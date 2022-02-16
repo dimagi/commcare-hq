@@ -7,7 +7,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.util import username_to_user_id
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 BATCH_SIZE = 100
@@ -26,11 +26,10 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         case_ids = self.find_case_ids_by_type(domain, case_type)
-        accessor = CaseAccessors(domain)
         case_blocks = []
         errors = []
         skip_count = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             username_of_associated_mobile_workers = case.get_case_property('username')
             try:
                 normalized_username = normalize_username(username_of_associated_mobile_workers, domain)
@@ -44,7 +43,8 @@ class Command(CaseUpdateCommand):
                 case_blocks.append(self.case_block(case, user_id_of_mobile_worker))
             else:
                 skip_count += 1
-        print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to unknown username.")
+        print(f"{len(case_blocks)} to update in {domain}, {skip_count} "
+              "cases have skipped due to unknown username.")
 
         total = 0
         for chunk in chunked(case_blocks, BATCH_SIZE):

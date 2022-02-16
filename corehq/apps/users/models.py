@@ -28,6 +28,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -45,16 +46,13 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
-from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.domain.shortcuts import create_user
@@ -81,11 +79,8 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.models import CommCareCase
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
@@ -1235,7 +1230,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                     skip=skip
                 )
 
-        return cls.view("users/by_domain",
+        return cls.view(
+            "users/by_domain",
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
@@ -1272,8 +1268,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_previewer(self):
         from django.conf import settings
-        return (self.is_superuser or
-                bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
+        return (self.is_superuser
+                or bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -1717,7 +1713,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).delete(deleted_by_domain, deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
-    @memoized
     def project(self):
         return Domain.get_by_name(self.domain)
 
@@ -1781,10 +1776,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.reports.models import HQUserType
         return HQUserType.ACTIVE
 
-    @property
-    def project(self):
-        return Domain.get_by_name(self.domain)
-
     def is_commcare_user(self):
         return True
 
@@ -1803,16 +1794,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         )
 
     def _get_form_ids(self):
-        return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
+        return XFormInstance.objects.get_form_ids_for_user(self.domain, self.user_id)
 
     def _get_case_ids(self):
-        return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
+        return CommCareCase.objects.get_case_ids_in_domain_by_owners(self.domain, [self.user_id])
 
     def _get_deleted_form_ids(self):
-        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.user_id)
+        return XFormInstance.objects.get_deleted_form_ids_for_user(self.domain, self.user_id)
 
     def _get_deleted_case_ids(self):
-        return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
+        return CommCareCase.objects.get_deleted_case_ids_by_owner(self.domain, self.user_id)
 
     def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
@@ -1839,10 +1830,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
         deleted_form_ids = self._get_deleted_form_ids()
-        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
+        XFormInstance.objects.soft_undelete_forms(self.domain, deleted_form_ids)
 
         deleted_case_ids = self._get_deleted_case_ids()
-        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+        CommCareCase.objects.soft_undelete_cases(self.domain, deleted_case_ids)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
@@ -2234,7 +2225,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
-            return CaseAccessors(self.domain).get_case(location_map_case_id(self))
+            return CommCareCase.objects.get_case(location_map_case_id(self), self.domain)
         except CaseNotFound:
             return None
 
@@ -2275,7 +2266,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self.get_usercase()
 
     def get_usercase(self):
-        return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return CommCareCase.objects.get_case_by_external_id(self.domain, self._id, USERCASE_TYPE)
 
     @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
@@ -2938,7 +2929,8 @@ class UserReportingMetadataStaging(models.Model):
 
     @classmethod
     def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
-        app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id):
+                      app_version, num_unsent_forms, num_quarantined_forms,
+                      commcare_version, build_profile_id):
         params = {
             'domain': domain,
             'user_id': user_id,
@@ -3107,3 +3099,13 @@ class UserHistory(models.Model):
             models.Index(fields=['by_domain']),
             models.Index(fields=['for_domain']),
         ]
+
+
+class DeactivateMobileWorkerTrigger(models.Model):
+    """
+    This determines if a Mobile Worker / CommCareUser is to be deactivated
+    after a certain date.
+    """
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+    deactivate_after = models.DateField()

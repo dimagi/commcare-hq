@@ -4,7 +4,6 @@ from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import RebuildWithReason, XFormInstance
 from corehq.util.log import with_progress_bar
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -31,7 +30,7 @@ class Command(BaseCommand):
     def _get_forms_to_archive(self):
         # ordered with latest form's id on top
         get_forms = XFormInstance.objects.get_forms
-        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
+        form_ids = XFormInstance.objects.get_form_ids_for_user(self.domain, self.user_id)
         return [f for f in get_forms(form_ids, self.domain) if f.is_normal]
 
     def _fetch_case_ids_to_rebuild(self):

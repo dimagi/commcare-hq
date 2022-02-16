@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 '''This command has an optional argument '--location' that will exclude all cases with that location. If the
 case_type is lab_result, the owner_id of that extension case is set to '-'. '''
@@ -54,14 +54,13 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         inactive_location = self.extra_options['inactive_location']
-        accessor = CaseAccessors(domain)
-        case_ids = accessor.get_case_ids_in_domain(case_type)
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         traveler_location_id = self.extra_options['location']
 
         case_blocks = []
         skip_count = 0
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, domain):
             if should_skip(case, traveler_location_id, inactive_location):
                 skip_count += 1
             elif needs_update(case):

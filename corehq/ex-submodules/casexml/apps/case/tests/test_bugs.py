@@ -9,7 +9,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -138,10 +138,9 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock.deprecated_init(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ], domain="test-domain")
-        cases = CaseAccessors("test-domain")
-        cases.soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases("test-domain", [case_id])
 
-        case = cases.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, "test-domain")
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
@@ -216,7 +215,7 @@ class TestCaseHierarchy(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        parent = CaseAccessors(parent.domain).get_case(parent.case_id)
+        parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
         hierarchy = get_case_hierarchy(parent, {})
         self.assertEqual(1, len(hierarchy['case_list']))
         self.assertEqual(0, len(hierarchy['child_cases']))
@@ -253,7 +252,8 @@ class TestCaseHierarchy(TestCase):
         [case] = factory.create_or_update_case(CaseStructure(
             case_id='infinite-recursion',
             attrs={'case_type': 'bug', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
+            indices=[CaseIndex(CaseStructure(
+                case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
             walk_related=False
         ))
 
@@ -316,7 +316,7 @@ class TestCaseHierarchy(TestCase):
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors('domain_name').get_case(case_id2)
+            CommCareCase.objects.get_case(case_id2, 'domain_name')
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock.deprecated_init(
@@ -325,7 +325,7 @@ class TestCaseHierarchy(TestCase):
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors('test-transactions').get_case(case_id2)
+        case2 = CommCareCase.objects.get_case(case_id2, 'test-transactions')
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
 
@@ -385,6 +385,5 @@ class TestCaseHierarchyContext(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        accessors = CaseAccessors(self.parent.domain)
-        self.parent = accessors.get_case(self.parent.case_id)
-        self.child = accessors.get_case(self.child.case_id)
+        self.parent = CommCareCase.objects.get_case(self.parent.case_id, self.parent.domain)
+        self.child = CommCareCase.objects.get_case(self.child.case_id, self.parent.domain)

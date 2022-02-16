@@ -9,8 +9,7 @@ from requests.exceptions import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -30,7 +29,7 @@ class EditFormTest(TestCase, TestFileMixin):
     def setUp(self):
         super(EditFormTest, self).setUp()
         self.interface = FormProcessorInterface(self.domain)
-        self.casedb = CaseAccessors(self.domain)
+        self.casedb = CommCareCase.objects
         self.formdb = XFormInstance.objects
 
     def tearDown(self):
@@ -189,7 +188,7 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.type, 'person')
         self.assertEqual(case.dynamic_case_properties()['property'], 'original value')
         self.assertEqual([form_id], case.xform_ids)
@@ -206,7 +205,7 @@ class EditFormTest(TestCase, TestFileMixin):
         ).as_text()
         xform, _ = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.type, 'newtype')
         self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
@@ -250,7 +249,7 @@ class EditFormTest(TestCase, TestFileMixin):
         create_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual([create_form_id], case.xform_ids)
 
         edit_date = datetime.utcnow()
@@ -266,7 +265,7 @@ class EditFormTest(TestCase, TestFileMixin):
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
@@ -281,7 +280,7 @@ class EditFormTest(TestCase, TestFileMixin):
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
@@ -299,7 +298,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         # ensure that the middle edit stays in the right place and is applied
         # before the final one
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual(case.dynamic_case_properties()['added_property'], 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)

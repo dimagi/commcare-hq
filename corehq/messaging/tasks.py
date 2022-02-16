@@ -9,7 +9,6 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.es import CaseES
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.tasks import (
     delete_schedule_instances_for_cases,
@@ -61,7 +60,7 @@ def sync_case_chunk_for_messaging_rule(domain, case_id_chunk, rule_id):
 
 def _sync_case_for_messaging(domain, case_id):
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         sms_tasks.clear_case_caches(case)
     except CaseNotFound:
         case = None
@@ -100,7 +99,7 @@ def _get_cached_rule(domain, rule_id):
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
     case_load_counter("messaging_rule_sync", domain)()
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
     except CaseNotFound:
         clear_messaging_for_case(domain, case_id)
         return

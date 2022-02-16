@@ -20,11 +20,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.blobs import get_blob_db
 from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -101,7 +97,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertIn("Form is a duplicate", res.content.decode('utf-8'))
 
         # make sure we logged it
-        [log] = FormAccessors(self.domain.name).get_forms_by_type('XFormDuplicate', limit=1)
+        [log] = XFormInstance.objects.get_forms_by_type(self.domain.name, 'XFormDuplicate', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
@@ -149,7 +145,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             self.assertIn('Invalid XML', res.content.decode('utf-8'))
 
         # make sure we logged it
-        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
+        [log] = XFormInstance.objects.get_forms_by_type(self.domain.name, 'SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
@@ -174,7 +170,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertIn(message, res.content.decode('utf-8'))
 
         # make sure we logged it
-        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
+        [log] = XFormInstance.objects.get_forms_by_type(self.domain.name, 'SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
@@ -339,7 +335,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         deprecated_form = XFormInstance.objects.get_form(form.deprecated_form_id, self.domain.name)
         self.assertTrue(deprecated_form.is_deprecated)
 
-        case = CaseAccessors(self.domain.name).get_case('ad38211be256653bceac8e2156475667')
+        case = CommCareCase.objects.get_case('ad38211be256653bceac8e2156475667', self.domain.name)
         transactions = case.transactions
         self.assertEqual(2, len(transactions))
         self.assertTrue(transactions[0].is_form_transaction)

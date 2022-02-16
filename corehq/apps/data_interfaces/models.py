@@ -37,13 +37,9 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -134,8 +130,8 @@ class AutomaticUpdateRule(models.Model):
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (
-                isinstance(definition, MatchPropertyDefinition) and
-                property_references_parent(definition.property_name)
+                isinstance(definition, MatchPropertyDefinition)
+                and property_references_parent(definition.property_name)
             ):
                 return True
 
@@ -146,14 +142,14 @@ class AutomaticUpdateRule(models.Model):
                     if property_references_parent(property_definition.name):
                         return True
                     if (
-                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
-                        property_references_parent(property_definition.value)
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY
+                        and property_references_parent(property_definition.value)
                     ):
                         return True
             elif isinstance(definition, CreateScheduleInstanceActionDefinition):
                 if (
-                    property_references_parent(definition.reset_case_property_name) or
-                    property_references_parent(definition.start_date_case_property)
+                    property_references_parent(definition.reset_case_property_name)
+                    or property_references_parent(definition.start_date_case_property)
                 ):
                     return True
 
@@ -239,7 +235,7 @@ class AutomaticUpdateRule(models.Model):
     @classmethod
     def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
         case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CaseAccessors(domain).iter_cases(case_ids)
+        return CommCareCase.objects.iter_cases(case_ids, domain)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -461,6 +457,7 @@ class AutomaticUpdateRule(models.Model):
         data['id'] = self.id
         return data
 
+
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
@@ -638,7 +635,7 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_CRITERIA[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, now)
@@ -739,11 +736,11 @@ class CaseRuleActionResult(object):
     @property
     def total_updates(self):
         return (
-            self.num_updates +
-            self.num_closes +
-            self.num_related_updates +
-            self.num_related_closes +
-            self.num_creates
+            self.num_updates
+            + self.num_closes
+            + self.num_related_updates
+            + self.num_related_closes
+            + self.num_creates
         )
 
 
@@ -879,7 +876,6 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
-
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
@@ -908,6 +904,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             num_related_updates=num_related_updates,
         )
 
+
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
@@ -918,7 +915,7 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_ACTIONS[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
@@ -1037,7 +1034,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
-        duplicate_cases = CaseAccessors(domain).get_cases(list(duplicate_case_ids))
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
         case_updates = self._get_case_updates(duplicate_cases)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(
@@ -1201,7 +1198,8 @@ class VisitSchedulerIntegrationHelper(object):
             return visit_due_date + timedelta(days=visit.starts)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
             if not isinstance(visit.expires, int):
-                raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
+                raise self.VisitSchedulerIntegrationException(
+                    "Cannot schedule end date of visit that does not expire")
 
             return visit_due_date + timedelta(days=visit.expires)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_DUE_DATE:
@@ -1213,7 +1211,7 @@ class VisitSchedulerIntegrationHelper(object):
         phase_num = self.case.get_case_property('current_schedule_phase')
         try:
             return int(phase_num)
-        except:
+        except:  # noqa: E722
             return None
 
     def get_visit(self, form):
@@ -1489,7 +1487,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in FormAccessors(self.domain).iter_forms(form_id_chunk):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):

@@ -10,8 +10,7 @@ from casexml.apps.case.util import (
     get_datetime_case_property_changed,
     get_paged_changes_to_case_property,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.models import CommCareCase, RebuildWithReason
 
 
 class TestCasePropertyChanged(TestCase):
@@ -47,7 +46,7 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
 
         self.assertEqual(
             updated_on.replace(tzinfo=pytz.UTC),
@@ -90,7 +89,7 @@ class TestCasePropertyChanged(TestCase):
                     "date_modified": day_2,
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
 
         self.assertEqual(
             day_2.replace(tzinfo=pytz.UTC),
@@ -111,7 +110,7 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
 
         changes, _ = get_paged_changes_to_case_property(case, 'owner_id')
         self.assertEqual(len(changes), 2)
@@ -128,7 +127,7 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         changes, _ = get_paged_changes_to_case_property(case, 'name')
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].new_value, 'Strider')
@@ -144,7 +143,7 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         changes, _ = get_paged_changes_to_case_property(case, 'sword')
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].new_value, '')
@@ -163,7 +162,7 @@ class TestCasePropertyChanged(TestCase):
                 }),
         )
         rebuild_case_from_forms(self.domain, self.case.case_id, RebuildWithReason())
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         changes, _ = get_paged_changes_to_case_property(case, 'sword')
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].new_value, '')

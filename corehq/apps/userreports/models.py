@@ -41,6 +41,7 @@ from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
@@ -257,6 +258,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     def __str__(self):
         return '{} - {}'.format(self.domain, self.display_name)
+
+    @property
+    def is_deleted(self):
+        return is_deleted(self)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()

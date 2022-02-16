@@ -19,7 +19,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
@@ -40,7 +40,7 @@ class ConfigurableReportTestMixin(object):
         ).as_xml()
         with drop_connected_signals(sql_case_post_save):
             post_case_blocks([case_block], {'domain': cls.domain})
-        return CaseAccessors(cls.domain).get_case(id)
+        return CommCareCase.objects.get_case(id, cls.domain)
 
     @classmethod
     def _delete_everything(cls):

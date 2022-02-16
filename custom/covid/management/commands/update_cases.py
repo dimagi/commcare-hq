@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.users.util import username_to_user_id
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class CaseUpdateCommand(BaseCommand):
@@ -23,8 +23,7 @@ class CaseUpdateCommand(BaseCommand):
         raise NotImplementedError()
 
     def find_case_ids_by_type(self, domain, case_type):
-        accessor = CaseAccessors(domain)
-        case_ids = accessor.get_case_ids_in_domain(case_type)
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         return case_ids
 

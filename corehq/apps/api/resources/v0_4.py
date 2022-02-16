@@ -55,8 +55,7 @@ from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplica
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
+from corehq.motech.repeaters.models import CommCareCase, Repeater, get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
@@ -184,7 +183,7 @@ def _cases_referenced_by_xform(esxform):
     """
     assert esxform.domain, esxform.form_id
     case_ids = set(cu.id for cu in get_case_updates(esxform))
-    return CaseAccessors(esxform.domain).get_cases(list(case_ids))
+    return CommCareCase.objects.get_cases(list(case_ids), esxform.domain)
 
 
 class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

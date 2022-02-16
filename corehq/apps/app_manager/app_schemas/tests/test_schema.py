@@ -11,6 +11,7 @@ from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.models import ConditionalCaseUpdate
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled
 
@@ -134,7 +135,9 @@ class SchemaTest(SimpleTestCase):
                          ["grandparent", "parent (greatgrandparent)"])
 
     def test_get_casedb_schema_with_parent_case_property_update(self):
-        family = self.add_form("family", {"parent/has_well": "/data/village_has_well"})
+        family = self.add_form("family", {
+            "parent/has_well": "/data/village_has_well"
+        })
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
         schema = get_casedb_schema(family)
@@ -427,8 +430,8 @@ class SchemaTest(SimpleTestCase):
     def test_get_casedb_schema_with_usercase(self):
         module, form = self.factory.new_basic_module('village', 'village')
         self.factory.form_uses_usercase(form, update={
-            'name': '/data/username',
-            'role': '/data/userrole',
+            'name': ConditionalCaseUpdate(question_path='/data/username'),
+            'role': ConditionalCaseUpdate(question_path='/data/userrole'),
         })
         with patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use') as mock1, \
                 patch('corehq.apps.app_manager.app_schemas.case_properties.is_usercase_in_use') as mock2:

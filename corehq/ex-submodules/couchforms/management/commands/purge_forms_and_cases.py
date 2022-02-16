@@ -5,7 +5,7 @@ from django.http import Http404
 
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
@@ -38,7 +38,6 @@ though deletion would be re-confirmed so dont panic
         self.case_ids = set()
         self.filtered_xform_ids, self.xform_ids = [], []
         self.xform_writer, self.case_writer = None, None
-        self.forms_accessor, self.case_accessors = None, None
         self.domain, self.app_id, self.version_number, self.test_run = None, None, None, None
         self.version_mapping = dict()
 
@@ -47,8 +46,6 @@ though deletion would be re-confirmed so dont panic
         self.xform_writer.writerow(XFORM_HEADER)
         self.case_writer = csv.writer(open(CASE_FILE_NAME, 'w+b'))
         self.case_writer.writerow(CASE_HEADER)
-        self.forms_accessor = FormAccessors(self.domain)
-        self.case_accessors = CaseAccessors(self.domain)
 
     def ensure_prerequisites(self, domain, app_id, version_number, test_run):
         self.domain = domain
@@ -63,7 +60,7 @@ though deletion would be re-confirmed so dont panic
 
     def handle(self, domain, app_id, version_number, test_run, **options):
         self.ensure_prerequisites(domain, app_id, version_number, test_run)
-        self.xform_ids = self.forms_accessor.get_all_form_ids_in_domain()
+        self.xform_ids = XFormInstance.objects.get_form_ids_in_domain(domain)
         self.iterate_forms_and_collect_case_ids()
         _print_final_debug_info(self.xform_ids, self.filtered_xform_ids, self.case_ids)
         if self.data_to_delete() and self.delete_permitted():
@@ -74,7 +71,7 @@ though deletion would be re-confirmed so dont panic
 
     def iterate_forms_and_collect_case_ids(self):
         print("Iterating Through %s XForms and Collecting Case Ids" % len(self.xform_ids))
-        for xform in self.forms_accessor.iter_forms(self.xform_ids):
+        for xform in XFormInstance.objects.iter_forms(self.xform_ids, self.domain):
             # Get app version by fetching app corresponding to xform build_id since xform.form
             # does not have updated app version unless form was updated for that version
             app_version_built_with = self.get_xform_build_version(xform)
@@ -107,7 +104,7 @@ though deletion would be re-confirmed so dont panic
             _raise_xform_domain_mismatch(xform)
 
     def print_case_details(self):
-        for case in self.case_accessors.iter_cases(self.case_ids):
+        for case in CommCareCase.objects.iter_cases(self.case_ids, self.domain):
             _print_case_details(case, self.case_writer)
 
     def delete_permitted(self):
@@ -118,8 +115,8 @@ though deletion would be re-confirmed so dont panic
 
     def delete_forms_and_cases(self):
         print('Proceeding with deleting forms and cases')
-        self.forms_accessor.soft_delete_forms(self.filtered_xform_ids)
-        self.case_accessors.soft_delete_cases(list(self.case_ids))
+        XFormInstance.objects.soft_delete_forms(self.domain, self.filtered_xform_ids)
+        CommCareCase.objects.soft_delete_cases(self.domain, list(self.case_ids))
 
 
 def _print_form_details(xform, file_writer, app_version_built_with):

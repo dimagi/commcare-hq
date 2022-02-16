@@ -397,11 +397,6 @@ def get_apps_base_context(request, domain, app):
             and app.is_biometric_enabled
         )
 
-        disable_report_modules = (
-            is_active_upstream_domain(domain)
-            and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
-        )
-
         # ideally this should be loaded on demand
         practice_users = []
         if app.enable_practice_users:
@@ -418,7 +413,6 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
-            'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_module_v1': toggles.V1_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,

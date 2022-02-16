@@ -52,3 +52,14 @@ class EnterprisePermissions(models.Model):
         for domain in self.account.get_domains():
             self.get_domains.clear(self.__class__, domain)
             self.get_by_domain.clear(self.__class__, domain)
+
+
+class EnterpriseMobileWorkerSettings(models.Model):
+    """
+    Stores the configuration for auto-deactivating Mobile Workers for
+    Enterprise projects
+    """
+    account = models.OneToOneField(BillingAccount, null=False, on_delete=models.CASCADE)
+    enable_auto_deactivation = models.BooleanField(default=False)
+    inactivity_period = models.IntegerField(default=90)
+    allow_custom_deactivation = models.BooleanField(default=False)

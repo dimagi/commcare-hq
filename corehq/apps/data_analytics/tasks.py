@@ -10,7 +10,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
+from corehq.apps.data_analytics.malt_generator import generate_malt
 from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -19,7 +19,7 @@ from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 logger = get_task_logger(__name__)
 
 
-@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='2'),
                acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
@@ -34,7 +34,7 @@ def build_last_month_MALT():
     send_MALT_complete_email(last_month)
 
 
-@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=2, minute=0, day_of_week='*'),
                ignore_result=True)
 def update_current_MALT():
     today = datetime.date.today()
@@ -44,7 +44,7 @@ def update_current_MALT():
         update_current_MALT_for_domains.delay(this_month_dict, chunk)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='3'),
                acks_late=True, ignore_result=True)
 def build_last_month_GIR():
     last_month = last_month_datespan()
@@ -71,7 +71,7 @@ def build_last_month_GIR():
 @task(queue='malt_generation_queue')
 def update_current_MALT_for_domains(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
-    MALTTableGenerator([month]).build_table(domains=domains)
+    generate_malt([month], domains=domains)
 
 
 def send_MALT_complete_email(month_dict):

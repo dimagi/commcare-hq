@@ -79,7 +79,6 @@ from corehq.apps.users.views.mobile import (
 )
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
@@ -242,7 +241,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    obj = CaseAccessors(domain).get_case(recipient_id)
+                    obj = CommCareCase.objects.get_case(recipient_id, domain)
                     if isinstance(obj, CommCareCase):
                         sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
@@ -1358,6 +1357,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             DataTablesColumn(_("Scheduling Configuration")),
             DataTablesColumn(_("Recipient")),
             DataTablesColumn(_("Triggering Case")),
+            DataTablesColumn(_("Attempt Number"))
         )
 
     @property
@@ -1559,6 +1559,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_broadcast_display(schedule_instance),
                 self.get_recipient_display(schedule_instance.recipient),
                 '-',
+                schedule_instance.attempts + 1
             ]
         elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
             return [
@@ -1566,6 +1567,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_rule_display(schedule_instance.rule_id),
                 self.get_recipient_display(schedule_instance.recipient),
                 self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
+                schedule_instance.attempts + 1
             ]
         else:
             raise TypeError("Unexpected type: %s" % type(schedule_instance))

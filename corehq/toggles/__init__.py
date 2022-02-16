@@ -1071,15 +1071,6 @@ MOBILE_UCR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
-    'mobile_ucr_linked_domain',
-    'Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains.',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
-                'NOTE: This won\'t work without developer intervention'
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
@@ -2060,6 +2051,14 @@ ERM_DEVELOPMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
+    'auto_deactivate_mobile_workers',
+    'Development flag for auto-deactivation of mobile workers. To be replaced '
+    'by a privilege.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
     'Allow limited fixtures to be available in case restore for SMS workflows.',
@@ -2164,4 +2163,16 @@ SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
     'Support count per choice column to show up in multibar graph in reports',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
+    'save-only-edited-form-fields',
+    'Save a form field only if the answer has been edited',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Addison Dunn',
+    description="""
+    Enable a checkbox for the ability to save a form question's answer in Case Management in App
+    Manager only if the question's inputted answer is different from the current value in the case.
+    """
 )

@@ -9,6 +9,7 @@ from corehq.apps.dump_reload.util import get_model_label
 IGNORE_APPS = {
     'aaa',
     'accounting',
+    'analytics',
     'admin',
     'auditcare',
     'captcha',
@@ -48,6 +49,7 @@ IGNORE_MODELS = {
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'domain.DomainAuditRecordEntry',
+    'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',

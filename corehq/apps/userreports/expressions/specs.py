@@ -29,7 +29,6 @@ from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
@@ -794,7 +793,7 @@ class SubcasesExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('case_id',))
     def _get_subcases(self, case_id, context):
         domain = context.root_doc['domain']
-        return [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
+        return [c.to_json() for c in CommCareCase.objects.get_reverse_indexed_cases(domain, [case_id])]
 
     def __str__(self):
         return "get subcases for {}".format(str(self._case_id_expression))

@@ -6,7 +6,6 @@ from celery.task import task
 from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs
-from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.utils import MockDevice
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase
@@ -17,10 +16,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 @task
@@ -126,8 +122,6 @@ def delete_exploded_cases(domain, explosion_id, task=None):
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, len(case_ids))
 
-    case_accessor = CaseAccessors(domain)
-    form_accessor = FormAccessors(domain)
     ledger_accessor = LedgerAccessorSQL
     deleted_form_ids = set()
     num_deleted_ledger_entries = 0
@@ -138,13 +132,13 @@ def delete_exploded_cases(domain, explosion_id, task=None):
             ledger_accessor.delete_ledger_transactions_for_form([id], form_id)
         num_deleted_ledger_entries += ledger_accessor.delete_ledger_values(id)
 
-        new_form_ids = set(case_accessor.get_case_xform_ids(id)) - deleted_form_ids
-        form_accessor.soft_delete_forms(list(new_form_ids))
+        new_form_ids = set(CommCareCase.objects.get_case_xform_ids(id)) - deleted_form_ids
+        XFormInstance.objects.soft_delete_forms(domain, list(new_form_ids))
         deleted_form_ids |= new_form_ids
 
     completed = 0
     for ids in chunked(case_ids, 100):
-        case_accessor.soft_delete_cases(list(ids))
+        CommCareCase.objects.soft_delete_cases(domain, list(ids))
         if task:
             completed += len(ids)
             DownloadBase.set_progress(delete_exploded_case_task, completed, len(case_ids))

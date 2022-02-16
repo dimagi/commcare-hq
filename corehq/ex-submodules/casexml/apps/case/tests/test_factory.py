@@ -3,8 +3,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -106,7 +105,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(CaseAccessors(case.domain).get_case(case.case_id))
+        self.assertIsNotNone(CommCareCase.objects.get_case(case.case_id, case.domain))
 
     def test_create_overrides(self):
         factory = CaseFactory()

@@ -17,8 +17,8 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.dates import coerce_to_datetime
@@ -43,8 +43,8 @@ class FundamentalBaseTests(TestCase):
     def setUp(self):
         super(FundamentalBaseTests, self).setUp()
         self.interface = FormProcessorInterface()
-        self.casedb = CaseAccessors(DOMAIN)
-        self.formdb = FormAccessors(DOMAIN)
+        self.casedb = CommCareCase.objects
+        self.formdb = XFormInstance.objects
 
 
 class FundamentalFormTests(FundamentalBaseTests):
@@ -87,7 +87,7 @@ class FundamentalFormTests(FundamentalBaseTests):
 
         before = form.server_modified_on
 
-        self.formdb.soft_undelete_forms([form_id])
+        self.formdb.soft_undelete_forms(DOMAIN, [form_id])
         form = self.formdb.get_form(form_id)
 
         self.assertFalse(form.is_deleted)
@@ -107,7 +107,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             xmlns=xmlns
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertIsNotNone(case)
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
@@ -143,7 +143,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'dynamic': '123'
             }
         )
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.name, case_name)
 
     def test_update_case(self):
@@ -164,7 +164,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
         self.assertEqual(coerce_to_datetime(case.opened_on), coerce_to_datetime(opened_on))
@@ -190,7 +190,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             False, case_id, user_id='user2', date_modified=modified_on, close=True
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')
@@ -214,7 +214,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             False, case_id, user_id='user2', date_modified=modified_on, update={}
         )
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, DOMAIN)
         self.assertEqual(case.dynamic_case_properties(), {'dynamic': '123'})
 
     def test_case_with_index(self):
@@ -233,7 +233,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
         index = case.indices[0]
         self.assertEqual(index.identifier, 'mom')
@@ -256,7 +256,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(case.indices[0].identifier, 'mom')
 
         _submit_case_block(
@@ -264,7 +264,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'mom': ('other_mother', mother_case_id)
             }
         )
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(case.indices[0].referenced_type, 'other_mother')
 
     def test_delete_index(self):
@@ -282,7 +282,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
 
         _submit_case_block(
@@ -290,7 +290,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
                 'mom': ('mother', '')
             }
         )
-        case = self.casedb.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id, DOMAIN)
         self.assertEqual(len(case.indices), 1)
         self.assertEqual(case.indices[0].referenced_id, '')
 
@@ -394,18 +394,28 @@ class FundamentalCaseTests(FundamentalBaseTests):
     def test_update_case_without_creating_triggers_soft_assert(self):
         def _submit_form_with_cc_version(version):
             xml = """<?xml version='1.0' ?>
-                            <system version="1" uiVersion="1" xmlns="http://commcarehq.org/case" xmlns:orx="http://openrosa.org/jr/xforms">
-                                <orx:meta xmlns:cc="http://commcarehq.org/xforms">
-                                    <orx:deviceID />
-                                    <orx:timeStart>2017-06-22T08:39:07.585584Z</orx:timeStart>
-                                    <orx:timeEnd>2017-06-22T08:39:07.585584Z</orx:timeEnd>
-                                    <orx:username>system</orx:username>
-                                    <orx:userID></orx:userID>
-                                    <orx:instanceID>{form_id}</orx:instanceID>
-                                    <cc:appVersion>CommCare Version "{version}"</cc:appVersion>
-                                </orx:meta>
-                                <case case_id="{case_id}" date_modified="2017-06-22T08:39:07.585427Z" user_id="user2" xmlns="http://commcarehq.org/case/transaction/v2" />
-                            </system>""".format(form_id=uuid.uuid4().hex, case_id=uuid.uuid4().hex, version=version)
+                <system version="1" uiVersion="1"
+                        xmlns="http://commcarehq.org/case"
+                        xmlns:orx="http://openrosa.org/jr/xforms">
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID />
+                        <orx:timeStart>2017-06-22T08:39:07.585584Z</orx:timeStart>
+                        <orx:timeEnd>2017-06-22T08:39:07.585584Z</orx:timeEnd>
+                        <orx:username>system</orx:username>
+                        <orx:userID></orx:userID>
+                        <orx:instanceID>{form_id}</orx:instanceID>
+                        <cc:appVersion>CommCare Version "{version}"</cc:appVersion>
+                    </orx:meta>
+                    <case case_id="{case_id}"
+                            date_modified="2017-06-22T08:39:07.585427Z"
+                            user_id="user2"
+                            xmlns="http://commcarehq.org/case/transaction/v2" />
+                </system>
+            """.format(
+                form_id=uuid.uuid4().hex,
+                case_id=uuid.uuid4().hex,
+                version=version,
+            )
             submit_form_locally(
                 xml, domain=DOMAIN
             )

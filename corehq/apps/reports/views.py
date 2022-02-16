@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
+from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,6 +19,7 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
+    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -134,13 +136,10 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import UserRequestedRebuild, XFormInstance
+from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
@@ -1122,7 +1121,7 @@ class CaseDataView(BaseProjectReportSectionView):
     @memoized
     def case_instance(self):
         try:
-            case = CaseAccessors(self.domain).get_case(self.case_id)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
             if case.domain != self.domain or case.is_deleted:
                 return None
             return case
@@ -1629,7 +1628,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
@@ -1858,6 +1857,32 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@login_and_domain_required
+@require_form_view_permission
+@location_safe
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    # Open form attachment in browser
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    if not instance_id or not attachment_id:
+        raise Http404
+
+    # this raises a PermissionDenied error if necessary
+    safely_get_form(request, domain, instance_id)
+
+    try:
+        content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
+    except AttachmentNotFound:
+        raise Http404
+
+    return StreamingHttpResponse(
+        streaming_content=FileWrapper(content.content_stream),
+        content_type=content.content_type
+    )
+
+
 @location_safe
 @require_form_view_permission
 @login_and_domain_required
@@ -1980,7 +2005,7 @@ class EditFormInstance(View):
             non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
-                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                case = CommCareCase.objects.get_case(edit_session_data['case_id'], domain)
                 if case.closed:
                     message = format_html(_(
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
@@ -2106,7 +2131,7 @@ def _get_cases_with_other_forms(domain, xform):
     :returns: Dict of Case ID -> Case"""
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
-    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+    for case in CommCareCase.objects.iter_cases(cases_created, domain):
         if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
@@ -2127,7 +2152,7 @@ def _get_case_id_and_redirect_url(domain, request):
         if case_id:
             case_id = case_id[0]
             try:
-                case = CaseAccessors(domain).get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id, domain)
                 if case.is_deleted:
                     raise CaseNotFound
             except CaseNotFound:

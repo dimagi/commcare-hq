@@ -57,7 +57,6 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
@@ -1261,7 +1260,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = self._send_case_to_es()
         case.external_id = '123'
         case.save()
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
         es_case = transform_case_for_elasticsearch(case_json)

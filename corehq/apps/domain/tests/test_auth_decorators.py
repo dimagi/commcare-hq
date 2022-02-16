@@ -5,7 +5,8 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from unittest.mock import patch
 
-from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS
+from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS, \
+    ACCESS_CONTROL_ALLOW_METHODS
 from corehq.apps.api.decorators import allow_cors
 from corehq.apps.domain.decorators import _login_or_challenge, api_auth
 from corehq.apps.domain.shortcuts import create_domain
@@ -270,4 +271,5 @@ class AllowCORSDecoratorTest(TestCase):
     def test_options(self):
         response = allow_cors(['POST'])(sample_view_with_response)(RequestFactory().options('/foobar/'))
         self._assert_cors(response)
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW_METHODS], 'POST, OPTIONS')
         self.assertEqual(response[ACCESS_CONTROL_ALLOW], 'POST, OPTIONS')
