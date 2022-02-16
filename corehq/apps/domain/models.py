@@ -245,7 +245,6 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     partner_comments = StringProperty()
     partner_contact = StringProperty()
     dimagi_contact = StringProperty()
-    active_dte_expressions = StringListProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
