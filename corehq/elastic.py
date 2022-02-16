@@ -1,103 +1,35 @@
-import json
-
-from django.conf import settings
-
-from memoized import memoized
-
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.client import CLIENT_DEFAULT, CLIENT_EXPORT, get_client
+from corehq.apps.es.exceptions import ESError, ESShardFailure
 from corehq.apps.es.registry import registry_entry
-from corehq.util.es.elasticsearch import (
-    Elasticsearch,
-    ElasticsearchException,
-    SerializationError,
-)
+from corehq.util.es.elasticsearch import ElasticsearchException
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
-from corehq.util.json import CommCareJSONEncoder
 from corehq.util.metrics import metrics_counter
 
 
-class ESJSONSerializer(object):
-    """Modfied version of ``elasticsearch.serializer.JSONSerializer``
-    that uses the CommCareJSONEncoder for serializing to JSON.
-    """
-    mimetype = 'application/json'
-
-    def loads(self, s):
-        try:
-            return json.loads(s)
-        except (ValueError, TypeError) as e:
-            raise SerializationError(s, e)
-
-    def dumps(self, data):
-        # don't serialize strings
-        if isinstance(data, str):
-            return data
-        try:
-            return json.dumps(data, cls=CommCareJSONEncoder)
-        except (ValueError, TypeError) as e:
-            raise SerializationError(data, e)
+# TODO: remove these (update where imported)
+from corehq.apps.es.const import MAX_CLAUSE_COUNT, SIZE_LIMIT  # noqa: F401
+ES_DEFAULT_INSTANCE = CLIENT_DEFAULT
+ES_EXPORT_INSTANCE = CLIENT_EXPORT
+ES_MAX_CLAUSE_COUNT = MAX_CLAUSE_COUNT
 
 
-def _es_hosts():
-    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-    if not es_hosts:
-        es_hosts = [settings.ELASTICSEARCH_HOST]
-
-    hosts = [
-        {
-            'host': host,
-            'port': settings.ELASTICSEARCH_PORT,
-        }
-        for host in es_hosts
-    ]
-    return hosts
-
-
-@memoized
 def get_es_new():
-    """
-    Get a handle to the configured elastic search DB.
-    Returns an elasticsearch.Elasticsearch instance.
-    """
-    hosts = _es_hosts()
-    es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
-    return es
+    # TODO: remove this (update where imported)
+    return get_client()
 
 
-@memoized
 def get_es_export():
-    """
-    Get a handle to the configured elastic search DB with settings geared towards exports.
-    Returns an elasticsearch.Elasticsearch instance.
-    """
-    hosts = _es_hosts()
-    es = Elasticsearch(
-        hosts,
-        retry_on_timeout=True,
-        max_retries=3,
-        # Timeout in seconds for an elasticsearch query
-        timeout=300,
-        serializer=ESJSONSerializer(),
-    )
-    return es
-
-
-ES_DEFAULT_INSTANCE = 'default'
-ES_EXPORT_INSTANCE = 'export'
-
-ES_INSTANCES = {
-    ES_DEFAULT_INSTANCE: get_es_new,
-    ES_EXPORT_INSTANCE: get_es_export,
-}
+    # TODO: remove this (update where imported)
+    return get_client(client_type=CLIENT_EXPORT)
 
 
 def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
-    assert es_instance_alias in ES_INSTANCES
-    return ES_INSTANCES[es_instance_alias]()
+    # TODO: remove this (update where imported)
+    return get_client(client_type=es_instance_alias)
 
 
 def doc_exists_in_es(index_info, doc_id):
@@ -135,29 +67,9 @@ def refresh_elasticsearch_index(index_cname):
     es.indices.refresh(index=index_info.alias)
 
 
-# this is what ES's maxClauseCount is currently set to, can change this config
-# value if we want to support querying over more domains
-ES_MAX_CLAUSE_COUNT = 1024
-
-
-class ESShardFailure(ESError):
-    pass
-
-
-def run_query(index_cname, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
-    # the debug_host parameter allows you to query another env for testing purposes
-    if debug_host:
-        if not settings.DEBUG:
-            raise Exception("You can only specify an ES env in DEBUG mode")
-        es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
-        es_instance = Elasticsearch([{'host': es_host,
-                                      'port': settings.ELASTICSEARCH_PORT}],
-                                    timeout=3, max_retries=0)
-    else:
-        es_instance = get_es_instance(es_instance_alias)
-
+def run_query(index_cname, q, es_instance_alias=ES_DEFAULT_INSTANCE):
+    es_instance = get_es_instance(es_instance_alias)
     es_interface = ElasticsearchInterface(es_instance)
-
     index_info = registry_entry(index_cname)
     try:
         results = es_interface.search(index_info.alias, index_info.type, body=q)
@@ -247,9 +159,6 @@ class ScanResult(object):
     def __iter__(self):
         for x in self._iterator:
             yield x
-
-
-SIZE_LIMIT = 1000000
 
 
 def report_and_fail_on_shard_failures(search_result):

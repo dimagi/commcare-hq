@@ -71,18 +71,6 @@ like inactive users or deleted docs.
 These things should nearly always be excluded, but if necessary, you can remove
 these with ``remove_default_filters``.
 
-Running against production
---------------------------
-Since the ESQuery library is read-only, it's mostly safe to run against
-production. You can define alternate elasticsearch hosts in your localsettings
-file in the ``ELASTICSEARCH_DEBUG_HOSTS`` dictionary and pass in this host name
-as the ``debug_host`` to the constructor:
-
-.. code-block:: python
-
-    >>> CaseES(debug_host='prod').domain('dimagi').count()
-    120
-
 Language
 --------
 
@@ -148,13 +136,12 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
+    def __init__(self, index=None, es_instance_alias=ES_DEFAULT_INSTANCE):
         if index is not None:
             self.index = index
         # verify index canonical name
         verify_registered(self.index)  # raises ESRegistryError on failure
 
-        self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
@@ -216,7 +203,6 @@ class ESQuery(object):
         raw = run_query(
             query.index,
             query.raw_query,
-            debug_host=query.debug_host,
             es_instance_alias=self.es_instance_alias,
         )
         return ESQuerySet(raw, deepcopy(query))

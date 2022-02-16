@@ -4,3 +4,7 @@ class ESError(Exception):
 
 class ESRegistryError(ESError):
     pass
+
+
+class ESShardFailure(ESError):
+    pass

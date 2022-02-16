@@ -276,8 +276,8 @@ class TestSendToElasticsearch(SimpleTestCase):
             from corehq.util.es.elasticsearch import Elasticsearch
             return Elasticsearch(
                 [{
-                    'host': settings.ELASTICSEARCH_HOST,
-                    'port': settings.ELASTICSEARCH_PORT - 2,  # bad port
+                    'host': 'localhost',
+                    'port': 65536,  # bad port
                 }],
                 timeout=0.1,
             )
