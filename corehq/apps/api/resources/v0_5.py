@@ -63,6 +63,7 @@ from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     StaticReportConfiguration,
@@ -102,6 +103,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+
 
 MOCK_BULK_USER_ES = None
 
@@ -794,9 +796,15 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         ]
         for key, value in bundle.data.items():
             if key in allowed_update_fields:
-                print(f'setting {key} to {value}')
                 data_source[key] = value
-        data_source.save()
+        try:
+            data_source.validate()
+            data_source.save()
+        except BadSpecError as e:
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": _("Invalid data source! Details: {details}").format(details=str(e))}),
+                content_type="application/json",
+                status=500))
         bundle.obj = data_source
         return bundle
 
