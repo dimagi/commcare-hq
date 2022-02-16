@@ -9,7 +9,6 @@ from django.db import models
 from django.db.models import F
 from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
-from django.forms import CharField, IntegerField
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
