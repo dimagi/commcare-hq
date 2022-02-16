@@ -149,9 +149,11 @@ class DailySavedExportMixin(object):
         self._priv_check()
         return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
 
-    def create_new_export_instance(self, schema, export_settings=None):
+    def create_new_export_instance(self, schema, username, domain, export_settings=None):
         instance = super(DailySavedExportMixin, self).create_new_export_instance(
             schema,
+            username,
+            domain,
             export_settings=export_settings
         )
         instance.is_daily_saved_export = True
@@ -184,9 +186,11 @@ class DashboardFeedMixin(DailySavedExportMixin):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
 
-    def create_new_export_instance(self, schema, export_settings=None):
+    def create_new_export_instance(self, schema, username, domain, export_settings=None):
         instance = super(DashboardFeedMixin, self).create_new_export_instance(
             schema,
+            username,
+            domain,
             export_settings=export_settings
         )
         instance.export_format = "html"

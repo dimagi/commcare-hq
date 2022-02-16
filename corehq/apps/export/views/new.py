@@ -145,12 +145,22 @@ class BaseExportView(BaseProjectDataView):
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
+
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
         if not export._rev:
+            # This is a new export
+            export_type = export.type.capitalize()
+
+            track_workflow(
+                request.user.username,
+                f'{export_type} Export - Created Export',
+                properties={'domain': self.domain}
+            )
+
             if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
@@ -254,8 +264,15 @@ class CreateNewCustomFormExportView(BaseExportView):
         from corehq.apps.export.views.list import FormExportListView
         return FormExportListView
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+        export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+
+        from corehq.apps.export.views.list import FormExportListView
+        if self.report_class == FormExportListView:
+            track_workflow(username, 'Form Export - Clicked Add Export Popup', properties={
+                'domain': domain
+            })
+        return export
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
@@ -263,7 +280,11 @@ class CreateNewCustomFormExportView(BaseExportView):
 
         export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, app_id, xmlns)
-        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
+        self.export_instance = self.create_new_export_instance(
+            schema,
+            request.user.username,
+            self.domain,
+            export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -280,15 +301,27 @@ class CreateNewCustomCaseExportView(BaseExportView):
         from corehq.apps.export.views.list import CaseExportListView
         return CaseExportListView
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+
+        export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+
+        from corehq.apps.export.views.list import CaseExportListView
+        if self.report_class == CaseExportListView:
+            track_workflow(username, 'Case Export - Clicked Add Export Popup', properties={
+                'domain': domain
+            })
+        return export
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
         export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, None, case_type)
-        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
+        self.export_instance = self.create_new_export_instance(
+            schema,
+            request.user.username,
+            self.domain,
+            export_settings=export_settings)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
