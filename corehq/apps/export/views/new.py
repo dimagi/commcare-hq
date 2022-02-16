@@ -266,9 +266,12 @@ class CreateNewCustomFormExportView(BaseExportView):
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
-        track_workflow(username, 'Form Export - Clicked Add Export Popup', properties={
-            'domain': domain
-        })
+
+        from corehq.apps.export.views.list import FormExportListView
+        if self.report_class == FormExportListView:
+            track_workflow(username, 'Form Export - Clicked Add Export Popup', properties={
+                'domain': domain
+            })
         return export
 
     def get(self, request, *args, **kwargs):
@@ -299,10 +302,14 @@ class CreateNewCustomCaseExportView(BaseExportView):
         return CaseExportListView
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
+
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
-        track_workflow(username, 'Case Export - Clicked Add Export Popup', properties={
-            'domain': domain
-        })
+
+        from corehq.apps.export.views.list import CaseExportListView
+        if self.report_class == CaseExportListView:
+            track_workflow(username, 'Case Export - Clicked Add Export Popup', properties={
+                'domain': domain
+            })
         return export
 
     def get(self, request, *args, **kwargs):
