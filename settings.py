@@ -1335,6 +1335,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
+        },
+        'notify_exception': {
+            'level': 'ERROR',
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
+        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -1396,7 +1404,7 @@ LOGGING = {
             'propagate': False,
         },
         'smsbillables': {
-            'handlers': ['file', 'console'],
+            'handlers': ['file', 'console', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },

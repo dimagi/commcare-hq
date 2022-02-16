@@ -1,14 +1,24 @@
 import sys
+from collections import defaultdict
+from itertools import islice
 from logging import Filter
 import traceback
 from datetime import timedelta, datetime
 
 from celery._state import get_current_task
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import HtmlFormatter
 
 from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
+from django.core import mail
 from django.http import HttpRequest
-from django.views.debug import get_exception_reporter_filter
+from django.utils.log import AdminEmailHandler
+from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
+from django.template.loader import render_to_string
 from corehq.util.view_utils import get_request
+from corehq.util.metrics.utils import get_url_group, sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
 
 
 def clean_exception(exception):
@@ -42,6 +52,137 @@ def get_sanitized_request_repr(request):
         return repr(filter.get_post_parameters(request))
 
     return request
+
+
+class HqAdminEmailHandler(AdminEmailHandler):
+    """
+    Custom AdminEmailHandler to include additional details which can be supplied as follows:
+
+    logger.error(message,
+        extra={
+            'details': {'domain': 'demo', 'user': 'user1'}
+        }
+    )
+    """
+
+    def get_context(self, record):
+        from corehq.util.metrics import metrics_counter
+        try:
+            request = record.request
+        except Exception:
+            request = None
+
+        request_repr = get_sanitized_request_repr(request)
+
+        tb_list = []
+        code = None
+        if record.exc_info:
+            etype, _value, tb = record.exc_info
+            value = clean_exception(_value)
+            tb_list = ['Traceback (most recent call first):\n']
+            formatted_exception = traceback.format_exception_only(etype, value)
+            tb_list.extend(formatted_exception)
+            extracted_tb = list(reversed(traceback.extract_tb(tb)))
+            code = self.get_code(extracted_tb)
+            tb_list.extend(traceback.format_list(extracted_tb))
+            stack_trace = '\n'.join(tb_list)
+            subject = '%s: %s' % (record.levelname,
+                                  formatted_exception[0].strip() if formatted_exception else record.getMessage())
+        else:
+            stack_trace = 'No stack trace available'
+            subject = '%s: %s' % (
+                record.levelname,
+                record.getMessage()
+            )
+        context = defaultdict(lambda: '')
+        context.update({
+            'subject': self.format_subject(subject),
+            'message': record.getMessage(),
+            'details': getattr(record, 'details', None),
+            'tb_list': tb_list,
+            'request_repr': request_repr,
+            'stack_trace': stack_trace,
+            'code': code,
+        })
+        if request:
+            sanitized_url = sanitize_url(request.build_absolute_uri())
+            metrics_counter('commcare.error.count', tags={
+                'url': sanitized_url,
+                'group': get_url_group(sanitized_url),
+                'domain': getattr(request, 'domain', TAG_UNKNOWN),
+            })
+
+            context.update({
+                'get': list(request.GET.items()),
+                'post': SafeExceptionReporterFilter().get_post_parameters(request),
+                'method': request.method,
+                'username': request.user.username if getattr(request, 'user', None) else "",
+                'url': request.build_absolute_uri(),
+            })
+        return context
+
+    def emit(self, record):
+        context = self.get_context(record)
+
+        message = "\n\n".join([_f for _f in [
+            context['message'],
+            self.format_details(context['details']),
+            context['stack_trace'],
+            context['request_repr'],
+        ] if _f])
+        html_message = render_to_string('hqadmin/email/error_email.html', context)
+        mail.mail_admins(self._clean_subject(context['subject']), message, fail_silently=True,
+                         html_message=html_message)
+
+    def format_details(self, details):
+        if details:
+            formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
+            return 'Details:\n{}'.format(formatted)
+
+    @staticmethod
+    def get_code(extracted_tb):
+        try:
+            trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
+            if not trace:
+                return None
+
+            filename = trace[0]
+            lineno = trace[1]
+            offset = 10
+            with open(filename, encoding='utf-8') as f:
+                code_context = list(islice(f, lineno - offset, lineno + offset))
+
+            return highlight(''.join(code_context),
+                PythonLexer(),
+                HtmlFormatter(
+                    noclasses=True,
+                    linenos='table',
+                    hl_lines=[offset, offset],
+                    linenostart=(lineno - offset + 1),
+                )
+            )
+        except Exception as e:
+            return "Unable to extract code. {}".format(e)
+
+    @classmethod
+    def _clean_subject(cls, subject):
+        # Django raises BadHeaderError if subject contains following bad_strings
+        # to guard against Header Inejction.
+        # see https://docs.djangoproject.com/en/1.8/topics/email/#preventing-header-injection
+        # bad-strings list from http://nyphp.org/phundamentals/8_Preventing-Email-Header-Injection
+        bad_strings = ["\r", "\n", "%0a", "%0d", "Content-Type:", "bcc:", "to:", "cc:"]
+        replacement = "-"
+        for i in bad_strings:
+            subject = subject.replace(i, replacement)
+        return subject
+
+
+class NotifyExceptionEmailer(HqAdminEmailHandler):
+
+    def get_context(self, record):
+        context = super(NotifyExceptionEmailer, self).get_context(record)
+        context['subject'] = record.getMessage()
+        return context
 
 
 class HQRequestFilter(Filter):
