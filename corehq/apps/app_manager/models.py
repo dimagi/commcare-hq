@@ -74,7 +74,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -139,6 +139,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     update_form_unique_ids,
     update_report_module_ids, module_loads_registry_case,
+    wrap_transition_from_old_update_case_action,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -330,22 +331,32 @@ class FormAction(DocumentSchema):
             yield 'name', action.name_path
         if 'case_name' in action_properties:
             yield 'name', action.case_name
+        if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
+            yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, path in action.update.items():
-                yield name, path
+            for name, conditional_case_update in action.update.items():
+                yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
-            for name, path in action.case_properties.items():
-                yield name, path
+            for name, conditional_case_update in action.case_properties.items():
+                yield name, conditional_case_update.question_path
         if 'preload' in action_properties:
             for path, name in action.preload.items():
                 yield name, path
 
 
-class UpdateCaseAction(FormAction):
+class ConditionalCaseUpdate(DocumentSchema):
+    question_path = StringProperty()
+    update_mode = StringProperty(
+        choices=[UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT],
+        default=UPDATE_MODE_ALWAYS
+    )
 
-    update = DictProperty()
+
+class UpdateCaseAction(FormAction):
+    # TODO: migrate from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
+    update = SchemaDictProperty(ConditionalCaseUpdate)
 
 
 class PreloadAction(FormAction):
@@ -375,16 +386,27 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    # This method transitions us during a change to the name_update field, which used to be
+    # called name_path and was just a StringProperty that held the name prop's question path.
+    @classmethod
+    def wrap(cls, data):
+        if 'name_path' in data:
+            path = data['name_path']
+            data['name_update'] = {
+                'question_path': path
+            }
+        return super(OpenCaseAction, cls).wrap(data)
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
-    case_name = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
-    case_properties = DictProperty()
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
@@ -395,6 +417,19 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     @property
     def form_element_name(self):
         return 'subcase_{}'.format(self.id)
+
+    # This method transitions us during a change to the name_update field, which used to be
+    # called case_name.
+    @classmethod
+    def wrap(cls, data):
+        if 'case_name' in data:
+            path = data['case_name']
+            data['name_update'] = {
+                'question_path': path
+            }
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
+        return super(OpenSubCaseAction, cls).wrap(data)
 
 
 class FormActions(DocumentSchema):
@@ -430,6 +465,18 @@ class FormActions(DocumentSchema):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
 
+    @classmethod
+    def wrap(cls, data):
+        if 'update_case' in data and 'update' in data['update_case']:
+            data['update_case']['update'] = wrap_transition_from_old_update_case_action(
+                data['update_case']['update']
+            )
+        if 'usercase_update' in data and 'update' in data['usercase_update']:
+            data['usercase_update']['update'] = wrap_transition_from_old_update_case_action(
+                data['usercase_update']['update']
+            )
+        return super(FormActions, cls).wrap(data)
+
 
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
@@ -443,7 +490,9 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    case_properties = DictProperty()
+
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
+
     # case_indices = NotImplemented
 
     close_condition = SchemaProperty(FormActionCondition)
@@ -451,8 +500,8 @@ class AdvancedAction(IndexedSchema):
     __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
-        for path in self.case_properties.values():
-            yield path
+        for smart_case_update in self.case_properties.values():
+            yield smart_case_update.question_path
 
         if self.close_condition.type == 'if':
             yield self.close_condition.question
@@ -467,6 +516,12 @@ class AdvancedAction(IndexedSchema):
     @property
     def form_element_name(self):
         return "case_{}".format(self.case_tag)
+
+    @classmethod
+    def wrap(cls, data):
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
+        return super(AdvancedAction, cls).wrap(data)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -581,7 +636,7 @@ class LoadUpdateAction(AdvancedAction):
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     case_indices = SchemaListProperty(CaseIndex)
 
@@ -591,7 +646,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
         for path in super(AdvancedOpenCaseAction, self).get_paths():
             yield path
 
-        yield self.name_path
+        yield self.name_update.question_path
 
         if self.open_condition.type == 'if':
             yield self.open_condition.question
@@ -616,6 +671,13 @@ class AdvancedOpenCaseAction(AdvancedAction):
             del data['parent_tag']
             data.pop('parent_reference_id', None)
             data.pop('relationship', None)
+        # This statement transitions us during a change to the name_update field, which used
+        # to be called name_path.
+        if 'name_path' in data:
+            path = data['name_path']
+            data['name_update'] = {
+                'question_path': path
+            }
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
@@ -1108,7 +1170,7 @@ class FormBase(DocumentSchema):
         raise NotImplementedError()
 
     def wrapped_xform(self):
-        return XForm(self.source)
+        return XForm(self.source, domain=self.get_app().domain)
 
     def validate_form(self):
         vc = self.get_validation_cache()
@@ -1178,7 +1240,7 @@ class FormBase(DocumentSchema):
 
     @memoized
     def render_xform(self, build_profile_id=None):
-        xform = XForm(self.source)
+        xform = XForm(self.source, domain=self.get_app().domain)
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
@@ -1197,7 +1259,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):
         try:
-            return XForm(self.source).get_questions(
+            return XForm(self.source, domain=self.get_app().domain).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
@@ -1237,7 +1299,7 @@ class FormBase(DocumentSchema):
             pass
 
     def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
+        source = XForm(self.source, domain=self.get_app().domain)
         if source.exists():
             source.rename_language(old_code, new_code)
             self.source = source.render().decode('utf-8')
@@ -3121,7 +3183,7 @@ class AdvancedModule(ModuleBase):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_path=open.name_path,
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                     )
@@ -3157,7 +3219,7 @@ class AdvancedModule(ModuleBase):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
-                        name_path=subcase.case_name,
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
@@ -5673,7 +5735,7 @@ class RemoteApp(ApplicationBase):
                 location, data = self.fetch_file(location)
                 if tag == 'xform' and langs_for_build:
                     try:
-                        xform = XForm(data)
+                        xform = XForm(data, domain=self.domain)
                     except XFormException as e:
                         raise XFormException('In file %s: %s' % (location, e))
                     xform.exclude_languages(whitelist=langs_for_build)
@@ -5696,7 +5758,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location).decode('utf-8'))
+                    xform = XForm(fetch(location).decode('utf-8'), domain=self.domain)
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions
