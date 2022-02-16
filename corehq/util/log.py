@@ -177,14 +177,6 @@ class HqAdminEmailHandler(AdminEmailHandler):
         return subject
 
 
-class NotifyExceptionEmailer(HqAdminEmailHandler):
-
-    def get_context(self, record):
-        context = super(NotifyExceptionEmailer, self).get_context(record)
-        context['subject'] = record.getMessage()
-        return context
-
-
 class HQRequestFilter(Filter):
     """
     Filter that adds custom context to log records for HQ domain, username, and path.
