@@ -817,6 +817,7 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
 
+    @flaky_slow
     def test_async_invalid_data(self):
         # re-fetch from DB to bust object caches
         self.config = DataSourceConfiguration.get(self.config.data_source_id)
