@@ -534,7 +534,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         web_user.save()
         return web_user
 
-
     @classmethod
     def setUpClass(cls):
         super(DomainChoiceProviderTest, cls).setUpClass()
@@ -604,8 +603,9 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         self.assertEqual([Choice(value='A', display='A')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
                                                                        user=self.web_user_no_registry_access)))
-        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0,
-                                                                           user=self.web_user_no_registry_access)))
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='D', offset=0,
+                                                                       user=self.web_user_no_registry_access)))
 
     def test_query_count(self):
         self.assertEqual(1, self.choice_provider.query_count("A", user=self.web_user))
