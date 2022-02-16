@@ -354,7 +354,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     page_title = ugettext_lazy("Create OData Case Feed")
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
-        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(
+        export_instance = super().create_new_export_instance(
             schema,
             username,
             domain,
@@ -370,7 +370,7 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     page_title = ugettext_lazy("Create OData Form Feed")
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
-        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(
+        export_instance = super().create_new_export_instance(
             schema,
             username,
             domain,
