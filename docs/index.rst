@@ -81,6 +81,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     api
+    linked_projects
     fhir/index
     openmrs
     value_source
