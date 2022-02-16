@@ -405,9 +405,7 @@ class DomainChoiceProvider(ChainableChoiceProvider):
     @memoized
     def _query_domains(self, domain, query_text, user):
         domains = {domain}
-        if user is None:
-            return list(domains)
-        if not RegistryPermissionCheck(domain, user).can_view_registry_data(
+        if user is None or not RegistryPermissionCheck(domain, user).can_view_registry_data(
                 self.report.registry_helper.registry_slug):
             return list(domains)
         try:
