@@ -181,5 +181,6 @@ def _get_csv_value(value):
         return value
     try:
         return int(value)
-    except ValueError:
-        return bytes(value)
+    except (ValueError, TypeError):
+        pass
+    return str(value)

@@ -3,7 +3,7 @@ import datetime
 
 from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.accounting.models import DomainUserHistory
 from corehq.apps.analytics.models import (
@@ -25,6 +25,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     NUMBER_OF_WEB_USERS,
     NUMBER_OF_SUBMISSIONS,
     ACCESS_ODATA,
+    _get_csv_value,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
@@ -385,3 +386,18 @@ class TestPartnerAnalyticsReportUtils(TestCase):
                 month=self.month,
             )
         )
+
+
+class TestGetCsvValue(SimpleTestCase):
+
+    def test_returns_string_if_value_is_string(self):
+        value = _get_csv_value("foo")
+        self.assertIsInstance(value, str)
+
+    def test_returns_integer_if_value_is_integer(self):
+        value = _get_csv_value(10)
+        self.assertIsInstance(value, int)
+
+    def test_returns_string_if_value_is_other(self):
+        value = _get_csv_value(PartnerAnalyticsContact)
+        self.assertIsInstance(value, str)
