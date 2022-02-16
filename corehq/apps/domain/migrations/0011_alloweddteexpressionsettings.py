@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('domain', '0009_restrict_mob_access_from_FF'),
+        ('domain', '0010_projectlimit'),
     ]
 
     operations = [
