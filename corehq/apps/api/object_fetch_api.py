@@ -1,4 +1,5 @@
 import urllib.parse
+from io import BytesIO
 from wsgiref.util import FileWrapper
 
 from django.http import (
@@ -12,6 +13,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 
 from dimagi.utils.django.cached_object import (
+    CachedObject,
+    CachedImage,
     IMAGE_SIZE_ORDERING,
     OBJECT_ORIGINAL,
 )
@@ -24,11 +27,7 @@ from corehq.apps.reports.views import (
     require_form_view_permission,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    get_cached_case_attachment,
-)
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CaseAttachment, CommCareCase
 
 
 class CaseAttachmentAPI(View):
@@ -55,7 +54,7 @@ class CaseAttachmentAPI(View):
         max_filesize = int(self.request.GET.get('max_size', 0))
 
         try:
-            CaseAccessors(domain).get_case(case_id)
+            CommCareCase.objects.get_case(case_id, domain)
         except CaseNotFound:
             raise Http404
 
@@ -117,7 +116,7 @@ class CaseAttachmentAPI(View):
                     fixed_size=size
                 )
         else:
-            cached_attachment = get_cached_case_attachment(domain, case_id, attachment_id)
+            cached_attachment = get_cached_case_attachment(case_id, attachment_id)
             attachment_meta, attachment_stream = cached_attachment.get()
 
         if attachment_meta is not None:
@@ -129,9 +128,9 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@api_auth
 @require_form_view_permission
 @location_safe
-@api_auth
 def view_form_attachment(request, domain, instance_id, attachment_id):
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
@@ -159,7 +158,7 @@ def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0,
         constraint_dict['width'] = width_limit
     do_constrain = bool(constraint_dict)
 
-    cached_image = get_cached_case_attachment(domain, case_id, attachment_id, is_image=True)
+    cached_image = get_cached_case_attachment(case_id, attachment_id, is_image=True)
     meta, stream = cached_image.get(size_key=size_key)
 
     if do_constrain:
@@ -186,3 +185,14 @@ def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0,
                 stream = None
 
     return meta, stream
+
+
+def get_cached_case_attachment(case_id, attachment_id, is_image=False):
+    cache_key = f"{case_id}_{attachment_id}"
+    cobject = (CachedImage if is_image else CachedObject)(cache_key)
+    if not cobject.is_cached():
+        content = CaseAttachment.get_content(case_id, attachment_id)
+        stream = BytesIO(content.content_body)
+        metadata = {'content_type': content.content_type}
+        cobject.cache_put(stream, metadata)
+    return cobject

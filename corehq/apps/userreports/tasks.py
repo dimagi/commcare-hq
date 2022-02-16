@@ -43,9 +43,7 @@ from corehq.apps.userreports.const import (
     UCR_CELERY_QUEUE,
     UCR_INDICATOR_CELERY_QUEUE,
 )
-from corehq.apps.userreports.exceptions import (
-    StaticDataSourceConfigurationNotFoundError,
-)
+from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     get_report_config,
@@ -470,7 +468,7 @@ def build_async_indicators(indicator_doc_ids):
                         config_ids.add(config_id)
                         try:
                             config = _get_config(config_id)
-                        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                        except (ResourceNotFound, DataSourceConfigurationNotFoundError):
                             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
                             # remove because the config no longer exists
                             _mark_config_to_remove(config_id, [indicator.pk])

@@ -11,10 +11,7 @@ from lxml import etree
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    LedgerAccessorSQL,
-)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
@@ -66,7 +63,7 @@ class FormProcessorSQL(object):
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
         XFormInstance.objects.hard_delete_forms(domain, form_ids)
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
         for form in xforms:
             form.state |= XFormInstance.DELETED
             publish_form_saved(form)
@@ -123,7 +120,7 @@ class FormProcessorSQL(object):
                 XFormInstance.objects.save_new_form(processed_forms.submitted)
                 if cases:
                     for case in cases:
-                        CaseAccessorSQL.save_case(case)
+                        case.save(with_tracked_models=True)
 
                 if stock_result:
                     ledgers_to_save = stock_result.models_to_save
@@ -135,7 +132,7 @@ class FormProcessorSQL(object):
                 if sort_submissions:
                     for case in cases:
                         if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
-                            CaseAccessorSQL.save_case(case)
+                            case.save(with_tracked_models=True)
         except DatabaseError:
             for model in all_models:
                 setattr(model, model._meta.pk.attname, None)
@@ -296,7 +293,7 @@ class FormProcessorSQL(object):
 
             case.server_modified_on = rebuild_transaction.server_date
             if save:
-                CaseAccessorSQL.save_case(case)
+                case.save(with_tracked_models=True)
                 publish_case_saved(case)
             return case
         finally:
@@ -304,10 +301,8 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
-        transactions = CaseAccessorSQL.get_case_transactions_by_case_id(
-            case,
-            updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
+        transactions = strategy.get_transactions_for_rebuild(updated_xforms)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
         if updated_xforms:
@@ -323,12 +318,12 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def get_case_forms(case_id):
-        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        xform_ids = CommCareCase.objects.get_case_xform_ids(case_id)
         return XFormInstance.objects.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod
     def form_has_case_transactions(form_id):
-        return CaseAccessorSQL.form_has_case_transactions(form_id)
+        return CaseTransaction.objects.exists_for_form(form_id)
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, wrap=False):
@@ -337,14 +332,10 @@ class FormProcessorSQL(object):
                 try:
                     return CommCareCase.get_locked_obj(_id=case_id)
                 except redis.RedisError:
-                    case = CaseAccessorSQL.get_case(case_id)
+                    case = CommCareCase.objects.get_case(case_id)
             else:
-                case = CaseAccessorSQL.get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id)
         except CaseNotFound:
             return None, None
 
         return case, None
-
-    @staticmethod
-    def case_exists(case_id):
-        return CaseAccessorSQL.case_exists(case_id)

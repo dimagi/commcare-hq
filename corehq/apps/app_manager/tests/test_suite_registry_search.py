@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DetailColumn,
     DetailTab,
     FormLink,
@@ -18,6 +19,7 @@ from corehq.apps.app_manager.models import (
     Module,
     OpenCaseAction,
     ParentSelect,
+    ShadowModule,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -60,8 +62,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='colors', instance_uri='jr://fixture/item-list:colors',
-                    nodeset="instance('colors')/colors_list/colors", label='name', sort='name', value='value'),
+                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    nodeset="instance('item-list:colors')/colors_list/colors",
+                    label='name', sort='name', value='value'),
                 )
             ],
             data_registry="myregistry",
@@ -72,7 +75,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.reg_module = self.app.add_module(Module.new_module("Registration", None))
         self.reg_form = self.app.new_form(1, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.reg_module.case_type = 'case'
-        self.reg_form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        self.reg_form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1")
+        )
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
@@ -109,7 +114,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     <locale id="search_property.m0.favorite_color"/>
                   </text>
                 </display>
-                <itemset nodeset="instance('colors')/colors_list/colors">
+                <itemset nodeset="instance('item-list:colors')/colors_list/colors">
                   <label ref="name"/>
                   <value ref="value"/>
                   <sort ref="name"/>
@@ -274,6 +279,92 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """,
             suite,
             "./entry[2]/stack/create"
+        )
+
+
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
+@patch_get_xform_resource_overrides()
+@patch.object(Application, 'supports_data_registry', lambda: True)
+class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite_registry')
+
+    def setUp(self):
+        super().setUp()
+        self.app = Application.new_app(DOMAIN, "Application with Shadow")
+        self.app._id = '456'
+        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
+        self.module = self.app.add_module(Module.new_module("Followup", None))
+        self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
+        self.form.requires = 'case'
+        self.module.case_type = 'case'
+
+        self.module.case_details.long.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                field="whatever",
+            ))
+        )
+
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+                CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
+                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    nodeset="instance('item-list:colors')/colors_list/colors",
+                    label='name', sort='name', value='value'),
+                )
+            ],
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+            additional_registry_cases=["'another case ID'"],
+        )
+
+        self.shadow_module = self.app.add_module(ShadowModule.new_module("Shadow", "en"))
+        self.shadow_module.source_module_id = self.module.unique_id
+
+        self.shadow_module.case_details.long.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                field="whatever",
+            ))
+        )
+
+        self.shadow_module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+                CaseSearchProperty(name='favorite_color', label={'en': 'Texture'}, itemset=Itemset(
+                    instance_id='item-list:textures', instance_uri='jr://fixture/item-list:textures',
+                    nodeset="instance('item-list:textures')/textures_list/textures",
+                    label='name', sort='name', value='value'),
+                )
+            ],
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+        )
+
+        # wrap to have assign_references called
+        self.app = Application.wrap(self.app.to_json())
+
+        # reset to newly wrapped module
+        self.module = self.app.modules[0]
+        self.shadow_module = self.app.modules[1]
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_suite(self, *args):
+        suite = self.app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('shadow_module_entry'),
+            suite,
+            "./entry[2]"
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('shadow_module_remote_request'),
+            suite,
+            "./remote-request[2]"
         )
 
 

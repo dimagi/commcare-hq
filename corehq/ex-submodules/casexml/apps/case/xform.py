@@ -8,7 +8,7 @@ from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from corehq import toggles
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.util.soft_assert import soft_assert
 from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 
@@ -154,7 +154,7 @@ def get_all_extensions_to_close(domain, cases):
 
 def get_extensions_to_close(domain, cases):
     case_ids = [case.case_id for case in cases if case.closed]
-    return CaseAccessors(domain).get_extension_chain(case_ids, include_closed=False)
+    return CommCareCaseIndex.objects.get_extension_chain(domain, case_ids, include_closed=False)
 
 
 def is_device_report(doc):

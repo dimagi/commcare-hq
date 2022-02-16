@@ -55,11 +55,8 @@ from corehq.apps.products.models import Product
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
-from corehq.form_processor.models import LedgerTransaction, XFormInstance
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.models import CommCareCase, LedgerTransaction, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from testapps.test_pillowtop.utils import process_pillow_changes
@@ -529,7 +526,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
 
     def test_xform_id_added_to_case_xform_list_only_once(self):
@@ -546,7 +543,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
         # make sure the ID only got added once
         self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
@@ -558,14 +555,13 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case_accessors = CaseAccessors(self.domain.name)
-        case = case_accessors.get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
 
         form = XFormInstance.objects.get_form(instance_id, self.domain.name)
         form.archive()
 
-        case = case_accessors.get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertNotIn(instance_id, case.xform_ids)
 
 

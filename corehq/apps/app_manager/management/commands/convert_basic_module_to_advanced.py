@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     CaseIndex,
+    ConditionalCaseUpdate,
     Form,
     LoadUpdateAction,
 )
@@ -79,7 +80,7 @@ class Command(BaseCommand):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_path=open.name_path,
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                 )
@@ -114,7 +115,7 @@ class Command(BaseCommand):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i + 1),
-                        name_path=subcase.case_name,
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,

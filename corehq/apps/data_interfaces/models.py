@@ -37,9 +37,8 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.models.abstract import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
@@ -236,7 +235,7 @@ class AutomaticUpdateRule(models.Model):
     @classmethod
     def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
         case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CaseAccessors(domain).iter_cases(case_ids)
+        return CommCareCase.objects.iter_cases(case_ids, domain)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -877,7 +876,6 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
-
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
@@ -1036,7 +1034,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
-        duplicate_cases = CaseAccessors(domain).get_cases(list(duplicate_case_ids))
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
         case_updates = self._get_case_updates(duplicate_cases)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(

@@ -10,10 +10,7 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 
 from corehq.form_processor.models import CommCareCaseIndex
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 IDENTIFIER_INDEX_NAME = 'form_processor_commcarecaseindexsql_identifier'
@@ -93,10 +90,10 @@ def _add_temp_index(db):
 
 def _index_exists(db, index_name):
     with CommCareCaseIndex.get_cursor_for_partition_db(db).cursor() as cursor:
-        sql = "SELECT to_regclass('{}') IS NOT NULL as index_exists".format(index_name)
-        log_sql(sql)
-        cursor.execute(sql)
-        return fetchone_as_namedtuple(cursor).index_exists
+        sql = "SELECT to_regclass(%s) IS NOT NULL as index_exists"
+        log_sql(sql % repr(index_name))
+        cursor.execute(sql, [index_name])
+        return cursor.fetchone()[0]
 
 
 def _drop_index(db, index_name):
@@ -148,16 +145,15 @@ def _delete_duplicate_indices(case_ids, db):
         SELECT id FROM (
           SELECT id, case_id, row_number() OVER (PARTITION BY case_id, identifier, referenced_id, relationship_id)
           FROM {case_index_table}
-          JOIN (SELECT UNNEST(ARRAY['{{case_ids}}']) AS case_id) AS cx USING (case_id)) as indices
+          JOIN (SELECT UNNEST(%s) AS case_id) AS cx USING (case_id)) as indices
         WHERE row_number > 1
         )
     """.format(case_index_table=CommCareCaseIndex._meta.db_table)
 
-    for chunk in chunked(case_ids, 100):
+    for chunk in chunked(case_ids, 100, list):
         with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
-            delete_sql = delete_dupes_sql.format(case_ids="','".join(chunk))
-            log_sql(delete_sql)
-            cursor.execute(delete_sql)
+            log_sql(delete_dupes_sql % repr(chunk))
+            cursor.execute(delete_dupes_sql, [chunk])
 
 
 def _get_case_ids_with_dupe_indices(db):

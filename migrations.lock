@@ -234,6 +234,7 @@ data_analytics
  0007_auto_20160819_1423
  0008_auto_20161114_1903
  0009_remove_girrow_wam
+ 0010_maltrow_last_run_date
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -300,6 +301,7 @@ domain
  0007_auto_20200924_1753
  0008_use_livequery
  0009_restrict_mob_access_from_FF
+ 0010_projectlimit
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -310,6 +312,7 @@ enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
+ 0004_enterprisemobileworkersettings
 export
  0001_initial
  0002_datafile
@@ -676,6 +679,7 @@ scheduling_partitioned
  0005_timed_schedule_instance_schedule_revision
  0006_unique_indexes
  0007_index_cleanup
+ 0008_track_attempts
 sessions
  0001_initial
 sites
@@ -987,6 +991,7 @@ users
  0039_merge_20211007_0556
  0040_add_repr_and_changed_by_repr
  0041_migrate_reprs
+ 0042_deactivatemobileworkertrigger
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
