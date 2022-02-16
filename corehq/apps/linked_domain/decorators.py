@@ -11,10 +11,10 @@ REMOTE_REQUESTER_HEADER = 'HTTP_HQ_REMOTE_REQUESTER'
 def require_access_to_linked_domains(view_func):
     @wraps(view_func)
     def _inner(request, domain, *args, **kwargs):
-        if hasattr(request, 'couch_user'):
-            couch_user = request.couch_user
-        else:
+        if not hasattr(request, 'couch_user'):
             raise Http404()
+
+        couch_user = request.couch_user
 
         def call_view():
             return view_func(request, domain, *args, **kwargs)
