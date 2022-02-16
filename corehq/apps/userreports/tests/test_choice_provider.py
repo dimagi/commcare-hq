@@ -517,6 +517,25 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = "domain-choicer-provider"
 
     @classmethod
+    def make_web_user_with_registry_role(cls, email, domain, has_registry_access=False):
+        web_user = WebUser.create(
+            domain=domain.name,
+            username=email,
+            password="*****",
+            created_by=None,
+            created_via=None,
+        )
+        role = UserRole.create(
+            domain=domain,
+            name='Registry Access',
+            permissions=Permissions(view_data_registry_contents=has_registry_access),
+        )
+        web_user.set_role(domain.name, role.get_qualified_id())
+        web_user.save()
+        return web_user
+
+
+    @classmethod
     def setUpClass(cls):
         super(DomainChoiceProviderTest, cls).setUpClass()
         cls.domain_a = create_domain(name="A")
@@ -526,9 +545,10 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
             domain.save()
         cls.user = create_user("admin", "123")
-        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
-        cls.web_user_no_registry_access = UserChoiceProviderTest.make_web_user('other-web-user@example.com',
-                                                                               domain="A")
+        cls.web_user = cls.make_web_user_with_registry_role('web-user@ex.com', cls.domain_a,
+                                                            has_registry_access=True)
+        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role('other-web-user@ex.com',
+                                                                               cls.domain_a)
 
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         # A, B, and C are in the registry A has access to B and C, B has access to C
@@ -556,20 +576,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = DomainChoiceProvider(cls.report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
-        view_registry_role = UserRole.create(
-            domain=cls.domain_a,
-            name='Can View Registry Data',
-            permissions=Permissions(view_data_registry_contents=True),
-        )
-        cls.web_user.set_role(cls.domain_a.name, view_registry_role.get_qualified_id())
-        cls.web_user.save()
-        restrit_registry_access_role = UserRole.create(
-            domain=cls.domain_a,
-            name='Cannot View Registry Data',
-            permissions=Permissions(view_data_registry_contents=False),
-        )
-        cls.web_user_no_registry_access.set_role(cls.domain_a.name, restrit_registry_access_role.get_qualified_id())
-        cls.web_user_no_registry_access.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -615,6 +621,8 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         )
 
     def test_domain_with_some_grants(self):
+        user = self.make_web_user_with_registry_role('another-web-user@ex.com', self.domain_b,
+                                                     has_registry_access=True)
         config = RegistryDataSourceConfiguration(
             domain="B", table_id='foo',
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
@@ -623,10 +631,13 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         report = RegistryReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C', )],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0, user=self.web_user)))
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
+                                                                       user=user)))
         config.delete()
 
     def test_domain_with_no_grants(self):
+        user = self.make_web_user_with_registry_role('yet-another-web-user@ex.com', self.domain_c,
+                                                     has_registry_access=True)
         config = RegistryDataSourceConfiguration(
             domain="C", table_id='foo',
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
@@ -635,5 +646,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         report = RegistryReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='C', display='C')],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0, user=self.web_user)))
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
+                                                                       user=user)))
         config.delete()
