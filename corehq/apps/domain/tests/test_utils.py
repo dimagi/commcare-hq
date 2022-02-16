@@ -73,3 +73,13 @@ def test_domain(name="domain", skip_full_delete=False):
             Domain.get_db().delete_doc(domain.get_id)
         else:
             domain.delete()
+
+
+class TestDTEExpressionUtils(TestCase):
+    def test_default_value_when_domain_not_exists(self):
+        self.assertEqual(set(get_dte_expressions('blah_domain')), {'base_item', 'related_document'})
+
+    def test_when_domain_exists(self):
+        exprn = ['base_item']
+        AllowedDTEExpressionSettings.objects.create(domain='test_domain', active_dte_expressions=exprn)
+        self.assertEqual(get_dte_expressions('test_domain'), exprn)
