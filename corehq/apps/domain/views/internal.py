@@ -128,7 +128,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'partner_comments',
             'partner_contact',
             'dimagi_contact',
-            'active_dte_expressions',
         ]
         if can_edit_eula:
             internal_attrs += [

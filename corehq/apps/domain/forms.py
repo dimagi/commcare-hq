@@ -1178,7 +1178,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             partner_comments=self.cleaned_data['partner_comments'],
             partner_contact=self.cleaned_data['partner_contact'],
             dimagi_contact=self.cleaned_data['dimagi_contact'],
-            active_dte_expressions=self.cleaned_data['active_dte_expressions'],
             **kwargs
         )
 
