@@ -199,7 +199,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
         server_modified_on=utcnow,
     )
 
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
 
     ledger = LedgerValue(
         domain=domain,

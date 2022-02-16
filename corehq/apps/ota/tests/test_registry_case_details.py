@@ -14,8 +14,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import generate_cases, flag_enabled
 
 
@@ -73,8 +72,8 @@ class RegistryCaseDetailsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(deleted_by_domain=None, deleted_by=None)
-        xform_ids = CaseAccessorSQL.get_case_xform_ids(cls.parent_case_id)
-        CaseAccessorSQL.hard_delete_cases(cls.domain, [case.case_id for case in cls.cases])
+        xform_ids = CommCareCase.objects.get_case_xform_ids(cls.parent_case_id)
+        CommCareCase.objects.hard_delete_cases(cls.domain, [case.case_id for case in cls.cases])
         XFormInstance.objects.hard_delete_forms(cls.domain, xform_ids)
         cls.app.delete()
         Domain.get_db().delete_doc(cls.domain_object)  # no need to run the full domain delete

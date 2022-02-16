@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import F
 from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
+from django.forms import CharField, IntegerField
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -1074,3 +1075,17 @@ class AllowedDTEExpressionSettings(models.Model):
         models.CharField(max_length=32, choices=RESTRICTED_DTE_EXPRESSIONS),
         default=get_default_dte_expressions
     )
+
+
+class ProjectLimitType():
+    LIVE_GOOGLE_SHEETS = 'lgs'
+
+    CHOICES = (
+        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
+    )
+
+
+class ProjectLimit(models.Model):
+    domain = models.CharField(max_length=256, db_index=True)
+    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
+    limit_value = models.IntegerField(default=20)

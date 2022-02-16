@@ -1,5 +1,4 @@
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.tasks import get_sync_key
@@ -34,7 +33,7 @@ class Command(BaseCommand):
         rule = self.get_rule(options['domain'], options['rule_id'])
 
         print("Fetching case ids...")
-        case_ids = CaseAccessors(rule.domain).get_case_ids_in_domain(rule.case_type)
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(rule.domain, rule.case_type)
         case_id_chunks = list(chunked(case_ids, 10))
 
         for case_id_chunk in with_progress_bar(case_id_chunks):

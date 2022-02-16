@@ -10,7 +10,6 @@ from couchforms.const import TAG_FORM, TAG_META
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (  # noqa: F401
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -552,7 +551,8 @@ class SubcaseValueSource(ValueSource):
             value_source.set_external_value(external_data, subcase_info)
 
     def _iter_subcase_info(self, info: CaseTriggerInfo):
-        subcases = CaseAccessors(info.domain).get_reverse_indexed_cases(
+        subcases = CommCareCase.objects.get_reverse_indexed_cases(
+            info.domain,
             [info.case_id],
             self.case_types,
             self.is_closed,

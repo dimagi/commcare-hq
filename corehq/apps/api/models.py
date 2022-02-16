@@ -12,10 +12,8 @@ from django.http import HttpResponse
 from couchforms import const
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, XFormInstance
 from corehq.form_processor.models.cases import CaseToXMLMixin, get_index_map
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -223,7 +221,7 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     @property
     def _reverse_indices(self):
-        return CaseAccessors(self.domain).get_all_reverse_indices_info([self._id])
+        return CommCareCaseIndex.objects.get_all_reverse_indices_info(self.domain, [self._id])
 
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form

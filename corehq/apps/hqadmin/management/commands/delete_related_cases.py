@@ -6,7 +6,6 @@ import csv
 
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
@@ -19,7 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('--filename', dest='filename', default='case-delete-info.csv')
 
     def handle(self, domain, case_id, **options):
-        case_accessor = CaseAccessors(domain=domain)
         case = CommCareCase.objects.get_case(case_id, domain)
         if not case.is_deleted and input('\n'.join([
             'Case {} is not already deleted. Are you sure you want to delete it? (y/N)'.format(case_id)
@@ -64,7 +62,7 @@ class Command(BaseCommand):
         if cases_to_delete and input('\n'.join([
             'Delete these {} cases? (y/N)'.format(len(cases_to_delete)),
         ])).lower() == 'y':
-            case_accessor.soft_delete_cases([c.case_id for c in cases_to_delete])
+            CommCareCase.objects.soft_delete_cases(domain, [c.case_id for c in cases_to_delete])
             print('deleted {} cases'.format(len(cases_to_delete)))
 
         if cases_to_delete:
@@ -80,11 +78,11 @@ def get_entire_case_network(domain, case_ids):
     This includes all cases that index into the passed in cases (extensions or children)
     as well as all cases that index into those, recursively.
     """
-    case_accessor = CaseAccessors(domain=domain)
     all_ids = set(case_ids)
     remaining_ids = set(case_ids)
     while remaining_ids:
-        this_round_ids = set(c.case_id for c in case_accessor.get_reverse_indexed_cases(list(remaining_ids)))
+        cases = CommCareCase.objects.get_reverse_indexed_cases(domain, list(remaining_ids))
+        this_round_ids = {c.case_id for c in cases}
         remaining_ids = this_round_ids - all_ids
         all_ids = all_ids | this_round_ids
     return all_ids

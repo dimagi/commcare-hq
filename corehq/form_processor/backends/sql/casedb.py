@@ -1,5 +1,4 @@
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.models import CommCareCase
@@ -28,7 +27,7 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         cases = self.get_changed()
 
         saved_case_ids = [case.case_id for case in cases if case.is_saved()]
-        cases_modified_on = CaseAccessorSQL.get_last_modified_dates(self.domain, saved_case_ids)
+        cases_modified_on = CommCareCase.objects.get_last_modified_dates(self.domain, saved_case_ids)
         for case in cases:
             if case.is_saved():
                 modified_on = cases_modified_on.get(case.case_id, None)
@@ -40,8 +39,8 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return cases
 
     def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
-        return CaseAccessorSQL.get_reverse_indexed_cases(self.domain, case_ids,
-                                                         case_types=case_types, is_closed=is_closed)
+        return CommCareCase.objects.get_reverse_indexed_cases(
+            self.domain, case_ids, case_types=case_types, is_closed=is_closed)
 
     def filter_closed_extensions(self, extensions_to_close):
         # noop for SQL since the filtering already happened when we fetched the IDs

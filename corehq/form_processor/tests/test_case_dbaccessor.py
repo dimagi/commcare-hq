@@ -2,6 +2,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.db import router
 from django.test import TestCase
 
@@ -467,24 +468,6 @@ class CaseAccessorTestsSQL(TestCase):
         )
         self.assertEqual(set(case_ids), set([case1.case_id, case3.case_id]))
 
-    def test_get_open_case_ids(self):
-        case1 = _create_case(user_id="user1")
-        case2 = _create_case(user_id="user1")
-        case3 = _create_case(user_id="user2")
-        case2.closed = True
-        CaseAccessorSQL.save_case(case2)
-
-        self.assertEqual(CaseAccessorSQL.get_open_case_ids_for_owner(DOMAIN, "user1"), [case1.case_id])
-
-    def test_get_closed_case_ids(self):
-        case1 = _create_case(user_id="user1")
-        case2 = _create_case(user_id="user1")
-        case3 = _create_case(user_id="user2")
-        case2.closed = True
-        CaseAccessorSQL.save_case(case2)
-
-        self.assertEqual(CaseAccessorSQL.get_closed_case_ids_for_owner(DOMAIN, "user1"), [case2.case_id])
-
     def test_get_open_case_ids_in_domain_by_type(self):
         case1 = _create_case(user_id="user1", case_type='t1')
         case2 = _create_case(user_id="user1", case_type='t1')
@@ -512,44 +495,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(
             CaseAccessorSQL.get_extension_case_ids(DOMAIN, [referenced_id]),
             [case.case_id]
-        )
-
-    def test_get_indexed_case_ids(self):
-        # Create case and indexes
-        case = _create_case()
-        extension_index = CommCareCaseIndex(
-            case=case,
-            identifier="task",
-            referenced_type="task",
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.EXTENSION
-        )
-        case.track_create(extension_index)
-        child_index = CommCareCaseIndex(
-            case=case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=uuid.uuid4().hex,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        case.track_create(child_index)
-        CaseAccessorSQL.save_case(case)
-
-        # Create irrelevant case
-        other_case = _create_case()
-        other_child_index = CommCareCaseIndex(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=case.case_id,
-            relationship_id=CommCareCaseIndex.CHILD
-        )
-        other_case.track_create(other_child_index)
-        CaseAccessorSQL.save_case(other_case)
-
-        self.assertEqual(
-            set(CaseAccessorSQL.get_indexed_case_ids(DOMAIN, [case.case_id])),
-            set([extension_index.referenced_id, child_index.referenced_id])
         )
 
     def test_get_last_modified_dates(self):
@@ -695,18 +640,6 @@ class CaseAccessorTestsSQL(TestCase):
 
         case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
         self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
-
-    def test_get_case_owner_ids(self):
-        _create_case(user_id='user1', case_id='123')  # get's sharded to p1
-        _create_case(user_id='user2', case_id='125')  # get's sharded to p2
-        _create_case(user_id='user1')
-        _create_case(domain='other_domain', user_id='user3')
-
-        owners = CaseAccessorSQL.get_case_owner_ids('other_domain')
-        self.assertEqual({'user3'}, owners)
-
-        owners = CaseAccessorSQL.get_case_owner_ids(DOMAIN)
-        self.assertEqual({'user1', 'user2'}, owners)
 
 
 @sharded

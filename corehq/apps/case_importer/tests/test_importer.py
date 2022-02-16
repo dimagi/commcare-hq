@@ -29,8 +29,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
@@ -64,8 +63,6 @@ class ImporterTest(TestCase):
         create_enterprise_permissions(self.couch_user.username, self.domain,
                                       [self.subdomain1.name, self.subdomain2.name],
                                       [self.ignored_domain.name])
-
-        self.accessor = CaseAccessors(self.domain)
 
         self.factory = CaseFactory(domain=self.domain, case_defaults={
             'case_type': self.default_case_type,
@@ -103,7 +100,7 @@ class ImporterTest(TestCase):
         update_state.assert_called_with(
             state=states.FAILURE,
             meta=get_interned_exception('Sorry, your session has expired. Please start over and try again.'))
-        self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
@@ -120,7 +117,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(5, len(cases))
         properties_seen = set()
@@ -145,7 +142,7 @@ class ImporterTest(TestCase):
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertFalse(res['errors'])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertItemsEqual(
             [case.external_id for case in CommCareCase.objects.get_cases(case_ids, self.domain)],
             ['external_id-0', 'external_id-0', 'external_id-1']
@@ -163,7 +160,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
 
         self.assertEqual(4, res['created_count'])
-        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(4, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', 'sex\xa0', 'location']
@@ -175,7 +172,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
 
         self.assertEqual(1, res['created_count'])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         case = CommCareCase.objects.get_case(case_ids[0], self.domain)
         self.assertTrue(bool(case.get_case_property('sex')))  # make sure the value also got properly set
@@ -186,7 +183,7 @@ class ImporterTest(TestCase):
             'create': True,
             'update': {'importer_test_prop': 'foo'},
         }))
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -201,7 +198,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
         for prop in ['age', 'sex', 'location']:
@@ -215,7 +212,7 @@ class ImporterTest(TestCase):
             'create': True,
             'case_type': 'nonmatch-type',
         }))
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
@@ -227,14 +224,14 @@ class ImporterTest(TestCase):
         # because the type is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(4, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testCaseLookupDomainCheck(self):
         self.factory.domain = 'wrong-domain'
         [case] = self.factory.create_or_update_case(CaseStructure(attrs={
             'create': True,
         }))
-        self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
@@ -247,7 +244,7 @@ class ImporterTest(TestCase):
         # because the domain is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(3, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(3, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testExternalIdMatching(self):
         # bootstrap a stub case
@@ -258,7 +255,7 @@ class ImporterTest(TestCase):
                 'external_id': external_id,
             }
         ))
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
@@ -274,7 +271,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def test_external_id_matching_on_create_with_custom_column_name(self):
         headers = ['id_column', 'age', 'sex', 'location']
@@ -290,7 +287,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['created_count'])
         self.assertEqual(1, res['match_count'])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         case = CommCareCase.objects.get_case(case_ids[0], self.domain)
         self.assertEqual(external_id, case.external_id)
@@ -310,7 +307,7 @@ class ImporterTest(TestCase):
         # no matching and no create new set - should do nothing
         self.assertEqual(0, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testBlankRows(self):
         # don't create new cases for rows left blank
@@ -325,7 +322,7 @@ class ImporterTest(TestCase):
         # no matching and no create new set - should do nothing
         self.assertEqual(0, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     @patch('corehq.apps.case_importer.do_import.CASEBLOCK_CHUNKSIZE', 2)
     def testBasicChunking(self):
@@ -342,7 +339,7 @@ class ImporterTest(TestCase):
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
         self.assertEqual(5, res['created_count'])
-        self.assertEqual(5, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(5, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testExternalIdChunking(self):
         # bootstrap a stub case
@@ -365,7 +362,7 @@ class ImporterTest(TestCase):
         self.assertEqual(2, res['num_chunks'])  # the lookup causes an extra chunk
 
         # should just create the one case
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(external_id, case.external_id)
@@ -377,7 +374,7 @@ class ImporterTest(TestCase):
         config = self._config(headers, create_new_cases=True, search_column='case_id')
         rows = 3
         [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
         file = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
@@ -390,8 +387,12 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(rows, res['created_count'])
         # Should create child cases
-        self.assertEqual(len(self.accessor.get_reverse_indexed_cases([parent_case.case_id])), 3)
-        self.assertEqual(self.accessor.get_extension_case_ids([parent_case.case_id]), [])
+        cases = CommCareCase.objects.get_reverse_indexed_cases(self.domain, [parent_case.case_id])
+        self.assertEqual(len(cases), 3)
+        self.assertEqual(
+            CommCareCaseIndex.objects.get_extension_case_ids(self.domain, [parent_case.case_id]),
+            [],
+        )
 
         file_missing = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
@@ -411,7 +412,7 @@ class ImporterTest(TestCase):
         headers = ['parent_id', 'name', 'case_id', 'parent_relationship_type', 'parent_identifier']
         config = self._config(headers, create_new_cases=True, search_column='case_id')
         [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
         file = make_worksheet_wrapper(
             headers,
@@ -424,7 +425,8 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(res['created_count'], 3)
         # Of the 3, 2 should be extension cases
-        extension_case_ids = self.accessor.get_extension_case_ids([parent_case.case_id])
+        extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
+            self.domain, [parent_case.case_id])
         self.assertEqual(len(extension_case_ids), 2)
         extension_cases = CommCareCase.objects.get_cases(extension_case_ids, self.domain)
         # Check that identifier is set correctly
@@ -456,7 +458,7 @@ class ImporterTest(TestCase):
         self.assertEqual(2, res['failed_count'])
 
         # Asserting current domain
-        cur_case_ids = self.accessor.get_case_ids_in_domain()
+        cur_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
         self.assertEqual(3, len(cur_cases))
         #Asserting current domain case property
@@ -464,7 +466,7 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
 
         # Asserting subdomain 1
-        s1_case_ids = CaseAccessors(self.subdomain1.name).get_case_ids_in_domain()
+        s1_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain1.name)
         s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
         self.assertEqual(1, len(s1_cases))
         # Asserting subdomain 1 case property
@@ -472,7 +474,7 @@ class ImporterTest(TestCase):
         self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
 
         # Asserting subdomain 2
-        s2_case_ids = CaseAccessors(self.subdomain2.name).get_case_ids_in_domain()
+        s2_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain2.name)
         s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
         self.assertEqual(1, len(s2_cases))
         # Asserting subdomain 2 case property
@@ -496,7 +498,7 @@ class ImporterTest(TestCase):
         self.assertEqual(6, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         # Asserting current domain
         cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertEqual(6, len(cur_cases))
@@ -531,7 +533,7 @@ class ImporterTest(TestCase):
             ['', 'duplicate-location-name', '', duplicate_loc.name],
             ['', 'non-case-owning-name', '', improper_loc.name],
         ])
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
 
         self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
@@ -628,7 +630,7 @@ class ImporterTest(TestCase):
                 ['', 'Caroline', '', 'yellow', case_owner._id],
             ])
             self.assertEqual(res['errors'], {})
-            case_ids = self.accessor.get_case_ids_in_domain()
+            case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
             cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
             self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
             self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
@@ -645,7 +647,7 @@ class ImporterTest(TestCase):
                 ['', 'Quinton Fortune', dsa.location_id],
             ])
 
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
@@ -667,7 +669,7 @@ class ImporterTest(TestCase):
                 ['', 'Quinton Fortune', dsa_owner._id],
             ])
 
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
         self.assertTrue(res['errors'])

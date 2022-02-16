@@ -14,8 +14,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-07 20:56+0000\n"
-"PO-Revision-Date: 2022-02-02 21:25+0000\n"
+"POT-Creation-Date: 2022-02-09 20:05+0000\n"
+"PO-Revision-Date: 2022-02-07 20:57+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -476,7 +476,7 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:17
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:6
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:3
-#: corehq/apps/settings/views.py:621 corehq/apps/sms/forms.py:892
+#: corehq/apps/settings/views.py:627 corehq/apps/sms/forms.py:892
 #: corehq/apps/sso/forms.py:411
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html:26
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:67
@@ -3717,7 +3717,7 @@ msgstr ""
 msgid "Please log in to the app to check for an update."
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py:87 corehq/apps/export/views/list.py:967
+#: corehq/apps/app_manager/fields.py:87 corehq/apps/export/views/list.py:972
 #: corehq/apps/hqwebapp/doc_info.py:201 corehq/apps/sms/models.py:1017
 #: corehq/apps/sms/models.py:1533 corehq/apps/sms/views.py:674
 msgid "Case"
@@ -3730,7 +3730,7 @@ msgstr "Caso"
 #: corehq/apps/commtrack/templates/commtrack/manage/rebuild_stock_state.html:57
 #: corehq/apps/data_interfaces/interfaces.py:220
 #: corehq/apps/export/templates/export/customize_export_new.html:48
-#: corehq/apps/export/views/list.py:969 corehq/apps/hqwebapp/doc_info.py:186
+#: corehq/apps/export/views/list.py:974 corehq/apps/hqwebapp/doc_info.py:186
 #: corehq/apps/reports/filters/forms.py:587
 #: corehq/apps/reports/standard/inspect.py:187
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html:151
@@ -4533,7 +4533,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:49
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html:39
-#: corehq/apps/domain/views/settings.py:119
+#: corehq/apps/domain/views/settings.py:121
 #: corehq/apps/locations/templates/locations/manage/location.html:64
 #: corehq/apps/users/forms.py:346
 #: corehq/apps/users/templates/users/edit_commcare_user.html:24
@@ -7183,7 +7183,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/tableau_visualization.html:20
 #: corehq/apps/reports/templates/reports/tableau_visualization.html:41
 #: corehq/apps/settings/templates/settings/user_api_keys.html:19
-#: corehq/apps/settings/views.py:626
+#: corehq/apps/settings/views.py:632
 #: corehq/apps/sms/templates/sms/gateway_list.html:78
 #: corehq/apps/sms/templates/sms/gateway_list.html:93
 #: corehq/apps/sms/templates/sms/global_gateway_list.html:32
@@ -12067,7 +12067,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/interfaces.py:32
 #: corehq/apps/data_interfaces/views.py:141
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html:10
-#: corehq/apps/settings/views.py:538
+#: corehq/apps/settings/views.py:544
 #: corehq/apps/userreports/reports/builder/forms.py:1019
 #: corehq/apps/userreports/reports/builder/forms.py:1024
 #: corehq/apps/users/templates/users/roles_and_permissions.html:88
@@ -12077,7 +12077,7 @@ msgstr "Datos"
 
 #: corehq/apps/case_search/views.py:20
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:21
-#: corehq/apps/domain/views/settings.py:313 corehq/apps/registry/models.py:255
+#: corehq/apps/domain/views/settings.py:315 corehq/apps/registry/models.py:255
 #: corehq/tabs/tabclasses.py:2004
 msgid "Case Search"
 msgstr "Búsqueda de Caso"
@@ -13028,7 +13028,7 @@ msgstr "Exporte y administre datos"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:29
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:71
 #: corehq/apps/users/templates/users/enterprise_users.html:14
-#: corehq/apps/users/views/__init__.py:142
+#: corehq/apps/users/views/__init__.py:144
 #: corehq/messaging/scheduling/forms.py:1048 corehq/tabs/tabclasses.py:1307
 msgid "Users"
 msgstr "Usuarios"
@@ -14465,7 +14465,7 @@ msgid "Override project's timezone setting just for me."
 msgstr "Omita la configuración de la zona horaria del proyecto solo para mí."
 
 #: corehq/apps/domain/forms.py:155 corehq/apps/domain/forms.py:158
-#: corehq/apps/domain/views/settings.py:210
+#: corehq/apps/domain/views/settings.py:212
 msgid "My Timezone"
 msgstr "Mi Zona Horaria"
 
@@ -14749,7 +14749,7 @@ msgstr "Permitir que usuarios desconocidos soliciten acceso web al dominio"
 msgid "HIPAA compliant"
 msgstr "Reclamo HIPAA"
 
-#: corehq/apps/domain/forms.py:617 corehq/apps/settings/views.py:355
+#: corehq/apps/domain/forms.py:617 corehq/apps/settings/views.py:361
 #: corehq/apps/users/templates/users/edit_commcare_user.html:73
 msgid "Two Factor Authentication"
 msgstr "Autenticación de Dos Factores"
@@ -15290,7 +15290,7 @@ msgid "Action Type"
 msgstr "Tipo de Acción"
 
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html:7
-#: corehq/apps/domain/views/settings.py:394
+#: corehq/apps/domain/views/settings.py:396
 #: corehq/apps/linked_domain/const.py:34
 msgid "Feature Previews"
 msgstr "Vistas Previas de Función"
@@ -16558,7 +16558,7 @@ msgstr "Siguiente"
 
 #: corehq/apps/domain/templates/domain/select.html:5
 #: corehq/apps/domain/templates/domain/select.html:48
-#: corehq/apps/settings/views.py:259
+#: corehq/apps/settings/views.py:261
 msgid "My Projects"
 msgstr "Mis Proyectos"
 
@@ -17274,7 +17274,7 @@ msgstr "Mostar Códigos"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:61
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html:65
-#: corehq/apps/settings/views.py:457
+#: corehq/apps/settings/views.py:463
 msgid "Remove Two-Factor Authentication"
 msgstr ""
 
@@ -17674,7 +17674,7 @@ msgstr ""
 msgid "Manage Releases By App Profile"
 msgstr ""
 
-#: corehq/apps/domain/views/settings.py:57
+#: corehq/apps/domain/views/settings.py:59
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:48
 #: corehq/apps/locations/views.py:1064 corehq/apps/registry/views.py:57
 #: corehq/apps/registry/views.py:144 corehq/reports.py:380
@@ -17682,28 +17682,28 @@ msgstr ""
 msgid "Project Settings"
 msgstr "Configuraciones del Proyecto"
 
-#: corehq/apps/domain/views/settings.py:199
+#: corehq/apps/domain/views/settings.py:201
 msgid "Project settings saved!"
 msgstr "¡Configuraciones del proyecto guardadas!"
 
-#: corehq/apps/domain/views/settings.py:201
+#: corehq/apps/domain/views/settings.py:203
 msgid "There was an error saving your settings. Please try again!"
 msgstr ""
 
-#: corehq/apps/domain/views/settings.py:253
-#: corehq/apps/domain/views/settings.py:307
+#: corehq/apps/domain/views/settings.py:255
+#: corehq/apps/domain/views/settings.py:309
 msgid "Your project settings have been saved!"
 msgstr "¡Se ha guardado la configuración de su proyecto!"
 
-#: corehq/apps/domain/views/settings.py:269
+#: corehq/apps/domain/views/settings.py:271
 msgid "Privacy and Security"
 msgstr "Privacidad y Seguridad"
 
-#: corehq/apps/domain/views/settings.py:451
+#: corehq/apps/domain/views/settings.py:453
 msgid "Password for {} has successfully been reset. You can now login."
 msgstr ""
 
-#: corehq/apps/domain/views/settings.py:480
+#: corehq/apps/domain/views/settings.py:488
 msgid "Recovery Measures History"
 msgstr ""
 
@@ -17831,7 +17831,7 @@ msgstr ""
 #: corehq/apps/enterprise/enterprise.py:134 corehq/apps/export/forms.py:212
 #: corehq/apps/reports/models.py:31
 #: corehq/apps/users/templates/users/roles_and_permissions.html:76
-#: corehq/apps/users/views/__init__.py:558
+#: corehq/apps/users/views/__init__.py:560
 msgid "Web Users"
 msgstr ""
 
@@ -19824,10 +19824,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/views/download.py:384
-#, fuzzy
-#| msgid "Update the downloaded file."
 msgid "Failed to download export."
-msgstr "Actualice el archivo descargado."
+msgstr ""
 
 #: corehq/apps/export/views/download.py:403
 msgid "Download Form Data Export"
@@ -19945,7 +19943,7 @@ msgid ""
 "{doc_count} cases have been resent for export '{incremental_export.name}'"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:345
+#: corehq/apps/export/views/list.py:344
 msgid "Select a model to export"
 msgstr ""
 
@@ -19953,11 +19951,11 @@ msgstr ""
 msgid "Select a Form to Export"
 msgstr "Seleccionar un Formulario a Exportar"
 
-#: corehq/apps/export/views/list.py:429
+#: corehq/apps/export/views/list.py:433
 msgid "Select a Case Type to Export"
 msgstr "Seleccione un Tipo de Caso a Exportar"
 
-#: corehq/apps/export/views/list.py:490
+#: corehq/apps/export/views/list.py:495
 msgid ""
 "\n"
 "        Exports are a way to download data in a variety of formats (CSV, "
@@ -19966,66 +19964,66 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:513
+#: corehq/apps/export/views/list.py:518
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:7
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:29
 msgid "Export"
 msgstr "Exportación"
 
-#: corehq/apps/export/views/list.py:514
+#: corehq/apps/export/views/list.py:519
 msgid "export"
 msgstr "exportación"
 
-#: corehq/apps/export/views/list.py:515
+#: corehq/apps/export/views/list.py:520
 msgid "Exports"
 msgstr "Exportaciones"
 
-#: corehq/apps/export/views/list.py:516
+#: corehq/apps/export/views/list.py:521
 msgid "exports"
 msgstr "exportaciones"
 
-#: corehq/apps/export/views/list.py:517
+#: corehq/apps/export/views/list.py:522
 msgid "My Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:518
+#: corehq/apps/export/views/list.py:523
 msgid "Exports Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:608
+#: corehq/apps/export/views/list.py:613
 msgid ""
 "This file has more than 256 columns, which is not supported by xls. Please "
 "change the output type to csv or xlsx in the export configuration page to "
 "export this file."
 msgstr ""
 
-#: corehq/apps/export/views/list.py:618
+#: corehq/apps/export/views/list.py:623
 msgid "Daily Saved Exports"
 msgstr "Exportaciones Guardadas Diariamente"
 
-#: corehq/apps/export/views/list.py:690
+#: corehq/apps/export/views/list.py:695
 msgid "Problem saving dashboard feed filters: Invalid form"
 msgstr ""
 "Ocurrió un problema al guardar filtros de alimentación del tablero: "
 "Formulario inválido "
 
-#: corehq/apps/export/views/list.py:697
+#: corehq/apps/export/views/list.py:702
 msgid "Export Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:703
+#: corehq/apps/export/views/list.py:708
 msgid "Export Case Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:708
+#: corehq/apps/export/views/list.py:713
 msgid "Export De-Identified Cases"
 msgstr "Exportar Casos Anónimos"
 
-#: corehq/apps/export/views/list.py:715
+#: corehq/apps/export/views/list.py:720
 msgid "Excel Dashboard Integration"
 msgstr "Integración de Tablero de Excel"
 
-#: corehq/apps/export/views/list.py:717
+#: corehq/apps/export/views/list.py:722
 msgid ""
 "\n"
 "        Excel dashboard feeds allow Excel to directly connect to CommCareHQ "
@@ -20034,67 +20032,67 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:727
+#: corehq/apps/export/views/list.py:732
 msgid "Dashboard Feed"
 msgstr "Ingreso del Tablero"
 
-#: corehq/apps/export/views/list.py:728
+#: corehq/apps/export/views/list.py:733
 msgid "dashboard feed"
 msgstr "ingreso del tablero"
 
-#: corehq/apps/export/views/list.py:729
+#: corehq/apps/export/views/list.py:734
 msgid "Dashboard Feeds"
 msgstr "Ingresos del Tablero"
 
-#: corehq/apps/export/views/list.py:730
+#: corehq/apps/export/views/list.py:735
 msgid "dashboard feeds"
 msgstr "ingresos del tablero"
 
-#: corehq/apps/export/views/list.py:731
+#: corehq/apps/export/views/list.py:736
 msgid "My Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:732
+#: corehq/apps/export/views/list.py:737
 msgid "Dashboard Feeds Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:738
+#: corehq/apps/export/views/list.py:743
 msgid "Export De-Identified Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:745
+#: corehq/apps/export/views/list.py:750
 msgid "Export De-Identified Daily Saved Exports"
 msgstr "Exportar las Exportaciones Anónimas Guardadas Diariamente"
 
-#: corehq/apps/export/views/list.py:751
+#: corehq/apps/export/views/list.py:756
 msgid "Export De-Identified Dashboard Feeds"
 msgstr "Exportar los Ingresos Anónimos del Tablero"
 
-#: corehq/apps/export/views/list.py:777
+#: corehq/apps/export/views/list.py:782
 msgid "Export not found"
 msgstr "Exportación no encontrada"
 
-#: corehq/apps/export/views/list.py:872
+#: corehq/apps/export/views/list.py:877
 msgid "The form did not validate."
 msgstr "El formulario no se validó."
 
-#: corehq/apps/export/views/list.py:961
+#: corehq/apps/export/views/list.py:966
 msgid "Feed Type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:964
+#: corehq/apps/export/views/list.py:969
 msgid "Select field type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:982
+#: corehq/apps/export/views/list.py:987
 msgid "Select Feed Type"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1015
+#: corehq/apps/export/views/list.py:1020
 msgid "PowerBi/Tableau Integration"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1019
+#: corehq/apps/export/views/list.py:1024
 #, python-brace-format
 msgid ""
 "\n"
@@ -20113,27 +20111,27 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1036
+#: corehq/apps/export/views/list.py:1041
 msgid "OData Feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1037
+#: corehq/apps/export/views/list.py:1042
 msgid "OData feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1038
+#: corehq/apps/export/views/list.py:1043
 msgid "OData Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1039
+#: corehq/apps/export/views/list.py:1044
 msgid "OData feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1040
+#: corehq/apps/export/views/list.py:1045
 msgid "My OData Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:1041
+#: corehq/apps/export/views/list.py:1046
 msgid "OData Feeds Shared with Me"
 msgstr ""
 
@@ -20769,7 +20767,7 @@ msgstr "Estado de la Carga de Tabla de Búsqueda"
 #: corehq/apps/fixtures/views.py:369
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/download_status.html:19
 #: corehq/apps/locations/views.py:867 corehq/apps/products/views.py:333
-#: corehq/apps/users/views/__init__.py:1192
+#: corehq/apps/users/views/__init__.py:1194
 #: corehq/apps/users/views/mobile/users.py:1066
 msgid "Importing your data. This may take some time..."
 msgstr "Importando sus datos; esto puede llevar un tiempo..."
@@ -22536,8 +22534,8 @@ msgid "Change Project"
 msgstr "Cambiar Proyecto"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html:15
-#: corehq/apps/settings/forms.py:276 corehq/apps/settings/views.py:642
-#: corehq/apps/settings/views.py:673
+#: corehq/apps/settings/forms.py:276 corehq/apps/settings/views.py:648
+#: corehq/apps/settings/views.py:679
 msgid "All Projects"
 msgstr ""
 
@@ -22620,7 +22618,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:137
 #: corehq/apps/settings/templates/settings/my_projects.html:11
-#: corehq/apps/settings/views.py:623 corehq/apps/users/views/web.py:84
+#: corehq/apps/settings/views.py:629 corehq/apps/users/views/web.py:84
 msgid "Project"
 msgstr "Proyecto"
 
@@ -22904,7 +22902,7 @@ msgid "Available Alerts"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html:82
-#: corehq/apps/settings/views.py:625
+#: corehq/apps/settings/views.py:631
 msgid "Created"
 msgstr ""
 
@@ -23578,7 +23576,7 @@ msgstr ""
 msgid "Enter the base URL for callouts that should be signed"
 msgstr ""
 
-#: corehq/apps/integration/forms.py:195 corehq/apps/settings/views.py:622
+#: corehq/apps/integration/forms.py:195 corehq/apps/settings/views.py:628
 #: corehq/apps/users/forms.py:353
 #: corehq/messaging/smsbackends/telerivet/forms.py:18
 #: corehq/messaging/smsbackends/telerivet/forms.py:60
@@ -25206,7 +25204,7 @@ msgid "Organization Structure Import Status"
 msgstr "Estado de Importación de la Estructura de la Organización"
 
 #: corehq/apps/locations/views.py:868 corehq/apps/products/views.py:334
-#: corehq/apps/users/views/__init__.py:1193
+#: corehq/apps/users/views/__init__.py:1195
 #: corehq/apps/users/views/mobile/users.py:1067
 msgid "Problem importing data! Please try again or report an issue."
 msgstr ""
@@ -25259,7 +25257,7 @@ msgstr "Diagnóstico de Casos"
 
 #: corehq/apps/locations/views.py:1047
 #: corehq/apps/userreports/reports/view.py:659
-#: corehq/apps/users/views/__init__.py:632
+#: corehq/apps/users/views/__init__.py:634
 #: corehq/apps/users/views/mobile/users.py:563
 #: corehq/apps/users/views/mobile/users.py:1122
 msgid "There was an unexpected error! Please try again or report an issue."
@@ -25352,7 +25350,7 @@ msgstr ""
 "Utilice este formulario para generar la respuesta de restauración para "
 "usuarios y caché, los resultados por 24 horas."
 
-#: corehq/apps/ota/utils.py:49 corehq/apps/users/tasks.py:273
+#: corehq/apps/ota/utils.py:49 corehq/apps/users/tasks.py:274
 msgid ""
 "Something went wrong in creating restore for the user. Please try again or "
 "report an issue"
@@ -30825,7 +30823,7 @@ msgid "Phone Numbers"
 msgstr "Números de Teléfono"
 
 #: corehq/apps/settings/templates/settings/enable_superuser.html:7
-#: corehq/apps/settings/views.py:558
+#: corehq/apps/settings/views.py:564
 msgid "Enable Privileges on Mobile"
 msgstr "Permitir Privilegios en el Móvil"
 
@@ -30894,20 +30892,20 @@ msgid ""
 "country code."
 msgstr ""
 
-#: corehq/apps/settings/views.py:100
+#: corehq/apps/settings/views.py:102
 msgid "My Account"
 msgstr "Mi Cuenta"
 
-#: corehq/apps/settings/views.py:133
+#: corehq/apps/settings/views.py:135
 msgid "My Information"
 msgstr "Mi Información"
 
-#: corehq/apps/settings/views.py:200 corehq/apps/settings/views.py:495
+#: corehq/apps/settings/views.py:202 corehq/apps/settings/views.py:501
 #: corehq/apps/users/views/mobile/users.py:358
 msgid "Phone number added."
 msgstr "Número de teléfono añadido."
 
-#: corehq/apps/settings/views.py:202
+#: corehq/apps/settings/views.py:204
 msgid ""
 "Invalid phone number format entered. Please enter number, including country "
 "code, in digits only."
@@ -30915,75 +30913,75 @@ msgstr ""
 "Formato de número de teléfono inválido. Por favor ingrese el número, "
 "incluyendo el código de país, solamente en dígitos."
 
-#: corehq/apps/settings/views.py:218
+#: corehq/apps/settings/views.py:220
 msgid "Phone number deleted."
 msgstr "Número de teléfono eliminado."
 
-#: corehq/apps/settings/views.py:223
+#: corehq/apps/settings/views.py:225
 msgid "Primary phone number updated."
 msgstr "Número de teléfono principal actualizado."
 
-#: corehq/apps/settings/views.py:287
+#: corehq/apps/settings/views.py:289
 #, python-format
 msgid "Unable remove membership because you are the admin of %s"
 msgstr ""
 "No se puede remover la membresía porque usted es el administrador de %s "
 
-#: corehq/apps/settings/views.py:298
+#: corehq/apps/settings/views.py:300
 #, python-format
 msgid "You are no longer part of the project %s"
 msgstr "Usted ya no es parte del proyecto  %s"
 
-#: corehq/apps/settings/views.py:300
+#: corehq/apps/settings/views.py:302
 msgid "There was an error removing you from this project."
 msgstr "Ocurrió un error al removerlo de este proyecto."
 
-#: corehq/apps/settings/views.py:307
+#: corehq/apps/settings/views.py:309
 msgid "Change My Password"
 msgstr "Cambiar Mi Contraseña"
 
-#: corehq/apps/settings/views.py:341
+#: corehq/apps/settings/views.py:345
 msgid "Your password was successfully changed!"
 msgstr "¡Su contraseña fue cambiada exitosamente!"
 
-#: corehq/apps/settings/views.py:386
+#: corehq/apps/settings/views.py:392
 msgid "Two Factor Authentication Setup"
 msgstr "Configuración de Autenticación de Dos Factores"
 
-#: corehq/apps/settings/views.py:413
+#: corehq/apps/settings/views.py:419
 msgid "Two Factor Authentication Setup Complete"
 msgstr "Configuración de Autenticación de Dos Factores Completa"
 
-#: corehq/apps/settings/views.py:430
+#: corehq/apps/settings/views.py:436
 msgid "Two Factor Authentication Backup Tokens"
 msgstr "Identificador de Respaldo de Autenticación de Dos Factores"
 
-#: corehq/apps/settings/views.py:471
+#: corehq/apps/settings/views.py:477
 msgid "Two Factor Authentication Phone Setup"
 msgstr "Configuración de Autenticación de Dos Factores de Teléfono"
 
-#: corehq/apps/settings/views.py:511
+#: corehq/apps/settings/views.py:517
 msgid "Phone number removed."
 msgstr ""
 
-#: corehq/apps/settings/views.py:605
+#: corehq/apps/settings/views.py:611
 msgid "API Keys"
 msgstr ""
 
-#: corehq/apps/settings/views.py:624
+#: corehq/apps/settings/views.py:630
 msgid "IP Allowlist"
 msgstr ""
 
-#: corehq/apps/settings/views.py:645
+#: corehq/apps/settings/views.py:651
 msgid "All IP Addresses"
 msgstr ""
 
-#: corehq/apps/settings/views.py:666
+#: corehq/apps/settings/views.py:672
 msgid ""
 "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
 msgstr ""
 
-#: corehq/apps/settings/views.py:667
+#: corehq/apps/settings/views.py:673
 msgid "Copy this in a secure place. It will not be shown again."
 msgstr ""
 
@@ -31570,7 +31568,7 @@ msgstr "El nombre ya está en uso."
 msgid "Catch-All Gateway"
 msgstr "Portal General"
 
-#: corehq/apps/sms/forms.py:1091 corehq/apps/users/views/__init__.py:398
+#: corehq/apps/sms/forms.py:1091 corehq/apps/users/views/__init__.py:400
 #: corehq/apps/users/views/mobile/users.py:305
 msgid "(none)"
 msgstr "(ninguno)"
@@ -37226,20 +37224,20 @@ msgstr "¿Está seguro que desea eliminar esta invitación?"
 msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
-#: corehq/apps/users/views/__init__.py:349
+#: corehq/apps/users/views/__init__.py:351
 #, python-format
 msgid "Changes saved for user \"%s\""
 msgstr "Cambios guardados para el usuario \"%s\" "
 
-#: corehq/apps/users/views/__init__.py:360
+#: corehq/apps/users/views/__init__.py:362
 msgid "Edit Web User"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:365
+#: corehq/apps/users/views/__init__.py:367
 msgid "Edit Web User (View Only)"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:383
+#: corehq/apps/users/views/__init__.py:385
 msgid ""
 "\n"
 "                    This user has no role. Please assign this user a role "
@@ -37247,14 +37245,14 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:460
+#: corehq/apps/users/views/__init__.py:462
 #, python-brace-format
 msgid ""
 "Your project space \"{domain}\" now trusts the SSO Identity Provider "
 "\"{idp_name}\"."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:530
+#: corehq/apps/users/views/__init__.py:532
 msgid ""
 "We might be experiencing issues fetching the entire list of user roles right "
 "now. This issue is likely temporary and nothing to worry about, but if you "
@@ -37262,32 +37260,32 @@ msgid ""
 "data-toggle='modal'>Report an Issue</a>."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:544
+#: corehq/apps/users/views/__init__.py:546
 msgid "Enterprise Users"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:611
-#: corehq/apps/users/views/__init__.py:630
+#: corehq/apps/users/views/__init__.py:613
+#: corehq/apps/users/views/__init__.py:632
 msgid "Download Web Users Status"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:631
+#: corehq/apps/users/views/__init__.py:633
 msgid "Preparing web user download."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:634
+#: corehq/apps/users/views/__init__.py:636
 msgid "Go back to Web Users"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:644
+#: corehq/apps/users/views/__init__.py:646
 msgid "Roles & Permissions"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:659
+#: corehq/apps/users/views/__init__.py:661
 msgid "Use Default"
 msgstr "Utilizar el Predeterminado"
 
-#: corehq/apps/users/views/__init__.py:671
+#: corehq/apps/users/views/__init__.py:673
 msgid ""
 "This project has user roles that restrict data access by organization, but "
 "the software plan no longer supports that. Any users assigned to roles that "
@@ -37300,23 +37298,23 @@ msgstr ""
 "organización, ya no puede acceder a este proyecto. Por favor actualice los "
 "roles existentes."
 
-#: corehq/apps/users/views/__init__.py:827
+#: corehq/apps/users/views/__init__.py:829
 #, python-brace-format
 msgid ""
 "You have successfully removed {username} from your project space. <a "
 "href=\"{url}\" class=\"post-link\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:834
+#: corehq/apps/users/views/__init__.py:836
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:904
+#: corehq/apps/users/views/__init__.py:906
 msgid "A role with the same name already exists"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:931
+#: corehq/apps/users/views/__init__.py:933
 #, python-brace-format
 msgid ""
 "Unable to delete role '{role}'. It has one user still assigned to it. Remove "
@@ -37327,53 +37325,53 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: corehq/apps/users/views/__init__.py:993
+#: corehq/apps/users/views/__init__.py:995
 msgid "Invite Web User to Project"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1117
+#: corehq/apps/users/views/__init__.py:1119
 msgid ""
 "Groups are not allowed with parallel user import. Please upload them "
 "separately"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1161
+#: corehq/apps/users/views/__init__.py:1163
 msgid "Bulk Upload Web Users"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1183
-#: corehq/apps/users/views/__init__.py:1191
+#: corehq/apps/users/views/__init__.py:1185
+#: corehq/apps/users/views/__init__.py:1193
 msgid "Web User Upload Status"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1195
+#: corehq/apps/users/views/__init__.py:1197
 msgid "Return to manage web users"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1212
+#: corehq/apps/users/views/__init__.py:1214
 msgid "Bulk upload complete."
 msgstr "Carga general completa."
 
-#: corehq/apps/users/views/__init__.py:1290
+#: corehq/apps/users/views/__init__.py:1292
 #, python-brace-format
 msgid "Bad SMS configuration: {error}"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1293
+#: corehq/apps/users/views/__init__.py:1295
 msgid "Cannot start verification workflow. Phone number is already in use."
 msgstr ""
 "No se puede iniciar el flujo de trabajo de verificación. El número de "
 "teléfono ya está en uso."
 
-#: corehq/apps/users/views/__init__.py:1295
+#: corehq/apps/users/views/__init__.py:1297
 msgid "Phone number is already verified."
 msgstr "El número de teléfono ya está verificado."
 
-#: corehq/apps/users/views/__init__.py:1297
+#: corehq/apps/users/views/__init__.py:1299
 msgid "Verification message resent."
 msgstr "Mensaje de verificación reenviado."
 
-#: corehq/apps/users/views/__init__.py:1299
+#: corehq/apps/users/views/__init__.py:1301
 msgid "Verification workflow started."
 msgstr "El flujo de trabajo de verificación ya inició."
 
@@ -40311,8 +40309,8 @@ msgstr ""
 msgid "Search the remote FHIR service for matching patients?"
 msgstr ""
 
-#: corehq/motech/fhir/repeaters.py:40 corehq/motech/fhir/views.py:27
-#: corehq/motech/fhir/views.py:28
+#: corehq/motech/fhir/repeaters.py:40 corehq/motech/fhir/views.py:26
+#: corehq/motech/fhir/views.py:27
 msgid "Forward Cases to a FHIR API"
 msgstr ""
 
@@ -40320,7 +40318,7 @@ msgstr ""
 msgid "Unsupported FHIR Resource type {}. Please choose from {}"
 msgstr ""
 
-#: corehq/motech/fhir/views.py:48
+#: corehq/motech/fhir/views.py:47
 msgid "Edit FHIR Repeater"
 msgstr ""
 

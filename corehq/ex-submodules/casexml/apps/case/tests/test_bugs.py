@@ -9,7 +9,6 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -139,8 +138,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock.deprecated_init(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ], domain="test-domain")
-        cases = CaseAccessors("test-domain")
-        cases.soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases("test-domain", [case_id])
 
         case = CommCareCase.objects.get_case(case_id, "test-domain")
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
