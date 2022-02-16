@@ -23,6 +23,7 @@ from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -103,7 +104,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-
 
 MOCK_BULK_USER_ES = None
 
@@ -760,10 +760,14 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     def _ensure_toggle_enabled(self, request):
         if not toggles.USER_CONFIGURABLE_REPORTS.enabled_for_request(request):
-            raise ImmediateHttpResponse(HttpResponse(
-                json.dumps({"error": _("You don't have permission to access this API")}),
-                content_type="application/json",
-                status=401)
+            raise ImmediateHttpResponse(
+                add_cors_headers_to_response(
+                    HttpResponse(
+                        json.dumps({"error": _("You don't have permission to access this API")}),
+                        content_type="application/json",
+                        status=401,
+                    )
+                )
             )
 
     def obj_get(self, bundle, **kwargs):
@@ -801,10 +805,15 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
             data_source.validate()
             data_source.save()
         except BadSpecError as e:
-            raise ImmediateHttpResponse(HttpResponse(
-                json.dumps({"error": _("Invalid data source! Details: {details}").format(details=str(e))}),
-                content_type="application/json",
-                status=500))
+            raise ImmediateHttpResponse(
+                add_cors_headers_to_response(
+                    HttpResponse(
+                        json.dumps({"error": _("Invalid data source! Details: {details}").format(details=str(e))}),
+                        content_type="application/json",
+                        status=500,
+                    )
+                )
+            )
         bundle.obj = data_source
         return bundle
 
