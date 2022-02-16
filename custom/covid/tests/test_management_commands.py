@@ -406,7 +406,7 @@ class TestUpdateAllActivityCompleteDate(TestCase):
             'not_status_closed': cls._make_case('patient', {"current_status": "open"}),
             'in_active_location': cls._make_case(
                 'patient', {"isolation_end_date": "2022-01-04"}, inactive_owner=False),
-            'contact_to_ignore': cls._make_case('contact', {'finale_disposition': 'converted_to_pui'}),
+            'contact_to_ignore': cls._make_case('contact', {'final_disposition': 'converted_to_pui'}),
             'patient_to_update': cls._make_case('patient', {"isolation_end_date": "2022-01-04"}),
             'patient_to_update_adjust': cls._make_case('patient', {"symptom_onset_date": "2022-01-05"}),
             'contact_to_update': cls._make_case('contact', {"quarantine_end_date": "2022-01-07"}),

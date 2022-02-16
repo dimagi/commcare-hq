@@ -72,7 +72,7 @@ def _get_bad_case_ids(domain, case_type):
 
     if case_type == 'contact':
         query = query.NOT(
-            exact_case_property_text_query('finale_disposition', 'converted_to_pui')
+            exact_case_property_text_query('final_disposition', 'converted_to_pui')
         )
 
     return list(query.scroll_ids())
@@ -84,7 +84,7 @@ def _correct_bad_property(case):
             case.get_case_property('all_activity_complete_date')
             or case.get_case_property('current_status') != 'closed'
             or (case.type == 'contact'
-                and case.get_case_property('finale_disposition') == 'converted_to_pui')
+                and case.get_case_property('final_disposition') == 'converted_to_pui')
             or case.owner_id not in INACTIVE_LOCATION_IDS
     ):
         return None
