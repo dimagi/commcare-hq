@@ -102,7 +102,9 @@ from corehq.apps.domain.models import (
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
+    get_default_dte_expressions,
 )
+from corehq.apps.domain.utils import save_dte_expressions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
@@ -1088,6 +1090,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
 
+    def clean_allowed_dte_expressions(self):
+        value = self.cleaned_data.get('active_dte_expressions')
+        all_expressions = get_default_dte_expressions()
+        for expr in value:
+            if expr not in all_expressions:
+                raise forms.ValidationError(_(f"Unknown expression {expr}"))
+        return value
+
     def clean_auto_case_update_hour(self):
         if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
             return None
@@ -1147,6 +1157,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
         )
+        dte_expressions = self.cleaned_data['active_dte_expressions']
+        save_dte_expressions(domain.name, dte_expressions)
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
