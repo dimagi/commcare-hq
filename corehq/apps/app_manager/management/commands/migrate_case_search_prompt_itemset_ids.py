@@ -18,7 +18,7 @@ class Command(AppMigrationCommandBase):
         should_save = False
         for module in app_doc.get('modules', []):
             if module.get('search_config'):
-                for prop in module.get('search_config').get('properties'):
+                for prop in module.get('search_config').get('properties', []):
                     (new_itemset, should_save) = wrap_itemset(prop.get('itemset'))
                     prop['itemset'] = new_itemset
 
@@ -27,13 +27,13 @@ class Command(AppMigrationCommandBase):
 
 def wrap_itemset(data):
     should_save = False
-    if data.get('instance_uri', '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
+    if (data.get('instance_uri') or '').startswith(f'jr://fixture/{ItemListsProvider.id}:'):
         instance_id = data.get('instance_id')
         if instance_id and ItemListsProvider.id not in instance_id:
             should_save = True
             data['instance_id'] = f'{ItemListsProvider.id}:{instance_id}'
             data['nodeset'] = re.sub(r"instance\((.)" + instance_id,
                                      r"instance(\1" + ItemListsProvider.id + r":" + instance_id,
-                                     data.get('nodeset', ''))
+                                     (data.get('nodeset') or ''))
 
     return data, should_save
