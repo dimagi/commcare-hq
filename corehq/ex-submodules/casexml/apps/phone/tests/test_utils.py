@@ -8,7 +8,6 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_ledgers, d
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.stock.mock import Balance, Entry, Transfer
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
 
 
@@ -37,7 +36,6 @@ class TestUtils(SimpleTestCase):
 class MockDeviceLedgersTest(BaseSyncTest, TestXmlMixin):
     def setUp(self):
         super(MockDeviceLedgersTest, self).setUp()
-        self.accessor = CaseAccessors(self.project.name)
         self._create_ledgers()
 
     def tearDown(self):

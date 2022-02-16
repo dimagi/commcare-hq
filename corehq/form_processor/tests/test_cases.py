@@ -406,6 +406,38 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 
 
 @sharded
+class TestCommCareCase(BaseCaseManagerTest):
+
+    def test_closed_transactions(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        self.assertEqual(len(case.get_closing_transactions()), 1)
+        self.assertTrue(case.get_closing_transactions()[0].is_case_close)
+
+    def test_closed_transactions_with_tracked(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
+            revoked=True
+        ))
+        # exclude based on type
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            revoked=False
+        ))
+        self.assertEqual(len(case.get_closing_transactions()), 2)
+
+
+@sharded
 class TestCaseAttachmentManager(BaseCaseManagerTest):
 
     def setUp(self):
