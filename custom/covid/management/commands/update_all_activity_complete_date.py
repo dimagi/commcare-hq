@@ -38,7 +38,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type', choices=['patient', 'contact'])
-        parser.add_argument('--username', type=str, required=True)
+        parser.add_argument('--username', type=str)
         parser.add_argument('--and-linked', action='store_true', default=False)
         parser.add_argument('--throttle-secs', type=float, default=0)
 
@@ -56,7 +56,7 @@ class Command(BaseCommand):
                 domain=domain,
                 update_fn=_correct_bad_property,
                 case_ids=with_progress_bar(bad_case_ids, oneline=False),
-                form_meta=SystemFormMeta.for_script(__name__, options['username']),
+                form_meta=SystemFormMeta.for_script(__name__, options.get('username')),
                 throttle_secs=options['throttle_secs'],
             )
 
