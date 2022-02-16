@@ -46,6 +46,9 @@ class EntryInstances(PostProcessor):
             xpaths.add(datum.function)
         for query in entry.queries:
             xpaths.update({data.ref for data in query.data})
+            for prompt in query.prompts:
+                if prompt.itemset:
+                    xpaths.add(prompt.itemset.nodeset)
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
