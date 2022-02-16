@@ -3,7 +3,6 @@ from functools import cached_property
 from corehq.apps.es.client import ElasticManageAdapter
 from corehq.apps.es.const import SCROLL_KEEPALIVE
 from corehq.apps.es.transient_util import doc_adapter_from_alias
-from corehq.util.es.elasticsearch import bulk
 
 
 class ElasticsearchInterface:
@@ -71,22 +70,13 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         return doc_adapter.count(query)
 
-    @staticmethod
-    def _without_id_field(doc):
-        # Field [_id] is a metadata field and cannot be added inside a document.
-        # Use the index API request parameters.
-        return {key: value for key, value in doc.items() if key != '_id'}
-
     def delete_doc(self, index_alias, doc_type, doc_id):
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         doc_adapter.delete(doc_id)
 
-    def bulk_ops(self, actions, stats_only=False, **kwargs):
-        for action in actions:
-            if '_source' in action:
-                action['_source'] = self._without_id_field(action['_source'])
-        ret = bulk(self.es, actions, stats_only=stats_only, **kwargs)
-        return ret
+    def bulk_ops(self, index_alias, doc_type, actions, **kwargs):
+        doc_adapter = self._get_doc_adapter(index_alias, doc_type)
+        return doc_adapter.bulk(actions, **kwargs)
 
     def search(self, index_alias, doc_type, body=None, params=None, **kwargs):
         self._verify_is_alias(index_alias)
