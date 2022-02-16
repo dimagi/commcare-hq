@@ -561,14 +561,14 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             name='Can View Registry Data',
             permissions=Permissions(view_data_registry_contents=True),
         )
-        cls.web_user.set_role(cls.domain_a, view_registry_role.get_qualified_id())
+        cls.web_user.set_role(cls.domain_a.name, view_registry_role.get_qualified_id())
         cls.web_user.save()
         restrit_registry_access_role = UserRole.create(
             domain=cls.domain_a,
             name='Cannot View Registry Data',
             permissions=Permissions(view_data_registry_contents=False),
         )
-        cls.web_user_no_registry_access.set_role(cls.domain_a, restrit_registry_access_role.get_qualified_id())
+        cls.web_user_no_registry_access.set_role(cls.domain_a.name, restrit_registry_access_role.get_qualified_id())
         cls.web_user_no_registry_access.save()
 
     @classmethod
