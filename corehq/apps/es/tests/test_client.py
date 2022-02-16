@@ -1023,7 +1023,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         self.adapter._fix_hit(hit)
         self.assertEqual(expected, hit)
 
-    def test__fix_hits_in_results(self):
+    def test__fix_hits_in_result(self):
         ids = ["abc", "def"]
         result = {"hits": {"hits": [
             {"_id": ids[0], "_source": {"test": True}},
@@ -1032,7 +1032,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         expected = deepcopy(result)
         expected["hits"]["hits"][0]["_source"]["_id"] = ids[0]
         expected["hits"]["hits"][1]["_source"]["_id"] = ids[1]
-        self.adapter._fix_hits_in_results(result)
+        self.adapter._fix_hits_in_result(result)
         self.assertEqual(expected, result)
 
     def test__report_and_fail_on_shard_failures(self):

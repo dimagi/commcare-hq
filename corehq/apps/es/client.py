@@ -481,9 +481,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param doc_ids: iterable of document IDs
         :returns: ``dict``"""
         docs = []
-        results = self._mget({"ids": doc_ids})
+        result = self._mget({"ids": doc_ids})
         # TODO: check for shard failures
-        for doc_result in results["docs"]:
+        for doc_result in result["docs"]:
             if "error" in doc_result:
                 raise ESError(doc_result["error"].get("reason", "multi-get error"))
             if doc_result["found"]:
@@ -503,13 +503,13 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
             yield from self.fetch_many(ids_chunk)
 
     def _mget(self, query):
-        """Perform an ``mget`` request and return the results.
+        """Perform an ``mget`` request and return the result.
 
         :param query: ``dict`` mget query"""
         return self._es.mget(query, self.index, self.type, _source=True)
 
     def search(self, query, **kw):
-        """Perform a query (search) and return the results.
+        """Perform a query (search) and return the result.
 
         :param query: ``dict`` search query to execute
         :param **kw: extra parameters passed directly to the
@@ -519,14 +519,14 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         # TODO: standardize all result collections returned by this class.
         try:
             result = self._search(query, **kw)
-            self._fix_hits_in_results(result)
+            self._fix_hits_in_result(result)
             self._report_and_fail_on_shard_failures(result)
         except ElasticsearchException as exc:
             raise ESError(exc)
         return result
 
     def _search(self, query, **kw):
-        """Perform a "low-level" search and return the raw results."""
+        """Perform a "low-level" search and return the raw result."""
         return self._es.search(self.index, self.type, query, **kw)
 
     def scroll(self, query, **kw):
@@ -549,7 +549,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         try:
             for result in self._scroll(query, **kw):
                 self._report_and_fail_on_shard_failures(result)
-                self._fix_hits_in_results(result)
+                self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
                     yield hit
         except ElasticsearchException as e:
@@ -563,7 +563,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param scroll: ``str`` duration to keep scroll context alive
         :param **kwargs: extra parameters passed directly to the underlying
                          ``elasticsearch.Elasticsearch.search()`` method.
-        :yields: ``dict``s of Elasticsearch results
+        :yields: ``dict``s of Elasticsearch result objects
 
         Providing a query with `size` specified as well as the `size` keyword
         argument is ambiguous, and Elastic docs do not say what happens when
@@ -602,22 +602,22 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         elif not (size_kw is None or size_qy is None):
             raise ValueError(f"size cannot be specified in both query and keyword "
                              f"arguments (query: {size_qy}, kw: {size_kw})")
-        results = self._search(query, scroll=scroll, **kwargs)
-        scroll_id = results.get("_scroll_id")
+        result = self._search(query, scroll=scroll, **kwargs)
+        scroll_id = result.get("_scroll_id")
         if scroll_id is None:
             return
         try:
-            yield results
+            yield result
             while True:
                 # Failure to add the `scroll` parameter here will cause the
                 # scroll context to terminate immediately after this request,
                 # resulting in this method fetching a maximum `size * 2`
                 # documents.
                 # see: https://stackoverflow.com/a/63911571
-                results = self._es.scroll(scroll_id, scroll=scroll)
-                scroll_id = results.get("_scroll_id")
-                yield results
-                if scroll_id is None or not results["hits"]["hits"]:
+                result = self._es.scroll(scroll_id, scroll=scroll)
+                scroll_id = result.get("_scroll_id")
+                yield result
+                if scroll_id is None or not result["hits"]["hits"]:
                     break
         finally:
             if scroll_id:
@@ -774,15 +774,15 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         if "_source" in hit:
             hit["_source"]["_id"] = hit["_id"]
 
-    def _fix_hits_in_results(self, results):
-        """Munge the ``results`` dict, conditionally modifying it.
+    def _fix_hits_in_result(self, result):
+        """Munge the ``result`` dict, conditionally modifying it.
 
-        :param results: ``dict`` of Elasticsearch result hits (or possibly
+        :param result: ``dict`` of Elasticsearch result hits (or possibly
                         something else)
         :returns: ``None``"""
         # TODO: standardize all result collections returned by this class.
         try:
-            hits = results["hits"]["hits"]
+            hits = result["hits"]["hits"]
         except KeyError:
             return
         for hit in hits:
