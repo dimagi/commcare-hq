@@ -331,7 +331,7 @@ class FormAction(DocumentSchema):
             yield 'name', action.name_path
         if 'case_name' in action_properties:
             yield 'name', action.case_name
-        if 'name_update' in action_properties and action.name_update:
+        if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
@@ -490,7 +490,7 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    # TODO: migrate this from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
+
     case_properties = SchemaDictProperty(ConditionalCaseUpdate)
 
     # case_indices = NotImplemented
@@ -1170,7 +1170,7 @@ class FormBase(DocumentSchema):
         raise NotImplementedError()
 
     def wrapped_xform(self):
-        return XForm(self.source)
+        return XForm(self.source, domain=self.get_app().domain)
 
     def validate_form(self):
         vc = self.get_validation_cache()
@@ -1240,7 +1240,7 @@ class FormBase(DocumentSchema):
 
     @memoized
     def render_xform(self, build_profile_id=None):
-        xform = XForm(self.source)
+        xform = XForm(self.source, domain=self.get_app().domain)
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
@@ -1259,7 +1259,7 @@ class FormBase(DocumentSchema):
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):
         try:
-            return XForm(self.source).get_questions(
+            return XForm(self.source, domain=self.get_app().domain).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
@@ -1299,7 +1299,7 @@ class FormBase(DocumentSchema):
             pass
 
     def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
+        source = XForm(self.source, domain=self.get_app().domain)
         if source.exists():
             source.rename_language(old_code, new_code)
             self.source = source.render().decode('utf-8')
@@ -3183,10 +3183,7 @@ class AdvancedModule(ModuleBase):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_update=ConditionalCaseUpdate(
-                        question_path=open.name_update.question_path,
-                        update_mode=open.name_update.update_mode,
-                    ),
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                     )
@@ -3222,7 +3219,7 @@ class AdvancedModule(ModuleBase):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
-                        name_update=ConditionalCaseUpdate(question_path=subcase.name_update.question_path),
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
@@ -5738,7 +5735,7 @@ class RemoteApp(ApplicationBase):
                 location, data = self.fetch_file(location)
                 if tag == 'xform' and langs_for_build:
                     try:
-                        xform = XForm(data)
+                        xform = XForm(data, domain=self.domain)
                     except XFormException as e:
                         raise XFormException('In file %s: %s' % (location, e))
                     xform.exclude_languages(whitelist=langs_for_build)
@@ -5761,7 +5758,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location).decode('utf-8'))
+                    xform = XForm(fetch(location).decode('utf-8'), domain=self.domain)
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions

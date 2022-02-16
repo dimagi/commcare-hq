@@ -258,12 +258,10 @@
                             "doc_type":"UpdateCaseAction",
                             "update":{  
                               "plays": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/plays",
                                 "update_mode": "always"
                               },
                               "artist": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/artist",
                                 "update_mode": "always"
                               }
@@ -415,12 +413,10 @@
                             "doc_type":"UpdateCaseAction",
                             "update":{  
                               "plays": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/new_plays",
                                 "update_mode": "always"
                               },
                               "last_played": {
-                                "doc_type": "SmartCaseUpdate",
                                 "question_path": "/data/today",
                                 "update_mode": "always"
                               }

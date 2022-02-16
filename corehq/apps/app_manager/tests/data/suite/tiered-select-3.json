@@ -582,7 +582,6 @@
                             },
                             "update": {
                                 "color": {
-                                  "doc_type": "SmartCaseUpdate",
                                   "question_path": "/data/color",
                                   "update_mode": "always"
                                 }

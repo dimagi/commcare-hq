@@ -67,7 +67,6 @@
               "doc_type": "UpdateCaseAction", 
               "update": {
                 "picproperty": {
-                  "doc_type": "SmartCaseUpdate",
                   "question_path": "/data/picproperty",
                   "update_mode": "always"
                 }

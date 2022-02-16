@@ -157,7 +157,7 @@ def save_xform(app, form, xml):
         return xform.render()
 
     try:
-        xform = XForm(xml)
+        xform = XForm(xml, domain=app.domain)
     except XFormException:
         pass
     else:
@@ -702,14 +702,18 @@ def extract_instance_id_from_nodeset_ref(nodeset):
 
 
 def wrap_transition_from_old_update_case_action(properties_dict):
+    """
+    This function assists wrap functions for changes to the FormActions and AdvancedFormActions models.
+    A modification of UpdateCaseAction to use a ConditionalCaseUpdate instead of a simple question path
+    was part of these changes. It also used as part of a follow-up migration.
+    """
     if(properties_dict):
         first_prop_value = list(properties_dict.values())[0]
         # If the dict just holds question paths (strings) as values we want to translate the old
         # type of UpdateCaseAction model to the new.
         if isinstance(first_prop_value, str):
-            old_dict_values = properties_dict
             new_dict_values = {}
-            for case_property, question_path in old_dict_values.items():
+            for case_property, question_path in properties_dict.items():
                 new_dict_values[case_property] = {
                     'question_path': question_path
                 }
