@@ -1357,6 +1357,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             DataTablesColumn(_("Scheduling Configuration")),
             DataTablesColumn(_("Recipient")),
             DataTablesColumn(_("Triggering Case")),
+            DataTablesColumn(_("Attempt Number"))
         )
 
     @property
@@ -1558,6 +1559,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_broadcast_display(schedule_instance),
                 self.get_recipient_display(schedule_instance.recipient),
                 '-',
+                schedule_instance.attempts + 1
             ]
         elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
             return [
@@ -1565,6 +1567,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_rule_display(schedule_instance.rule_id),
                 self.get_recipient_display(schedule_instance.recipient),
                 self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
+                schedule_instance.attempts + 1
             ]
         else:
             raise TypeError("Unexpected type: %s" % type(schedule_instance))
