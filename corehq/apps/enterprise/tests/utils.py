@@ -8,6 +8,8 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SoftwareProductRate,
     SoftwarePlanVersion,
+    Subscription,
+    BillingAccount,
 )
 from corehq.apps.accounting.tests import generator as accounting_gen
 from corehq.apps.accounting.tests import generator
@@ -94,3 +96,11 @@ def add_domains_to_enterprise_account(account, domains, plan_version, date_start
             plan_version=plan_version,
             is_active=True,
         )
+
+
+@unit_testing_only
+def cleanup_accounting():
+    Subscription.objects.all().delete()
+    BillingAccount.objects.all().delete()
+    SoftwarePlan.objects.all().delete()
+    SoftwarePlanVersion.objects.all().delete()

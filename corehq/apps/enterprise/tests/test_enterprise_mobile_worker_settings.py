@@ -8,6 +8,7 @@ from corehq.apps.enterprise.tests.utils import (
     get_enterprise_account,
     add_domains_to_enterprise_account,
     get_enterprise_software_plan,
+    cleanup_accounting,
 )
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
@@ -38,6 +39,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
         one_year_ago = add_months_to_date(today.date(), -12)
         enterprise_plan = get_enterprise_software_plan()
         cls.billing_account = get_enterprise_account()
+        cls.addClassCleanup(cleanup_accounting)
         cls.domains = [
             create_domain('test-emw-settings-001'),
             create_domain('test-emw-settings-002'),
