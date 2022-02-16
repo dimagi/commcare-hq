@@ -416,10 +416,6 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def settings(cls):
         return settings.ELASTIC_INDICES[cls.index_key].get("ADAPTER_SETTINGS", {})
 
-    @property
-    def query(self):
-        return self.query_class(self)
-
     @classmethod
     def transform(cls, doc):
         """Transform a Python model object into the json-serializable (``dict``)
