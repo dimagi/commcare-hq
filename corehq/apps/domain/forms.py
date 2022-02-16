@@ -100,6 +100,8 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
+    ProjectLimit,
+    ProjectLimitType,
     TransferDomainRequest,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -956,6 +958,19 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1,
     )
+    use_custom_gsheet_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom Google Sheet limit? Default is 20"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        )
+    )
+    gsheet_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed Google Sheets per user"),
+        required=False,
+        min_value=1,
+    )
     granted_messaging_access = forms.BooleanField(
         label="Enable Messaging",
         required=False,
@@ -1044,6 +1059,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('odata_feed_limit'),
                     data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
                 ),
+                crispy.Field(
+                    'use_custom_gsheet_limit',
+                    data_bind="value: use_custom_gsheet_limit",
+                ),
+                crispy.Div(
+                    crispy.Field('gsheet_limit'),
+                    data_bind="visible: use_custom_gsheet_limit() === 'Y'",
+                ),
                 'granted_messaging_access',
             ),
             crispy.Fieldset(
@@ -1065,7 +1088,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         return {
             'use_custom_auto_case_update_hour': self['use_custom_auto_case_update_hour'].value(),
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
-            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
+            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value(),
+            'use_custom_gsheet_limit': self['use_custom_gsheet_limit'].value()
         }
 
     def _get_user_or_fail(self, field):
@@ -1111,6 +1135,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         return value
 
+    def clean_gsheet_limit(self):
+        if self.cleaned_data.get('use_custom_gsheet_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('gsheet_limit')
+        if not value:
+            raise forms.ValidationError(_("Please specify a limit for Google Sheets"))
+
+        return value
+
     def clean(self):
         send_handoff_email = self.cleaned_data['send_handoff_email']
 
@@ -1129,6 +1163,28 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    "to send an email to the partner.").format(dimagi_user.username)
             self.add_error('dimagi_contact', msg)
 
+    def save_gsheet_limit(self, domain, limit_value):
+        try:
+            limit = ProjectLimit.objects.get(domain=domain)
+
+            if self.cleaned_data.get('use_custom_gsheet_limit') != 'Y':
+                limit.delete()
+            else:
+                limit.limit_value = limit_value
+                limit.save()
+
+            return limit
+
+        except ProjectLimit.DoesNotExist:
+            if self.cleaned_data.get('use_custom_gsheet_limit') != 'Y':
+                return None
+            else:
+                return ProjectLimit.objects.create(
+                    domain=domain,
+                    limit_type=ProjectLimitType.LIVE_GOOGLE_SHEETS,
+                    limit_value=limit_value,
+                )
+
     def save(self, domain):
         kwargs = {
             "workshop_region": self.cleaned_data["workshop_region"]
@@ -1136,6 +1192,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
+
+        self.save_gsheet_limit(domain, self.cleaned_data['gsheet_limit'])
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],

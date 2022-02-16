@@ -19,6 +19,7 @@ hqDefine("domain/js/internal_settings", [
         self.use_custom_auto_case_update_hour = ko.observable(initialValues.use_custom_auto_case_update_hour);
         self.use_custom_auto_case_update_limit = ko.observable(initialValues.use_custom_auto_case_update_limit);
         self.use_custom_odata_feed_limit = ko.observable(initialValues.use_custom_odata_feed_limit);
+        self.use_custom_gsheet_limit = ko.observable(initialValues.use_custom_gsheet_limit);
         return self;
     };
 
