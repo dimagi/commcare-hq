@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
+from corehq.apps.users.exceptions import AutoDeactivateUserException
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
     user_display_string,
@@ -187,3 +188,7 @@ class TestAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
+
+    def test_no_user_raises_exception(self):
+        with self.assertRaises(AutoDeactivateUserException):
+            auto_deactivate_commcare_user('fake-user', self.domain)
