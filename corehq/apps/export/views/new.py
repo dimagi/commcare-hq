@@ -59,6 +59,7 @@ class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
+    metric_name = None  # Override
     is_async = True
 
     @method_decorator(require_can_edit_data)
@@ -153,11 +154,10 @@ class BaseExportView(BaseProjectDataView):
 
         if not export._rev:
             # This is a new export
-            export_type = export.type.capitalize()
 
             track_workflow(
                 request.user.username,
-                f'{export_type} Export - Created Export',
+                f'{self.metric_name} - Created Export',
                 properties={'domain': self.domain}
             )
 
@@ -257,6 +257,7 @@ class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
+    metric_name = 'Form Export'
 
     @property
     @memoized
@@ -267,11 +268,10 @@ class CreateNewCustomFormExportView(BaseExportView):
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
-        from corehq.apps.export.views.list import FormExportListView
-        if self.report_class == FormExportListView:
-            track_workflow(username, 'Form Export - Clicked Add Export Popup', properties={
-                'domain': domain
-            })
+        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+            'domain': domain
+        })
+
         return export
 
     def get(self, request, *args, **kwargs):
@@ -294,6 +294,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
+    metric_name = 'Case Export'
 
     @property
     @memoized
@@ -305,11 +306,10 @@ class CreateNewCustomCaseExportView(BaseExportView):
 
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
-        from corehq.apps.export.views.list import CaseExportListView
-        if self.report_class == CaseExportListView:
-            track_workflow(username, 'Case Export - Clicked Add Export Popup', properties={
-                'domain': domain
-            })
+        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+            'domain': domain
+        })
+
         return export
 
     def get(self, request, *args, **kwargs):
@@ -329,29 +329,34 @@ class CreateNewCustomCaseExportView(BaseExportView):
 @location_safe
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
+    metric_name = 'Excel Dashboard Case Export'
     page_title = ugettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
 class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_feed_export'
+    metric_name = 'Excel Dashboard Form Export'
     page_title = ugettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
 class CreateNewDailySavedCaseExport(DailySavedExportMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_daily_saved_export'
+    metric_name = 'Daily Saved Case Export'
 
 
 @location_safe
 class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_faily_saved_export'
+    metric_name = 'Daily Saved Form Export'
 
 
 @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
+    metric_name = 'PowerBI Case Export'
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
         export_instance = super().create_new_export_instance(
@@ -368,6 +373,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
+    metric_name = 'PowerBI Form Export'
 
     def create_new_export_instance(self, schema, username, domain, export_settings=None):
         export_instance = super().create_new_export_instance(
