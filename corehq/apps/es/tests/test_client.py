@@ -1037,13 +1037,22 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
 
     def test__report_and_fail_on_shard_failures(self):
         result = self.adapter._search({})
+        # in case this test search actually had a shard failure...
+        result["_shards"] = {"failed": 0}
         self.adapter._report_and_fail_on_shard_failures(result)  # does not raise
+
+    def test__report_and_fail_on_shard_failures_raises_on_shard_failure(self):
         shard_result = {"failed": 5, "test": True}
         shard_exc_args = (f"_shards: {json.dumps(shard_result)}",)
+        result = self.adapter._search({})
         result["_shards"] = shard_result
         with self.assertRaises(ESShardFailure) as test:
             self.adapter._report_and_fail_on_shard_failures(result)
         self.assertEqual(test.exception.args, shard_exc_args)
+
+    def test__report_and_fail_on_shard_failures_with_invalid_result_raises_valueerror(self):
+        with self.assertRaises(ValueError):
+            self.adapter._report_and_fail_on_shard_failures([])
 
     def _index_many_new_docs(self, count, refresh=True):
         docs = []

@@ -789,11 +789,14 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """
         Raise an ESShardFailure if there are shard failures in a search result
         (JSON) and report to datadog.
-        The ``commcare.es.partial_results`` metric counts 1 per ES request with
-        any shard failure.
+        The ``commcare.es.partial_results`` metric counts 1 per Elastic request
+        with any shard failure.
+
+        :param result: Elasticsearch ``search`` or ``scroll`` result object
+        :raises: ``ESShardFailure``, ``ValueError``
         """
         if not isinstance(result, dict):
-            return
+            raise ValueError(f"invalid Elastic result object: {result}")
         if result.get("_shards", {}).get("failed"):
             metrics_counter("commcare.es.partial_results")
             # Example message:
