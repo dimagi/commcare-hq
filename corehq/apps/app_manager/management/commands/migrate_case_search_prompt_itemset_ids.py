@@ -5,6 +5,7 @@ from corehq.apps.app_manager.management.commands.helpers import (
 )
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.fixtures.fixturegenerators import ItemListsProvider
+from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
 
 
 class Command(AppMigrationCommandBase):
@@ -26,6 +27,9 @@ class Command(AppMigrationCommandBase):
                     prop['itemset'] = new_itemset
 
         return get_correct_app_class(app_doc).wrap(app_doc) if should_save else None
+
+    def get_domains(self):
+        return sorted(SYNC_SEARCH_CASE_CLAIM.get_enabled_domains())
 
 
 def wrap_itemset(data):
