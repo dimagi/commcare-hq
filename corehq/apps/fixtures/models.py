@@ -1,5 +1,4 @@
 from datetime import datetime
-from xml.etree import cElementTree as ElementTree
 
 from django.db import models
 
@@ -31,14 +30,12 @@ from corehq.apps.fixtures.exceptions import (
     FixtureVersionError,
 )
 from corehq.apps.fixtures.utils import (
-    clean_fixture_field_name,
     get_fields_without_attributes,
     remove_deleted_ownerships,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.util.xml_utils import serialize
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -93,7 +90,13 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
-        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True, descending=True)
+        return cls.view(
+            'fixtures/data_types_by_domain_tag',
+            key=[domain, tag],
+            reduce=False,
+            include_docs=True,
+            descending=True,
+        )
 
     @classmethod
     def fixture_tag_exists(cls, domain, tag):
@@ -245,7 +248,12 @@ class FixtureDataItem(Document):
     def add_owner(self, owner, owner_type, transaction=None):
         assert(owner.domain == self.domain)
         with transaction or CouchTransaction() as transaction:
-            o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
+            o = FixtureOwnership(
+                domain=self.domain,
+                owner_type=owner_type,
+                owner_id=owner.get_id,
+                data_item_id=self.get_id,
+            )
             transaction.save(o)
         return o
 
@@ -295,9 +303,11 @@ class FixtureDataItem(Document):
             if field.field_name in fields:
                 fields.remove(field)
             else:
-                raise FixtureTypeCheckError("field %s not in fixture data %s" % (field.field_name, self.get_id))
+                raise FixtureTypeCheckError(
+                    f"field {field.field_name} not in fixture data {self.get_id}")
         if fields:
-            raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
+            raise FixtureTypeCheckError(
+                f"fields {', '.join(fields)} from fixture data {self.get_id} not in fixture data type")
 
     def get_groups(self, wrap=True):
         group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
@@ -328,7 +338,11 @@ class FixtureDataItem(Document):
                 keys=list(group_ids),
                 include_docs=True)]
         if wrap:
-            return set(CommCareUser.view('_all_docs', keys=list(user_ids), include_docs=True)).union(*users_in_groups)
+            return set(CommCareUser.view(
+                '_all_docs',
+                keys=list(user_ids),
+                include_docs=True
+            )).union(*users_in_groups)
         else:
             return user_ids | set([user.get_id for user in users_in_groups])
 
@@ -362,9 +376,9 @@ class FixtureDataItem(Document):
 
         fixture_ids = set(
             FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=(make_keys('user', [user.user_id]) +
-                      make_keys('group', group_ids) +
-                      make_keys('location', loc_ids)),
+                keys=(make_keys('user', [user.user_id])
+                      + make_keys('group', group_ids)
+                      + make_keys('location', loc_ids)),
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )
