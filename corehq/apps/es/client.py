@@ -49,7 +49,7 @@ Document Adapters
 '''''''''''''''''
 
 Document adapters are created on a per-index basis and include specific
-properties and functionality necessary for maitaining a single type of "model"
+properties and functionality necessary for maintaining a single type of "model"
 document in a single index.  Each index in Elasticsearch needs to have a
 cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
 model is applied to that specific index.  At the very least, a document adapter
@@ -61,7 +61,7 @@ must define the following:
   documents used by the adapter.
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
-- a ``transform()`` classmethod which can convert a Python model object into the
+- A ``transform()`` classmethod which can convert a Python model object into the
   JSON-serializable format for writing into the adapter's index.
 
 The combination of ``(index_key, type)`` constrains the document adapter to
@@ -109,11 +109,13 @@ Using this adapter in practice might look as follows:
 .. code-block:: python
 
     adapter = ElasticBook()
+    # index new
     new_book = Book("978-1491946008", "Luciano Ramalho",
                     "Fluent Python: Clear, Concise, and Effective Programming",
                     datetime.datetime(2015, 2, 10))
     adapter.upsert(new_book)
-    read_again = adapter.fetch("978-0345391803")
+    # fetch existing
+    classic_book = adapter.fetch("978-0345391803")
 
 
 Code Documentation
@@ -188,7 +190,7 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def get_indices(self, full_info=False):
         """Return the cluster index information.
 
-        :param full_info: ``boolean`` whether to return the full index info
+        :param full_info: ``bool`` whether to return the full index info
                           (default ``False``)
         :returns: ``dict``"""
         feature = "" if full_info else "_aliases,_settings"
@@ -197,7 +199,7 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def get_aliases(self):
         """Return the cluster aliases information.
 
-        :returns: ``dict``"""
+        :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``"""
         aliases = {}
         for index, alias_info in self._es.indices.get_aliases().items():
             for alias in alias_info.get("aliases", {}):
@@ -224,15 +226,15 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def get_node_info(self, node_id, metric):
         """Return a specific metric from the node info for an Elasticsearch node.
 
-        :param node_id: ``string`` ID of the node
-        :param metric: ``string`` name of the metric to fetch
+        :param node_id: ``str`` ID of the node
+        :param metric: ``str`` name of the metric to fetch
         :returns: deserialized JSON (``dict``, ``list``, ``str``, etc)"""
         return self._es.nodes.info(node_id, metric)["nodes"][node_id][metric]
 
     def get_task(self, task_id):
         """Return the details for an active task
 
-        :param task_id: ``string`` ID of the task
+        :param task_id: ``str`` ID of the task
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
         # NOTE: elasticsearch5 python library doesn't support `task_id` as a
@@ -251,7 +253,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
                             only one task result and return the details for that
                             task only.  Setting to ``False`` changes the return
                             value, returning a dictionary of one or more tasks,
-                            keyed by their ``task_id`` (used for tests).
+                            keyed by their ``task_id`` (used for tests, but is
+                            not necessarily a "for testing only" feature).
         :returns: ``dict``
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
         tasks = {}
@@ -271,7 +274,7 @@ class ElasticManageAdapter(ElasticClientAdapter):
                 if cause["type"] == "resource_not_found_exception":
                     raise TaskMissing(cause)
         except (KeyError, IndexError):
-            # unexpected result format
+            # task info format is not what we expected
             pass
         raise TaskError(result)
 
@@ -323,12 +326,14 @@ class ElasticManageAdapter(ElasticClientAdapter):
         ensures that the alias is **only** assigned to one index at a time, and
         that (if present) an existing alias does not vanish momentarily.
 
+        See <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html>
+
         :param index: ``str`` name of the index to be aliased
         :param name: ``str`` name of the alias to assign to ``index``
         """
         self._validate_single_index(index)
         self._validate_single_index(name)
-        # remove the alias (if assigned) and (re)assign it in one atomic operation
+        # remove the alias (if assigned) and (re)assign it in a single request
         self._es.indices.update_aliases({"actions": [
             {"remove": {"index": "_all", "alias": name}},
             {"add": {"index": index, "alias": name}},
@@ -438,15 +443,15 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def exists(self, doc_id):
         """Check if a document exists for the provided ``doc_id``
 
-        :param doc_id: ID of the document to be checked
+        :param doc_id: ``str`` ID of the document to be checked
         :returns: ``bool``"""
         return self._es.exists(self.index, self.type, doc_id)
 
     def fetch(self, doc_id, source_includes=[]):
         """Return the document for the provided ``doc_id``
 
-        :param doc_id: ID of the document to be fetched
-        :param source_includes: A list of fields to extract and return
+        :param doc_id: ``str`` ID of the document to be fetched
+        :param source_includes: a list of fields to extract and return
         :returns: ``dict``"""
         kw = {"_source_include": source_includes} if source_includes else {}
         doc = self._es.get_source(self.index, self.type, doc_id, **kw)
@@ -474,7 +479,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def fetch_many(self, doc_ids):
         """Return multiple docs for the provided ``doc_ids``
 
-        :param doc_ids: iterable of document IDs
+        :param doc_ids: iterable of document IDs (``str``s)
         :returns: ``dict``"""
         docs = []
         result = self._mget({"ids": doc_ids})
@@ -491,7 +496,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def iter_fetch(self, doc_ids, chunk_size=100):
         """Return a generator which pulls queries documents in chunks.
 
-        :param doc_ids: iterable of document IDs
+        :param doc_ids: iterable of document IDs (``str``s)
         :param chunk_size: ``int`` number of documents to fetch per query
         :yields: ``dict`` documents"""
         # TODO: standardize all result collections returned by this class.
@@ -522,7 +527,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         return result
 
     def _search(self, query, **kw):
-        """Perform a "low-level" search and return the raw result."""
+        """Perform a "low-level" search and return the raw result. This is
+        split into a separate method for ease of testing the result format."""
         return self._es.search(self.index, self.type, query, **kw)
 
     def scroll(self, query, **kw):
@@ -561,21 +567,21 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
                          ``elasticsearch.Elasticsearch.search()`` method.
         :yields: ``dict``s of Elasticsearch result objects
 
-        Providing a query with `size` specified as well as the `size` keyword
-        argument is ambiguous, and Elastic docs do not say what happens when
-        `size` is provided both as a GET parameter _as well as_ part of the
-        query body. Real-world observations show that the GET parameter wins,
-        but to avoid ambiguity, specifying both in this function will raise a
-        ValueError.
+        Providing a query with ``size`` specified as well as the ``size``
+        keyword argument is ambiguous, and Elastic docs do not say what happens
+        when ``size`` is provided both as a GET parameter _as well as_ part of
+        the query body. Real-world observations show that the GET parameter
+        wins, but to avoid ambiguity, specifying both in this function will
+        raise a ``ValueError``.
 
         Read before using:
         - Scroll queries are not designed for real-time user requests.
         - Using aggregations with scroll queries may yield non-aggregated
           results.
         - The most efficient way to perform a scroll request is to sort by
-          `_doc`.
+          ``_doc``.
         - Scroll request results reflect the state of the index at the time the
-          initial `search` is requested. Changes to the index after that time
+          initial ``search`` is requested. Changes to the index after that time
           will not be reflected for the duration of the search context.
         - Open scroll search contexts can keep old index segments alive longer,
           which may require more disk space and file descriptor limits.
@@ -583,7 +589,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
           search contexts. Versions 2.4 and 5.6 do not specify what the default
           maximum limit is, or how to configure it. Version 7.14 specifies the
           default is 500 concurrent search contexts.
-        - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
+        - See <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html>
         """
         query = query.copy()
         query.setdefault("sort", "_doc")  # configure for efficiency if able
@@ -637,7 +643,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def update(self, doc_id, fields, refresh=False, **kw):
         """Update an existing document in Elasticsearch
 
-        :param doc_id: ID of the document to delete
+        :param doc_id: ``str`` ID of the document to update
         :param fields: ``dict`` of fields/values to update on the existing
                        Elastic doc
         :param refresh: ``bool`` refresh the effected shards to make this
@@ -659,7 +665,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def delete(self, doc_id, refresh=False):
         """Delete an existing document from Elasticsearch
 
-        :param doc_id: ID of the document to delete
+        :param doc_id: ``str`` ID of the document to delete
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search"""
         self._es.delete(self.index, self.type, doc_id,
@@ -667,18 +673,18 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     @staticmethod
     def _refresh_value(refresh):
-        """Translate a boolean refresh value into a string value expected by
-        Elasticsearch.
+        """Translate a boolean ``refresh`` argument value into a string value
+        expected by Elasticsearch.
 
         :param refresh: ``bool``
-        :returns: ``'true'`` or ``'false'``"""
+        :returns: ``str`` (one of ``'true'`` or ``'false'``)"""
         # valid Elasticsearch values are ["true", "false", "wait_for"]
         if refresh not in {True, False}:
             raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
         return "true" if refresh else "false"
 
     def bulk(self, actions, refresh=False, **kw):
-        """Use the Elasticsearch library's ``bulk`` helper function to process
+        """Use the Elasticsearch library's ``bulk()`` helper function to process
         documents en masse.
 
         :param actions: iterable of ``BulkActionItem`` instances
@@ -693,7 +699,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """Convenience method for bulk indexing many documents without the
         BulkActionItem boilerplate.
 
-        :param docs: iterable of (Python model) documents to index
+        :param docs: iterable of (Python model) documents to be indexed
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
@@ -742,7 +748,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     @staticmethod
     def _verify_doc_id(doc_id):
-        """Checks whether or not the provided ``doc_id`` is a valid value to
+        """Check whether or not the provided ``doc_id`` is a valid value to
         use as the ``_id`` for an Elasticsearch document.
 
         :param doc_id: value to check
@@ -752,7 +758,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     @staticmethod
     def _verify_doc_source(source):
-        """Checks whether or the not the provided ``source`` is valid for
+        """Check whether or the not the provided ``source`` is valid for
         passing to Elasticseach (does not contain any illegal meta properties).
 
         :param source: ``dict`` of document properties to check
@@ -864,7 +870,7 @@ class BulkActionItem:
         return self.op_type is self.INDEX
 
     def __repr__(self):
-        human_op = self.OP_TYPES.get(self.op_type, "???")  # to avoid KeyError
+        human_op = self.OP_TYPES.get(self.op_type, "???")  # avoid KeyError
         if self.doc_id is not None:
             doc_info = f"_id={self.doc_id!r}"
         else:
@@ -875,7 +881,7 @@ class BulkActionItem:
 def get_client(for_export=False):
     """Get an elasticsearch client instance.
 
-    :param for_export: (optional boolean) specifies whether the returned
+    :param for_export: (optional ``bool``) specifies whether the returned
                           client should be optimized for slow export queries.
     :returns: `elasticsearch.Elasticsearch` instance.
     """
@@ -886,16 +892,13 @@ def get_client(for_export=False):
 
 @memoized
 def _client_default():
-    """
-    Get a configured elasticsearch client instance.
-    """
+    """Get a configured elasticsearch client instance."""
     return _client()
 
 
 @memoized
 def _client_for_export():
-    """
-    Get an elasticsearch client with settings more tolerant of slow queries
+    """Get an elasticsearch client with settings more tolerant of slow queries
     (better suited for large exports).
     """
     return _client(
