@@ -127,36 +127,23 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if limit is not None:
             kwargs['limit'] = limit
 
-        if not include_shared:
-            result = cache_core.cached_view(
-                db,
-                "reportconfig/configs_by_domain",
-                reduce=False,
-                include_docs=True,
-                startkey=key,
-                endkey=key + [{}],
-                wrapper=cls.wrap,
-                **kwargs
-            )
-        else:
-            # Get user's own configs on domain
-            user_configs = cache_core.cached_view(
-                db,
-                "reportconfig/configs_by_domain",
-                reduce=False,
-                include_docs=False,
-                startkey=key,
-                endkey=key + [{}],
-                wrapper=cls.wrap,
-                **kwargs
-            )
-            user_configs = [c['id'] for c in user_configs]
-            # Include all shared configs
-            user_configs.extend(cls.shared_on_domain(domain, only_id=True))
+        configs = cache_core.cached_view(
+            db,
+            "reportconfig/configs_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=key,
+            endkey=key + [{}],
+            wrapper=cls.wrap,
+            **kwargs
+        )
 
-            result = [ReportConfig.get(id) for id in set(user_configs)]
+        if include_shared:
+            user_configs_ids = [c._id for c in configs]
+            shared_configs = [c for c in cls.shared_on_domain(domain) if c._id not in user_configs_ids]
+            configs = configs + shared_configs
 
-        return result
+        return configs
 
     @classmethod
     def shared_on_domain(cls, domain, only_id=False, stale=False):

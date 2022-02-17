@@ -321,17 +321,15 @@ class MySavedReportsView(BaseProjectReportSectionView):
             # Admin user should see ALL shared saved reports
             config_reports = ReportConfig.shared_on_domain(self.domain)
         else:
-            # The non-admin user should ONLY see his/her saved reports (ie ReportConfigs) which have been used
+            # The non-admin user should ONLY see their saved reports (ie ReportConfigs) which have been used
             # in a ReportNotification (not other users' ReportConfigs).
             [config_reports.extend(r.configs) for r in self.scheduled_reports]
 
-        good_configs = []
-        for config in config_reports:
-            if config.is_configurable_report and not config.configurable_report:
-                continue
-
-            good_configs.append(config.to_complete_json(lang=self.language))
-
+        good_configs = [
+            config.to_complete_json(lang=self.language)
+            for config in config_reports
+            if not (config.is_configurable_report and not config.configurable_report)
+        ]
         return good_configs
 
     def _report_sort_key(self):
@@ -720,14 +718,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         if self.scheduled_report_id and user.is_domain_admin(self.domain):
             return self.report_notification.configs
 
-        if user.is_domain_admin(self.domain):
-            report_configurations = ReportConfig.by_domain_and_owner(
-                self.domain,
-                user._id,
-                include_shared=True
-            )
-        else:
-            report_configurations = ReportConfig.by_domain_and_owner(self.domain, user._id)
+        report_configurations = ReportConfig.by_domain_and_owner(
+            self.domain,
+            user._id,
+            include_shared=user.is_domain_admin(self.domain)
+        )
 
         return [
             c for c in report_configurations

@@ -18,7 +18,7 @@ hqDefine("reports/js/saved_reports_main", [
         if ($configList.length) {
             $configList.koApplyBindings(reportConfigModels.reportConfigsViewModel({
                 items: initialPageData.get('configs'),
-                other_items: initialPageData.get('shared_saved_reports'),
+                sharedItems: initialPageData.get('shared_saved_reports'),
                 saveUrl: initialPageData.reverse("add_report_config"),
             }));
         }
