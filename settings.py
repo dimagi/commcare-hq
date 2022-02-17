@@ -600,6 +600,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
+    "malt_generation_queue": 6 * 60 * 60,
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
