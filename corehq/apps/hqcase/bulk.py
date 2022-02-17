@@ -16,16 +16,21 @@ class SystemFormMeta:
     xmlns: str = SYSTEM_FORM_XMLNS
 
     @classmethod
-    def for_script(cls, name, username):
-        user_id = username_to_user_id(username)
-        if not user_id:
-            raise Exception(f"User '{username}' not found")
+    def for_script(cls, name, username=None):
+        user_kwargs = {}
+        if username:
+            user_id = username_to_user_id(username)
+            if not user_id:
+                raise Exception(f"User '{username}' not found")
+            user_kwargs = {
+                'user_id': user_id,
+                'username': username,
+            }
 
         return cls(
-            user_id=user_id,
-            username=username,
             device_id=name,
             xmlns=f"http://commcarehq.org/script/{name.split('.')[-1]}",
+            **user_kwargs,
         )
 
 

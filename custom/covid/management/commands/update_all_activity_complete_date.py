@@ -56,7 +56,7 @@ class Command(BaseCommand):
                 domain=domain,
                 update_fn=_correct_bad_property,
                 case_ids=with_progress_bar(bad_case_ids, oneline=False),
-                form_meta=SystemFormMeta.for_script(__name__, options.get('username')),
+                form_meta=SystemFormMeta.for_script(__name__, options['username']),
                 throttle_secs=options['throttle_secs'],
             )
 
