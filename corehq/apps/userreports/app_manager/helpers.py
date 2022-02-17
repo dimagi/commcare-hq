@@ -70,7 +70,7 @@ def get_form_data_sources(app):
 
 
 def get_form_data_source(app, form):
-    xform = XForm(form.source)
+    xform = XForm(form.source, domain=app.domain)
     schema = FormExportDataSchema.generate_schema_from_builds(
         app.domain,
         app._id,

@@ -34,7 +34,6 @@ from casexml.apps.phone.data_providers.case.load_testing import (
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
@@ -64,17 +63,17 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
     """
 
     debug = logging.getLogger(__name__).debug
-    accessor = CaseAccessors(restore_state.domain)
+    domain = restore_state.domain
     owner_ids = list(restore_state.owner_ids)
 
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
             owned_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
-                restore_state.domain, owner_ids, closed=False)
+                domain, owner_ids, closed=False)
             debug("owned: %r", owned_ids)
 
-        live_ids, indices = get_live_case_ids_and_indices(restore_state.domain, owned_ids, timing_context)
+        live_ids, indices = get_live_case_ids_and_indices(domain, owned_ids, timing_context)
 
         if restore_state.last_sync_log:
             with timing_context("discard_already_synced_cases"):
@@ -85,18 +84,18 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
         restore_state.current_sync_log.case_ids_on_phone = live_ids
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
-            iaccessor = PrefetchIndexCaseAccessor(restore_state.domain, indices)
+            iaccessor = PrefetchIndexCaseAccessor(domain, indices)
             metrics_histogram(
                 'commcare.restore.case_load',
                 len(sync_ids),
                 'cases',
                 RESTORE_CASE_LOAD_BUCKETS,
                 tags={
-                    'domain': accessor.domain,
+                    'domain': domain,
                     'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
                 }
             )
-            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': accessor.domain})
+            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': domain})
             compile_response(
                 timing_context,
                 restore_state,

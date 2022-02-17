@@ -2051,6 +2051,14 @@ ERM_DEVELOPMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
+    'auto_deactivate_mobile_workers',
+    'Development flag for auto-deactivation of mobile workers. To be replaced '
+    'by a privilege.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
     'Allow limited fixtures to be available in case restore for SMS workflows.',
@@ -2148,4 +2156,16 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
     'Add ability to send a scheduled report hourly',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
+    'save-only-edited-form-fields',
+    'Save a form field only if the answer has been edited',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Addison Dunn',
+    description="""
+    Enable a checkbox for the ability to save a form question's answer in Case Management in App
+    Manager only if the question's inputted answer is different from the current value in the case.
+    """
 )

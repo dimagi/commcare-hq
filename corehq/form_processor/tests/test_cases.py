@@ -8,18 +8,20 @@ from django.db import router
 from django.test import TestCase
 
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachment,
     CaseTransaction,
     CommCareCase,
     CommCareCaseIndex,
-    XFormInstance,
 )
 from corehq.form_processor.models.cases import CaseIndexInfo
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_case,
+    create_case_with_index,
+    sharded,
+)
 from corehq.sql_db.routers import HINT_PLPROXY
 from corehq.sql_db.tests.utils import new_id_in_different_dbalias
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -129,6 +131,18 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         )
         self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
 
+    def test_get_last_modified_dates(self):
+        date1 = datetime(1992, 1, 30, 12, 0)
+        date2 = datetime(2015, 12, 28, 5, 48)
+        case1 = _create_case(server_modified_on=date1)
+        case2 = _create_case(server_modified_on=date2)
+        _create_case()
+
+        self.assertEqual(
+            CommCareCase.objects.get_last_modified_dates(DOMAIN, [case1.case_id, case2.case_id]),
+            {case1.case_id: date1, case2.case_id: date2}
+        )
+
     def test_get_case_xform_ids(self):
         form_id = uuid.uuid4().hex
         case = _create_case(form_id=form_id)
@@ -200,10 +214,9 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         )
 
     def test_get_deleted_case_ids_in_domain(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case1 = _create_case()
         case2 = _create_case()
-        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id])
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
         self.assertEqual(case_ids, [case2.case_id])
@@ -212,13 +225,12 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual(deleted, [case1.case_id])
 
     def test_get_deleted_case_ids_by_owner(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         user_id = uuid.uuid4().hex
         case1 = _create_case(user_id=user_id)
         case2 = _create_case(user_id=user_id)
         _create_case(user_id=user_id)
 
-        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
 
         case_ids = CommCareCase.objects.get_deleted_case_ids_by_owner(DOMAIN, user_id)
         self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
@@ -331,6 +343,36 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         with self.assertRaises(CaseSaveError):
             case.save(with_tracked_models=True)
 
+    def test_soft_delete_and_undelete(self):
+        _create_case(case_id='c1')
+        _create_case(case_id='c2')
+        _create_case(case_id='c3')
+
+        # delete
+        num = CommCareCase.objects.soft_delete_cases(DOMAIN, ['c1', 'c2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for case_id in ['c1', 'c2']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertTrue(case.is_deleted)
+            self.assertEqual(case.deletion_id, '123')
+
+        case = CommCareCase.objects.get_case('c3')
+        self.assertFalse(case.is_deleted)
+
+        # undelete
+        num = CommCareCase.objects.soft_undelete_cases(DOMAIN, ['c2'])
+        self.assertEqual(num, 1)
+
+        case = CommCareCase.objects.get_case('c1')
+        self.assertTrue(case.is_deleted)
+        self.assertEqual(case.deletion_id, '123')
+
+        for case_id in ['c2', 'c3']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertFalse(case.is_deleted, case_id)
+            self.assertIsNone(case.deletion_id, case_id)
+
     def test_hard_delete_cases(self):
         case1 = _create_case()
         case2 = _create_case(domain='other_domain')
@@ -361,6 +403,38 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
         self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
+
+
+@sharded
+class TestCommCareCase(BaseCaseManagerTest):
+
+    def test_closed_transactions(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        self.assertEqual(len(case.get_closing_transactions()), 1)
+        self.assertTrue(case.get_closing_transactions()[0].is_case_close)
+
+    def test_closed_transactions_with_tracked(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
+            revoked=True
+        ))
+        # exclude based on type
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            revoked=False
+        ))
+        self.assertEqual(len(case.get_closing_transactions()), 2)
 
 
 @sharded
@@ -630,61 +704,20 @@ class TestCaseTransactionManager(BaseCaseManagerTest):
         self.assertFalse(CaseTransaction.objects.case_has_transactions_since_sync(
             case1.case_id, "foo", datetime.utcnow()))
 
+    def test_exists_for_form(self):
+        self.assertFalse(CaseTransaction.objects.exists_for_form('missing-form'))
 
-def _create_case(
-    domain=DOMAIN,
-    *,
-    form_id=None,
-    case_id=None,
-    case_type=None,
-    user_id='user1',
-    **case_args,
-):
-    """Create case and related models directly (not via form processor)
-
-    :return: CommCareCase
-    """
-    form_id = form_id or uuid.uuid4().hex
-    case_id = case_id or uuid.uuid4().hex
-    utcnow = datetime.utcnow()
-    form = XFormInstance(
-        form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
-        received_on=utcnow,
-        user_id=user_id,
-        domain=domain
-    )
-    case = CommCareCase(
-        case_id=case_id,
-        domain=domain,
-        type=case_type or '',
-        owner_id=user_id,
-        opened_on=utcnow,
-        modified_on=utcnow,
-        modified_by=user_id,
-        server_modified_on=utcnow,
-        **case_args
-    )
-    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
-    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
-    return case
+        case = _create_case()
+        for form_id in _create_case_transactions(case):
+            self.assertTrue(CaseTransaction.objects.exists_for_form(form_id))
 
 
-def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
-                            case_type='child'):
-    case = _create_case(case_type=case_type)
-    case.deleted = case_is_deleted
-    index = CommCareCaseIndex(
-        case=case,
-        identifier=identifier,
-        referenced_type=referenced_type,
-        referenced_id=referenced_case_id,
-        relationship_id=relationship_id
-    )
-    case.track_create(index)
-    case.save(with_tracked_models=True)
-    return case, index
+def _create_case(domain=DOMAIN, **kw):
+    return create_case(domain, save=True, **kw)
+
+
+def _create_case_with_index(*args, **kw):
+    return create_case_with_index(DOMAIN, save=True, *args, **kw)
 
 
 def _create_case_transactions(case, all_forms=False):
