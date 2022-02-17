@@ -56,22 +56,30 @@ def get_actions_in_domain_link_history(link):
     ))
 
 
-def get_available_domains_to_link(upstream_domain_name, user):
+def get_available_domains_to_link(upstream_domain, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    :param upstream_domain_name: potential upstream domain candidate
+    :param upstream_domain: name of upstream domain candidate
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    is_enterprise = domain_is_enterprise(upstream_domain_name)
-    if is_enterprise and domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_enterprise(upstream_domain_name, user)
-    elif domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT) or \
-            domain_has_privilege(upstream_domain_name, LITE_RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=True)
-    elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin=False)
+    available_domains = []
 
+    if domain_is_enterprise(upstream_domain) and domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT):
+        available_domains.extend(get_available_domains_to_link_for_enterprise(upstream_domain, user))
+
+    if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(upstream_domain, LITE_RELEASE_MANAGEMENT):
+        available_domains.extend(
+            get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=True)
+        )
+
+    if available_domains:
+        return available_domains
+
+    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
+    if toggles.LINKED_DOMAINS.enabled(upstream_domain):
+        return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=False)
     return []
 
 
@@ -97,19 +105,28 @@ def get_available_domains_to_link_for_user(upstream_domain_name, user, should_en
 def get_available_upstream_domains(downstream_domain, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    :param downstream_domain: potential upstream domain candidate
+    :param downstream_domain: name of downstream domain in potential links
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    is_enterprise = domain_is_enterprise(downstream_domain)
-    if is_enterprise and domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_enterprise(downstream_domain, user)
-    elif domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
-            domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
-    elif toggles.LINKED_DOMAINS.enabled(downstream_domain):
-        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
+    upstream_domains = []
+    if domain_is_enterprise(downstream_domain) and domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
+        upstream_domains.extend(
+            get_available_upstream_domains_for_enterprise(downstream_domain, user)
+        )
 
+    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
+        upstream_domains.extend(
+            get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
+        )
+
+    if upstream_domains:
+        return upstream_domains
+
+    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
+    if toggles.LINKED_DOMAINS.enabled(downstream_domain):
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
     return []
 
 
