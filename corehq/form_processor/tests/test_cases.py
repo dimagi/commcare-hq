@@ -7,19 +7,23 @@ from django.conf import settings
 from django.db import router
 from django.test import TestCase
 
-from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
-from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachment,
     CaseTransaction,
     CommCareCase,
     CommCareCaseIndex,
-    XFormInstance,
 )
 from corehq.form_processor.models.cases import CaseIndexInfo
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_case,
+    create_case_with_index,
+    sharded,
+)
 from corehq.sql_db.routers import HINT_PLPROXY
+from corehq.sql_db.tests.utils import new_id_in_different_dbalias
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 DOMAIN = 'test-case-accessor'
@@ -84,6 +88,39 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         result = CommCareCase.objects.iter_cases(case_ids, DOMAIN)
         self.assertEqual({r.case_id for r in result}, {case1.case_id, case2.case_id})
 
+    def test_get_case_by_external_id(self):
+        case1 = _create_case(external_id='123')
+        case2 = _create_case(domain='d2', case_type='t1', external_id='123')
+        if settings.USE_PARTITIONED_DATABASE:
+            self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('d2'))
+
+        case = CommCareCase.objects.get_case_by_external_id(DOMAIN, '123')
+        self.assertEqual(case.case_id, case1.case_id)
+
+        case = CommCareCase.objects.get_case_by_external_id('d2', '123')
+        self.assertEqual(case.case_id, case2.case_id)
+
+        case = CommCareCase.objects.get_case_by_external_id('d2', '123', case_type='t2')
+        self.assertIsNone(case)
+
+    def test_get_case_by_external_id_with_multiple_results(self):
+        case1_id = uuid.uuid4().hex
+        case2_id = new_id_in_different_dbalias(case1_id)  # raises SkipTest on non-sharded db
+        _create_case(case_id=case1_id, external_id='123')
+        _create_case(case_id=case2_id, external_id='123')
+
+        with self.assertRaises(CommCareCase.MultipleObjectsReturned) as context:
+            CommCareCase.objects.get_case_by_external_id(DOMAIN, '123', raise_multiple=True)
+        case_ids = {c.case_id for c in context.exception.cases}
+        self.assertEqual(case_ids, {case1_id, case2_id})
+
+        # This gets a random case from the set of matching cases.
+        # Code exists that uses this feature, but it is not part
+        # of a formal specification known to the test author.
+        # It may be better/safer to always raise multiple results.
+        case = CommCareCase.objects.get_case_by_external_id(DOMAIN, '123')
+        self.assertIn(case.case_id, {case1_id, case2_id})
+
     def test_get_case_ids_that_exist(self):
         case1 = _create_case()
         case2 = _create_case()
@@ -93,6 +130,18 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
             ['missing_case', case1.case_id, case2.case_id]
         )
         self.assertItemsEqual(case_ids, [case1.case_id, case2.case_id])
+
+    def test_get_last_modified_dates(self):
+        date1 = datetime(1992, 1, 30, 12, 0)
+        date2 = datetime(2015, 12, 28, 5, 48)
+        case1 = _create_case(server_modified_on=date1)
+        case2 = _create_case(server_modified_on=date2)
+        _create_case()
+
+        self.assertEqual(
+            CommCareCase.objects.get_last_modified_dates(DOMAIN, [case1.case_id, case2.case_id]),
+            {case1.case_id: date1, case2.case_id: date2}
+        )
 
     def test_get_case_xform_ids(self):
         form_id = uuid.uuid4().hex
@@ -124,6 +173,90 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         bambi.save(with_tracked_models=True)
         cases = CommCareCase.objects.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
         self.assertEqual([c.case_id for c in cases], [bambi.case_id])
+
+    def test_get_case_by_location(self):
+        case = _create_case(case_type=SUPPLY_POINT_CASE_TYPE)
+        location_id = uuid.uuid4().hex
+        case.location_id = location_id
+        case.save(with_tracked_models=True)
+
+        fetched_case = CommCareCase.objects.get_case_by_location(DOMAIN, location_id)
+        self.assertEqual(case.id, fetched_case.id)
+
+    def test_get_case_ids_in_domain(self):
+        case1 = _create_case(case_type='t1')
+        case2 = _create_case(case_type='t1')
+        case3 = _create_case(case_type='t2')
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual({case1.case_id, case2.case_id, case3.case_id}, set(case_ids))
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, 't1')
+        self.assertEqual({case1.case_id, case2.case_id}, set(case_ids))
+
+        case2.domain = 'new_domain'
+        case2.save(with_tracked_models=True)
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual({case1.case_id, case3.case_id}, set(case_ids))
+
+    def test_get_open_case_ids_in_domain_by_type(self):
+        case1 = _create_case(user_id="user1", case_type='t1')
+        case2 = _create_case(user_id="user1", case_type='t1')
+        _create_case(user_id="user1", case_type='t1', closed=True)
+        _create_case(user_id="user2", case_type='t1')
+        _create_case(user_id="user1", case_type='t2')
+
+        case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', ["user1"])
+        self.assertEqual(
+            set(case_ids),
+            {case1.case_id, case2.case_id}
+        )
+
+    def test_get_deleted_case_ids_in_domain(self):
+        case1 = _create_case()
+        case2 = _create_case()
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id])
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual(case_ids, [case2.case_id])
+
+        deleted = CommCareCase.objects.get_deleted_case_ids_in_domain(DOMAIN)
+        self.assertEqual(deleted, [case1.case_id])
+
+    def test_get_deleted_case_ids_by_owner(self):
+        user_id = uuid.uuid4().hex
+        case1 = _create_case(user_id=user_id)
+        case2 = _create_case(user_id=user_id)
+        _create_case(user_id=user_id)
+
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+
+        case_ids = CommCareCase.objects.get_deleted_case_ids_by_owner(DOMAIN, user_id)
+        self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
+
+    def test_get_case_ids_in_domain_by_owners(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3")
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(DOMAIN, ["user1", "user3"])
+        self.assertEqual(set(case_ids), set([case1.case_id, case2.case_id, case4.case_id]))
+
+    def test_get_case_ids_in_domain_by_owners_closed(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1", closed=True)
+        case3 = _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3", closed=True)
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            DOMAIN, ["user1", "user3"], closed=True)
+        self.assertEqual(set(case_ids), set([case2.case_id, case4.case_id]))
+
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            DOMAIN, ["user1", "user2", "user3"], closed=False)
+        self.assertEqual(set(case_ids), set([case1.case_id, case3.case_id]))
 
     def test_save_case_update_index(self):
         case = _create_case()
@@ -210,8 +343,37 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         with self.assertRaises(CaseSaveError):
             case.save(with_tracked_models=True)
 
+    def test_soft_delete_and_undelete(self):
+        _create_case(case_id='c1')
+        _create_case(case_id='c2')
+        _create_case(case_id='c3')
+
+        # delete
+        num = CommCareCase.objects.soft_delete_cases(DOMAIN, ['c1', 'c2'], deletion_id='123')
+        self.assertEqual(num, 2)
+
+        for case_id in ['c1', 'c2']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertTrue(case.is_deleted)
+            self.assertEqual(case.deletion_id, '123')
+
+        case = CommCareCase.objects.get_case('c3')
+        self.assertFalse(case.is_deleted)
+
+        # undelete
+        num = CommCareCase.objects.soft_undelete_cases(DOMAIN, ['c2'])
+        self.assertEqual(num, 1)
+
+        case = CommCareCase.objects.get_case('c1')
+        self.assertTrue(case.is_deleted)
+        self.assertEqual(case.deletion_id, '123')
+
+        for case_id in ['c2', 'c3']:
+            case = CommCareCase.objects.get_case(case_id)
+            self.assertFalse(case.is_deleted, case_id)
+            self.assertIsNone(case.deletion_id, case_id)
+
     def test_hard_delete_cases(self):
-        from ..backends.sql.dbaccessors import CaseAccessorSQL
         case1 = _create_case()
         case2 = _create_case(domain='other_domain')
         self.addCleanup(lambda: CommCareCase.objects.hard_delete_cases('other_domain', [case2.case_id]))
@@ -240,7 +402,39 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
 
         self.assertEqual([], CommCareCaseIndex.objects.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
+        self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
+
+
+@sharded
+class TestCommCareCase(BaseCaseManagerTest):
+
+    def test_closed_transactions(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        self.assertEqual(len(case.get_closing_transactions()), 1)
+        self.assertTrue(case.get_closing_transactions()[0].is_case_close)
+
+    def test_closed_transactions_with_tracked(self):
+        case = _create_case()
+        _create_case_transactions(case)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE,
+            revoked=True
+        ))
+        # exclude based on type
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            revoked=False
+        ))
+        self.assertEqual(len(case.get_closing_transactions()), 2)
 
 
 @sharded
@@ -397,63 +591,143 @@ class TestCommCareCaseIndexManager(BaseCaseManagerTest):
             }
         )
 
+    def test_get_extension_case_ids(self):
+        # There are similar tests for get_extension_case_ids in the
+        # `.test_extension_cases` module, but none that replicate this
+        # one precisely. This one may also be better because it creates
+        # models directly rather creating cases by constructing and
+        # processing form XML.
 
-def _create_case(domain=DOMAIN, form_id=None, case_type=None, user_id='user1', closed=False, case_id=None):
-    """Create case and related models directly (not via form processor)
+        # Create case and index
+        referenced_id = uuid.uuid4().hex
+        case, _ = _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndex.EXTENSION)
 
-    :return: CommCareCase
-    """
-    form_id = form_id or uuid.uuid4().hex
-    case_id = case_id or uuid.uuid4().hex
-    utcnow = datetime.utcnow()
-    form = XFormInstance(
-        form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
-        received_on=utcnow,
-        user_id=user_id,
-        domain=domain
-    )
-    case = CommCareCase(
-        case_id=case_id,
-        domain=domain,
-        type=case_type or '',
-        owner_id=user_id,
-        opened_on=utcnow,
-        modified_on=utcnow,
-        modified_by=user_id,
-        server_modified_on=utcnow,
-        closed=closed or False
-    )
-    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
-    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
-    return case
+        # Create irrelevant cases
+        _create_case_with_index(referenced_id)
+        _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndex.EXTENSION, case_is_deleted=True)
+
+        self.assertEqual(
+            CommCareCaseIndex.objects.get_extension_case_ids(DOMAIN, [referenced_id]),
+            [case.case_id],
+        )
 
 
-def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndex.CHILD, case_is_deleted=False,
-                            case_type='child'):
-    case = _create_case(case_type=case_type)
-    case.deleted = case_is_deleted
-    index = CommCareCaseIndex(
-        case=case,
-        identifier=identifier,
-        referenced_type=referenced_type,
-        referenced_id=referenced_case_id,
-        relationship_id=relationship_id
-    )
-    case.track_create(index)
-    case.save(with_tracked_models=True)
-    return case, index
+class TestCaseTransactionManager(BaseCaseManagerTest):
+
+    def test_get_transactions(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+        transactions = CaseTransaction.objects.get_transactions(case.case_id)
+        self.assertEqual(1, len(transactions))
+        self.assertEqual(form_id, transactions[0].form_id)
+
+        form_ids = _create_case_transactions(case, all_forms=True)
+
+        transactions = CaseTransaction.objects.get_transactions(case.case_id)
+        self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
+        self.assertEqual(len(transactions), 6)
+
+    def test_get_transaction_by_form_id(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseTransaction.objects.get_transaction_by_form_id(case.case_id, form_id)
+        self.assertEqual(form_id, transaction.form_id)
+        self.assertEqual(case.case_id, transaction.case_id)
+
+        transaction = CaseTransaction.objects.get_transaction_by_form_id(case.case_id, 'wrong')
+        self.assertIsNone(transaction)
+
+    def test_get_most_recent_form_transaction(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        self.assertEqual(transaction.form_id, form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED,
+            revoked=False
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # still the same since the last transaction was not a form transaction
+        self.assertEqual(transaction.form_id, form_id)
+
+        second_form_id = uuid.uuid4().hex
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=second_form_id,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=False
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # now it's the new form transaction
+        self.assertEqual(transaction.form_id, second_form_id)
+
+        case.track_create(CaseTransaction(
+            case=case,
+            form_id=uuid.uuid4().hex,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM,
+            revoked=True
+        ))
+        case.save(with_tracked_models=True)
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(case.case_id)
+        # still second_form_id since the newest one is revoked
+        self.assertEqual(transaction.form_id, second_form_id)
+
+    def test_get_transactions_for_case_rebuild(self):
+        form_id = uuid.uuid4().hex
+        case = _create_case(form_id=form_id)
+        form_ids = _create_case_transactions(case)
+
+        transactions = CaseTransaction.objects.get_transactions_for_case_rebuild(case.case_id)
+        self.assertEqual({t.form_id for t in transactions}, {form_id} | form_ids)
+        self.assertEqual(4, len(transactions))
+
+    def test_case_has_transactions_since_sync(self):
+        case1 = _create_case()
+        _create_case_transactions(case1)
+        self.assertTrue(CaseTransaction.objects.case_has_transactions_since_sync(
+            case1.case_id, "foo", datetime(1992, 1, 30)))
+        self.assertFalse(CaseTransaction.objects.case_has_transactions_since_sync(
+            case1.case_id, "foo", datetime.utcnow()))
+
+    def test_exists_for_form(self):
+        self.assertFalse(CaseTransaction.objects.exists_for_form('missing-form'))
+
+        case = _create_case()
+        for form_id in _create_case_transactions(case):
+            self.assertTrue(CaseTransaction.objects.exists_for_form(form_id))
 
 
-def _create_case_transactions(case):
+def _create_case(domain=DOMAIN, **kw):
+    return create_case(domain, save=True, **kw)
+
+
+def _create_case_with_index(*args, **kw):
+    return create_case_with_index(DOMAIN, save=True, *args, **kw)
+
+
+def _create_case_transactions(case, all_forms=False):
     TX = CaseTransaction
     traces = [
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CREATE | TX.TYPE_LEDGER),
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_LEDGER),
         CaseTransactionTrace(TX.TYPE_FORM | TX.TYPE_CASE_CLOSE),
-        CaseTransactionTrace(TX.TYPE_FORM, revoked=True, include=False),  # excluded because revoked
-        CaseTransactionTrace(TX.TYPE_REBUILD_FORM_ARCHIVED, include=False),  # excluded based on type
+        CaseTransactionTrace(TX.TYPE_FORM, revoked=True, include=all_forms),  # excluded because revoked
+        CaseTransactionTrace(TX.TYPE_REBUILD_FORM_ARCHIVED, include=all_forms),  # excluded based on type
     ]
     for trace in traces:
         case.track_create(CaseTransaction(

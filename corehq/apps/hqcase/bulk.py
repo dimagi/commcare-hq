@@ -1,7 +1,7 @@
 import time
 from xml.etree import cElementTree as ElementTree
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 from .utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 
@@ -50,9 +50,8 @@ def update_cases(domain, update_fn, case_ids, user_id, device_id, throttle_secs=
     update_fn should be a function which accepts a case and returns a CaseBlock
     if an update is to be performed, or None to skip the case.
     """
-    accessor = CaseAccessors(domain)
     with CaseBulkDB(domain, user_id, device_id, throttle_secs) as bulk_db:
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids):
             case_block = update_fn(case)
             if case_block:
                 bulk_db.save(case_block)

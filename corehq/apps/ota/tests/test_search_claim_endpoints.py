@@ -26,7 +26,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
@@ -327,14 +326,14 @@ class CaseClaimEndpointTests(TestCase):
         """
         A claim case request should create an extension case
         """
-        self.assertEqual(len(CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)), 0)
 
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
         client.post(url, {'case_id': self.case_id})
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
         claim = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim.owner_id, self.user.get_id)
@@ -388,7 +387,7 @@ class CaseClaimEndpointTests(TestCase):
             'commcare_login_as': other_user_username
         })
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
         claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
@@ -412,7 +411,7 @@ class CaseClaimEndpointTests(TestCase):
             'commcare_login_as': other_user_username
         })
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
         claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
@@ -424,7 +423,7 @@ class CaseClaimEndpointTests(TestCase):
         })
 
         # We've now created two claims
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 2)
 
         # The most recent one should be the extension owned by the other user

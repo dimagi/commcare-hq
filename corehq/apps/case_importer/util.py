@@ -17,7 +17,6 @@ from corehq.apps.case_importer.exceptions import (
     ImporterRefError,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.util.workbook_reading import (
     SpreadsheetFileEncrypted,
@@ -140,34 +139,27 @@ class WorksheetWrapper(object):
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
-    Attempt to find the case in CouchDB by the provided search_field and search_id.
+    Attempt to find the case by the provided search_field and search_id.
 
     Returns a tuple with case (if found) and an
     error code (if there was an error in lookup).
     """
-    found = False
-    case_accessors = CaseAccessors(domain)
     if search_field == 'case_id':
         try:
             case = CommCareCase.objects.get_case(search_id, domain)
-            if case.domain == domain and case.type == case_type:
-                found = True
+            if case.type == case_type:
+                return (case, None)
         except CaseNotFound:
             pass
     elif search_field == EXTERNAL_ID:
-        cases_by_type = case_accessors.get_cases_by_external_id(search_id, case_type=case_type)
-        if not cases_by_type:
-            return (None, LookupErrors.NotFound)
-        elif len(cases_by_type) > 1:
+        try:
+            case = CommCareCase.objects.get_case_by_external_id(
+                domain, search_id, case_type=case_type, raise_multiple=True)
+        except CommCareCase.MultipleObjectsReturned:
             return (None, LookupErrors.MultipleResults)
-        else:
-            case = cases_by_type[0]
-            found = True
-
-    if found:
-        return (case, None)
-    else:
-        return (None, LookupErrors.NotFound)
+        if case is not None:
+            return (case, None)
+    return (None, LookupErrors.NotFound)
 
 
 def open_spreadsheet_download_ref(filename):

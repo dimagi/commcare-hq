@@ -8,7 +8,6 @@ from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 
 
@@ -46,13 +45,13 @@ class Command(CaseUpdateCommand):
         ).as_xml()).decode('utf-8')
 
     def update_cases(self, domain, case_type, user_id):
-        accessor = CaseAccessors(domain)
         location_id = self.extra_options['location']
         if location_id is None:
             case_ids = []
             print("Warning: no active location was entered")
         else:
-            case_ids = accessor.get_open_case_ids_in_domain_by_type(case_type, owner_ids=[location_id])
+            case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+                domain, case_type, owner_ids=[location_id])
 
         case_blocks = []
         errors = []

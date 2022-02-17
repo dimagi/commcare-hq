@@ -145,9 +145,9 @@ class TestBlockedHubspotData(TestCase):
         cls.blocked_commcare_user.save()
 
     def test_get_blocked_domains(self):
-        self.assertListEqual(
-            get_blocked_hubspot_domains(),
-            [self.blocked_domain.name, self.second_blocked_domain.name]
+        self.assertEqual(
+            set(get_blocked_hubspot_domains()),
+            {self.blocked_domain.name, self.second_blocked_domain.name}
         )
 
     def test_get_blocked_hubspot_accounts(self):

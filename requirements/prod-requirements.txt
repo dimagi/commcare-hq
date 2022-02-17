@@ -56,8 +56,6 @@ cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
-    # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
 cryptography==3.4.8
@@ -85,7 +83,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==2.2.25
+django==2.2.27
     # via
     #   -r base-requirements.in
     #   django-angular
@@ -360,7 +358,7 @@ pycryptodome==3.10.1
     # via -r base-requirements.in
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.8.1
+pygments==2.11.2
     # via
     #   -r base-requirements.in
     #   ipython
@@ -540,7 +538,7 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.0.1
+typing-extensions==4.1.1
     # via black
 ua-parser==0.10.0
     # via user-agents
@@ -574,9 +572,9 @@ xlwt==1.3.0
     # via -r base-requirements.in
 xmlsec==1.3.11
     # via python3-saml
-zope.event==4.5.0
+zope-event==4.5.0
     # via gevent
-zope.interface==5.4.0
+zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -590,5 +588,5 @@ setuptools==50.3.0
     #   ipython
     #   jsonschema
     #   protobuf
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface

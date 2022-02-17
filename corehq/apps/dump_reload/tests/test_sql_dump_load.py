@@ -37,7 +37,6 @@ from corehq.apps.zapier.signals.receivers import (
 )
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndex,
@@ -173,7 +172,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def setUpClass(cls):
         super(TestSQLDumpLoadShardedModels, cls).setUpClass()
         cls.factory = CaseFactory(domain=cls.domain_name)
-        cls.case_accessors = CaseAccessors(cls.domain_name)
         cls.product = make_product(cls.domain_name, 'A Product', 'prodcode_a')
         cls.default_objects_counts.update({SQLProduct: 1})
 
@@ -216,17 +214,16 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self._load(stream, expected_object_counts)
 
         domain = "d47de5734d2c4670a8c294b51788075f"
-        with mock.patch.object(self.case_accessors, "domain", domain):
-            form_ids = XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormInstance')
-            self.assertEqual(set(form_ids), {
-                '580987967edf45169574193f844e97dc',
-                '56e8ba18e6ab407c862309f421930a7c',
-            })
-            case_ids = self.case_accessors.get_case_ids_in_domain()
-            self.assertEqual(set(case_ids), {
-                '1ff125c3ad39412891a7be47a590cd5d',
-                'f9e768d36ca34a5a95dca40a75488863',
-            })
+        form_ids = XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormInstance')
+        self.assertEqual(set(form_ids), {
+            '580987967edf45169574193f844e97dc',
+            '56e8ba18e6ab407c862309f421930a7c',
+        })
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain)
+        self.assertEqual(set(case_ids), {
+            '1ff125c3ad39412891a7be47a590cd5d',
+            'f9e768d36ca34a5a95dca40a75488863',
+        })
 
     def test_sql_dump_load_case(self):
         expected_object_counts = Counter({
@@ -253,7 +250,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
-        case_ids = self.case_accessors.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain_name)
         self.assertEqual(set(case_ids), set(case.case_id for case in pre_cases))
         for pre_case in pre_cases:
             post_case = CommCareCase.objects.get_case(pre_case.case_id, self.domain_name)

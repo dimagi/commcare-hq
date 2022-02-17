@@ -12,7 +12,6 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -44,8 +43,6 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         self.mobile_worker = CommCareUser.create(self.domain, username, "123", None, None)
         sync_usercases(self.mobile_worker, self.domain)
 
-        self.case_accessor = CaseAccessors(self.domain)
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         delete_all_users()
@@ -66,7 +63,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         return checkin_case
 
     def close_all_usercases(self):
-        usercase_ids = self.case_accessor.get_case_ids_in_domain(type=USERCASE_TYPE)
+        usercase_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain, USERCASE_TYPE)
         for usercase_id in usercase_ids:
             CaseFactory(self.domain).close_case(usercase_id)
             usercase = CommCareCase.objects.get_case(usercase_id, self.domain)

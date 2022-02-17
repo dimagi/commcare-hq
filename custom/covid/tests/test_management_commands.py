@@ -17,7 +17,6 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -32,8 +31,6 @@ class CaseCommandsTest(TestCase):
 
         cls.domain_obj = create_domain(cls.domain)
         enable_usercase(cls.domain)
-
-        cls.case_accessor = CaseAccessors(cls.domain)
 
         cls.mobile_worker = CommCareUser.create(cls.domain, "username", "p@ssword123", None, None)
         cls.user_id = cls.mobile_worker.user_id
@@ -283,7 +280,7 @@ class CaseCommandsTest(TestCase):
         )
 
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        assignment_cases = CommCareCase.objects.get_case_ids_in_domain(self.domain, "assignment")
         self.assertEqual(len(assignment_cases), 1)
         self.assertEqual(
             CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
@@ -301,7 +298,7 @@ class CaseCommandsTest(TestCase):
         )
 
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        assignment_cases = CommCareCase.objects.get_case_ids_in_domain(self.domain, "assignment")
         self.assertEqual(len(assignment_cases), 1)
         self.assertEqual(
             CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
@@ -322,7 +319,7 @@ class CaseCommandsTest(TestCase):
         )
 
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        assignment_cases = CommCareCase.objects.get_case_ids_in_domain(self.domain, "assignment")
         self.assertEqual(len(assignment_cases), 2)
         self.assertEqual(
             CommCareCase.objects.get_case(assignment_cases[0], self.domain).indices[0].relationship,
@@ -340,7 +337,7 @@ class CaseCommandsTest(TestCase):
                                          "assigned_to_temp_checkin_case_id": 'also_not_a_invalid_id'},
         )
         call_command('add_assignment_cases', self.domain, 'patient', '--location=active-location')
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        assignment_cases = CommCareCase.objects.get_case_ids_in_domain(self.domain, "assignment")
         self.assertEqual(len(assignment_cases), 0)
 
     def test_add_assignment_cases_with_inactive_location(self):
@@ -354,7 +351,7 @@ class CaseCommandsTest(TestCase):
         )
 
         call_command('add_assignment_cases', self.domain, 'patient', '--location=loc-thats-not-act')
-        assignment_cases = self.case_accessor.get_case_ids_in_domain("assignment")
+        assignment_cases = CommCareCase.objects.get_case_ids_in_domain(self.domain, "assignment")
         self.assertEqual(len(assignment_cases), 0)
 
     def test_clear_owner_ids(self):
@@ -384,8 +381,6 @@ class TestUpdateAllActivityCompleteDate(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.case_accessor = CaseAccessors(cls.domain)
-
         cls.bad_case_id = str(uuid.uuid4())
         cls.good_case_id = str(uuid.uuid4())
         case_search_es_setup(cls.domain, [
@@ -415,9 +410,9 @@ class TestUpdateAllActivityCompleteDate(TestCase):
     def test(self):
         call_command('update_all_activity_complete_date', self.domain)
 
-        bad_case = self.case_accessor.get_case(self.bad_case_id)
+        bad_case = CommCareCase.objects.get_case(self.bad_case_id)
         self.assertEqual(bad_case.get_case_property('all_activity_complete_date'), '')
 
-        good_case = self.case_accessor.get_case(self.good_case_id)
+        good_case = CommCareCase.objects.get_case(self.good_case_id)
         self.assertEqual(good_case.get_case_property('all_activity_complete_date'), 'original_value')
         self.assertEqual(len(good_case.transactions), 1)
