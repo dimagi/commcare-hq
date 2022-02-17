@@ -583,6 +583,10 @@ class TestDomainSharedConfigs(TestCase):
     DOMAIN = 'test_domain'
     OWNER_ID = '5'
 
+    def setUp(self) -> None:
+        # Make sure cached value us cleared
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
     def test_domain_does_not_have_shared_configs(self):
         self.assertEqual(len(ReportConfig.shared_on_domain(self.DOMAIN)), 0)
 
@@ -596,7 +600,10 @@ class TestDomainSharedConfigs(TestCase):
             owner_id=self.OWNER_ID,
             config_ids=[config._id],
         )
-        configs = list(ReportConfig.shared_on_domain(self.DOMAIN, stale=False))
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN))
 
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
@@ -682,6 +689,10 @@ class TestReportsBase(TestCase):
 
 class TestUserConfigsWithShared(TestReportsBase):
 
+    def setUp(self) -> None:
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
     def test_no_shared_configs(self):
         config = self.create_report_config(self.DOMAIN, self.admin_user._id)
         configs = ReportConfig.by_domain_and_owner(
@@ -696,7 +707,10 @@ class TestUserConfigsWithShared(TestReportsBase):
 
     def test_with_shared_config(self):
         config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+
         self.create_report_notification([config], owner_id=self.admin_user._id)
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
 
         configs = ReportConfig.by_domain_and_owner(
             self.DOMAIN,
@@ -704,7 +718,6 @@ class TestUserConfigsWithShared(TestReportsBase):
             include_shared=True,
             stale=False,
         )
-
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
 
@@ -727,6 +740,8 @@ class TestMySavedReportsView(TestReportsBase):
     URL = reverse(MySavedReportsView.urlname, args=[TestReportsBase.DOMAIN])
 
     def get_shared_saved_reports_for_user(self, username):
+        ReportConfig.shared_on_domain.clear(ReportConfig, self.DOMAIN)
+
         self.log_user_in(username)
         response = self.client.get(self.URL)
         return response.context['shared_saved_reports']
@@ -850,6 +865,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
         )
         # Create ReportNotification as to make confi1 shared
         self.create_report_notification([config1], owner_id=self.admin_user._id)
+        ReportConfig.shared_on_domain.clear(ReportConfig, self.DOMAIN, only_id=True)
 
         new_description = 'This is a description'
         post_data = {

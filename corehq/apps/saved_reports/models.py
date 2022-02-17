@@ -66,6 +66,7 @@ from corehq.util.view_utils import absolute_reverse
 from smtplib import SMTPSenderRefused
 
 from .logging import ScheduledReportLogger
+from ...util.quickcache import quickcache
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
@@ -146,6 +147,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return configs
 
     @classmethod
+    @quickcache(['domain', 'only_id', 'stale'], timeout=5)
     def shared_on_domain(cls, domain, only_id=False, stale=False):
         shared_config_ids = {
             id_ for rn in ReportNotification.by_domain(domain, stale=stale)
