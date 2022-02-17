@@ -406,11 +406,11 @@ class DeleteScheduleInstancesTest(BaseScheduleTest):
 
     def test_delete_alert_schedule_instances_for_schedule(self):
         refresh_alert_schedule_instances(
-            self.alert_schedule_1.schedule_id,
+            self.alert_schedule_1.schedule_id.hex,
             (('CommCareUser', self.user1.get_id),)
         )
         refresh_alert_schedule_instances(
-            self.alert_schedule_2.schedule_id,
+            self.alert_schedule_2.schedule_id.hex,
             (('CommCareUser', self.user1.get_id), ('CommCareUser', self.user2.get_id))
         )
         self.assertEqual(self.count(get_alert_schedule_instances_for_schedule(self.alert_schedule_1)), 1)
@@ -1418,7 +1418,7 @@ class AlertTest(TestCase):
 
         # Schedule the alert
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), True, self.user1)
@@ -1432,7 +1432,7 @@ class AlertTest(TestCase):
         self.assertEqual(send_patch.call_count, 1)
 
         # Test copying of the alert schedule instance for a new recipient
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user2.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user2.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user2)
@@ -1443,7 +1443,7 @@ class AlertTest(TestCase):
 
         # Schedule the alert
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), True, self.user1)
@@ -1464,7 +1464,7 @@ class AlertTest(TestCase):
 
         # Scheduling the alert creates an inactive schedule instance
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
@@ -1480,7 +1480,7 @@ class AlertTest(TestCase):
             # to the next event and being put into an inactive state as a result.
             # On the second iteration, it realizes the total iterations have been completed,
             # so nothing changes.
-            refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+            refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
             self.assertNumInstancesForSchedule(1)
             [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
             self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
@@ -1491,7 +1491,7 @@ class AlertTest(TestCase):
 
         # Schedule the alert
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), True, self.user1)
@@ -1500,7 +1500,7 @@ class AlertTest(TestCase):
         # Deactivate
         self.schedule.active = False
         self.schedule.save()
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
@@ -1517,7 +1517,7 @@ class AlertTest(TestCase):
 
         # Schedule the alert
         utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user1.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 47, 21), True, self.user1)
@@ -1531,7 +1531,7 @@ class AlertTest(TestCase):
         self.assertEqual(send_patch.call_count, 1)
 
         # Test copying of the alert schedule instance for a new recipient
-        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user2.get_id),))
+        refresh_alert_schedule_instances(self.schedule.schedule_id.hex, (('CommCareUser', self.user2.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
         self.assertAlertScheduleInstance(instance, 1, 1, datetime(2017, 3, 16, 7, 2, 21), True, self.user2)

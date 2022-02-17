@@ -299,8 +299,9 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
-    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id], timeout=5 * 60):
-        schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
+    schedule_uuid = uuid.UUID(schedule_id)
+    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_uuid.hex], timeout=5 * 60):
+        schedule = AlertSchedule.objects.get(schedule_id=schedule_uuid)
         AlertScheduleInstanceRefresher(
             schedule,
             recipients,
@@ -311,14 +312,15 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
 @task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_timed_schedule_instances(schedule_id, recipients, start_date_iso_string=None):
     """
-    :param schedule_id: the TimedSchedule schedule_id
+    :param schedule_id: type str that is hex representation of the TimeSchedule schedule_id (UUID)
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     :param start_date_iso_string: the date to start the TimedSchedule formatted as an iso string
     """
+    schedule_uuid = uuid.UUID(schedule_id)
     start_date = iso_string_to_date(start_date_iso_string) if start_date_iso_string else None
-    with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
-        schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
+    with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_uuid.hex], timeout=5 * 60):
+        schedule = TimedSchedule.objects.get(schedule_id=schedule_uuid)
         TimedScheduleInstanceRefresher(
             schedule,
             recipients,
@@ -335,7 +337,7 @@ def delete_alert_schedule_instances(self, schedule_id):
     """
     schedule_uuid = uuid.UUID(schedule_id)
     try:
-        with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id], timeout=30 * 60):
+        with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_uuid.hex], timeout=30 * 60):
             delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule_uuid)
     except Exception as e:
         self.retry(exc=e)
@@ -349,7 +351,7 @@ def delete_timed_schedule_instances(self, schedule_id):
     """
     schedule_uuid = uuid.UUID(schedule_id)
     try:
-        with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id], timeout=30 * 60):
+        with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_uuid.hex], timeout=30 * 60):
             delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, schedule_uuid)
     except Exception as e:
         self.retry(exc=e)
