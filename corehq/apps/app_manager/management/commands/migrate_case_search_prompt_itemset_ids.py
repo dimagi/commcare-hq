@@ -22,7 +22,8 @@ class Command(AppMigrationCommandBase):
                 if not isinstance(properties, list):
                     continue
                 for prop in properties:
-                    (new_itemset, should_save) = wrap_itemset(prop.get('itemset'))
+                    (new_itemset, updated) = wrap_itemset(prop.get('itemset'))
+                    should_save = should_save or updated
                     prop['itemset'] = new_itemset
 
         return app_doc if should_save else None
