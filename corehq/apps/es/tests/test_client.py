@@ -158,9 +158,11 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         self.adapter.index_create(self.index)
         self.assertIn("status", self.adapter.cluster_health(self.index))
 
-    def test_cluster_routing_enable(self):
-        self._clear_cluster_routing(verify=True)
-        self.adapter.cluster_routing_enable(True)
+    def test_cluster_routing(self):
+        # ensure it's something different first
+        self.adapter.cluster_routing(enabled=False)
+        # now set it and test
+        self.adapter.cluster_routing(enabled=True)
         settings = self.adapter._es.cluster.get_settings(flat_settings=True)
         self.assertEqual(
             settings["transient"]["cluster.routing.allocation.enable"],
@@ -169,8 +171,10 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         self._clear_cluster_routing()
 
     def test_cluster_routing_disable(self):
+        # ensure it's something different first
         self._clear_cluster_routing(verify=True)
-        self.adapter.cluster_routing_enable(False)
+        # now set it and test
+        self.adapter.cluster_routing(enabled=False)
         settings = self.adapter._es.cluster.get_settings(flat_settings=True)
         self.assertEqual(
             settings["transient"]["cluster.routing.allocation.enable"],
@@ -179,14 +183,25 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         self._clear_cluster_routing()
 
     def _clear_cluster_routing(self, verify=False):
-        try:
-            self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
-        except TransportError:
-            # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
-            pass
+        """Attempt to "clear" the cluster setting. In v2.4 you can't clear
+        a transient setting once its set without restarting the cluster, so we
+        explicitly set the default value (`all`) instead.
+        """
+        self.adapter.cluster_routing(enabled=True)  # default value
         if verify:
-            settings = self.adapter._es.cluster.get_settings()
-            self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
+            settings = self.adapter._es.cluster.get_settings(flat_settings=True)
+            self.assertEqual(settings["transient"]["cluster.routing.allocation.enable"], "all")
+        #
+        # The code below is better. Use it instead when able Elastic v5+
+        #
+        #try:
+        #    self.adapter._cluster_put_settings({"cluster.routing.allocation.enable": None})
+        #except TransportError:
+        #    # TransportError(400, 'action_request_validation_exception', 'Validation Failed: 1: no settings to update;')  # noqa: E501
+        #    pass
+        #if verify:
+        #    settings = self.adapter._es.cluster.get_settings(flat_settings=True)
+        #    self.assertIsNone(settings["transient"].get("cluster.routing.allocation.enable"))
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()

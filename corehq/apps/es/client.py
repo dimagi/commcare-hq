@@ -215,12 +215,12 @@ class ElasticManageAdapter(ElasticClientAdapter):
             self._validate_single_index(index)
         return self._es.cluster.health(index)
 
-    def cluster_routing_enable(self, enable):
+    def cluster_routing(self, *, enabled):
         """Enable or disable cluster routing.
 
-        :param enable: ``bool`` whether to enable or disable routing
+        :param enabled: ``bool`` whether to enable or disable routing
         """
-        value = "all" if enable else "none"
+        value = "all" if enabled else "none"
         self._cluster_put_settings({"cluster.routing.allocation.enable": value})
 
     def _cluster_put_settings(self, settings, transient=True, is_flat=True):
