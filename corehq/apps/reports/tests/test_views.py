@@ -584,6 +584,7 @@ class TestDomainSharedConfigs(TestCase):
     OWNER_ID = '5'
 
     def setUp(self) -> None:
+        super().setUp()
         # Make sure cached value us cleared
         ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
 
@@ -624,7 +625,7 @@ class TestDomainSharedConfigs(TestCase):
             config_ids=[config._id],
         )
 
-        configs = list(ReportConfig.shared_on_domain(self.DOMAIN, stale=False))
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN))
         self.assertEqual(len(configs), 1)
         self.assertEqual(configs[0]._id, config._id)
 
@@ -690,6 +691,7 @@ class TestReportsBase(TestCase):
 class TestUserConfigsWithShared(TestReportsBase):
 
     def setUp(self) -> None:
+        super().setUp()
         # Clear cached value
         ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
 
