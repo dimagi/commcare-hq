@@ -152,7 +152,7 @@ from .utils import ElasticJSONSerializer
 log = logging.getLogger(__name__)
 
 
-class ElasticClientAdapter:
+class BaseAdapter:
     """Base adapter that includes methods common to all adapters."""
 
     def __init__(self, for_export=False):
@@ -167,7 +167,7 @@ class ElasticClientAdapter:
         return self._es.ping()
 
 
-class ElasticManageAdapter(ElasticClientAdapter):
+class ElasticManageAdapter(BaseAdapter):
 
     def __init__(self):
         # set explicitly because management clients are never for exports
@@ -424,7 +424,7 @@ class ElasticManageAdapter(ElasticClientAdapter):
         raise NotImplementedError("TODO")
 
 
-class ElasticDocumentAdapter(ElasticClientAdapter):
+class ElasticDocumentAdapter(BaseAdapter):
     """Base for subclassing document-specific adapters.
 
     Subclasses must define the following:

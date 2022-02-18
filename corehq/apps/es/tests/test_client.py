@@ -19,7 +19,7 @@ from .utils import (
 )
 from ..client import (
     BulkActionItem,
-    ElasticClientAdapter,
+    BaseAdapter,
     ElasticManageAdapter,
     get_client,
     _elastic_hosts,
@@ -81,7 +81,7 @@ class TestClient(SimpleTestCase):
         self.assertIsNot(client, client_exp)
 
 
-class BaseAdapterTest(SimpleTestCase):
+class AdapterTestCase(SimpleTestCase):
 
     def setUp(self):
         super().setUp()
@@ -89,9 +89,9 @@ class BaseAdapterTest(SimpleTestCase):
 
 
 @es_test
-class TestElasticClientAdapter(BaseAdapterTest):
+class TestBaseAdapter(AdapterTestCase):
 
-    adapter_class = ElasticClientAdapter
+    adapter_class = BaseAdapter
 
     def test_info(self):
         self.assertEqual(sorted(self.adapter.info()),
@@ -102,19 +102,19 @@ class TestElasticClientAdapter(BaseAdapterTest):
 
     def test_ping_fail(self):
         # verify that the current (new or cached) client works
-        self.assertTrue(ElasticClientAdapter().ping())
+        self.assertTrue(BaseAdapter().ping())
         # discard cached client so we get a new one
         _client_default.reset_cache()
         with override_settings(ELASTICSEARCH_HOSTS=["localhost:65536"]):  # bad port
-            ping_fail_adapter = ElasticClientAdapter()
+            ping_fail_adapter = BaseAdapter()
             self.assertFalse(ping_fail_adapter.ping())
         # discard again so later tests get a valid client
         _client_default.reset_cache()
         # verify that the cache clear was successful
-        self.assertTrue(ElasticClientAdapter().ping())
+        self.assertTrue(BaseAdapter().ping())
 
 
-class BaseAdapterTestWithIndex(BaseAdapterTest):
+class AdapterWithIndexTestCase(AdapterTestCase):
 
     index = None  # set by subclass
 
@@ -137,7 +137,7 @@ class BaseAdapterTestWithIndex(BaseAdapterTest):
 
 
 @es_test
-class TestElasticManageAdapter(BaseAdapterTestWithIndex):
+class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
     adapter_class = ElasticManageAdapter
     index = "test_manage-adapter"
@@ -547,7 +547,7 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
 
 
 @es_test
-class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
+class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
 
     adapter_class = TestDocumentAdapterWithExtras
     index = TestDocumentAdapterWithExtras.index  # for _purge_test_index
