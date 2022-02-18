@@ -67,13 +67,13 @@ def _get_bad_case_ids(domain, case_type):
              .filter(exact_case_property_text_query('current_status', 'closed'))
              .filter(case_property_missing("all_activity_complete_date"))
              .case_type(case_type)
-             .owner(INACTIVE_LOCATION_IDS)
-             .modified_range(gte=datetime.date(2022, 2, 2)))
+             .owner(INACTIVE_LOCATION_IDS))
 
     if case_type == 'contact':
-        query = query.NOT(
-            exact_case_property_text_query('final_disposition', 'converted_to_pui')
-        )
+        query = (query.modified_range(gte=datetime.date(2022, 2, 2))
+            .NOT(
+                exact_case_property_text_query('final_disposition', 'converted_to_pui')
+        ))
 
     return list(query.scroll_ids())
 
