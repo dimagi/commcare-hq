@@ -302,6 +302,10 @@ class ElasticManageAdapter(ElasticClientAdapter):
         self._validate_single_index(index)
         self._es.indices.delete(index)
 
+    def index_refresh(self, index):
+        """Convenience method for refreshing a single index."""
+        self.indices_refresh([index])
+
     def indices_refresh(self, indices):
         """Refresh a list of indices.
 
@@ -312,10 +316,6 @@ class ElasticManageAdapter(ElasticClientAdapter):
         for index in indices:
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
-
-    def index_refresh(self, index):
-        """Convenience method for refreshing a single index."""
-        self.indices_refresh([index])
 
     def index_flush(self, index):
         """Flush an index.

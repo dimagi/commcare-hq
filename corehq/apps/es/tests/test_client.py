@@ -337,6 +337,11 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         self.adapter.index_delete(self.index)
         self.assertFalse(self.adapter.index_exists(self.index))
 
+    def test_index_refresh(self):
+        with patch.object(self.adapter, "indices_refresh") as patched:
+            self.adapter.index_refresh(self.index)
+            patched.assert_called_once_with([self.index])
+
     def test_indices_refresh(self):
         doc_adapter = TestDocumentAdapter()
         doc_adapter.index = self.index  # use our index so it gets cleaned up
