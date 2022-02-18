@@ -351,6 +351,13 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         docs = [h["_source"] for h in get_search_hits()]
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
+    def test_indices_refresh_requires_list_similar(self):
+        self.adapter.indices_refresh([self.index])  # does not raise for list
+        self.adapter.indices_refresh((self.index,))  # does not raise for tuple
+        self.adapter.indices_refresh({self.index})  # does not raise for set
+        with self.assertRaises(ValueError):
+            self.adapter.indices_refresh(self.index)  # string is invalid
+
     def test_index_flush(self):
         with patch.object(self.adapter._es.indices, "flush") as patched:
             self.adapter.index_flush(self.index)

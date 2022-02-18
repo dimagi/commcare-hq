@@ -307,6 +307,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         :param indices: iterable of index names or aliases
         """
+        if not isinstance(indices, (list, tuple, set)):
+            raise ValueError(f"invalid list of indices: {indices}")
         for index in indices:
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
