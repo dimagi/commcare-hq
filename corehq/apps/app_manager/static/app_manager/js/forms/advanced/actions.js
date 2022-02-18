@@ -670,7 +670,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             var action = ko.mapping.toJS(self, openCaseAction.mapping(self));
             var x = caseConfigUtils.propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
-            action.name_path = x[1].name;
+            action.name_update = x[1].name;
             action.repeat_context = self.repeat_context();
             return action;
         },
