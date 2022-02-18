@@ -184,9 +184,9 @@ class OTARestoreWebUser(OTARestoreUser):
         return []
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureStatus
+        from corehq.apps.fixtures.models import UserLookupTableStatus
 
-        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
