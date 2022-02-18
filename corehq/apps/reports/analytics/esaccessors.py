@@ -37,7 +37,7 @@ from corehq.util.quickcache import quickcache
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_users(domain, user_ids, datespan, for_export):
+def get_last_submission_time_for_users(domain, user_ids, datespan, for_export=True):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
     query = (
