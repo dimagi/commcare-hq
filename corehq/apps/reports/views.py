@@ -919,6 +919,8 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
         # was probably already deleted by a fast-clicker.
         pass
     else:
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
         if delete_count:
             for report in scheduled_reports:
                 if not _can_delete_scheduled_report(report, user, domain):
