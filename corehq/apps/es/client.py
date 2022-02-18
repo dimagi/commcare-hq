@@ -436,12 +436,10 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     """
 
     @classproperty
-    @memoized
     def index(cls):
         return settings.ELASTIC_INDICES[cls.index_key]["INDEX"]
 
     @classproperty
-    @memoized
     def settings(cls):
         return settings.ELASTIC_INDICES[cls.index_key].get("ADAPTER_SETTINGS", {})
 
