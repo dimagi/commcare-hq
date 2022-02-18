@@ -123,6 +123,7 @@ Code Documentation
 """
 import json
 import logging
+from enum import Enum
 
 from django.conf import settings
 from django.utils.decorators import classproperty
@@ -887,23 +888,16 @@ class BulkActionItem:
     methods rather than instantiating directly (via ``__init__()``).
     """
 
-    DELETE = object()
-    INDEX = object()
-
-    OP_TYPES = {
-        # <object>: <name>
-        DELETE: "delete",
-        INDEX: "index",
-    }
+    OpType = Enum("OpType", "index delete")
 
     def __init__(self, op_type, doc=None, doc_id=None):
-        if op_type not in self.OP_TYPES:
+        if not (isinstance(op_type, self.OpType) and op_type in self.OpType):
             raise ValueError(f"invalid operations type: {op_type!r}")
         if doc is None and doc_id is None:
             raise ValueError("at least one of 'doc' or 'doc_id' are required")
         elif not (doc is None or doc_id is None):
             raise ValueError("'doc' and 'doc_id' are mutually exclusive")
-        elif doc is None and op_type is not self.DELETE:
+        elif doc is None and op_type is not self.OpType.delete:
             raise ValueError("'doc_id' can only be used for delete operations")
         self.doc = doc
         self.doc_id = doc_id
@@ -912,30 +906,30 @@ class BulkActionItem:
     @classmethod
     def delete(cls, doc):
         """Factory method for a document delete action"""
-        return cls(cls.DELETE, doc=doc)
+        return cls(cls.OpType.delete, doc=doc)
 
     @classmethod
     def delete_id(cls, doc_id):
         """Factory method for a document delete action providing only the ID"""
-        return cls(cls.DELETE, doc_id=doc_id)
+        return cls(cls.OpType.delete, doc_id=doc_id)
 
     @classmethod
     def index(cls, doc):
         """Factory method for a document index action"""
-        return cls(cls.INDEX, doc=doc)
+        return cls(cls.OpType.index, doc=doc)
 
     @property
     def is_delete(self):
         """Return ``True`` if this action is for a document delete operation."""
-        return self.op_type is self.DELETE
+        return self.op_type is self.OpType.delete
 
     @property
     def is_index(self):
         """Return ``True`` if this action is for a document index operation."""
-        return self.op_type is self.INDEX
+        return self.op_type is self.OpType.index
 
     def __repr__(self):
-        human_op = self.OP_TYPES.get(self.op_type, "???")  # avoid KeyError
+        human_op = getattr(self.op_type, "name", "???")  # avoid AttributeError
         if self.doc_id is not None:
             doc_info = f"_id={self.doc_id!r}"
         else:

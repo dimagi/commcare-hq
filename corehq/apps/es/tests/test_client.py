@@ -1166,7 +1166,7 @@ class TestBulkActionItem(SimpleTestCase):
     def test_delete(self):
         doc = TestDoc("1", "test")
         action = BulkActionItem.delete(doc)
-        self.assertIs(action.op_type, BulkActionItem.DELETE)
+        self.assertIs(action.op_type, BulkActionItem.OpType.delete)
         self.assertIs(action.doc, doc)
         self.assertIsNone(action.doc_id)
         self.assertTrue(action.is_delete)
@@ -1175,7 +1175,7 @@ class TestBulkActionItem(SimpleTestCase):
     def test_delete_id(self):
         doc = TestDoc("1", "test")
         action = BulkActionItem.delete_id(doc.id)
-        self.assertIs(action.op_type, BulkActionItem.DELETE)
+        self.assertIs(action.op_type, BulkActionItem.OpType.delete)
         self.assertIsNone(action.doc)
         self.assertEqual(action.doc_id, doc.id)
         self.assertTrue(action.is_delete)
@@ -1184,7 +1184,7 @@ class TestBulkActionItem(SimpleTestCase):
     def test_index(self):
         doc = TestDoc("1", "test")
         action = BulkActionItem.index(doc)
-        self.assertIs(action.op_type, BulkActionItem.INDEX)
+        self.assertIs(action.op_type, BulkActionItem.OpType.index)
         self.assertIs(action.doc, doc)
         self.assertIsNone(action.doc_id)
         self.assertFalse(action.is_delete)
@@ -1197,18 +1197,18 @@ class TestBulkActionItem(SimpleTestCase):
 
     def test_create_fails_without_doc_params(self):
         with self.assertRaises(ValueError):
-            BulkActionItem(BulkActionItem.DELETE)
+            BulkActionItem(BulkActionItem.OpType.delete)
         with self.assertRaises(ValueError):
-            BulkActionItem(BulkActionItem.INDEX)
+            BulkActionItem(BulkActionItem.OpType.index)
 
     def test_create_fails_with_multiple_doc_params(self):
         doc = TestDoc("1", "test")
         with self.assertRaises(ValueError):
-            BulkActionItem(BulkActionItem.DELETE, doc=doc, doc_id=doc.id)
+            BulkActionItem(BulkActionItem.OpType.delete, doc=doc, doc_id=doc.id)
 
     def test_create_fails_with_doc_id_for_index(self):
         with self.assertRaises(ValueError):
-            BulkActionItem(BulkActionItem.INDEX, doc_id="1")
+            BulkActionItem(BulkActionItem.OpType.index, doc_id="1")
 
 
 class OneshotIterable:
