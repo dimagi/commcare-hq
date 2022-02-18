@@ -246,7 +246,8 @@ def docs_from_result(result):
     metadata) from an Elastic results object.
 
     :param result: ``dict`` search results object
-    :returns: ``[<doc>, ...]`` list"""
+    :returns: ``[<doc>, ...]`` list
+    """
     return [h["_source"] for h in result["hits"]["hits"]]
 
 
@@ -292,7 +293,8 @@ class TestDoc:
 @nottest
 class TestDocumentAdapter(ElasticDocumentAdapter):
     """An ``ElasticDocumentAdapter`` implementation for Elasticsearch actions
-    involving ``TestDoc`` model objects."""
+    involving ``TestDoc`` model objects.
+    """
 
     index = "test_doc-adapter"
     type = "test_doc"

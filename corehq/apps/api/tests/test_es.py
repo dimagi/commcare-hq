@@ -43,7 +43,8 @@ class TestESView(SimpleTestCase):
         ambiguous way (i.e. ``GET /<index>/_all/<doc_id>``), there is a chance
         that a regression bug that starts using ``_all`` in this way again may
         not cause this test to fail. It performs as expected right now, and the
-        bug will be fixed soon."""
+        bug will be fixed soon.
+        """
 
         def to_dict(dict_obj):
             return dict(dict_obj._data)

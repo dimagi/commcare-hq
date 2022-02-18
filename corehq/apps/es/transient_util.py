@@ -1,5 +1,6 @@
 """Transient utilities needed during the interim of converting HQ Elastic logic
-to use the new "client adapter" models."""
+to use the new "client adapter" models.
+"""
 
 from .client import ElasticDocumentAdapter
 from .registry import get_registry
@@ -7,13 +8,15 @@ from .registry import get_registry
 
 def get_mapping(index, type_):
     """Temporary function for fetching the Elastic mapping (still defined in
-    pillowtop module)"""
+    pillowtop module).
+    """
     return _DOC_MAPPINGS_BY_INDEX[(index, type_)]
 
 
 def transform_dict_with_possible_id(doc):
     """Temporary "common transform" function for adapters who don't yet own
-    their document transform logic."""
+    their document transform logic.
+    """
     if "_id" in doc:
         return doc["_id"], {k: doc[k] for k in doc if k != "_id"}
     return None, doc

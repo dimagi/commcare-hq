@@ -177,7 +177,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
         alias).
 
         :param name: ``str`` index name or alias
-        :returns: ``bool``"""
+        :returns: ``bool``
+        """
         self._validate_single_index(index)
         try:
             if self._es.indices.get(index, feature="_aliases",
@@ -192,14 +193,16 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         :param full_info: ``bool`` whether to return the full index info
                           (default ``False``)
-        :returns: ``dict``"""
+        :returns: ``dict``
+        """
         feature = "" if full_info else "_aliases,_settings"
         return self._es.indices.get("_all", feature=feature)
 
     def get_aliases(self):
         """Return the cluster aliases information.
 
-        :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``"""
+        :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
+        """
         aliases = {}
         for index, alias_info in self._es.indices.get_aliases().items():
             for alias in alias_info.get("aliases", {}):
@@ -215,7 +218,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def cluster_routing_enable(self, enable):
         """Enable or disable cluster routing.
 
-        :param enable: ``bool`` whether to enable or disable routing"""
+        :param enable: ``bool`` whether to enable or disable routing
+        """
         value = "all" if enable else "none"
         self._cluster_put_settings({"cluster.routing.allocation.enable": value})
 
@@ -228,7 +232,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         :param node_id: ``str`` ID of the node
         :param metric: ``str`` name of the metric to fetch
-        :returns: deserialized JSON (``dict``, ``list``, ``str``, etc)"""
+        :returns: deserialized JSON (``dict``, ``list``, ``str``, etc)
+        """
         return self._es.nodes.info(node_id, metric)["nodes"][node_id][metric]
 
     def get_task(self, task_id):
@@ -236,7 +241,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         :param task_id: ``str`` ID of the task
         :returns: ``dict`` of task details
-        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
+        """
         # NOTE: elasticsearch5 python library doesn't support `task_id` as a
         # kwarg for the `tasks.list()` method, and uses `tasks.get()` for that
         # instead.
@@ -256,7 +262,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
                             keyed by their ``task_id`` (used for tests, but is
                             not necessarily a "for testing only" feature).
         :returns: ``dict``
-        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)"""
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
+        """
         tasks = {}
         for node_name, info in result.get("nodes", {}).items():
             for task_id, details in info.get("tasks", {}).items():
@@ -282,21 +289,24 @@ class ElasticManageAdapter(ElasticClientAdapter):
         """Create a new index.
 
         :param index: ``str`` index name
-        :param settings: ``dict`` of index settings"""
+        :param settings: ``dict`` of index settings
+        """
         self._validate_single_index(index)
         self._es.indices.create(index, settings)
 
     def index_delete(self, index):
         """Delete an existing index.
 
-        :param index: ``str`` index name"""
+        :param index: ``str`` index name
+        """
         self._validate_single_index(index)
         self._es.indices.delete(index)
 
     def indices_refresh(self, indices):
         """Refresh a list of indices.
 
-        :param indices: iterable of index names or aliases"""
+        :param indices: iterable of index names or aliases
+        """
         for index in indices:
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
@@ -308,14 +318,16 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def index_flush(self, index):
         """Flush an index.
 
-        :param index: ``str`` index name"""
+        :param index: ``str`` index name
+        """
         self._validate_single_index(index)
         self._es.indices.flush(index, expand_wildcards="none")
 
     def index_close(self, index):
         """Close an index.
 
-        :param index: ``str`` index name"""
+        :param index: ``str`` index name
+        """
         self._validate_single_index(index)
         self._es.indices.close(index, expand_wildcards="none")
 
@@ -343,7 +355,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
         """Set the number of replicas for an index.
 
         :param index: ``str`` index for which to change the replicas
-        :param replicas: ``int`` number of replicas"""
+        :param replicas: ``int`` number of replicas
+        """
         self._validate_single_index(index)
         settings = {"index.number_of_replicas": replicas}
         self._index_put_settings(index, settings)
@@ -351,14 +364,16 @@ class ElasticManageAdapter(ElasticClientAdapter):
     def index_configure_for_reindex(self, index):
         """Update an index with settings optimized for reindexing.
 
-        :param index: ``str`` index for which to change the settings"""
+        :param index: ``str`` index for which to change the settings
+        """
         self._validate_single_index(index)
         return self._index_put_settings(index, INDEX_CONF_REINDEX)
 
     def index_configure_for_standard_ops(self, index):
         """Update an index with settings optimized standard HQ performance.
 
-        :param index: ``str`` index for which to change the settings"""
+        :param index: ``str`` index for which to change the settings
+        """
         return self._index_put_settings(index, INDEX_CONF_STANDARD)
 
     def _index_put_settings(self, index, settings):
@@ -373,7 +388,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         :param index: ``str`` index where the mapping should be updated
         :param type_: ``str`` doc type to update on the index
-        :param mapping: ``dict`` mapping for the provided doc type"""
+        :param mapping: ``dict`` mapping for the provided doc type
+        """
         self._validate_single_index(index)
         return self._es.indices.put_mapping(type_, {type_: mapping}, index,
                                             expand_wildcards="none")
@@ -389,7 +405,8 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
         See <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params>  # noqa: E501
 
-        :param index: index name or alias"""
+        :param index: index name or alias
+        """
         if not index:
             raise ValueError(f"invalid index: {index}")
         elif index == "_all":
@@ -428,13 +445,15 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param doc: document (instance of a model)
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
-                  indexed/updated/deleted in Elasticsearch"""
+                  indexed/updated/deleted in Elasticsearch
+        """
         raise NotImplementedError(f"{cls.__name__} is abstract")
 
     @classmethod
     def transform_full(cls, doc):
         """Return the full transformed document (including the ``_id`` key,
-        if present) as it would be returned by an adapter ``search`` result."""
+        if present) as it would be returned by an adapter ``search`` result.
+        """
         _id, source = cls.transform(doc)
         if _id is not None:
             source["_id"] = _id
@@ -444,7 +463,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """Check if a document exists for the provided ``doc_id``
 
         :param doc_id: ``str`` ID of the document to be checked
-        :returns: ``bool``"""
+        :returns: ``bool``
+        """
         return self._es.exists(self.index, self.type, doc_id)
 
     def fetch(self, doc_id, source_includes=[]):
@@ -452,7 +472,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param doc_id: ``str`` ID of the document to be fetched
         :param source_includes: a list of fields to extract and return
-        :returns: ``dict``"""
+        :returns: ``dict``
+        """
         kw = {"_source_include": source_includes} if source_includes else {}
         doc = self._es.get_source(self.index, self.type, doc_id, **kw)
         # TODO: standardize all result collections returned by this class.
@@ -463,13 +484,15 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """Return the number of documents matched by the ``query``
 
         :param query: ``dict`` query body
-        :returns: ``int``"""
+        :returns: ``int``
+        """
         query = self._prepare_count_query(query)
         return self._es.count(self.index, self.type, query).get("count")
 
     def _prepare_count_query(self, query):
         """TODO: move this logic to the calling class (the low-level adapter
-        should not be performing this type of manipulation)."""
+        should not be performing this type of manipulation).
+        """
         # pagination params are not required and not supported in ES count API
         query = query.copy()
         for extra in ["size", "sort", "from", "to", "_source"]:
@@ -480,7 +503,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """Return multiple docs for the provided ``doc_ids``
 
         :param doc_ids: iterable of document IDs (``str``s)
-        :returns: ``dict``"""
+        :returns: ``dict``
+        """
         docs = []
         result = self._mget({"ids": doc_ids})
         # TODO: check for shard failures
@@ -498,7 +522,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param doc_ids: iterable of document IDs (``str``s)
         :param chunk_size: ``int`` number of documents to fetch per query
-        :yields: ``dict`` documents"""
+        :yields: ``dict`` documents
+        """
         # TODO: standardize all result collections returned by this class.
         for ids_chunk in chunked(doc_ids, chunk_size):
             yield from self.fetch_many(ids_chunk)
@@ -506,7 +531,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def _mget(self, query):
         """Perform an ``mget`` request and return the result.
 
-        :param query: ``dict`` mget query"""
+        :param query: ``dict`` mget query
+        """
         return self._es.mget(query, self.index, self.type, _source=True)
 
     def search(self, query, **kw):
@@ -528,7 +554,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def _search(self, query, **kw):
         """Perform a "low-level" search and return the raw result. This is
-        split into a separate method for ease of testing the result format."""
+        split into a separate method for ease of testing the result format.
+        """
         return self._es.search(self.index, self.type, query, **kw)
 
     def scroll(self, query, **kw):
@@ -667,7 +694,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param doc_id: ``str`` ID of the document to delete
         :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search"""
+                        operation visible to search
+        """
         self._es.delete(self.index, self.type, doc_id,
                         refresh=self._refresh_value(refresh))
 
@@ -677,7 +705,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         expected by Elasticsearch.
 
         :param refresh: ``bool``
-        :returns: ``str`` (one of ``'true'`` or ``'false'``)"""
+        :returns: ``str`` (one of ``'true'`` or ``'false'``)
+        """
         # valid Elasticsearch values are ["true", "false", "wait_for"]
         if refresh not in {True, False}:
             raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
@@ -691,7 +720,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function."""
+                     ``elasticsearch.helpers.bulk()`` function.
+        """
         payload = [self._render_bulk_action(action) for action in actions]
         return bulk(self._es, payload, refresh=self._refresh_value(refresh), **kw)
 
@@ -703,7 +733,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function."""
+                     ``elasticsearch.helpers.bulk()`` function.
+        """
         action_gen = (BulkActionItem.index(doc) for doc in docs)
         return self.bulk(action_gen, refresh, **kw)
 
@@ -715,7 +746,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function."""
+                     ``elasticsearch.helpers.bulk()`` function.
+        """
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
         return self.bulk(action_gen, refresh, **kw)
 
@@ -724,7 +756,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         Elasticsearch ``bulk()`` helper function.
 
         :param action: a ``BulkActionItem`` instance
-        :returns: ``dict``"""
+        :returns: ``dict``
+        """
         for_elastic = {
             "_index": self.index,
             "_type": self.type,
@@ -752,7 +785,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         use as the ``_id`` for an Elasticsearch document.
 
         :param doc_id: value to check
-        :raises: ``ValueError``"""
+        :raises: ``ValueError``
+        """
         if not (isinstance(doc_id, str) and doc_id):
             raise ValueError(f"invalid Elastic _id value: {doc_id!r}")
 
@@ -762,7 +796,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         passing to Elasticseach (does not contain any illegal meta properties).
 
         :param source: ``dict`` of document properties to check
-        :raises: ``ValueError``"""
+        :raises: ``ValueError``
+        """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
 
@@ -771,7 +806,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         """Modify the ``hit`` dict that is passed to this method.
 
         :param hit: ``dict`` Elasticsearch result
-        :returns: ``None``"""
+        :returns: ``None``
+        """
         # TODO: standardize all result collections returned by this class.
         if "_source" in hit:
             hit["_source"]["_id"] = hit["_id"]
@@ -781,7 +817,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param result: ``dict`` of Elasticsearch result hits (or possibly
                         something else)
-        :returns: ``None``"""
+        :returns: ``None``
+        """
         # TODO: standardize all result collections returned by this class.
         try:
             hits = result["hits"]["hits"]
@@ -820,7 +857,8 @@ class BulkActionItem:
     bulk() method for processing.
 
     Instances of this class are meant to be acquired via one of the factory
-    methods rather than instantiating directly (via ``__init__()``)."""
+    methods rather than instantiating directly (via ``__init__()``).
+    """
 
     DELETE = object()
     INDEX = object()

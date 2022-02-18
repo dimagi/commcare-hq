@@ -478,7 +478,8 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
 @nottest
 class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     """A special document adapter (has extra methods) specifically for reducing
-    boilerplate on adapter tests where periodic management actions are needed."""
+    boilerplate on adapter tests where periodic management actions are needed.
+    """
 
     def index_exists(self):
         return ElasticManageAdapter().index_exists(self.index)
