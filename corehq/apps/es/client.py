@@ -424,11 +424,15 @@ class ElasticManageAdapter(ElasticClientAdapter):
 
 
 class ElasticDocumentAdapter(ElasticClientAdapter):
-    """Base for subclassing document-specific adapters."""
+    """Base for subclassing document-specific adapters.
 
-    index_key = None  # set by subclass
-    type = None  # set by subclass
-    mapping = None  # set by subclass
+    Subclasses must define the following:
+
+    - ``index_key``: class attribute (``str``)
+    - ``type``: class attribute (``str``)
+    - ``mapping``: class attribute (``dict``)
+    - ``transform(...)``: classmethod for converting models into Elastic format
+    """
 
     @classproperty
     @memoized
