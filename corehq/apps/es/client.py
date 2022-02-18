@@ -24,9 +24,9 @@ etc.  This functionality is split into a separate class for a few reasons:
 1. The management adapter is responsible for low-level Elastic operations which
    document adapters should never be performing because the scope of a document
    adapter does not extend beyond a single index.
-2. Future versions of Elasticsearch implement security features which limit the
-   kinds of operations a connection can be used for. The separation in these
-   client adapter classes is designed to fit into that model.
+2. Elasticsearch 5+ implements security features which limit the kinds of
+   operations a connection can be used for. The separation in these client
+   adapter classes is designed to fit into that model.
 
 The management adapter does not need any special parameters to work with, and
 can be instantiated and used directly:
