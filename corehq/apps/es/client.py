@@ -468,6 +468,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def exists(self, doc_id):
         """Check if a document exists for the provided ``doc_id``
 
+        Equivalent to the legacy ``ElasticsearchInterface.doc_exists(...)``
+        method.
+
         :param doc_id: ``str`` ID of the document to be checked
         :returns: ``bool``
         """
@@ -475,6 +478,8 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def fetch(self, doc_id, source_includes=[]):
         """Return the document for the provided ``doc_id``
+
+        Equivalent to the legacy ``ElasticsearchInterface.get_doc(...)`` method.
 
         :param doc_id: ``str`` ID of the document to be fetched
         :param source_includes: a list of fields to extract and return
@@ -507,6 +512,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def fetch_many(self, doc_ids):
         """Return multiple docs for the provided ``doc_ids``
+
+        Equivalent to the legacy ``ElasticsearchInterface.get_bulk_docs(...)``
+        method.
 
         :param doc_ids: iterable of document IDs (``str``s)
         :returns: ``dict``
@@ -661,6 +669,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def upsert(self, doc, refresh=False, **kw):
         """Index (send) a new document in (to) Elasticsearch
 
+        Equivalent to the legacy
+        ``ElasticsearchInterface.index_doc(...)`` method.
+
         :param doc: the (Python model) document to index
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
@@ -675,6 +686,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def update(self, doc_id, fields, refresh=False, **kw):
         """Update an existing document in Elasticsearch
+
+        Equivalent to the legacy
+        ``ElasticsearchInterface.update_doc_fields(...)`` method.
 
         :param doc_id: ``str`` ID of the document to update
         :param fields: ``dict`` of fields/values to update on the existing
@@ -697,6 +711,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
     def delete(self, doc_id, refresh=False):
         """Delete an existing document from Elasticsearch
+
+        Equivalent to the legacy ``ElasticsearchInterface.delete_doc(...)``
+        method.
 
         :param doc_id: ``str`` ID of the document to delete
         :param refresh: ``bool`` refresh the effected shards to make this
@@ -721,6 +738,9 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     def bulk(self, actions, refresh=False, **kw):
         """Use the Elasticsearch library's ``bulk()`` helper function to process
         documents en masse.
+
+        Equivalent to the legacy ``ElasticsearchInterface.bulk_ops(...)``
+        method.
 
         :param actions: iterable of ``BulkActionItem`` instances
         :param refresh: ``bool`` refresh the effected shards to make this
