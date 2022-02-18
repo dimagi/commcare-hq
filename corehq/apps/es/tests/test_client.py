@@ -926,6 +926,30 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         self.adapter.bulk([BulkActionItem.delete(doc) for doc in docs], refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
+    def test_bulk_iterates_actions_only_once(self):
+        """Ensure the ``bulk()`` method supports generators and does not attempt
+        to iterate over its ``actions`` argument more than once.
+        """
+        doc = self._make_doc()
+        actions = OneshotIterable([BulkActionItem.index(doc)])
+        self.adapter.bulk(actions)  # does not raise IterableExhaustedError
+
+    def test_bulk_index_iterates_docs_only_once(self):
+        """Ensure the ``bulk_index()`` method supports generators and does not
+        attempt to iterate over its ``docs`` argument more than once.
+        """
+        doc = self._make_doc()
+        docs = OneshotIterable([doc])
+        self.adapter.bulk_index(docs)  # does not raise IterableExhaustedError
+
+    def test_bulk_delete_iterates_doc_ids_only_once(self):
+        """Ensure the ``bulk_delete()`` method supports generators and does not
+        attempt to iterate over its ``doc_ids`` argument more than once.
+        """
+        doc = self._index_new_doc()
+        doc_ids = OneshotIterable([doc["_id"]])
+        self.adapter.bulk_delete(doc_ids)  # does not raise IterableExhaustedError
+
     def test_bulk_index_and_delete(self):
         def tform_to_dict(docs):
             return docs_to_dict(self.adapter.transform_full(doc) for doc in docs)
@@ -1185,3 +1209,20 @@ class TestBulkActionItem(SimpleTestCase):
     def test_create_fails_with_doc_id_for_index(self):
         with self.assertRaises(ValueError):
             BulkActionItem(BulkActionItem.INDEX, doc_id="1")
+
+
+class OneshotIterable:
+
+    def __init__(self, items):
+        self.items = items
+        self.exhausted = False
+
+    def __iter__(self):
+        if self.exhausted:
+            raise IterableExhaustedError("cannot iterate items more than once")
+        yield from self.items
+        self.exhausted = True
+
+
+class IterableExhaustedError(Exception):
+    pass
