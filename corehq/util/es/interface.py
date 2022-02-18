@@ -83,7 +83,7 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         query = {} if body is None else body
         params = params if params else {}
-        return doc_adapter.search(query, params=params or {}, **kwargs)
+        return doc_adapter.search(query, params=params, **kwargs)
 
     def iter_scroll(self, index_alias, doc_type, body=None,
                     scroll=SCROLL_KEEPALIVE, **kwargs):
