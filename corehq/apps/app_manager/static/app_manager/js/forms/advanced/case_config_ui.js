@@ -7,8 +7,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
             loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
             openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            toggles = hqImport("hqwebapp/js/toggles");
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
         var DEFAULT_CONDITION = function (type) {
             return {
