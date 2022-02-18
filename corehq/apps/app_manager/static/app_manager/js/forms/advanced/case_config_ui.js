@@ -435,7 +435,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             path: '',
                             key: 'name',
                             required: true,
-                            save_only_if_edited: action.name_update.update_mode === 'edit',
+                            save_only_if_edited: false,
                         }],
                         repeat_context: '',
                         case_indices: [],
