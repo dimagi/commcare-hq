@@ -2020,7 +2020,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         :param location: may be a sql or couch location
         """
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
 
         if not location.location_id:
             raise AssertionError("You can't set an unsaved location")
@@ -2043,7 +2043,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             location.location_id
         })
 
-        self.update_fixture_status(UserFixtureType.LOCATION)
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
@@ -2063,7 +2063,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             If fall_back_to_next is True, primary location is not set to next but cleared.
             This option exists only to be backwards compatible when user can only have one location
         """
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
@@ -2083,7 +2083,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.pop_metadata('commcare_primary_case_sharing_id', None)
             self.location_id = None
             self.clear_location_delegates()
-            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.update_fixture_status(UserLookupTableType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
             if commit:
@@ -2109,10 +2109,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
         try:
             self.assigned_location_ids.remove(location_id)
-            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.update_fixture_status(UserLookupTableType.LOCATION)
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
@@ -2343,9 +2343,9 @@ def update_fixture_status_for_users(user_ids, fixture_type):
 
 @quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
 def get_fixture_statuses(user_id):
-    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+    from corehq.apps.fixtures.models import UserLookupTableType, UserFixtureStatus
     last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
-                      for choice in UserFixtureType.CHOICES}
+                      for choice in UserLookupTableType.CHOICES}
     for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
         last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
     return last_modifieds
