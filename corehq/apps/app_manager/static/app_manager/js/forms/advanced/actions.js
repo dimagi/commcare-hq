@@ -1,7 +1,8 @@
 hqDefine('app_manager/js/forms/advanced/actions', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
         caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,
-        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty;
+        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty,
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var caseIndex = {
         mapping: {
@@ -30,7 +31,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag || (self.warn_blank_case_tag() && !hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
+            } else if (!case_tag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
@@ -66,7 +67,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 if (!self.auto_select && !tag) {
                     // Don't allow user to blank out case tag
                     self.warn_blank_case_tag(true);
-                    if (!hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS')) {
+                    if (!toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS')) {
                         self.case_tag(self.case_tag.previous());
                     }
                     return;
@@ -439,6 +440,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 add_circular();
             }
 
+            // needed for compatibility with shared templates
+            self.searchAndFilter = false;
+            self.visible_case_properties = ko.computed(function () {
+                return self.case_properties();
+            });
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
+
             return self;
         },
         unwrap: function (self) {
@@ -640,6 +648,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             } else {
                 add_circular();
             }
+
+            // needed for compatibility with shared templates
+            self.searchAndFilter = false;
+            self.visible_case_properties = ko.computed(function () {
+                return self.case_properties();
+            });
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             return self;
         },
