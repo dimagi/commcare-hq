@@ -377,8 +377,11 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
             self.adapter.indices_refresh(self.index)  # string is invalid
 
     def test_index_flush(self):
+        self.adapter.index_create(self.index)
+        flush_index = self.adapter._es.indices.flush  # keep a reference
         with patch.object(self.adapter._es.indices, "flush") as patched:
             self.adapter.index_flush(self.index)
+            flush_index(self.index)  # also perform the actual Elastic request
             patched.assert_called_once_with(self.index, expand_wildcards="none")
 
     def test_index_close(self):
