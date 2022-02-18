@@ -33,7 +33,3 @@ class UserLookupTableStatus(models.Model):
         app_label = 'fixtures'
         db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")
-
-
-UserFixtureType = UserLookupTableType
-UserFixtureStatus = UserLookupTableStatus
