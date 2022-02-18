@@ -578,13 +578,14 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
 
         :param query: ``dict`` raw search query.
         :param **kw: Additional scroll keyword arguments. Valid options:
-                     ``size``: ``int`` scroll size (number of documents per
-                     "scroll" page)
-                     ``scroll``: ``str`` time value specifying how long the
-                     Elastic cluster should keep the search context alive.
+
+            - ``size``: ``int`` scroll size (number of documents per
+              "scroll" page)
+            - ``scroll``: ``str`` time value specifying how long the
+              Elastic cluster should keep the search context alive.
+
         :yields: ``dict`` documents
         """
-        # TODO: ^this docstring formatting is awful, find a better way
         # TODO: standardize all result collections returned by this class.
         valid_kw = {"size", "scroll"}
         if not set(kw).issubset(valid_kw):
