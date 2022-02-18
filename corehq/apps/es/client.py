@@ -419,10 +419,6 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self):
-        """Initiate a reindex operation"""
-        raise NotImplementedError("TODO")
-
 
 class ElasticDocumentAdapter(BaseAdapter):
     """Base for subclassing document-specific adapters.
