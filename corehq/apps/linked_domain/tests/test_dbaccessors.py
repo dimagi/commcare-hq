@@ -53,6 +53,16 @@ class TestGetAvailableUpstreamDomains(SimpleTestCase):
 
         self.assertEqual(upstream_domains, ['account-domain'] + ['user-domain'])
 
+    def test_does_not_return_duplicate_domains_if_enterprise_and_release_management_privilege(self, mock_user):
+        self.mock_is_enterprise.return_value = True
+        self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
+        self.mock_available_account_domains.return_value = ['domain']
+        self.mock_available_user_domains.return_value = ['domain']
+
+        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
+
+        self.assertEqual(upstream_domains, ['domain'])
+
     def test_returns_domains_for_user_if_not_enterprise_and_release_management_privilege(self, mock_user):
         self.mock_is_enterprise.return_value = False
         self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
@@ -124,6 +134,16 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
         domains = get_available_domains_to_link('upstream', mock_user)
 
         self.assertEqual(domains, ['account-domain'] + ['user-domain'])
+
+    def test_does_not_return_duplicate_domains_if_enterprise_and_release_management_privilege(self, mock_user):
+        self.mock_is_enterprise.return_value = True
+        self.mock_domain_has_privilege.return_value = True
+        self.mock_available_account_domains.return_value = ['domain']
+        self.mock_available_user_domains.return_value = ['domain']
+
+        domains = get_available_domains_to_link('upstream', mock_user)
+
+        self.assertEqual(domains, ['domain'])
 
     def test_returns_domains_for_user_if_not_enterprise_and_release_management_privilege(self, mock_user):
         self.mock_is_enterprise.return_value = False

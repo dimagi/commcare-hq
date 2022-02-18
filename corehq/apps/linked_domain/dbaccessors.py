@@ -63,19 +63,21 @@ def get_available_domains_to_link(upstream_domain, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    available_domains = []
+    available_domains = set()
 
     if domain_is_enterprise(upstream_domain) and domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT):
-        available_domains.extend(get_available_domains_to_link_for_enterprise(upstream_domain, user))
+        available_domains = available_domains.union(
+            get_available_domains_to_link_for_enterprise(upstream_domain, user)
+        )
 
     if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(upstream_domain, LITE_RELEASE_MANAGEMENT):
-        available_domains.extend(
+        available_domains = available_domains.union(
             get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=True)
         )
 
     if available_domains:
-        return available_domains
+        return list(available_domains)
 
     # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
     if toggles.LINKED_DOMAINS.enabled(upstream_domain):
@@ -109,20 +111,20 @@ def get_available_upstream_domains(downstream_domain, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    upstream_domains = []
+    upstream_domains = set()
     if domain_is_enterprise(downstream_domain) and domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
-        upstream_domains.extend(
+        upstream_domains = upstream_domains.union(
             get_available_upstream_domains_for_enterprise(downstream_domain, user)
         )
 
     if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
-        upstream_domains.extend(
+        upstream_domains = upstream_domains.union(
             get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
         )
 
     if upstream_domains:
-        return upstream_domains
+        return list(upstream_domains)
 
     # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
     if toggles.LINKED_DOMAINS.enabled(downstream_domain):
