@@ -52,6 +52,12 @@ class TestClient(SimpleTestCase):
         expected = [{"host": "otherhost", "port": 9292}]
         self.assertEqual(expected, _elastic_hosts())
 
+    @override_settings(ELASTICSEARCH_HOSTS=["somehost:9200"],
+                       ELASTICSEARCH_HOST="ignored:9292")
+    def test_elastic_host_is_ignored_if_hosts_present(self):
+        expected = [{"host": "somehost", "port": 9200}]
+        self.assertEqual(expected, _elastic_hosts())
+
     @override_settings(ELASTICSEARCH_PORT=9292)
     def test_elastic_hosts_alt_default_port(self):
         expected = [{"host": "localhost", "port": 9292}]
