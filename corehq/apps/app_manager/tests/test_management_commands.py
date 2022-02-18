@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     Itemset,
     Module,
 )
+from corehq.apps.app_manager.util import get_correct_app_class
 
 
 class MigrateCaseSearchPromptItemsetIdsTest(SimpleTestCase):
@@ -37,9 +38,10 @@ class MigrateCaseSearchPromptItemsetIdsTest(SimpleTestCase):
 
     def _migrate_property(self, prop):
         self.doc['modules'][0]['search_config']['properties'] = [prop.to_json()]
-        update = Command().migrate_app(self.doc)
-        if update:
-            return update.modules[0].search_config.properties[0].itemset
+        app_doc = Command().migrate_app(self.doc)
+        if app_doc:
+            app = get_correct_app_class(app_doc).wrap(app_doc)
+            return app.modules[0].search_config.properties[0].itemset
 
     def test_text(self):
         self.assertIsNone(self._migrate_property(CaseSearchProperty(name='name', label={'en': 'Name'})))
