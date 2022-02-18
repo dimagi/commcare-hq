@@ -100,7 +100,6 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
 
         self.assertEqual(result.num_updates, 1)
         session_case = CommCareCase.objects.get_case(self.session_case.case_id, self.session_case.domain)
-        print(session_case.case_json)
         self.assertDictEqual(
             session_case.case_json,
             {
