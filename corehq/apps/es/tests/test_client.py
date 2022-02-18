@@ -24,7 +24,6 @@ from ..client import (
     get_client,
     _elastic_hosts,
     _client_default,
-    _client_for_export,
 )
 from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD
 from ..exceptions import ESShardFailure, TaskError, TaskMissing
@@ -101,17 +100,18 @@ class TestElasticClientAdapter(BaseAdapterTest):
     def test_ping(self):
         self.assertTrue(self.adapter.ping())
 
-    @override_settings(ELASTICSEARCH_HOSTS=["localhost:65536"])  # bad port
     def test_ping_fail(self):
-
-        def clear_cached_clients():
-            for func in [_client_default, _client_for_export]:
-                func.reset_cache()
-
-        clear_cached_clients()  # discard cached client so we get a new one
-        failed_adapter = ElasticClientAdapter()
-        self.assertFalse(failed_adapter.ping())
-        clear_cached_clients()  # discard again so later tests get a real client
+        # verify that the current (new or cached) client works
+        self.assertTrue(ElasticClientAdapter().ping())
+        # discard cached client so we get a new one
+        _client_default.reset_cache()
+        with override_settings(ELASTICSEARCH_HOSTS=["localhost:65536"]):  # bad port
+            ping_fail_adapter = ElasticClientAdapter()
+            self.assertFalse(ping_fail_adapter.ping())
+        # discard again so later tests get a valid client
+        _client_default.reset_cache()
+        # verify that the cache clear was successful
+        self.assertTrue(ElasticClientAdapter().ping())
 
 
 class BaseAdapterTestWithIndex(BaseAdapterTest):
