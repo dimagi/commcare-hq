@@ -64,13 +64,22 @@ class TestClient(SimpleTestCase):
         self.assertEqual(expected, _elastic_hosts())
 
     def test_get_client(self):
-        self.assertIsInstance(get_client(), Elasticsearch)
+        client = get_client()
+        self.assertIsInstance(client, Elasticsearch)
+        self.assertFalse(client.transport.retry_on_timeout)
 
     def test_get_client_for_export(self):
         export_client = get_client(for_export=True)
         self.assertIsInstance(export_client, Elasticsearch)
-        # depends on memoized client
-        self.assertIsNot(export_client, get_client())
+        self.assertTrue(export_client.transport.retry_on_timeout)
+        self.assertEqual(export_client.transport.kwargs, {"timeout": 300})
+
+    def test_get_client_is_memoized(self):
+        client = get_client()
+        client_exp = get_client(for_export=True)
+        self.assertIs(client, get_client())
+        self.assertIs(client_exp, get_client(for_export=True))
+        self.assertIsNot(client, client_exp)
 
 
 class BaseAdapterTest(SimpleTestCase):
