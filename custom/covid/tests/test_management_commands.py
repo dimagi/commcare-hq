@@ -4,8 +4,11 @@ from datetime import timedelta
 from django.core.management import call_command
 from django.test import TestCase
 
+from unittest.mock import patch
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.domain.shortcuts import create_domain
@@ -20,7 +23,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from dimagi.utils.parsing import json_format_date
 
 
 class CaseCommandsTest(TestCase):
@@ -418,9 +420,10 @@ class TestUpdateAllActivityCompleteDate(TestCase):
         case_search_es_teardown()
         super().tearDownClass()
 
+    @patch('corehq.apps.hqcase.bulk.username_to_user_id', new=lambda _: 'my_username')
     def test(self):
-        call_command('update_all_activity_complete_date', self.domain, 'patient')
-        call_command('update_all_activity_complete_date', self.domain, 'contact')
+        call_command('update_all_activity_complete_date', self.domain, 'patient', username='test@example.com')
+        call_command('update_all_activity_complete_date', self.domain, 'contact', username='test@example.com')
 
         cases = {
             label: (CommCareCase.objects.get_case(case_block.case_id), case_block)
