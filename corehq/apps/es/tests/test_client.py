@@ -346,14 +346,27 @@ class TestElasticManageAdapter(BaseAdapterTestWithIndex):
         doc_adapter = TestDocumentAdapter()
         doc_adapter.index = self.index  # use our index so it gets cleaned up
         self.adapter.index_create(self.index)
-        doc_adapter.upsert(TestDoc("1", "test"))
+        self.adapter = ElasticManageAdapter()
+
+        def set_refresh_interval(value):
+            self.adapter._index_put_settings(
+                self.index,
+                {"index.refresh_interval": value}
+            )
 
         def get_search_hits():
             return doc_adapter.search({})["hits"]["hits"]
 
-        self.assertEqual([], get_search_hits())
-        self.adapter.indices_refresh([doc_adapter.index])
-        docs = [h["_source"] for h in get_search_hits()]
+        # Disable auto-refresh to ensure the index doesn't refresh between our
+        # upsert and search (which would cause this test to fail).
+        set_refresh_interval("-1")
+        try:
+            doc_adapter.upsert(TestDoc("1", "test"))
+            self.assertEqual([], get_search_hits())
+            self.adapter.indices_refresh([doc_adapter.index])
+            docs = [h["_source"] for h in get_search_hits()]
+        finally:
+            set_refresh_interval("5s")  # set it back to previous value
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
     def test_indices_refresh_requires_list_similar(self):
