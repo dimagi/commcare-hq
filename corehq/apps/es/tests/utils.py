@@ -255,7 +255,7 @@ def docs_to_dict(docs):
     """Convenience function for getting a ``dict`` of documents keyed by their
     ID for testing unordered equality (or other reasons it might be desireable).
 
-    :param docs: iterable of documents in the "transformed" (``dict``) format
+    :param docs: iterable of documents in the "json" (``dict``) format
     :returns: ``{<doc_id>: <doc_sans_id>, ...}`` dict
     """
     docs_dict = {}
@@ -311,5 +311,5 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     }
 
     @classmethod
-    def transform(cls, doc):
+    def from_python(cls, doc):
         return doc.id, {"value": doc.value, "entropy": doc.entropy}

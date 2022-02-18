@@ -559,20 +559,20 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
                          f"index exists: {self.adapter.index}")
         self.adapter.create_index({"mappings": {self.adapter.type: self.adapter.mapping}})
 
-    def test_transform(self):
+    def test_from_python(self):
         doc = TestDoc("1", "test")
-        transformed = (doc.id, {"value": doc.value, "entropy": doc.entropy})
-        self.assertEqual(transformed, self.adapter.transform(doc))
+        from_python = (doc.id, {"value": doc.value, "entropy": doc.entropy})
+        self.assertEqual(from_python, self.adapter.from_python(doc))
 
-    def test_transform_full(self):
+    def test_to_json(self):
         doc = TestDoc("1", "test")
-        transformed_full = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
-        self.assertEqual(transformed_full, self.adapter.transform_full(doc))
+        as_json = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
+        self.assertEqual(as_json, self.adapter.to_json(doc))
 
-    def test_transform_full_id_null(self):
+    def test_to_json_id_null(self):
         doc = TestDoc(None, "test")
-        transformed_full = {"value": doc.value, "entropy": doc.entropy}
-        self.assertEqual(transformed_full, self.adapter.transform_full(doc))
+        as_json = {"value": doc.value, "entropy": doc.entropy}
+        self.assertEqual(as_json, self.adapter.to_json(doc))
 
     def test_exists(self):
         doc = self._index_new_doc()
@@ -843,7 +843,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         doc = self._make_doc()
         self.assertEqual({}, self._search_hits_dict({}))
         self.adapter.upsert(doc, refresh=True)
-        self.assertEqual([self.adapter.transform_full(doc)],
+        self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
 
     def test_upsert_fails_with_invalid_id(self):
@@ -855,9 +855,9 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
 
     def test_upsert_fails_with_invalid_source(self):
         doc = self._make_doc()
-        bad_source = self.adapter.transform_full(doc)
+        bad_source = self.adapter.to_json(doc)
         invalid = (doc.id, bad_source)
-        with patch.object(self.adapter, "transform", return_value=invalid):
+        with patch.object(self.adapter, "from_python", return_value=invalid):
             with self.assertRaises(ValueError):
                 self.adapter.upsert(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
@@ -865,7 +865,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
     def test_upsert_succeeds_if_exists(self):
         doc = self._make_doc()
         self.adapter.upsert(doc, refresh=True)
-        self.assertEqual([self.adapter.transform_full(doc)],
+        self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
         self.adapter.upsert(doc, refresh=True)  # does not raise
 
@@ -873,12 +873,12 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         doc = self._make_doc()
         doc_id = doc.id
         self.adapter.upsert(doc, refresh=True)
-        self.assertEqual([self.adapter.transform_full(doc)],
+        self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
         doc.value = self._make_doc().value  # modify the doc
         self.assertEqual(doc.id, doc_id)  # confirm it has the same ID
         self.adapter.upsert(doc, refresh=True)  # does not raise
-        self.assertEqual([self.adapter.transform_full(doc)],
+        self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
 
     def test_update(self):
@@ -934,7 +934,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
 
     def test_bulk(self):
         def tform_to_dict(docs):
-            return docs_to_dict(self.adapter.transform_full(doc) for doc in docs)
+            return docs_to_dict(self.adapter.to_json(doc) for doc in docs)
         self.assertEqual({}, self._search_hits_dict({}))
         docs = [self._make_doc() for x in range(2)]
         self.adapter.bulk([BulkActionItem.index(doc) for doc in docs], refresh=True)
@@ -968,7 +968,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
 
     def test_bulk_index_and_delete(self):
         def tform_to_dict(docs):
-            return docs_to_dict(self.adapter.transform_full(doc) for doc in docs)
+            return docs_to_dict(self.adapter.to_json(doc) for doc in docs)
         docs = [self._make_doc() for x in range(2)]
         self.adapter.bulk_index(docs, refresh=True)
         self.assertEqual(tform_to_dict(docs), self._search_hits_dict({}))
@@ -983,7 +983,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
     def test__render_bulk_action_index(self):
         doc = self._make_doc()
         action = BulkActionItem.index(doc)
-        doc_id, source = self.adapter.transform(doc)
+        doc_id, source = self.adapter.from_python(doc)
         expected = {
             "_index": self.adapter.index,
             "_type": self.adapter.type,
@@ -1036,7 +1036,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
         for x in range(3):
             doc = self._make_doc()
             docs.append(doc)
-            serialized.append(self.adapter.transform_full(doc))
+            serialized.append(self.adapter.to_json(doc))
         self.assertEqual({}, self._search_hits_dict({}))
         self.adapter.bulk_index(docs, refresh=True)
         self.assertEqual(docs_to_dict(serialized), self._search_hits_dict({}))
@@ -1050,9 +1050,9 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
 
     def test_bulk_index_fails_with_invalid_source(self):
         doc = self._make_doc()
-        bad_source = self.adapter.transform_full(doc)
+        bad_source = self.adapter.to_json(doc)
         invalid = (doc.id, bad_source)
-        with patch.object(self.adapter, "transform", return_value=invalid):
+        with patch.object(self.adapter, "from_python", return_value=invalid):
             with self.assertRaises(ValueError):
                 self.adapter.bulk_index([doc], refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
@@ -1142,7 +1142,7 @@ class TestElasticDocumentAdapter(BaseAdapterTestWithIndex):
     def _index_new_doc(self, refresh=True):
         doc = self._make_doc()
         self.adapter.upsert(doc, refresh=refresh)
-        return self.adapter.transform_full(doc)
+        return self.adapter.to_json(doc)
 
     def _make_doc(self, value=None):
         if value is None:

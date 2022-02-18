@@ -61,7 +61,7 @@ must define the following:
   documents used by the adapter.
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
-- A ``transform()`` classmethod which can convert a Python model object into the
+- A ``from_python()`` classmethod which can convert a Python model object into the
   JSON-serializable format for writing into the adapter's index.
 
 The combination of ``(index_key, type)`` constrains the document adapter to
@@ -96,7 +96,7 @@ A simple example of a document model and its cooresponding adapter:
         }}
 
         @classmethod
-        def transform(cls, book):
+        def from_python(cls, book):
             source = {
                 "author": book.author,
                 "title": book.title,
@@ -432,7 +432,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
     - ``index_key``: class attribute (``str``)
     - ``type``: class attribute (``str``)
     - ``mapping``: class attribute (``dict``)
-    - ``transform(...)``: classmethod for converting models into Elastic format
+    - ``from_python(...)``: classmethod for converting models into Elastic format
     """
 
     @classproperty
@@ -444,22 +444,28 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         return settings.ELASTIC_INDICES[cls.index_key].get("ADAPTER_SETTINGS", {})
 
     @classmethod
-    def transform(cls, doc):
+    def from_python(cls, doc):
         """Transform a Python model object into the json-serializable (``dict``)
         format suitable for indexing in Elasticsearch.
 
-        :param doc: document (instance of a model)
+        :param doc: document (instance of a Python model)
         :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
                   indexed/updated/deleted in Elasticsearch
         """
         raise NotImplementedError(f"{cls.__name__} is abstract")
 
     @classmethod
-    def transform_full(cls, doc):
-        """Return the full transformed document (including the ``_id`` key,
-        if present) as it would be returned by an adapter ``search`` result.
+    def to_json(cls, doc):
+        """Convenience method that returns the full "from python" document
+        (including the ``_id`` key, if present) as it would be returned by an
+        adapter ``search`` result.
+
+        This method is not used by the adapter itself, and is only present for
+        other code which wishes to work with documents in a couch-like format.
+
+        :param doc: document (instance of a Python model)
         """
-        _id, source = cls.transform(doc)
+        _id, source = cls.from_python(doc)
         if _id is not None:
             source["_id"] = _id
         return source
@@ -678,7 +684,7 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.Elasticsearch.index()`` method.
         """
-        doc_id, source = self.transform(doc)
+        doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
         self._es.index(self.index, self.type, source, doc_id,
@@ -793,10 +799,10 @@ class ElasticDocumentAdapter(ElasticClientAdapter):
             if action.doc is None:
                 doc_id = action.doc_id
             else:
-                doc_id = self.transform(action.doc)[0]
+                doc_id = self.from_python(action.doc)[0]
         elif action.is_index:
             for_elastic["_op_type"] = "index"
-            doc_id, source = self.transform(action.doc)
+            doc_id, source = self.from_python(action.doc)
             self._verify_doc_source(source)
             for_elastic["_source"] = source
         else:

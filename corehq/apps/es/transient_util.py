@@ -13,9 +13,9 @@ def get_mapping(index, type_):
     return _DOC_MAPPINGS_BY_INDEX[(index, type_)]
 
 
-def transform_dict_with_possible_id(doc):
-    """Temporary "common transform" function for adapters who don't yet own
-    their document transform logic.
+def from_dict_with_possible_id(doc):
+    """Temporary "common" function for adapters who don't yet own their document
+    ``from_python()`` logic.
     """
     if "_id" in doc:
         return doc["_id"], {k: doc[k] for k in doc if k != "_id"}
@@ -89,8 +89,8 @@ def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
         mapping = mapping_
 
         @classmethod
-        def transform(cls, doc):
-            return transform_dict_with_possible_id(doc)
+        def from_python(cls, doc):
+            return from_dict_with_possible_id(doc)
 
     Adapter.__name__ = f"{descriptor}Test"
     _DOC_ADAPTERS_BY_INDEX[index_] = Adapter
