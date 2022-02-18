@@ -428,7 +428,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     index = self.open_cases().length;
                     self.open_cases.push(openCaseAction.wrap({
                         case_type: caseConfig.caseType,
-                        name_path: '',
+                        name_update: '',
                         case_tag: 'open_' + caseConfig.caseType + '_' + index,
                         case_properties: [{
                             path: '',

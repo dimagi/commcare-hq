@@ -470,7 +470,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             return {
                 include: [
                     'case_type',
-                    'name_path',
+                    'name_update',
                     'case_tag',
                     'open_condition',
                     'close_condition',
@@ -576,7 +576,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
             self.propertyCounts = ko.computed(actionBase.propertyCounts(self));
 
-            self.name_path = ko.computed(function () {
+            self.name_update = ko.computed(function () {
                 try {
                     return _(self.case_properties()).find(function (p) {
                         return p.key() === 'name' && p.required();
@@ -587,7 +587,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.repeat_context = function () {
-                return self.caseConfig.get_repeat_context(self.name_path());
+                return self.caseConfig.get_repeat_context(self.name_update());
             };
 
             self.addProperty = function () {
