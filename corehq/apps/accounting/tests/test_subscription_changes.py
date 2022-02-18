@@ -438,13 +438,13 @@ class DeactivateScheduleTest(TransactionTestCase):
 
             b = self.domain_1_survey_schedules[0]
             p1.assert_called_once_with(
-                b.schedule_id,
+                b.schedule_id.hex,
                 b.recipients,
                 start_date_iso_string=json_format_date(b.start_date)
             )
 
             b = self.domain_1_survey_schedules[1]
-            p2.assert_called_once_with(b.schedule_id, b.recipients)
+            p2.assert_called_once_with(b.schedule_id.hex, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
             p3.assert_called_once_with(rule)
