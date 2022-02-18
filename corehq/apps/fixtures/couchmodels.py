@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from django.db import models
-
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 
@@ -499,23 +495,3 @@ class FixtureOwnership(Document):
         ).all()
 
         return ownerships
-
-
-class UserFixtureType(object):
-    LOCATION = 1
-    CHOICES = (
-        (LOCATION, "Location"),
-    )
-
-
-class UserFixtureStatus(models.Model):
-    """Keeps track of when a user needs to re-sync a fixture"""
-    user_id = models.CharField(max_length=100, db_index=True)
-    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
-    last_modified = models.DateTimeField()
-
-    DEFAULT_LAST_MODIFIED = datetime.min
-
-    class Meta(object):
-        app_label = 'fixtures'
-        unique_together = ("user_id", "fixture_type")
