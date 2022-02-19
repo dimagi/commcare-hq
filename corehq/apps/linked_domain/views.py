@@ -55,6 +55,7 @@ from corehq.apps.linked_domain.decorators import (
     require_linked_domain,
 )
 from corehq.apps.linked_domain.exceptions import (
+    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
@@ -443,6 +444,23 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
+
+
+def validate_push_for_user(user, domain_links):
+    if user.is_superuser:
+        return
+
+    if len(domain_links) == 1:
+        # pushing to one domain is fine regardless of access status
+        return
+
+    limited_access_links = list(filter(lambda link: not link.has_full_access(), domain_links))
+
+    if not limited_access_links:
+        # all links are full access
+        return
+
+    raise AttemptedPushViolatesConstraints
 
 
 class DomainLinkHistoryReport(GenericTabularReport):

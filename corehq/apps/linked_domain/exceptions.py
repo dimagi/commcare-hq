@@ -10,6 +10,10 @@ class DomainLinkNotAllowed(Exception):
     pass
 
 
+class AttemptedPushViolatesConstraints(Exception):
+    pass
+
+
 class MultipleDownstreamAppsError(Exception):
     pass
 
