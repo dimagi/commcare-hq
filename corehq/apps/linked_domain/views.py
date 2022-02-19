@@ -316,6 +316,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'has_release_management_privilege': can_domain_access_release_management(self.domain),
             'is_superuser': is_superuser,
             'view_data': {
+                'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
                 'available_domains': available_domains_to_link,
