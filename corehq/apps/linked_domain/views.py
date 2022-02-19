@@ -11,6 +11,8 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -393,6 +395,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             error_message = ugettext(
                 "The attempted push from {} to {} is disallowed.".format(self.domain, formatted_domains)
             )
+            notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
         finally:
             if error_message:
                 return {
