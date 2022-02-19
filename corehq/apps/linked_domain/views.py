@@ -381,6 +381,25 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
+        error_message = ''
+        try:
+            validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
+        except NoDownstreamDomainsProvided:
+            error_message = ugettext("No downstream project spaces were selected.")
+        except DomainLinkNotFound:
+            error_message = ugettext("Links between one or more project spaces do not exist.")
+        except AttemptedPushViolatesConstraints:
+            formatted_domains = ','.join(in_data['linked_domains'])
+            error_message = ugettext(
+                "The attempted push from {} to {} is disallowed.".format(self.domain, formatted_domains)
+            )
+        finally:
+            if error_message:
+                return {
+                    'success': False,
+                    'message': error_message,
+                }
+
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
 
