@@ -15,7 +15,7 @@ hqDefine("userreports/js/configurable_reports_home", [
     });
 
     $select.select2({
-        placeholder: gettext("Edit a report or data source"),
+        placeholder: gettext("Edit a custom web report or custom web report source"),
         templateResult: function (item) {
             var text = item.text.trim();
             if (!item.element) {
