@@ -60,7 +60,7 @@ hqDefine("linked_domain/js/domain_links", [
     var DomainLinksViewModel = function (data) {
         var self = {};
         self.upstreamLink = data.upstream_link ? DomainLink(data.upstream_link) : null;
-
+        self.isSuperuser = data.is_superuser;
         // setup getting started view model
         var gettingStartedData = {
             parent: self,
@@ -259,6 +259,9 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
             // receives updates every time a domain is selected/unselected from the multiselect
+            if (self.parent.isSuperuser) {
+                return;
+            }
 
             // handles the Add All edge case if both lite and full access links exist
             if (newValue.length > 1 && self.containsLiteAndFullLinks()) {
@@ -312,8 +315,11 @@ hqDefine("linked_domain/js/domain_links", [
                 selectableHeaderTitle: gettext("All project spaces"),
                 selectedHeaderTitle: gettext("Project spaces to push to"),
                 searchItemTitle: gettext("Search project spaces"),
-                disableModifyAllActions: !self.parent.hasFullAccess,
+                disableModifyAllActions: !self.parent.hasFullAccess && !self.parent.isSuperuser,
                 willSelectAllListener: function () {
+                    if (self.parent.isSuperuser) {
+                        return;
+                    }
                     var requiresRebuild = false;
                     for (var option of $('#domain-multiselect')[0].options) {
                         var tempLink = self.parent.domainLinksByName()[option.value];
