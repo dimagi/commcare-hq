@@ -8,10 +8,13 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
+    DomainLinkNotFound,
+    NoDownstreamDomainsProvided,
 )
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.views import (
     link_domains,
+    validate_push,
     validate_push_for_user,
 )
 from corehq.apps.users.models import WebUser
@@ -66,6 +69,42 @@ class LinkDomainsTests(SimpleTestCase):
             domain_link = link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
         self.assertIsNotNone(domain_link)
+
+
+class ValidatePushTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = WebUser()
+        cls.user.username = 'superuser'
+        cls.user.save()
+        cls.addClassCleanup(cls.user.delete, 'test-domain', deleted_by=None)
+
+        validate_patcher = patch('corehq.apps.linked_domain.views.validate_push_for_user')
+        cls.mock_validate_push_for_user = validate_patcher.start()
+        cls.addClassCleanup(validate_patcher.stop)
+
+    def test_raises_exception_if_no_downstream_domains_selected(self):
+        with self.assertRaises(NoDownstreamDomainsProvided):
+            validate_push(self.user, 'upstream', [])
+
+    def test_raises_exception_if_link_not_found(self):
+        with self.assertRaises(DomainLinkNotFound):
+            validate_push(self.user, 'upstream', ['downstream'])
+
+    def test_raises_exception_if_user_attempts_invalid_push(self):
+        DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_validate_push_for_user.side_effect = AttemptedPushViolatesConstraints
+
+        with self.assertRaises(AttemptedPushViolatesConstraints):
+            validate_push(self.user, 'upstream', ['downstream'])
+
+    def test_successful_validation(self):
+        DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_validate_push_for_user.side_effect = None
+
+        validate_push(self.user, 'upstream', ['downstream'])
 
 
 class ValidatePushForUserTests(TestCase):

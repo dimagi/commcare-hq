@@ -14,6 +14,14 @@ class AttemptedPushViolatesConstraints(Exception):
     pass
 
 
+class DomainLinkNotFound(Exception):
+    pass
+
+
+class NoDownstreamDomainsProvided(Exception):
+    pass
+
+
 class MultipleDownstreamAppsError(Exception):
     pass
 

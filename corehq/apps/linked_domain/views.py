@@ -59,6 +59,8 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
+    DomainLinkNotFound,
+    NoDownstreamDomainsProvided,
     UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
@@ -444,6 +446,20 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
+
+
+def validate_push(user, domain, downstream_domains):
+    if not downstream_domains:
+        raise NoDownstreamDomainsProvided
+
+    try:
+        domain_links = [
+            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
+        ]
+    except DomainLink.DoesNotExist:
+        raise DomainLinkNotFound
+
+    validate_push_for_user(user, domain_links)
 
 
 def validate_push_for_user(user, domain_links):
