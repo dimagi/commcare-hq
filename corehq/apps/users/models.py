@@ -3169,3 +3169,10 @@ class DeactivateMobileWorkerTrigger(models.Model):
             if existing_trigger.exists():
                 existing_trigger.delete()
                 return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+
+    @classmethod
+    def get_deactivate_after_date(cls, domain, user_id):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not existing_trigger.exists():
+            return None
+        return existing_trigger.first().deactivate_after

@@ -226,3 +226,29 @@ class UpdateDeactivateMobileWorkerTriggerTest(TestCase):
             DeactivateMobileWorkerTrigger.update_trigger(
                 'test-trigger', 'user-trigger-006', 'foobar'
             )
+
+
+class GetDeactivateAfterDateTest(TestCase):
+
+    def tearDown(self):
+        DeactivateMobileWorkerTrigger.objects.all().delete()
+        super().tearDown()
+
+    def test_no_trigger_exists(self):
+        deactivate_after = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+            'test-trigger-date', 'user-trigger-001'
+        )
+        self.assertIsNone(deactivate_after)
+
+    def test_date_is_fetched(self):
+        DeactivateMobileWorkerTrigger.objects.create(
+            domain='test-trigger-date',
+            user_id='user-trigger-002',
+            deactivate_after=datetime.date(2022, 2, 1),
+        )
+        deactivate_after = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+            'test-trigger-date', 'user-trigger-002'
+        )
+        self.assertEqual(
+            deactivate_after, datetime.date(2022, 2, 1)
+        )
