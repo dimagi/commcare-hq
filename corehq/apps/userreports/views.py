@@ -71,6 +71,7 @@ from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
@@ -429,8 +430,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -454,7 +455,9 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
-            if app_source.registry_slug != '':
+            registry_permission_checker = RegistryPermissionCheck(self.domain, self.request.couch_user)
+            if app_source.registry_slug != '' and \
+                    registry_permission_checker.can_view_some_data_registry_contents():
                 get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
