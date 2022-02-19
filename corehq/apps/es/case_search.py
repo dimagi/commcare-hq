@@ -135,7 +135,7 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    index_key = "case_search"
+    _index_name = "case_search_2018-05-29"
     type = ElasticCase.type
 
     @property

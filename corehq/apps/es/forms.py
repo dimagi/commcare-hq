@@ -54,7 +54,7 @@ class FormES(HQESQuery):
 
 class ElasticForm(ElasticDocumentAdapter):
 
-    index_key = "form"
+    _index_name = "xforms_2016-07-07"
     type = "xform"
 
     @property
@@ -68,7 +68,7 @@ class ElasticForm(ElasticDocumentAdapter):
 
 class ElasticReportForm(ElasticDocumentAdapter):
 
-    index_key = "report_form"
+    _index_name = "report_xforms_20160824_1708"
     type = "report_xform"
 
     @property

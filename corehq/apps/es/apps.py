@@ -25,7 +25,7 @@ class AppES(HQESQuery):
 
 class ElasticApp(ElasticDocumentAdapter):
 
-    index_key = "app"
+    _index_name = "hqapps_2020-02-26"
     type = "app"
 
     @property

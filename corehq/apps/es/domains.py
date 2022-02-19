@@ -51,7 +51,7 @@ class DomainES(HQESQuery):
 
 class ElasticDomain(ElasticDocumentAdapter):
 
-    index_key = "domain"
+    _index_name = "hqdomains_2020-02-10"
     type = "hqdomain"
 
     @property

@@ -36,7 +36,7 @@ class GroupES(HQESQuery):
 
 class ElasticGroup(ElasticDocumentAdapter):
 
-    index_key = "group"
+    _index_name = "hqgroups_2017-05-29"
     type = "group"
 
     @property

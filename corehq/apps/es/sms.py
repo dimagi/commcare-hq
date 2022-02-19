@@ -33,7 +33,7 @@ class SMSES(HQESQuery):
 
 class ElasticSMS(ElasticDocumentAdapter):
 
-    index_key = "sms"
+    _index_name = "smslogs_2020-01-28"
     type = "sms"
 
     @property

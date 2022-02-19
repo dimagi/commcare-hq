@@ -131,8 +131,7 @@ class TestBaseAdapter(AdapterTestCase):
 
 
 class AdapterWithIndexTestCase(AdapterTestCase):
-
-    index = None  # set by subclass
+    """Subclasses must set ``index`` class attribute."""
 
     def setUp(self):
         super().setUp()

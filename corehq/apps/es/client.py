@@ -55,8 +55,9 @@ cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
 model is applied to that specific index.  At the very least, a document adapter
 must define the following:
 
-- An ``index_key`` attribute whose value is the Django settings key for the
-  Elastic index used by the adapter.
+- An ``_index_name`` attribute whose value is the name of the Elastic index
+  used by the adapter. This attribute must be private to support proper index
+  naming between production code and tests.
 - A ``type`` attribute whose value is the name is the Elastic ``_type`` for
   documents used by the adapter.
 - A ``mapping`` which defines the structure and properties for documents managed
@@ -64,7 +65,7 @@ must define the following:
 - A ``from_python()`` classmethod which can convert a Python model object into the
   JSON-serializable format for writing into the adapter's index.
 
-The combination of ``(index_key, type)`` constrains the document adapter to
+The combination of ``(index_name, type)`` constrains the document adapter to
 a specific HQ document mapping.  Comparing an Elastic cluster to a Postgres
 database (for the sake of analogy), the Elastic **index** is analogous to a
 Postgres **schema** object (e.g. ``public``), and the ``_type`` property is
@@ -87,7 +88,7 @@ A simple example of a document model and its cooresponding adapter:
 
     class ElasticBook(ElasticDocumentAdapter):
 
-        index = "books"
+        _index_name = "books"
         type = "book"
         mapping = {"properties": {
             "author": {"type": "text"},
@@ -125,6 +126,7 @@ import json
 import logging
 from enum import Enum
 
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 from django.utils.decorators import classproperty
 
@@ -425,7 +427,7 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     Subclasses must define the following:
 
-    - ``index_key``: class attribute (``str``)
+    - ``_index_name``: class attribute (``str``)
     - ``type``: class attribute (``str``)
     - ``mapping``: class attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
@@ -433,11 +435,21 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     @classproperty
     def index(cls):
-        return settings.ELASTIC_INDICES[cls.index_key]["INDEX"]
+        # temporary holdover until next commit
+        return cls.index_name
+
+    @classproperty
+    def index_name(cls):
+        try:
+            return cls.__index_name
+        except AttributeError:
+            prefix = TEST_DATABASE_PREFIX if settings.UNIT_TESTING else ""
+            cls.__index_name = f"{prefix}{cls._index_name}"
+        return cls.__index_name
 
     @classproperty
     def settings(cls):
-        return settings.ELASTIC_INDICES[cls.index_key].get("ADAPTER_SETTINGS", {})
+        return settings.ELASTIC_ADAPTER_SETTINGS.get(cls.__name__, {})
 
     @classmethod
     def from_python(cls, doc):

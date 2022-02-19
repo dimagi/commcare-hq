@@ -296,7 +296,7 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     involving ``TestDoc`` model objects.
     """
 
-    index = "test_doc-adapter"
+    _index_name = "doc-adapter"
     type = "test_doc"
     mapping = {
         "properties": {

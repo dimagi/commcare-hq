@@ -46,7 +46,7 @@ class CaseES(HQESQuery):
 
 class ElasticCase(ElasticDocumentAdapter):
 
-    index_key = "case"
+    _index_name = "hqcases_2016-03-04"
     type = "case"
 
     @property
@@ -60,7 +60,7 @@ class ElasticCase(ElasticDocumentAdapter):
 
 class ElasticReportCase(ElasticDocumentAdapter):
 
-    index_key = "report_case"
+    _index_name = "report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
     type = "report_case"
 
     @property
