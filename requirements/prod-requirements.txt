@@ -305,7 +305,7 @@ prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via ipython
-protobuf==3.13.0
+protobuf==3.15.0
     # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
@@ -495,8 +495,6 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.1.1
-    # via black
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -542,6 +540,5 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
-    #   protobuf
     #   zope-event
     #   zope-interface

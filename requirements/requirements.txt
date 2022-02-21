@@ -264,7 +264,7 @@ polib==1.1.0
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
-protobuf==3.13.0
+protobuf==3.15.0
     # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
@@ -465,6 +465,5 @@ setuptools==50.3.0
     #   gevent
     #   gunicorn
     #   jsonschema
-    #   protobuf
     #   zope-event
     #   zope-interface
