@@ -24,6 +24,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.domain.utils import get_allowed_ucr_expressions
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -1079,6 +1080,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             self.config.meta.build.initiated_in_place
             and not self.config.meta.build.finished_in_place
         )
+        allowed_ucr_expression = get_allowed_ucr_expressions(self.request.domain)
         return {
             'form': self.edit_form,
             'data_source': self.config,
@@ -1086,6 +1088,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'used_by_reports': self.get_reports(),
             'is_rebuilding': is_rebuilding,
             'is_rebuilding_inplace': is_rebuilding_inplace,
+            'allowed_ucr_expressions': allowed_ucr_expression,
         }
 
     @property
