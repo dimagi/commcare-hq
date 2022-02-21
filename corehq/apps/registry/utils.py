@@ -57,6 +57,11 @@ class RegistryPermissionCheck:
     def user_can_manage_all(couch_user, domain):
         return RegistryPermissionCheck(domain, couch_user).can_manage_all
 
+    def can_view_some_data_registry_contents(self):
+        dm = self.couch_user.get_domain_membership(self.domain, allow_enterprise=True)
+        data_registry_contents_list = dm.permissions.view_data_registry_contents_list if dm else []
+        return self.couch_user.can_view_data_registry_contents() or bool(data_registry_contents_list)
+
 
 manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
 manage_all_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_all)
@@ -237,9 +242,14 @@ class DataRegistryAuditViewHelper:
         ]
 
 
-def get_data_registry_dropdown_options(domain, required_case_types=None):
+def get_data_registry_dropdown_options(domain, required_case_types=None, permission_checker=None):
+    registries = DataRegistry.objects.visible_to_domain(domain)
+    if permission_checker:
+        registries = [registry for registry in registries
+                      if permission_checker.can_view_registry_data(registry.slug)]
+
     return [
         {"slug": registry.slug, "name": registry.name}
-        for registry in DataRegistry.objects.visible_to_domain(domain)
+        for registry in registries
         if not required_case_types or set(registry.wrapped_schema.case_types) & required_case_types
     ]
