@@ -305,7 +305,7 @@ prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via ipython
-protobuf==3.13.0
+protobuf==3.15.0
     # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
@@ -542,6 +542,5 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
-    #   protobuf
     #   zope-event
     #   zope-interface
