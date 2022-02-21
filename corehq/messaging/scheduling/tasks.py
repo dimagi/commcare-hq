@@ -312,7 +312,7 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
 @task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_timed_schedule_instances(schedule_id, recipients, start_date_iso_string=None):
     """
-    :param schedule_id: type str that is hex representation of the TimeSchedule schedule_id (UUID)
+    :param schedule_id: type str that is hex representation of the TimedSchedule schedule_id (UUID)
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     :param start_date_iso_string: the date to start the TimedSchedule formatted as an iso string
