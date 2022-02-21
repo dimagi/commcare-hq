@@ -88,6 +88,10 @@ hqDefine("reports/js/report_config_models", [
             return reportConfig(item);
         }));
 
+        self.sharedReportConfigs = ko.observableArray(ko.utils.arrayMap(options.sharedItems, function (item) {
+            return reportConfig(item);
+        }));
+
         self.configBeingViewed = ko.observable();
 
         self.configBeingEdited = ko.observable();
