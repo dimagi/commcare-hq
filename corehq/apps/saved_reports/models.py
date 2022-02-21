@@ -147,10 +147,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return configs
 
     @classmethod
-    @quickcache(['domain', 'only_id', 'stale'], timeout=1*60*60)
-    def shared_on_domain(cls, domain, only_id=False, stale=False):
+    @quickcache(['domain', 'only_id'], timeout=1*60*60)
+    def shared_on_domain(cls, domain, only_id=False):
         shared_config_ids = {
-            id_ for rn in ReportNotification.by_domain(domain, stale=stale)
+            id_ for rn in ReportNotification.by_domain(domain, stale=False)
             for id_ in rn.config_ids
         }
         if only_id:
