@@ -103,8 +103,8 @@ from corehq.apps.domain.models import (
     SUB_AREA_CHOICES,
     TransferDomainRequest,
     get_default_ucr_expressions,
+    AllowedUCRExpressionSettings
 )
-from corehq.apps.domain.utils import save_allowed_ucr_expressions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
@@ -1158,7 +1158,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         ucr_expressions = self.cleaned_data['active_ucr_expressions']
-        save_allowed_ucr_expressions(domain.name, ucr_expressions)
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions(domain.name, ucr_expressions)
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']

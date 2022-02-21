@@ -1076,9 +1076,27 @@ class AllowedUCRExpressionSettings(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        from .utils import get_allowed_ucr_expressions
-        get_allowed_ucr_expressions.clear(self.domain)
+        self.__class__.get_allowed_ucr_expressions.clear(self.__class__, self.domain)
         return super().save(*args, **kwargs)
+
+    @classmethod
+    @quickcache(['domain_name'])
+    def get_allowed_ucr_expressions(cls, domain_name):
+        try:
+            ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+            allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
+        except AllowedUCRExpressionSettings.DoesNotExist:
+            allowed_ucr_expressions = get_default_ucr_expressions()
+        return allowed_ucr_expressions
+
+    @classmethod
+    def save_allowed_ucr_expressions(cls, domain_name, expressions):
+        AllowedUCRExpressionSettings.objects.update_or_create(
+            domain=domain_name,
+            defaults={
+                'allowed_ucr_expressions': expressions
+            }
+        )
 
 
 class ProjectLimitType():
