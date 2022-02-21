@@ -465,6 +465,5 @@ setuptools==50.3.0
     #   gevent
     #   gunicorn
     #   jsonschema
-    #   protobuf
     #   zope-event
     #   zope-interface

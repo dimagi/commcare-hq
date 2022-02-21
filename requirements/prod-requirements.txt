@@ -542,6 +542,5 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
-    #   protobuf
     #   zope-event
     #   zope-interface
