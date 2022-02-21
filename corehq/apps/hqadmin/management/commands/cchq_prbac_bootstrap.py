@@ -189,7 +189,6 @@ class Command(BaseCommand):
         Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
-        Role(slug='enterprise_plan_v1', name='Enterprise Plan', description=''),
     ] + [
         Role(slug='standard_plan_report_builder_v0', name='Standard Plan - 5 Reports', description=''),
         Role(slug='pro_plan_report_builder_v0', name='Pro Plan - 5 Reports', description=''),
