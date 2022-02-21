@@ -58,6 +58,16 @@ class TestClient(SimpleTestCase):
         expected = [{"host": "somehost", "port": 9200}]
         self.assertEqual(expected, _elastic_hosts())
 
+    @override_settings(ELASTICSEARCH_HOSTS=["somehost:badport"])
+    def test_elastic_host_fails_non_int_port(self):
+        with self.assertRaises(ValueError):
+            _elastic_hosts()
+
+    @override_settings(ELASTICSEARCH_HOSTS=["somehost:"])
+    def test_elastic_host_fails_empty_port(self):
+        with self.assertRaises(ValueError):
+            _elastic_hosts()
+
     @override_settings(ELASTICSEARCH_PORT=9292)
     def test_elastic_hosts_alt_default_port(self):
         expected = [{"host": "localhost", "port": 9292}]

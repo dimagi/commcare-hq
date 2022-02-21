@@ -985,8 +985,8 @@ def _elastic_hosts():
         parse_hosts.append(settings.ELASTICSEARCH_HOST)
     hosts = []
     for hostspec in parse_hosts:
-        host, c, port = hostspec.partition(":")
-        if port:
+        host, delim, port = hostspec.partition(":")
+        if delim:
             port = int(port)
         else:
             port = settings.ELASTICSEARCH_PORT
