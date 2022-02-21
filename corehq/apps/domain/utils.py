@@ -128,11 +128,11 @@ def get_serializable_wire_invoice_general_credit(general_credit):
 
 def get_ucr_expressions(domain_name):
     try:
-        active_ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
-        active_ucr_expressions = active_ucr_expressions_obj.active_ucr_expressions
+        ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+        allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
     except AllowedUCRExpressionSettings.DoesNotExist:
-        active_ucr_expressions = get_default_ucr_expressions()
-    return active_ucr_expressions
+        allowed_ucr_expressions = get_default_ucr_expressions()
+    return allowed_ucr_expressions
 
 
 def save_ucr_expressions(domain_name, expressions):
