@@ -79,7 +79,7 @@ hqDefine("domain/js/internal_settings", [
             selectedHeaderTitle: gettext("Active Countries"),
             searchItemTitle: gettext("Search Countries..."),
         });
-        multiselectUtils.createFullMultiselectWidget('id_active_dte_expressions', {
+        multiselectUtils.createFullMultiselectWidget('id_active_ucr_expressions', {
             selectableHeaderTitle: gettext("Inactive Expressions"),
             selectedHeaderTitle: gettext("Active Expressions"),
             searchItemTitle: gettext("Search Expressions"),

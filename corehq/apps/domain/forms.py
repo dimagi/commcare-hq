@@ -95,16 +95,16 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
-    RESTRICTED_DTE_EXPRESSIONS,
+    RESTRICTED_UCR_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
-    get_default_dte_expressions,
+    get_default_ucr_expressions,
 )
-from corehq.apps.domain.utils import save_dte_expressions
+from corehq.apps.domain.utils import save_ucr_expressions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
@@ -964,9 +964,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Check this box to enable messaging.",  # TODO through non-test gateways
     )
-    active_dte_expressions = forms.MultipleChoiceField(
+    active_ucr_expressions = forms.MultipleChoiceField(
         label="Expressions for SaaS to Manage",
-        choices=RESTRICTED_DTE_EXPRESSIONS,
+        choices=RESTRICTED_UCR_EXPRESSIONS,
         required=False,
     )
 
@@ -1053,7 +1053,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
                 ),
                 'granted_messaging_access',
-                'active_dte_expressions',
+                'active_ucr_expressions',
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -1090,9 +1090,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
 
-    def clean_allowed_dte_expressions(self):
-        value = self.cleaned_data.get('active_dte_expressions')
-        all_expressions = get_default_dte_expressions()
+    def clean_active_ucr_expressions(self):
+        value = self.cleaned_data.get('active_ucr_expressions')
+        all_expressions = get_default_ucr_expressions()
         for expr in value:
             if expr not in all_expressions:
                 raise forms.ValidationError(_(f"Unknown expression {expr}"))
@@ -1157,8 +1157,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
         )
-        dte_expressions = self.cleaned_data['active_dte_expressions']
-        save_dte_expressions(domain.name, dte_expressions)
+        ucr_expressions = self.cleaned_data['active_ucr_expressions']
+        save_ucr_expressions(domain.name, ucr_expressions)
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']

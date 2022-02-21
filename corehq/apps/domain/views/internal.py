@@ -16,7 +16,7 @@ from django.views.generic import View
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.domain.utils import get_dte_expressions
+from corehq.apps.domain.utils import get_ucr_expressions
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
@@ -140,7 +140,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        initial['active_dte_expressions'] = get_dte_expressions(domain_name=self.domain_object.name)
+        initial['active_ucr_expressions'] = get_ucr_expressions(domain_name=self.domain_object.name)
         return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
