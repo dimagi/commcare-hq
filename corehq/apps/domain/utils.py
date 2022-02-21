@@ -12,7 +12,7 @@ from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_
 from corehq.apps.domain.extension_points import custom_domain_module
 from corehq.util.test_utils import unit_testing_only
 
-from corehq.apps.domain.models import AllowedDTEExpressionSettings, Domain, get_default_dte_expressions
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain, get_default_ucr_expressions
 from corehq.apps.es import DomainES
 from corehq.util.quickcache import quickcache
 
@@ -126,19 +126,19 @@ def get_serializable_wire_invoice_general_credit(general_credit):
     return []
 
 
-def get_dte_expressions(domain_name):
+def get_ucr_expressions(domain_name):
     try:
-        active_dte_expressions_obj = AllowedDTEExpressionSettings.objects.get(domain=domain_name)
-        active_dte_expressions = active_dte_expressions_obj.active_dte_expressions
-    except AllowedDTEExpressionSettings.DoesNotExist:
-        active_dte_expressions = get_default_dte_expressions()
-    return active_dte_expressions
+        active_ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+        active_ucr_expressions = active_ucr_expressions_obj.active_ucr_expressions
+    except AllowedUCRExpressionSettings.DoesNotExist:
+        active_ucr_expressions = get_default_ucr_expressions()
+    return active_ucr_expressions
 
 
-def save_dte_expressions(domain_name, expressions):
-    AllowedDTEExpressionSettings.objects.update_or_create(
+def save_ucr_expressions(domain_name, expressions):
+    AllowedUCRExpressionSettings.objects.update_or_create(
         domain=domain_name,
         defaults={
-            'active_dte_expressions': expressions
+            'allowed_ucr_expressions': expressions
         }
     )
