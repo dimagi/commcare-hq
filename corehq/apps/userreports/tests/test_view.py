@@ -23,6 +23,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import flag_enabled
 
 
 class ConfigurableReportTestMixin(object):
@@ -259,6 +260,25 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         }
         self.assertEqual(actual, expected)
 
+    def test_report_preview_data_with_expanded_columns(self):
+        report, view = self._build_report_and_view()
+        self.assertEqual(len(report.charts[1].y_axis_columns), 1)
+        self.assertEqual(report.charts[1].y_axis_columns[0].column_id, 'report_column_col_id_expanded_num1')
+        self.assertEqual(report.charts[1].y_axis_columns[0].display, 'Num1 values')
+
+        with flag_enabled('SUPPORT_EXPANDED_COLUMN_IN_REPORTS'):
+            report, view = self._build_report_and_view()
+            self.assertEqual(len(report.charts[1].y_axis_columns), 3)
+            self.assertEqual(report.charts[1].y_axis_columns[0].column_id, 'report_column_col_id_expanded_num1-0')
+            self.assertEqual(report.charts[1].y_axis_columns[0].display, 'report_column_display_expanded_num1-1')
+            self.assertEqual(report.charts[1].y_axis_columns[1].column_id, 'report_column_col_id_expanded_num1-1')
+            self.assertEqual(report.charts[1].y_axis_columns[1].display, 'report_column_display_expanded_num1-4')
+            self.assertEqual(report.charts[1].y_axis_columns[2].column_id, 'report_column_col_id_expanded_num1-2')
+            self.assertEqual(report.charts[1].y_axis_columns[2].display, 'report_column_display_expanded_num1-7')
+
+            # just test that preview works
+            self.test_report_preview_data()
+
     def test_report_charts(self):
         report, view = self._build_report_and_view()
 
@@ -282,6 +302,20 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             preview_data_multibar_chart.y_axis_columns[0].display,
             'Num1 values'
         )
+
+    @flag_enabled('SUPPORT_EXPANDED_COLUMN_IN_REPORTS')
+    def test_report_charts_with_expanded_columns(self):
+        report, view = self._build_report_and_view()
+
+        preview_data = ConfigurableReportView.report_preview_data(report.domain, report)
+        multibar_chart = preview_data['chart_configs'][1]
+        self.assertEqual(multibar_chart.type, 'multibar')
+        self.assertEqual(multibar_chart.y_axis_columns[0].column_id, 'report_column_col_id_expanded_num1-0')
+        self.assertEqual(multibar_chart.y_axis_columns[0].display, 'report_column_display_expanded_num1-1')
+        self.assertEqual(multibar_chart.y_axis_columns[1].column_id, 'report_column_col_id_expanded_num1-1')
+        self.assertEqual(multibar_chart.y_axis_columns[1].display, 'report_column_display_expanded_num1-4')
+        self.assertEqual(multibar_chart.y_axis_columns[2].column_id, 'report_column_col_id_expanded_num1-2')
+        self.assertEqual(multibar_chart.y_axis_columns[2].display, 'report_column_display_expanded_num1-7')
 
     def test_paginated_build_table(self):
         """
