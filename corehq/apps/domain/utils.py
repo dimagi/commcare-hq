@@ -135,7 +135,7 @@ def get_allowed_ucr_expressions(domain_name):
     return allowed_ucr_expressions
 
 
-def save_ucr_expressions(domain_name, expressions):
+def save_allowed_ucr_expressions(domain_name, expressions):
     AllowedUCRExpressionSettings.objects.update_or_create(
         domain=domain_name,
         defaults={
