@@ -34,18 +34,15 @@ hqDefine("export/js/export_list_main", [
             $('#createExportOptionsModal').on('show.bs.modal', function () {
                 kissmetricsAnalytics.track.event("Clicked New Export");
 
-                let modelType = initialPageData.get('model_type', true);
-                if (modelType) {
-                    modelType = utils.capitalize(modelType);
-                    const metricsMessage = `${modelType} Export - Clicked Add Export Button`;
-                    kissmetricsAnalytics.track.event(metricsMessage, {
-                        domain: initialPageData.get('domain'),
-                    });
-                }
-
                 if (isOData) {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
                 }
+
+                const exportAction = getExportAction();
+                const metricsMessage = `${exportAction} Export - Clicked Add Export Button`;
+                kissmetricsAnalytics.track.event(metricsMessage, {
+                    domain: initialPageData.get('domain'),
+                });
             });
         }
 
@@ -93,4 +90,23 @@ hqDefine("export/js/export_list_main", [
             kissmetricsAnalytics.track.event("Dismissed alert bubble - Deep links in exports");
         });
     });
+
+    function getExportAction() {
+        const modelType = initialPageData.get('model_type', true);
+        if (modelType) {
+            return utils.capitalize(modelType);
+        }
+
+        const isDailySavedExport = initialPageData.get('is_daily_saved_export', true);
+        const isExcelExport = initialPageData.get('is_feed', true);
+        const isOData = initialPageData.get('is_odata', true);
+
+        if (isDailySavedExport) {
+            // NOTE: Currently, excel exports are considered daily exports,
+            // but if this was not intentional, this code should be separated
+            return (isExcelExport ? 'Excel Dashboard' : 'Daily Saved');
+        } else if (isOData) {
+            return 'PowerBI';
+        }
+    }
 });
