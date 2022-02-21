@@ -486,6 +486,8 @@ class AddSavedReportConfigView(View):
 
         self.config.save()
         ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user)
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -578,6 +580,8 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
+    ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
     try:
         saved_report = ReportConfig.get(config_id)
     except ResourceNotFound:
