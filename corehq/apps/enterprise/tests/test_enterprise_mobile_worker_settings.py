@@ -21,6 +21,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form
 from dimagi.utils.dates import add_months_to_date
 from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.processors.form import mark_latest_submission
 
 
 @es_test
@@ -134,39 +135,52 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
             ),
         ]
 
-        for user in cls.users:
-            elastic_user = transform_user_for_elasticsearch(user.to_json())
-            send_to_elasticsearch('users', elastic_user)
-
-        forms = [
-            TestFormMetadata(
+        form_submissions = [
+            (TestFormMetadata(
                 domain=cls.domains[0].name,
                 received_on=today - datetime.timedelta(days=cls.emw_settings.inactivity_period - 1),
                 user_id=cls.active_user1.user_id,
                 username=cls.active_user1.username,
-            ),
-            TestFormMetadata(
+            ), cls.active_user1),
+            (TestFormMetadata(
                 domain=cls.domains[0].name,
                 received_on=today - datetime.timedelta(days=cls.emw_settings.inactivity_period),
                 user_id=cls.active_user2.user_id,
                 username=cls.active_user2.username,
-            ),
-            TestFormMetadata(
+            ), cls.active_user2),
+            (TestFormMetadata(
                 domain=cls.domains[1].name,
                 received_on=today - datetime.timedelta(days=cls.emw_settings.inactivity_period - 10),
                 user_id=cls.active_user3.user_id,
                 username=cls.active_user3.username,
-            ),
-            TestFormMetadata(
+            ), cls.active_user3),
+            (TestFormMetadata(
                 domain=cls.domains[1].name,
                 received_on=today - datetime.timedelta(days=cls.emw_settings.inactivity_period + 1),
                 user_id=cls.active_user6.user_id,
                 username=cls.active_user6.username,
-            ),
+            ), cls.active_user6),
         ]
-        for form_metadata in forms:
+        for form_metadata, user in form_submissions:
+            # ensure users are as old as the received_on dates of their submissions
+            user.created_on = form_metadata.received_on
+            user.save()
             form_pair = make_es_ready_form(form_metadata)
             send_to_elasticsearch('forms', form_pair.json_form)
+            mark_latest_submission(
+                form_metadata.domain,
+                user,
+                form_metadata.app_id,
+                "build-id",
+                "2",
+                {'deviceID': 'device-id'},
+                form_metadata.received_on
+            )
+
+        for user in cls.users:
+            fresh_user = CommCareUser.get_by_user_id(user.user_id)
+            elastic_user = transform_user_for_elasticsearch(fresh_user.to_json())
+            send_to_elasticsearch('users', elastic_user)
 
         cls.es.indices.refresh(USER_INDEX_INFO.alias)
         cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
