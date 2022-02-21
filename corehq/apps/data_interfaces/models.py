@@ -273,9 +273,9 @@ class AutomaticUpdateRule(models.Model):
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
-                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)
                 elif isinstance(schedule, TimedSchedule):
-                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id.hex)
                 else:
                     raise TypeError("Unexpected schedule type")
 
