@@ -68,21 +68,6 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     return result
 
 
-def get_days_since_last_form_submission_for_user_id(domain, user_id):
-    query = (
-        FormES()
-        .domain(domain)
-        .user_id(user_id)
-        .sort('received_on', desc=True)
-        .size(1)
-    )
-    result = query.run().hits
-    if not result:
-        return -1
-    delta = datetime.utcnow() - iso_string_to_datetime(result[0]['received_on'])
-    return delta.days
-
-
 def get_active_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None, export=False):
     return _get_case_case_counts_by_owner(domain, datespan, case_types, False, owner_ids, export)
 
