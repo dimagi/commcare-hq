@@ -80,17 +80,17 @@ BUSINESS_UNITS = [
     "INC",
 ]
 
-# These are the DTE Expressions (UCR expressions) that are not currently
+# These are the UCR Expressions (Data Transformation Engine expressions) that are not currently
 # supported by SaaS. If any domain wants to use them them it can be
 # enabled from  Project Settings > Project Information Internal
-RESTRICTED_DTE_EXPRESSIONS = [
+RESTRICTED_UCR_EXPRESSIONS = [
     ('base_item', 'Base Item Expressions'),
     ('related_document', 'Related Document Expressions')
 ]
 
 
-def get_default_dte_expressions():
-    return [exp[0] for exp in RESTRICTED_DTE_EXPRESSIONS]
+def get_default_ucr_expressions():
+    return [exp[0] for exp in RESTRICTED_UCR_EXPRESSIONS]
 
 
 for lang in all_langs:
@@ -1059,7 +1059,7 @@ class DomainAuditRecordEntry(models.Model):
         obj.save(update_fields=[property_to_update])
 
 
-class AllowedDTEExpressionSettings(models.Model):
+class AllowedUCRExpressionSettings(models.Model):
     """
     Model contains DTE(aka UCR) expressions settings for a domain.
     The expressions defined in RESTRICTED_DTE_EXPRESSIONS are not generally available yet.
@@ -1070,9 +1070,9 @@ class AllowedDTEExpressionSettings(models.Model):
     """
 
     domain = models.CharField(unique=True, max_length=256)
-    active_dte_expressions = ArrayField(
-        models.CharField(max_length=32, choices=RESTRICTED_DTE_EXPRESSIONS),
-        default=get_default_dte_expressions
+    allowed_ucr_expressions = ArrayField(
+        models.CharField(max_length=32, choices=RESTRICTED_UCR_EXPRESSIONS),
+        default=get_default_ucr_expressions
     )
 
 
