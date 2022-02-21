@@ -1075,6 +1075,11 @@ class AllowedUCRExpressionSettings(models.Model):
         default=get_default_ucr_expressions
     )
 
+    def save(self, *args, **kwargs):
+        from .utils import get_allowed_ucr_expressions
+        get_allowed_ucr_expressions.clear(self.domain)
+        return super().save(*args, **kwargs)
+
 
 class ProjectLimitType():
     LIVE_GOOGLE_SHEETS = 'lgs'
