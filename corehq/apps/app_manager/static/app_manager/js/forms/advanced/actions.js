@@ -1,7 +1,8 @@
 hqDefine('app_manager/js/forms/advanced/actions', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
         caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,
-        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty;
+        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty,
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var caseIndex = {
         mapping: {
@@ -30,7 +31,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag || (self.warn_blank_case_tag() && !hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
+            } else if (!case_tag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
@@ -66,7 +67,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 if (!self.auto_select && !tag) {
                     // Don't allow user to blank out case tag
                     self.warn_blank_case_tag(true);
-                    if (!hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS')) {
+                    if (!toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS')) {
                         self.case_tag(self.case_tag.previous());
                     }
                     return;
@@ -439,6 +440,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 add_circular();
             }
 
+            // needed for compatibility with shared templates
+            self.searchAndFilter = false;
+            self.visible_case_properties = ko.computed(function () {
+                return self.case_properties();
+            });
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
+
             return self;
         },
         unwrap: function (self) {
@@ -462,7 +470,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             return {
                 include: [
                     'case_type',
-                    'name_path',
+                    'name_update',
                     'case_tag',
                     'open_condition',
                     'close_condition',
@@ -568,7 +576,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
             self.propertyCounts = ko.computed(actionBase.propertyCounts(self));
 
-            self.name_path = ko.computed(function () {
+            self.name_update = ko.computed(function () {
                 try {
                     return _(self.case_properties()).find(function (p) {
                         return p.key() === 'name' && p.required();
@@ -579,7 +587,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.repeat_context = function () {
-                return self.caseConfig.get_repeat_context(self.name_path());
+                return self.caseConfig.get_repeat_context(self.name_update());
             };
 
             self.addProperty = function () {
@@ -641,6 +649,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 add_circular();
             }
 
+            // needed for compatibility with shared templates
+            self.searchAndFilter = false;
+            self.visible_case_properties = ko.computed(function () {
+                return self.case_properties();
+            });
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
+
             return self;
         },
         unwrap: function (self) {
@@ -655,7 +670,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             var action = ko.mapping.toJS(self, openCaseAction.mapping(self));
             var x = caseConfigUtils.propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
-            action.name_path = x[1].name;
+            action.name_update = x[1].name;
             action.repeat_context = self.repeat_context();
             return action;
         },

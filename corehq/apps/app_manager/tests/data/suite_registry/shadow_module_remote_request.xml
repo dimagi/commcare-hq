@@ -1,0 +1,48 @@
+<partial>
+  <remote-request>
+    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0" url="https://www.example.com/a/test_domain/phone/claim-case/">
+      <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
+    </post>
+    <command id="search_command.m1">
+      <display>
+        <text>
+          <locale id="case_search.m1"/>
+        </text>
+      </display>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="item-list:textures" src="jr://fixture/item-list:textures"/>
+    <session>
+      <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/456/">
+        <data key="case_type" ref="'case'"/>
+        <data key="x_commcare_data_registry" ref="'myregistry'"/>
+        <prompt key="name">
+          <display>
+            <text>
+              <locale id="search_property.m1.name"/>
+            </text>
+          </display>
+        </prompt>
+        <prompt key="favorite_color">
+          <display>
+            <text>
+              <locale id="search_property.m1.favorite_color"/>
+            </text>
+          </display>
+          <itemset nodeset="instance('item-list:textures')/textures_list/textures">
+            <label ref="name"/>
+            <value ref="value"/>
+            <sort ref="name"/>
+          </itemset>
+        </prompt>
+      </query>
+      <datum detail-confirm="m1_search_long" detail-select="m1_search_short" id="search_case_id" nodeset="instance('results')/results/case[@case_type='case'][not(commcare_is_related_case=true())]" value="./@case_id"/>
+    </session>
+    <stack>
+      <push>
+        <rewind value="instance('commcaresession')/session/data/search_case_id"/>
+      </push>
+    </stack>
+  </remote-request>
+</partial>

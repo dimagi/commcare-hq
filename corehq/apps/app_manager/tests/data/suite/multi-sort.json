@@ -272,7 +272,10 @@
                                 "type": "always"
                             },
                             "update": {
-                                "birthdate": "/data/birthdate"
+                                "birthdate": {
+                                  "question_path": "/data/birthdate",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
@@ -365,7 +368,10 @@
                                 "type": "always"
                             },
                             "update": {
-                                "favorite_food": "/data/favorite_food"
+                                "favorite_food": {
+                                  "question_path": "/data/favorite_food",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
