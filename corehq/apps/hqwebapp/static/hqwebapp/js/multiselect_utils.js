@@ -174,27 +174,33 @@ hqDefine('hqwebapp/js/multiselect_utils', [
      * A custom binding for setting multiselect properties and additional knockout bindings
      * The only dynamic part of this binding are the options
      * For a list of configurable multiselect properties, see http://loudev.com/ under Options
+     * properties - a dictionary of properties used by the multiselect element (see createFullMultiselectWidget above)
+     * options - an observable array of option elements (only supports array of strings)
+     * didUpdateListener - method to invoke when the multiselect updates
      */
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
             var model = valueAccessor();
-            assertProperties.assert(model, [], ['properties', 'options']);
+            assertProperties.assert(model, [], ['properties', 'options', 'didUpdateListener']);
             multiselect_utils.createFullMultiselectWidget(element, model.properties);
 
             if (model.options) {
-                // add the `options` binding to the element, valueAccessor() should return an observable
-                // NOTE: apply bindings after the multiselect has been setup
+                // apply bindings after the multiselect has been setup
                 ko.applyBindingsToNode(element, {options: model.options});
             }
         },
         update: function (element, valueAccessor) {
             var model = valueAccessor();
+            assertProperties.assert(model, [], ['properties', 'options', 'didUpdateListener']);
             if (model.options) {
                 // have to access the observable to get the `update` method to fire on changes to options
                 ko.unwrap(model.options());
             }
 
             multiselect_utils.rebuildMultiselect(element, model.properties);
+            if (model.didUpdateListener) {
+                model.didUpdateListener();
+            }
         },
     };
 
