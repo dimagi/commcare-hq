@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.utils import (
-    get_ucr_expressions,
+    get_allowed_ucr_expressions,
     get_serializable_wire_invoice_general_credit,
     guess_domain_language,
 )
@@ -77,9 +77,9 @@ def test_domain(name="domain", skip_full_delete=False):
 
 class TestDTEExpressionUtils(TestCase):
     def test_default_value_when_domain_not_exists(self):
-        self.assertEqual(set(get_ucr_expressions('blah_domain')), {'base_item', 'related_document'})
+        self.assertEqual(set(get_allowed_ucr_expressions('blah_domain')), {'base_item', 'related_document'})
 
     def test_when_domain_exists(self):
         exprn = ['base_item']
         AllowedUCRExpressionSettings.objects.create(domain='test_domain', allowed_ucr_expressions=exprn)
-        self.assertEqual(get_ucr_expressions('test_domain'), exprn)
+        self.assertEqual(get_allowed_ucr_expressions('test_domain'), exprn)

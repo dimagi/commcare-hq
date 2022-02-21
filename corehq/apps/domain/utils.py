@@ -126,7 +126,7 @@ def get_serializable_wire_invoice_general_credit(general_credit):
     return []
 
 
-def get_ucr_expressions(domain_name):
+def get_allowed_ucr_expressions(domain_name):
     try:
         ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
         allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
