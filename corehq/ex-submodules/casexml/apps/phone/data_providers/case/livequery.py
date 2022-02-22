@@ -21,13 +21,10 @@ Example case graphs with outcomes:
 
    a(closed) <--ext-- b <--chi-- c(owned) >> []
 """
-from __future__ import annotations
-
 import logging
 from collections import defaultdict
 from functools import wraps
 from itertools import chain, islice
-from typing import TYPE_CHECKING, Callable, Iterator
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
@@ -41,14 +38,10 @@ from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
-from corehq.util.timer import TimingContext
 
 from .load_testing import get_xml_for_response
 from .stock import get_stock_payload
 from .utils import get_case_sync_updates
-
-if TYPE_CHECKING:
-    from casexml.apps.phone.restore import RestoreContent, RestoreState
 
 
 def livequery_read_from_standbys(func):
@@ -370,12 +363,12 @@ def init_progress(async_task, total):
 
 
 def compile_response(
-        timing_context: TimingContext,
-        restore_state: RestoreState,
-        response: RestoreContent,
-        batches: Iterator[list[CommCareCase]],
-        update_progress: Callable,
-        total_cases: int,
+    timing_context,
+    restore_state,
+    response,
+    batches,
+    update_progress,
+    total_cases,
 ):
     done = 0
     for cases in batches:
