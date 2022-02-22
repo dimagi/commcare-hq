@@ -85,5 +85,5 @@ branches:
     - gh/mrm/superuser # Graham Feb 18
     - gh/mrm/newly-linked-domain # Graham Feb 20
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - gh/pickles/motech # Graham Feb 22
+    # - gh/pickles/motech # Graham Feb 22
 submodules: { }
