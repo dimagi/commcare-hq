@@ -81,6 +81,7 @@ class ChoiceProviderTestMixin(metaclass=ABCMeta):
     choice_provider = None
     static_choice_provider = None
     choice_query_context = ChoiceQueryContext
+    web_user = None
 
     def _test_query(self, query_context):
         self.assertEqual(
@@ -94,13 +95,13 @@ class ChoiceProviderTestMixin(metaclass=ABCMeta):
         )
 
     def test_query_no_search_all(self):
-        self._test_query(self.choice_query_context('', limit=20, page=0))
+        self._test_query(self.choice_query_context('', limit=20, page=0, user=self.web_user))
 
     def test_query_no_search_first_short_page(self):
-        self._test_query(self.choice_query_context('', 2, page=0))
+        self._test_query(self.choice_query_context('', 2, page=0, user=self.web_user))
 
     def test_query_no_search_second_short_page(self):
-        self._test_query(self.choice_query_context('', 2, page=1))
+        self._test_query(self.choice_query_context('', 2, page=1, user=self.web_user))
 
     @abstractmethod
     def test_query_search(self):
