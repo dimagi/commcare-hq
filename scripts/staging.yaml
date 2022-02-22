@@ -86,4 +86,5 @@ branches:
 #     - gh/mrm/newly-linked-domain # Graham Feb 20
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
 #     - gh/pickles/motech # Graham Feb 22
+    - jls/force-manual-action-per-command # Jenny Feb 22
 submodules: { }
