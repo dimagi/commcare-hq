@@ -1,4 +1,6 @@
-from contextlib import contextmanager
+import argparse
+import sys
+from textwrap import dedent
 
 from django.core.management.base import BaseCommand
 
@@ -18,10 +20,27 @@ MAPPING_SPECIAL_VALUES = {
 
 class Command(BaseCommand):
 
-    help = "Print Elasticsearch index mappings."
+    help = dedent("""\
+        Print Elasticsearch index mappings.
+
+        Designed for:
+
+        1. Printing mappings in a standard, consistent format.
+        2. Using the verbatim output to update mapping source code.
+        3. Generating transformed mappings (e.g. for upgrading mappings to
+           modern formats) with an iterative workflow where the transform logic
+           is represented as tested, reviewable code.
+    """)
+
+    def create_parser(self, prog_name, subcommand, **kwargs):
+        parser = super().create_parser(prog_name, subcommand, **kwargs)
+        # adding `formatter_class` to kwargs causes BaseCommand to specify it twice
+        parser.formatter_class = argparse.RawDescriptionHelpFormatter
+        return parser
 
     def add_arguments(self, parser):
         parser.add_argument("-o", "--outfile", metavar="FILE",
+            type=argparse.FileType("w"), default=sys.stdout,
             help="write output to %(metavar)s rather than STDOUT")
         parser.add_argument("--no-names", action="store_true", default=False,
             help="do not replace special values with names")
@@ -35,20 +54,10 @@ class Command(BaseCommand):
             help="print mapping for %(metavar)s")
 
     def handle(self, cname, **options):
-        outpath = options["outfile"]
         if options["no_names"]:
             namespace = {}
         else:
             namespace = MAPPING_SPECIAL_VALUES
-        if outpath is None:
-            outpath = self.stdout._out  # Why, OutputWrapper.write()? Why?
-
-            @contextmanager
-            def opener(file, mode):
-                yield file
-
-        else:
-            opener = open
         index_info = CANONICAL_NAME_INFO_MAP[cname]
         if options["from_elastic"]:
             mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
@@ -58,8 +67,7 @@ class Command(BaseCommand):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
                 mapping = ALL_TRANSFORMS[key](mapping)
-        with opener(outpath, "w") as outfile:
-            pprint(mapping, namespace, stream=outfile)
+        pprint(mapping, namespace, stream=options["outfile"])
 
 
 def transform_multi_field(mapping, key=None):
