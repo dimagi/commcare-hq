@@ -31,7 +31,7 @@ def get_xml_for_response(
     update: CaseSyncUpdate,
     restore_state: RestoreState,
     total_cases: int,
-):
+) -> list[str]:
     """
     Adds the XML from the case_update to the restore response.
     If factor is > 1 it will append that many updates to the response for load testing purposes.
