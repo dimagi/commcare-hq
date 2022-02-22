@@ -1075,10 +1075,6 @@ class AllowedUCRExpressionSettings(models.Model):
         default=get_default_ucr_expressions
     )
 
-    def save(self, *args, **kwargs):
-        self.__class__.get_allowed_ucr_expressions.clear(self.__class__, self.domain)
-        return super().save(*args, **kwargs)
-
     @classmethod
     @quickcache(['domain_name'])
     def get_allowed_ucr_expressions(cls, domain_name):
