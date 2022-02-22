@@ -2328,13 +2328,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return device
 
 
-def reset_loadtest_factor(user_id: str):
-    user = CommCareUser.get_by_user_id(user_id)
-    if user.loadtest_factor is not None:
-        user.loadtest_factor = None
-        user.save()
-
-
 def update_fixture_status_for_users(user_ids, fixture_type):
     from corehq.apps.fixtures.models import UserFixtureStatus
     from dimagi.utils.chunked import chunked
