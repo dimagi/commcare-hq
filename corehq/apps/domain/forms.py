@@ -95,12 +95,15 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
+    RESTRICTED_UCR_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
+    get_default_ucr_expressions,
+    AllowedUCRExpressionSettings
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -961,6 +964,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Check this box to enable messaging.",  # TODO through non-test gateways
     )
+    active_ucr_expressions = forms.MultipleChoiceField(
+        label="Expressions for SaaS to Manage",
+        choices=RESTRICTED_UCR_EXPRESSIONS,
+        required=False,
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1045,6 +1053,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
                 ),
                 'granted_messaging_access',
+                'active_ucr_expressions',
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -1080,6 +1089,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_active_ucr_expressions(self):
+        value = self.cleaned_data.get('active_ucr_expressions')
+        all_expressions = get_default_ucr_expressions()
+        for expr in value:
+            if expr not in all_expressions:
+                raise forms.ValidationError(_(f"Unknown expression {expr}"))
+        return value
 
     def clean_auto_case_update_hour(self):
         if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
@@ -1140,6 +1157,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
         )
+        ucr_expressions = self.cleaned_data['active_ucr_expressions']
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions(domain.name, ucr_expressions)
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']

@@ -34,7 +34,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -139,6 +139,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
+        initial['active_ucr_expressions'] = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(
+            domain_name=self.domain_object.name
+        )
         return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
