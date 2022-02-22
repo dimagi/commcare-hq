@@ -6,7 +6,6 @@ from corehq.util.soft_assert.core import SoftAssert
 
 from casexml.apps.case.exceptions import ReconciliationError
 from casexml.apps.case.xml.parser import CaseUpdateAction, KNOWN_PROPERTIES
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import ProcessedForms
@@ -59,7 +58,7 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -140,7 +139,7 @@ class SqlUpdateStrategyTest(TestCase):
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
         case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)

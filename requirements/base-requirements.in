@@ -7,7 +7,6 @@ boto3
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
 celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
 CommcareTranslationChecker>=0.9.7
-concurrent-log-handler>=0.9.12
 csiphash
 datadog
 ddtrace
@@ -40,7 +39,7 @@ django-transfer
 django-two-factor-auth
 django-user-agents
 django-websocket-redis
-django<3.0  # we are not ready to move to django 3.0
+django>=2.2.27,<3.0  # we are not ready to move to django 3.0
 djangorestframework
 dnspython
 dropbox
@@ -52,6 +51,9 @@ eulxml
 Faker
 gevent
 ghdiff
+google-api-python-client==2.32.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
 hiredis
@@ -88,7 +90,6 @@ psycopg2>=2.8.4  # Python 3.8 support
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
-Pygments
 pygooglechart
 python-dateutil
 python-imap

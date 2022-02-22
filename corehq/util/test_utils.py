@@ -574,6 +574,11 @@ def create_and_save_a_form(domain):
 
 
 def _create_case(domain, **kwargs):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
@@ -583,6 +588,11 @@ def _create_case(domain, **kwargs):
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
         drop_signals=True, owner_id=None, user_id=None, index=None):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
@@ -615,8 +625,13 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 @contextmanager
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
         case_id=None, owner_id=None, user_id=None):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    from corehq.form_processor.models import CommCareCase
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -627,7 +642,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 create_test_case.__test__ = False

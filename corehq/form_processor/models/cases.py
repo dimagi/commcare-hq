@@ -6,8 +6,10 @@ import uuid
 from collections import OrderedDict, namedtuple
 from datetime import datetime
 
-from django.db import models
+from django.db import DatabaseError, models, transaction
+from django.db.models import F
 
+from ddtrace import tracer
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
@@ -22,14 +24,15 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, CaseNotFound, UnknownActionType
+from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
 from ..track_related import TrackRelatedChanges
-from .attachment import AttachmentMixin
+from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, sort_with_id_list
+from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -83,6 +86,195 @@ class CommCareCaseManager(RequireDBManager):
         """
         for chunk in chunked((x for x in case_ids if x), 100, list):
             yield from self.get_cases(chunk, domain)
+
+    def get_case_by_external_id(self, domain, external_id, case_type=None, raise_multiple=False):
+        """Get case in domain with external id and optional case type
+
+        :param raise_multiple: When true, raise an exception if multiple
+        cases match the given criteria. When false (the default), get
+        a random matching case. TODO raise by default?
+        :raises: `CommCareCase.MultipleObjectsReturned` if
+        `raise_multiple=True` and more than one case exists for the
+        given criteria. The exception has a `cases` attribute
+        containing a list of returned case objects.
+        :returns: `CommCareCase` object or `None` if there are no
+        matching cases
+        """
+        cases = list(self.plproxy_raw(
+            'SELECT * FROM get_case_by_external_id(%s, %s, %s)',
+            [domain, external_id, case_type]
+        ))
+        if not cases:
+            return None
+        if raise_multiple and len(cases) > 1:
+            error = CommCareCase.MultipleObjectsReturned()
+            error.cases = cases
+            raise error
+        return cases[0]
+
+    def get_case_ids_that_exist(self, domain, case_ids):
+        result = []
+        for db_name, case_ids_chunk in split_list_by_db_partition(case_ids):
+            result.extend(CommCareCase.objects
+                          .using(db_name)
+                          .filter(domain=domain, case_id__in=case_ids_chunk)
+                          .values_list('case_id', flat=True))
+        return result
+
+    def get_case_ids_in_domain(self, domain, type=None):
+        return self._get_case_ids_in_domain(domain, case_type=type)
+
+    def get_open_case_ids_in_domain_by_type(self, domain, case_type, owner_ids=None):
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False)
+
+    def get_deleted_case_ids_in_domain(self, domain):
+        return self._get_case_ids_in_domain(domain, deleted=True)
+
+    def get_deleted_case_ids_by_owner(self, domain, owner_id):
+        return self._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
+
+    def get_case_ids_in_domain_by_owners(self, domain, owner_ids, closed=None, case_type=None):
+        """
+        get case_ids for open, closed, or all cases in a domain
+        that belong to a list of owner_ids
+
+        owner_ids: a list of owner ids to filter on.
+            A case matches if it belongs to any of them.
+        closed: True (only closed cases), False (only open cases), or None (all)
+
+        returns a list of case_ids
+        """
+        return self._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=closed)
+
+    def _get_case_ids_in_domain(self, domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
+        owner_ids = list(owner_ids) if owner_ids else None
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed, deleted]
+            )
+            return [row[0] for row in cursor]
+
+    def get_closed_and_deleted_ids(self, domain, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        :returns: List of three-tuples: `(case_id, closed, deleted)`
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
+                [domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
+    def get_modified_case_ids(self, domain, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [domain, case_ids, sync_log.date, sync_log._id]
+            )
+            return [row[0] for row in cursor]
+
+    def get_last_modified_dates(self, domain, case_ids):
+        """
+        Given a list of case IDs, return a dict where the ids are keys and the
+        values are the last server modified date of that case.
+        """
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
+                [domain, case_ids]
+            )
+            return dict(cursor)
+
+    def get_case_xform_ids(self, case_id):
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
+                [case_id, CaseTransaction.TYPE_FORM]
+            )
+            return [row[0] for row in cursor]
+
+    def get_reverse_indexed_cases(self, domain, case_ids, case_types=None, is_closed=None):
+        assert isinstance(case_ids, list), type(case_ids)
+        assert case_types is None or isinstance(case_types, list), case_types
+        if not case_ids:
+            return []
+
+        cases = list(self.plproxy_raw(
+            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
+            [domain, case_ids, case_types, is_closed])
+        )
+        cases_by_id = {case.case_id: case for case in cases}
+        if cases_by_id:
+            indices = list(CommCareCaseIndex.objects.plproxy_raw(
+                'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(cases_by_id)])
+            )
+            attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        return cases
+
+    def get_case_by_location(self, domain, location_id):
+        try:
+            return self.plproxy_raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
+        except IndexError:
+            return None
+
+    def soft_delete_cases(self, domain, case_ids, deletion_date=None, deletion_id=None):
+        from ..change_publishers import publish_case_deleted
+        assert isinstance(case_ids, list), type(case_ids)
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as deleted_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
+            )
+            deleted_count = sum(row[0] for row in cursor)
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return deleted_count
+
+    def soft_undelete_cases(self, domain, case_ids):
+        from ..change_publishers import publish_case_saved
+        assert isinstance(case_ids, list), type(case_ids)
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as undeleted_count',
+                [domain, case_ids]
+            )
+            undeleted_count = sum(row[0] for row in cursor)
+        for case in self.iter_cases(case_ids, domain):
+            publish_case_saved(case)
+        return undeleted_count
+
+    def hard_delete_cases(self, domain, case_ids):
+        """Permanently delete cases in domain
+
+        :returns: Number of deleted cases.
+        """
+        assert isinstance(case_ids, list), type(case_ids)
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
+            return sum(row[0] for row in cursor)
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
@@ -229,8 +421,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def reverse_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_reverse_indices(self.domain, self.case_id)
+        return CommCareCaseIndex.objects.get_reverse_indices(self.domain, self.case_id)
 
     @memoized
     def get_subcases(self, index_identifier=None):
@@ -245,12 +436,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @memoized
     def _saved_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         cached_indices = 'cached_indices'
         if hasattr(self, cached_indices):
             return getattr(self, cached_indices)
-
-        return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
+        return CommCareCaseIndex.objects.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
     def _set_indices(self, value):
         """Set previously-saved indices
@@ -298,24 +487,20 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def _get_attachment_from_db(self, name):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_name(self.case_id, name)
+        return CaseAttachment.objects.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachments(self.case_id)
+        return CaseAttachment.objects.get_attachments(self.case_id)
 
     @property
     @memoized
     def transactions(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = CaseAccessorSQL.get_transactions(self.case_id) if self.is_saved() else []
+        transactions = CaseTransaction.objects.get_transactions(self.case_id) if self.is_saved() else []
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
     def check_transaction_order(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.check_transaction_order_for_case(self.case_id)
+        return CaseTransaction.objects.check_order_for_case(self.case_id)
 
     @property
     def actions(self):
@@ -328,11 +513,10 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return transactions[0] if transactions else None
 
     def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         transaction = self._get_unsaved_transaction_for_form(form_id)
 
         if not transaction and self.is_saved():
-            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+            transaction = CaseTransaction.objects.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -366,9 +550,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return self._transactions_by_type(CaseTransaction.TYPE_FORM)
 
     def _transactions_by_type(self, transaction_type):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.is_saved():
-            transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
+            transactions = CaseTransaction.objects.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
         transactions += [
@@ -380,8 +563,8 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     def modified_since_sync(self, sync_log):
         if self.server_modified_on >= sync_log.date:
             # check all of the transactions since last sync for one that had a different sync token
-            from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-            return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
+            return CaseTransaction.objects.case_has_transactions_since_sync(
+                self.case_id, sync_log._id, sync_log.date)
         return False
 
     def get_actions_for_form(self, xform):
@@ -537,6 +720,52 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
         return result[0] if result else None
 
+    def save(self, *args, with_tracked_models=False, **kw):
+        """Save case, optionally with tracked models
+
+        grep note: was `CaseAccessorSQL.save_case(case)`
+        """
+        if not with_tracked_models:
+            super().save(*args, **kw)
+            return
+
+        transactions_to_save = self.get_live_tracked_models(CaseTransaction)
+        indices_to_save_or_update = self.get_live_tracked_models(CommCareCaseIndex)
+        index_ids_to_delete = [index.id for index in self.get_tracked_models_to_delete(CommCareCaseIndex)]
+        attachments_to_save = self.get_tracked_models_to_create(CaseAttachment)
+        attachment_ids_to_delete = [att.id for att in self.get_tracked_models_to_delete(CaseAttachment)]
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    f"Updating attachments is not supported. case id={self.case_id}, "
+                    f"attachment id={attachment.attachment_id}"
+                )
+
+        try:
+            with transaction.atomic(using=self.db, savepoint=False):
+                super().save(*args, **kw)
+                for case_transaction in transactions_to_save:
+                    case_transaction.save()
+
+                for index in indices_to_save_or_update:
+                    index.domain = self.domain  # ensure domain is set on indices
+                    update_fields = None
+                    if index.is_saved():
+                        # prevent changing identifier
+                        update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
+                    index.save(update_fields=update_fields)
+
+                CommCareCaseIndex.objects.using(self.db).filter(id__in=index_ids_to_delete).delete()
+
+                for attachment in attachments_to_save:
+                    attachment.save()
+
+                CaseAttachment.objects.using(self.db).filter(id__in=attachment_ids_to_delete).delete()
+
+                self.clear_tracked_models()
+        except DatabaseError as e:
+            raise CaseSaveError(e)
+
     def __str__(self):
         return (
             "CommCareCase("
@@ -568,6 +797,21 @@ def get_index_map(indices):
     ])
 
 
+class CaseAttachmentManager(RequireDBManager):
+
+    def get_attachments(self, case_id):
+        return list(self.partitioned_query(case_id).filter(case_id=case_id))
+
+    def get_attachment_by_name(self, case_id, name):
+        try:
+            return self.plproxy_raw(
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, name]
+            )[0]
+        except IndexError:
+            raise AttachmentNotFound(case_id, name)
+
+
 class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -582,6 +826,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     for sharding locality with other data from the same case.
     """
     partition_attr = 'case_id'
+    objects = CaseAttachmentManager()
 
     case = models.ForeignKey(
         'CommCareCase', to_field='case_id', db_index=False,
@@ -645,6 +890,11 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     def new(cls, name):
         return cls(name=name, attachment_id=uuid.uuid4())
 
+    @classmethod
+    def get_content(cls, case_id, name):
+        att = cls.objects.get_attachment_by_name(case_id, name)
+        return AttachmentContent(att.content_type, att.open())
+
     def __str__(self):
         return str(
             "CaseAttachment("
@@ -677,8 +927,101 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
         ]
 
 
+class CommCareCaseIndexManager(RequireDBManager):
+
+    def get_indices(self, domain, case_id):
+        query = self.partitioned_query(case_id)
+        return list(query.filter(case_id=case_id, domain=domain))
+
+    def get_related_indices(self, domain, case_ids, exclude_indices):
+        """Get indices (forward and reverse) for the given set of case ids
+
+        :param case_ids: A list of case ids.
+        :param exclude_indices: A set or dict of index id strings with
+        the format ``'<index.case_id> <index.identifier>'``.
+        :returns: A list of CommCareCaseIndex-like objects.
+        """
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        return list(self.plproxy_raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_indices)],
+        ))
+
+    def get_reverse_indices(self, domain, case_id):
+        indices = list(self.plproxy_raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
+
+        def _set_referenced_id(index):
+            # see corehq/couchapps/case_indices/views/related/map.js
+            index.referenced_id = index.case_id
+            return index
+
+        return [_set_referenced_id(index) for index in indices]
+
+    def get_all_reverse_indices_info(self, domain, case_ids):
+        assert isinstance(case_ids, list), type(case_ids)
+        if not case_ids:
+            return []
+
+        indexes = self.plproxy_raw(
+            'SELECT * FROM get_all_reverse_indices(%s, %s)',
+            [domain, case_ids]
+        )
+        return [
+            CaseIndexInfo(
+                case_id=index.case_id,
+                identifier=index.identifier,
+                referenced_id=index.referenced_id,
+                referenced_type=index.referenced_type,
+                relationship=index.relationship_id
+            ) for index in indexes
+        ]
+
+    def get_extension_case_ids(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        """
+        Given a base list of case ids, get all ids of all extension cases that reference them
+        """
+        if not case_ids:
+            return []
+        extension_case_ids = set()
+        for db_name in get_db_aliases_for_partitioned_query():
+            query = self.using(db_name).filter(
+                domain=domain,
+                relationship_id=self.model.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            if exclude_for_case_type:
+                query = query.exclude(referenced_type=exclude_for_case_type)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
+
+    def get_extension_chain(self, domain, case_ids, include_closed=True, exclude_for_case_type=None):
+        assert isinstance(case_ids, list)
+        incoming_extensions = set(self.get_extension_case_ids(
+            domain, case_ids, include_closed, exclude_for_case_type))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            extensions = self.get_extension_case_ids(
+                domain, list(new_extensions), include_closed, exclude_for_case_type)
+            new_extensions = set(extensions) - all_extension_ids
+            all_extension_ids = all_extension_ids | new_extensions
+        return all_extension_ids
+
+
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)
+
+
 class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
+    objects = CommCareCaseIndexManager()
 
     # relationship_ids should be powers of 2
     CHILD = 1
@@ -727,7 +1070,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         """
         For a 'forward' index this is the case that the the index points to.
         For a 'reverse' index this is the case that owns the index.
-        See ``CaseAccessorSQL.get_reverse_indices``
+        See ``CommCareCaseIndex.objects.get_reverse_indices``
 
         :return: referenced case
         """
@@ -777,8 +1120,75 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
+class CaseTransactionManager(RequireDBManager):
+
+    def get_transactions(self, case_id):
+        return list(
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id)
+            .order_by('server_date')
+        )
+
+    def get_transaction_by_form_id(self, case_id, form_id):
+        transactions = list(self.plproxy_raw(
+            'SELECT * from get_case_transaction_by_form_id(%s, %s)',
+            [case_id, form_id])
+        )
+        assert len(transactions) <= 1, (case_id, form_id, len(transactions))
+        return transactions[0] if transactions else None
+
+    def get_most_recent_form_transaction(self, case_id):
+        return (
+            self.partitioned_query(case_id)
+            .filter(case_id=case_id, revoked=False)
+            .annotate(type_filter=F('type').bitand(self.model.TYPE_FORM))
+            .filter(type_filter=self.model.TYPE_FORM)
+            .order_by("-server_date")
+            .first()
+        )
+
+    def get_transactions_by_type(self, case_id, transaction_type):
+        return list(self.plproxy_raw(
+            'SELECT * from get_case_transactions_by_type(%s, %s)',
+            [case_id, transaction_type],
+        ))
+
+    def get_transactions_for_case_rebuild(self, case_id):
+        return self.get_transactions_by_type(case_id, self.model.TYPE_FORM)
+
+    def case_has_transactions_since_sync(self, case_id, sync_log_id, sync_log_date):
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_has_transactions_since_sync(%s, %s, %s)',
+                [case_id, sync_log_id, sync_log_date],
+            )
+            return cursor.fetchone()[0]
+
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
+    def check_order_for_case(self, case_id):
+        """ Returns whether the order of transactions needs to be reconciled by client_date
+
+        True if the order is fine, False if the order is bad
+        """
+        if not case_id:
+            return False
+        model = self.model
+        with model.get_cursor_for_partition_value(case_id) as cursor:
+            cursor.execute(
+                'SELECT compare_server_client_case_transaction_order(%s, %s)',
+                [case_id, model.case_rebuild_types() | model.TYPE_CASE_CREATE])
+            return cursor.fetchone()[0]
+
+    def exists_for_form(self, form_id):
+        for db_name in get_db_aliases_for_partitioned_query():
+            if self.using(db_name).filter(form_id=form_id).exists():
+                return True
+        return False
+
+
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
+    objects = CaseTransactionManager()
 
     # types should be powers of 2
     TYPE_FORM = 1

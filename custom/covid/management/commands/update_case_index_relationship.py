@@ -6,7 +6,6 @@ from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase
 
 '''This command has an optional argument '--location' that will exclude all cases with that location. If the
@@ -55,8 +54,7 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, case_type, user_id):
         inactive_location = self.extra_options['inactive_location']
-        accessor = CaseAccessors(domain)
-        case_ids = accessor.get_case_ids_in_domain(case_type)
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, case_type)
         print(f"Found {len(case_ids)} {case_type} cases in {domain}")
         traveler_location_id = self.extra_options['location']
 

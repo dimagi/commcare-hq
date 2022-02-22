@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
+    FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCase
@@ -199,7 +199,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
         server_modified_on=utcnow,
     )
 
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
 
     ledger = LedgerValue(
         domain=domain,

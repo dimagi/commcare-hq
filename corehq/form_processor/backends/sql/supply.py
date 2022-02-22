@@ -1,6 +1,5 @@
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import CommCareCase
 
 
@@ -19,7 +18,7 @@ class SupplyPointSQL:
 
     @staticmethod
     def get_closed_and_open_by_location_id_and_domain(domain, location_id):
-        return CaseAccessorSQL.get_case_by_location(domain, location_id)
+        return CommCareCase.objects.get_case_by_location(domain, location_id)
 
     @staticmethod
     def get_supply_point_ids_by_location(domain):

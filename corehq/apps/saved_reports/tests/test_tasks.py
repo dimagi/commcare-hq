@@ -1,9 +1,12 @@
-from django.test import TestCase
+from unittest.mock import patch
+from django.test import SimpleTestCase, TestCase
 from freezegun import freeze_time
 import datetime
 
+from ..exceptions import ReportNotFound
 from ..models import ScheduledReportLog
-from ..tasks import purge_old_scheduled_report_logs
+from ..tasks import purge_old_scheduled_report_logs, queue_scheduled_reports
+from .. import tasks
 
 
 CURRENT_DATE = datetime.date(2020, 1, 2)
@@ -37,3 +40,18 @@ class PurgeOldScheduledReportLogsTests(TestCase):
             size=10,
             timestamp=date
         )
+
+
+class QueueScheduledReportsTests(SimpleTestCase):
+    @patch.object(tasks, 'send_delayed_report')
+    @patch.object(tasks, 'create_records_for_scheduled_reports')
+    def test_resource_not_found_does_not_stop_sending(self, mock_get_ids, mock_send):
+        mock_get_ids.return_value = ['a', 'b', 'c']  # Expect to send these 3 reports
+        mock_send.side_effect = ReportNotFound  # ...and have all of them throw ReportNotFound
+
+        queue_scheduled_reports()
+
+        # Verify that the 3 expected reports were attempted
+        ARG_INDEX = 0
+        calls = set(call[ARG_INDEX][0] for call in mock_send.call_args_list)
+        self.assertSetEqual(calls, {'a', 'b', 'c'})

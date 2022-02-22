@@ -100,7 +100,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     """
     from corehq.apps.users.models import CouchUser, update_fixture_status_for_users
     from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
-    from corehq.apps.fixtures.models import UserFixtureType
+    from corehq.apps.fixtures.models import UserLookupTableType
     from dimagi.utils.couch.database import iter_docs
 
     # close supply point cases
@@ -121,7 +121,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
 
     # update fixtures for users at ancestor locations
     user_ids = mobile_user_ids_at_locations(ancestor_ids)
-    update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
+    update_fixture_status_for_users(user_ids, UserLookupTableType.LOCATION)
 
 
 def deactivate_users_at_location(location_id):

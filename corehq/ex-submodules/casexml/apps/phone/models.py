@@ -186,9 +186,9 @@ class OTARestoreWebUser(OTARestoreUser):
         return []
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureStatus
+        from corehq.apps.fixtures.models import UserLookupTableStatus
 
-        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
@@ -231,9 +231,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.get_case_sharing_groups()
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
 
-        return self._couch_user.fixture_status(UserFixtureType.LOCATION)
+        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
 
 class SyncLogAssertionError(AssertionError):

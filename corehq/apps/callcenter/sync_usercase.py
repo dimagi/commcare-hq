@@ -15,7 +15,7 @@ from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class _UserCaseHelper(object):
@@ -97,7 +97,7 @@ def _domain_has_new_fields(domain, field_names):
 
 def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
     fields = _get_user_case_fields(user, case_type, owner_id)
-    case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(user._id, case_type)
+    case = case or CommCareCase.objects.get_case_by_external_id(domain, user._id, case_type)
     close = user.to_be_deleted() or not user.is_active
     user_case_helper = _UserCaseHelper(domain, owner_id, user._id)
 
@@ -202,8 +202,8 @@ def _get_call_center_case_and_owner(user, domain_obj):
     Return the appropriate owner id for the given users call center case.
     """
     config = domain_obj.call_center_config
-    case = CaseAccessors(domain_obj.name).get_case_by_domain_hq_user_id(
-        user._id, config.case_type
+    case = CommCareCase.objects.get_case_by_external_id(
+        domain_obj.name, user._id, config.case_type
     )
     if config.use_user_location_as_owner:
         owner_id = _call_center_location_owner(user, config.user_location_ancestor_level)
