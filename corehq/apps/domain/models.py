@@ -1061,8 +1061,8 @@ class DomainAuditRecordEntry(models.Model):
 
 class AllowedUCRExpressionSettings(models.Model):
     """
-    Model contains DTE(aka UCR) expressions settings for a domain.
-    The expressions defined in RESTRICTED_DTE_EXPRESSIONS are not generally available yet.
+    Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.
+    The expressions defined in RESTRICTED_UCR_EXPRESSIONS are not generally available yet.
     But these expressions are enabled by default on every domain so that current flow does not change.
     If any expression's usage is to be restricted on any domain
     then the  Expressions should be explicitly removed from

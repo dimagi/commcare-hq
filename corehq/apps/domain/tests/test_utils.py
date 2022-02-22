@@ -74,9 +74,12 @@ def test_domain(name="domain", skip_full_delete=False):
             domain.delete()
 
 
-class TestDTEExpressionUtils(TestCase):
+class TestUCRExpressionUtils(TestCase):
     def test_default_value_when_domain_not_exists(self):
-        self.assertEqual(set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('blah_domain')), {'base_item', 'related_document'})
+        self.assertEqual(
+            set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('blah_domain')),
+            {'base_item', 'related_document'}
+        )
 
     def test_when_domain_exists(self):
         exprn = ['base_item']
