@@ -1061,8 +1061,8 @@ class DomainAuditRecordEntry(models.Model):
 
 class AllowedUCRExpressionSettings(models.Model):
     """
-    Model contains DTE(aka UCR) expressions settings for a domain.
-    The expressions defined in RESTRICTED_DTE_EXPRESSIONS are not generally available yet.
+    Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.
+    The expressions defined in RESTRICTED_UCR_EXPRESSIONS are not generally available yet.
     But these expressions are enabled by default on every domain so that current flow does not change.
     If any expression's usage is to be restricted on any domain
     then the  Expressions should be explicitly removed from
@@ -1075,10 +1075,24 @@ class AllowedUCRExpressionSettings(models.Model):
         default=get_default_ucr_expressions
     )
 
-    def save(self, *args, **kwargs):
-        from .utils import get_allowed_ucr_expressions
-        get_allowed_ucr_expressions.clear(self.domain)
-        return super().save(*args, **kwargs)
+    @classmethod
+    @quickcache(['domain_name'])
+    def get_allowed_ucr_expressions(cls, domain_name):
+        try:
+            ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+            allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
+        except AllowedUCRExpressionSettings.DoesNotExist:
+            allowed_ucr_expressions = get_default_ucr_expressions()
+        return allowed_ucr_expressions
+
+    @classmethod
+    def save_allowed_ucr_expressions(cls, domain_name, expressions):
+        AllowedUCRExpressionSettings.objects.update_or_create(
+            domain=domain_name,
+            defaults={
+                'allowed_ucr_expressions': expressions
+            }
+        )
 
 
 class ProjectLimitType():
