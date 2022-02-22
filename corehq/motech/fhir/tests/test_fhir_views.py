@@ -10,7 +10,6 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.fhir.tests.utils import (
     add_case_property_with_resource_property_path,
@@ -196,9 +195,8 @@ def _setup_cases(owner_id):
         _get_caseblock(TEST_CASE_ID, 'test', owner_id).as_text(),
     ], DOMAIN)
 
-    case_accessor = CaseAccessors(DOMAIN)
-    case_accessor.soft_delete_cases(
-        [DELETED_CASE_ID], datetime.utcnow(), 'test-deletion-with-cases'
+    CommCareCase.objects.soft_delete_cases(
+        DOMAIN, [DELETED_CASE_ID], datetime.utcnow(), 'test-deletion-with-cases'
     )
 
     test_case = CommCareCase.objects.get_case(TEST_CASE_ID, DOMAIN)

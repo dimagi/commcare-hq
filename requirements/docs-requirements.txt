@@ -47,8 +47,6 @@ cloudant==2.14.0
     # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
-    # via -r base-requirements.in
 contextlib2==0.6.0.post1
     # via schema
 cryptography==3.4.8
@@ -289,7 +287,7 @@ polib==1.1.0
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
-protobuf==3.13.0
+protobuf==3.15.0
     # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
@@ -303,10 +301,8 @@ pycryptodome==3.10.1
     # via -r base-requirements.in
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.8.1
-    # via
-    #   -r base-requirements.in
-    #   sphinx
+pygments==2.11.2
+    # via sphinx
 pygooglechart==0.4.0
     # via -r base-requirements.in
 pyjwt==1.7.1
@@ -503,9 +499,9 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-zope.event==4.5.0
+zope-event==4.5.0
     # via gevent
-zope.interface==5.4.0
+zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -515,7 +511,6 @@ setuptools==53.0.0
     #   gevent
     #   gunicorn
     #   jsonschema
-    #   protobuf
     #   sphinx
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface

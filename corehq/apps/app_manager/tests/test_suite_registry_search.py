@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DetailColumn,
     DetailTab,
     FormLink,
@@ -74,7 +75,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.reg_module = self.app.add_module(Module.new_module("Registration", None))
         self.reg_form = self.app.new_form(1, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.reg_module.case_type = 'case'
-        self.reg_form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        self.reg_form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1")
+        )
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [

@@ -20,7 +20,6 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
 
 
@@ -194,7 +193,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        CaseAccessors(self.domain).soft_delete_cases([parent_id])
+        CommCareCase.objects.soft_delete_cases(self.domain, [parent_id])
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])

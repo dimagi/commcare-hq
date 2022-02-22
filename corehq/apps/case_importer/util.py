@@ -139,7 +139,7 @@ class WorksheetWrapper(object):
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
-    Attempt to find the case in CouchDB by the provided search_field and search_id.
+    Attempt to find the case by the provided search_field and search_id.
 
     Returns a tuple with case (if found) and an
     error code (if there was an error in lookup).
