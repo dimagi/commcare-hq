@@ -11,8 +11,6 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
-from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -91,6 +89,7 @@ from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app,
     server_to_user_time,
     user_has_admin_access_in_all_domains,
+    can_domain_access_release_management,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -112,7 +111,6 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, WebUser
-from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -279,8 +277,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         """
-        This view services both domains that are master domains and domains that are linked domains
-        (and legacy domains that are both).
+        This view services both domains that are upstream, downstream, and legacy domains that are both
         """
         timezone = get_timezone_for_request()
         upstream_link = get_upstream_domain_link(self.domain)
@@ -302,16 +299,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             is_superuser=is_superuser
         )
 
-        account = BillingAccount.get_account_by_domain(self.request.domain)
-        available_domains_to_link = get_available_domains_to_link(self.request.domain,
-                                                                  self.request.couch_user,
-                                                                  billing_account=account)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
 
         upstream_domain_urls = []
-        upstream_domains = get_available_upstream_domains(self.request.domain,
-                                                          self.request.couch_user,
-                                                          billing_account=account)
-        for domain in upstream_domains:
+        for domain in get_available_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         if upstream_link and upstream_link.is_remote:
@@ -322,7 +313,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
             'is_superuser': is_superuser,
             'view_data': {
                 'is_downstream_domain': bool(upstream_link),
@@ -333,6 +324,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
+                'has_full_access': can_domain_access_release_management(self.domain, include_lite_version=False),
             },
         }
 
