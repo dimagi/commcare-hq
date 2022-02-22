@@ -4,7 +4,7 @@ from collections import Counter
 from django.utils.translation import ugettext as _
 
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
+from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, BinaryExpression, serialize
 
 from corehq.apps.case_search.xpath_functions import (
     XPATH_FUNCTIONS,
@@ -28,6 +28,14 @@ class CaseFilterError(Exception):
 
 class TooManyRelatedCasesError(CaseFilterError):
     pass
+
+
+class SubCaseQuery():
+    def __init__(self, node):
+        pass
+
+    def get_config():
+        return
 
 
 def print_ast(node):
@@ -316,20 +324,69 @@ def _parse_normalize_subcase_query(node):
     - not( subcase query )
 
     :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
-     - index_identifier: the name of the index identifier to match on
-     - subcase search predicates: list of predicates used to filter the subcase query
-     - count_op: One of ['>', '=']
-     - case_count: Integer value used in conjunction with count_op to filter parent cases
-     - invert_condition: True if the initial expression is one of ['<', '<=']
+    - index_identifier: the name of the index identifier to match on
+    - subcase search predicates: list of predicates used to filter the subcase query
+    - count_op: One of ['>', '=']
+    - case_count: Integer value used in conjunction with count_op to filter parent cases
+    - invert_condition: True if the initial expression is one of ['<', '<=']
     """
 
-    # NOTES:
-    #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
-    #    could encapsulate some functionality:
-    #       subcase_query.include_parent(subcase_count)
-    #       subcase_query.create_parent_filter(matching_parent_ids)
+    # def parse_nested_binary_expression(node):
+    #     if not isinstance(node.right, Step):
+    #         print("hello")
+    #         return [f"{node.left.axis}{node.left.node_test}{node.op}'{node.right}'"]
+    #     else:
+    #         left = node.left
+    #         right = node.right
+    #         return [
+    #             str(left.left + left.op + left.right),
+    #             str(right.left + right.op + right.right)
+    #         ]
 
-    return "", [], "", 0, False  # TODO
+        # NOTES:
+        #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
+        #    could encapsulate some functionality:
+        #       subcase_query.include_parent(subcase_count)
+        #       subcase_query.create_parent_filter(matching_parent_ids)
+
+    current_node = parse_xpath(node)
+    invert_condition = False
+
+    # If xpath is NOT(query), set invert_condition and get first arg
+    if isinstance(current_node, FunctionCall):
+        if current_node.name.lower() == "not":
+            invert_condition = not invert_condition
+        current_node = current_node.args[0]
+
+    # If subcase query is a count comparison:
+    # Set current_op and case_count, and traverse to left node
+    if isinstance(current_node, BinaryExpression):
+        count_op = current_node.op
+        case_count = current_node.right
+        current_node = current_node.left
+
+    if str(current_node.node_test) == "subcase_exists":
+        case_count = 0
+        count_op = ">"
+
+    if count_op in ["<", "<="]:
+        invert_condition = not invert_condition
+
+    if count_op in [">=", "<"]:
+        case_count -= 1
+
+    if count_op != "=":
+        count_op = ">"
+
+    index_indetifier = current_node.predicates[0].right
+    subcase_predicates = []
+    for node in current_node.predicates[1:]:
+        axis = node.left.axis if node.left.axis is not None else ""
+        subcase_predicates.append(f"{axis}{node.left.node_test}{node.op}'{node.right}'")
+
+    print(index_indetifier, subcase_predicates, count_op, case_count, invert_condition)
+
+    return index_indetifier, subcase_predicates, count_op, case_count, invert_condition
 
 
 def build_filter_from_xpath(domain, xpath, fuzzy=False):
