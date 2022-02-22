@@ -1343,10 +1343,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'notify_exception': {
-            'level': 'ERROR',
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
         'null': {
             'class': 'logging.NullHandler',
         },

@@ -342,6 +342,7 @@ fixtures
  0001_initial
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
+ 0004_userlookuptablestatus
 form_processor
  0001_initial
  0002_xformattachmentsql

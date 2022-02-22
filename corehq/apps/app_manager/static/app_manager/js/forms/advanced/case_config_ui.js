@@ -7,8 +7,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
             loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
             openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            toggles = hqImport("hqwebapp/js/toggles");
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
         var DEFAULT_CONDITION = function (type) {
             return {
@@ -293,13 +292,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
-                // needed for compatibility with shared templates
-                action.searchAndFilter = false;
-                action.visible_case_properties = ko.computed(function () {
-                    return action.case_properties();
-                });
-                action.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
-
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
                 });
@@ -337,13 +329,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
-
-                // needed for compatibility with shared templates
-                action.searchAndFilter = false;
-                action.visible_case_properties = ko.computed(function () {
-                    return action.case_properties();
-                });
-                action.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
                 return action;
             }));
@@ -443,13 +428,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     index = self.open_cases().length;
                     self.open_cases.push(openCaseAction.wrap({
                         case_type: caseConfig.caseType,
-                        name_path: '',
+                        name_update: '',
                         case_tag: 'open_' + caseConfig.caseType + '_' + index,
                         case_properties: [{
                             path: '',
                             key: 'name',
                             required: true,
-                            save_only_if_edited: action.name_update.update_mode === 'edit',
+                            save_only_if_edited: false,
                         }],
                         repeat_context: '',
                         case_indices: [],

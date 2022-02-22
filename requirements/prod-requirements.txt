@@ -329,11 +329,8 @@ prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via ipython
-protobuf==3.13.0
-    # via
-    #   ddtrace
-    #   google-api-core
-    #   googleapis-common-protos
+protobuf==3.15.0
+    # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
 psycopg2==2.8.6
@@ -359,9 +356,7 @@ pycryptodome==3.10.1
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.11.2
-    # via
-    #   -r base-requirements.in
-    #   ipython
+    # via ipython
 pygooglechart==0.4.0
     # via -r base-requirements.in
 pyjwt==1.7.1
@@ -587,6 +582,5 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
-    #   protobuf
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface

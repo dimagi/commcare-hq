@@ -288,11 +288,8 @@ polib==1.1.0
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
-protobuf==3.13.0
-    # via
-    #   ddtrace
-    #   google-api-core
-    #   googleapis-common-protos
+protobuf==3.15.0
+    # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
 psycopg2==2.8.6
@@ -310,8 +307,6 @@ pycparser==2.20
 pycryptodome==3.10.1
     # via -r base-requirements.in
 pygithub==1.54.1
-    # via -r base-requirements.in
-pygments==2.11.2
     # via -r base-requirements.in
 pygooglechart==0.4.0
     # via -r base-requirements.in
@@ -511,6 +506,5 @@ setuptools==50.3.0
     #   gevent
     #   gunicorn
     #   jsonschema
-    #   protobuf
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface
