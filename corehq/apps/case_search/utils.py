@@ -180,46 +180,38 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 return search_es.filter(filters.domain(criteria.value))
         elif criteria.key not in UNSEARCHABLE_KEYS:
-            return search_es.add_query(self._get_case_property_query(criteria.key, criteria.value), queries.MUST)
+            return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
 
-    def _get_daterange_query(self, key, value):
-        # Add query for specially formatted daterange param
-        #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
-        #   used by App manager case-search feature
-        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
-        match = pattern.match(value)
-        if not match:
-            raise CaseFilterError(_('Invalid date range format, {}'), key)
-        startdate, enddate = value.split('__')[2:]
-        return case_property_range_query(key, gte=startdate, lte=enddate)
+    def _get_daterange_query(self, criteria):
+        startdate, enddate = criteria.get_date_range()
+        return case_property_range_query(criteria.key, gte=startdate, lte=enddate)
 
-    def _get_case_property_query(self, key, value):
-        if isinstance(value, list) and '' in value:
-            value = [v for v in value if v != '']
-            if value:
-                if '/' in key:
-                    missing_filter = build_filter_from_xpath(self.query_domains, f'{key} = ""')
+    def _get_case_property_query(self, criteria):
+        if criteria.has_multiple_terms and criteria.has_missing_filter:
+            criteria = criteria.clone_without_missing()
+            if not criteria.is_empty:
+                if criteria.is_ancestor_query:
+                    missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
                 else:
-                    missing_filter = case_property_missing(key)
-                value = value[0] if len(value) == 1 else value
-                return filters.OR(self._get_query(key, value), missing_filter)
+                    missing_filter = case_property_missing(criteria.key)
+                return filters.OR(self._get_query(criteria), missing_filter)
             else:
-                return case_property_missing(key)
+                return case_property_missing(criteria.key)
         else:
-            return self._get_query(key, value)
+            return self._get_query(criteria)
 
-    def _get_query(self, key, value):
-        if not isinstance(value, list) and value.startswith('__range__'):
-            return self._get_daterange_query(key, value)
+    def _get_query(self, criteria):
+        if criteria.is_daterange:
+            return self._get_daterange_query(criteria)
 
-        value = self._remove_ignored_patterns(key, value)
-        fuzzy = key in self._fuzzy_properties
-        if '/' in key:
-            query = f'{key} = "{value}"'
+        value = self._remove_ignored_patterns(criteria.key, criteria.value)
+        fuzzy = criteria.key in self._fuzzy_properties
+        if criteria.is_ancestor_query:
+            query = f'{criteria.key} = "{value}"'
             return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
         else:
-            return case_property_query(key, value, fuzzy=fuzzy)
+            return case_property_query(criteria.key, value, fuzzy=fuzzy)
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:

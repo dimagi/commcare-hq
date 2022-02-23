@@ -1,3 +1,5 @@
+import re
+
 import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -45,6 +47,12 @@ class SearchCriteria:
         return not bool(self.value)
 
     @property
+    def has_missing_filter(self):
+        if self.has_multiple_terms:
+            return bool([v for v in self.value if v == ''])
+        return self.value == ''
+
+    @property
     def value_as_list(self):
         assert not self.has_multiple_terms
         return self.value.split(' ')
@@ -63,7 +71,22 @@ class SearchCriteria:
     def is_ancestor_query(self):
         return '/' in self.key
 
+    def get_date_range(self):
+        """The format is __range__YYYY-MM-DD__YYYY-MM-DD"""
+        start, end = self.value.split('__')[2:]
+        return start, end
+
+    def clone_without_missing(self):
+        return SearchCriteria(self.key, self._value_without_empty())
+
+    def _value_without_empty(self):
+        return _flatten_singleton_list([v for v in self.value if v != ''])
+
     def validate(self):
+        self._validate_multiple_terms()
+        self._validate_daterange()
+
+    def _validate_multiple_terms(self):
         if not self.has_multiple_terms:
             return
 
@@ -78,6 +101,15 @@ class SearchCriteria:
                 _("Multiple values are only supported for simple text and range searches"),
                 self.key
             )
+
+    def _validate_daterange(self):
+        if not self.is_daterange:
+            return
+
+        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
+        match = pattern.match(self.value)
+        if not match:
+            raise CaseFilterError(_('Invalid date range format, {}'), self.key)
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
