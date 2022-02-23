@@ -343,11 +343,11 @@ def _parse_normalize_subcase_query(node):
     #             str(right.left + right.op + right.right)
     #         ]
 
-        # NOTES:
-        #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
-        #    could encapsulate some functionality:
-        #       subcase_query.include_parent(subcase_count)
-        #       subcase_query.create_parent_filter(matching_parent_ids)
+    # NOTES:
+    #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
+    #    could encapsulate some functionality:
+    #       subcase_query.include_parent(subcase_count)
+    #       subcase_query.create_parent_filter(matching_parent_ids)
 
     current_node = parse_xpath(node)
     invert_condition = False

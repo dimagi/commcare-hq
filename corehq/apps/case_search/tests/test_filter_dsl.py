@@ -589,7 +589,7 @@ def test_subcase_query_parsing():
         ),
         (
             _check,
-            "subcase_exists[identifier='p'][@case_type='bob'][prop=value]",
+            "subcase_exists[identifier='p'][@case_type='bob'][prop='value']",
             ("p", ["@case_type='bob'", "prop=value"], ">", 0, False)
         ),
         (
