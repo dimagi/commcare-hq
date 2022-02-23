@@ -10,7 +10,7 @@ from crispy_forms.layout import Submit
 
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.domain.utils import get_allowed_ucr_expressions
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.userreports.models import guess_data_source_type
@@ -198,7 +198,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'display_name',
             'description',
         ]
-        if 'base_item' in get_allowed_ucr_expressions(self.domain):
+        if 'base_item_expression' in AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain):
             fields.append('base_item_expression')
 
         fields += [
