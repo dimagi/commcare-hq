@@ -579,23 +579,18 @@ class SubscriptionForm(forms.Form):
             self.fields['account'].initial = subscription.account.id
             account_field = hqcrispy.B3TextField(
                 'account',
-                '<a href="%(account_url)s">%(account_name)s</a>' % {
-                    'account_url': reverse(ManageBillingAccountView.urlname,
-                                           args=[subscription.account.id]),
-                    'account_name': subscription.account.name,
-                }
+                format_html('<a href="{}">{}</a>',
+                    reverse(ManageBillingAccountView.urlname, args=[subscription.account.id]),
+                    subscription.account.name)
             )
 
             self.fields['plan_version'].initial = subscription.plan_version.id
             plan_version_field = hqcrispy.B3TextField(
                 'plan_version',
-                '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
-                    'plan_version_url': reverse(
-                        SoftwarePlanVersionView.urlname,
-                        args=[subscription.plan_version.plan.id, subscription.plan_version_id]
-                    ),
-                    'plan_name': subscription.plan_version,
-                },
+                format_html('<a href="{}">{}</a>',
+                    reverse(SoftwarePlanVersionView.urlname,
+                        args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
+                    subscription.plan_version)
             )
             self.fields['plan_edition'].initial = subscription.plan_version.plan.edition
             plan_edition_field = hqcrispy.B3TextField(
@@ -610,11 +605,9 @@ class SubscriptionForm(forms.Form):
 
             domain_field = hqcrispy.B3TextField(
                 'domain',
-                '<a href="%(project_url)s">%(project_name)s</a>' % {
-                    'project_url': reverse(DefaultProjectSettingsView.urlname,
-                                           args=[subscription.subscriber.domain]),
-                    'project_name': subscription.subscriber.domain,
-                },
+                format_html('<a href="{}">{}</a>',
+                    reverse(DefaultProjectSettingsView.urlname, args=[subscription.subscriber.domain]),
+                    subscription.subscriber.domain)
             )
 
             self.fields['start_date'].initial = subscription.date_start.isoformat()
