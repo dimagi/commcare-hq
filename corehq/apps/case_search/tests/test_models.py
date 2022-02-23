@@ -90,7 +90,8 @@ def _make_request_dict(params):
     ("owner_id", ["a", "b"]),
     (CASE_SEARCH_XPATH_QUERY_KEY, ["a", "b"]),
     ("date", ["a", "__range__2022-01-01__2022-02-01"]),
-    ("date", "__range__2022-01-01__2022")
+    ("date", "__range__2022-01-01__2022"),
+    ("parent/foo", ["a", "b"])
 ])
 def test_search_criteria_validate(self, key, value):
     with assert_raises(CaseFilterError):

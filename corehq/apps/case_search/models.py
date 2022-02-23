@@ -76,7 +76,7 @@ class SearchCriteria:
         start, end = self.value.split('__')[2:]
         return start, end
 
-    def clone_without_missing(self):
+    def clone_without_blanks(self):
         return SearchCriteria(self.key, self._value_without_empty())
 
     def _value_without_empty(self):
@@ -96,11 +96,19 @@ class SearchCriteria:
             CASE_SEARCH_XPATH_QUERY_KEY,
         ]
 
-        if self.key in disallowed_parameters or self.is_ancestor_query or self.is_daterange:
+        if self.key in disallowed_parameters or self.is_daterange:
             raise CaseFilterError(
                 _("Multiple values are only supported for simple text and range searches"),
                 self.key
             )
+
+        if self.is_ancestor_query:
+            non_missing = self.clone_without_blanks()
+            if non_missing.has_multiple_terms:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text and range searches"),
+                    self.key
+                )
 
     def _validate_daterange(self):
         if not self.is_daterange:

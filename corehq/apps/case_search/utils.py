@@ -189,7 +189,7 @@ class CaseSearchQueryBuilder:
 
     def _get_case_property_query(self, criteria):
         if criteria.has_multiple_terms and criteria.has_missing_filter:
-            criteria = criteria.clone_without_missing()
+            criteria = criteria.clone_without_blanks()
             if not criteria.is_empty:
                 if criteria.is_ancestor_query:
                     missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
