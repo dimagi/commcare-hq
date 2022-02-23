@@ -71,6 +71,7 @@ def get_latest_released_app_versions_by_app_id(domain):
     return {r['key'][2]: r['key'][3] for r in results}
 
 
+@quickcache(['domain', 'app_id'])
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)
