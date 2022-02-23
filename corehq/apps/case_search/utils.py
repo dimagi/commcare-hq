@@ -183,21 +183,6 @@ class CaseSearchQueryBuilder:
             return search_es.add_query(self._get_case_property_query(criteria.key, criteria.value), queries.MUST)
         return search_es
 
-    def _validate_multiple_parameter_values(self, key, val):
-        if not isinstance(val, list):
-            return
-        disallowed_multiple_value_parameters = [
-            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-            'owner_id',
-            CASE_SEARCH_XPATH_QUERY_KEY,
-        ]
-        is_daterange = any([v.startswith('__range__') for v in val])
-        if key in disallowed_multiple_value_parameters or '/' in key or is_daterange:
-            raise CaseFilterError(
-                _("Multiple values are only supported for simple text and range searches"),
-                key
-            )
-
     def _get_daterange_query(self, key, value):
         # Add query for specially formatted daterange param
         #   The format is __range__YYYY-MM-DD__YYYY-MM-DD, which is
@@ -225,7 +210,6 @@ class CaseSearchQueryBuilder:
             return self._get_query(key, value)
 
     def _get_query(self, key, value):
-        self._validate_multiple_parameter_values(key, value)
         if not isinstance(value, list) and value.startswith('__range__'):
             return self._get_daterange_query(key, value)
 

@@ -5,6 +5,7 @@ from django.forms import model_to_dict
 from django.utils.translation import ugettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -45,11 +46,45 @@ class SearchCriteria:
 
     @property
     def value_as_list(self):
+        assert not self.has_multiple_terms
         return self.value.split(' ')
+
+    @property
+    def has_multiple_terms(self):
+        return isinstance(self.value, list)
+
+    @property
+    def is_daterange(self):
+        if self.has_multiple_terms:
+            return any([v.startswith('__range__') for v in self.value])
+        return self.value.startswith('__range__')
+
+    @property
+    def is_ancestor_query(self):
+        return '/' in self.key
+
+    def validate(self):
+        if not self.has_multiple_terms:
+            return
+
+        disallowed_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+            CASE_SEARCH_XPATH_QUERY_KEY,
+        ]
+
+        if self.key in disallowed_parameters or self.is_ancestor_query or self.is_daterange:
+            raise CaseFilterError(
+                _("Multiple values are only supported for simple text and range searches"),
+                self.key
+            )
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
-    return [SearchCriteria(k, v) for k, v in criteria_dict.items()]
+    criteria = [SearchCriteria(k, v) for k, v in criteria_dict.items()]
+    for search_criteria in criteria:
+        search_criteria.validate()
+    return criteria
 
 
 @attr.s(frozen=True)
