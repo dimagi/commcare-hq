@@ -84,8 +84,8 @@ BUSINESS_UNITS = [
 # supported by SaaS. If any domain wants to use them them it can be
 # enabled from  Project Settings > Project Information Internal
 RESTRICTED_UCR_EXPRESSIONS = [
-    ('base_item', 'Base Item Expressions'),
-    ('related_document', 'Related Document Expressions')
+    ('base_item_expression', 'Base Item Expressions'),
+    ('related_doc', 'Related Document Expressions')
 ]
 
 
