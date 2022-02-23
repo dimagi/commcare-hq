@@ -543,7 +543,9 @@ def ping_response(request):
         app_id = app['copy_of'] if app['copy_of'] else app['_id']
         latest_build_id = get_latest_released_build_id(domain, app_id)
         # Do not show popup to users who have use_latest_build_cloudcare ff enabled
-        if latest_build_id and not CLOUDCARE_LATEST_BUILD.enabled_for_request(request):
+        latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
+                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
+        if latest_build_id and not latest_build_ff_enabled:
             new_app_version_available = current_build_id != latest_build_id
 
     return JsonResponse({
