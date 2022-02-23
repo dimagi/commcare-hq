@@ -13,7 +13,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
     enable_case_search,
     extract_search_request_config,
-    CASE_SEARCH_CASE_TYPE_KEY,
+    CASE_SEARCH_CASE_TYPE_KEY, SearchCriteria,
 )
 from corehq.util.test_utils import generate_cases
 
@@ -65,7 +65,7 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
     if not expect_exception:
         expected_case_types = case_type if isinstance(case_type, list) else [case_type]
         eq(config, CaseSearchRequestConfig(
-            criteria={"other_key": "jim"},
+            criteria=[SearchCriteria("other_key", "jim")],
             case_types=expected_case_types, data_registry=data_registry, custom_related_case_property=custom_related_case_property
         ))
 

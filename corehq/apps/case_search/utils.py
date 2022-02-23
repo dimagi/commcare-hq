@@ -152,10 +152,10 @@ class CaseSearchQueryBuilder:
             config = CaseSearchConfig(domain=self.request_domain)
         return config
 
-    def build_query(self, criteria):
+    def build_query(self, search_criteria):
         search_es = self._get_initial_search_es()
-        for key, value in criteria.items():
-            search_es = self._apply_filter(search_es, key, value)
+        for criteria in search_criteria:
+            search_es = self._apply_filter(search_es, criteria.key, criteria.value)
         return search_es
 
     def _get_initial_search_es(self):

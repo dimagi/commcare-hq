@@ -31,16 +31,22 @@ UNSEARCHABLE_KEYS = (
 
 
 def _flatten_singleton_list(value):
-    return value[0] if value and len(value) == 1 else value
+    return value[0] if value and isinstance(value, list) and len(value) == 1 else value
 
 
-def _flatten_multi_value_dict_values(value):
-    return {k: _flatten_singleton_list(v) for k, v in value.items()}
+@attr.s(frozen=True)
+class SearchCriteria:
+    key = attr.ib()
+    value = attr.ib(converter=_flatten_singleton_list)
+
+
+def criteria_dict_to_criteria_list(criteria_dict):
+    return [SearchCriteria(k, v) for k, v in criteria_dict.items()]
 
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
-    criteria = attr.ib(kw_only=True, converter=_flatten_multi_value_dict_values)
+    criteria = attr.ib(kw_only=True)
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
@@ -65,7 +71,9 @@ def extract_search_request_config(request_dict):
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
     }
-    return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)
+
+    criteria = criteria_dict_to_criteria_list(params)
+    return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):
