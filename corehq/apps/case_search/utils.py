@@ -62,9 +62,9 @@ def get_case_search_results(domain, case_types, criteria,
         query_domains = [domain]
         helper = _QueryHelper(domain)
 
-    case_search_criteria = CaseSearchQueryBuilder(domain, case_types, criteria, query_domains)
+    builder = CaseSearchQueryBuilder(domain, case_types, query_domains)
     try:
-        search_es = case_search_criteria.search_es
+        search_es = builder.build_query(criteria)
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
@@ -126,10 +126,9 @@ class _RegistryQueryHelper:
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, criteria, query_domains=None):
+    def __init__(self, domain, case_types, query_domains=None):
         self.request_domain = domain
         self.case_types = case_types
-        self.criteria = criteria
         self.query_domains = [domain] if query_domains is None else query_domains
 
     @cached_property
@@ -153,10 +152,9 @@ class CaseSearchQueryBuilder:
             config = CaseSearchConfig(domain=self.request_domain)
         return config
 
-    @cached_property
-    def search_es(self):
+    def build_query(self, criteria):
         search_es = self._get_initial_search_es()
-        for key, value in self.criteria.items():
+        for key, value in criteria.items():
             search_es = self._apply_filter(search_es, key, value)
         return search_es
 
