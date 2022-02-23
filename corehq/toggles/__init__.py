@@ -2169,3 +2169,14 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     Manager only if the question's inputted answer is different from the current value in the case.
     """
 )
+
+GOOGLE_SHEETS_INTEGRATION = StaticToggle(
+    'google-sheet-integration',
+    'Unlock the Google Sheets view in Exports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    description="""
+    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
+    on the Exports page.
+    """
+)
