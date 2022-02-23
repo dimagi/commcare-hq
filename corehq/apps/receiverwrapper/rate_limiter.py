@@ -156,6 +156,7 @@ def report_submission_usage(domain):
 def report_case_usage(domain, num_cases):
     global_case_rate_limiter.report_usage(delta=num_cases)
     domain_case_rate_limiter.report_usage(scope=domain, delta=num_cases)
+    _report_current_global_case_update_thresholds()
 
 
 def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_reject, datadog_metric):
@@ -202,5 +203,16 @@ def _report_current_global_submission_thresholds():
             'window': window
         }, multiprocess_mode='max')
         metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
+            'window': window
+        }, multiprocess_mode='max')
+
+
+@quickcache([], timeout=60)  # Only report up to once a minute
+def _report_current_global_case_update_thresholds():
+    for window, value, threshold in global_case_rate_limiter.iter_rates():
+        metrics_gauge('commcare.case_updates.global_threshold', threshold, tags={
+            'window': window
+        }, multiprocess_mode='max')
+        metrics_gauge('commcare.case_updates.global_usage', value, tags={
             'window': window
         }, multiprocess_mode='max')

@@ -390,7 +390,7 @@ class BroadcastListView(BaseMessagingSectionView):
 
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
         refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
             start_date_iso_string=json_format_date(broadcast.start_date)
         )

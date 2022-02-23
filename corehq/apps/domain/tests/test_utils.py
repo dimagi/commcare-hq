@@ -78,10 +78,10 @@ class TestUCRExpressionUtils(TestCase):
     def test_default_value_when_domain_not_exists(self):
         self.assertEqual(
             set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('blah_domain')),
-            {'base_item', 'related_document'}
+            {'base_item_expression', 'related_doc'}
         )
 
     def test_when_domain_exists(self):
-        exprn = ['base_item']
+        exprn = ['base_item_expression']
         AllowedUCRExpressionSettings.objects.create(domain='test_domain', allowed_ucr_expressions=exprn)
         self.assertEqual(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('test_domain'), exprn)

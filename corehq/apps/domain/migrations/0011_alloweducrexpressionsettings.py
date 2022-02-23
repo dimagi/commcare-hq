@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=256, unique=True)),
-                ('allowed_ucr_expressions', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('base_item', 'Base Item Expressions'), ('related_document', 'Related Document Expressions')], max_length=32), default=corehq.apps.domain.models.get_default_ucr_expressions, size=None)),
+                ('allowed_ucr_expressions', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('base_item', 'Base Item Expressions'), ('related_document', 'Related Document Expressions')], max_length=32), default=corehq.apps.domain.models.all_restricted_ucr_expressions, size=None)),
             ],
         ),
     ]

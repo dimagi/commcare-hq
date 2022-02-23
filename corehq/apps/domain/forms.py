@@ -102,7 +102,7 @@ from corehq.apps.domain.models import (
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
-    get_default_ucr_expressions,
+    all_restricted_ucr_expressions,
     AllowedUCRExpressionSettings
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -1092,7 +1092,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
     def clean_active_ucr_expressions(self):
         value = self.cleaned_data.get('active_ucr_expressions')
-        all_expressions = get_default_ucr_expressions()
+        all_expressions = all_restricted_ucr_expressions()
         for expr in value:
             if expr not in all_expressions:
                 raise forms.ValidationError(_(f"Unknown expression {expr}"))

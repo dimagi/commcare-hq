@@ -84,12 +84,12 @@ BUSINESS_UNITS = [
 # supported by SaaS. If any domain wants to use them them it can be
 # enabled from  Project Settings > Project Information Internal
 RESTRICTED_UCR_EXPRESSIONS = [
-    ('base_item', 'Base Item Expressions'),
-    ('related_document', 'Related Document Expressions')
+    ('base_item_expression', 'Base Item Expressions'),
+    ('related_doc', 'Related Document Expressions')
 ]
 
 
-def get_default_ucr_expressions():
+def all_restricted_ucr_expressions():
     return [exp[0] for exp in RESTRICTED_UCR_EXPRESSIONS]
 
 
@@ -1072,7 +1072,7 @@ class AllowedUCRExpressionSettings(models.Model):
     domain = models.CharField(unique=True, max_length=256)
     allowed_ucr_expressions = ArrayField(
         models.CharField(max_length=32, choices=RESTRICTED_UCR_EXPRESSIONS),
-        default=get_default_ucr_expressions
+        default=all_restricted_ucr_expressions
     )
 
     @classmethod
@@ -1082,7 +1082,7 @@ class AllowedUCRExpressionSettings(models.Model):
             ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
             allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
         except AllowedUCRExpressionSettings.DoesNotExist:
-            allowed_ucr_expressions = get_default_ucr_expressions()
+            allowed_ucr_expressions = all_restricted_ucr_expressions()
         return allowed_ucr_expressions
 
     @classmethod
