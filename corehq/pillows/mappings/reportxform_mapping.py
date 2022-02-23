@@ -3,7 +3,7 @@ from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_XFORM_HQ_INDEX_NAME
 
-REPORT_XFORM_INDEX = ElasticReportForm.index
+REPORT_XFORM_INDEX = ElasticReportForm.index_name
 REPORT_XFORM_TYPE = ElasticReportForm.type
 REPORT_XFORM_ALIAS = prefix_for_tests("report_xforms")
 

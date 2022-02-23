@@ -2,7 +2,7 @@ from corehq.apps.es.domains import ElasticDomain
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = ElasticDomain.index
+DOMAIN_INDEX = ElasticDomain.index_name
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {

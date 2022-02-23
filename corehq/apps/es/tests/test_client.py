@@ -16,6 +16,7 @@ from .utils import (
     docs_from_result,
     docs_to_dict,
     es_test,
+    temporary_index,
 )
 from ..client import (
     BulkActionItem,
@@ -359,29 +360,27 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
     def test_indices_refresh(self):
         doc_adapter = TestDocumentAdapter()
-        doc_adapter.index = self.index  # use our index so it gets cleaned up
-        self.adapter.index_create(self.index)
-        self.adapter = ElasticManageAdapter()
 
         def set_refresh_interval(value):
             self.adapter._index_put_settings(
-                self.index,
+                doc_adapter.index_name,
                 {"index.refresh_interval": value}
             )
 
         def get_search_hits():
             return doc_adapter.search({})["hits"]["hits"]
 
-        # Disable auto-refresh to ensure the index doesn't refresh between our
-        # upsert and search (which would cause this test to fail).
-        set_refresh_interval("-1")
-        try:
-            doc_adapter.upsert(TestDoc("1", "test"))
-            self.assertEqual([], get_search_hits())
-            self.adapter.indices_refresh([doc_adapter.index])
-            docs = [h["_source"] for h in get_search_hits()]
-        finally:
-            set_refresh_interval("5s")  # set it back to previous value
+        with temporary_index(doc_adapter.index_name, doc_adapter.type, doc_adapter.mapping):
+            # Disable auto-refresh to ensure the index doesn't refresh between our
+            # upsert and search (which would cause this test to fail).
+            set_refresh_interval("-1")
+            try:
+                doc_adapter.upsert(TestDoc("1", "test"))
+                self.assertEqual([], get_search_hits())
+                self.adapter.indices_refresh([doc_adapter.index_name])
+                docs = [h["_source"] for h in get_search_hits()]
+            finally:
+                set_refresh_interval("5s")  # set it back to previous value
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
     def test_indices_refresh_requires_list_similar(self):
@@ -401,14 +400,13 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
     def test_index_close(self):
         doc_adapter = TestDocumentAdapter()
-        doc_adapter.index = self.index  # use our index so it gets cleaned up
-        self.adapter.index_create(self.index)
-        doc_adapter.upsert(TestDoc("1", "test"))  # does not raise
-        self.adapter.index_close(self.index)
-        with self.assertRaises(TransportError) as test:
-            doc_adapter.upsert(TestDoc("2", "test"))
-        self.assertEqual(test.exception.status_code, 403)
-        self.assertEqual(test.exception.error, "index_closed_exception")
+        with temporary_index(doc_adapter.index_name):
+            doc_adapter.upsert(TestDoc("1", "test"))  # does not raise
+            self.adapter.index_close(doc_adapter.index_name)
+            with self.assertRaises(TransportError) as test:
+                doc_adapter.upsert(TestDoc("2", "test"))
+            self.assertEqual(test.exception.status_code, 403)
+            self.assertEqual(test.exception.error, "index_closed_exception")
 
     def test_index_put_alias(self):
         alias = "test_alias"
@@ -549,29 +547,29 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     """
 
     def index_exists(self):
-        return ElasticManageAdapter().index_exists(self.index)
+        return ElasticManageAdapter().index_exists(self.index_name)
 
     def create_index(self, settings=None):
-        ElasticManageAdapter().index_create(self.index, settings)
+        ElasticManageAdapter().index_create(self.index_name, settings)
 
     def delete_index(self):
-        ElasticManageAdapter().index_delete(self.index)
+        ElasticManageAdapter().index_delete(self.index_name)
 
     def refresh_index(self):
-        ElasticManageAdapter().indices_refresh([self.index])
+        ElasticManageAdapter().indices_refresh([self.index_name])
 
 
 @es_test
 class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
 
     adapter_class = TestDocumentAdapterWithExtras
-    index = TestDocumentAdapterWithExtras.index  # for _purge_test_index
+    index = TestDocumentAdapterWithExtras.index_name
 
     def setUp(self):
         super().setUp()
         # simply fail all the tests rather than spewing many huge tracebacks
         self.assertFalse(self.adapter.index_exists(),
-                         f"index exists: {self.adapter.index}")
+                         f"index exists: {self.adapter.index_name}")
         self.adapter.create_index({"mappings": {self.adapter.type: self.adapter.mapping}})
 
     def test_from_python(self):
@@ -702,7 +700,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
             hit.pop("_score")
             doc_id = hit["_id"]
             self.assertEqual(hit, {
-                "_index": self.adapter.index,
+                "_index": self.adapter.index_name,
                 "_type": self.adapter.type,
                 "_id": doc_id,
                 "_source": by_id[doc_id],
@@ -773,7 +771,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
                 hit.pop("sort")
                 doc_id = hit["_id"]
                 self.assertEqual(hit, {
-                    "_index": self.adapter.index,
+                    "_index": self.adapter.index_name,
                     "_type": self.adapter.type,
                     "_id": doc_id,
                     "_source": by_id[doc_id],
@@ -807,7 +805,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         }
         with patch.object(self.adapter._es, "search", return_value={}) as search:
             list(self.adapter.scroll(scroll_query, **scroll_kw))
-            search.assert_called_once_with(self.adapter.index,
+            search.assert_called_once_with(self.adapter.index_name,
                                            self.adapter.type, search_query,
                                            **scroll_kw)
 
@@ -942,7 +940,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         error_info.pop("_shards")
         self.assertEqual(error_info, {
             "found": False,
-            "_index": self.adapter.index,
+            "_index": self.adapter.index_name,
             "_type": self.adapter.type,
             "_id": missing_id,
         })
@@ -1000,7 +998,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         action = BulkActionItem.index(doc)
         doc_id, source = self.adapter.from_python(doc)
         expected = {
-            "_index": self.adapter.index,
+            "_index": self.adapter.index_name,
             "_type": self.adapter.type,
             "_op_type": "index",
             "_id": doc_id,
@@ -1012,7 +1010,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         doc = self._make_doc()
         action = BulkActionItem.delete(doc)
         expected = {
-            "_index": self.adapter.index,
+            "_index": self.adapter.index_name,
             "_type": self.adapter.type,
             "_op_type": "delete",
             "_id": doc.id,
@@ -1023,7 +1021,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         doc = self._make_doc()
         action = BulkActionItem.delete_id(doc.id)
         expected = {
-            "_index": self.adapter.index,
+            "_index": self.adapter.index_name,
             "_type": self.adapter.type,
             "_op_type": "delete",
             "_id": doc.id,

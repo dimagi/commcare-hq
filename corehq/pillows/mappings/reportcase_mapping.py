@@ -3,7 +3,7 @@ from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_CASE_HQ_INDEX_NAME
 
 
-REPORT_CASE_INDEX = ElasticReportCase.index
+REPORT_CASE_INDEX = ElasticReportCase.index_name
 REPORT_CASE_ES_TYPE = ElasticReportCase.type
 REPORT_CASE_ES_ALIAS = prefix_for_tests("report_cases")
 

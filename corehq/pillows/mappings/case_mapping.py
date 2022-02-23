@@ -4,7 +4,7 @@ from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_HQ_INDEX_NAME
 
-CASE_INDEX = ElasticCase.index
+CASE_INDEX = ElasticCase.index_name
 CASE_ES_TYPE = ElasticCase.type
 CASE_ES_ALIAS = prefix_for_tests("hqcases")
 

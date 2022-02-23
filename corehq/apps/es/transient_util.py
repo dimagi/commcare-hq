@@ -10,7 +10,7 @@ def get_adapter_mapping(adapter):
     """Temporary function for fetching the Elastic mapping (still defined in
     pillowtop module) for an adapter.
     """
-    return _DOC_MAPPINGS_BY_INDEX[(adapter.index, adapter.type)]
+    return _DOC_MAPPINGS_BY_INDEX[(adapter.index_name, adapter.type)]
 
 
 def from_dict_with_possible_id(doc):
@@ -61,9 +61,9 @@ def _populate_doc_adapter_map(is_test):
                        ElasticReportCase, ElasticDomain, ElasticForm,
                        ElasticReportForm, ElasticGroup, ElasticSMS,
                        ElasticUser]:
-        assert DocAdapter.index not in _DOC_ADAPTERS_BY_INDEX, \
-            (DocAdapter.index, _DOC_ADAPTERS_BY_INDEX)
-        _DOC_ADAPTERS_BY_INDEX[DocAdapter.index] = DocAdapter
+        assert DocAdapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
+            (DocAdapter.index_name, _DOC_ADAPTERS_BY_INDEX)
+        _DOC_ADAPTERS_BY_INDEX[DocAdapter.index_name] = DocAdapter
     # aliases and mappings
     for index_info in get_registry().values():
         _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
@@ -84,7 +84,7 @@ def _populate_doc_adapter_map(is_test):
 def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
 
     class Adapter(ElasticDocumentAdapter):
-        index = index_
+        index_name = index_  # override the classproperty
         type = type_
         mapping = mapping_
 

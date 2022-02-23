@@ -434,11 +434,6 @@ class ElasticDocumentAdapter(BaseAdapter):
     """
 
     @classproperty
-    def index(cls):
-        # temporary holdover until next commit
-        return cls.index_name
-
-    @classproperty
     def index_name(cls):
         try:
             return cls.__index_name
@@ -487,7 +482,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param doc_id: ``str`` ID of the document to be checked
         :returns: ``bool``
         """
-        return self._es.exists(self.index, self.type, doc_id)
+        return self._es.exists(self.index_name, self.type, doc_id)
 
     def fetch(self, doc_id, source_includes=[]):
         """Return the document for the provided ``doc_id``
@@ -499,7 +494,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :returns: ``dict``
         """
         kw = {"_source_include": source_includes} if source_includes else {}
-        doc = self._es.get_source(self.index, self.type, doc_id, **kw)
+        doc = self._es.get_source(self.index_name, self.type, doc_id, **kw)
         # TODO: standardize all result collections returned by this class.
         doc["_id"] = doc_id
         return doc
@@ -511,7 +506,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :returns: ``int``
         """
         query = self._prepare_count_query(query)
-        return self._es.count(self.index, self.type, query).get("count")
+        return self._es.count(self.index_name, self.type, query).get("count")
 
     def _prepare_count_query(self, query):
         """TODO: move this logic to the calling class (the low-level adapter
@@ -560,7 +555,7 @@ class ElasticDocumentAdapter(BaseAdapter):
 
         :param query: ``dict`` mget query
         """
-        return self._es.mget(query, self.index, self.type, _source=True)
+        return self._es.mget(query, self.index_name, self.type, _source=True)
 
     def search(self, query, **kw):
         """Perform a query (search) and return the result.
@@ -583,7 +578,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
-        return self._es.search(self.index, self.type, query, **kw)
+        return self._es.search(self.index_name, self.type, query, **kw)
 
     def scroll(self, query, **kw):
         """Perfrom a scrolling search, yielding each doc until the entire context
@@ -695,7 +690,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
-        self._es.index(self.index, self.type, source, doc_id,
+        self._es.index(self.index_name, self.type, source, doc_id,
                        refresh=self._refresh_value(refresh), **kw)
 
     def update(self, doc_id, fields, refresh=False, **kw):
@@ -720,7 +715,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         # NOTE: future implementations may wish to get a return value here (e.g.
         # when using the `fields` kwarg), but the current implementation never
         # uses this functionality, so this method does not return anything.
-        self._es.update(self.index, self.type, doc_id, {"doc": fields},
+        self._es.update(self.index_name, self.type, doc_id, {"doc": fields},
                         refresh=self._refresh_value(refresh), **kw)
 
     def delete(self, doc_id, refresh=False):
@@ -733,7 +728,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
         """
-        self._es.delete(self.index, self.type, doc_id,
+        self._es.delete(self.index_name, self.type, doc_id,
                         refresh=self._refresh_value(refresh))
 
     @staticmethod
@@ -799,7 +794,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :returns: ``dict``
         """
         for_elastic = {
-            "_index": self.index,
+            "_index": self.index_name,
             "_type": self.type,
         }
         if action.is_delete:
@@ -888,7 +883,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             raise ESShardFailure(f"_shards: {shard_info}")
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} index={self.index!r}, type={self.type!r}>"
+        return f"<{self.__class__.__name__} index={self.index_name!r}, type={self.type!r}>"
 
 
 class BulkActionItem:

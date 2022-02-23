@@ -283,6 +283,6 @@ def delete_case_search_cases(domain):
         raise TypeError("Domain attribute is required")
 
     case_search = ElasticCaseSearch()
-    ElasticManageAdapter().index_refresh(case_search.index)
+    ElasticManageAdapter().index_refresh(case_search.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
     case_search.bulk_delete(case_ids)

@@ -5,7 +5,7 @@ from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from pillowtop.es_utils import ElasticsearchIndexInfo, USER_HQ_INDEX_NAME
 
 
-USER_INDEX = ElasticUser.index
+USER_INDEX = ElasticUser.index_name
 USER_ES_ALIAS = prefix_for_tests('hqusers')
 
 USER_MAPPING = {'_all': {'analyzer': 'standard'},

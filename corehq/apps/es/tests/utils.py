@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 from functools import wraps
 from datetime import datetime
 from inspect import isclass
@@ -16,7 +17,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
-from ..client import ElasticDocumentAdapter
+from ..client import ElasticDocumentAdapter, ElasticManageAdapter
 from ..registry import (
     register,
     deregister,
@@ -205,6 +206,23 @@ def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_te
     decorate("setUp", setup_decorator)
     decorate("tearDown", teardown_decorator)
     return test_class
+
+
+@contextmanager
+def temporary_index(index, type_=None, mapping=None, *, purge=True):
+    manager = ElasticManageAdapter()
+    if purge and manager.index_exists(index):
+        manager.index_delete(index)
+    manager.index_create(index)
+    if type_ is not None:
+        if mapping is None:
+            raise ValueError(f"type_ and mapping args are mutually inclusive "
+                             f"(index={index!r}, type_={type_!r})")
+        manager.index_put_mapping(index, type_, mapping)
+    try:
+        yield
+    finally:
+        manager.index_delete(index)
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):

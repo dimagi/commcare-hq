@@ -4,7 +4,7 @@ from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 
-XFORM_INDEX = ElasticForm.index
+XFORM_INDEX = ElasticForm.index_name
 XFORM_ES_TYPE = ElasticForm.type
 XFORM_ALIAS = prefix_for_tests("xforms")
 

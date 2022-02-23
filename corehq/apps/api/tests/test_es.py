@@ -22,10 +22,10 @@ class TestESView(SimpleTestCase):
         self.manager = ElasticManageAdapter()
         self.cases = ElasticCase()
         self._purge_indices()
-        self.manager.index_create(self.cases.index)
-        self.manager.index_put_mapping(self.cases.index, self.cases.type,
+        self.manager.index_create(self.cases.index_name)
+        self.manager.index_put_mapping(self.cases.index_name, self.cases.type,
                                        self.cases.mapping)
-        self.manager.index_put_alias(self.cases.index, CaseESView.es_alias)
+        self.manager.index_put_alias(self.cases.index_name, CaseESView.es_alias)
 
     def tearDown(self):
         self._purge_indices()
@@ -33,7 +33,7 @@ class TestESView(SimpleTestCase):
 
     def _purge_indices(self):
         try:
-            self.manager.index_delete(self.cases.index)
+            self.manager.index_delete(self.cases.index_name)
         except TransportError:
             # TransportError(404, 'index_not_found_exception', 'no such index')
             pass
@@ -64,7 +64,7 @@ class TestESView(SimpleTestCase):
 
         # index a doc with a new _type ('type2')
         cases_type2 = ElasticCase2()
-        self.manager.index_put_mapping(cases_type2.index, cases_type2.type,
+        self.manager.index_put_mapping(cases_type2.index_name, cases_type2.type,
                                        cases_type2.mapping)
         doc_dc = mk_doc(doc_id, "DC")
         cases_type2.upsert(doc_dc, refresh=True)
