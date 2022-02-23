@@ -37,8 +37,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-16 22:45+0000\n"
-"PO-Revision-Date: 2022-02-07 20:57+0000\n"
+"POT-Creation-Date: 2022-02-23 20:08+0000\n"
+"PO-Revision-Date: 2022-02-16 22:56+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -13226,28 +13226,14 @@ msgid "Case Reassignment"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:11
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "          Automatically update and close cases from CommCareHQ\n"
-#| "        "
 msgid ""
 "\n"
 "          Automatically update or close cases from CommCareHQ\n"
 "        "
 msgstr ""
-"\n"
-"Atualizar e fechar casos do CommCareHQ automaticamente"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:16
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "          Create rules for closing cases from CommCareHQ.\n"
-#| "          All rules run every day at %(time)s GMT.\n"
-#| "          For more information, see the <a href=\"%(help_site_url)s"
-#| "\">Help Site</a>.\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "          Create rules for updating or closing cases from CommCareHQ.\n"
@@ -13256,17 +13242,10 @@ msgid ""
 "Site</a>.\n"
 "        "
 msgstr ""
-"\n"
-"Criar regras para o encerramento de casos do CommCareHQ.\n"
-"Todas as regras decorrem todos os dias às %(time)s GMT.\n"
-"Para mais informações, veja o <a href=\"%(help_site_url)s\">Site de Ajuda</"
-"a>."
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:27
-#, fuzzy
-#| msgid "Add Automatic Case Close Rule"
 msgid "Add Automatic Case Update Rule"
-msgstr "Adicionar Regra de Encerramento de Caso Automática"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:42
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html:43
@@ -24450,6 +24429,11 @@ msgstr ""
 msgid "Manage Notification"
 msgstr ""
 
+#: corehq/apps/oauth_integrations/views/google.py:83
+msgid ""
+"Something went wrong when trying to sign you in to Google. Please try again."
+msgstr ""
+
 #: corehq/apps/ota/forms.py:14
 msgid ""
 "For projects where mobile users manage a lot of cases (e.g. more than "
@@ -27950,10 +27934,8 @@ msgid "Triggering Case"
 msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:1360
-#, fuzzy
-#| msgid "Add Number"
 msgid "Attempt Number"
-msgstr "Adicionar Número"
+msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:1485
 msgid "(no recipient)"
@@ -39715,28 +39697,20 @@ msgid "No API requests have been logged."
 msgstr ""
 
 #: corehq/motech/views.py:131
-#, fuzzy
-#| msgid "Request Quote"
 msgid "Request Method"
-msgstr "Requisitar cotação"
+msgstr ""
 
 #: corehq/motech/views.py:132
-#, fuzzy
-#| msgid "Request Quote"
 msgid "Request URL"
-msgstr "Requisitar cotação"
+msgstr ""
 
 #: corehq/motech/views.py:133
-#, fuzzy
-#| msgid "Request Quote"
 msgid "Request Body"
-msgstr "Requisitar cotação"
+msgstr ""
 
 #: corehq/motech/views.py:135
-#, fuzzy
-#| msgid "Status"
 msgid "Status Code"
-msgstr "Estado"
+msgstr ""
 
 #: corehq/motech/views.py:136
 msgid "Response Headers"
