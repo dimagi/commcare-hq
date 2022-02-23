@@ -340,7 +340,9 @@ def _parse_normalize_subcase_query(node):
     current_node = node
     invert_condition = False
 
-    if not isinstance(current_node, (FunctionCall, BinaryExpression, Step)):
+    try:
+        assert isinstance(current_node, (FunctionCall, BinaryExpression, Step))
+    except AssertionError:
         raise TypeError("Xpath incorrectly formatted.")  # TODO: clearer error text
 
     # If xpath is a NOT(query), set invert_condition and get first arg
@@ -360,7 +362,8 @@ def _parse_normalize_subcase_query(node):
         assert str(current_node.node_test) in ["subcase_exists", "subcase_count"]
     except AssertionError:
         raise ValueError(
-            f"Xpath incorrectly formatted. Expected: subcase_exists or subcase_count. Received: {current_node.node_test}"
+            "Xpath incorrectly formatted."
+            f"Expected: subcase_exists or subcase_count. Received: {current_node.node_test}"
         )
 
     if str(current_node.node_test) == "subcase_exists":
