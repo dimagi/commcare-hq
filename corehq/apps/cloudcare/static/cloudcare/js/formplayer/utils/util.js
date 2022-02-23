@@ -169,6 +169,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
+        this.forceManualAction = options.forceManualAction;
 
         this.setSelections = function (selections) {
             this.selections = selections;
