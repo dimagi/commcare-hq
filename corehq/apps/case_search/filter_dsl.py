@@ -331,28 +331,19 @@ def _parse_normalize_subcase_query(node):
     - invert_condition: True if the initial expression is one of ['<', '<=']
     """
 
-    # def parse_nested_binary_expression(node):
-    #     if not isinstance(node.right, Step):
-    #         print("hello")
-    #         return [f"{node.left.axis}{node.left.node_test}{node.op}'{node.right}'"]
-    #     else:
-    #         left = node.left
-    #         right = node.right
-    #         return [
-    #             str(left.left + left.op + left.right),
-    #             str(right.left + right.op + right.right)
-    #         ]
-
     # NOTES:
     #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
     #    could encapsulate some functionality:
     #       subcase_query.include_parent(subcase_count)
     #       subcase_query.create_parent_filter(matching_parent_ids)
 
-    current_node = parse_xpath(node)
+    current_node = node
     invert_condition = False
 
-    # If xpath is NOT(query), set invert_condition and get first arg
+    if not isinstance(current_node, (FunctionCall, BinaryExpression, Step)):
+        raise TypeError("Xpath incorrectly formatted.")  # TODO: clearer error text
+
+    # If xpath is a NOT(query), set invert_condition and get first arg
     if isinstance(current_node, FunctionCall):
         if current_node.name.lower() == "not":
             invert_condition = not invert_condition
@@ -365,9 +356,21 @@ def _parse_normalize_subcase_query(node):
         case_count = current_node.right
         current_node = current_node.left
 
+    try:
+        assert str(current_node.node_test) in ["subcase_exists", "subcase_count"]
+    except AssertionError:
+        raise ValueError(
+            f"Xpath incorrectly formatted. Expected: subcase_exists or subcase_count. Received: {current_node.node_test}"
+        )
+
     if str(current_node.node_test) == "subcase_exists":
         case_count = 0
         count_op = ">"
+
+    try:
+        assert count_op in [">", "<", "<=" ">=", "="]
+    except AssertionError:
+        raise TypeError("Xpath incorrectly formatted.")  # TODO: clearer error text
 
     if count_op in ["<", "<="]:
         invert_condition = not invert_condition
@@ -379,10 +382,7 @@ def _parse_normalize_subcase_query(node):
         count_op = ">"
 
     index_indetifier = current_node.predicates[0].right
-    subcase_predicates = []
-    for node in current_node.predicates[1:]:
-        axis = node.left.axis if node.left.axis is not None else ""
-        subcase_predicates.append(f"{axis}{node.left.node_test}{node.op}'{node.right}'")
+    subcase_predicates = current_node.predicates[1:]
 
     print(index_indetifier, subcase_predicates, count_op, case_count, invert_condition)
 
