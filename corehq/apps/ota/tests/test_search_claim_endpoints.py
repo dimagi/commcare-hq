@@ -10,6 +10,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.util.test_utils import flag_enabled
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -22,7 +23,7 @@ from corehq.apps.case_search.models import (
     IgnorePatterns,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test, get_case_search_query
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
