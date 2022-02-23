@@ -39,6 +39,14 @@ class SearchCriteria:
     key = attr.ib()
     value = attr.ib(converter=_flatten_singleton_list)
 
+    @property
+    def is_empty(self):
+        return not bool(self.value)
+
+    @property
+    def value_as_list(self):
+        return self.value.split(' ')
+
 
 def criteria_dict_to_criteria_list(criteria_dict):
     return [SearchCriteria(k, v) for k, v in criteria_dict.items()]
