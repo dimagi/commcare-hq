@@ -18,6 +18,7 @@ import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
@@ -88,6 +89,7 @@ from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
+    find_in_json,
     get_async_indicator_modify_lock_key,
     get_indicator_adapter, wrap_report_config_by_type,
 )
@@ -526,6 +528,16 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def data_domains(self):
         return [self.domain]
 
+    def _verify_contains_allowed_expressions(self):
+        allowed_expressions_for_domain = set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        disallowed_expressions = restricted_expressions - allowed_expressions_for_domain
+        if 'base_item_expression' in allowed_expressions_for_domain and self.base_item_expression:
+            raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
+
+        find_in_json(self.configured_indicators, 'type', disallowed_expressions)
+        find_in_json(self.named_expressions, 'type', disallowed_expressions)
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -543,7 +555,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
-
+        self._verify_contains_allowed_expressions()
         self.parsed_expression
         self.pk_columns
 
