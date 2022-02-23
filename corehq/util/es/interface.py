@@ -58,7 +58,7 @@ class ElasticsearchInterface:
         if doc.get("_id", object()) != doc_id:
             doc["_id"] = doc_id
         kw = {} if params is None else params
-        doc_adapter.upsert(doc, **kw)
+        doc_adapter.index(doc, **kw)
 
     def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
         self._verify_is_alias(index_alias)

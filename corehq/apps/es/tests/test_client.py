@@ -368,7 +368,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                 doc_adapter.index_name,
                 {"index.refresh_interval": "-1"}
             )
-            doc_adapter.upsert(TestDoc("1", "test"))
+            doc_adapter.index(TestDoc("1", "test"))
             self.assertEqual([], get_search_hits())
             self.adapter.indices_refresh([doc_adapter.index_name])
             docs = [h["_source"] for h in get_search_hits()]
@@ -392,10 +392,10 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_index_close(self):
         doc_adapter = TestDocumentAdapter()
         with temporary_index(doc_adapter.index_name):
-            doc_adapter.upsert(TestDoc("1", "test"))  # does not raise
+            doc_adapter.index(TestDoc("1", "test"))  # does not raise
             self.adapter.index_close(doc_adapter.index_name)
             with self.assertRaises(TransportError) as test:
-                doc_adapter.upsert(TestDoc("2", "test"))
+                doc_adapter.index(TestDoc("2", "test"))
             self.assertEqual(test.exception.status_code, 403)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
@@ -840,10 +840,10 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.assertEqual(docs_to_dict(docs),
                          self._scroll_hits_dict({}, size=scroll_size))
 
-    def test_upsert(self):
+    def test_index(self):
         doc = self._make_doc()
         self.assertEqual({}, self._search_hits_dict({}))
-        self.adapter.upsert(doc, refresh=True)
+        self.adapter.index(doc, refresh=True)
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
 
@@ -851,7 +851,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         doc = self._make_doc()
         doc.id = None
         with self.assertRaises(ValueError):
-            self.adapter.upsert(doc, refresh=True)
+            self.adapter.index(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
     def test_upsert_fails_with_invalid_source(self):
@@ -860,25 +860,25 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         invalid = (doc.id, bad_source)
         with patch.object(self.adapter, "from_python", return_value=invalid):
             with self.assertRaises(ValueError):
-                self.adapter.upsert(doc, refresh=True)
+                self.adapter.index(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
     def test_upsert_succeeds_if_exists(self):
         doc = self._make_doc()
-        self.adapter.upsert(doc, refresh=True)
+        self.adapter.index(doc, refresh=True)
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
-        self.adapter.upsert(doc, refresh=True)  # does not raise
+        self.adapter.index(doc, refresh=True)  # does not raise
 
     def test_upsert_with_change_succeeds_if_exists(self):
         doc = self._make_doc()
         doc_id = doc.id
-        self.adapter.upsert(doc, refresh=True)
+        self.adapter.index(doc, refresh=True)
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
         doc.value = self._make_doc().value  # modify the doc
         self.assertEqual(doc.id, doc_id)  # confirm it has the same ID
-        self.adapter.upsert(doc, refresh=True)  # does not raise
+        self.adapter.index(doc, refresh=True)  # does not raise
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
 
@@ -1142,7 +1142,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
 
     def _index_new_doc(self, refresh=True):
         doc = self._make_doc()
-        self.adapter.upsert(doc, refresh=refresh)
+        self.adapter.index(doc, refresh=refresh)
         return self.adapter.to_json(doc)
 
     def _make_doc(self, value=None):

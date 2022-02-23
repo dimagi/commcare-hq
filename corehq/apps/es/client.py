@@ -114,7 +114,7 @@ Using this adapter in practice might look as follows:
     new_book = Book("978-1491946008", "Luciano Ramalho",
                     "Fluent Python: Clear, Concise, and Effective Programming",
                     datetime.datetime(2015, 2, 10))
-    adapter.upsert(new_book)
+    adapter.index(new_book)
     # fetch existing
     classic_book = adapter.fetch("978-0345391803")
 
@@ -675,7 +675,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             if scroll_id:
                 self._es.clear_scroll(body={"scroll_id": [scroll_id]}, ignore=(404,))
 
-    def upsert(self, doc, refresh=False, **kw):
+    def index(self, doc, refresh=False, **kw):
         """Index (send) a new document in (to) Elasticsearch
 
         Equivalent to the legacy

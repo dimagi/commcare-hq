@@ -56,7 +56,7 @@ class TestESView(SimpleTestCase):
         # index a (case) doc with default _type ('case')
         doc_id = "1"
         doc_ny = mk_doc(doc_id, "NYC")
-        self.cases.upsert(doc_ny, refresh=True)
+        self.cases.index(doc_ny, refresh=True)
         self.assertEqual(doc_ny, self.cases.fetch(doc_id))
         view = CaseESView(doc_ny["domain"])
         # test that the view fetches the doc by its ID as we'd expect
@@ -67,7 +67,7 @@ class TestESView(SimpleTestCase):
         self.manager.index_put_mapping(cases_type2.index_name, cases_type2.type,
                                        cases_type2.mapping)
         doc_dc = mk_doc(doc_id, "DC")
-        cases_type2.upsert(doc_dc, refresh=True)
+        cases_type2.index(doc_dc, refresh=True)
 
         # test that the CaseESView still sees the doc it expects
         self.assertEqual(doc_ny, to_dict(view.get_document(doc_id)))
