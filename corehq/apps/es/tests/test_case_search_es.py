@@ -22,7 +22,6 @@ from corehq.apps.case_search.models import (
     IgnorePatterns,
 )
 from corehq.apps.case_search.utils import (
-    CaseSearchCriteria,
     _QueryHelper,
     get_related_case_relationships,
     get_related_case_results,
@@ -37,7 +36,7 @@ from corehq.apps.es.case_search import (
     flatten_result,
     wrap_case_search_hit,
 )
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test, get_case_search_query
 from corehq.elastic import SIZE_LIMIT, get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -575,11 +574,11 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c3', 'dob': date(2020, 3, 3)},
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
-            CaseSearchCriteria(
+            get_case_search_query(
                 self.domain,
                 [self.case_type],
                 {'dob': '__range__2020-03-02__2020-03-03'},
-            ).search_es,
+            ),
             None,
             ['c2', 'c3']
         )
@@ -743,7 +742,7 @@ class TestCaseSearchLookups(TestCase):
         self._assert_query_runs_correctly(
             self.domain,
             cases,
-            CaseSearchCriteria(self.domain, ['song', 'show'], {'description': 'New York'}).search_es,
+            get_case_search_query(self.domain, ['song', 'show'], {'description': 'New York'}),
             None,
             ['c1', 'c2']
         )
@@ -761,7 +760,7 @@ class TestCaseSearchLookups(TestCase):
         self._assert_query_runs_correctly(
             self.domain,
             cases,
-            CaseSearchCriteria(self.domain, ['person'], {'phone_number': '+18675309'}).search_es,
+            get_case_search_query(self.domain, ['person'], {'phone_number': '+18675309'}),
             None,
             ['c1']
         )
@@ -777,7 +776,7 @@ class TestCaseSearchLookups(TestCase):
         self._assert_query_runs_correctly(
             self.domain,
             cases,
-            CaseSearchCriteria(self.domain, ['show', 'song'], {'description': 'New York'}).search_es,
+            get_case_search_query(self.domain, ['show', 'song'], {'description': 'New York'}),
             None,
             ['c1', 'c3']
         )
@@ -795,7 +794,7 @@ class TestCaseSearchLookups(TestCase):
             ({'foo': ''}, ['c3', 'c4']),
             ({'foo': ['', 'blackbeard']}, ['c2', 'c3', 'c4']),
         ]:
-            actual = CaseSearchCriteria(self.domain, [self.case_type], criteria).search_es.get_ids()
+            actual = get_case_search_query(self.domain, [self.case_type], criteria).get_ids()
             msg = f"{criteria} yielded {actual}, not {expected}"
             self.assertItemsEqual(actual, expected, msg=msg)
 
@@ -811,7 +810,7 @@ class TestCaseSearchLookups(TestCase):
             {'_id': 'c7'},
             {'_id': 'c8', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c7')}},
         ])
-        actual = CaseSearchCriteria(self.domain, ['child'], {
+        actual = get_case_search_query(self.domain, ['child'], {
             'parent/foo': ['', 'blackbeard'],
-        }).search_es.get_ids()
+        }).get_ids()
         self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])

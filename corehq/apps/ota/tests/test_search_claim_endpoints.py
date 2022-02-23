@@ -21,9 +21,8 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     IgnorePatterns,
 )
-from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test, get_case_search_query
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
@@ -93,7 +92,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         }
 
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
+            get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected
         )
 
@@ -284,7 +283,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
+            get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected,
             validate_query=False
         )

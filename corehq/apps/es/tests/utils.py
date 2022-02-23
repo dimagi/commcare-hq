@@ -21,7 +21,7 @@ from ..registry import (
     deregister,
     registry_entry,
 )
-
+from ...case_search.utils import CaseSearchCriteria
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -234,3 +234,9 @@ def case_search_es_setup(domain, case_blocks):
 def case_search_es_teardown():
     FormProcessorTestUtils.delete_all_cases()
     ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+
+
+def get_case_search_query(domain, case_types, criteria_dict):
+    """Helper function for tests. In the future this will handle conversion
+    of the criteria from a dict to a list of Criteria objects"""
+    return CaseSearchCriteria(domain, case_types, criteria_dict).search_es
