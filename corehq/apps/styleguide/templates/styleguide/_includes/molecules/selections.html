@@ -57,9 +57,29 @@
   <h2>Multiselects</h2>
   <p>
     This is a custom widget we built. It can be useful in situations where the user is adding/removing
-    items from a list and wants to be able to see both the included and excluded items. It's more complicated
-    than a dropdown and takes up much more space. Be cautious adding it to new pages - be sure that
-    the visual weight and potential learning curve is worthwhile for the workflow you're creating.
+    items from a list and wants to be able to see both the included and excluded items.
+  </p>
+  <p>
+    It's more complicated than a dropdown and takes up much more space. <strong>Be cautious adding it to new
+    pages</strong> - be sure that the visual weight and potential learning curve is worthwhile for the workflow
+    you're creating.
+  </p>
+  <h4>Optional Properties</h4>
+  <p>
+    In addition to the optional title properties, the following properties can be useful in situations where more
+    control is needed.
+  </p>
+  <p>
+    <dl>
+      <dd>
+        <strong>disableModifyAllActions</strong> - defaults to false, useful when the preferred workflow is to disable
+        the ability to select and remove all items at once
+      </dd>
+      <dd>
+        <strong>willSelectAllListener</strong> - provides an opportunity to execute code prior to all items being
+        selected
+      </dd>
+    </dl>
   </p>
   {% include 'styleguide/example_html.html' with slug='multiselect' title='Multiselect' content=examples.selections.multiselect %}
 
