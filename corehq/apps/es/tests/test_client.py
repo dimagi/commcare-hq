@@ -161,11 +161,8 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_index_exists(self):
         self.assertFalse(self.adapter.index_exists(self.index))
         self.adapter.index_create(self.index)
-        try:
-            self.adapter.indices_refresh([self.index])
-            self.assertTrue(self.adapter.index_exists(self.index))
-        finally:
-            self.adapter.index_delete(self.index)
+        self.adapter.indices_refresh([self.index])
+        self.assertTrue(self.adapter.index_exists(self.index))
 
     def test_cluster_health(self):
         self.assertIn("status", self.adapter.cluster_health())
@@ -361,26 +358,20 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_indices_refresh(self):
         doc_adapter = TestDocumentAdapter()
 
-        def set_refresh_interval(value):
-            self.adapter._index_put_settings(
-                doc_adapter.index_name,
-                {"index.refresh_interval": value}
-            )
-
         def get_search_hits():
             return doc_adapter.search({})["hits"]["hits"]
 
         with temporary_index(doc_adapter.index_name, doc_adapter.type, doc_adapter.mapping):
             # Disable auto-refresh to ensure the index doesn't refresh between our
             # upsert and search (which would cause this test to fail).
-            set_refresh_interval("-1")
-            try:
-                doc_adapter.upsert(TestDoc("1", "test"))
-                self.assertEqual([], get_search_hits())
-                self.adapter.indices_refresh([doc_adapter.index_name])
-                docs = [h["_source"] for h in get_search_hits()]
-            finally:
-                set_refresh_interval("5s")  # set it back to previous value
+            self.adapter._index_put_settings(
+                doc_adapter.index_name,
+                {"index.refresh_interval": "-1"}
+            )
+            doc_adapter.upsert(TestDoc("1", "test"))
+            self.assertEqual([], get_search_hits())
+            self.adapter.indices_refresh([doc_adapter.index_name])
+            docs = [h["_source"] for h in get_search_hits()]
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
     def test_indices_refresh_requires_list_similar(self):
@@ -420,14 +411,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         alias = "test_alias"
         flip_to_index = f"{self.index}_alt"
         self.adapter.index_create(self.index)
-        self.adapter.index_create(flip_to_index)
-        try:
+        with temporary_index(flip_to_index):
             self.adapter.index_put_alias(self.index, alias)
             self._assert_alias_on_single_index(alias, self.index)
             self.adapter.index_put_alias(flip_to_index, alias)
             self._assert_alias_on_single_index(alias, flip_to_index)
-        finally:
-            self.adapter.index_delete(flip_to_index)
 
     def _assert_alias_on_single_index(self, alias, index):
         aliases = self.adapter.get_aliases()
