@@ -266,7 +266,6 @@ class TestCountWebUsers(TestCase):
 
         cls.admin_user_with_location.delete(cls.domain_obj.name, deleted_by=None)
         cls.admin_user.delete(cls.domain_obj.name, deleted_by=None)
-        cls.normal_role.delete()
 
         cls.domain_obj.delete()
         super().tearDownClass()
