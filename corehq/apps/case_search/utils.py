@@ -62,7 +62,7 @@ def get_case_search_results(domain, case_types, criteria,
         query_domains = [domain]
         helper = _QueryHelper(domain)
 
-    case_search_criteria = CaseSearchCriteria(domain, case_types, criteria, query_domains)
+    case_search_criteria = CaseSearchQueryBuilder(domain, case_types, criteria, query_domains)
     try:
         search_es = case_search_criteria.search_es
     except TooManyRelatedCasesError:
@@ -123,7 +123,7 @@ class _RegistryQueryHelper:
         return case
 
 
-class CaseSearchCriteria:
+class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
     def __init__(self, domain, case_types, criteria, query_domains=None):
