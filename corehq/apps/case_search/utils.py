@@ -189,17 +189,20 @@ class CaseSearchQueryBuilder:
 
     def _get_case_property_query(self, criteria):
         if criteria.has_multiple_terms and criteria.has_missing_filter:
-            criteria = criteria.clone_without_blanks()
-            if criteria.is_empty:
-                return case_property_missing(criteria.key)
-
-            if criteria.is_ancestor_query:
-                missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
-            else:
-                missing_filter = case_property_missing(criteria.key)
-            return filters.OR(self._get_query(criteria), missing_filter)
+            non_blank_criteria = criteria.clone_without_blanks()
+            return self._get_case_property_or_missing_query(non_blank_criteria)
         else:
             return self._get_query(criteria)
+
+    def _get_case_property_or_missing_query(self, criteria):
+        if criteria.is_empty:
+            return case_property_missing(criteria.key)
+
+        if criteria.is_ancestor_query:
+            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
+        else:
+            missing_filter = case_property_missing(criteria.key)
+        return filters.OR(self._get_query(criteria), missing_filter)
 
     def _get_query(self, criteria):
         if criteria.is_daterange:
