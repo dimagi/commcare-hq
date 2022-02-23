@@ -6,11 +6,11 @@ from .client import ElasticDocumentAdapter
 from .registry import get_registry
 
 
-def get_mapping(index, type_):
+def get_adapter_mapping(adapter):
     """Temporary function for fetching the Elastic mapping (still defined in
-    pillowtop module).
+    pillowtop module) for an adapter.
     """
-    return _DOC_MAPPINGS_BY_INDEX[(index, type_)]
+    return _DOC_MAPPINGS_BY_INDEX[(adapter.index, adapter.type)]
 
 
 def from_dict_with_possible_id(doc):

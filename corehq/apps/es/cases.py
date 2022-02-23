@@ -18,7 +18,7 @@ closed after May 1st.
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
-from .transient_util import get_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class CaseES(HQESQuery):
@@ -51,7 +51,7 @@ class ElasticCase(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_mapping(self.index, self.type)
+        return get_adapter_mapping(self)
 
     @classmethod
     def from_python(cls, doc):
@@ -65,7 +65,7 @@ class ElasticReportCase(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_mapping(self.index, self.type)
+        return get_adapter_mapping(self)
 
     @classmethod
     def from_python(cls, doc):

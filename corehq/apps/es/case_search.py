@@ -34,7 +34,7 @@ from corehq.util.dates import iso_string_to_datetime
 from . import filters, queries
 from .cases import ElasticCase
 from .client import ElasticDocumentAdapter
-from .transient_util import get_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class CaseSearchES(CaseES):
@@ -140,7 +140,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_mapping(self.index, self.type)
+        return get_adapter_mapping(self)
 
     @classmethod
     def from_python(cls, doc):

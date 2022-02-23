@@ -5,7 +5,7 @@ AppES
 from . import filters, queries
 from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
-from .transient_util import get_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class AppES(HQESQuery):
@@ -30,7 +30,7 @@ class ElasticApp(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_mapping(self.index, self.type)
+        return get_adapter_mapping(self)
 
     @classmethod
     def from_python(cls, doc):
