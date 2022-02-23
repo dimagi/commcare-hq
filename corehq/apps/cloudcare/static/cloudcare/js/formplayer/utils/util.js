@@ -209,7 +209,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function (queryDict, execute) {
+        this.setQueryData = function (queryDict, execute, forceManualSearch) {
             if (!this.queryData) {
                 this.queryData = {};
             }
@@ -217,6 +217,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.queryData[sessionStorage.queryKey] = {
                 inputs: queryDict,
                 execute: execute,
+                force_manual_search: forceManualSearch,
                 selections: selections,
             };
             this.page = null;
