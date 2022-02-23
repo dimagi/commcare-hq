@@ -1016,11 +1016,21 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         }
         self.assertEqual(expected, self.adapter._render_bulk_action(action))
 
-    def test__render_bulk_action_fails_malformed_action(self):
-        action = BulkActionItem.delete_id("1")
-        action.op_type = "backflip"
-        with self.assertRaises(ValueError):
+    def test__render_bulk_action_fails_unsupported_action(self):
+        from enum import Enum
+
+        class SpecialBulkActionItem(BulkActionItem):
+
+            OpType = Enum("OpType", "index delete create")
+
+            @classmethod
+            def create(cls, doc):
+                return cls(cls.OpType.create, doc=doc)
+
+        action = SpecialBulkActionItem.create(self._make_doc())
+        with self.assertRaises(ValueError) as test:
             self.adapter._render_bulk_action(action)
+        self.assertIn("unsupported action type", str(test.exception))
 
     def test__render_bulk_action_fails_invalid_ids(self):
         bad = TestDoc(id="")

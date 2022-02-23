@@ -936,12 +936,11 @@ class BulkActionItem:
         return self.op_type is self.OpType.index
 
     def __repr__(self):
-        human_op = getattr(self.op_type, "name", "???")  # avoid AttributeError
         if self.doc_id is not None:
             doc_info = f"_id={self.doc_id!r}"
         else:
             doc_info = f"doc={self.doc!r}"
-        return f"<{self.__class__.__name__} op_type={human_op}, {doc_info}>"
+        return f"<{self.__class__.__name__} op_type={self.op_type.name}, {doc_info}>"
 
 
 def get_client(for_export=False):
