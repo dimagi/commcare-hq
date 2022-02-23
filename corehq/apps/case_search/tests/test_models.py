@@ -6,6 +6,7 @@ from django.utils.datastructures import MultiValueDict
 from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.case_search.models import (
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
@@ -13,7 +14,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
     enable_case_search,
     extract_search_request_config,
-    CASE_SEARCH_CASE_TYPE_KEY, SearchCriteria,
+    CASE_SEARCH_CASE_TYPE_KEY, SearchCriteria, CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, CASE_SEARCH_XPATH_QUERY_KEY,
 )
 from corehq.util.test_utils import generate_cases
 
@@ -82,3 +83,15 @@ def _make_request_dict(params):
         else:
             request_dict[key] = value
     return request_dict
+
+
+@generate_cases([
+    (CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, ["a", "b"]),
+    ("owner_id", ["a", "b"]),
+    (CASE_SEARCH_XPATH_QUERY_KEY, ["a", "b"]),
+    ("date", ["a", "__range__2022-01-01__2022-02-01"]),
+    ("date", "__range__2022-01-01__2022")
+])
+def test_search_criteria_validate(self, key, value):
+    with assert_raises(CaseFilterError):
+        SearchCriteria(key, value).validate()
