@@ -578,19 +578,20 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
 def test_subcase_query_parsing():
     def _check(query, expected):
-        result = _parse_normalize_subcase_query(query)
-        eq(result, expected)
+        node = parse_xpath(query)
+        result = _parse_normalize_subcase_query(node)
+        assert(result == expected)
 
     yield from [
         (
             _check,
             "subcase_exists[identifier='parent'][@case_type='bob']",
-            ("parent", ["@case_type='bob'"], ">", 0, False)
+            ("parent", [parse_xpath("@case_type='bob'")], ">", 0, False)
         ),
         (
             _check,
             "subcase_exists[identifier='p'][@case_type='bob'][prop='value']",
-            ("p", ["@case_type='bob'", "prop=value"], ">", 0, False)
+            ("p", ["@case_type='bob'", "prop='value'"], ">", 0, False)
         ),
         (
             _check,
