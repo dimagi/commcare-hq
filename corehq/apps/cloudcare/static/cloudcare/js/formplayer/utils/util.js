@@ -209,10 +209,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function (queryDict, execute, forceManualSearch) {
+        this.setQueryData = function (inputs, execute, forceManualSearch) {
             var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
             this.queryData[sessionStorage.queryKey] = _.defaults({
-                inputs: queryDict,
+                inputs: inputs,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
