@@ -176,7 +176,7 @@ class TestDeleteDomain(TestCase):
         self.current_subscription = Subscription.new_domain_subscription(
             BillingAccount.get_or_create_account_by_domain(self.domain.name, created_by='tests')[0],
             self.domain.name,
-            DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED),
+            get_product_plan_version(),
             date_start=date.today() - relativedelta(days=1),
         )
 
@@ -1102,3 +1102,17 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 def ensure_deleted(domain):
     if domain._rev:
         domain.delete()
+
+
+def get_product_plan_version(edition=SoftwarePlanEdition.ADVANCED):
+    """Work around AccountingError: No default product plan was set up,
+    did you forget to run migrations?
+    """
+    from corehq.apps.accounting.exceptions import AccountingError
+    from corehq.apps.accounting.tests.generator import bootstrap_test_software_plan_versions
+    try:
+        return DefaultProductPlan.get_default_plan_version(edition)
+    except AccountingError:
+        call_command('cchq_prbac_bootstrap')
+        bootstrap_test_software_plan_versions()
+    return DefaultProductPlan.get_default_plan_version(edition)
