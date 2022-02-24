@@ -538,14 +538,15 @@ def ping_response(request):
     current_build_id = request.GET.get('selected_app_id', '')
     domain = request.GET.get('domain', '')
     new_app_version_available = False
-    if current_build_id and domain:
+    # Do not show popup to users who have use_latest_build_cloudcare ff enabled
+    latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
+                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
+    if current_build_id and domain and not latest_build_ff_enabled:
         app = get_app_cached(domain, current_build_id)
         app_id = app['copy_of'] if app['copy_of'] else app['_id']
         latest_build_id = get_latest_released_build_id(domain, app_id)
-        # Do not show popup to users who have use_latest_build_cloudcare ff enabled
-        latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
-                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
-        if latest_build_id and not latest_build_ff_enabled:
+
+        if latest_build_id:
             new_app_version_available = current_build_id != latest_build_id
 
     return JsonResponse({
