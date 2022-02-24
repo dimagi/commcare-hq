@@ -2,7 +2,7 @@ from django.test import SimpleTestCase, TestCase
 from testil import eq
 
 from corehq.util.es.elasticsearch import ConnectionError
-from eulxml.xpath import parse as parse_xpath
+from eulxml.xpath import parse as parse_xpath, serialize as serialize_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -580,13 +580,14 @@ def test_subcase_query_parsing():
     def _check(query, expected):
         node = parse_xpath(query)
         result = _parse_normalize_subcase_query(node)
-        assert(result == expected)
+        result = result[0:1] + ([serialize_xpath(v) for v in result[1]],) + result[2:]
+        eq(result, expected)
 
     yield from [
         (
             _check,
             "subcase_exists[identifier='parent'][@case_type='bob']",
-            ("parent", [parse_xpath("@case_type='bob'")], ">", 0, False)
+            ("parent", ["@case_type='bob'"], ">", 0, False)
         ),
         (
             _check,
