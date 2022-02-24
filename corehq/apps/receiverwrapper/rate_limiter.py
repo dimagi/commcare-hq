@@ -121,7 +121,7 @@ def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
 
     allow_case_usage = (
         global_case_rate_limiter.allow_usage()
-        or case_rate_limiter.allow_usage(domain))
+        or domain_case_rate_limiter.allow_usage(domain))
 
     if allow_form_usage:
         allow_usage = True
