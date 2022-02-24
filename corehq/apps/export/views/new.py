@@ -265,11 +265,11 @@ class CreateNewCustomFormExportView(BaseExportView):
         from corehq.apps.export.views.list import FormExportListView
         return FormExportListView
 
-    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+    def create_new_export_instance(self, schema, username, export_settings=None):
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
         track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
-            'domain': domain
+            'domain': self.domain
         })
 
         return export
@@ -283,7 +283,6 @@ class CreateNewCustomFormExportView(BaseExportView):
         self.export_instance = self.create_new_export_instance(
             schema,
             request.user.username,
-            self.domain,
             export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
@@ -302,12 +301,12 @@ class CreateNewCustomCaseExportView(BaseExportView):
         from corehq.apps.export.views.list import CaseExportListView
         return CaseExportListView
 
-    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+    def create_new_export_instance(self, schema, username, export_settings=None):
 
         export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
 
         track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
-            'domain': domain
+            'domain': self.domain
         })
 
         return export
@@ -320,7 +319,6 @@ class CreateNewCustomCaseExportView(BaseExportView):
         self.export_instance = self.create_new_export_instance(
             schema,
             request.user.username,
-            self.domain,
             export_settings=export_settings)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
@@ -358,11 +356,10 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     page_title = ugettext_lazy("Create OData Case Feed")
     metric_name = 'PowerBI Case Export'
 
-    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+    def create_new_export_instance(self, schema, username, export_settings=None):
         export_instance = super().create_new_export_instance(
             schema,
             username,
-            domain,
             export_settings=export_settings
         )
         clean_odata_columns(export_instance)
@@ -375,11 +372,10 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     page_title = ugettext_lazy("Create OData Form Feed")
     metric_name = 'PowerBI Form Export'
 
-    def create_new_export_instance(self, schema, username, domain, export_settings=None):
+    def create_new_export_instance(self, schema, username, export_settings=None):
         export_instance = super().create_new_export_instance(
             schema,
             username,
-            domain,
             export_settings=export_settings
         )
         # odata settings only apply to form exports
