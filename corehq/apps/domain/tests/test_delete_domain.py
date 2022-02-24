@@ -1,11 +1,13 @@
 import random
 import uuid
+from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
@@ -60,6 +62,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
+from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -182,7 +185,7 @@ class TestDeleteDomain(TestCase):
 
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
-        self.addCleanup(self.domain2.delete)
+        self.addCleanup(ensure_deleted, self.domain2)
         self.domain2.convert_to_commtrack()
 
         LocationType.objects.create(
@@ -1005,7 +1008,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.addCleanup(ensure_deleted, self.domain)
         self.domain2 = Domain(name='test2')
         self.domain2.save()
-        self.addCleanup(self.domain2.delete)
+        self.addCleanup(ensure_deleted, self.domain2)
 
     def tearDown(self):
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
@@ -1100,8 +1103,28 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
 
 def ensure_deleted(domain):
-    if domain._rev:
-        domain.delete()
+    def make_exe(op):
+        """Make execute function that ignores failed SQL deletions and continue
+        deleting other related entities, especially Couch objects.
+
+        SQL entities that cannot be deleted will be cleaned up on
+        rollback at the end of the transaction.
+        """
+        def execute(domain_name):
+            try:
+                real_execute(domain_name)
+            except TransactionManagementError as err:
+                if cant_execute not in str(err):
+                    raise
+        real_execute = op.execute
+        return execute
+
+    cant_execute = "can't execute queries until the end of the 'atomic' block."
+    if domain and domain._rev:
+        with ExitStack() as stack:
+            for op in DOMAIN_DELETE_OPERATIONS:
+                stack.enter_context(patch.object(op, "execute", make_exe(op)))
+            domain.delete()
 
 
 def get_product_plan_version(edition=SoftwarePlanEdition.ADVANCED):
