@@ -210,16 +210,13 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
 
         this.setQueryData = function (queryDict, execute, forceManualSearch) {
-            if (!this.queryData) {
-                this.queryData = {};
-            }
             var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
-            this.queryData[sessionStorage.queryKey] = {
+            this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: queryDict,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-            };
+            }, this.queryData[sessionStorage.queryKey]);
             this.page = null;
             this.search = null;
         };
