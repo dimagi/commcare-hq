@@ -31,13 +31,14 @@ def get_session_schema(form):
 
     unrelated_parents = set()
     for datum in datums:
-        if datum.module_id:
-            module = app.get_module_by_unique_id(datum.module_id)
-            parent_select_active = hasattr(module, 'parent_select') and module.parent_select.active
-            if parent_select_active and module.parent_select.relationship is None:
-                # for child modules that use parent select where the parent is not a 'related' case
-                # See toggles.NON_PARENT_MENU_SELECTION
-                unrelated_parents.add(module.parent_select.module_id)
+        if not datum.module_id:
+            continue
+        module = app.get_module_by_unique_id(datum.module_id)
+        parent_select_active = hasattr(module, 'parent_select') and module.parent_select.active
+        if parent_select_active and module.parent_select.relationship is None:
+            # for child modules that use parent select where the parent is not a 'related' case
+            # See toggles.NON_PARENT_MENU_SELECTION
+            unrelated_parents.add(module.parent_select.module_id)
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
