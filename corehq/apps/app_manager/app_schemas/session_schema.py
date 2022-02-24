@@ -41,6 +41,8 @@ def get_session_schema(form):
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
+        if not datum.module_id:
+            continue
         module = app.get_module_by_unique_id(datum.module_id)
         data_registry = module.search_config.data_registry
         if i == 0:
