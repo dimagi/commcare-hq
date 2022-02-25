@@ -9,13 +9,15 @@ from corehq.apps.accounting.management.commands.change_role_for_software_plan_ve
     change_role_for_software_plan_version,
 )
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition,
-    SoftwarePlanVisibility,
+    SoftwarePlan,
+    SoftwarePlanVersion,
     Subscription,
 )
-from corehq.apps.domain.models import Domain
 
 logger = logging.getLogger(__name__)
+
+NEW_ROLE_SLUG_SUFFIX = "_erm"
+NEW_ROLE_NAME_SUFFIX = " (With ERM)"
 
 
 class Command(BaseCommand):
@@ -29,59 +31,78 @@ class Command(BaseCommand):
 
     def handle(self, quiet, dry_run, **options):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
-        automatic_upgrades, manual_upgrades = _find_plans_with_linked_projects_toggle()
-        _upgrade_plans(automatic_upgrades, dry_run=dry_run)
-        logger.info('The following plans need to be manually audited to determine if they are eligible for ERM.')
-        formatted_manual_info = "\n".join(manual_upgrades)
-        logger.info(formatted_manual_info)
+        roles_to_update_in_place, roles_to_increment = _get_roles_that_need_migration()
+        _update_roles_in_place(roles_to_update_in_place)
+        _create_and_migrate_to_new_roles(roles_to_increment)
 
 
-def _find_plans_with_linked_projects_toggle():
-    manual_audits = []
-    automated_upgrades = []
-    for domain in toggles.LINKED_DOMAINS.get_enabled_domains():
-        domain_obj = Domain.get_by_name(domain)
-        if not domain_obj:
+def _get_roles_that_need_migration():
+    plans = SoftwarePlan.objects.all()
+    active_plans = list(filter(lambda plan: plan.get_version() is not None, plans))
+    # roles referenced by active software plans
+    roles = [plan.get_version().role for plan in active_plans]
+    # for each role, look at all domains that reference that role
+    roles_to_update_in_place = []
+    roles_to_increment = {}
+    count = 0
+    release_management_role = Role.objects.get(slug='release_management')
+    for role in roles:
+        print(f'Processing {count} of {len(roles)} roles')
+        count += 1
+
+        # skip roles that already have release management
+        if Grant.objects.filter(from_role=role, to_role=release_management_role).exists():
             continue
-        if domain_obj.is_test == 'true':
+
+        # a bit hacky, but these plans are handled in a separate migration
+        if role.slug == 'enterprise_plan_v0' or role.slug == 'enterprise_plan_v1':
             continue
-        subscription = Subscription.get_active_subscription_by_domain(domain)
-        plan_version = subscription.plan_version if subscription else \
-            Subscription.get_subscribed_plan_by_domain(domain)
-        if plan_version.role.slug not in ['enterprise_plan_v0', 'enterprise_plan_v1']:
-            is_public = plan_version.plan.visibility == SoftwarePlanVisibility.PUBLIC
-            is_community = plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
-            entry = {
-                'domain': domain,
-                'plan': plan_version.plan.name,
-                'role_slug': plan_version.role.slug,
-                'role_name': plan_version.role.name,
-                'edition': plan_version.plan.edition,
-                'visibility': plan_version.plan.visibility,
-                'active_subscription': subscription is not None,
-                'created_by': domain_obj.creating_user,
-            }
-            if is_public or is_community:
-                manual_audits.append(entry)
-            else:
-                automated_upgrades.append(entry)
 
-    return automated_upgrades, manual_audits
+        versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
+
+        # get all subscriptions associated with this software plan version
+        subscriptions = [
+            subscription for version in versions for subscription in Subscription.visible_objects.filter(
+                plan_version=version, is_active=True
+            )
+        ]
+        domains = [subscription.subscriber.domain for subscription in subscriptions]
+        toggle_enabled = [toggles.LINKED_DOMAINS.enabled(domain) for domain in domains]
+        if len(set(toggle_enabled)) == 2:
+            # add domains that should be updated to the new role
+            roles_to_increment[role.slug] = [
+                domain for domain in domains if toggles.LINKED_DOMAINS.enabled(domain)
+            ]
+        elif len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
+            # all domains referencing this role after the feature flag enabled
+            roles_to_update_in_place.append(role.slug)
+    return roles_to_update_in_place, roles_to_increment
 
 
-def _upgrade_plans(automatic_upgrades, dry_run=False):
-    slug_suffix = '_with_erm'
-    name_suffix = '(With ERM)'
-    for plan_info in automatic_upgrades:
-        new_role = _get_or_create_role(plan_info['role_slug'], slug_suffix, name_suffix, dry_run=dry_run)
-        change_role_for_software_plan_version(plan_info['role_slug'], new_role.slug, dry_run=dry_run)
+def _update_roles_in_place(role_slugs, dry_run=False):
+    for role_slug in role_slugs:
+        role = Role.objects.get(slug=role_slug)
+        release_management_role = Role.objects.get(slug='release_management')
+        if not dry_run:
+            Grant.objects.create(from_role=role, to_role=release_management_role)
+        logger.info(f'Added release management privilege to {role.slug}.')
 
 
-def _get_or_create_role(existing_role_slug, slug_suffix, name_suffix, dry_run=False):
+def _create_and_migrate_to_new_roles(domains_by_role_slug, dry_run=False):
+    for role_slug, domains in domains_by_role_slug:
+        new_role = _get_or_create_role(role_slug, dry_run=dry_run)
+        for domain in domains:
+            subscription = Subscription.get_active_subscription_by_domain(domain)
+            change_role_for_software_plan_version(
+                role_slug, new_role.slug, limit_to_plan_version_id=subscription.plan_version.id
+            )
+
+
+def _get_or_create_role(existing_role_slug, dry_run=False):
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
     existing_role = Role.objects.get(slug=existing_role_slug)
-    new_role_slug = existing_role.slug + slug_suffix
-    new_role_name = existing_role.name + name_suffix
+    new_role_slug = existing_role.slug + NEW_ROLE_SLUG_SUFFIX
+    new_role_name = existing_role.name + NEW_ROLE_NAME_SUFFIX
     # search for grandfathered version of role
     try:
         new_role = Role.objects.get(slug=new_role_slug)
