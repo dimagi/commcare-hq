@@ -160,7 +160,7 @@ a specific HQ document mapping.  Comparing an Elastic cluster to a Postgres
 database (for the sake of analogy), the Elastic **index** is analogous to a
 Postgres **schema** object (e.g. ``public``), and the ``_type`` property is
 analogous to a Postgres **table** object. The combination of both index name
-_and_ ``_type`` fully constrains the properties that make up a specific Elastic
+*and* ``_type`` fully constrains the properties that make up a specific Elastic
 document.
 
 A simple example of a document model and its cooresponding adapter:
