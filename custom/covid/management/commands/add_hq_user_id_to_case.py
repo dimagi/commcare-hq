@@ -14,7 +14,7 @@ class Command(CaseUpdateCommand):
     def logger_name(self):
         return __name__
 
-    def case_block(self, case, **kwargs):
+    def case_blocks(self, case):
         username_of_associated_mobile_workers = case.get_case_property('username')
         try:
             normalized_username = normalize_username(username_of_associated_mobile_workers, case.domain)

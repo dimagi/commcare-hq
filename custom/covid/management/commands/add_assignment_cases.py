@@ -55,7 +55,7 @@ class Command(CaseUpdateCommand):
         return CommCareCase.objects.get_open_case_ids_in_domain_by_type(
             domain, self.case_type, owner_ids=[location_id])
 
-    def case_block(self, case):
+    def case_blocks(self, case):
         if case.get_case_property('current_status') == 'closed':
             return None
 

@@ -44,7 +44,7 @@ class Command(CaseUpdateCommand):
 
         return list(query.scroll_ids())
 
-    def case_block(self, case):
+    def case_blocks(self, case):
         if (
                 # Double check filters in case ES data is stale
                 case.get_case_property('all_activity_complete_date')

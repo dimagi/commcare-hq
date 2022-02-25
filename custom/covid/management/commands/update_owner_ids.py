@@ -26,7 +26,7 @@ class Command(CaseUpdateCommand):
         self.locations_objects[owner_id] = loc
         return loc
 
-    def case_block(self, case):
+    def case_blocks(self, case):
         owner_id = case.get_case_property('owner_id')
         try:
             location_obj = self.get_location(owner_id)

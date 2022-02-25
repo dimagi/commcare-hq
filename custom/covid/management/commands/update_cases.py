@@ -25,7 +25,10 @@ class CaseUpdateCommand(BaseCommand):
         """
         raise NotImplementedError()
 
-    def case_block(self, case):
+    def case_blocks(self, case):
+        """
+        Return a list of CaseBlock updates, or None if no updates are needed.
+        """
         raise NotImplementedError()
 
     def find_case_ids(self, domain):
@@ -68,7 +71,7 @@ class CaseUpdateCommand(BaseCommand):
             self.logger.debug(f"Found {len(case_ids)} cases in {domain} ({i}/{len(domains)})")
             update_count = update_cases(
                 domain=domain,
-                update_fn=self.case_block,
+                update_fn=self.case_blocks,
                 case_ids=with_progress_bar(case_ids, oneline=False),
                 form_meta=SystemFormMeta.for_script(self.logger_name(), username),
                 throttle_secs=self.throttle_secs,

@@ -9,7 +9,7 @@ class Command(CaseUpdateCommand):
     def logger_name(self):
         return __name__
 
-    def case_block(self, case, **kwargs):
+    def case_blocks(self, case):
         if case.get_case_property('owner_id') == '-':
             return None
 
