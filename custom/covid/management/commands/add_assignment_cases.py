@@ -44,15 +44,16 @@ class Command(CaseUpdateCommand):
             update={"assignment_type": assignment_type},
         ).as_xml()).decode('utf-8')
 
-    def update_cases(self, domain, user_id):
+    def find_case_ids(self, domain):
         location_id = self.extra_options['location']
         if location_id is None:
-            case_ids = []
             print("Warning: no active location was entered")
-        else:
-            case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
-                domain, self.case_type, owner_ids=[location_id])
+            return []
+        return CommCareCase.objects.get_open_case_ids_in_domain_by_type(
+            domain, self.case_type, owner_ids=[location_id])
 
+    def update_cases(self, domain, user_id):
+        case_ids = self.find_case_ids(domain)
         case_blocks = []
         errors = []
         skip_count = 0
@@ -85,6 +86,7 @@ class Command(CaseUpdateCommand):
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
 
+        location_id = self.extra_options['location']
         self.log_data(domain, "add_assignment_cases", len(case_ids), total, errors, loc_id=location_id)
 
     def add_arguments(self, parser):

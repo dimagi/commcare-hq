@@ -25,7 +25,7 @@ class Command(CaseUpdateCommand):
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
     def update_cases(self, domain, user_id):
-        case_ids = self.find_case_ids_by_type(domain)
+        case_ids = self.find_case_ids(domain)
 
         locations_objects = {}
         case_blocks = []

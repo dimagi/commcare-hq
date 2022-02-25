@@ -26,9 +26,8 @@ class CaseUpdateCommand(BaseCommand):
     def update_cases(self, domain, user_id):
         raise NotImplementedError()
 
-    # TODO: make a find_case_ids that isn't implemented and calls this?
     # TODO: add optional verify_case method in case we're pulling from ES
-    def find_case_ids_by_type(self, domain):
+    def find_case_ids(self, domain):
         case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
         print(f"Found {len(case_ids)} {self.case_type} cases in {domain}")
         return case_ids

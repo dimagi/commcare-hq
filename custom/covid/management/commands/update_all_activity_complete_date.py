@@ -36,7 +36,7 @@ class Command(CaseUpdateCommand):
 
     def update_cases(self, domain, user_id):
         username = user_id_to_username(user_id)     # TODO: something else
-        bad_case_ids = _get_bad_case_ids(domain, self.case_type)
+        bad_case_ids = self.find_case_ids(domain)
         print(f"Updating {len(bad_case_ids)} cases on {domain}")  # ({i}/{len(domains)})")  TODO: pull up
         update_cases(
             domain=domain,
@@ -46,22 +46,21 @@ class Command(CaseUpdateCommand):
             throttle_secs=self.throttle_secs,
         )
 
+    def find_case_ids(self, domain):
+        query = (CaseSearchES()
+                .domain(domain)
+                .filter(exact_case_property_text_query('current_status', 'closed'))
+                .filter(case_property_missing("all_activity_complete_date"))
+                .case_type(self.case_type)
+                .owner(INACTIVE_LOCATION_IDS))
 
-def _get_bad_case_ids(domain, case_type):
-    query = (CaseSearchES()
-             .domain(domain)
-             .filter(exact_case_property_text_query('current_status', 'closed'))
-             .filter(case_property_missing("all_activity_complete_date"))
-             .case_type(case_type)
-             .owner(INACTIVE_LOCATION_IDS))
+        if self.case_type == 'contact':
+            query = (query.modified_range(gte=datetime.date(2022, 2, 2))
+                .NOT(
+                    exact_case_property_text_query('final_disposition', 'converted_to_pui')
+            ))
 
-    if case_type == 'contact':
-        query = (query.modified_range(gte=datetime.date(2022, 2, 2))
-            .NOT(
-                exact_case_property_text_query('final_disposition', 'converted_to_pui')
-        ))
-
-    return list(query.scroll_ids())
+        return list(query.scroll_ids())
 
 
 def _correct_bad_property(case):

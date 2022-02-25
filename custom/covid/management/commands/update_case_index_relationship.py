@@ -52,9 +52,12 @@ class Command(CaseUpdateCommand):
             index={index.identifier: ("patient", index.referenced_id, "extension")},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
+    def find_case_ids(self, domain):
+        return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
+
     def update_cases(self, domain, user_id):
         inactive_location = self.extra_options['inactive_location']
-        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
+        case_ids = self.find_case_ids(domain)
         print(f"Found {len(case_ids)} {self.case_type} cases in {domain}")
         traveler_location_id = self.extra_options['location']
 
