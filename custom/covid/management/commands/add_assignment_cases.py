@@ -33,7 +33,8 @@ def find_owner_id(case, case_property):
 class Command(CaseUpdateCommand):
     help = "Creates assignment cases for cases of a specified type in an active location"
 
-    logger_name = __name__
+    def logger_name(self):
+        return __name__
 
     def _case_block(self, case, owner_id, assignment_type):
         case_id = uuid.uuid4().hex

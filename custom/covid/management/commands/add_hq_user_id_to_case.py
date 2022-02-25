@@ -11,7 +11,8 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 class Command(CaseUpdateCommand):
     help = "Updates checkin cases to hold the userid of the mobile worker that the checkin case is associated with"
 
-    logger_name = __name__
+    def logger_name(self):
+        return __name__
 
     def case_block(self, case, **kwargs):
         username_of_associated_mobile_workers = case.get_case_property('username')

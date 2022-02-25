@@ -10,8 +10,10 @@ class Command(CaseUpdateCommand):
     help = f"Changes the owner_id of a case to the location_id of the child location with type " \
            f"{CHILD_LOCATION_TYPE} of the current location"
 
-    logger_name = __name__
     locations_objects = None
+
+    def logger_name(self):
+        return __name__
 
     def get_location(self, owner_id):
         if self.locations_objects is None:

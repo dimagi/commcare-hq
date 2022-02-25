@@ -16,8 +16,6 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 
 class Command(CaseUpdateCommand):
-    logger_name = __name__
-
     help = textwrap.dedent("""
         Twice-off script created 2022-02-03, updated 2022-02-11. A bunch of
         cases had the property all_activity_complete_date inadvertently set to
@@ -26,6 +24,9 @@ class Command(CaseUpdateCommand):
         well, so this now finds those cases that were blanked out and sets them
         to an actual date.
     """)
+
+    def logger_name(self):
+        return __name__
 
     def find_case_ids(self, domain):
         query = (CaseSearchES()
