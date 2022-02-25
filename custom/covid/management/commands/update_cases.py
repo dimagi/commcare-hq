@@ -20,7 +20,6 @@ class CaseUpdateCommand(BaseCommand):
     logger_name = __name__
 
     def __init__(self):
-        self.output_file = None
         self.extra_options = {}
 
     def case_block(self, case):
@@ -43,25 +42,11 @@ class CaseUpdateCommand(BaseCommand):
     def find_case_ids(self, domain):
         return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
 
-    # TODO: replace with logger from Ethan's script, allow overwriting - when is this called?
-    def log_data(self, domain, command, total_cases, num_updated, errors, loc_id=None):
-        if self.output_file is not None:
-            with open(self.output_file, "a") as output_file:
-                num_case_updated_str = "{} {}: Updated {} out of the {} {} cases".format(domain, command,
-                                                                                         num_updated, total_cases,
-                                                                                         self.case_type)
-                if loc_id is not None:
-                    num_case_updated_str += f" in this location:{loc_id}"
-                output_file.write(num_case_updated_str + '\n')
-                for error in errors:
-                    output_file.write(domain + ": " + error + '\n')
-
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type')
         parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
-        parser.add_argument('--output-file', type=str, default=None)
         parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
@@ -85,7 +70,6 @@ class CaseUpdateCommand(BaseCommand):
 
         self.case_type = case_type
         self.throttle_secs = options.pop("throttle_secs", None)
-        self.output_file = options.pop("output_file", None)
 
         self.extra_options = options
 
