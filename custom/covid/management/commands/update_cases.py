@@ -31,14 +31,14 @@ class CaseUpdateCommand(BaseCommand):
         username = user_id_to_username(user_id)     # TODO: something else
         case_ids = self.find_case_ids(domain)
         self.logger.debug(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})") TODO
-        (update_count, skip_count) = update_cases(
+        update_count = update_cases(
             domain=domain,
             update_fn=self.case_block,
             case_ids=with_progress_bar(case_ids, oneline=False),
             form_meta=SystemFormMeta.for_script(__name__, username),
             throttle_secs=self.throttle_secs,
         )
-        self.logger.debug(f"Made {update_count} updates and skipped {skip_count} cases in {domain}")
+        self.logger.debug(f"Made {update_count} updates in {domain}")
 
     def find_case_ids(self, domain):
         return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
