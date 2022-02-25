@@ -391,6 +391,40 @@ class CaseSchemaTest(BaseSchemaTest):
 
 @combined_patches
 class SessionSchemaTests(BaseSchemaTest):
+    def test_get_session_schema_with_advanced_form(self):
+        module_id = len(self.factory.app.modules)
+        module, form = self.factory.new_advanced_module(module_id, "village")
+        self.factory.form_opens_case(form, "village")
+        self.factory.form_requires_case(
+            form,
+            case_type=self.factory.app.get_module(0).case_type,
+            update={'foo': '/data/question1'}
+        )
+        schema = get_session_schema(form)
+
+        expected_schema = {
+            'id': 'commcaresession',
+            'uri': 'jr://instance/session',
+            'name': 'Session',
+            'path': '/session',
+            'structure': {
+                'data': {
+                    'merge': True,
+                    'structure': {
+                        'case_id_load_village_0': {
+                            'reference': {
+                                'hashtag': '#case',
+                                'source': 'casedb',
+                                'subset': 'case',
+                                'key': '@case_id'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(schema, expected_schema)
+
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
         schema = get_session_schema(form)

@@ -42,15 +42,14 @@ def get_session_schema(form):
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
-        if not datum.module_id:
-            continue
-        module = app.get_module_by_unique_id(datum.module_id)
-        data_registry = module.search_config.data_registry
+        module_id = datum.module_id
+        module = app.get_module_by_unique_id(module_id) if module_id else None
+        data_registry = module.search_config.data_registry if module else None
         if i == 0:
             # always add the datum for this module
             data_structure[datum.datum.id] = _get_structure(datum, data_registry)
         else:
-            if datum.module_id and datum.module_id in unrelated_parents:
+            if module and module_id in unrelated_parents:
                 source = clean_trans(module.name, app.langs)  # ensure that this structure reference is unique
                 data_structure[datum.datum.id] = _get_structure(datum, data_registry, source)
 
