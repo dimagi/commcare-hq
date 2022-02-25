@@ -87,5 +87,130 @@ This reindex procedure is inherently safe because:
 
 ----
 
+Elastic Client Adapters
+-----------------------
+
+The ``corehq.apps.es.client`` module encapsulates the CommCare HQ Elasticsearch
+client adapters. It implements a high-level Elasticsearch client protocol
+necessary to accomplish all interactions with the backend Elasticsearch cluster.
+Client adapters are split into two usage patterns, the "Management Adapter" and
+"Document Adapters".
+
+.. toctree::
+
+    Management Adapter
+    Document Adapters
+    Code Documentation
+
+
+Management Adapter
+''''''''''''''''''
+
+There is only one management adapter, ``ElasticManageAdapter``. This adapter is
+used for performing all cluster management tasks such as creating and updating
+indices and their mappings, changing index settings, changing cluster settings,
+etc.  This functionality is split into a separate class for a few reasons:
+
+1. The management adapter is responsible for low-level Elastic operations which
+   document adapters should never be performing because the scope of a document
+   adapter does not extend beyond a single index.
+2. Elasticsearch 5+ implements security features which limit the kinds of
+   operations a connection can be used for. The separation in these client
+   adapter classes is designed to fit into that model.
+
+The management adapter does not need any special parameters to work with, and
+can be instantiated and used directly:
+
+.. code-block:: python
+
+    adapter = ElasticManageAdapter()
+    adapter.index_create("books")
+    mapping = {"properties": {
+        "author": {"type": "text"},
+        "title": {"type": "text"},
+        "published": {"type": "date"},
+    }}
+    adapter.index_put_mapping("books", "book", mapping)
+    adapter.index_refresh("books")
+    adapter.index_delete("books")
+
+
+Document Adapters
+'''''''''''''''''
+
+Document adapters are created on a per-index basis and include specific
+properties and functionality necessary for maintaining a single type of "model"
+document in a single index.  Each index in Elasticsearch needs to have a
+cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
+model is applied to that specific index.  At the very least, a document adapter
+must define the following:
+
+- An ``_index_name`` attribute whose value is the name of the Elastic index
+  used by the adapter. This attribute must be private to support proper index
+  naming between production code and tests.
+- A ``type`` attribute whose value is the name is the Elastic ``_type`` for
+  documents used by the adapter.
+- A ``mapping`` which defines the structure and properties for documents managed
+  by the adapter.
+- A ``from_python()`` classmethod which can convert a Python model object into the
+  JSON-serializable format for writing into the adapter's index.
+
+The combination of ``(index_name, type)`` constrains the document adapter to
+a specific HQ document mapping.  Comparing an Elastic cluster to a Postgres
+database (for the sake of analogy), the Elastic **index** is analogous to a
+Postgres **schema** object (e.g. ``public``), and the ``_type`` property is
+analogous to a Postgres **table** object. The combination of both index name
+_and_ ``_type`` fully constrains the properties that make up a specific Elastic
+document.
+
+A simple example of a document model and its cooresponding adapter:
+
+.. code-block:: python
+
+    class Book:
+
+        def __init__(self, isbn, author, title, published):
+            self.isbn = isbn
+            self.author = author
+            self.title = title
+            self.published = published
+
+
+    class ElasticBook(ElasticDocumentAdapter):
+
+        _index_name = "books"
+        type = "book"
+        mapping = {"properties": {
+            "author": {"type": "text"},
+            "title": {"type": "text"},
+            "published": {"type": "date"},
+        }}
+
+        @classmethod
+        def from_python(cls, book):
+            source = {
+                "author": book.author,
+                "title": book.title,
+                "published": book.published,
+            }
+            return book.isbn, source
+
+Using this adapter in practice might look as follows:
+
+.. code-block:: python
+
+    adapter = ElasticBook()
+    # index new
+    new_book = Book("978-1491946008", "Luciano Ramalho",
+                    "Fluent Python: Clear, Concise, and Effective Programming",
+                    datetime.datetime(2015, 2, 10))
+    adapter.index(new_book)
+    # fetch existing
+    classic_book = adapter.fetch("978-0345391803")
+
+
+Code Documentation
+''''''''''''''''''
+
 .. automodule:: corehq.apps.es.client
    :members:
