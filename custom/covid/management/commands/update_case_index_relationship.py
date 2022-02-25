@@ -39,6 +39,8 @@ class Command(CaseUpdateCommand):
         case_type is lab_result, the owner_id of that extension case is set to '-'.
     """
 
+    logger_name = __name__
+
     def find_case_ids(self, domain):
         return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
 

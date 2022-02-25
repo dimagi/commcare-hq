@@ -1,5 +1,4 @@
 import datetime
-import logging
 import textwrap
 
 from jsonobject.api import re_date
@@ -15,13 +14,10 @@ from corehq.apps.es.case_search import (
 from corehq.util.dates import iso_string_to_date
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
-# logger.debug will record something to a file but not print it
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.FileHandler('all_activity_complete_date.txt'))
-logger.setLevel(logging.DEBUG)
-
 
 class Command(CaseUpdateCommand):
+    logger_name = __name__
+
     help = textwrap.dedent("""
         Twice-off script created 2022-02-03, updated 2022-02-11. A bunch of
         cases had the property all_activity_complete_date inadvertently set to
@@ -58,7 +54,7 @@ class Command(CaseUpdateCommand):
         ):
             return None
 
-        logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
+        self.logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
         date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
         new_value = date_func(case)
         return [CaseBlock(

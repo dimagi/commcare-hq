@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from django.core.management.base import BaseCommand
 
@@ -15,6 +16,9 @@ class CaseUpdateCommand(BaseCommand):
         Override all methods that raise NotImplementedError.
     """
 
+    # Include this line in subclasses
+    logger_name = __name__
+
     def __init__(self):
         self.output_file = None
         self.extra_options = {}
@@ -26,7 +30,7 @@ class CaseUpdateCommand(BaseCommand):
     def update_cases(self, domain, user_id):
         username = user_id_to_username(user_id)     # TODO: something else
         case_ids = self.find_case_ids(domain)
-        print(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})")  # TODO: use logger
+        self.logger.debug(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})") TODO
         (update_count, skip_count) = update_cases(
             domain=domain,
             update_fn=self.case_block,
@@ -34,7 +38,7 @@ class CaseUpdateCommand(BaseCommand):
             form_meta=SystemFormMeta.for_script(__name__, username),
             throttle_secs=self.throttle_secs,
         )
-        print(f"Made {update_count} updates and skipped {skip_count} cases in {domain}")   # ({i}/{len(domains)})")  # TODO: use logger
+        self.logger.debug(f"Made {update_count} updates and skipped {skip_count} cases in {domain}")
 
     # TODO: add optional verify_case method in case we're pulling from ES
     def find_case_ids(self, domain):
@@ -62,7 +66,12 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
-        print(f"{datetime.datetime.utcnow()} Starting run: {options}")  # TODO: use logger
+        # logger.debug will record something to a file but not print it
+        self.logger = logging.getLogger(self.logger_name)
+        self.logger.addHandler(logging.FileHandler(self.logger_name.split(".")[-1] + ".txt"))
+        self.logger.setLevel(logging.DEBUG)
+
+        self.logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
         domains = {domain}
         if options.pop("and_linked", False):
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
@@ -84,4 +93,4 @@ class CaseUpdateCommand(BaseCommand):
         for domain in sorted(domains):
             self.update_cases(domain, user_id)
 
-        print(f"{datetime.datetime.utcnow()} Script complete")  # TODO: use logger
+        self.logger.debug(f"{datetime.datetime.utcnow()} Script complete")
