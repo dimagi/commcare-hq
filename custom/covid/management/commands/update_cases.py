@@ -55,11 +55,13 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
+        print(f"{datetime.datetime.utcnow()} Starting run: {options}")
         domains = {domain}
-        if options["and_linked"]:
+        if options.pop("and_linked", False):
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
-        if options["username"]:
+        username = options.pop("username", None)
+        if username is not None:
             user_id = username_to_user_id(options["username"])
             if not user_id:
                 raise Exception("The username you entered is invalid")
@@ -67,15 +69,11 @@ class CaseUpdateCommand(BaseCommand):
             user_id = SYSTEM_USER_ID
 
         self.case_type = case_type
-        self.throttle_secs = options["throttle_secs"]
-        self.output_file = options["output_file"]
+        self.throttle_secs = options.pop("throttle_secs", None)
+        self.output_file = options.pop("output_file", None)
 
-        options.pop("and_linked")
-        options.pop("username")
-        options.pop("output_file", None)
         self.extra_options = options
 
-        print(f"{datetime.datetime.utcnow()} Starting run: {options}")
         for domain in sorted(domains):
             print(f"Processing {domain}")
             self.update_cases(domain, user_id)
