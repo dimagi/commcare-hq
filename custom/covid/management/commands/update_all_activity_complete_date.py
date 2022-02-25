@@ -61,11 +61,11 @@ class Command(CaseUpdateCommand):
         logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
         date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
         new_value = date_func(case)
-        return CaseBlock(
+        return [CaseBlock(
             create=False,
             case_id=case.case_id,
             update={"all_activity_complete_date": new_value},
-        )
+        )]
 
 
 def _get_new_patient_date_value(case):

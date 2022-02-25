@@ -47,7 +47,7 @@ class TestUpdateCases(TestCase):
 
 def _set_phase_2(case):
     if case.get_case_property('to_update') == 'yes':
-        return CaseBlock(
+        return [CaseBlock(
             case_id=case.case_id,
             update={'phase': '2'},
-        )
+        )]

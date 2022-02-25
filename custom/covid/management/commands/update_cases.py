@@ -19,7 +19,6 @@ class CaseUpdateCommand(BaseCommand):
         self.output_file = None
         self.extra_options = {}
 
-    # TODO: return list of blocks, for the sake of the upcoming script
     def case_block(self, case):
         raise NotImplementedError()
 
@@ -28,13 +27,14 @@ class CaseUpdateCommand(BaseCommand):
         username = user_id_to_username(user_id)     # TODO: something else
         case_ids = self.find_case_ids(domain)
         print(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})")  # TODO: use logger
-        update_cases(
+        (update_count, skip_count) = update_cases(
             domain=domain,
             update_fn=self.case_block,
             case_ids=with_progress_bar(case_ids, oneline=False),
             form_meta=SystemFormMeta.for_script(__name__, username),
             throttle_secs=self.throttle_secs,
         )
+        print(f"Made {update_count} updates and skipped {skip_count} cases in {domain}")   # ({i}/{len(domains)})")  # TODO: use logger
 
     # TODO: add optional verify_case method in case we're pulling from ES
     def find_case_ids(self, domain):

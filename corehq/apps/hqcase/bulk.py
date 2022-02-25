@@ -81,11 +81,21 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None, 
     """
     Perform a large number of case updates in chunks
 
-    update_fn should be a function which accepts a case and returns a CaseBlock
+    update_fn should be a function which accepts a case and returns a list of CaseBlock objects
     if an update is to be performed, or None to skip the case.
+
+    Returns counts of number of updates made (not necessarily number of cases update)
+    and number of cases skipped.
     """
+    update_count = 0
+    skip_count = 0
     with CaseBulkDB(domain, form_meta, throttle_secs) as bulk_db:
         for case in CommCareCase.objects.iter_cases(case_ids):
-            case_block = update_fn(case)
-            if case_block:
-                bulk_db.save(case_block)
+            case_blocks = update_fn(case)
+            if case_blocks:
+                for case_block in case_blocks:
+                    bulk_db.save(case_block)
+                    update_count += 1
+            else:
+                skip_count = skip_count + 1
+    return update_count, skip_count
