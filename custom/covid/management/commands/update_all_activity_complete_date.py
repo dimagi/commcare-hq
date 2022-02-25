@@ -2,8 +2,6 @@ import datetime
 import logging
 import textwrap
 
-from django.core.management.base import BaseCommand
-
 from jsonobject.api import re_date
 
 from casexml.apps.case.mock import CaseBlock
@@ -15,9 +13,10 @@ from corehq.apps.es.case_search import (
     exact_case_property_text_query,
 )
 from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_date
 from corehq.util.log import with_progress_bar
+from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 # logger.debug will record something to a file but not print it
 logger = logging.getLogger(__name__)
@@ -25,7 +24,7 @@ logger.addHandler(logging.FileHandler('all_activity_complete_date.txt'))
 logger.setLevel(logging.DEBUG)
 
 
-class Command(BaseCommand):
+class Command(CaseUpdateCommand):
     help = textwrap.dedent("""
         Twice-off script created 2022-02-03, updated 2022-02-11. A bunch of
         cases had the property all_activity_complete_date inadvertently set to
@@ -35,30 +34,17 @@ class Command(BaseCommand):
         to an actual date.
     """)
 
-    def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('case_type', choices=['patient', 'contact'])
-        parser.add_argument('--username', type=str)
-        parser.add_argument('--and-linked', action='store_true', default=False)
-        parser.add_argument('--throttle-secs', type=float, default=0)
-
-    def handle(self, domain, **options):
-        logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
-
-        domains = {domain}
-        if options["and_linked"]:
-            domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
-
-        for i, domain in enumerate(sorted(domains), start=1):
-            bad_case_ids = _get_bad_case_ids(domain, options['case_type'])
-            print(f"Updating {len(bad_case_ids)} cases on {domain} ({i}/{len(domains)})")
-            update_cases(
-                domain=domain,
-                update_fn=_correct_bad_property,
-                case_ids=with_progress_bar(bad_case_ids, oneline=False),
-                form_meta=SystemFormMeta.for_script(__name__, options['username']),
-                throttle_secs=options['throttle_secs'],
-            )
+    def update_cases(self, domain, case_type, user_id):
+        username = user_id_to_username(user_id)     # TODO: something else
+        bad_case_ids = _get_bad_case_ids(domain, case_type)
+        print(f"Updating {len(bad_case_ids)} cases on {domain}")  # ({i}/{len(domains)})")  TODO: pull up
+        update_cases(
+            domain=domain,
+            update_fn=_correct_bad_property,
+            case_ids=with_progress_bar(bad_case_ids, oneline=False),
+            form_meta=SystemFormMeta.for_script(__name__, username),
+            throttle_secs=self.throttle_secs,
+        )
 
 
 def _get_bad_case_ids(domain, case_type):

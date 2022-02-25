@@ -423,8 +423,8 @@ class TestUpdateAllActivityCompleteDate(TestCase):
     @patch('corehq.apps.hqcase.bulk.username_to_user_id', new=lambda _: 'my_username')
     def test(self):
         logging.getLogger('custom.covid.management.commands.update_all_activity_complete_date').disabled = True
-        call_command('update_all_activity_complete_date', self.domain, 'patient', username='test@example.com')
-        call_command('update_all_activity_complete_date', self.domain, 'contact', username='test@example.com')
+        call_command('update_all_activity_complete_date', self.domain, 'patient')
+        call_command('update_all_activity_complete_date', self.domain, 'contact')
 
         cases = {
             label: (CommCareCase.objects.get_case(case_block.case_id), case_block)

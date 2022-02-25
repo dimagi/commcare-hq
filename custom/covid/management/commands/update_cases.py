@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
@@ -45,6 +47,7 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
         parser.add_argument('--output-file', type=str, default=None)
+        parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
         domains = {domain}
@@ -58,6 +61,7 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
+        self.throttle_secs = options["throttle_secs"]
         self.output_file = options["output_file"]
 
         options.pop("and_linked")
@@ -65,6 +69,7 @@ class CaseUpdateCommand(BaseCommand):
         options.pop("output_file", None)
         self.extra_options = options
 
+        print(f"{datetime.datetime.utcnow()} Starting run: {options}")
         for domain in sorted(domains):
             print(f"Processing {domain}")
             self.update_cases(domain, case_type, user_id)
