@@ -25,20 +25,6 @@ class CaseUpdateCommand(BaseCommand):
     def case_block(self, case):
         raise NotImplementedError()
 
-    # TODO: eventually probably fold this into handle
-    def update_cases(self, domain, user_id):
-        username = user_id_to_username(user_id)     # TODO: something else
-        case_ids = self.find_case_ids(domain)
-        self.logger.debug(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})") TODO
-        update_count = update_cases(
-            domain=domain,
-            update_fn=self.case_block,
-            case_ids=with_progress_bar(case_ids, oneline=False),
-            form_meta=SystemFormMeta.for_script(__name__, username),
-            throttle_secs=self.throttle_secs,
-        )
-        self.logger.debug(f"Made {update_count} updates in {domain}")
-
     def find_case_ids(self, domain):
         return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
 
@@ -73,7 +59,17 @@ class CaseUpdateCommand(BaseCommand):
 
         self.extra_options = options
 
-        for domain in sorted(domains):
-            self.update_cases(domain, user_id)
+        username = user_id_to_username(user_id)
+        for i, domain in enumerate(sorted(domains), start=1):
+            case_ids = self.find_case_ids(domain)
+            self.logger.debug(f"Found {len(case_ids)} cases in {domain} ({i}/{len(domains)})")
+            update_count = update_cases(
+                domain=domain,
+                update_fn=self.case_block,
+                case_ids=with_progress_bar(case_ids, oneline=False),
+                form_meta=SystemFormMeta.for_script(self.logger_name, username),
+                throttle_secs=self.throttle_secs,
+            )
+            self.logger.debug(f"Made {update_count} updates in {domain} ({i}/{len(domains)})")
 
         self.logger.debug(f"{datetime.datetime.utcnow()} Script complete")
