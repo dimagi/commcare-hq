@@ -201,9 +201,12 @@ Using this adapter in practice might look as follows:
 
     adapter = ElasticBook()
     # index new
-    new_book = Book("978-1491946008", "Luciano Ramalho",
-                    "Fluent Python: Clear, Concise, and Effective Programming",
-                    datetime.datetime(2015, 2, 10))
+    new_book = Book(
+        "978-1491946008",
+        "Luciano Ramalho",
+        "Fluent Python: Clear, Concise, and Effective Programming",
+        datetime.date(2015, 2, 10),
+    )
     adapter.index(new_book)
     # fetch existing
     classic_book = adapter.fetch("978-0345391803")
