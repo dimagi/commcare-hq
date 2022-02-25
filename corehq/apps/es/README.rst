@@ -63,7 +63,7 @@ other:
    only the new index).
 4. Execute a management command to delete the old index.
 
-*Note*: the above steps are not limited to a single index at a time. That is,
+**Note**: the above steps are not limited to a single index at a time. That is,
 the implementation does not prohibit configuring multiplexing and reindexing
 multiple indexes at once.
 
@@ -72,8 +72,9 @@ This reindex procedure is inherently safe because:
 - At any point in the process, the rollback procedure is a simple code change
   (i.e. revert PR, deploy).
 - The operation responsible for populating the secondary index is idempotent
-  *and* decoupled from the index configuration, meaning it can undergo change
-  iterations without aborting the entire process and losing existing progress.
+  *and* decoupled from the index configuration, allowing it to undergo change
+  iterations without aborting the entire process (thereby losing reindex
+  progress).
 - Instructions for third party hosters can follow the same process that Dimagi
   uses, which guarantees that any possible problems encountered by a third party
   hoster are not outside the Dimagi main track.

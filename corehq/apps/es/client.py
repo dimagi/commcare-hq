@@ -220,7 +220,7 @@ class ElasticManageAdapter(BaseAdapter):
         ensures that the alias is **only** assigned to one index at a time, and
         that (if present) an existing alias does not vanish momentarily.
 
-        See <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html>
+        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html
 
         :param index: ``str`` name of the index to be aliased
         :param name: ``str`` name of the alias to assign to ``index``
@@ -285,7 +285,7 @@ class ElasticManageAdapter(BaseAdapter):
         - does not contain commas (``,``)
         - does not contain wildcards (i.e. asterisks, ``*``).
 
-        See <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params>  # noqa: E501
+        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params  # noqa: E501
 
         :param index: index name or alias
         """
@@ -401,7 +401,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         Equivalent to the legacy ``ElasticsearchInterface.get_bulk_docs(...)``
         method.
 
-        :param doc_ids: iterable of document IDs (``str``s)
+        :param doc_ids: iterable of document IDs (``str``'s)
         :returns: ``dict``
         """
         docs = []
@@ -417,7 +417,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         return docs
 
     def iter_fetch(self, doc_ids, chunk_size=100):
-        """Return a generator which pulls queries documents in chunks.
+        """Return a generator which fetches documents in chunks.
 
         :param doc_ids: iterable of document IDs (``str``s)
         :param chunk_size: ``int`` number of documents to fetch per query
@@ -516,7 +516,7 @@ class ElasticDocumentAdapter(BaseAdapter):
           search contexts. Versions 2.4 and 5.6 do not specify what the default
           maximum limit is, or how to configure it. Version 7.14 specifies the
           default is 500 concurrent search contexts.
-        - See <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html>
+        - See: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-scroll.html
         """
         query = query.copy()
         query.setdefault("sort", "_doc")  # configure for efficiency if able
@@ -764,9 +764,9 @@ class ElasticDocumentAdapter(BaseAdapter):
 
 
 class BulkActionItem:
-    """A "wrapper" for documents to be processed via Elasticsearch's Bulk API.
+    """A wrapper for documents to be processed via Elasticsearch's Bulk API.
     Collections of these objects can be passed to an ElasticDocumentAdapter's
-    bulk() method for processing.
+    ``.bulk()`` method for processing.
 
     Instances of this class are meant to be acquired via one of the factory
     methods rather than instantiating directly (via ``__init__()``).
@@ -804,12 +804,12 @@ class BulkActionItem:
 
     @property
     def is_delete(self):
-        """Return ``True`` if this action is for a document delete operation."""
+        """``True`` if this is a delete action, otherwise ``False``."""
         return self.op_type is self.OpType.delete
 
     @property
     def is_index(self):
-        """Return ``True`` if this action is for a document index operation."""
+        """``True`` if this is an index action, otherwise ``False``."""
         return self.op_type is self.OpType.index
 
     def __repr__(self):
