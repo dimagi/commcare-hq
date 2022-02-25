@@ -40,7 +40,6 @@ class CaseUpdateCommand(BaseCommand):
         )
         self.logger.debug(f"Made {update_count} updates and skipped {skip_count} cases in {domain}")
 
-    # TODO: add optional verify_case method in case we're pulling from ES
     def find_case_ids(self, domain):
         return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
 
