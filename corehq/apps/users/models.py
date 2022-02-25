@@ -3133,4 +3133,4 @@ class DeactivateMobileWorkerTrigger(models.Model):
         user_ids = trigger_query.values_list('user_id', flat=True)
         for chunked_ids in chunked(user_ids, 100):
             bulk_auto_deactivate_commcare_users(chunked_ids, domain)
-        trigger_query.delete()
+            cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()
