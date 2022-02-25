@@ -9,6 +9,8 @@ from django.utils.translation import ugettext as _
 from celery.task import task
 
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger
+from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.accounting.models import BillingAccount
@@ -67,6 +69,7 @@ def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
 
 @task()
 def auto_deactivate_mobile_workers():
+    time_started = datetime.datetime.utcnow()
     date_deactivation = datetime.date.today()
     for emw_setting in EnterpriseMobileWorkerSettings.objects.filter(
         Q(enable_auto_deactivation=True) | Q(allow_custom_deactivation=True)
@@ -78,3 +81,9 @@ def auto_deactivate_mobile_workers():
                 DeactivateMobileWorkerTrigger.deactivate_mobile_workers(
                     domain, date_deactivation=date_deactivation,
                 )
+    task_time = datetime.datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.enterprise.tasks.auto_deactivate_mobile_workers',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )

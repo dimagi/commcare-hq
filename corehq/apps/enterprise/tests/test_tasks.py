@@ -100,12 +100,14 @@ class TestAutoDeactivateMobileWorkersTask(TestCase):
                 domain.delete()
         super().tearDownClass()
 
+    @mock.patch('corehq.apps.enterprise.tasks.metrics_gauge')
     @mock.patch('corehq.apps.enterprise.tasks.EnterpriseMobileWorkerSettings'
                 '.deactivate_mobile_workers_by_inactivity')
     @mock.patch('corehq.apps.enterprise.tasks.DeactivateMobileWorkerTrigger'
                 '.deactivate_mobile_workers')
     def test_auto_deactivate_mobile_workers_task(
-        self, deactivate_mobile_workers, deactivate_mobile_workers_by_inactivity
+        self, deactivate_mobile_workers, deactivate_mobile_workers_by_inactivity,
+        metrics_gauge
     ):
         auto_deactivate_mobile_workers()
         domains_checked_for_inactivity = [
@@ -134,3 +136,5 @@ class TestAutoDeactivateMobileWorkersTask(TestCase):
                 ('domain-account4-001', self.today),
             ]
         )
+
+        metrics_gauge.assert_called_once()
