@@ -52,10 +52,10 @@ class Command(CaseUpdateCommand):
             index={index.identifier: ("patient", index.referenced_id, "extension")},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id):
+    def update_cases(self, domain, user_id):
         inactive_location = self.extra_options['inactive_location']
-        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, case_type)
-        print(f"Found {len(case_ids)} {case_type} cases in {domain}")
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
+        print(f"Found {len(case_ids)} {self.case_type} cases in {domain}")
         traveler_location_id = self.extra_options['location']
 
         case_blocks = []
@@ -64,7 +64,7 @@ class Command(CaseUpdateCommand):
             if should_skip(case, traveler_location_id, inactive_location):
                 skip_count += 1
             elif needs_update(case):
-                owner_id = get_owner_id(case_type)
+                owner_id = get_owner_id(self.case_type)
                 case_blocks.append(self.case_block(case, owner_id))
         print(f"{len(case_blocks)} to update in {domain}, {skip_count} cases have skipped due to"
               f" multiple indices.")
@@ -75,7 +75,7 @@ class Command(CaseUpdateCommand):
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
 
-        self.log_data(domain, "update_case_index_relationship", case_type, len(case_ids), total, [])
+        self.log_data(domain, "update_case_index_relationship", len(case_ids), total, [])
 
     def add_arguments(self, parser):
         super().add_arguments(parser)

@@ -18,23 +18,28 @@ class CaseUpdateCommand(BaseCommand):
         self.output_file = None
         self.extra_options = {}
 
+    # TODO: return list of blocks, for the sake of the upcoming script
     def case_block(self):
         raise NotImplementedError()
 
-    def update_cases(self, domain, case_type, user_id):
+    # TODO: implment most of this here? use update_cases as in Ethan's script, and SystemFormMeta
+    def update_cases(self, domain, user_id):
         raise NotImplementedError()
 
-    def find_case_ids_by_type(self, domain, case_type):
-        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, case_type)
-        print(f"Found {len(case_ids)} {case_type} cases in {domain}")
+    # TODO: make a find_case_ids that isn't implemented and calls this?
+    # TODO: add optional verify_case method in case we're pulling from ES
+    def find_case_ids_by_type(self, domain):
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
+        print(f"Found {len(case_ids)} {self.case_type} cases in {domain}")
         return case_ids
 
-    def log_data(self, domain, command, case_type, total_cases, num_updated, errors, loc_id=None):
+    # TODO: replace with logger from Ethan's script, allow overwriting - when is this called?
+    def log_data(self, domain, command, total_cases, num_updated, errors, loc_id=None):
         if self.output_file is not None:
             with open(self.output_file, "a") as output_file:
                 num_case_updated_str = "{} {}: Updated {} out of the {} {} cases".format(domain, command,
                                                                                          num_updated, total_cases,
-                                                                                         case_type)
+                                                                                         self.case_type)
                 if loc_id is not None:
                     num_case_updated_str += f" in this location:{loc_id}"
                 output_file.write(num_case_updated_str + '\n')
@@ -61,6 +66,7 @@ class CaseUpdateCommand(BaseCommand):
         else:
             user_id = SYSTEM_USER_ID
 
+        self.case_type = case_type
         self.throttle_secs = options["throttle_secs"]
         self.output_file = options["output_file"]
 
@@ -72,4 +78,4 @@ class CaseUpdateCommand(BaseCommand):
         print(f"{datetime.datetime.utcnow()} Starting run: {options}")
         for domain in sorted(domains):
             print(f"Processing {domain}")
-            self.update_cases(domain, case_type, user_id)
+            self.update_cases(domain, user_id)

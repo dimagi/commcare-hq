@@ -21,11 +21,11 @@ class Command(CaseUpdateCommand):
             update=blank_owner_id,
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id):
-        case_ids = self.find_case_ids_by_type(domain, case_type)
+    def update_cases(self, domain, user_id):
+        case_ids = self.find_case_ids_by_type(domain)
         case_blocks = []
 
-        print(f"Found {len(case_ids)} {case_type} cases in {domain}. Proceeding...")
+        print(f"Found {len(case_ids)} {self.case_type} cases in {domain}. Proceeding...")
 
         total_cases_updated = 0
         count_already_blank = 0
@@ -43,8 +43,8 @@ class Command(CaseUpdateCommand):
             submit_case_blocks(case_blocks, domain, device_id=DEVICE_ID, user_id=user_id)
             total_cases_updated += len(case_blocks)
 
-        print(f"{total_cases_updated} cases of case type {case_type} in domain {domain} had their owner ID"
+        print(f"{total_cases_updated} cases of case type {self.case_type} in domain {domain} had their owner ID"
             f" field cleared successfully. {count_already_blank} cases already had a blank owner ID and were"
             " skipped.")
 
-        self.log_data(domain, "clear_owner_ids", case_type, len(case_ids), total_cases_updated, errors=[])
+        self.log_data(domain, "clear_owner_ids", len(case_ids), total_cases_updated, errors=[])

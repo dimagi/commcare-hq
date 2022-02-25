@@ -24,8 +24,8 @@ class Command(CaseUpdateCommand):
             update={'hq_user_id': user_id},
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id):
-        case_ids = self.find_case_ids_by_type(domain, case_type)
+    def update_cases(self, domain, user_id):
+        case_ids = self.find_case_ids_by_type(domain)
         case_blocks = []
         errors = []
         skip_count = 0
@@ -52,4 +52,4 @@ class Command(CaseUpdateCommand):
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
 
-        self.log_data(domain, "add_hq_user_id_to_case", case_type, len(case_ids), total, errors)
+        self.log_data(domain, "add_hq_user_id_to_case", len(case_ids), total, errors)

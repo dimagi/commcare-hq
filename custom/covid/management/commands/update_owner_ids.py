@@ -24,8 +24,8 @@ class Command(CaseUpdateCommand):
             owner_id=child_location.location_id,
         ).as_xml(), encoding='utf-8').decode('utf-8')
 
-    def update_cases(self, domain, case_type, user_id):
-        case_ids = self.find_case_ids_by_type(domain, case_type)
+    def update_cases(self, domain, user_id):
+        case_ids = self.find_case_ids_by_type(domain)
 
         locations_objects = {}
         case_blocks = []
@@ -65,4 +65,4 @@ class Command(CaseUpdateCommand):
             total += len(chunk)
             print("Updated {} cases on domain {}".format(total, domain))
 
-        self.log_data(domain, "update_owner_ids", case_type, len(case_ids), total, errors)
+        self.log_data(domain, "update_owner_ids", len(case_ids), total, errors)

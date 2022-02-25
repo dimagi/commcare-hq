@@ -34,9 +34,9 @@ class Command(CaseUpdateCommand):
         to an actual date.
     """)
 
-    def update_cases(self, domain, case_type, user_id):
+    def update_cases(self, domain, user_id):
         username = user_id_to_username(user_id)     # TODO: something else
-        bad_case_ids = _get_bad_case_ids(domain, case_type)
+        bad_case_ids = _get_bad_case_ids(domain, self.case_type)
         print(f"Updating {len(bad_case_ids)} cases on {domain}")  # ({i}/{len(domains)})")  TODO: pull up
         update_cases(
             domain=domain,
