@@ -396,8 +396,11 @@ def _get_changed_details(couch_user, action, fields_changed):
 
 def bulk_auto_deactivate_commcare_users(user_ids, domain):
     """
-    Deactivates CommCareUsers in bulk. Please pre-chunk ids to a reasonable size.
-    Also please reference the save() method in CommCareUser when making changes.
+    Deactivates CommCareUsers in bulk.
+    
+    Please pre-chunk ids to a reasonable size. Also please reference the
+    save() method in CommCareUser when making changes.
+
     :param user_ids: list of user IDs
     :param domain: name of domain user IDs belong to
     """
