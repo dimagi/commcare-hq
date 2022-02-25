@@ -1452,9 +1452,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             super(CouchUser, self).save(**params)
 
         if fire_signals:
-            from .signals import couch_user_post_save
-            results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            self.fire_signals()
+
+    def fire_signals(self):
+        from .signals import couch_user_post_save
+        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
