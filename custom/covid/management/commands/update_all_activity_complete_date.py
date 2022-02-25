@@ -12,10 +12,7 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     exact_case_property_text_query,
 )
-from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
-from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_date
-from corehq.util.log import with_progress_bar
 from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 # logger.debug will record something to a file but not print it
@@ -34,18 +31,6 @@ class Command(CaseUpdateCommand):
         to an actual date.
     """)
 
-    def update_cases(self, domain, user_id):
-        username = user_id_to_username(user_id)     # TODO: something else
-        bad_case_ids = self.find_case_ids(domain)
-        print(f"Updating {len(bad_case_ids)} cases on {domain}")  # ({i}/{len(domains)})")  TODO: pull up
-        update_cases(
-            domain=domain,
-            update_fn=_correct_bad_property,
-            case_ids=with_progress_bar(bad_case_ids, oneline=False),
-            form_meta=SystemFormMeta.for_script(__name__, username),
-            throttle_secs=self.throttle_secs,
-        )
-
     def find_case_ids(self, domain):
         query = (CaseSearchES()
                 .domain(domain)
@@ -62,26 +47,25 @@ class Command(CaseUpdateCommand):
 
         return list(query.scroll_ids())
 
+    def case_block(self, case):
+        if (
+                # Double check filters in case ES data is stale
+                case.get_case_property('all_activity_complete_date')
+                or case.get_case_property('current_status') != 'closed'
+                or (case.type == 'contact'
+                    and case.get_case_property('final_disposition') == 'converted_to_pui')
+                or case.owner_id not in INACTIVE_LOCATION_IDS
+        ):
+            return None
 
-def _correct_bad_property(case):
-    if (
-            # Double check filters in case ES data is stale
-            case.get_case_property('all_activity_complete_date')
-            or case.get_case_property('current_status') != 'closed'
-            or (case.type == 'contact'
-                and case.get_case_property('final_disposition') == 'converted_to_pui')
-            or case.owner_id not in INACTIVE_LOCATION_IDS
-    ):
-        return None
-
-    logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
-    date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
-    new_value = date_func(case)
-    return CaseBlock(
-        create=False,
-        case_id=case.case_id,
-        update={"all_activity_complete_date": new_value},
-    )
+        logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
+        date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
+        new_value = date_func(case)
+        return CaseBlock(
+            create=False,
+            case_id=case.case_id,
+            update={"all_activity_complete_date": new_value},
+        )
 
 
 def _get_new_patient_date_value(case):

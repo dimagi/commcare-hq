@@ -2,10 +2,11 @@ import datetime
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.apps.users.util import username_to_user_id
+from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id, user_id_to_username
 from corehq.form_processor.models import CommCareCase
+from corehq.util.log import with_progress_bar
 
 
 class CaseUpdateCommand(BaseCommand):
@@ -19,18 +20,25 @@ class CaseUpdateCommand(BaseCommand):
         self.extra_options = {}
 
     # TODO: return list of blocks, for the sake of the upcoming script
-    def case_block(self):
+    def case_block(self, case):
         raise NotImplementedError()
 
-    # TODO: implment most of this here? use update_cases as in Ethan's script, and SystemFormMeta
+    # TODO: eventually probably fold this into handle
     def update_cases(self, domain, user_id):
-        raise NotImplementedError()
+        username = user_id_to_username(user_id)     # TODO: something else
+        case_ids = self.find_case_ids(domain)
+        print(f"Found {len(case_ids)} cases in {domain}")   # ({i}/{len(domains)})")  # TODO: use logger
+        update_cases(
+            domain=domain,
+            update_fn=self.case_block,
+            case_ids=with_progress_bar(case_ids, oneline=False),
+            form_meta=SystemFormMeta.for_script(__name__, username),
+            throttle_secs=self.throttle_secs,
+        )
 
     # TODO: add optional verify_case method in case we're pulling from ES
     def find_case_ids(self, domain):
-        case_ids = CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
-        print(f"Found {len(case_ids)} {self.case_type} cases in {domain}")
-        return case_ids
+        return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
 
     # TODO: replace with logger from Ethan's script, allow overwriting - when is this called?
     def log_data(self, domain, command, total_cases, num_updated, errors, loc_id=None):
@@ -54,7 +62,7 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
-        print(f"{datetime.datetime.utcnow()} Starting run: {options}")
+        print(f"{datetime.datetime.utcnow()} Starting run: {options}")  # TODO: use logger
         domains = {domain}
         if options.pop("and_linked", False):
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
@@ -74,5 +82,6 @@ class CaseUpdateCommand(BaseCommand):
         self.extra_options = options
 
         for domain in sorted(domains):
-            print(f"Processing {domain}")
             self.update_cases(domain, user_id)
+
+        print(f"{datetime.datetime.utcnow()} Script complete")  # TODO: use logger
