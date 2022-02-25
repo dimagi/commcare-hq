@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
@@ -44,7 +45,8 @@ class CaseUpdateCommand(BaseCommand):
     def handle(self, domain, case_type, **options):
         # logger.debug will record something to a file but not print it
         self.logger = logging.getLogger(self.logger_name())
-        self.logger.addHandler(logging.FileHandler(self.logger_name().split(".")[-1] + ".txt"))
+        if not settings.UNIT_TESTING:
+            self.logger.addHandler(logging.FileHandler(self.logger_name().split(".")[-1] + ".txt"))
         self.logger.setLevel(logging.DEBUG)
 
         self.logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
