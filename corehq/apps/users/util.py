@@ -1,3 +1,4 @@
+import datetime
 import numbers
 import re
 
@@ -20,11 +21,13 @@ from casexml.apps.case.const import (
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.exceptions import AutoDeactivateUserException
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.parsing import json_format_datetime
+
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
 WEIRD_USER_IDS = [
@@ -391,26 +394,56 @@ def _get_changed_details(couch_user, action, fields_changed):
     return changed_details
 
 
-def auto_deactivate_commcare_user(user_id, domain):
+def bulk_auto_deactivate_commcare_users(user_ids, domain):
     """
-    Deactivate a Mobile Worker / CommCareUser through the auto-deactivation
-    process.
-    :param user_id: string - user ID of CommCareUser
-    :param domain: string - domain CommCareUser belongs to
+    Deactivates CommCareUsers in bulk. Please pre-chunk ids to a reasonable size.
+    Also please reference the save() method in CommCareUser when making changes.
+    :param user_ids: list of user IDs
+    :param domain: name of domain user IDs belong to
     """
-    from corehq.apps.users.models import CommCareUser
-    user = CommCareUser.get_by_user_id(user_id, domain)
-    if user is None:
-        raise AutoDeactivateUserException("no user found")
-    if user.is_active and user.domain == domain:
-        # Only record change if user has not previously been deactivated
-        user.is_active = False
-        user.save(spawn_task=True)
-        log_user_change(
+    from corehq.apps.users.models import UserHistory, CommCareUser
+    from corehq.apps.users.model_log import UserModelAction
+
+    user_docs_to_bulk_save = []
+    for user_doc in get_docs(CommCareUser.get_db(), keys=user_ids):
+        if user_doc['is_active']:
+            user_doc['is_active'] = False
+            user_doc['last_modified'] = json_format_datetime(datetime.datetime.utcnow())
+            user_docs_to_bulk_save.append(user_doc)
+
+    # bulk save django Users
+    user_query = User.objects.filter(
+        username__in=[u["username"] for u in user_docs_to_bulk_save]
+    )
+    user_query.update(is_active=False)
+
+    # bulk save in couch
+    CommCareUser.get_db().bulk_save(user_docs_to_bulk_save)
+
+    # bulk create all the UserHistory logs
+    UserHistory.objects.bulk_create([
+        UserHistory(
             by_domain=domain,
             for_domain=domain,
-            couch_user=user,
-            changed_by_user=SYSTEM_USER_ID,
+            user_type=CommCareUser.doc_type,
+            user_repr=u['username'].split('@')[0],
+            changed_by_repr=SYSTEM_USER_ID,
+            user_id=u['_id'],
+            changed_by=SYSTEM_USER_ID,
+            changes={'is_active': False},
             changed_via=USER_CHANGE_VIA_AUTO_DEACTIVATE,
-            fields_changed={'is_active': user.is_active}
+            change_messages={},
+            action=UserModelAction.UPDATE.value,
+            user_upload_record_id=None
         )
+        for u in user_docs_to_bulk_save
+    ])
+
+    # clear caches and fire signals
+    for user_doc in user_docs_to_bulk_save:
+        commcare_user = CommCareUser.wrap(user_doc)
+        commcare_user.clear_quickcache_for_user()
+        commcare_user.fire_signals()
+        # FYI we don't call the save() method individually because
+        # it is ridiculously inefficient! Unfortunately, it's harder to get
+        # around caches and signals in a bulk way.

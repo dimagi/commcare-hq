@@ -77,7 +77,7 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
-    auto_deactivate_commcare_user,
+    bulk_auto_deactivate_commcare_users,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -1437,6 +1437,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     bulk_save = save_docs
 
     def save(self, fire_signals=True, **params):
+        # HEADS UP!
+        # When updating this method, please also ensure that your updates also
+        # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
@@ -3123,9 +3126,11 @@ class DeactivateMobileWorkerTrigger(models.Model):
         :param domain: String - domain name
         :param date_deactivation: Date
         """
-        for trigger in cls.objects.filter(
+        trigger_query = cls.objects.filter(
             domain=domain,
             deactivate_after__lte=date_deactivation
-        ):
-            auto_deactivate_commcare_user(trigger.user_id, trigger.domain)
-            trigger.delete()
+        )
+        user_ids = trigger_query.values_list('user_id', flat=True)
+        for chunked_ids in chunked(user_ids, 100):
+            bulk_auto_deactivate_commcare_users(chunked_ids, domain)
+        trigger_query.delete()

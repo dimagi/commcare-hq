@@ -18,7 +18,3 @@ class MissingRoleException(Exception):
     Raised when encountering a WebUser without a role
     """
     pass
-
-
-class AutoDeactivateUserException(Exception):
-    pass

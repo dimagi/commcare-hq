@@ -3,9 +3,10 @@ import datetime
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
+from dimagi.utils.chunked import chunked
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.es import UserES, filters
-from corehq.apps.users.util import auto_deactivate_commcare_user
+from corehq.apps.users.util import bulk_auto_deactivate_commcare_users
 from corehq.util.quickcache import quickcache
 
 
@@ -91,5 +92,6 @@ class EnterpriseMobileWorkerSettings(models.Model):
             )
             .source(['_id'])
         )
-        for user in user_query.run().hits:
-            auto_deactivate_commcare_user(user['_id'], domain)
+        user_ids = [u['_id'] for u in user_query.run().hits]
+        for chunked_ids in chunked(user_ids, 100):
+            bulk_auto_deactivate_commcare_users(chunked_ids, domain)

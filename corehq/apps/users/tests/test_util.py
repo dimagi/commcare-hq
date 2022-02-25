@@ -3,14 +3,13 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
-from corehq.apps.users.exceptions import AutoDeactivateUserException
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
     user_display_string,
     username_to_user_id,
     user_id_to_username,
     cached_user_id_to_user_display,
-    auto_deactivate_commcare_user,
+    bulk_auto_deactivate_commcare_users,
     SYSTEM_USER_ID,
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
@@ -118,7 +117,7 @@ class TestUserDisplayString(SimpleTestCase):
         self.assertEqual(result, 'test@dimagi.com')
 
 
-class TestAutoDeactivateCommCareUser(TestCase):
+class TestBulkAutoDeactivateCommCareUser(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -156,7 +155,7 @@ class TestAutoDeactivateCommCareUser(TestCase):
         super().tearDownClass()
 
     def test_user_is_deactivated_and_logged(self):
-        auto_deactivate_commcare_user(self.active_user.get_id, self.domain)
+        bulk_auto_deactivate_commcare_users([self.active_user.get_id], self.domain)
         refreshed_user = CommCareUser.get_by_user_id(self.active_user.user_id)
         self.assertFalse(
             refreshed_user.is_active
@@ -180,7 +179,7 @@ class TestAutoDeactivateCommCareUser(TestCase):
         )
 
     def test_user_is_not_deactivated_and_no_logs(self):
-        auto_deactivate_commcare_user(self.inactive_user.user_id, self.domain)
+        bulk_auto_deactivate_commcare_users([self.inactive_user.user_id], self.domain)
         refreshed_user = CommCareUser.get_by_user_id(self.inactive_user.get_id)
         self.assertFalse(
             refreshed_user.is_active
@@ -188,7 +187,3 @@ class TestAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
-
-    def test_no_user_raises_exception(self):
-        with self.assertRaises(AutoDeactivateUserException):
-            auto_deactivate_commcare_user('fake-user', self.domain)
