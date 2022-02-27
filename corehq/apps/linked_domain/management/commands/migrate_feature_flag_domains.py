@@ -32,7 +32,7 @@ class Command(BaseCommand):
     def handle(self, quiet, dry_run, **options):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
         roles_to_update_in_place, roles_to_increment = _get_roles_that_need_migration()
-        _update_roles_in_place(roles_to_update_in_place)
+        _update_roles_in_place(roles_to_update_in_place, 'release_management')
         _create_and_migrate_to_new_roles(roles_to_increment)
 
 
@@ -79,13 +79,13 @@ def _get_roles_that_need_migration():
     return roles_to_update_in_place, roles_to_increment
 
 
-def _update_roles_in_place(role_slugs, dry_run=False):
+def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
     for role_slug in role_slugs:
         role = Role.objects.get(slug=role_slug)
-        release_management_role = Role.objects.get(slug='release_management')
+        role_for_privilege = Role.objects.get(slug=privilege_slug)
         if not dry_run:
-            Grant.objects.create(from_role=role, to_role=release_management_role)
-        logger.info(f'Added release management privilege to {role.slug}.')
+            Grant.objects.create(from_role=role, to_role=role_for_privilege)
+        logger.info(f'Added {privilege_slug} privilege to {role.slug}.')
 
 
 def _create_and_migrate_to_new_roles(domains_by_role_slug, dry_run=False):
