@@ -585,19 +585,15 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
-        if not restrict_global_admin:
-            # is_admin is the same as having all the permissions set
-            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
-                return True
-            elif self.is_domain_admin(domain):
-                return True
+    def has_permission(self, domain, permission, data=None):
+        # is_admin is the same as having all the permissions set
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
+            return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
-            # an admin has access to all features by default, restrict that if needed
-            if dm.is_admin and restrict_global_admin:
-                return False
             return dm.has_permission(permission, data)
         return False
 
