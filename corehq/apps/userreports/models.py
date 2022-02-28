@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
-# from jsonpath_ng.ext import parser
+from jsonpath_ng.ext import parser
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -541,18 +541,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         disallowed_expressions = disallowed_ucr_expressions(self.domain)
         if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
             raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
-        found_configured_expr = find_in_json(self.configured_indicators, 'type', disallowed_expressions)
-        found_named_expr = find_in_json(self.named_expressions, 'type', disallowed_expressions)
-        found_expr = found_configured_expr if found_configured_expr else found_named_expr
-        if found_expr:
-            raise BadSpecError(_(f'{found_expr} is not allowed for domain {self.domain}'))
-
-        """
+        doubtful_keys = dict(indicators=self.configured_indicators, expressions=self.named_expressions)
         for expr in disallowed_expressions:
-            results = parser.parse(f"$..*[?type={expr}]").find(list(self.configured_indicators))
+            results = parser.parse(f"$..[*][?type={expr}]").find(doubtful_keys)
             if results:
                 raise BadSpecError(_(f'{expr} is not allowed for domain {self.domain}'))
-        """
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
