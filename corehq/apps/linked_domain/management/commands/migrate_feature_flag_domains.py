@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from django.core.management import BaseCommand
 
@@ -39,21 +40,25 @@ class Command(BaseCommand):
 
     def handle(self, quiet, dry_run, **options):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
-        roles_to_update_in_place, roles_to_increment = _get_roles_that_need_migration()
-        _update_roles_in_place(roles_to_update_in_place, 'release_management')
-        _create_and_migrate_to_new_roles(roles_to_increment, 'release_management')
+        roles_to_update, versions_to_update, versions_to_increment = _get_erm_migration_stats()
+        erm_slug = 'release_management'
+        _update_roles_in_place(roles_to_update, erm_slug, dry_run=dry_run)
+        _update_versions_in_place(versions_to_update, erm_slug, dry_run=dry_run)
+        _create_and_migrate_plan_versions_to_new_roles(versions_to_increment, erm_slug, dry_run=dry_run)
 
 
-def _get_roles_that_need_migration():
-    plans = SoftwarePlan.objects.all()
-    active_plans = list(filter(lambda plan: plan.get_version() is not None, plans))
-    # roles referenced by active software plans
-    roles = [plan.get_version().role for plan in active_plans]
-    # for each role, look at all domains that reference that role
+def _get_erm_migration_stats():
+    active_plan_versions = SoftwarePlanVersion.objects.filter(is_active=True)
+    # roles referenced by active software plans as a set (remove duplicates)
+    roles = {version.role for version in active_plan_versions}
     roles_to_update_in_place = []
-    roles_to_increment = {}
+    versions_to_update_in_place = []
+    versions_to_increment = {}
     count = 0
     release_management_role = Role.objects.get(slug='release_management')
+    # 1) update role in place
+    # 2) create new role and update software plan version in place to reference new role
+    # 3) create new role and create new software plan version to reference new role
     for role in roles:
         print(f'Processing {count} of {len(roles)} roles')
         count += 1
@@ -66,6 +71,7 @@ def _get_roles_that_need_migration():
         if role.slug == 'enterprise_plan_v0' or role.slug == 'enterprise_plan_v1':
             continue
 
+        # get all active software plan versions that reference this role
         versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
 
         # get all subscriptions associated with this software plan version
@@ -74,17 +80,36 @@ def _get_roles_that_need_migration():
                 plan_version=version, is_active=True
             )
         ]
-        domains = [subscription.subscriber.domain for subscription in subscriptions]
+        domains = [sub.subscriber.domain for sub in subscriptions]
+        domains_for_software_plan_version_id = defaultdict(list)
         toggle_enabled = [toggles.LINKED_DOMAINS.enabled(domain) for domain in domains]
-        if len(set(toggle_enabled)) == 2:
-            # add domains that should be updated to the new role
-            roles_to_increment[role.slug] = [
-                domain for domain in domains if toggles.LINKED_DOMAINS.enabled(domain)
-            ]
-        elif len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
-            # all domains referencing this role after the feature flag enabled
+        if len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
+            # all domains that reference this role via all possible plan versions have the feature flag enabled
+            # this is (1) update role in place
             roles_to_update_in_place.append(role.slug)
-    return roles_to_update_in_place, roles_to_increment
+            continue
+
+        # not all domains have feature flag enabled, need to do more investigation
+        for version in versions:
+            subscriptions = Subscription.visible_objects.filter(plan_version=version, is_active=True)
+            domains_for_subscriptions = [subscription.subscriber.domain for subscription in subscriptions]
+            domains_for_software_plan_version_id[version.id].extend(domains_for_subscriptions)
+
+        for plan_version_id, domains in domains_for_software_plan_version_id.items():
+            toggle_enabled = [toggles.LINKED_DOMAINS.enabled(domain) for domain in domains]
+            if len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
+                # all domains referencing this software plan version have the feature flag enabled
+                # this is (2) update version in place
+                versions_to_update_in_place.append(plan_version_id)
+            elif len(set(toggle_enabled)) == 2:
+                # not all domains referencing this software plan version have feature flag enabled
+                # this is (3) mark which plan_id/domain need to be updated
+                # add domains that should be updated to the new role
+                versions_to_increment[plan_version_id] = [
+                    domain for domain in domains if toggles.LINKED_DOMAINS.enabled(domain)
+                ]
+
+    return roles_to_update_in_place, versions_to_update_in_place, versions_to_increment
 
 
 def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
@@ -96,15 +121,49 @@ def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
         logger.info(f'Added {privilege_slug} privilege to {role.slug}.')
 
 
-def _create_and_migrate_to_new_roles(domains_by_role_slug, privilege_slug, dry_run=False):
-    for role_slug, domains in domains_by_role_slug:
-        new_role = _get_or_create_role_with_privilege(role_slug, privilege_slug, dry_run=dry_run)
+def _update_versions_in_place(version_ids, privilege_slug, dry_run=False):
+    for version_id in version_ids:
+        version = SoftwarePlanVersion.objects.get(id=version_id)
+        new_role = _get_or_create_role_with_privilege(version.role.slug, privilege_slug, dry_run=dry_run)
         if new_role:
+            change_role_for_software_plan_version(
+                version.role.slug, new_role.slug, limit_to_plan_version_id=version_id
+            )
+
+
+def _create_and_migrate_plan_versions_to_new_roles(domains_by_version_id, privilege_slug, dry_run=False):
+    """
+    :param domains_by_version_id: {plan_id: [domains], ...}
+    :param privilege_slug:
+    :param dry_run:
+    :return:
+    """
+    for plan_id, domains in domains_by_version_id:
+        # create a new software plan version for this subscription
+        current_version = SoftwarePlanVersion.objects.get(id=plan_id)
+        new_role = _get_or_create_role_with_privilege(current_version.role.slug, privilege_slug, dry_run=dry_run)
+        new_plan = _create_new_plan_version_from_version(current_version, new_role)
+        if new_role and new_plan:
             for domain in domains:
                 subscription = Subscription.get_active_subscription_by_domain(domain)
-                change_role_for_software_plan_version(
-                    role_slug, new_role.slug, limit_to_plan_version_id=subscription.plan_version.id
-                )
+                # TODO: do I need to use the more formal upgrade_subscriptions_to_latest_plan_version?
+                subscription.plan_version = new_plan
+                subscription.save()
+
+
+def _create_new_plan_version_from_version(from_version, role_with_privilege, dry_run=False):
+    new_version = SoftwarePlanVersion(
+        plan=from_version.plan,
+        product_rate=from_version.product_rate,
+        role=role_with_privilege,
+    )
+    if not dry_run:
+        new_version.save()
+        new_version.feature_rates.set(list(from_version.feature_rates.all()))
+        new_version.save()
+        return new_version
+
+    return None
 
 
 def _get_or_create_role_with_privilege(existing_role_slug, privilege_slug, dry_run=False):

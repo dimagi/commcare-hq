@@ -1,8 +1,19 @@
 from django.test import TestCase
-from django_prbac.models import Role, Grant
 
-from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains import _update_roles_in_place, \
-    _get_or_create_role_with_privilege
+from django_prbac.models import Grant, Role
+
+from corehq.apps.accounting.models import (
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwarePlanVisibility,
+    SoftwareProductRate,
+)
+from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains import (
+    _get_or_create_role_with_privilege,
+    _update_roles_in_place,
+    _update_versions_in_place,
+)
 
 
 class UpdateRolesInPlaceTests(TestCase):
@@ -83,3 +94,89 @@ class GetOrCreateRoleWithPrivilegeTests(TestCase):
             Grant.objects.get(from_role=actual_role, to_role=self.privilege_role)
         except Grant.DoesNotExist:
             self.fail(f"Grant not found for {actual_role.slug} and {self.privilege_role.slug}")
+
+
+class UpdateVersionInPlaceTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.software_plan = SoftwarePlan.objects.create(
+            name="Test Software Plan",
+            description="Software Plan For Unit Tests",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+            is_customer_software_plan=False,
+        )
+        cls.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cls.software_plan.name)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.privilege_role = Role.objects.create(slug='privilege', name='test privilege')
+        self.existing_role = Role.objects.create(slug='role', name='Role')
+
+    def test_succesful_when_new_role_with_erm_created(self):
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        _update_versions_in_place([version.id], self.privilege_role.slug)
+
+        # refetch
+        updated_version = SoftwarePlanVersion.objects.get(id=version.id)
+        self.assertEqual(updated_version.role.slug, 'role_erm')
+        try:
+            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+        except Grant.DoesNotExist:
+            self.fail(f"Grant not found for {updated_version.role.slug} and {self.privilege_role.slug}")
+
+    def test_successful_when_role_with_privilege_exists(self):
+        role_with_privilege = Role.objects.create(slug='role_erm', name='Role (with ERM)')
+        Grant.objects.create(from_role=role_with_privilege, to_role=self.privilege_role)
+
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        _update_versions_in_place([version.id], self.privilege_role.slug)
+
+        # refetch
+        updated_version = SoftwarePlanVersion.objects.get(id=version.id)
+        self.assertEqual(updated_version.role.slug, role_with_privilege.slug)
+        try:
+            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+        except Grant.DoesNotExist:
+            self.fail(f"Grant not found for {updated_version.role.slug} and {self.privilege_role.slug}")
+
+    def test_fails_if_role_exists_without_grant(self):
+        Role.objects.create(slug='role_erm', name='Role (with ERM)')
+        # intentionally do not create grant between role with privilege and privilege itself
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+
+        _update_versions_in_place([version.id], self.privilege_role.slug)
+
+        # refetch
+        updated_version = SoftwarePlanVersion.objects.get(id=version.id)
+        self.assertEqual(updated_version.role.slug, self.existing_role.slug)
+        with self.assertRaises(Grant.DoesNotExist):
+            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+
+    def test_dry_run(self):
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        _update_versions_in_place([version.id], self.privilege_role.slug, dry_run=True)
+
+        # refetch
+        updated_version = SoftwarePlanVersion.objects.get(id=version.id)
+        self.assertEqual(updated_version.role.slug, self.existing_role.slug)
+        with self.assertRaises(Grant.DoesNotExist):
+            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
