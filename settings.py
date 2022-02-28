@@ -1053,7 +1053,7 @@ ELASTIC_ADAPTER_SETTINGS = {
 }
 
 # TODO: remove these Elastic settings:
-ELASTIC_SETTINGS_OVERRIDE = None  # [do not use] legacy mechanism for tests
+ES_SETTINGS = None  # [do not use] legacy mechanism for tests
 CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
 
 PHI_API_KEY = None

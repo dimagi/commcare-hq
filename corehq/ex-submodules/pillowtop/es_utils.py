@@ -71,8 +71,11 @@ ES_INDEX_SETTINGS = {
 }
 
 # Allow removing settings from defaults by setting
-# the value to this constant in settings.ELASTIC_SETTINGS_OVERRIDE
-REMOVE_SETTING = "__REMOVE_THIS_SETTING__"
+# the value to this constant in settings.ES_SETTINGS
+# TODO: change this constant to an object that isn't actually a meaningful
+# Elastic index settings value (`None` is how you revert a setting to its
+# cluster-default value).
+REMOVE_SETTING = None
 
 
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
@@ -95,9 +98,9 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
             ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
         )
 
-        if settings.ELASTIC_SETTINGS_OVERRIDE is not None:
+        if settings.ES_SETTINGS is not None:
             for hq_index_name in ['default', self.hq_index_name]:
-                for key, value in settings.ELASTIC_SETTINGS_OVERRIDE.get(hq_index_name, {}).items():
+                for key, value in settings.ES_SETTINGS.get(hq_index_name, {}).items():
                     if value is REMOVE_SETTING:
                         del meta_settings['settings'][key]
                     else:

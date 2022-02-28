@@ -30,7 +30,7 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT='production', ELASTIC_SETTINGS_OVERRIDE={
+    @override_settings(SERVER_ENVIRONMENT='production', ES_SETTINGS={
         "default": {"number_of_replicas": 1},
         CASE_SEARCH_HQ_INDEX_NAME: {},
         APP_HQ_INDEX_NAME: {},
