@@ -17,11 +17,9 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
+# from jsonpath_ng.ext import parser
 from memoized import memoized
-from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 
-from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -48,6 +46,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
@@ -59,12 +58,13 @@ from corehq.apps.userreports.const import (
     VALID_REFERENCED_DOC_TYPES,
 )
 from corehq.apps.userreports.dbaccessors import (
-    get_datasources_for_domain,
-    get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
+    get_number_of_report_configs_by_data_source,
+    get_registry_data_sources_by_domain,
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -76,6 +76,10 @@ from corehq.apps.userreports.exceptions import (
     ValidationError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.extension_points import (
+    static_ucr_data_source_paths,
+    static_ucr_report_paths,
+)
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -89,9 +93,11 @@ from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
+    disallowed_ucr_expressions,
     find_in_json,
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, wrap_report_config_by_type,
+    get_indicator_adapter,
+    wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
