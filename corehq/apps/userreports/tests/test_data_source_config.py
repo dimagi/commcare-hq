@@ -4,7 +4,7 @@ import time
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -85,6 +85,7 @@ class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
         self.assertIsNone(self.config.validate())
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -392,6 +393,7 @@ class DataSourceConfigurationDbTest(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def setUp(self):

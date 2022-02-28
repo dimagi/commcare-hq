@@ -14,7 +14,7 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
-
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class RegistryDataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
