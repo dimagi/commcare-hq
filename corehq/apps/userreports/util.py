@@ -6,6 +6,7 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
@@ -362,3 +363,9 @@ def find_in_json(json_obj, lookup_key, vals):
             if found:
                 return found
     return found
+
+
+def disallowed_ucr_expressions(domain_name):
+    allowed_expressions_for_domain = set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions(domain_name))
+    restricted_expressions = set(all_restricted_ucr_expressions())
+    return restricted_expressions - allowed_expressions_for_domain
