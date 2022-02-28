@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import create_autospec, patch
+from unittest.mock import MagicMock, create_autospec, patch
 
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
@@ -13,6 +13,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_doc_and_indicators, get_sample_registry_data_source,
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
+
 
 @patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class RegistryDataSourceConfigurationTest(SimpleTestCase):
