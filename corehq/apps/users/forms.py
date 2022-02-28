@@ -1553,12 +1553,13 @@ class UserFilterForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
+        user = self.couch_user
 
-        if not data.get('location_id'):
+        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
             # Add (web) user assigned_location_ids so as to
             # 1) reflect all locations user is assigned to ('All' option)
             # 2) restrict user access
-            domain_membership = self.couch_user.get_domain_membership(self.domain)
+            domain_membership = user.get_domain_membership(self.domain)
             if domain_membership and domain_membership.assigned_location_ids:
                 data['web_user_assigned_location_ids'] = list(domain_membership.assigned_location_ids)
 

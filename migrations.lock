@@ -119,6 +119,7 @@ app_manager
  0018_migrate_case_search_labels
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
+ 0021_migrate_case_search_itemset_ids
 auditcare
  0001_sqlmodels
  0002_uniques

@@ -2072,7 +2072,7 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry.',
+    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2159,5 +2159,16 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     description="""
     Enable a checkbox for the ability to save a form question's answer in Case Management in App
     Manager only if the question's inputted answer is different from the current value in the case.
+    """
+)
+
+GOOGLE_SHEETS_INTEGRATION = StaticToggle(
+    'google-sheet-integration',
+    'Unlock the Google Sheets view in Exports',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_USER],
+    description="""
+    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
+    on the Exports page.
     """
 )
