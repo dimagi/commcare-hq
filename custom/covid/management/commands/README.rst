@@ -13,6 +13,8 @@ Most of these scripts build off of the base class ``CaseUpdateCommand``, which h
 
 * Run for either a single domain or a single domain plus all of its linked domains.
 
+* Run as a particular user, or just default to SYSTEM_USER
+
 * Throttle updates
 
 * Log activity to a file
