@@ -257,6 +257,32 @@ hqDefine("linked_domain/js/domain_links", [
             return _.uniq(_.pluck(self.parent.domainLinks(), 'hasFullAccess')).length === 2;
         });
 
+
+        self.multiselectBindingDidUpdate = function () {
+            let shouldRebuildMultiselect = false;
+            for (const option of $('#domain-multiselect')[0].options) {
+                if (self.domainsToPush().includes(option.value)) {
+                    continue;
+                }
+                // option is enabled by default, only rebuild if disabled is set to true
+                let shouldDisable = false;
+                if (self.shouldShowSelectedERMDomain()) {
+                    // disable if not full access
+                    shouldDisable = !self.parent.domainLinksByName[option.value].hasFullAccess;
+                } else if (self.shouldShowSelectedMRMDomain()) {
+                    shouldDisable = true;
+                }
+                if (shouldDisable && !option.disabled) {
+                    option.disabled = true;
+                    shouldRebuildMultiselect = true;
+                }
+            }
+
+            if (shouldRebuildMultiselect) {
+                multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
+            }
+        };
+
         self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
             // receives updates every time a domain is selected/unselected from the multiselect
 
@@ -328,6 +354,7 @@ hqDefine("linked_domain/js/domain_links", [
                 },
             },
             options: self.localDownstreamDomains,
+            didUpdateListener: self.multiselectBindingDidUpdate,
         };
 
         self.canPush = ko.computed(function () {
