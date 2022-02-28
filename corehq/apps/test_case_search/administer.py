@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
+from pprint import pprint
 
 from pillowtop.es_utils import (
     set_index_normal_settings,
@@ -26,6 +27,7 @@ def reset_test_index():
 
     meta = deepcopy(CASE_SEARCH_INDEX_INFO.meta)
     meta['mappings'] = {CASE_ES_TYPE: _get_mapping()}
+    pprint(meta)
     es.indices.create(index=TEST_INDEX_NAME, body=meta)
     load_case_fixtures(es)
 

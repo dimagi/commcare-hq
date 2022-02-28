@@ -8,8 +8,8 @@ from .const import PATIENT_CASE_TYPE, TEST_DOMAIN_NAME
 
 @dataclass(frozen=True)
 class Patient:
-    name: str
-    address: str
+    first_name: str
+    last_name: str
 
     def to_json(self):
         # This mimics the return value of CommCareCaseSQL.to_json()
@@ -19,7 +19,8 @@ class Patient:
         now = datetime.utcnow().isoformat()
 
         properties = {
-            'address': self.address,
+            'first_name': self.first_name,
+            'last_name': self.last_name
         }
 
         return {**properties, **{
@@ -30,7 +31,7 @@ class Patient:
             'case_id': case_id,
             'domain': TEST_DOMAIN_NAME,
             'type': PATIENT_CASE_TYPE,
-            'name': self.name,
+            'name': self.first_name,
             'owner_id': user_id,
             'opened_on': now,
             'opened_by': user_id,
@@ -55,8 +56,8 @@ class Patient:
 
 
 CASES_FIXTURE = [
-    Patient("P. Sherman", "42 Wallaby Way"),
-    Patient("P. Sherman", "Wallaby Way 42"),
-    Patient("Peter Sherman", "42 Wallaby Way, Sydney AU"),
-    Patient("Paul Sherman", "#42 Wallaby Way, Sydney AU"),
+    Patient("Paul", "Rubens"),
+    Patient("Rick", "Rubins"),
+    Patient("Sandra", "Bullick"),
+    Patient("Sendra", "Bullok"),
 ]
