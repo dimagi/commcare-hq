@@ -1,5 +1,4 @@
 import re
-from collections import OrderedDict
 from uuid import uuid4
 
 from django.test import Client, TestCase
@@ -10,29 +9,29 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from corehq.util.test_utils import flag_enabled
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import (
-    CLAIM_CASE_TYPE,
     CASE_SEARCH_XPATH_QUERY_KEY,
+    CLAIM_CASE_TYPE,
     CaseSearchConfig,
-    IgnorePatterns,
 )
-from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCase
-from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
+from corehq.pillows.case_search import (
+    CaseSearchReindexerFactory,
+    domains_needing_search_index,
+)
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
 )
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
@@ -46,248 +45,6 @@ PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
 DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
-
-
-@es_test
-class CaseSearchTests(ElasticTestMixin, TestCase):
-    def setUp(self):
-        super(CaseSearchTests, self).setUp()
-        self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
-
-    def test_add_blacklisted_ids(self):
-        criteria = {
-            "commcare_blacklisted_owner_ids": "id1 id2 id3,id4"
-        }
-        expected = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {'terms': {'domain.exact': ['swashbucklers']}},
-                        {"terms": {"type.exact": ["case_type"]}},
-                        {"term": {"closed": False}},
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "terms": {
-                                        "owner_id": [
-                                            "id1",
-                                            "id2",
-                                            "id3,id4"
-                                        ]
-                                    }
-                                }
-                            }
-                        },
-                        {"match_all": {}}
-                    ],
-                    "must": {
-                        "match_all": {}
-                    }
-                }
-            },
-            "sort": [
-                "_score",
-                "_doc"
-            ],
-            "size": CASE_SEARCH_MAX_RESULTS
-        }
-
-        self.checkQuery(
-            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
-            expected
-        )
-
-    def test_add_ignore_pattern_queries(self):
-        rc = IgnorePatterns(
-            domain=DOMAIN,
-            case_type='case_type',
-            case_property='name',
-            regex=' word',
-        )                       # remove ' word' from the name case property
-        rc.save()
-        self.config.ignore_patterns.add(rc)
-        rc = IgnorePatterns(
-            domain=DOMAIN,
-            case_type='case_type',
-            case_property='name',
-            regex=' gone',
-        )                       # remove ' gone' from the name case property
-        rc.save()
-        self.config.ignore_patterns.add(rc)
-        rc = IgnorePatterns(
-            domain=DOMAIN,
-            case_type='case_type',
-            case_property='special_id',
-            regex='-',
-        )                       # remove '-' from the special id case property
-        rc.save()
-        self.config.ignore_patterns.add(rc)
-        self.config.save()
-        rc = IgnorePatterns(
-            domain=DOMAIN,
-            case_type='case_type',
-            case_property='phone_number',
-            regex='+',
-        )                       # remove '+' from the phone_number case property
-        rc.save()
-        self.config.ignore_patterns.add(rc)
-        self.config.save()
-
-        criteria = OrderedDict([
-            ('phone_number', '+91999'),
-            ('special_id', 'abc-123-546'),
-            ('name', "this word should be gone"),
-            ('other_name', "this word should not be gone"),
-        ])
-
-        expected = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {'terms': {'domain.exact': ['swashbucklers']}},
-                        {"terms": {"type.exact": ["case_type"]}},
-                        {"term": {"closed": False}},
-                        {"match_all": {}}
-                    ],
-                    "must": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "phone_number"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "91999"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "special_id"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "abc123546"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "this should be"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "other_name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "this word should not be gone"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "sort": [
-                "_score",
-                "_doc"
-            ],
-            "size": CASE_SEARCH_MAX_RESULTS
-        }
-        self.checkQuery(
-            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
-            expected,
-            validate_query=False
-        )
 
 
 @es_test

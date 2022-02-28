@@ -2080,7 +2080,7 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry.',
+    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2170,9 +2170,20 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
+GOOGLE_SHEETS_INTEGRATION = StaticToggle(
+    'google-sheet-integration',
+    'Unlock the Google Sheets view in Exports',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_USER],
+    description="""
+    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
+    on the Exports page.
+    """
+)
+
 SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
 )

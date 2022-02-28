@@ -36,8 +36,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-16 22:45+0000\n"
-"PO-Revision-Date: 2022-02-07 20:57+0000\n"
+"POT-Creation-Date: 2022-02-23 20:08+0000\n"
+"PO-Revision-Date: 2022-02-16 22:56+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -3537,10 +3537,8 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:766
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You don't have permission to access this API"
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:811
 #, python-brace-format
@@ -13708,10 +13706,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:27
-#, fuzzy
-#| msgid "Add Automatic Case Close Rule"
 msgid "Add Automatic Case Update Rule"
-msgstr "Ajouter une règle de fermeture automatique de dossiers"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:42
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html:43
@@ -25251,6 +25247,17 @@ msgstr ""
 msgid "Manage Notification"
 msgstr "Gérer les notifications"
 
+#: corehq/apps/oauth_integrations/views/google.py:83
+#, fuzzy
+#| msgid ""
+#| "Something went wrong in creating restore for the user. Please try again "
+#| "or report an issue"
+msgid ""
+"Something went wrong when trying to sign you in to Google. Please try again."
+msgstr ""
+"Il y eu un problème dans la restauration de l'utilisateur. Veuillez "
+"réessayer ou signaler le problème"
+
 #: corehq/apps/ota/forms.py:14
 msgid ""
 "For projects where mobile users manage a lot of cases (e.g. more than "
@@ -28853,10 +28860,8 @@ msgid "Triggering Case"
 msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:1360
-#, fuzzy
-#| msgid "Add Number"
 msgid "Attempt Number"
-msgstr "Ajouter un numéro"
+msgstr ""
 
 #: corehq/apps/reports/standard/sms.py:1485
 msgid "(no recipient)"
@@ -40950,40 +40955,28 @@ msgid "No API requests have been logged."
 msgstr ""
 
 #: corehq/motech/views.py:131
-#, fuzzy
-#| msgid "HTTP Request Method"
 msgid "Request Method"
-msgstr "Méthode de demande HTTP"
+msgstr ""
 
 #: corehq/motech/views.py:132
-#, fuzzy
-#| msgid "Request"
 msgid "Request URL"
-msgstr "Requête"
+msgstr ""
 
 #: corehq/motech/views.py:133
-#, fuzzy
-#| msgid "Request body"
 msgid "Request Body"
-msgstr "Organisme de requête"
+msgstr ""
 
 #: corehq/motech/views.py:135
-#, fuzzy
-#| msgid "Status"
 msgid "Status Code"
-msgstr "État"
+msgstr ""
 
 #: corehq/motech/views.py:136
-#, fuzzy
-#| msgid "Responses"
 msgid "Response Headers"
-msgstr "Réponses"
+msgstr ""
 
 #: corehq/motech/views.py:137
-#, fuzzy
-#| msgid "Response body"
 msgid "Response Body"
-msgstr "Organe de réponse"
+msgstr ""
 
 #: corehq/motech/views.py:183
 msgid "Notify Addresses"

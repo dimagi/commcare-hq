@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-16 22:45+0000\n"
+"POT-Creation-Date: 2022-02-23 20:09+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -206,7 +206,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:93
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:92
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50397
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50814
 #: submodules/formdesigner/src/itemset.js:95
@@ -456,105 +456,105 @@ msgid ""
 "please report an issue."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:32
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:713
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:33
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:728
 msgid "Case Type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:34
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:35
 msgid "Case Tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:37
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:717
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:38
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:732
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:41
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:721
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:42
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:736
 msgid "Case Tag already in use"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:110
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:111
 msgid "subcase of"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:116
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:117
 msgid "autoselect mode: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:119
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:120
 msgid " (from fixture)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:276
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:277
 msgid "Autoselect mode required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:278
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:279
 msgid "Property required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:281
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:282
 msgid "Case required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:283
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:284
 msgid "Lookup table tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:287
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:288
 msgid "Expected case type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:386
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:621
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:387
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:629
 msgid "Subcase parent reference is missing"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:388
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:623
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:389
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:631
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:395
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:630
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:396
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:638
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:530
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:538
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:87
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:86
 msgid "Raw"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:90
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:89
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:96
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:95
 msgid "User Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:101
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:100
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:352
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:337
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:355
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:340
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:358
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:343
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:366
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:351
 msgid "Open a Case"
 msgstr ""
 
