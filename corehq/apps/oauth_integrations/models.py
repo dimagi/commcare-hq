@@ -1,7 +1,6 @@
 from django.db import models
 
 from django.contrib.auth.models import User
-from django.forms import CharField
 
 
 class GoogleApiToken(models.Model):
@@ -11,7 +10,7 @@ class GoogleApiToken(models.Model):
 
 
 class LiveGoogleSheetSchedule(models.Model):
-    export_config_id = models.CharField(length=250, db_index=True)
+    export_config_id = models.CharField(max_length=250, db_index=True)
     is_active = models.BooleanField(default=True)
     start_time = models.IntegerField(default=200)
-    google_sheet_id = CharField(length=250)
+    google_sheet_id = models.CharField(max_length=250)
