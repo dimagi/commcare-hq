@@ -16,6 +16,7 @@ from django.views.generic import View
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
@@ -172,7 +173,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
             old_attrs = copy.copy(self.domain_object.internal)
+            old_ucr_permissions = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain)
             self.internal_settings_form.save(self.domain_object)
+            log_domain_changes(
+                self.request.couch_user.username,
+                self.domain,
+                old_ucr_permissions,
+                self.internal_settings_form.cleaned_data['active_ucr_expressions'],
+            )
             eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
                                   bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
 
