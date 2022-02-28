@@ -1127,15 +1127,18 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         )
 
     def post(self, request, *args, **kwargs):
-        if self.edit_form.is_valid():
-            config = self.edit_form.save(commit=True)
-            messages.success(request, _('Data source "{}" saved!').format(
-                config.display_name
-            ))
-            if self.config_id is None:
-                return HttpResponseRedirect(reverse(
-                    EditDataSourceView.urlname, args=[self.domain, config._id])
-                )
+        try:
+            if self.edit_form.is_valid():
+                config = self.edit_form.save(commit=True)
+                messages.success(request, _('Data source "{}" saved!').format(
+                    config.display_name
+                ))
+                if self.config_id is None:
+                    return HttpResponseRedirect(reverse(
+                        EditDataSourceView.urlname, args=[self.domain, config._id])
+                    )
+        except BadSpecError as e:
+            messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
 
     def get_reports(self):
