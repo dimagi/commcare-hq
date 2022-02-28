@@ -20,6 +20,14 @@ NEW_ROLE_SLUG_SUFFIX = "_erm"
 NEW_ROLE_NAME_SUFFIX = " (With ERM)"
 
 
+class RoleMissingPrivilege(Exception):
+    pass
+
+
+class ExistingRoleNotFound(Exception):
+    pass
+
+
 class Command(BaseCommand):
     """
     Enables the RELEASE_MANAGEMENT privilege on any domain that has the Linked Projects feature flag enabled
@@ -33,7 +41,7 @@ class Command(BaseCommand):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
         roles_to_update_in_place, roles_to_increment = _get_roles_that_need_migration()
         _update_roles_in_place(roles_to_update_in_place, 'release_management')
-        _create_and_migrate_to_new_roles(roles_to_increment)
+        _create_and_migrate_to_new_roles(roles_to_increment, 'release_management')
 
 
 def _get_roles_that_need_migration():
@@ -88,38 +96,78 @@ def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
         logger.info(f'Added {privilege_slug} privilege to {role.slug}.')
 
 
-def _create_and_migrate_to_new_roles(domains_by_role_slug, dry_run=False):
+def _create_and_migrate_to_new_roles(domains_by_role_slug, privilege_slug, dry_run=False):
     for role_slug, domains in domains_by_role_slug:
-        new_role = _get_or_create_role(role_slug, dry_run=dry_run)
-        for domain in domains:
-            subscription = Subscription.get_active_subscription_by_domain(domain)
-            change_role_for_software_plan_version(
-                role_slug, new_role.slug, limit_to_plan_version_id=subscription.plan_version.id
-            )
+        new_role = _get_or_create_role_with_privilege(role_slug, privilege_slug, dry_run=dry_run)
+        if new_role:
+            for domain in domains:
+                subscription = Subscription.get_active_subscription_by_domain(domain)
+                change_role_for_software_plan_version(
+                    role_slug, new_role.slug, limit_to_plan_version_id=subscription.plan_version.id
+                )
 
 
-def _get_or_create_role(existing_role_slug, dry_run=False):
+def _get_or_create_role_with_privilege(existing_role_slug, privilege_slug, dry_run=False):
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
     existing_role = Role.objects.get(slug=existing_role_slug)
     new_role_slug = existing_role.slug + NEW_ROLE_SLUG_SUFFIX
     new_role_name = existing_role.name + NEW_ROLE_NAME_SUFFIX
-    # search for grandfathered version of role
+    # search for legacied version of role
+    privilege_role = Role.objects.get(slug=privilege_slug)
+    new_role = None
     try:
-        new_role = Role.objects.get(slug=new_role_slug)
-        logger.info(f'{dry_run_tag}Found existing role for {new_role.slug}.')
-    except Role.DoesNotExist:
-        release_management_role = Role.objects.get(slug='release_management')
-        # copy existing role to new role
-        new_role = Role(slug=new_role_slug, name=new_role_name)
+        new_role = _get_existing_role_with_privilege(new_role_slug, privilege_role)
+    except RoleMissingPrivilege:
+        logger.error(f'{dry_run_tag}Could not find Grant for {new_role_slug} and {privilege_slug}')
+        return None
+    except ExistingRoleNotFound:
         if not dry_run:
-            new_role.save()
-            _copy_existing_grants(existing_role, new_role)
-            # add new grant
-            Grant.objects.create(from_role=new_role, to_role=release_management_role)
-        logger.info(f'{dry_run_tag}Created new role with slug {new_role_slug}.')
+            new_role = _create_new_role_from_role(existing_role, new_role_slug, new_role_name, privilege_role)
+    else:
+        logger.info(f'{dry_run_tag}Found existing role for {new_role.slug}.')
+
+    return new_role
+
+
+def _get_existing_role_with_privilege(role_slug, privilege_role):
+    """
+    :param role_slug: str
+    :param privilege_role: Role object
+    :return:
+    """
+    try:
+        new_role = Role.objects.get(slug=role_slug)
+    except Role.DoesNotExist:
+        raise ExistingRoleNotFound
+    # ensure grant exists on new role
+    try:
+        Grant.objects.get(from_role=new_role, to_role=privilege_role)
+    except Grant.DoesNotExist:
+        raise RoleMissingPrivilege
+    return new_role
+
+
+def _create_new_role_from_role(from_role, new_role_slug, new_role_name, privilege_to_add):
+    """
+    :param from_role: Role object of existing role to copy
+    :param new_role_slug: str object that is new slug (unique)
+    :param new_role_name: str object that is new name
+    :param privilege_to_add: Role object of privilege to add to new role via Grant
+    :return: new role object
+    """
+    new_role = Role(slug=new_role_slug, name=new_role_name)
+    new_role.save()
+    _copy_existing_grants(from_role, new_role)
+    # add new grant
+    Grant.objects.create(from_role=new_role, to_role=privilege_to_add)
     return new_role
 
 
 def _copy_existing_grants(copy_from_role, copy_to_role):
+    """
+    :param copy_from_role: Role object
+    :param copy_to_role: Role object
+    :return:
+    """
     for grant in Grant.objects.filter(from_role=copy_from_role):
         Grant.objects.create(from_role=copy_to_role, to_role=grant.to_role)
