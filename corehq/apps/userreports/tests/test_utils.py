@@ -6,9 +6,7 @@ from corehq.apps.userreports.util import (
     UCR_TABLE_PREFIX,
     get_table_name,
     truncate_value,
-    find_in_json,
 )
-from .data.test_util_data import nested_json_data
 from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
 
 
@@ -97,15 +95,3 @@ def test_remove_deleted_doc_type_suffix():
         (_check, 'DataSource-Deleted', 'DataSource'),
         (_check, 'DataSource-Deleted-Deleted', 'DataSource'),
     ]
-
-
-class TestFindInJSON(SimpleTestCase):
-
-    def test_val_present_in_nested_json(self):
-        self.assertEqual(find_in_json(nested_json_data, 'name', ['asprin']), 'asprin')
-        self.assertEqual(find_in_json(nested_json_data, 'missing_field', ['missing_value']), 'missing_value')
-        self.assertEqual(find_in_json(nested_json_data, 'exercise', ['yes']), 'yes')
-
-    def test_field_and_val_not_present_in_json(self):
-        self.assertEqual(find_in_json(nested_json_data, 'random', ['yes']), None)
-        self.assertEqual(find_in_json(nested_json_data, 'exercise', ['no']), None)

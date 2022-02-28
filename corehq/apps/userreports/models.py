@@ -94,7 +94,6 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     disallowed_ucr_expressions,
-    find_in_json,
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
     wrap_report_config_by_type,

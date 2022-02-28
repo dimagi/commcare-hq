@@ -334,37 +334,6 @@ def wrap_report_config_by_type(config):
         raise ReportConfigurationNotFoundError()
 
 
-def find_in_json(json_obj, lookup_key, vals):
-    """
-    In a nested JSON it will look for key with value in vals and return
-    the first occurance of any of the values in vals
-
-    Arguments
-        json_obj(dict)
-        lookup_key(string)
-        vals(list|set)
-
-    Returns
-        None if no match is found
-        The first val
-    """
-    found = None
-    if isinstance(json_obj, dict):
-        for key, val in json_obj.items():
-            if key == lookup_key and val in vals:
-                return val
-            if isinstance(val, dict) or isinstance(val, list):
-                found = find_in_json(val, lookup_key, vals)
-                if found:
-                    return found
-    elif isinstance(json_obj, list):
-        for obj in json_obj:
-            found = find_in_json(obj, lookup_key, vals)
-            if found:
-                return found
-    return found
-
-
 def disallowed_ucr_expressions(domain_name):
     allowed_expressions_for_domain = set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions(domain_name))
     restricted_expressions = set(all_restricted_ucr_expressions())
