@@ -2,7 +2,6 @@ from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from django.conf import settings
 
-from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
