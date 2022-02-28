@@ -332,9 +332,3 @@ def wrap_report_config_by_type(config):
         }[config["doc_type"]].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
-
-
-def disallowed_ucr_expressions(domain_name):
-    allowed_expressions_for_domain = set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions(domain_name))
-    restricted_expressions = set(all_restricted_ucr_expressions())
-    return restricted_expressions - allowed_expressions_for_domain

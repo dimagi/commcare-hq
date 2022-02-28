@@ -19,6 +19,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -93,7 +94,6 @@ from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
-    disallowed_ucr_expressions,
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
     wrap_report_config_by_type,
@@ -537,7 +537,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         Raise BadSpecError if any disallowed expression is present in datasource
         """
-        disallowed_expressions = disallowed_ucr_expressions(self.domain)
+        disallowed_expressions = AllowedUCRExpressionSettings.disallowed_ucr_expressions(self.domain)
         if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
             raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
         doubtful_keys = dict(indicators=self.configured_indicators, expressions=self.named_expressions)
