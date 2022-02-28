@@ -2169,3 +2169,10 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     Manager only if the question's inputted answer is different from the current value in the case.
     """
 )
+
+SUPERSET_ANALYTICS = StaticToggle(
+    'superset-analytics',
+    'Activates Analytics features to create Superset based reports and dashboards using UCR data',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+)
