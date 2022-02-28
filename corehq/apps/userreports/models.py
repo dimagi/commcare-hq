@@ -535,14 +535,24 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return [self.domain]
 
     def _verify_contains_allowed_expressions(self):
-        allowed_expressions_for_domain = set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain))
-        restricted_expressions = set(all_restricted_ucr_expressions())
-        disallowed_expressions = restricted_expressions - allowed_expressions_for_domain
-        if 'base_item_expression' in allowed_expressions_for_domain and self.base_item_expression:
+        """
+        Raise BadSpecError if any disallowed expression is present in datasource
+        """
+        disallowed_expressions = disallowed_ucr_expressions(self.domain)
+        if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
             raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
+        found_configured_expr = find_in_json(self.configured_indicators, 'type', disallowed_expressions)
+        found_named_expr = find_in_json(self.named_expressions, 'type', disallowed_expressions)
+        found_expr = found_configured_expr if found_configured_expr else found_named_expr
+        if found_expr:
+            raise BadSpecError(_(f'{found_expr} is not allowed for domain {self.domain}'))
 
-        find_in_json(self.configured_indicators, 'type', disallowed_expressions)
-        find_in_json(self.named_expressions, 'type', disallowed_expressions)
+        """
+        for expr in disallowed_expressions:
+            results = parser.parse(f"$..*[?type={expr}]").find(list(self.configured_indicators))
+            if results:
+                raise BadSpecError(_(f'{expr} is not allowed for domain {self.domain}'))
+        """
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
