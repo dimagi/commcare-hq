@@ -638,6 +638,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         self.has_permission.reset_cache(self)
         self.get_role.reset_cache(self)
+        try:
+            self.is_domain_admin.reset_cache(self)
+        except AttributeError:
+            pass
+        DomainMembership.role.fget.reset_cache(dm)
 
     def role_label(self, domain=None):
         if not domain:
