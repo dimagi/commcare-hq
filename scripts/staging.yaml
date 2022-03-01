@@ -65,7 +65,6 @@ branches:
     - es/mobile-auth # Simon Nov 23
     #- jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
     #- jm/elastic-modernize-mappings  # Joel Dec 3
-    - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
     - ml/remove-pickles-reports # Minha Jan 24
     - jls/drop-case-search-limit # Jenny Jan 31
@@ -85,5 +84,7 @@ branches:
     - cs/support-12674_check_permission_on_web_user # Charl Feb 23
     - ap/link-permissions-to-expressions # Amit Feb 28
     - sk/dr-case-type-optional # Simon Mar 1
+    - jm/elastic-client-adapter+sr/case-reindex-staging  # Joel Mar 1
     - jm/elastic-client-adapter  # Joel Mar 1
+    - sr/case-reindex-staging # Sravan Oct 14
 submodules: { }
