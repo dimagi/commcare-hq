@@ -566,7 +566,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         domain = domain or getattr(self, 'current_domain', None)
         if not domain:
             return False  # no domain, no admin
-        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+        if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
