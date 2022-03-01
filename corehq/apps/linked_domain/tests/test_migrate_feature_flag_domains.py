@@ -388,3 +388,27 @@ class GetMigrationInfoTests(TestCase):
         self.assertFalse(roles_to_update)
         self.assertFalse(version_to_update)
         self.assertEqual(versions_to_increment, {version.id: ['domain']})
+
+    def test_role_is_not_updated_directly_for_public_plans(self):
+        public_plan = SoftwarePlan.objects.create(
+            name="Test Public Software Plan",
+            description="Public Software Plan For Unit Tests",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.PUBLIC,
+            is_customer_software_plan=False,
+        )
+        version = SoftwarePlanVersion.objects.create(
+            plan=public_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        self.mock_get_domains_for_versions.return_value = ['domain']
+        self.mock_all_domains_have_toggle_enabled.return_value = True
+
+        roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
+            [self.existing_role], 'N/A', self.privilege_role.slug
+        )
+
+        self.assertFalse(roles_to_update)
+        self.assertEqual(version_to_update, [version.id])
+        self.assertFalse(versions_to_increment)

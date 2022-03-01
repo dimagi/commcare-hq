@@ -9,7 +9,11 @@ from corehq import toggles
 from corehq.apps.accounting.management.commands.change_role_for_software_plan_version import (
     change_role_for_software_plan_version,
 )
-from corehq.apps.accounting.models import SoftwarePlanVersion, Subscription
+from corehq.apps.accounting.models import (
+    SoftwarePlanVersion,
+    SoftwarePlanVisibility,
+    Subscription,
+)
 from corehq.apps.toggle_ui.utils import find_static_toggle
 
 logger = logging.getLogger(__name__)
@@ -73,7 +77,7 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
         versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
         domains = _get_domains_for_versions(versions)
 
-        if _all_domains_have_toggle_enabled(domains, toggle_slug):
+        if not _contain_public_versions(versions) and _all_domains_have_toggle_enabled(domains, toggle_slug):
             roles_to_update.append(role.slug)
             continue
 
@@ -89,6 +93,11 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
     return roles_to_update, plan_versions_to_update, plan_versions_to_increment
 
 
+def _contain_public_versions(versions):
+    plan_visibility = {version.plan.visibility for version in versions}
+    return SoftwarePlanVisibility.PUBLIC in plan_visibility
+
+
 def _get_domains_with_toggle_enabled(domains, toggle_slug):
     toggle = find_static_toggle(toggle_slug)
     return list(filter(toggle.enabled, domains))
@@ -96,8 +105,8 @@ def _get_domains_with_toggle_enabled(domains, toggle_slug):
 
 def _all_domains_have_toggle_enabled(domains, toggle_slug):
     toggle = find_static_toggle(toggle_slug)
-    toggle_enabled = [toggle.enabled(domain) for domain in domains]
-    return len(set(toggle_enabled)) == 1 and toggle_enabled[0]
+    toggle_enabled = {toggle.enabled(domain) for domain in domains}
+    return len(toggle_enabled) == 1 and toggle_enabled[0]
 
 
 def _get_domains_for_version(version):
