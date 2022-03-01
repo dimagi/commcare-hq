@@ -296,13 +296,7 @@ def test_generator_update_multiple_cases_multiple_domains():
 
 
 def test_generator_required_fields():
-    intent_case = CommCareCase(
-        domain=SOURCE_DOMAIN,
-        type="registry_case_update",
-        case_json={},
-        case_id=uuid.uuid4().hex,
-        user_id="local_user1"
-    )
+    intent_case = IntentCaseBuilder().get_case({})
     expect_missing = ["target_data_registry", "target_domain", "target_case_id"]
     expected_message = f"Missing required case properties: {', '.join(expect_missing)}"
     with assert_raises(DataRegistryCaseUpdateError, msg=expected_message):
@@ -310,37 +304,25 @@ def test_generator_required_fields():
 
 
 def test_generator_required_fields_create_missing_owner():
-    intent_case = CommCareCase(
-        domain=SOURCE_DOMAIN,
-        type="registry_case_update",
-        case_json={
-            "target_data_registry": "reg1",
-            "target_domain": "domain",
-            "target_case_id": "123",
-            "target_case_create": "1"
-        },
-        case_id=uuid.uuid4().hex,
-        user_id="local_user1"
-    )
+    intent_case = IntentCaseBuilder().get_case({
+        "target_data_registry": "reg1",
+        "target_domain": "domain",
+        "target_case_id": "123",
+        "target_case_create": "1"
+    })
     expected_message = "'owner_id' required when creating cases"
     with assert_raises(DataRegistryCaseUpdateError, msg=expected_message):
         _test_payload_generator(intent_case=intent_case)
 
 
 def test_generator_required_fields_create_missing_case_type():
-    intent_case = CommCareCase(
-        domain=SOURCE_DOMAIN,
-        type="registry_case_update",
-        case_json={
+    intent_case = IntentCaseBuilder().get_case({
             "target_data_registry": "reg1",
             "target_domain": "domain",
             "target_case_id": "123",
             "target_case_create": "1",
             "target_case_owner_id": "1234"
-        },
-        case_id=uuid.uuid4().hex,
-        user_id="local_user1"
-    )
+    })
     expected_message = "'case_type' required when creating cases"
     with assert_raises(DataRegistryCaseUpdateError, msg=expected_message):
         _test_payload_generator(intent_case=intent_case)
@@ -534,12 +516,13 @@ class IntentCaseBuilder:
     def set_subcases(self, subcases):
         self.subcases = subcases
 
-    def get_case(self):
+    def get_case(self, case_json=None):
         utcnow = datetime.utcnow()
+        case_json = self.props if case_json is None else case_json
         intent_case = CommCareCase(
             domain=SOURCE_DOMAIN,
             type=self.CASE_TYPE,
-            case_json=self.props,
+            case_json=case_json,
             case_id=uuid.uuid4().hex,
             user_id="local_user1",
             opened_on=utcnow,
