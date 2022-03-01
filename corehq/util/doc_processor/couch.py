@@ -1,4 +1,3 @@
-from couchdbkit import ResourceNotFound
 from uuid import uuid4
 
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
@@ -45,7 +44,8 @@ class DocsIterator:
             discard_state()
 
 
-def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None, full_row=False):
+def resumable_view_iterator(db, iteration_key, view_name, view_keys,
+        chunk_size=100, view_event_handler=None, full_row=False):
     """Perform one-time resumable iteration over a CouchDB View
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -156,7 +156,7 @@ class CouchDocumentProvider(DocumentProvider):
             raise ValueError("Invalid (duplicate?) doc types")
 
         self.couchdb = next(iter(self.doc_type_map.values())).get_db()
-        couchid = lambda db: getattr(db, "dbname", id(db))
+        couchid = lambda db: getattr(db, "dbname", id(db))  # noqa: E731
         dbid = couchid(self.couchdb)
         assert all(couchid(m.get_db()) == dbid for m in self.doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(self.doc_type_map)
