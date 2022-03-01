@@ -3143,6 +3143,12 @@ class DeactivateMobileWorkerTrigger(models.Model):
     @classmethod
     def update_trigger(cls, domain, user_id, deactivate_after):
         existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not deactivate_after:
+            if existing_trigger.exists():
+                existing_trigger.delete()
+                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+            # noop
+            return
         if isinstance(deactivate_after, str):
             try:
                 parts = deactivate_after.split('-')
@@ -3165,10 +3171,6 @@ class DeactivateMobileWorkerTrigger(models.Model):
                     deactivate_after=deactivate_after,
                 )
                 return DeactivateMobileWorkerTriggerUpdateMessage.CREATED
-        elif deactivate_after is None:
-            if existing_trigger.exists():
-                existing_trigger.delete()
-                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
 
     @classmethod
     def get_deactivate_after_date(cls, domain, user_id):
