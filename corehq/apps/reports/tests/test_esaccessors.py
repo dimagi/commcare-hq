@@ -340,16 +340,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
 
-    def test_get_form_counts_for_domains(self):
-        self._send_form_to_es()
-        self._send_form_to_es()
-        self._send_form_to_es(domain='other')
-
-        self.assertEqual(
-            get_form_counts_for_domains([self.domain, 'other']),
-            {self.domain: 2, 'other': 1}
-        )
-
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)

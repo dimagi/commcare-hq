@@ -1156,9 +1156,9 @@ class RepeatRecord(Document):
         task = retry_process_repeat_record if is_retry else process_repeat_record
 
         if fire_synchronously:
-            task(self)
+            task(self._id)
         else:
-            task.delay(self)
+            task.delay(self._id)
 
     def requeue(self):
         self.cancelled = False
@@ -1343,7 +1343,7 @@ def attempt_forward_now(repeater: SQLRepeater):
         return
     if not repeater.is_ready:
         return
-    process_repeater.delay(repeater)
+    process_repeater.delay(repeater.id)
 
 
 def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
