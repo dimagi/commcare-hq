@@ -1,8 +1,48 @@
 from couchdbkit import ResourceNotFound
+from uuid import uuid4
 
+from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 from corehq.util.couch_helpers import MultiKeyViewArgsProvider, MultiKwargViewArgsProvider
 from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgressLogger
 from corehq.util.pagination import ResumableFunctionIterator
+
+from dimagi.utils.couch.database import retry_on_couch_error
+
+
+class DocsIterator:
+    """Iterate over all documents of the given Couch document class
+
+    The number of documents can be counted with `len()`.
+    Yields unwrapped document dicts.
+    """
+
+    def __init__(self, couch_class, chunk_size=100):
+        self.couch_class = couch_class
+        self.db = couch_class.get_db()
+        self.doc_type = couch_class.__name__
+        self.chunk_size = chunk_size
+
+    def __len__(self):
+        if not hasattr(self, "_len"):
+            self._len = get_doc_count_by_type(self.db, self.doc_type)
+        return self._len
+
+    def __iter__(self):
+        @retry_on_couch_error
+        def discard_state():
+            docs.discard_state()
+
+        docs = resumable_view_iterator(
+            self.db,
+            uuid4().hex,
+            'all_docs/by_doc_type',
+            [[self.doc_type]],
+            self.chunk_size,
+        )
+        try:
+            yield from docs
+        finally:
+            discard_state()
 
 
 def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None, full_row=False):
