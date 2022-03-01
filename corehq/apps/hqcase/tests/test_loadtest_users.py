@@ -20,7 +20,6 @@ from casexml.apps.phone.restore import (
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.const import LOADTEST_HARD_LIMIT
 
@@ -32,23 +31,25 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super(LoadtestUserTest, cls).setUpClass()
-        cls.domain = create_domain(DOMAIN)
+        cls.domain = Domain.get_or_create_with_name(DOMAIN)
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
-        cls.user = CommCareUser.create(
+
+    def setUp(self):
+        self.user = CommCareUser.create(
             DOMAIN, 'somebody', 'password',
             created_by=None, created_via=None,
         )
-        cls.factory = CaseFactory(
+        self.factory = CaseFactory(
             domain=DOMAIN,
-            case_defaults={'owner_id': cls.user._id},
+            case_defaults={'owner_id': self.user._id},
         )
 
-    def setUp(self):
+    def tearDown(self):
+        self.user.delete(DOMAIN, deleted_by=None)
         delete_all_cases()
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(DOMAIN, deleted_by=None)
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 
