@@ -63,8 +63,8 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
-    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
-    - jm/elastic-modernize-mappings  # Joel Dec 3
+    #- jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
+    #- jm/elastic-modernize-mappings  # Joel Dec 3
     - sr/case-reindex-staging # Sravan Oct 14
     - sr/datums  # sravan Dec 21
     - ml/remove-pickles-reports # Minha Jan 24
