@@ -812,6 +812,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
                         })
                 else:
                     y_axis_columns.append(y_axis_column)
+        # catch edge cases where data source table is yet to be created
         except DataSourceConfigurationNotFoundError:
             return original_y_axis_columns
         else:
