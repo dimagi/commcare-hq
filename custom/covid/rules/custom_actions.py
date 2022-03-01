@@ -19,7 +19,7 @@ from corehq.apps.es import filters
 def set_all_activity_complete_date_to_today(case, rule):
     """
     For any case matching the criteria, set the all_activity_complete_date property
-    to today's date, in YYYY-MM-DD format, based on UTC.
+    to today's date, in YYYY-MM-DD format, based on the domain's default time zone.
     """
     domain_obj = Domain.get_by_name(case.domain)
     today = datetime.now(domain_obj.get_default_timezone()).strftime(ISO_DATE_FORMAT)
