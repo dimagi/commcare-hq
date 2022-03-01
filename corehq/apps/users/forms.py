@@ -413,6 +413,14 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             "Leave blank for normal users."
         ),
         widget=forms.HiddenInput())
+    deactivate_after_date = forms.CharField(
+        label=ugettext_lazy("Deactivate After"),
+        required=False,
+        help_text=ugettext_lazy(
+            "When specified, the mobile worker is automatically deactivated "
+            "on the first day of the month and year selected."
+        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -425,10 +433,35 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
+        self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domain
+        )
+
+        if self.show_deactivate_after_date:
+            initial_deactivate_after_date = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+                self.domain, self.existing_user.user_id
+            )
+            if initial_deactivate_after_date is not None:
+                self.initial['deactivate_after_date'] = initial_deactivate_after_date.strftime('%m-%Y')
+        else:
+            del self.fields['deactivate_after_date']
+
+    def clean_deactivate_after_date(self):
+        return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
+
     @property
     def direct_properties(self):
-        indirect_props = ['role']
+        indirect_props = ['role', 'deactivate_after_date']
         return [k for k in self.fields if k not in indirect_props]
+
+    def update_user(self, **kwargs):
+        if self.show_deactivate_after_date:
+            DeactivateMobileWorkerTrigger.update_trigger(
+                self.domain,
+                self.existing_user.user_id,
+                self.cleaned_data['deactivate_after_date']
+            )
+        return super().update_user(**kwargs)
 
 
 class RoleForm(forms.Form):

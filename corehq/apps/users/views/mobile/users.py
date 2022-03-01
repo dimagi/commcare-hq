@@ -279,6 +279,7 @@ class EditCommCareUserView(BaseEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+            'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
             'can_create_groups': (
                 self.request.couch_user.has_permission(self.domain, 'edit_groups') and
                 self.request.couch_user.has_permission(self.domain, 'access_all_locations')
