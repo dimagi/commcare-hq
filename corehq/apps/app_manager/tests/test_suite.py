@@ -616,7 +616,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         <partial>
           <template>
             <text>
-              <xpath function="if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname}, ''))))">
+              <xpath function="join(' ', if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname})">
                 <variable name="h{key4_varname}">
                   <locale id="m0.case_short.case_gender_1.enum.h{key4_varname}"/>
                 </variable>
@@ -687,7 +687,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         <partial>
           <template>
             <text>
-              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
+              <xpath function="join(' ', if(selected(if(gender = 'male', 'boy', 'girl'), 'boy'), $kboy, ''), if(selected(if(gender = 'male', 'boy', 'girl'), 'girl'), $kgirl, ''))">
                 <variable name="kboy">
                   <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
                 </variable>
@@ -744,7 +744,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, if(age = '15%', $h{key3_varname}, '')))">
+                  <xpath function="join(' ', if(age = '10', $k{key1_varname}, if(age &gt; 50, $h{key2_varname}, if(age = '15%', $h{key3_varname})">
                     <variable name="h{key2_varname}">
                       <locale id="m0.case_short.case_age_1.enum.h{key2_varname}"/>
                     </variable>

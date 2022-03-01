@@ -375,7 +375,7 @@ class Enum(FormattedDetailColumn):
 
     def _xpath_template(self, type):
         if type == 'sort':
-            return "if({xpath} = '{key}', {i}, "
+            return "if(selected({xpath}, '{key}'), {i}, "
         if type == 'display':
             return "if(selected({xpath}, '{key}'), ${key_as_var}, ''), "
         raise ValueError('type must be in sort, display')

@@ -98,6 +98,7 @@ class XPathEnum(TextXPath):
             template_context = get_template_context(item, i)
             parts.append(template.format(**template_context))
         if type == "display":
+            print("Hello")
             parts.insert(0, "join(' ', ")
             parts[-1] = parts[-1][:-2]
             parts.append(")")
@@ -105,6 +106,7 @@ class XPathEnum(TextXPath):
             parts.append("''")
             parts.append(")" * len(enum))
         function = ''.join(parts)
+        print(function)
 
         return cls(
             function=function,
