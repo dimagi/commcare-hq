@@ -89,7 +89,11 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UserFilterForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeactivateMobileWorkerTrigger,
+)
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -689,6 +693,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'bulk_download_url': bulk_download_url,
+            'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
         }
 
     @property
@@ -775,7 +780,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
         is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
-        return CommCareUser.create(
+        commcare_user = CommCareUser.create(
             self.domain,
             username,
             password,
@@ -789,6 +794,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
+
+        if self.new_mobile_worker_form.show_deactivate_after_date:
+            DeactivateMobileWorkerTrigger.update_trigger(
+                self.domain,
+                commcare_user.user_id,
+                self.new_mobile_worker_form.cleaned_data['deactivate_after_date']
+            )
+
+        return commcare_user
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
@@ -811,6 +825,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
