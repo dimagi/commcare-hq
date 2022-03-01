@@ -801,10 +801,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         y_axis_columns = []
         try:
             for y_axis_column in original_y_axis_columns:
-                if isinstance(y_axis_column, dict):
-                    column_id = y_axis_column['column_id']
-                else:
-                    column_id = y_axis_column
+                column_id = y_axis_column['column_id']
                 column_config = self.report_columns_by_column_id[column_id]
                 if column_config.type == 'expanded':
                     expanded_columns = self.get_expanded_columns(column_config)
