@@ -142,12 +142,12 @@ def _create_and_migrate_plan_versions_to_new_roles(domains_by_version_id, privil
         # create a new software plan version for this subscription
         current_version = SoftwarePlanVersion.objects.get(id=plan_id)
         new_role = _get_or_create_role_with_privilege(current_version.role.slug, privilege_slug, dry_run=dry_run)
-        new_plan = _create_new_plan_version_from_version(current_version, new_role)
-        if new_role and new_plan:
+        new_version = _create_new_plan_version_from_version(current_version, new_role)
+        if new_role and new_version:
             for domain in domains:
                 subscription = Subscription.get_active_subscription_by_domain(domain)
                 # TODO: do I need to use the more formal upgrade_subscriptions_to_latest_plan_version?
-                subscription.plan_version = new_plan
+                subscription.plan_version = new_version
                 subscription.save()
 
 

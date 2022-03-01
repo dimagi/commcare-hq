@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
 )
 from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains import (
+    _create_new_plan_version_from_version,
     _get_or_create_role_with_privilege,
     _update_roles_in_place,
     _update_versions_in_place,
@@ -180,3 +181,49 @@ class UpdateVersionInPlaceTests(TestCase):
         self.assertEqual(updated_version.role.slug, self.existing_role.slug)
         with self.assertRaises(Grant.DoesNotExist):
             Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+
+
+class CreateNewSoftwarePlanVersionTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.software_plan = SoftwarePlan.objects.create(
+            name="Test Software Plan",
+            description="Software Plan For Unit Tests",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+            is_customer_software_plan=False,
+        )
+        cls.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cls.software_plan.name)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.privilege_role = Role.objects.create(slug='privilege', name='test privilege')
+        self.existing_role = Role.objects.create(slug='role', name='Role')
+
+    def test_new_version_referencing_new_role(self):
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+
+        new_version = _create_new_plan_version_from_version(version, self.privilege_role)
+
+        # refetch
+        updated_version = SoftwarePlanVersion.objects.get(id=new_version.id)
+        self.assertEqual(self.software_plan.get_version(), updated_version)
+        with self.assertRaises(Grant.DoesNotExist):
+            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+
+    def test_dry_run_returns_none(self):
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+
+        new_version = _create_new_plan_version_from_version(version, self.privilege_role, dry_run=True)
+
+        self.assertIsNone(new_version)
