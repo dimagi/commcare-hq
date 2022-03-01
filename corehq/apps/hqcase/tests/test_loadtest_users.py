@@ -137,7 +137,7 @@ class TestGetSafeLoadtestFactor(SimpleTestCase):
         assert_equal(safe, 1000)
 
     def test_get_safe_loadtest_factor_unsafe(self):
-        safe = self.restore_state.get_safe_loadtest_factor(total_cases=100)
+        safe = self.restore_state.get_safe_loadtest_factor(total_cases=1000)
         assert_equal(safe, 500)
 
     def test_get_safe_loadtest_factor_above_limit(self):
