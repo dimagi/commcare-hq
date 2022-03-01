@@ -438,6 +438,9 @@ class DomainMembership(Membership):
 class IsMemberOfMixin(DocumentSchema):
 
     def _is_member_of(self, domain, allow_enterprise):
+        if not domain:
+            return False
+
         if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
 

@@ -251,10 +251,6 @@ class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     def test_is_member_of__no_membership(self):
         self.assertTrue(self.user.is_member_of('other'))
 
-    def test_is_member_of__null_domain(self):
-        # TODO: shouldn't this be False?
-        self.assertTrue(self.user.is_member_of(None))
-
     @patch('corehq.apps.users.models.domain_restricts_superusers', return_value=True)
     def test_is_member_of__no_membership__domain_restricts_superusers(self, _mock):
         self.assertFalse(self.user.is_member_of('other'))
