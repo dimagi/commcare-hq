@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 
 from django_prbac.models import Grant, Role
@@ -13,7 +15,7 @@ from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains 
     _create_new_plan_version_from_version,
     _get_or_create_role_with_privilege,
     _update_roles_in_place,
-    _update_versions_in_place,
+    _update_versions_in_place, _should_skip_role, _get_migration_info,
 )
 
 
@@ -227,3 +229,103 @@ class CreateNewSoftwarePlanVersionTest(TestCase):
         new_version = _create_new_plan_version_from_version(version, self.privilege_role, dry_run=True)
 
         self.assertIsNone(new_version)
+
+
+class ShouldSkipRoleTests(TestCase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.privilege_role = Role.objects.create(slug='privilege', name='test privilege')
+        self.role_to_check = Role.objects.create(slug='role', name='Role')
+
+    def test_returns_false(self):
+        result = _should_skip_role(self.role_to_check, self.privilege_role)
+        self.assertFalse(result)
+
+    def test_returns_true_if_grant_exists(self):
+        Grant.objects.create(from_role=self.privilege_role, to_role=self.privilege_role)
+        result = _should_skip_role(self.role_to_check, self.privilege_role)
+        self.assertTrue(result)
+
+    def test_returns_true_if_role_to_skip_is_supplied(self):
+        result = _should_skip_role(self.role_to_check, self.privilege_role, roles_to_skip=['role'])
+        self.assertTrue(result)
+
+    def test_returns_false_if_role_to_skip_is_not_supplied(self):
+        result = _should_skip_role(self.role_to_check, self.privilege_role, roles_to_skip=['role-to-skip'])
+        self.assertFalse(result)
+
+
+class GetMigrationInfoTests(TestCase):
+    """
+    Mainly trying to ensure that these 3 cases are true:
+    # 1) a role can be directly updated (create a Grant) if all domains referencing this role have toggle enabled
+    # For both 2 and 3, a new role must be created
+    # 2) software plan versions can be directly updated (update role ref) if all domains referencing the software
+    plan have toggles enabled
+    # 3) a new software plan version must be created to the appropriate subscriptions updated to reference the new
+    version
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.software_plan = SoftwarePlan.objects.create(
+            name="Test Software Plan",
+            description="Software Plan For Unit Tests",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+            is_customer_software_plan=False,
+        )
+        cls.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cls.software_plan.name)
+        domains_patcher = patch(
+            'corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._get_domains_for_versions'
+        )
+        cls.mock_get_domains_for_versions = domains_patcher.start()
+        cls.addClassCleanup(domains_patcher.stop)
+        toggle_patcher = patch(
+            'corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._all_domains_have_toggle_enabled'
+        )
+        cls.mock_all_domains_have_toggle_enabled = toggle_patcher.start()
+        cls.addClassCleanup(toggle_patcher.stop)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.privilege_role = Role.objects.create(slug='privilege', name='test privilege')
+        self.existing_role = Role.objects.create(slug='role', name='Role')
+
+    def test_returns_roles_to_update(self):
+        # all domains for all plans that reference this role have feature flag enabled
+        SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        self.mock_get_domains_for_versions.return_value = ['domain']
+        self.mock_all_domains_have_toggle_enabled.return_value = True
+
+        roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
+            [self.existing_role], 'N/A', self.privilege_role.slug
+        )
+
+        self.assertEqual(roles_to_update, ['role'])
+        self.assertFalse(version_to_update)
+        self.assertFalse(versions_to_increment)
+
+    def test_returns_nothing_if_role_should_be_skipped(self):
+        # all domains for all plans that reference this role have feature flag enabled
+        SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+        role_to_skip1 = Role.objects.create(slug='enterprise_plan_v0', name='Role')
+        role_to_skip2 = Role.objects.create(slug='enterprise_plan_v1', name='Role')
+
+        roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
+            [role_to_skip1, role_to_skip2], 'N/A', self.privilege_role.slug
+        )
+
+        self.assertFalse(roles_to_update)
+        self.assertFalse(version_to_update)
+        self.assertFalse(versions_to_increment)

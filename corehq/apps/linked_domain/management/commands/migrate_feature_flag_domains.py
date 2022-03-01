@@ -10,10 +10,10 @@ from corehq.apps.accounting.management.commands.change_role_for_software_plan_ve
     change_role_for_software_plan_version,
 )
 from corehq.apps.accounting.models import (
-    SoftwarePlan,
     SoftwarePlanVersion,
     Subscription,
 )
+from corehq.apps.toggle_ui.utils import find_static_toggle
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,10 @@ class ExistingRoleNotFound(Exception):
     pass
 
 
+class PrivilegeRoleDoesNotExist(Exception):
+    pass
+
+
 class Command(BaseCommand):
     """
     Enables the RELEASE_MANAGEMENT privilege on any domain that has the Linked Projects feature flag enabled
@@ -40,76 +44,92 @@ class Command(BaseCommand):
 
     def handle(self, quiet, dry_run, **options):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
-        roles_to_update, versions_to_update, versions_to_increment = _get_erm_migration_stats()
-        erm_slug = 'release_management'
-        _update_roles_in_place(roles_to_update, erm_slug, dry_run=dry_run)
-        _update_versions_in_place(versions_to_update, erm_slug, dry_run=dry_run)
-        _create_and_migrate_plan_versions_to_new_roles(versions_to_increment, erm_slug, dry_run=dry_run)
+        privilege_role_slug = 'release_management'
+        active_roles = _get_active_roles()
+        roles_to_update, versions_to_update, versions_to_increment = _get_migration_info(
+            active_roles, toggles.LINKED_DOMAINS.slug, privilege_role_slug
+        )
+        _update_roles_in_place(roles_to_update, privilege_role_slug, dry_run=dry_run)
+        _update_versions_in_place(versions_to_update, privilege_role_slug, dry_run=dry_run)
+        _create_and_migrate_plan_versions_to_new_roles(versions_to_increment, privilege_role_slug, dry_run=dry_run)
 
 
-def _get_erm_migration_stats():
+def _get_migration_info(roles, toggle_slug, privilege_slug):
+    """
+    :param roles: [Role]
+    :param toggle_slug: str slug for feature flag to migrate from
+    :param privilege_slug: str slug for role replaces feature flag
+    :return: a list of role slugs that can be updated directly
+    """
+    try:
+        privilege_role = Role.objects.get(slug=privilege_slug)
+    except Role.DoesNotExist:
+        raise PrivilegeRoleDoesNotExist
+
+    roles_to_update = []
+    plan_versions_to_update = []
+    plan_versions_to_increment = defaultdict(list)
+    for role in roles:
+        if _should_skip_role(role, privilege_role, roles_to_skip=['enterprise_plan_v0', 'enterprise_plan_v1']):
+            continue
+
+        versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
+        domains = _get_domains_for_versions(versions)
+
+        if _all_domains_have_toggle_enabled(domains, toggle_slug):
+            roles_to_update.append(role.slug)
+            continue
+
+        for version in versions:
+            domains_for_version = _get_domains_for_version(version)
+            if _all_domains_have_toggle_enabled(domains_for_version, toggle_slug):
+                plan_versions_to_update.append(version.id)
+            else:
+                domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
+                plan_versions_to_increment[version.id] = domains_with_toggle_enabled
+
+    return roles_to_update, plan_versions_to_update, plan_versions_to_increment
+
+
+def _get_domains_with_toggle_enabled(domains, toggle_slug):
+    toggle = find_static_toggle(toggle_slug)
+    return list(filter(toggle.enabled, domains))
+
+
+def _all_domains_have_toggle_enabled(domains, toggle_slug):
+    toggle = find_static_toggle(toggle_slug)
+    toggle_enabled = [toggle.enabled(domain) for domain in domains]
+    return len(set(toggle_enabled)) == 1 and toggle_enabled[0]
+
+
+def _get_domains_for_version(version):
+    return [
+        sub.subscriber.domain for sub in Subscription.visible_objects.filter(plan_version=version, is_active=True)
+    ]
+
+
+def _get_domains_for_versions(versions):
+    return [
+        sub.subscriber.domain for version in versions
+        for sub in Subscription.visible_objects.filter(plan_version=version, is_active=True)
+    ]
+
+
+def _should_skip_role(role_to_check, privilege_role, roles_to_skip=None):
+    # skip roles that already have existing Grant with privilege role
+    if Grant.objects.filter(from_role=role_to_check, to_role=privilege_role).exists():
+        return True
+
+    if roles_to_skip and role_to_check.slug in roles_to_skip:
+        return True
+
+    return False
+
+
+def _get_active_roles():
     active_plan_versions = SoftwarePlanVersion.objects.filter(is_active=True)
     # roles referenced by active software plans as a set (remove duplicates)
-    roles = {version.role for version in active_plan_versions}
-    roles_to_update_in_place = []
-    versions_to_update_in_place = []
-    versions_to_increment = {}
-    count = 0
-    release_management_role = Role.objects.get(slug='release_management')
-    # 1) update role in place
-    # 2) create new role and update software plan version in place to reference new role
-    # 3) create new role and create new software plan version to reference new role
-    for role in roles:
-        print(f'Processing {count} of {len(roles)} roles')
-        count += 1
-
-        # skip roles that already have release management
-        if Grant.objects.filter(from_role=role, to_role=release_management_role).exists():
-            continue
-
-        # a bit hacky, but these plans are handled in a separate migration
-        if role.slug == 'enterprise_plan_v0' or role.slug == 'enterprise_plan_v1':
-            continue
-
-        # get all active software plan versions that reference this role
-        versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
-
-        # get all subscriptions associated with this software plan version
-        subscriptions = [
-            subscription for version in versions for subscription in Subscription.visible_objects.filter(
-                plan_version=version, is_active=True
-            )
-        ]
-        domains = [sub.subscriber.domain for sub in subscriptions]
-        domains_for_software_plan_version_id = defaultdict(list)
-        toggle_enabled = [toggles.LINKED_DOMAINS.enabled(domain) for domain in domains]
-        if len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
-            # all domains that reference this role via all possible plan versions have the feature flag enabled
-            # this is (1) update role in place
-            roles_to_update_in_place.append(role.slug)
-            continue
-
-        # not all domains have feature flag enabled, need to do more investigation
-        for version in versions:
-            subscriptions = Subscription.visible_objects.filter(plan_version=version, is_active=True)
-            domains_for_subscriptions = [subscription.subscriber.domain for subscription in subscriptions]
-            domains_for_software_plan_version_id[version.id].extend(domains_for_subscriptions)
-
-        for plan_version_id, domains in domains_for_software_plan_version_id.items():
-            toggle_enabled = [toggles.LINKED_DOMAINS.enabled(domain) for domain in domains]
-            if len(set(toggle_enabled)) == 1 and toggle_enabled[0]:
-                # all domains referencing this software plan version have the feature flag enabled
-                # this is (2) update version in place
-                versions_to_update_in_place.append(plan_version_id)
-            elif len(set(toggle_enabled)) == 2:
-                # not all domains referencing this software plan version have feature flag enabled
-                # this is (3) mark which plan_id/domain need to be updated
-                # add domains that should be updated to the new role
-                versions_to_increment[plan_version_id] = [
-                    domain for domain in domains if toggles.LINKED_DOMAINS.enabled(domain)
-                ]
-
-    return roles_to_update_in_place, versions_to_update_in_place, versions_to_increment
+    return {version.role for version in active_plan_versions}
 
 
 def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
