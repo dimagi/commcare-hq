@@ -85,4 +85,5 @@ branches:
     - cs/support-12674_check_permission_on_web_user # Charl Feb 23
     - ap/link-permissions-to-expressions # Amit Feb 28
     - sk/dr-case-type-optional # Simon Mar 1
+    - jm/elastic-client-adapter  # Joel Mar 1
 submodules: { }
