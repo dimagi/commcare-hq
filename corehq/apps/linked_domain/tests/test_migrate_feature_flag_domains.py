@@ -13,9 +13,11 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains import (
     _create_new_plan_version_from_version,
+    _get_migration_info,
     _get_or_create_role_with_privilege,
+    _should_skip_role,
     _update_roles_in_place,
-    _update_versions_in_place, _should_skip_role, _get_migration_info,
+    _update_versions_in_place,
 )
 
 
@@ -278,16 +280,30 @@ class GetMigrationInfoTests(TestCase):
             is_customer_software_plan=False,
         )
         cls.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cls.software_plan.name)
-        domains_patcher = patch(
+        cls.setUpPatchers()
+
+    @classmethod
+    def setUpPatchers(cls):
+        domains_for_version_patcher = patch(
+            'corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._get_domains_for_version'
+        )
+        cls.mock_get_domains_for_version = domains_for_version_patcher.start()
+        cls.addClassCleanup(domains_for_version_patcher.stop)
+
+        domains_for_versions_patcher = patch(
             'corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._get_domains_for_versions'
         )
-        cls.mock_get_domains_for_versions = domains_patcher.start()
-        cls.addClassCleanup(domains_patcher.stop)
-        toggle_patcher = patch(
-            'corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._all_domains_have_toggle_enabled'
-        )
+        cls.mock_get_domains_for_versions = domains_for_versions_patcher.start()
+        cls.addClassCleanup(domains_for_versions_patcher.stop)
+
+        toggle_patcher = patch('corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._all_domains_have_toggle_enabled')
         cls.mock_all_domains_have_toggle_enabled = toggle_patcher.start()
+        cls.mock_all_domains_have_toggle_enabled.return_value = True
         cls.addClassCleanup(toggle_patcher.stop)
+
+        domains_with_toggle_patcher = patch('corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains._get_domains_with_toggle_enabled')
+        cls.mock_domains_with_toggle = domains_with_toggle_patcher.start()
+        cls.addClassCleanup(domains_with_toggle_patcher.stop)
 
     def setUp(self) -> None:
         super().setUp()
@@ -319,8 +335,8 @@ class GetMigrationInfoTests(TestCase):
             product_rate=self.product_rate,
             role=self.existing_role,
         )
-        role_to_skip1 = Role.objects.create(slug='enterprise_plan_v0', name='Role')
-        role_to_skip2 = Role.objects.create(slug='enterprise_plan_v1', name='Role')
+        role_to_skip1, created1 = Role.objects.get_or_create(slug='enterprise_plan_v0')
+        role_to_skip2, created2 = Role.objects.get_or_create(slug='enterprise_plan_v1')
 
         roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
             [role_to_skip1, role_to_skip2], 'N/A', self.privilege_role.slug
@@ -329,3 +345,46 @@ class GetMigrationInfoTests(TestCase):
         self.assertFalse(roles_to_update)
         self.assertFalse(version_to_update)
         self.assertFalse(versions_to_increment)
+
+    def test_returns_plan_versions_to_update(self):
+        # all domains for all plans that reference this role have feature flag enabled
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+
+        def toggle_handler(domains, toggle_slug):
+            return 'disabled-domain' not in domains
+        self.mock_all_domains_have_toggle_enabled.side_effect = toggle_handler
+        self.mock_get_domains_for_versions.return_value = ['domain', 'disabled-domain']
+        self.mock_get_domains_for_version.return_value = ['domain']
+
+        roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
+            [self.existing_role], 'N/A', self.privilege_role.slug
+        )
+
+        self.assertFalse(roles_to_update)
+        self.assertEqual(version_to_update, [version.id])
+        self.assertFalse(versions_to_increment)
+
+    def test_returns_plan_versions_to_increment(self):
+        # all domains for all plans that reference this role have feature flag enabled
+        version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
+
+        self.mock_all_domains_have_toggle_enabled.return_value = False
+        self.mock_get_domains_for_versions.return_value = ['domain', 'disabled-domain']
+        self.mock_get_domains_for_version.return_value = ['domain', 'disabled-domain']
+        self.mock_domains_with_toggle.return_value = ['domain']
+
+        roles_to_update, version_to_update, versions_to_increment = _get_migration_info(
+            [self.existing_role], 'N/A', self.privilege_role.slug
+        )
+
+        self.assertFalse(roles_to_update)
+        self.assertFalse(version_to_update)
+        self.assertEqual(versions_to_increment, {version.id: ['domain']})

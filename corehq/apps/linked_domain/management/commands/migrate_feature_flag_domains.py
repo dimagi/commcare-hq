@@ -9,10 +9,7 @@ from corehq import toggles
 from corehq.apps.accounting.management.commands.change_role_for_software_plan_version import (
     change_role_for_software_plan_version,
 )
-from corehq.apps.accounting.models import (
-    SoftwarePlanVersion,
-    Subscription,
-)
+from corehq.apps.accounting.models import SoftwarePlanVersion, Subscription
 from corehq.apps.toggle_ui.utils import find_static_toggle
 
 logger = logging.getLogger(__name__)
@@ -86,7 +83,8 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
                 plan_versions_to_update.append(version.id)
             else:
                 domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
-                plan_versions_to_increment[version.id] = domains_with_toggle_enabled
+                if domains_with_toggle_enabled:
+                    plan_versions_to_increment[version.id] = domains_with_toggle_enabled
 
     return roles_to_update, plan_versions_to_update, plan_versions_to_increment
 
