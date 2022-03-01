@@ -245,7 +245,7 @@ class ShouldSkipRoleTests(TestCase):
         self.assertFalse(result)
 
     def test_returns_true_if_grant_exists(self):
-        Grant.objects.create(from_role=self.privilege_role, to_role=self.privilege_role)
+        Grant.objects.create(from_role=self.role_to_check, to_role=self.privilege_role)
         result = _should_skip_role(self.role_to_check, self.privilege_role)
         self.assertTrue(result)
 
