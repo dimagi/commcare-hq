@@ -616,9 +616,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if checking_global_admin and self.is_global_admin():
             return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_enterprise):
-            return self.get_domain_membership(domain, allow_enterprise).role
-        else:
-            raise DomainMembershipError()
+            dm = self.get_domain_membership(domain, allow_enterprise)
+            if dm:
+                return dm.role
+        raise DomainMembershipError()
 
     def set_role(self, domain, role_qualified_id):
         """

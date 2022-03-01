@@ -217,9 +217,8 @@ class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
             self.assertEqual(role.name, "Admin")
 
     def test_get_role__no_membership__no_checking_global_admin(self):
-        # TODO: fix AttributeError: 'NoneType' object has no attribute 'role'
-        role = self.user.get_role('other', checking_global_admin=False)
-        self.assertEqual(role.name, "Admin")
+        with self.assertRaises(DomainMembershipError):
+            self.user.get_role('other', checking_global_admin=False)
 
     @patch('corehq.apps.users.models.domain_restricts_superusers', return_value=True)
     def test_get_role__no_membership__domain_restricts_superusers(self, _mock):
