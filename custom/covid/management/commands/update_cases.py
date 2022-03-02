@@ -51,12 +51,12 @@ class CaseUpdateCommand(BaseCommand):
 
         self.logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
         domains = {domain}
-        if options.pop("and_linked", False):
+        if options.pop("and_linked"):
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
-        username = options.pop("username", None)
+        username = options.pop("username")
         if username is not None:
-            user_id = username_to_user_id(options["username"])
+            user_id = username_to_user_id(username)
             if not user_id:
                 raise Exception("The username you entered is invalid")
         else:
