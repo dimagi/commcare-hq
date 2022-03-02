@@ -10,6 +10,7 @@ from eulxml.xmlmap import (
 from lxml import etree
 
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
+from corehq.apps.app_manager.detail_screen import Enum
 
 
 class XPathField(StringField):
@@ -97,14 +98,17 @@ class XPathEnum(TextXPath):
         for i, item in enumerate(enum):
             template_context = get_template_context(item, i)
             parts.append(template.format(**template_context))
-        if type == "display":
-            parts.insert(0, "join(' ', ")
-            parts[-1] = parts[-1][:-2]
-            parts.append(")")
+
+        if type == "display" and isinstance(enum, Enum):
+            parts.insert(0, "replace(join(' ', ")
+            parts[-1] = parts[-1][:-2] # removes extra comma from last string
+            parts.append("), '  ', '')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))
+
         function = ''.join(parts)
+        print(function)
 
         return cls(
             function=function,
