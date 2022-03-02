@@ -207,11 +207,11 @@ def api_key():
     return real_decorator
 
 
-def _oauth2_check():
+def _oauth2_check(scopes):
     def auth_check(request):
         oauthlib_core = get_oauthlib_core()
         # as of now, this is only used in our APIs, so explictly check that particular scope
-        valid, r = oauthlib_core.verify_request(request, scopes=['access_apis'])
+        valid, r = oauthlib_core.verify_request(request, scopes=scopes)
         if valid:
             request.user = r.user
             return True
@@ -341,9 +341,9 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domai
     )
 
 
-def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=['access_apis']):
     return _login_or_challenge(
-        _oauth2_check(),
+        _oauth2_check(oauth_scopes),
         allow_cc_users=allow_cc_users,
         api_key=True,
         allow_sessions=allow_sessions,
@@ -351,7 +351,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def get_multi_auth_decorator(default, allow_formplayer=False):
+def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=['access_apis']):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -372,7 +372,7 @@ def get_multi_auth_decorator(default, allow_formplayer=False):
                 )
                 return HttpResponseForbidden()
             request.auth_type = authtype  # store auth type on request for access in views
-            function_wrapper = get_auth_decorator_map(allow_cc_users=True)[authtype]
+            function_wrapper = get_auth_decorator_map(allow_cc_users=True, oauth_scopes=oauth_scopes)[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -391,9 +391,14 @@ def two_factor_exempt(view_func):
     return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
 
-# Use this decorator to allow any auth type -
-# basic, digest, session, or apikey
+# Use api_auth or api_auth_with_scope decorators to allow -
+# any auth type basic, digest, session, apikey, or oauth
 api_auth = get_multi_auth_decorator(default=DIGEST)
+
+
+def api_auth_with_scope(oauth_scopes):
+    return get_multi_auth_decorator(default=DIGEST, oauth_scopes=oauth_scopes)
+
 
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
@@ -405,7 +410,7 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True):
+def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=['access_apis']):
     # get a mapped set of decorators for different auth types with the specified parameters
     decorator_function_kwargs = {
         'allow_cc_users': allow_cc_users,
@@ -416,7 +421,7 @@ def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sess
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
         BASIC: login_or_basic_ex(**decorator_function_kwargs),
         API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
-        OAUTH2: login_or_oauth2_ex(**decorator_function_kwargs),
+        OAUTH2: login_or_oauth2_ex(oauth_scopes=oauth_scopes, **decorator_function_kwargs),
         FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
     }
 
