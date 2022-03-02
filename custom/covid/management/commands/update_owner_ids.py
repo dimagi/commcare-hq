@@ -15,16 +15,9 @@ class Command(CaseUpdateCommand):
     def logger_name(self):
         return __name__
 
+    @memoized
     def get_location(self, owner_id):
-        if self.locations_objects is None:
-            self.locations_objects = {}
-
-        if owner_id in self.locations_objects:
-            return self.locations_objects[owner_id]
-
-        loc = SQLLocation.objects.get(location_id=owner_id)
-        self.locations_objects[owner_id] = loc
-        return loc
+        return SQLLocation.objects.get(location_id=owner_id)
 
     def case_blocks(self, case):
         owner_id = case.get_case_property('owner_id')
