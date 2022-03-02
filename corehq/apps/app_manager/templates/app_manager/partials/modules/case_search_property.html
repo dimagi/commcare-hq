@@ -159,6 +159,14 @@
                           <input type="checkbox" data-bind="checked: hidden" />
                         </div>
                       </div>
+                      <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-3">
+                          {% trans "Exclude From Search Filters" %}
+                        </label>
+                        <div class="col-xs-12 col-sm-9">
+                          <input type="checkbox" />
+                        </div>
+                      </div>
                   </fieldset>
                 {% endif %}
                 <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
