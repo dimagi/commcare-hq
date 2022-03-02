@@ -128,7 +128,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     couch_to_sql_models
     commtrack
     elasticsearch
-    es_query
     middleware
     migration_command_pattern
     nfs
