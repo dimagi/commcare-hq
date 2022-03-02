@@ -54,10 +54,8 @@ branches:
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     - sr/es-alias # Sravan Nov 18
-    - sr/cs-multiselect  # Sravan May 31
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
-    - dmr/throttle-system-forms  # Danny Sept 24
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
@@ -68,7 +66,6 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
     - ap/link-permissions-to-expressions+mk/support-multibar-reports+gh/mrm/erm-includes-mrm+gh/mrm/newly-linked-domain+gh/mrm/base
-    - mk/support-multibar-reports # MK Dec 14
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - ad/save-only-edited-fields-migration # Addison Feb 4
     - gh/mrm/base # Graham Feb 8
