@@ -67,7 +67,6 @@ branches:
     - ml/remove-pickles-user-importer # Minha Feb 2
     - ap/link-permissions-to-expressions+mk/support-multibar-reports+gh/mrm/erm-includes-mrm+gh/mrm/newly-linked-domain+gh/mrm/base
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - ad/save-only-edited-fields-migration # Addison Feb 4
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - gh/mrm/erm-includes-mrm # Graham Feb 17
@@ -79,4 +78,5 @@ branches:
     - jm/elastic-client-adapter  # Joel Mar 1
     - bmb/whh-003 # Biyeun Mar 1
     - nh/loadtest_users_ga+others  # Norman Mar 2
+    - ad/multivalued-search-functions # Addison Mar 2
 submodules: { }
