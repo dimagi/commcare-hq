@@ -3,13 +3,16 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
     user_display_string,
     username_to_user_id,
     user_id_to_username,
-    cached_user_id_to_user_display
+    cached_user_id_to_user_display,
+    bulk_auto_deactivate_commcare_users,
+    SYSTEM_USER_ID,
 )
+from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 
 
 class TestUsernameToUserID(TestCase):
@@ -112,3 +115,75 @@ class TestUserDisplayString(SimpleTestCase):
     def test_handles_none_names(self):
         result = user_display_string('test@dimagi.com', None, None)
         self.assertEqual(result, 'test@dimagi.com')
+
+
+class TestBulkAutoDeactivateCommCareUser(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = 'test-domain'
+        cls.active_user = CommCareUser.create(
+            cls.domain,
+            'active',
+            'secret',
+            None,
+            None,
+            is_active=True,
+        )
+        cls.inactive_user = CommCareUser.create(
+            cls.domain,
+            'inactive',
+            'secret',
+            None,
+            None,
+            is_active=False,
+        )
+
+        cache.clear()
+
+    def tearDown(self):
+        UserHistory.objects.all().delete()
+        super().tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.active_user.delete(cls.domain, deleted_by=None)
+        cls.inactive_user.delete(cls.domain, deleted_by=None)
+        cache.clear()
+        super().tearDownClass()
+
+    def test_user_is_deactivated_and_logged(self):
+        bulk_auto_deactivate_commcare_users([self.active_user.get_id], self.domain)
+        refreshed_user = CommCareUser.get_by_user_id(self.active_user.user_id)
+        self.assertFalse(
+            refreshed_user.is_active
+        )
+        user_history = UserHistory.objects.get(user_id=self.active_user.user_id)
+        self.assertEqual(
+            user_history.by_domain,
+            self.domain
+        )
+        self.assertEqual(
+            user_history.for_domain,
+            self.domain
+        )
+        self.assertEqual(
+            user_history.changed_by,
+            SYSTEM_USER_ID
+        )
+        self.assertEqual(
+            user_history.changed_via,
+            USER_CHANGE_VIA_AUTO_DEACTIVATE
+        )
+
+    def test_user_is_not_deactivated_and_no_logs(self):
+        bulk_auto_deactivate_commcare_users([self.inactive_user.user_id], self.domain)
+        refreshed_user = CommCareUser.get_by_user_id(self.inactive_user.get_id)
+        self.assertFalse(
+            refreshed_user.is_active
+        )
+        self.assertFalse(
+            UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
+        )

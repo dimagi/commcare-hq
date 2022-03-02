@@ -1,124 +1,30 @@
-import hashlib
-import re
-
 from django.test import SimpleTestCase
 
-import commcare_translations
-from unittest import mock
-from lxml.etree import tostring
-
-from corehq.apps.app_manager.exceptions import (
-    DuplicateInstanceIdError,
-    SuiteValidationError,
-)
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
-    AdvancedModule,
     Application,
     CaseSearch,
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
-    CustomAssertion,
-    CustomInstance,
-    DetailColumn,
-    FormActionCondition,
     GraphConfiguration,
     GraphSeries,
-    MappingItem,
-    Module,
-    OpenCaseAction,
-    OpenSubCaseAction,
-    PreloadAction,
     ReportAppConfig,
     ReportModule,
-    SortElement,
-    UpdateCaseAction,
-    ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
-    commtrack_enabled,
-    parse_normalize,
     patch_get_xform_resource_overrides,
 )
-from corehq.apps.app_manager.xpath import session_var
 from corehq.apps.hqmedia.models import HQMediaMapItem
-from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    @staticmethod
-    def _add_columns_for_case_details(_module):
-        _module.case_details.short.columns = [
-            DetailColumn(
-                header={'en': 'a'},
-                model='case',
-                field='a',
-                format='plain',
-                case_tile_field='header'
-            ),
-            DetailColumn(
-                header={'en': 'b'},
-                model='case',
-                field='b',
-                format='plain',
-                case_tile_field='top_left'
-            ),
-            DetailColumn(
-                header={'en': 'c'},
-                model='case',
-                field='c',
-                format='enum',
-                enum=[
-                    MappingItem(key='male', value={'en': 'Male'}),
-                    MappingItem(key='female', value={'en': 'Female'}),
-                ],
-                case_tile_field='sex'
-            ),
-            DetailColumn(
-                header={'en': 'd'},
-                model='case',
-                field='d',
-                format='plain',
-                case_tile_field='bottom_left'
-            ),
-            DetailColumn(
-                header={'en': 'e'},
-                model='case',
-                field='e',
-                format='date',
-                case_tile_field='date'
-            ),
-        ]
-
-    def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
-        suite = factory.app.create_suite()
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <datum
-                    {detail_confirm_attr}
-                    {detail_inline_attr}
-                    {detail_persistent_attr}
-                    detail-select="m1_case_short"
-                    id="case_id_load_person_0"
-                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
-                    value="./@case_id"
-                />
-            </partial>
-            """.format(detail_confirm_attr='detail-confirm="m1_case_long"' if not detail_inline_attr else '',
-                       detail_inline_attr=detail_inline_attr,
-                       detail_persistent_attr=detail_persistent_attr),
-            suite,
-            'entry/command[@id="m1-f0"]/../session/datum',
-        )
 
     def test_normal_suite(self, *args):
         self._test_generic_suite('app', 'normal-suite')
@@ -128,30 +34,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_3_tiered_select(self, *args):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
-
-    def test_multisort_suite(self, *args):
-        self._test_generic_suite('multi-sort', 'multi-sort')
-
-    def test_sort_only_value_suite(self, *args):
-        self._test_generic_suite('sort-only-value', 'sort-only-value')
-        self._test_app_strings('sort-only-value')
-
-    def test_sort_cache_suite(self, *args):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        detail = app.modules[0].case_details.short
-        detail.sort_elements.append(
-            SortElement(
-                field=detail.columns[0].field,
-                type='index',
-                direction='descending',
-                blanks='first',
-            )
-        )
-        self.assertXmlPartialEqual(
-            self.get_xml('sort-cache'),
-            app.create_suite(),
-            "./detail[@id='m0_case_short']"
-        )
 
     def test_case_search_action(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -195,282 +77,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_search_short']/action"
         )
 
-    def test_sort_cache_search(self, *args):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        app.modules[0].search_config = CaseSearch(
-            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
-        )
-        detail = app.modules[0].case_details.short
-        detail.sort_elements.append(
-            SortElement(
-                field=detail.columns[0].field,
-                type='index',
-                direction='descending',
-                blanks='first',
-            )
-        )
-
-        # wrap to have assign_references called
-        app = Application.wrap(app.to_json())
-
-        self.assertXmlPartialEqual(
-            self.get_xml('sort-cache-search'),
-            app.create_suite(),
-            "./detail[@id='m0_search_short']"
-        )
-
-    def test_sort_calculation(self, *args):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        detail = app.modules[0].case_details.short
-        detail.sort_elements.append(
-            SortElement(
-                field=detail.columns[0].field,
-                type='string',
-                direction='descending',
-                blanks='first',
-                sort_calculation='random()'
-            )
-        )
-        sort_node = """
-        <partial>
-            <sort direction="descending" blanks="first" order="1" type="string">
-              <text>
-                <xpath function="random()"/>
-              </text>
-            </sort>
-        </partial>
-        """
-        self.assertXmlPartialEqual(
-            sort_node,
-            app.create_suite(),
-            "./detail[@id='m0_case_short']/field/sort"
-        )
-
     def test_callcenter_suite(self, *args):
         self._test_generic_suite('call-center')
-
-    @commtrack_enabled(True)
-    def test_product_list_custom_data(self, *args):
-        # product data shouldn't be interpreted as a case index relationship
-        app = Application.wrap(self.get_json('suite-advanced'))
-        custom_path = 'product_data/is_bedazzled'
-        app.modules[1].product_details.short.columns[0].field = custom_path
-        suite_xml = app.create_suite()
-        for xpath in ['/template/text/xpath', '/sort/text/xpath']:
-            self.assertXmlPartialEqual(
-                '<partial><xpath function="{}"/></partial>'.format(custom_path),
-                suite_xml,
-                './detail[@id="m1_product_short"]/field[1]'+xpath,
-            )
-
-    @commtrack_enabled(True)
-    def test_autoload_supplypoint(self, *args):
-        app = Application.wrap(self.get_json('app'))
-        app.modules[0].forms[0].source = re.sub('/data/plain',
-                                                session_var('supply_point_id'),
-                                                app.modules[0].forms[0].source)
-        app_xml = app.create_suite()
-        self.assertXmlPartialEqual(
-            self.get_xml('autoload_supplypoint'),
-            app_xml,
-            './entry[1]'
-        )
-
-    def test_case_assertions(self, *args):
-        self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
-
-    def test_no_case_assertions(self, *args):
-        self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
     def test_attached_picture(self, *args):
         self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
-    def test_copy_form(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-        module = app.add_module(AdvancedModule.new_module('module', None))
-        original_form = app.new_form(module.id, "Untitled Form", None)
-        original_form.source = '<source>'
-
-        app.copy_form(module, original_form, module, rename=True)
-
-        form_count = 0
-        for f in app.get_forms():
-            form_count += 1
-            if f.unique_id != original_form.unique_id:
-                self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
-        self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
-
-    def test_copy_form_to_app(self, *args):
-        src_app = Application.new_app('domain', "Source Application")
-        src_module = src_app.add_module(AdvancedModule.new_module('Source Module', None))
-        original_form = src_app.new_form(src_module.id, "Untitled Form", None)
-        original_form.source = '<source>'
-        dst_app = Application.new_app('domain', "Destination Application")
-        dst_module = dst_app.add_module(AdvancedModule.new_module('Destination Module', None))
-
-        src_app.copy_form(src_module, original_form, dst_module, rename=True)
-
-        self.assertEqual(len(list(src_app.get_forms())), 1, 'Form copied to the wrong app')
-        dst_app_forms = list(dst_app.get_forms())
-        self.assertEqual(len(dst_app_forms), 1)
-        self.assertEqual(dst_app_forms[0].name['en'], 'Copy of Untitled Form')
-
     def test_owner_name(self, *args):
         self._test_generic_suite('owner-name')
-
-    def test_form_filter(self, *args):
-        """
-        Ensure form filter gets added correctly and appropriate instances get added to the entry.
-        """
-        app = Application.wrap(self.get_json('suite-advanced'))
-        form = app.get_module(1).get_form(1)
-        form.form_filter = "./edd = '123'"
-
-        expected = """
-        <partial>
-          <menu id="m1">
-            <text>
-              <locale id="modules.m1"/>
-            </text>
-            <command id="m1-f0"/>
-            <command id="m1-f1" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_clinic0]/edd = '123'"/>
-            <command id="m1-f2"/>
-            <command id="m1-case-list"/>
-          </menu>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected, app.create_suite(), "./menu[@id='m1']")
-
-    def test_module_filter(self, *args):
-        """
-        Ensure module filter gets added correctly
-        """
-        app = Application.new_app('domain', "Untitled Application")
-        app.build_spec.version = '2.20.0'
-        module = app.add_module(Module.new_module('m0', None))
-        module.new_form('f0', None)
-
-        module.module_filter = "/mod/filter = '123'"
-        self.assertXmlPartialEqual(
-            self.get_xml('module-filter'),
-            app.create_suite(),
-            "./menu[@id='m0']"
-        )
-
-    def test_module_filter_with_session(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-        app.build_spec.version = '2.20.0'
-        module = app.add_module(Module.new_module('m0', None))
-        form = module.new_form('f0', None)
-        form.xmlns = 'f0-xmlns'
-
-        module.module_filter = "#session/user/mod/filter = '123'"
-        self.assertXmlPartialEqual(
-            self.get_xml('module-filter-user'),
-            app.create_suite(),
-            "./menu[@id='m0']"
-        )
-        self.assertXmlPartialEqual(
-            self.get_xml('module-filter-user-entry'),
-            app.create_suite(),
-            "./entry[1]"
-        )
-
-    def test_usercase_id_added_update(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
-
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.usercase_update = UpdateCaseAction(
-            update={'name': ConditionalCaseUpdate(question_path='/data/question1')})
-        child_form.actions.usercase_update.condition.type = 'always'
-
-        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
-
-    def test_usercase_id_added_preload(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
-
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'name'})
-        child_form.actions.usercase_preload.condition.type = 'always'
-
-        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
-
-    def test_open_case_and_subcase(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-
-        module = app.add_module(Module.new_module('parent', None))
-        module.case_type = 'phone'
-        module.unique_id = 'm0'
-
-        form = app.new_form(0, "Untitled Form", None)
-        form.xmlns = 'http://m0-f0'
-        form.actions.open_case = OpenCaseAction(name_update=ConditionalCaseUpdate(question_path="/data/question1"))
-        form.actions.open_case.condition.type = 'always'
-        form.actions.subcases.append(OpenSubCaseAction(
-            case_type='tablet',
-            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
-            condition=FormActionCondition(type='always')
-        ))
-
-        self.assertXmlPartialEqual(self.get_xml('open_case_and_subcase'), app.create_suite(), "./entry[1]")
-
-    def test_update_and_subcase(self, *args):
-        app = Application.new_app('domain', "Untitled Application")
-
-        module = app.add_module(Module.new_module('parent', None))
-        module.case_type = 'phone'
-        module.unique_id = 'm0'
-
-        form = app.new_form(0, "Untitled Form", None)
-        form.xmlns = 'http://m0-f0'
-        form.requires = 'case'
-        form.actions.update_case = UpdateCaseAction(
-            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
-        form.actions.update_case.condition.type = 'always'
-        form.actions.subcases.append(OpenSubCaseAction(
-            case_type=module.case_type,
-            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
-            condition=FormActionCondition(type='always')
-        ))
-
-        self.assertXmlPartialEqual(self.get_xml('update_case_and_subcase'), app.create_suite(), "./entry[1]")
-
-    def test_graphing(self, *args):
-        self._test_generic_suite('app_graphing', 'suite-graphing')
-
-    def test_fixtures_in_graph(self, *args):
-        expected_suite = parse_normalize(self.get_xml('suite-fixture-graphing'), to_string=False)
-        actual_suite = parse_normalize(
-            Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
-
-        expected_configuration_list = expected_suite.findall('detail/field/template/graph/configuration')
-        actual_configuration_list = actual_suite.findall('detail/field/template/graph/configuration')
-
-        self.assertEqual(len(expected_configuration_list), 1)
-        self.assertEqual(len(actual_configuration_list), 1)
-
-        expected_configuration = expected_configuration_list[0]
-        actual_configuration = actual_configuration_list[0]
-
-        self.assertItemsEqual(
-            [tostring(text_element) for text_element in expected_configuration],
-            [tostring(text_element) for text_element in actual_configuration]
-        )
-
-        expected_suite.find('detail/field/template/graph').remove(expected_configuration)
-        actual_suite.find('detail/field/template/graph').remove(actual_configuration)
-
-        self.assertXmlEqual(tostring(expected_suite), tostring(actual_suite))
 
     def test_printing(self, *args):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
@@ -1242,44 +856,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
-    def test_custom_assertions(self, *args):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
-
-        tests = ["foo = 'bar' and baz = 'buzz'", "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"]
-
-        form.custom_assertions = [
-            CustomAssertion(test=test, text={'en': "en-{}".format(id), "fr": "fr-{}".format(id)})
-            for id, test in enumerate(tests)
-        ]
-        assertions_xml = [
-            """
-                <assert test="{test}">
-                    <text>
-                        <locale id="custom_assertion.m0.f0.{id}"/>
-                    </text>
-                </assert>
-            """.format(test=test, id=id) for id, test in enumerate(tests)
-        ]
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <assertions>
-                    {assertions}
-                </assertions>
-            </partial>
-            """.format(assertions="".join(assertions_xml)),
-            factory.app.create_suite(),
-            "entry/assertions"
-        )
-
-        en_app_strings = commcare_translations.loads(module.get_app().create_app_strings('en'))
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.0'], "en-0")
-        self.assertEqual(en_app_strings['custom_assertion.m0.f0.1'], "en-1")
-        fr_app_strings = commcare_translations.loads(module.get_app().create_app_strings('fr'))
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
-        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
-
     def test_custom_variables(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -1315,127 +891,4 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
             suite,
             "entry[1]/instance"
-        )
-
-
-@patch_get_xform_resource_overrides()
-class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
-    file_path = ('data', 'suite')
-
-    def setUp(self):
-        super(InstanceTests, self).setUp()
-        self.factory = AppFactory(include_xmlns=True)
-        self.module, self.form = self.factory.new_basic_module('m0', 'case1')
-
-    def test_custom_instances(self, *args):
-        instance_id = "foo"
-        instance_path = "jr://foo/bar"
-        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='{}' src='{}' />
-            </partial>
-            """.format(instance_id, instance_path),
-            self.factory.app.create_suite(),
-            "entry/instance"
-        )
-
-    def test_duplicate_custom_instances(self, *args):
-        self.factory.form_requires_case(self.form)
-        instance_id = "casedb"
-        instance_path = "jr://casedb/bar"
-        # Use form_filter to add instances
-        self.form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
-        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
-        with self.assertRaises(DuplicateInstanceIdError):
-            self.factory.app.create_suite()
-
-    def test_duplicate_regular_instances(self, *args):
-        """Make sure instances aren't getting added multiple times if they are referenced multiple times
-        """
-        self.factory.form_requires_case(self.form)
-        self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='casedb' src='jr://instance/casedb' />
-                <instance id='locations' src='jr://fixture/locations' />
-            </partial>
-            """,
-            self.factory.app.create_suite(),
-            "entry/instance"
-        )
-
-    def test_location_instances(self, *args):
-        self.form.form_filter = "instance('locations')/locations/"
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='locations' src='jr://fixture/locations' />
-            </partial>
-            """,
-            self.factory.app.create_suite(),
-            "entry/instance"
-        )
-
-    @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
-    def test_location_instance_during_migration(self, sync_patch):
-        # tests for expectations during migration from hierarchical to flat location fixture
-        # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_flat_fixture set to False
-        # should have hierarchical jr://fixture/commtrack:locations fixture format
-        # All other cases to have flat jr://fixture/locations fixture format
-        self.form.form_filter = "instance('locations')/locations/"
-        configuration_mock_obj = mock.MagicMock()
-        sync_patch.return_value = configuration_mock_obj
-
-        hierarchical_fixture_format_xml = """
-            <partial>
-                <instance id='locations' src='jr://fixture/commtrack:locations' />
-            </partial>
-        """
-
-        flat_fixture_format_xml = """
-            <partial>
-                <instance id='locations' src='jr://fixture/locations' />
-            </partial>
-        """
-
-        configuration_mock_obj.sync_flat_fixture = True  # default value
-        # Domains migrating to flat location fixture, will have FF enabled and should successfully be able to
-        # switch between hierarchical and flat fixture
-        with flag_enabled('HIERARCHICAL_LOCATION_FIXTURE'):
-            configuration_mock_obj.sync_hierarchical_fixture = True  # default value
-            self.assertXmlPartialEqual(flat_fixture_format_xml,
-                                       self.factory.app.create_suite(), "entry/instance")
-
-            configuration_mock_obj.sync_hierarchical_fixture = False
-            self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
-
-            configuration_mock_obj.sync_flat_fixture = False
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
-
-            configuration_mock_obj.sync_hierarchical_fixture = True
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
-
-        # To ensure for new domains or domains adding locations now come on flat fixture
-        configuration_mock_obj.sync_hierarchical_fixture = True  # default value
-        self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
-
-        # This should not happen ideally since the conf can not be set without having HIERARCHICAL_LOCATION_FIXTURE
-        # enabled. Considering that a domain has sync hierarchical fixture set to False without the FF
-        # HIERARCHICAL_LOCATION_FIXTURE. In such case the domain stays on flat fixture format
-        configuration_mock_obj.sync_hierarchical_fixture = False
-        self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
-
-    def test_unicode_lookup_table_instance(self, *args):
-        self.form.form_filter = "instance('item-list:província')/província/"
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <instance id='item-list:província' src='jr://fixture/item-list:província' />
-            </partial>
-            """,
-            self.factory.app.create_suite(),
-            "entry/instance"
         )
