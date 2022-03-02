@@ -126,7 +126,7 @@ def patch_get_xform_resource_overrides():
 
 
 def patch_validate_xform():
-    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _, __: None)
+    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
 
 
 @unit_testing_only
