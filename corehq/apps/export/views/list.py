@@ -32,7 +32,7 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, ProjectLimit
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -78,6 +78,7 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.test_utils import flag_enabled
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -497,6 +498,7 @@ class BaseExportListView(BaseProjectDataView):
         for use in third-party data analysis tools.
     '''))
     is_odata = False
+    is_live_google_sheet = False
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
@@ -515,6 +517,7 @@ class BaseExportListView(BaseProjectDataView):
             'has_edit_permissions': self.permissions.has_edit_permissions,
             'is_deid': self.is_deid,
             'is_odata': self.is_odata,
+            'is_live_google_sheet': self.is_live_google_sheet,
             "export_type_caps": _("Export"),
             "export_type": _("export"),
             "export_type_caps_plural": _("Exports"),
@@ -1049,4 +1052,123 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         if len(self.get_saved_exports()) >= self.odata_feed_limit:
             context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
+        return context
+
+
+class LiveGoogleSheetListHelper(ExportListHelper):
+    allow_bulk_export = False
+    include_saved_filters = True
+
+    @property
+    @memoized
+    def has_form_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, FORM_EXPORT_PERMISSION)
+
+    @property
+    @memoized
+    def has_case_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, CASE_EXPORT_PERMISSION)
+
+    @property
+    @memoized
+    def allowed_doc_type(self):
+        if self.has_case_export_permissions and self.has_form_export_permissions:
+            return None  # get_brief_deid_exports / get_brief_exports interprets this as both
+        if self.has_form_export_permissions:
+            return FORM_EXPORT
+        if self.has_case_export_permissions:
+            return CASE_EXPORT
+        if user_can_view_deid_exports(self.domain, self.request.couch_user):
+            return 'deid'
+        return 'neither'
+
+    @memoized
+    def get_saved_exports(self):
+        if self.allowed_doc_type == 'neither':
+            return []
+
+        if self.allowed_doc_type == 'deid':
+            exports = get_brief_deid_exports(self.domain, None)
+        else:
+            exports = get_brief_exports(self.domain, self.allowed_doc_type)
+        return [x for x in exports if self._should_appear_in_list(x)]
+
+    @property
+    def create_export_form(self):
+        form = CreateExportTagForm(True, True)
+        form.fields['model_type'].label = _("Feed Type")
+
+        model_type_choices = [
+            ('', _("Select field type")),
+        ]
+        if self.has_case_export_permissions:
+            model_type_choices.append(('case', _('Case')))
+        if self.has_form_export_permissions:
+            model_type_choices.append(('form', _('Form')))
+        form.fields['model_type'].choices = model_type_choices
+
+        return form
+
+    @property
+    @memoized
+    def live_google_sheets_limit(self):
+        try:
+            domain_object = ProjectLimit.objects.get(domain=self.domain)
+            return domain_object.limit_value
+        except ProjectLimit.DoesNotExist:
+            return settings.DEFAULT_GSHEET_LIMIT
+
+    @property
+    def create_export_form_title(self):
+        return _("Select Model Type")
+
+    def _should_appear_in_list(self, export):
+        return IntegrationFormat.is_integration_format(export['export_format'])
+
+    def fmt_export_data(self, export):
+        data = super(LiveGoogleSheetListHelper, self).fmt_export_data(export)
+        data.update({
+            'isGoogleSheet': True,
+        })
+        if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
+            data['editUrl'] = '#LiveGoogleSheetLimitReachedModal'
+        return data
+
+
+class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
+    is_live_google_sheet = True
+    url = 'list_live_google_sheets'
+    page_title = "Live Google Sheet Integration"
+
+    @flag_enabled('GOOGLE_SHEETS_INTEGRATION')
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    # TODO insert link to confluence page
+    @property
+    def lead_text(self):
+        return format_html(_("""
+        Integrate your live CommCare data with Google Sheets.
+        <a href=""
+       id="js-odata-track-learn-more"
+       target="_blank">
+        Learn more.
+        </a><br />
+        """))
+
+    @property
+    def page_context(self):
+        context = super(LiveGoogleSheetListView, self).page_context
+        context.update({
+            "export_type_caps": _("Google Sheet"),
+            "export_type": _("Google Sheet"),
+            "export_type_caps_plural": _("Google Sheets"),
+            "export_type_plural": _("Google Sheets"),
+            'my_export_type': _('My Google Sheets'),
+            'shared_export_type': _('Google Sheets Shared with Me'),
+            'google_sheet_limit': self.live_google_sheets_limit,
+        })
+        if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
+            context['create_url'] = '#LiveGoogleSheetLimitReachedModal'
+            context['google_sheets_over_limit'] = True
         return context
