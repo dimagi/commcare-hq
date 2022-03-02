@@ -106,7 +106,7 @@ def _get_domains_with_toggle_enabled(domains, toggle_slug):
 def _all_domains_have_toggle_enabled(domains, toggle_slug):
     toggle = find_static_toggle(toggle_slug)
     toggle_enabled = {toggle.enabled(domain) for domain in domains}
-    return len(toggle_enabled) == 1 and toggle_enabled[0]
+    return len(toggle_enabled) == 1 and True in toggle_enabled
 
 
 def _get_domains_for_version(version):
