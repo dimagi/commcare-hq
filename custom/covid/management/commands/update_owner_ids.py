@@ -12,8 +12,6 @@ class Command(CaseUpdateCommand):
     help = f"Changes the owner_id of a case to the location_id of the child location with type " \
            f"{CHILD_LOCATION_TYPE} of the current location"
 
-    locations_objects = None
-
     logger_name = __name__
 
     @memoized
