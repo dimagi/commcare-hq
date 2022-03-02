@@ -78,5 +78,5 @@ branches:
     - sk/dr-case-type-optional # Simon Mar 1
     - jm/elastic-client-adapter  # Joel Mar 1
     - bmb/whh-003 # Biyeun Mar 1
-    - nh/loadtest_users_ga  # Norman Mar 2
+    - nh/loadtest_users_ga+others  # Norman Mar 2
 submodules: { }
