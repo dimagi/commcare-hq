@@ -10,7 +10,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
-from corehq.apps.enterprise.views import ManageMobileWorkersView
+from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -1660,8 +1660,8 @@ class EnterpriseSettingsTab(UITab):
         items.append((_('Manage Enterprise'), enterprise_views))
         if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
             enterprise_user_management_views.append({
-                'title': _(ManageMobileWorkersView.page_title),
-                'url': reverse(ManageMobileWorkersView.urlname, args=[self.domain]),
+                'title': _(ManageEnterpriseMobileWorkersView.page_title),
+                'url': reverse(ManageEnterpriseMobileWorkersView.urlname, args=[self.domain]),
             })
             items.append((_("User Management"), enterprise_user_management_views))
 
@@ -1867,6 +1867,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         RecoveryMeasuresHistory,
+        ManageDomainMobileWorkersView,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
@@ -1894,6 +1895,13 @@ def _get_administration_section(domain):
             'title': _(ManageReleasesByLocation.page_title),
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
+
+    # todo also check is_domain_enterprise once PR 31047 is merged in
+    if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(domain):
+        administration.append(({
+            'title': _(ManageDomainMobileWorkersView.page_title),
+            'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
+        }))
 
     return administration
 

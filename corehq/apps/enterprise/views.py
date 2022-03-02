@@ -22,6 +22,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.enterprise.models import (
     EnterprisePermissions,
     EnterpriseMobileWorkerSettings,
@@ -447,44 +448,7 @@ def update_enterprise_permissions_source_domain(request, domain):
     return HttpResponseRedirect(redirect)
 
 
-class ManageMobileWorkersView(BaseEnterpriseAdminView):
+class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
     page_title = ugettext_lazy("Manage Mobile Workers")
-    urlname = 'enterprise_manage_mobile_workers'
     template_name = 'enterprise/manage_mobile_workers.html'
-
-    @property
-    def page_context(self):
-        return {
-            'account': self.request.account,
-            'edit_emw_settings_form': self.edit_emw_settings_form,
-        }
-
-    @property
-    @memoized
-    def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
-
-    @property
-    @memoized
-    def edit_emw_settings_form(self):
-        emw_settings, _ = EnterpriseMobileWorkerSettings.objects.get_or_create(
-            account=self.account,
-        )
-        if self.request.method == 'POST':
-            return EnterpriseManageMobileWorkersForm(
-                self.request.POST, emw_settings=emw_settings, domain=self.domain
-            )
-        return EnterpriseManageMobileWorkersForm(
-            emw_settings=emw_settings, domain=self.domain
-        )
-
-    def post(self, request, *args, **kwargs):
-        if self.edit_emw_settings_form.is_valid():
-            self.edit_emw_settings_form.update_settings()
-            messages.success(request, _("Settings have been updated!"))
-            return HttpResponseRedirect(self.page_url)
-        messages.error(
-            request,
-            _("Please check form for errors.")
-        )
-        return self.get(request, *args, **kwargs)
+    urlname = 'enterprise_manage_mobile_workers'
