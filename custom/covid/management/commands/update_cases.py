@@ -40,7 +40,6 @@ class CaseUpdateCommand(BaseCommand):
         parser.add_argument('case_type')
         parser.add_argument('--username', type=str, default=None)
         parser.add_argument('--and-linked', action='store_true', default=False)
-        parser.add_argument('--throttle-secs', type=float, default=0)
 
     def handle(self, domain, case_type, **options):
         # logger.debug will record something to a file but not print it
@@ -63,7 +62,6 @@ class CaseUpdateCommand(BaseCommand):
             user_id = SYSTEM_USER_ID
 
         self.case_type = case_type
-        self.throttle_secs = options.pop("throttle_secs", None)
 
         self.extra_options = options
 
@@ -76,7 +74,6 @@ class CaseUpdateCommand(BaseCommand):
                 update_fn=self.case_blocks,
                 case_ids=with_progress_bar(case_ids, oneline=False),
                 form_meta=SystemFormMeta.for_script(self.logger_name(), username),
-                throttle_secs=self.throttle_secs,
             )
             self.logger.debug(f"Made {update_count} updates in {domain} ({i}/{len(domains)})")
 
