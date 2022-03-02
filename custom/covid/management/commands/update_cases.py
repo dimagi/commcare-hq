@@ -20,6 +20,7 @@ class CaseUpdateCommand(BaseCommand):
     def __init__(self):
         self.extra_options = {}
 
+    @property
     def logger_name(self):
         """
         Typically __name__

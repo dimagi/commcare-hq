@@ -25,8 +25,7 @@ class Command(CaseUpdateCommand):
         to an actual date.
     """)
 
-    def logger_name(self):
-        return __name__
+    logger_name = __name__
 
     def find_case_ids(self, domain):
         query = (CaseSearchES()

@@ -12,8 +12,7 @@ class Command(CaseUpdateCommand):
 
     locations_objects = None
 
-    def logger_name(self):
-        return __name__
+    logger_name = __name__
 
     @memoized
     def get_location(self, owner_id):

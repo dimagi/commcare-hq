@@ -6,8 +6,7 @@ from custom.covid.management.commands.update_cases import CaseUpdateCommand
 class Command(CaseUpdateCommand):
     help = "Makes the owner_id for cases blank"
 
-    def logger_name(self):
-        return __name__
+    logger_name = __name__
 
     def case_blocks(self, case):
         if case.get_case_property('owner_id') == '-':

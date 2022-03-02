@@ -39,8 +39,7 @@ class Command(CaseUpdateCommand):
         case_type is lab_result, the owner_id of that extension case is set to '-'.
     """
 
-    def logger_name(self):
-        return __name__
+    logger_name = __name__
 
     def case_blocks(self, case):
         inactive_location = self.extra_options['inactive_location']
