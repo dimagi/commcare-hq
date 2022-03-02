@@ -43,9 +43,9 @@ class CaseUpdateCommand(BaseCommand):
 
     def handle(self, domain, case_type, **options):
         # logger.debug will record something to a file but not print it
-        self.logger = logging.getLogger(self.logger_name())
+        self.logger = logging.getLogger(self.logger_name)
         if not settings.UNIT_TESTING:
-            self.logger.addHandler(logging.FileHandler(self.logger_name().split(".")[-1] + ".txt"))
+            self.logger.addHandler(logging.FileHandler(self.logger_name.split(".")[-1] + ".txt"))
         self.logger.setLevel(logging.DEBUG)
 
         self.logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
@@ -64,7 +64,7 @@ class CaseUpdateCommand(BaseCommand):
                 domain=domain,
                 update_fn=self.case_blocks,
                 case_ids=with_progress_bar(case_ids, oneline=False),
-                form_meta=SystemFormMeta.for_script(self.logger_name(), username),
+                form_meta=SystemFormMeta.for_script(self.logger_name, username),
             )
             self.logger.debug(f"Made {update_count} updates in {domain} ({i}/{len(domains)})")
 
