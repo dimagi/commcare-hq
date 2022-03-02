@@ -114,28 +114,26 @@ class TestAutoDeactivateMobileWorkersTask(TestCase):
             arg[0][0]
             for arg in deactivate_mobile_workers_by_inactivity.call_args_list
         )
-        self.assertEqual(
-            len(
-                domains_checked_for_inactivity.difference({
-                    'domain-account1-002',
-                    'domain-account1-001',
-                    'domain-account2-003',
-                    'domain-account2-002',
-                    'domain-account2-001',
-                })
-            ), 0
+        self.assertSetEqual(
+            domains_checked_for_inactivity,
+            {
+                'domain-account1-002',
+                'domain-account1-001',
+                'domain-account2-003',
+                'domain-account2-002',
+                'domain-account2-001',
+            }
         )
         domains_with_custom_deactivations = set(
             (arg[0][0], arg[1]['date_deactivation'])
             for arg in deactivate_mobile_workers.call_args_list
         )
-        self.assertEqual(
-            len(
-                domains_with_custom_deactivations.difference({
-                    ('domain-account1-002', self.today),
-                    ('domain-account1-001', self.today),
-                    ('domain-account4-001', self.today),
-                })
-            ), 0
+        self.assertSetEqual(
+            domains_with_custom_deactivations,
+            {
+                ('domain-account1-002', self.today),
+                ('domain-account1-001', self.today),
+                ('domain-account4-001', self.today),
+            }
         )
         metrics_gauge.assert_called_once()
