@@ -114,7 +114,7 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
             }
         )
 
-    def test_with_peer_rating_cases_2(self):
+    def test_with_peer_rating_cases_when_values_truncated(self):
         rule = create_empty_rule(
             self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
         )
