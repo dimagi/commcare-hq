@@ -213,6 +213,13 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             )
 
     def visit(node):
+
+        if isinstance(node, FunctionCall):
+            if node.name in XPATH_FUNCTIONS:
+                return XPATH_FUNCTIONS[node.name](node, fuzzy)
+            else:
+                raise XPathFunctionException(f" '{node.name}' is not a valid function name ")
+
         if not hasattr(node, 'op'):
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
