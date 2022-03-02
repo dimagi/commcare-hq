@@ -18,9 +18,9 @@ from corehq.apps.es.aggregations import (
     TermsAggregation,
     TopHitsAggregation,
 )
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT
 
 
 @es_test
