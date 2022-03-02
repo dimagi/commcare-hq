@@ -68,7 +68,6 @@ class DomainLink(models.Model):
     def is_remote(self):
         return bool(self.remote_base_url) or 'http' in self.linked_domain
 
-    @property
     def has_full_access(self):
         return (domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT)
                 and domain_has_privilege(self.linked_domain, RELEASE_MANAGEMENT))
