@@ -2180,3 +2180,10 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     on the Exports page.
     """
 )
+
+SUPERSET_ANALYTICS = StaticToggle(
+    'superset-analytics',
+    'Activates Analytics features to create Superset based reports and dashboards using UCR data',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)

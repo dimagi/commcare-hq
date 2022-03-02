@@ -244,6 +244,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    is_available_in_analytics = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
