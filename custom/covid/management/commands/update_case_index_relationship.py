@@ -42,9 +42,6 @@ class Command(CaseUpdateCommand):
     def logger_name(self):
         return __name__
 
-    def find_case_ids(self, domain):
-        return CommCareCase.objects.get_case_ids_in_domain(domain, self.case_type)
-
     def case_blocks(self, case):
         inactive_location = self.extra_options['inactive_location']
         traveler_location_id = self.extra_options['location']
