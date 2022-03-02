@@ -24,7 +24,7 @@ class Command(CaseUpdateCommand):
             return None
         user_id_of_mobile_worker = username_to_user_id(normalized_username)
         if user_id_of_mobile_worker:
-            return [CaseBlock.deprecated_init(
+            return [CaseBlock(
                 create=False,
                 case_id=case.case_id,
                 update={'hq_user_id': user_id_of_mobile_worker},

@@ -38,7 +38,7 @@ class Command(CaseUpdateCommand):
 
     def _case_block(self, case, owner_id, assignment_type):
         case_id = uuid.uuid4().hex
-        return CaseBlock.deprecated_init(
+        return CaseBlock(
             create=True,
             case_id=case_id,
             case_type='assignment',

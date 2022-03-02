@@ -54,7 +54,7 @@ class Command(CaseUpdateCommand):
 
         owner_id = get_owner_id(self.case_type)
         index = case.indices[0]
-        return [CaseBlock.deprecated_init(
+        return [CaseBlock(
             create=False,
             case_id=case.case_id,
             owner_id=owner_id,

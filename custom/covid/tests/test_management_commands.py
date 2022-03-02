@@ -51,7 +51,7 @@ class CaseCommandsTest(TestCase):
     def submit_case_block(self, create, case_id, **kwargs):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=create,
                     case_id=case_id,
                     **kwargs

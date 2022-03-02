@@ -38,7 +38,7 @@ class Command(CaseUpdateCommand):
         children = location_obj.get_children()
         for child_location in children:
             if child_location.location_type.code == CHILD_LOCATION_TYPE:
-                return [CaseBlock.deprecated_init(
+                return [CaseBlock(
                     create=False,
                     case_id=case.case_id,
                     owner_id=child_location.location_id,
