@@ -9,6 +9,8 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
+
+from corehq.apps.enterprise.views import ManageMobileWorkersView
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -1607,6 +1609,7 @@ class EnterpriseSettingsTab(UITab):
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
         enterprise_views = []
+        enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
             enterprise_views.extend([
@@ -1629,7 +1632,7 @@ class EnterpriseSettingsTab(UITab):
                 ManageSSOEnterpriseView,
                 EditIdentityProviderEnterpriseView,
             )
-            enterprise_views.append({
+            manage_sso = {
                 'title': _(ManageSSOEnterpriseView.page_title),
                 'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
                 'subpages': [
@@ -1638,7 +1641,11 @@ class EnterpriseSettingsTab(UITab):
                         'urlname': EditIdentityProviderEnterpriseView.urlname,
                     },
                 ],
-            })
+            }
+            if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+                enterprise_user_management_views.append(manage_sso)
+            else:
+                enterprise_views.append(manage_sso)
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
@@ -1650,8 +1657,13 @@ class EnterpriseSettingsTab(UITab):
                     'subpages': [],
                     'show_in_dropdown': False,
                 })
-
         items.append((_('Manage Enterprise'), enterprise_views))
+        if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+            enterprise_user_management_views.append({
+                'title': _(ManageMobileWorkersView.page_title),
+                'url': reverse(ManageMobileWorkersView.urlname, args=[self.domain]),
+            })
+            items.append((_("User Management"), enterprise_user_management_views))
 
         if BillingAccount.should_show_sms_billable_report(self.domain):
             items.extend(EnterpriseReportDispatcher.navigation_sections(
