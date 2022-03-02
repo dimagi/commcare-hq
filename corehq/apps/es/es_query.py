@@ -71,18 +71,6 @@ like inactive users or deleted docs.
 These things should nearly always be excluded, but if necessary, you can remove
 these with ``remove_default_filters``.
 
-Running against production
---------------------------
-Since the ESQuery library is read-only, it's mostly safe to run against
-production. You can define alternate elasticsearch hosts in your localsettings
-file in the ``ELASTICSEARCH_DEBUG_HOSTS`` dictionary and pass in this host name
-as the ``debug_host`` to the constructor:
-
-.. code-block:: python
-
-    >>> CaseES(debug_host='prod').domain('dimagi').count()
-    120
-
 Language
 --------
 
@@ -104,8 +92,6 @@ from copy import deepcopy
 from memoized import memoized
 
 from corehq.elastic import (
-    ES_DEFAULT_INSTANCE,
-    SIZE_LIMIT,
     ESError,
     run_query,
     count_query,
@@ -113,6 +99,7 @@ from corehq.elastic import (
 )
 
 from . import aggregations, filters, queries
+from .const import SIZE_LIMIT
 from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 
@@ -148,16 +135,15 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
+    def __init__(self, index=None, for_export=False):
         if index is not None:
             self.index = index
         # verify index canonical name
         verify_registered(self.index)  # raises ESRegistryError on failure
 
-        self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self.es_instance_alias = es_instance_alias
+        self.for_export = for_export
         self.es_query = {
             "query": {
                 "bool": {
@@ -216,8 +202,7 @@ class ESQuery(object):
         raw = run_query(
             query.index,
             query.raw_query,
-            debug_host=query.debug_host,
-            es_instance_alias=self.es_instance_alias,
+            for_export=self.for_export,
         )
         return ESQuerySet(raw, deepcopy(query))
 
@@ -232,7 +217,7 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query, es_instance_alias=self.es_instance_alias)
+        result = scroll_query(self.index, self.raw_query, for_export=self.for_export)
         for r in result:
             yield ESQuerySet.normalize_result(self, r)
 
