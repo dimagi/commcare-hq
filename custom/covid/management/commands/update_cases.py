@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id, user_id_to_username
 from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
@@ -55,18 +54,9 @@ class CaseUpdateCommand(BaseCommand):
             domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
 
         username = options.pop("username")
-        if username is not None:
-            user_id = username_to_user_id(username)
-            if not user_id:
-                raise Exception("The username you entered is invalid")
-        else:
-            user_id = SYSTEM_USER_ID
-
         self.case_type = case_type
-
         self.extra_options = options
 
-        username = user_id_to_username(user_id)
         for i, domain in enumerate(sorted(domains), start=1):
             case_ids = self.find_case_ids(domain)
             self.logger.debug(f"Found {len(case_ids)} cases in {domain} ({i}/{len(domains)})")
