@@ -114,6 +114,43 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
             }
         )
 
+    def test_with_peer_rating_cases_2(self):
+        rule = create_empty_rule(
+            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
+        )
+        self._set_up_cases([
+            {
+                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 2.2,
+                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 2.1,
+                SESSION_RATING_CASE_PROP: 4.3,
+                DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 1, 1)
+            },
+            {
+                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 2.1,
+                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 4,
+                SESSION_RATING_CASE_PROP: 6.1,
+                DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 8, 10)
+            },
+        ])
+
+        result = sanitize_session_peer_rating(self.session_case, rule)
+
+        self.assertEqual(result.num_updates, 1)
+        session_case = CommCareCase.objects.get_case(self.session_case.case_id, self.session_case.domain)
+        self.assertDictEqual(
+            session_case.case_json,
+            {
+                'agg_mean_general_skills_score': '2.1',
+                'agg_mean_treatment_specific_score': '3.0',
+                'agg_rating': '5.2',
+                'date_of_peer_review': '2020-08-10',
+                'feedback_num': '2',
+                'share_score_check': 'yes',
+                'total_session_rating': '10.4',
+                NEEDS_AGGREGATION_CASE_PROP: NEEDS_AGGREGATION_NO_VALUE,
+            }
+        )
+
     def _set_up_cases(self, peer_ratings_case_json=None):
         peer_ratings_case_json = peer_ratings_case_json or []
         session_case = CaseStructure(
