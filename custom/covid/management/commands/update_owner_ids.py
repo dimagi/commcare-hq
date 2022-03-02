@@ -1,3 +1,5 @@
+from memoized import memoized
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.locations.models import SQLLocation
