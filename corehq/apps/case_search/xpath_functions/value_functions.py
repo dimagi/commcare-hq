@@ -33,8 +33,3 @@ def date(node):
     raise XPathFunctionException(
         "The \"date\" function only accepts integers or strings of the format \"YYYY-mm-dd\""
     )
-
-
-XPATH_FUNCTIONS = {
-    'date': date,
-}

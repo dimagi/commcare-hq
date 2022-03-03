@@ -8,7 +8,7 @@ from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, BinaryExpression, serialize
 
 from corehq.apps.case_search.xpath_functions import (
-    XPATH_FUNCTIONS,
+    XPATH_VALUE_FUNCTIONS,
     XPathFunctionException,
 )
 from corehq.apps.es import filters, queries
@@ -219,12 +219,12 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         if not isinstance(node, FunctionCall):
             return node
         try:
-            return XPATH_FUNCTIONS[node.name](node)
+            return XPATH_VALUE_FUNCTIONS[node.name](node)
         except KeyError:
             raise CaseFilterError(
                 _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(
                     node.name,
-                    ", ".join(list(XPATH_FUNCTIONS.keys())),
+                    ", ".join(list(XPATH_VALUE_FUNCTIONS.keys())),
                 ),
                 serialize(node)
             )
