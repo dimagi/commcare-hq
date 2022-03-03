@@ -147,26 +147,19 @@ def case_property_query(case_property_name, value, fuzzy=False, mode=None):
     """
     if value is None:
         raise TypeError("You cannot pass 'None' as a case property value")
-    if mode not in ['AND', 'OR', None]:
-        raise ValueError(" 'mode' must be one of: 'AND', 'OR', None")
+    if mode not in ['and', 'or', None]:
+        raise ValueError(" 'mode' must be one of: 'and', 'or', None")
     if value == '':
         return case_property_missing(case_property_name)
-    if fuzzy and (mode is None or mode == 'OR'):
+    if fuzzy:
         return filters.OR(
             # fuzzy match
-            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
+            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator=mode),
             # non-fuzzy match. added to improve the score of exact matches
-            case_property_text_query(case_property_name, value),
+            case_property_text_query(case_property_name, value, operator=mode),
         )
-    if fuzzy and mode == 'AND':
-        return filters.AND(
-            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator='and'),
-            case_property_text_query(case_property_name, value),
-        )
-    if not fuzzy and mode == 'OR':
-        return case_property_text_query(case_property_name, value, operator='or')
-    if not fuzzy and mode == 'AND':
-        return case_property_text_query(case_property_name, value, operator='and')
+    if not fuzzy and mode in ['or', 'and']:
+        return case_property_text_query(case_property_name, value, operator=mode)
     return exact_case_property_text_query(case_property_name, value)
 
 
