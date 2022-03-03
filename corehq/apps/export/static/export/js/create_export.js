@@ -31,6 +31,7 @@ hqDefine("export/js/create_export", [
         var self = {};
 
         self.isOData = initialPageData.get('is_odata', true);
+        self.isGSheet = initialPageData.get('isGSheet', true);
 
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
@@ -262,6 +263,14 @@ hqDefine("export/js/create_export", [
             if (self.isOData) {
                 kissmetricsAnalytics.track.event(
                     "[BI Integration] Clicked Add Odata Feed button",
+                    {
+                        "Feed Type": self.modelType(),
+                    }
+                );
+                setTimeout(self.submitNewExportForm, 250);
+            } else if (self.isGSheet) {
+                kissmetricsAnalytics.track.event(
+                    "[BI Integration] Clicked Add Google Sheet button",
                     {
                         "Feed Type": self.modelType(),
                     }
