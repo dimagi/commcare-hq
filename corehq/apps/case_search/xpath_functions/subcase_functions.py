@@ -105,53 +105,83 @@ def _parse_normalize_subcase_query(node) -> SubCaseQuery:
 
     Supports the following syntax:
     - subcase-exists('X', {subcase filter} )
-    - subcase-count('X', {subcase_filter} ) {one of =, !=, >, <, >=, <= } {integer value}
+    - subcase-count('X', {subcase_filter} ) {=, !=, >, <, >=, <=} {integer value}
     """
-    current_node = node
-    invert_condition = False
+    index_identifier, subcase_filter, count_op, case_count = _extract_subcase_query_parts(node)
+    case_count, count_op, invert_condition = _normalize_param(case_count, count_op)
+    return SubCaseQuery(index_identifier, subcase_filter, count_op, case_count, invert_condition)
 
-    # If subcase query is a count comparison:
-    # Set current_op and case_count, and traverse to left node
-    if isinstance(current_node, BinaryExpression):
-        count_op = current_node.op
+
+def _normalize_param(case_count, count_op):
+    invert_condition = False
+    if count_op == "<":
+        # count < N -> not( count > N - 1 )
+        count_op = ">"
+        invert_condition = not invert_condition
+        case_count -= 1
+    elif count_op == "<=":
+        # count <= N -> not( count > N )
+        count_op = ">"
+        invert_condition = not invert_condition
+    elif count_op == ">=":
+        # count >= N -> count > N -1
+        count_op = ">"
+        case_count -= 1
+    elif count_op == "!=":
+        # count != N -> not( count = N )
+        count_op = '='
+        invert_condition = not invert_condition
+    if count_op == "=" and case_count == 0:
+        # count = 0 -> not( count > 0 )
+        count_op = ">"
+        invert_condition = not invert_condition
+    return case_count, count_op, invert_condition
+
+
+def _extract_subcase_query_parts(node):
+    current_node = node
+    if isinstance(node, BinaryExpression):
+        count_op = node.op
+        case_count = node.right
+        current_node = node.left
 
         if count_op not in [">", "<", "<=", ">=", "=", "!="]:
             raise XPathFunctionException(
                 _("Unsupported operator for use with 'subcase-count': {op}").format(op=count_op),
+                serialize(node)
+            )
+
+        try:
+            case_count = int(case_count)
+        except ValueError:
+            raise XPathFunctionException(
+                _("'subcase-count' must be compared to a positive integer"),
+                serialize(node)
+            )
+
+        if case_count < 0:
+            raise XPathFunctionException(
+                _("'subcase-count' must be compared to a positive integer"),
+                serialize(node)
+            )
+
+        if not isinstance(current_node, FunctionCall) or str(current_node.name) != "subcase-count":
+            raise XPathFunctionException(
+                _("XPath incorrectly formatted. Expected 'subcase-count'"),
                 serialize(current_node)
             )
 
-        case_count = current_node.right
-        current_node = current_node.left
+    else:
+        if not isinstance(node, FunctionCall) or str(node.name) != "subcase-exists":
+            raise XPathFunctionException(
+                _("XPath incorrectly formatted. Expected 'subcase-exists'"),
+                serialize(node)
+            )
 
-    if str(current_node.name) not in ["subcase-exists", "subcase-count"]:
-        raise XPathFunctionException(
-            _("XPath incorrectly formatted. Expected: subcase-exists or subcase-count."),
-            serialize(current_node)
-        )
-
-    if str(current_node.name) == "subcase-exists":
         case_count = 0
         count_op = ">"
 
-    if count_op in ["<", "<="]:
-        invert_condition = not invert_condition
-
-    if count_op in [">=", "<"]:
-        case_count -= 1
-
-    if count_op == "!=":
-        count_op = '='
-        invert_condition = not invert_condition
-
-    if count_op != "=":
-        count_op = ">"
-
-    if count_op == "=" and case_count == 0:
-        count_op = ">"
-        invert_condition = not invert_condition
-
     index_identifier = current_node.args[0]
-    subcase_predicates = current_node.args[1]
+    subcase_filter = current_node.args[1]
 
-    return SubCaseQuery(index_identifier, subcase_predicates, count_op, case_count, invert_condition)
+    return index_identifier, subcase_filter, count_op, case_count
