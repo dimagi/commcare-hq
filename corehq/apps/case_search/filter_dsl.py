@@ -230,7 +230,6 @@ def build_filter_from_ast(domain, node, fuzzy=False):
                 )
 
         if not hasattr(node, 'op'):
-            # TODO: adjust this for subcase queries
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
                     boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
