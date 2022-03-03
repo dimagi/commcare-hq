@@ -98,6 +98,7 @@ from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
+from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
@@ -537,10 +538,14 @@ def ping_response(request):
     current_build_id = request.GET.get('selected_app_id', '')
     domain = request.GET.get('domain', '')
     new_app_version_available = False
-    if current_build_id and domain:
+    # Do not show popup to users who have use_latest_build_cloudcare ff enabled
+    latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
+                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
+    if current_build_id and domain and not latest_build_ff_enabled:
         app = get_app_cached(domain, current_build_id)
         app_id = app['copy_of'] if app['copy_of'] else app['_id']
         latest_build_id = get_latest_released_build_id(domain, app_id)
+
         if latest_build_id:
             new_app_version_available = current_build_id != latest_build_id
 

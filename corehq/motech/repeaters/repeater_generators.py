@@ -397,7 +397,6 @@ class CaseUpdateConfig:
         "registry_slug",
         "domain",
         "case_id",
-        "case_type",
     ]
 
     intent_case = attr.ib()
@@ -463,6 +462,8 @@ class CaseUpdateConfig:
         if self.create_case:
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+            if not self.case_type:
+                raise DataRegistryCaseUpdateError("'case_type' required when creating cases")
             kwargs = {
                 "create": True,
                 "case_type": self.case_type,
@@ -592,7 +593,7 @@ class CaseUpdateConfig:
         if for_create:
             raise DataRegistryCaseUpdateError(f"Unable to create case as it already exists: {case_id}")
 
-        if case.domain != domain or case.type != case_type:
+        if case.domain != domain or (case_type and case.type != case_type):
             raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
 
         return case

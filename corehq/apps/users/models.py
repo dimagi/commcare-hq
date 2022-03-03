@@ -77,6 +77,7 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
+    bulk_auto_deactivate_commcare_users,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -1435,6 +1436,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     bulk_save = save_docs
 
     def save(self, fire_signals=True, **params):
+        # HEADS UP!
+        # When updating this method, please also ensure that your updates also
+        # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
@@ -1450,9 +1454,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             super(CouchUser, self).save(**params)
 
         if fire_signals:
-            from .signals import couch_user_post_save
-            results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            self.fire_signals()
+
+    def fire_signals(self):
+        from .signals import couch_user_post_save
+        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -3109,3 +3116,20 @@ class DeactivateMobileWorkerTrigger(models.Model):
     domain = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
     deactivate_after = models.DateField()
+
+    @classmethod
+    def deactivate_mobile_workers(cls, domain, date_deactivation):
+        """
+        This deactivates all CommCareUsers who have a matching
+        DeactivateMobileWorkerTrigger with deactivate_after
+        :param domain: String - domain name
+        :param date_deactivation: Date
+        """
+        trigger_query = cls.objects.filter(
+            domain=domain,
+            deactivate_after__lte=date_deactivation
+        )
+        user_ids = trigger_query.values_list('user_id', flat=True)
+        for chunked_ids in chunked(user_ids, 100):
+            bulk_auto_deactivate_commcare_users(chunked_ids, domain)
+            cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()

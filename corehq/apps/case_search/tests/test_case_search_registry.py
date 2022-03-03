@@ -1,9 +1,10 @@
 import uuid
-
 from unittest import mock
+
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
+
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
@@ -12,10 +13,14 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.models import (
-    CASE_SEARCH_REGISTRY_ID_KEY,
     CaseSearchConfig,
+    SearchCriteria,
+    criteria_dict_to_criteria_list,
 )
-from corehq.apps.case_search.utils import get_case_search_results, _get_registry_visible_domains
+from corehq.apps.case_search.utils import (
+    _get_registry_visible_domains,
+    get_case_search_results,
+)
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -146,7 +151,8 @@ class TestCaseSearchRegistry(TestCase):
         case_search_es_teardown()
         super().tearDownClass()
 
-    def _run_query(self, domain, case_types, criteria, registry_slug):
+    def _run_query(self, domain, case_types, criteria_dict, registry_slug):
+        criteria = criteria_dict_to_criteria_list(criteria_dict)
         results = get_case_search_results(domain, case_types, criteria, registry_slug=registry_slug)
         return [(case.name, case.domain) for case in results]
 
@@ -269,7 +275,7 @@ class TestCaseSearchRegistry(TestCase):
         results = get_case_search_results(
             self.domain_1,
             ["person"],
-            {"name": "Jane"},
+            [SearchCriteria("name", "Jane")],
             registry_slug=self.registry_slug
         )
         self.assertItemsEqual([
@@ -287,7 +293,7 @@ class TestCaseSearchRegistry(TestCase):
             results = get_case_search_results(
                 self.domain_1,
                 ["creative_work"],
-                {"name": "Jane Eyre"},  # from domain 2
+                [SearchCriteria("name", "Jane Eyre")],  # from domain 2
                 app_id="mock_app_id",
                 registry_slug=self.registry_slug
             )

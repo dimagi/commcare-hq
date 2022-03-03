@@ -1,10 +1,14 @@
+import logging
 import uuid
+from datetime import timedelta
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.domain.shortcuts import create_domain
@@ -47,7 +51,7 @@ class CaseCommandsTest(TestCase):
     def submit_case_block(self, create, case_id, **kwargs):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=create,
                     case_id=case_id,
                     **kwargs
@@ -378,41 +382,101 @@ class CaseCommandsTest(TestCase):
 class TestUpdateAllActivityCompleteDate(TestCase):
     domain = 'all_activity_complete_date'
 
+    @staticmethod
+    def _make_case(case_type, update, inactive_owner=True):
+        case_id = str(uuid.uuid4())
+        return CaseBlock(
+            case_id=case_id,
+            case_type=case_type,
+            case_name=case_id,
+            owner_id='9074edfe555043fd8f16825a6236a313' if inactive_owner else 'active',
+            create=True,
+            update={**{
+                "all_activity_complete_date": "",
+                'current_status': 'closed',
+            }, **update},
+        )
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.bad_case_id = str(uuid.uuid4())
-        cls.good_case_id = str(uuid.uuid4())
-        case_search_es_setup(cls.domain, [
-            CaseBlock(
-                case_id=cls.bad_case_id,
-                case_type='patient',
-                case_name="bad_case",
-                owner_id='owner1',
-                create=True,
-                update={"all_activity_complete_date": "date(today())"},
-            ),
-            CaseBlock(
-                case_id=cls.good_case_id,
-                case_type='patient',
-                case_name="bad_case",
-                owner_id='owner1',
-                create=True,
-                update={"all_activity_complete_date": "original_value"},
-            ),
-        ])
+        cls.cases = {
+            'good': cls._make_case('patient', {"all_activity_complete_date": "original_value"}),
+            'bad_but_ignore': cls._make_case('patient', {"all_activity_complete_date": "date(today())"}),
+            'not_status_closed': cls._make_case('patient', {"current_status": "open"}),
+            'in_active_location': cls._make_case(
+                'patient', {"isolation_end_date": "2022-01-04"}, inactive_owner=False),
+            'contact_to_ignore': cls._make_case('contact', {'final_disposition': 'converted_to_pui'}),
+            'patient_to_update': cls._make_case('patient', {"isolation_end_date": "2022-01-04"}),
+            'patient_to_update_adjust': cls._make_case('patient', {"symptom_onset_date": "2022-01-05"}),
+            'contact_to_update': cls._make_case('contact', {"quarantine_end_date": "2022-01-07"}),
+            'contact_to_update_adjust': cls._make_case('contact', {"exposure_date": "2022-01-06"}),
+            'no_fallback': cls._make_case('patient', {}),
+        }
+        case_search_es_setup(cls.domain, list(cls.cases.values()))
 
     @classmethod
     def tearDownClass(cls):
         case_search_es_teardown()
         super().tearDownClass()
 
+    @patch('corehq.apps.hqcase.bulk.username_to_user_id', new=lambda _: 'my_username')
     def test(self):
-        call_command('update_all_activity_complete_date', self.domain)
+        logging.getLogger('custom.covid.management.commands.update_all_activity_complete_date').disabled = True
+        call_command('update_all_activity_complete_date', self.domain, 'patient')
+        call_command('update_all_activity_complete_date', self.domain, 'contact')
 
-        bad_case = CommCareCase.objects.get_case(self.bad_case_id)
-        self.assertEqual(bad_case.get_case_property('all_activity_complete_date'), '')
+        cases = {
+            label: (CommCareCase.objects.get_case(case_block.case_id), case_block)
+            for label, case_block in self.cases.items()
+        }
 
-        good_case = CommCareCase.objects.get_case(self.good_case_id)
-        self.assertEqual(good_case.get_case_property('all_activity_complete_date'), 'original_value')
-        self.assertEqual(len(good_case.transactions), 1)
+        # These cases should not have been affected
+        for label in [
+                'good',
+                'bad_but_ignore',
+                'not_status_closed',
+                'in_active_location',
+                'contact_to_ignore',
+        ]:
+            case, case_block = cases[label]
+            self.assertEqual(len(case.transactions), 1)
+            self.assertEqual(
+                case.get_case_property('all_activity_complete_date'),
+                case_block.update.get('all_activity_complete_date'),
+            )
+
+        case, case_block = cases['patient_to_update']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            case_block.update.get('isolation_end_date'),
+        )
+
+        case, case_block = cases['patient_to_update_adjust']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            '2022-01-20',
+        )
+
+        case, case_block = cases['contact_to_update']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            case_block.update.get('quarantine_end_date'),
+        )
+
+        case, case_block = cases['contact_to_update_adjust']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            '2022-01-21',
+        )
+
+        case, case_block = cases['no_fallback']
+        self.assertEqual(len(case.transactions), 2)
+        self.assertEqual(
+            case.get_case_property('all_activity_complete_date'),
+            json_format_date(case.get_case_property('opened_on') + timedelta(days=15))
+        )

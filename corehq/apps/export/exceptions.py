@@ -24,3 +24,7 @@ class ExportODataDuplicateLabelException(Exception):
 
 class RejectedStaleExport(Exception):
     pass
+
+
+class InvalidLoginException(Exception):
+    pass

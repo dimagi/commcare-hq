@@ -14,10 +14,5 @@ class Command(BaseCommand):
         parser.add_argument('--send_date', help="YYYY-MM-DD")
 
     def handle(self, domain_name, **options):
-        if options.get('send_date'):
-            send_date = datetime.strptime(options['send_date'], '%Y-%m-%d')
-        else:
-            send_date = None
-        send_datasets.apply(args=[domain_name], kwargs={
-            'send_now': True, 'send_date': send_date,
-        })
+        send_date = options.get('send_date', None)
+        send_datasets.apply(args=[domain_name], kwargs={'send_now': True, 'date_to_send': send_date})
