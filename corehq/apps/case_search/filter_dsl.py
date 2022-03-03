@@ -1,5 +1,6 @@
 import re
 from collections import Counter
+from dataclasses import dataclass
 
 from django.utils.translation import ugettext as _
 
@@ -28,14 +29,6 @@ class CaseFilterError(Exception):
 
 class TooManyRelatedCasesError(CaseFilterError):
     pass
-
-
-class SubCaseQuery():
-    def __init__(self, node):
-        pass
-
-    def get_config():
-        return
 
 
 def print_ast(node):
@@ -315,6 +308,20 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     return visit(node)
 
 
+@dataclass
+class SubCaseQuery:
+    index_identifier: str
+    subcase_filter: object
+    count_op: str
+    count: int
+    invert: bool
+
+    def as_tuple(self):
+        return (
+            self.index_identifier, serialize(self.subcase_filter), self.count_op, self.count, self.invert
+        )
+
+
 def _parse_normalize_subcase_query(node):
     """Parse the subcase query and normalize it to the form 'subcase_count > N' or 'subcase_count = N'
 
@@ -398,11 +405,12 @@ def _parse_normalize_subcase_query(node):
         invert_condition = not invert_condition
 
     index_indetifier = current_node.args[0]
-    subcase_predicates = parse_predicates(current_node.args[1])
+    # subcase_predicates = parse_predicates(current_node.args[1])
+    subcase_predicates = current_node.args[1]
 
     print(index_indetifier, subcase_predicates, count_op, case_count, invert_condition)
 
-    return index_indetifier, subcase_predicates, count_op, case_count, invert_condition
+    return SubCaseQuery(index_indetifier, subcase_predicates, count_op, case_count, invert_condition)
 
 
 def build_filter_from_xpath(domain, xpath, fuzzy=False):

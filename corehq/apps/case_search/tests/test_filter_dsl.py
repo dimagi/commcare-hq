@@ -580,68 +580,67 @@ def test_subcase_query_parsing():
     def _check(query, expected):
         node = parse_xpath(query)
         result = _parse_normalize_subcase_query(node)
-        result = result[0:1] + ([serialize_xpath(v) for v in result[1]],) + result[2:]
-        eq(result, expected)
+        eq(result.as_tuple(), expected)
 
     yield from [
         (
             _check,
             "subcase_exists('parent', @case_type='bob')",
-            ("parent", ["@case_type='bob'"], ">", 0, False)
+            ("parent", "@case_type='bob'", ">", 0, False)
         ),
         (
             _check,
-            "subcase_exists('p', (@case_type='bob' and prop='value'))",
-            ("p", ["@case_type='bob'", "prop='value'"], ">", 0, False)
+            "subcase_exists('p', @case_type='bob' and prop='value')",
+            ("p", "@case_type='bob' and prop='value'", ">", 0, False)
         ),
         (
             _check,
             "not(subcase_exists('p', prop=1))",
-            ("p", ["prop=1"], ">", 0, True)
+            ("p", "prop=1", ">", 0, True)
         ),
         (
             _check,
             "subcase_count('p', prop=1) > 3",
-            ("p", ["prop=1"], ">", 3, False)
+            ("p", "prop=1", ">", 3, False)
         ),
         (
             _check,
             "subcase_count('p', prop=1) >= 3",
-            ("p", ["prop=1"], ">", 2, False)
+            ("p", "prop=1", ">", 2, False)
         ),
         (
             _check,
             "subcase_count('p', prop=1) < 3",
-            ("p", ["prop=1"], ">", 2, True)
+            ("p", "prop=1", ">", 2, True)
         ),
         (
             _check,
             "subcase_count('p', prop=1) <= 3",
-            ("p", ["prop=1"], ">", 3, True)
+            ("p", "prop=1", ">", 3, True)
         ),
         (
             _check,
             "subcase_count('p', prop=1) = 3",
-            ("p", ["prop=1"], "=", 3, False)
+            ("p", "prop=1", "=", 3, False)
         ),
         (
             _check,
             "subcase_count('p', prop=1) = 0",
-            ("p", ["prop=1"], ">", 0, True)
+            ("p", "prop=1", ">", 0, True)
         ),
         (
             _check,
             "subcase_count('p', prop=1) != 2",
-            ("p", ["prop=1"], "=", 2, True)
+            ("p", "prop=1", "=", 2, True)
         ),
         (
             _check,
             "not(subcase_count('p', prop=1) = 2)",
-            ("p", ["prop=1"], "=", 2, True)
+            ("p", "prop=1", "=", 2, True)
         ),
         (  # double inversion: not, <
             _check,
             "not(subcase_count('p', prop=1) < 3)",
-            ("p", ["prop=1"], ">", 2, False)
+            ("p", "prop=1", ">", 2, False)
         ),
     ]
