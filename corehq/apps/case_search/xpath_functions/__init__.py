@@ -8,5 +8,6 @@ XPATH_VALUE_FUNCTIONS = {
 
 
 XPATH_QUERY_FUNCTIONS = {
-    'subcase-exists': subcase,
+    'subcase_exists': subcase,
+    'subcase_count': subcase,
 }

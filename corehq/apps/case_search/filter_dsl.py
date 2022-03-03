@@ -3,7 +3,7 @@ import re
 from django.utils.translation import ugettext as _
 
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
+from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize, BinaryExpression
 
 from corehq.apps.case_search.xpath_functions import (
     XPATH_VALUE_FUNCTIONS,
@@ -145,9 +145,13 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
 
-    def _is_subcase_lookup(node):
-        """Returns whether a particular AST node is a subcase lookup."""
-        return False  # TODO
+    def _is_subcase_count(node):
+        """Returns whether a particular AST node is a subcase lookup.
+        This is needed for subcase-count since we need the full expression, not just the function."""
+        if not isinstance(node, BinaryExpression):
+            return False
+
+        return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
     def _raise_step_RHS(node):
         raise CaseFilterError(
@@ -240,8 +244,8 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             # this node represents a filter on a property for a related case
             return _walk_ancestor_cases(node)
 
-        if _is_subcase_lookup(node):
-            return _subcase_filter(node)
+        if _is_subcase_count(node):
+            return XPATH_QUERY_FUNCTIONS['subcase_count'](domain, node, fuzzy)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf
