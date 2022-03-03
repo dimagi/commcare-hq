@@ -4,6 +4,9 @@ version: 2
 sphinx:
   configuration: docs/conf.py
 formats: all
+build:
+  tools:
+    python: "3.9"
 python:
   install:
     - requirements: requirements/docs-requirements.txt
