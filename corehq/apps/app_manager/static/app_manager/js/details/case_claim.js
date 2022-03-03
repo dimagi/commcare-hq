@@ -154,7 +154,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'excludeFromSearch',
         ], saveButton);
         return self;
     };
@@ -334,6 +334,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
+                    excludeFromSearch: searchProperties[i].excludeFromSearch,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -372,6 +373,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
+                        excludeFromSearch: p.excludeFromSearch(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
