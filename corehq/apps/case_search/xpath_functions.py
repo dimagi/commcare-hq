@@ -65,8 +65,11 @@ def selected_all(node, fuzzy):
     return case_property_query(property_name, search_values, fuzzy=fuzzy, mode='AND')
 
 
-XPATH_FUNCTIONS = {
+XPATH_VALUE_FUNCTIONS = {
     'date': date,
+}
+
+XPATH_QUERY_FUNCTIONS = {
     'selected': selected,
     'selected-any': selected_any,
     'selected-all': selected_all,
