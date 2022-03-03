@@ -65,7 +65,6 @@ branches:
     - jls/drop-case-search-limit # Jenny Jan 31
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
-    # - ap/link-permissions-to-expressions+mk/support-multibar-reports+gh/mrm/erm-includes-mrm+gh/mrm/newly-linked-domain+gh/mrm/base
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
