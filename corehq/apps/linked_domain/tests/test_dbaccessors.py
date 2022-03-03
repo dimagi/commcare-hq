@@ -61,7 +61,8 @@ class TestGetAvailableUpstreamDomains(SimpleTestCase):
 
         upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
 
-        self.assertSetEqual(set(upstream_domains), {'domain'})
+        self.assertEqual(len(upstream_domains), 1)
+        self.assertEqual(upstream_domains[0], 'domain')
 
     def test_returns_domains_for_user_if_not_enterprise_and_release_management_privilege(self, mock_user):
         self.mock_is_enterprise.return_value = False
@@ -143,7 +144,8 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
 
         domains = get_available_domains_to_link('upstream', mock_user)
 
-        self.assertSetEqual(set(domains), {'domain'})
+        self.assertEqual(len(domains), 1)
+        self.assertEqual(domains[0], 'domain')
 
     def test_returns_domains_for_user_if_not_enterprise_and_release_management_privilege(self, mock_user):
         self.mock_is_enterprise.return_value = False
