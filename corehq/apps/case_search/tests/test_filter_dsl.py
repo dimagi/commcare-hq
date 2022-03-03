@@ -639,11 +639,6 @@ def test_subcase_query_parsing():
         ),
         (
             _check,
-            "not(subcase-exists('p', prop=1))",
-            ("p", "prop=1", ">", 0, True)
-        ),
-        (
-            _check,
             "subcase-count('p', prop=1) > 3",
             ("p", "prop=1", ">", 3, False)
         ),
@@ -676,15 +671,5 @@ def test_subcase_query_parsing():
             _check,
             "subcase-count('p', prop=1) != 2",
             ("p", "prop=1", "=", 2, True)
-        ),
-        (
-            _check,
-            "not(subcase-count('p', prop=1) = 2)",
-            ("p", "prop=1", "=", 2, True)
-        ),
-        (  # double inversion: not, <
-            _check,
-            "not(subcase-count('p', prop=1) < 3)",
-            ("p", "prop=1", ">", 2, False)
         ),
     ]

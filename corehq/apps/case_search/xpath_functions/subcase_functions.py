@@ -110,17 +110,6 @@ def _parse_normalize_subcase_query(node) -> SubCaseQuery:
     current_node = node
     invert_condition = False
 
-    try:
-        assert isinstance(current_node, (FunctionCall, BinaryExpression, Step))
-    except AssertionError:
-        raise XPathFunctionException("Xpath incorrectly formatted. Check your subcase function syntax.")
-
-    # If xpath is a NOT(query), set invert_condition and get first arg
-    if isinstance(current_node, FunctionCall):
-        if current_node.name.lower() == "not":
-            invert_condition = not invert_condition
-            current_node = current_node.args[0]
-
     # If subcase query is a count comparison:
     # Set current_op and case_count, and traverse to left node
     if isinstance(current_node, BinaryExpression):
