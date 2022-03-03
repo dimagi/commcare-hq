@@ -12,10 +12,8 @@ from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
 )
-from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.exceptions import CaseSearchUserError, CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.filter_dsl import (
-    CaseFilterError,
-    TooManyRelatedCasesError,
     build_filter_from_xpath,
 )
 from corehq.apps.case_search.models import (

@@ -9,9 +9,9 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.filter_dsl import (
-    CaseFilterError,
     build_filter_from_ast,
 )
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch

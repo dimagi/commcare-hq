@@ -1,2 +1,0 @@
-class XPathFunctionException(Exception):
-    pass

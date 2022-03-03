@@ -3,11 +3,10 @@ from dataclasses import dataclass
 
 from django.utils.translation import ugettext as _
 
-from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step, serialize
+from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize
 
+from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import CaseSearchES, filters, queries
-
-from .exceptions import XPathFunctionException
 
 
 @dataclass
@@ -44,6 +43,11 @@ class SubCaseQuery:
 
 
 def subcase(domain, node, fuzzy=False):
+    """
+    Supports the following syntax:
+    - subcase-exists('parent', {subcase filter} )
+    - subcase-count('host', {subcase_filter} ) {=, !=, >, <, >=, <=} {integer value}
+    """
     subcase_query = _parse_normalize_subcase_query(node)
     ids = _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy)
     if subcase_query.invert:
@@ -62,9 +66,10 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
     from corehq.apps.case_search.filter_dsl import (
         MAX_RELATED_CASES,
-        TooManyRelatedCasesError,
         build_filter_from_ast,
     )
+
+    from ..exceptions import TooManyRelatedCasesError
 
     subcase_filter = build_filter_from_ast(domain, subcase_query.subcase_filter, fuzzy=fuzzy)
 
@@ -107,10 +112,6 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:
     """Parse the subcase query and normalize it to the form 'subcase-count > N' or 'subcase-count = N'
-
-    Supports the following syntax:
-    - subcase-exists('X', {subcase filter} )
-    - subcase-count('X', {subcase_filter} ) {=, !=, >, <, >=, <=} {integer value}
     """
     index_identifier, subcase_filter, count_op, case_count = _extract_subcase_query_parts(node)
     case_count, count_op, invert_condition = _normalize_param(case_count, count_op)

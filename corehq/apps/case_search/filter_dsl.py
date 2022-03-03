@@ -3,12 +3,22 @@ import re
 from django.utils.translation import ugettext as _
 
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize, BinaryExpression
+from eulxml.xpath.ast import (
+    BinaryExpression,
+    FunctionCall,
+    Step,
+    UnaryExpression,
+    serialize,
+)
 
-from corehq.apps.case_search.xpath_functions import (
-    XPATH_VALUE_FUNCTIONS,
-    XPATH_QUERY_FUNCTIONS,
+from corehq.apps.case_search.exceptions import (
+    CaseFilterError,
+    TooManyRelatedCasesError,
     XPathFunctionException,
+)
+from corehq.apps.case_search.xpath_functions import (
+    XPATH_QUERY_FUNCTIONS,
+    XPATH_VALUE_FUNCTIONS,
 )
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
@@ -17,17 +27,6 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     reverse_index_case_query,
 )
-
-
-class CaseFilterError(Exception):
-
-    def __init__(self, message, filter_part):
-        self.filter_part = filter_part
-        super(CaseFilterError, self).__init__(message)
-
-
-class TooManyRelatedCasesError(CaseFilterError):
-    pass
 
 
 def print_ast(node):

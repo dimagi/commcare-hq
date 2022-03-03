@@ -1,8 +1,7 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
-
-from .exceptions import XPathFunctionException
 
 
 def _not(domain, node, fuzzy):
