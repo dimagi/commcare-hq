@@ -174,16 +174,17 @@ class Command(BaseCommand):
 
         total_users = 0
         total_average_forms = 0
-        n = 0
+        months = 0
 
         for stat in user_stat_from_malt:
             total_average_forms += stat['avg_forms']
             total_users += stat['num_users']
-            n += 1
+            months += 1
 
         ResourceModel.set_stat(ResourceModel.TOTAL_USERS, total_users)
-        if n > 0:
-            ResourceModel.set_stat(ResourceModel.MONTHLY_FORMS_PER_USER, total_average_forms/n)
+
+        if months > 0:
+            ResourceModel.set_stat(ResourceModel.MONTHLY_FORMS_PER_USER, total_average_forms/months)
 
         monthly_user_stats = user_stat_from_malt\
             .filter(user_type__in=['CommCareUser'])\
@@ -406,17 +407,17 @@ class Command(BaseCommand):
 
         with db_cursor as cursor:
             cursor.execute("""
-                SELECT COUNT(*) as num_forms, d.count as num_updates 
+                SELECT COUNT(*) as num_forms, d.count as num_updates
                 FROM (
                     SELECT COUNT(*) as count
-                    FROM form_processor_casetransaction 
+                    FROM form_processor_casetransaction
                     WHERE case_id IN (
-                        SELECT case_id 
-                        FROM form_processor_commcarecasesql 
+                        SELECT case_id
+                        FROM form_processor_commcarecasesql
                         WHERE domain = %s
                     )
                     GROUP BY form_id
-                ) AS d 
+                ) AS d
                 GROUP BY d.count;
             """, [self.domain])
             result = cursor.fetchall()
@@ -426,14 +427,15 @@ class Command(BaseCommand):
             for num_forms, num_updates in result:
                 total_forms += num_forms
                 running_form_case_updates += num_forms * num_updates
+
             ResourceModel.set_stat(ResourceModel.CASE_TRANSACTIONS_FACTOR, running_form_case_updates / total_forms)
 
             cursor.execute("""
-                SELECT COUNT(*) 
-                FROM form_processor_casetransaction 
+                SELECT COUNT(*)
+                FROM form_processor_casetransaction
                 WHERE case_id IN (
-                    SELECT case_id 
-                    FROM form_processor_commcarecasesql 
+                    SELECT case_id
+                    FROM form_processor_commcarecasesql
                     WHERE domain = %s
                 );
             """, [self.domain])
@@ -446,8 +448,8 @@ class Command(BaseCommand):
 
         with db_cursor as cursor:
             cursor.execute("""
-                SELECT COUNT(*) 
-                FROM form_processor_commcarecaseindexsql 
+                SELECT COUNT(*)
+                FROM form_processor_commcarecaseindexsql
                 WHERE domain = %s;
             """, [self.domain])
             (total_case_indices,) = cursor.fetchone()
@@ -462,16 +464,16 @@ class Command(BaseCommand):
 
         with db_cursor as cursor:
             cursor.execute("""
-                SELECT COUNT(*), d.count 
+                SELECT COUNT(*), d.count
                 FROM (
-                    SELECT COUNT(*) AS count 
+                    SELECT COUNT(*) AS count
                     FROM phone_synclogsql
                     WHERE domain = %s
                     GROUP BY user_id
-                ) AS d 
-                GROUP BY d.count 
+                ) AS d
+                GROUP BY d.count
                 ORDER BY d.count;
-            """,  [self.domain])
+            """, [self.domain])
             result = cursor.fetchall()
 
             total_user_synclogs = 0
@@ -530,7 +532,7 @@ class Command(BaseCommand):
         )
 
         monthly_forms_per_user = ResourceModel.get_stat(ResourceModel.MONTHLY_FORMS_PER_USER)
-        self.stdout.write(f'Average user forms per month: {monthly_forms_per_user}')
+        self.stdout.write(f'Average forms per user per month: {monthly_forms_per_user}')
 
         self.stdout.write('')
         self.stdout.write('System user stats')
@@ -553,7 +555,7 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Cases updated per user'], case_updates)
 
         monthly_cases_per_user = ResourceModel.get_stat(ResourceModel.MONTHLY_CASES_PER_USER)
-        self.stdout.write(f'Average user cases per month: {monthly_cases_per_user}')
+        self.stdout.write(f'Average cases per user per month: {monthly_cases_per_user}')
 
     def _output_case_ratio_index(self):
         case_index_ratio = ResourceModel.get_stat(ResourceModel.CASE_INDEX_RATIO)
