@@ -1150,7 +1150,7 @@ class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
         return format_html(_("""
         Integrate your live CommCare data with Google Sheets.
         <a href=""
-       id="js-odata-track-learn-more"
+       id="js-gsheet-track-learn-more"
        target="_blank">
         Learn more.
         </a><br />

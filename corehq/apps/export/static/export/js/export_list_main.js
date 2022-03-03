@@ -16,7 +16,8 @@ hqDefine("export/js/export_list_main", [
 ) {
     $(function () {
         var $createExport = $("#create-export"),
-            isOData = initialPageData.get('is_odata', true);
+            isOData = initialPageData.get('is_odata', true),
+            isGSheet = initialPageData.get('is_data', true);
 
         if ($createExport.length) {
             $createExport.koApplyBindings(createModels.createExportModel({
@@ -28,6 +29,7 @@ hqDefine("export/js/export_list_main", [
                     is_feed: initialPageData.get('is_feed', true),
                     is_deid: initialPageData.get('is_deid', true),
                     is_odata: isOData,
+                    is_gsheet: isGSheet,
                     model_type: initialPageData.get('model_type', true),
                 },
             }));
@@ -36,6 +38,10 @@ hqDefine("export/js/export_list_main", [
 
                 if (isOData) {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
+                }
+
+                if (isGSheet) {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Google Sheet button");
                 }
 
                 const exportAction = getExportAction();
@@ -58,6 +64,18 @@ hqDefine("export/js/export_list_main", [
             );
         }
 
+        if (isGSheet) {
+            kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
+            kissmetricsAnalytics.track.outboundLink(
+                '#js-gsheet-track-learn-more',
+                "[BI Integration] Clicked Learn More-Wiki"
+            );
+            kissmetricsAnalytics.track.outboundLink(
+                '#js-gsheet-track-learn-more-preview',
+                "[BI Integration] Clicked Learn More-Feature Preview"
+            );
+        }
+
         var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(listModels.exportListModel({
             modelType: modelType,
@@ -65,6 +83,7 @@ hqDefine("export/js/export_list_main", [
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
             isOData: isOData,
+            isGSheet: isGSheet,
             headers: {
                 my_export_type: initialPageData.get('my_export_type'),
                 shared_export_type: initialPageData.get('shared_export_type'),
@@ -100,6 +119,7 @@ hqDefine("export/js/export_list_main", [
         const isDailySavedExport = initialPageData.get('is_daily_saved_export', true);
         const isExcelExport = initialPageData.get('is_feed', true);
         const isOData = initialPageData.get('is_odata', true);
+        const isGSheet = initialPageData.get('is_gsheet', true);
 
         if (isDailySavedExport) {
             // NOTE: Currently, excel exports are considered daily exports,
