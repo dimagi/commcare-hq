@@ -3,6 +3,8 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
@@ -80,6 +82,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('domain')
 
     illegal_headers = headers - allowed_headers
+
+    if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
+        allowed_headers.add('deactivate_after')
 
     if is_web_upload:
         missing_headers = web_required_headers - headers
@@ -446,6 +451,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
     ret = {"errors": [], "rows": []}
     current = 0
+    update_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+        upload_domain
+    )
 
     for row in user_specs:
         if update_progress:
@@ -485,6 +493,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         profile = row.get('user_profile', None)
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+        deactivate_after = row.get('deactivate_after', None) if update_deactivate_after_date else None
 
         try:
             password = str(password) if password else None
@@ -517,6 +526,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                 commcare_user_importer.update_name(name)
 
             commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
+
+            if update_deactivate_after_date:
+                commcare_user_importer.update_deactivate_after(deactivate_after)
 
             if language:
                 commcare_user_importer.update_language(language)
