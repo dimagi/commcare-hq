@@ -353,24 +353,19 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                     "bool": {
                         "filter": [
                             {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "first_name"
-                                            }
-                                        },
-                                        {
-                                            "term": {
-                                                "case_properties.value.exact": "Jon"
-                                            }
-                                        }
-                                    ]
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
                                 }
                             }
                         ],
                         "must": {
-                            "match_all": {}
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon",
+                                    "operator": "or",
+                                    "fuzziness": "0"
+                                }
+                            }
                         }
                     }
                 }
