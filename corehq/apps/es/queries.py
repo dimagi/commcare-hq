@@ -93,11 +93,15 @@ def ids_query(doc_ids):
     return {"ids": {"values": doc_ids}}
 
 
-def match(search_string, field, fuzziness="AUTO"):
+def match(search_string, field, fuzziness="AUTO", operator=None):
+    if operator not in [None, 'and', 'or']:
+        raise ValueError(" 'operator' argument should be one of: 'and', 'or' ")
     return {
         "match": {
             field: {
                 "query": search_string,
+                # OR is the accepted default for the operator on an ES match query
+                "operator": 'and' if operator == 'and' else 'or',
                 "fuzziness": fuzziness,
             }
         }
