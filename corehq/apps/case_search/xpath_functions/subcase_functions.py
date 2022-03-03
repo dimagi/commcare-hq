@@ -7,14 +7,30 @@ from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step, serialize
 
 from corehq.apps.es import CaseSearchES, filters, queries
 
+from .exceptions import XPathFunctionException
+
 
 @dataclass
 class SubCaseQuery:
     index_identifier: str
+    """The name of the index identifier to match on"""
+
     subcase_filter: object
+    """AST class representing the subcase filter expression"""
+
     count_op: str
+    """One of ['>', '=']"""
+
     count: int
+    """Integer value used in conjunction with count_op to filter parent cases"""
+
     invert: bool
+    """True if the initial expression is one of ['<', '<=']"""
+
+    def __post_init__(self):
+        ops = ('>', '=')
+        if self.count_op not in ops:
+            raise ValueError(f"count_op must be one of {ops}")
 
     def as_tuple(self):
         return (
@@ -29,14 +45,14 @@ def subcase(domain, node, fuzzy=False):
         if not ids:
             return filters.match_all()
         return filters.NOT(filters.doc_id(ids))
-    return filters.doc_id(ids)
+    return filters.doc_id(ids)  # TODO handle empty ids
 
 
 def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=False):
     """Get a list of case IDs for cases that have a subcase with the given index identifier
     and matching the subcase predicate filter.
 
-    Only cases with `> case_count_gt` subcases will be returned.
+    Only cases with `[>,=] case_count_gt` subcases will be returned.
     """
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
     from corehq.apps.case_search.filter_dsl import (
@@ -84,39 +100,20 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
     ]
 
 
-def _parse_normalize_subcase_query(node):
+def _parse_normalize_subcase_query(node) -> SubCaseQuery:
     """Parse the subcase query and normalize it to the form 'subcase-count > N' or 'subcase-count = N'
 
     Supports the following syntax:
-    - subcase-exists[identifier='X'][ {subcase filter} ]
-    - subcase-count[identifier='X'][ {subcase_filter} ] {one of =, !=, >, <, >=, <= } {integer value}
-    - not( subcase query )
-
-    :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
-    - index_identifier: the name of the index identifier to match on
-    - subcase search predicates: list of predicates used to filter the subcase query
-    - count_op: One of ['>', '=']
-    - case_count: Integer value used in conjunction with count_op to filter parent cases
-    - invert_condition: True if the initial expression is one of ['<', '<=']
+    - subcase-exists('X', {subcase filter} )
+    - subcase-count('X', {subcase_filter} ) {one of =, !=, >, <, >=, <= } {integer value}
     """
-    def parse_predicates(node):
-        if node.op in ['and', 'or']:
-            return [node.left, node.right]
-        return [node]
-
-    # NOTES:
-    #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
-    #    could encapsulate some functionality:
-    #       subcase_query.include_parent(subcase-count)
-    #       subcase_query.create_parent_filter(matching_parent_ids)
-
     current_node = node
     invert_condition = False
 
     try:
         assert isinstance(current_node, (FunctionCall, BinaryExpression, Step))
     except AssertionError:
-        raise TypeError("Xpath incorrectly formatted. Check your subcase function syntax.")
+        raise XPathFunctionException("Xpath incorrectly formatted. Check your subcase function syntax.")
 
     # If xpath is a NOT(query), set invert_condition and get first arg
     if isinstance(current_node, FunctionCall):
@@ -128,26 +125,25 @@ def _parse_normalize_subcase_query(node):
     # Set current_op and case_count, and traverse to left node
     if isinstance(current_node, BinaryExpression):
         count_op = current_node.op
+
+        if count_op not in [">", "<", "<=", ">=", "=", "!="]:
+            raise XPathFunctionException(
+                _("Unsupported operator for use with 'subcase-count': {op}").format(op=count_op),
+                serialize(current_node)
+            )
+
         case_count = current_node.right
         current_node = current_node.left
 
-    print(current_node)
-    try:
-        assert str(current_node.name) in ["subcase-exists", "subcase-count"]
-    except AssertionError:
-        raise ValueError(
-            "Xpath incorrectly formatted."
-            f"Expected: subcase-exists or subcase-count. Received: {current_node.name}"
+    if str(current_node.name) not in ["subcase-exists", "subcase-count"]:
+        raise XPathFunctionException(
+            _("XPath incorrectly formatted. Expected: subcase-exists or subcase-count."),
+            serialize(current_node)
         )
 
     if str(current_node.name) == "subcase-exists":
         case_count = 0
         count_op = ">"
-
-    try:
-        assert count_op in [">", "<", "<=", ">=", "=", "!="]
-    except AssertionError:
-        raise TypeError(f"Xpath incorrectly formatted. Check comparison operator. Received: {count_op}")
 
     if count_op in ["<", "<="]:
         invert_condition = not invert_condition
@@ -166,7 +162,7 @@ def _parse_normalize_subcase_query(node):
         count_op = ">"
         invert_condition = not invert_condition
 
-    index_indetifier = current_node.args[0]
+    index_identifier = current_node.args[0]
     subcase_predicates = current_node.args[1]
 
-    return SubCaseQuery(index_indetifier, subcase_predicates, count_op, case_count, invert_condition)
+    return SubCaseQuery(index_identifier, subcase_predicates, count_op, case_count, invert_condition)
