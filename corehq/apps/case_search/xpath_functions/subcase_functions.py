@@ -54,7 +54,10 @@ def subcase(domain, node, fuzzy=False):
         if not ids:
             return filters.match_all()
         return filters.NOT(filters.doc_id(ids))
-    return filters.doc_id(ids)  # TODO handle empty ids
+    # uncomment once we are on ES > 2.4
+    # if not ids:
+    #     return filters.match_none()
+    return filters.doc_id(ids)
 
 
 def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=False):

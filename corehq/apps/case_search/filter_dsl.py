@@ -267,6 +267,8 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
 
 def build_filter_from_xpath(domain, xpath, fuzzy=False):
+    """Given an xpath expression this function will generate an Elasticsearch
+    filter"""
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "

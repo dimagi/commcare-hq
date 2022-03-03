@@ -608,10 +608,6 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_subcase_count_no_match(self):
-        # TODO: can we 'exit early' if there are no matching subcases? Seems silly to continue
-        # with the parent query if we know there aren't going to be any results. We probably have
-        # to raise an exception and handle it in the calling code.
-
         parsed = parse_xpath("subcase-count('father', house='Tyrell') > 2")
 
         expected_filter = {"terms": {"_id": []}}
