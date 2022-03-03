@@ -44,6 +44,7 @@ from corehq.util.markup import (
     TableRowFormatter,
 )
 
+
 class ResourceModel(object):
 
     TOTAL_USERS = 'total_users'
