@@ -69,7 +69,6 @@ branches:
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - jls/force-manual-action-per-command # Jenny Feb 22
     - ap/link-permissions-to-expressions # Amit Feb 28
     - jm/elastic-client-adapter  # Joel Mar 1
     - bmb/whh-003 # Biyeun Mar 1
