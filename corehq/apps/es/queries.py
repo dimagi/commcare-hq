@@ -94,6 +94,8 @@ def ids_query(doc_ids):
 
 
 def match(search_string, field, fuzziness="AUTO", operator=None):
+    if operator not in [None, 'and', 'or']:
+        raise ValueError(" 'operator' argument should be one of: 'and', 'or' ")
     return {
         "match": {
             field: {
