@@ -38,31 +38,24 @@ def date(node):
     )
 
 
-def selected(node, fuzzy):
+def _selected_query(node, fuzzy, operator):
     if len(node.args) != 2:
-        raise XPathFunctionException(_("The \"selected\" function accepts exactly two arguments."))
+        raise XPathFunctionException(_(f"The {node.name} function accepts exactly two arguments."))
     property_name = serialize(node.args[0])
     search_values = node.args[1]
-    search_mode = None
-    if 1 < len(search_values.split(' ')):
-        search_mode = 'OR'  # This will actually make the query the same as with selected_any
-    return case_property_query(property_name, search_values, fuzzy=fuzzy, mode=search_mode)
+    return case_property_query(property_name, search_values, fuzzy=fuzzy, mode=operator)
+
+
+def selected(node, fuzzy):
+    return _selected_query(node, fuzzy=fuzzy, operator='or')
 
 
 def selected_any(node, fuzzy):
-    if len(node.args) != 2:
-        raise XPathFunctionException(_("The \"selected-any\" function accepts exactly two arguments."))
-    property_name = serialize(node.args[0])
-    search_values = node.args[1]
-    return case_property_query(property_name, search_values, fuzzy=fuzzy, mode='OR')
+    return _selected_query(node, fuzzy=fuzzy, operator='or')
 
 
 def selected_all(node, fuzzy):
-    if len(node.args) != 2:
-        raise XPathFunctionException(_("The \"selected-all\" function accepts exactly two arguments."))
-    property_name = serialize(node.args[0])
-    search_values = node.args[1]
-    return case_property_query(property_name, search_values, fuzzy=fuzzy, mode='AND')
+    return _selected_query(node, fuzzy=fuzzy, operator='and')
 
 
 XPATH_VALUE_FUNCTIONS = {
