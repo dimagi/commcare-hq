@@ -234,7 +234,7 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_with_importer.delay(importer.to_json())
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
