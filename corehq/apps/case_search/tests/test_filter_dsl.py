@@ -1,17 +1,12 @@
 from django.test import SimpleTestCase, TestCase
-from testil import eq
 
-from corehq.apps.case_search.xpath_functions.subcase_functions import _parse_normalize_subcase_query
-from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.case_search.filter_dsl import (
-    build_filter_from_ast,
-)
 from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.filter_dsl import build_filter_from_ast
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -19,6 +14,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import trap_extra_setup
 
 
@@ -625,58 +621,3 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             {self.parent_case_id},
             set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
         )
-
-
-def test_subcase_query_parsing():
-    def _check(query, expected):
-        node = parse_xpath(query)
-        result = _parse_normalize_subcase_query(node)
-        eq(result.as_tuple(), expected)
-
-    yield from [
-        (
-            _check,
-            "subcase-exists('parent', @case_type='bob')",
-            ("parent", "@case_type='bob'", ">", 0, False)
-        ),
-        (
-            _check,
-            "subcase-exists('p', @case_type='bob' and prop='value')",
-            ("p", "@case_type='bob' and prop='value'", ">", 0, False)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) > 3",
-            ("p", "prop=1", ">", 3, False)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) >= 3",
-            ("p", "prop=1", ">", 2, False)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) < 3",
-            ("p", "prop=1", ">", 2, True)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) <= 3",
-            ("p", "prop=1", ">", 3, True)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) = 3",
-            ("p", "prop=1", "=", 3, False)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) = 0",
-            ("p", "prop=1", ">", 0, True)
-        ),
-        (
-            _check,
-            "subcase-count('p', prop=1) != 2",
-            ("p", "prop=1", "=", 2, True)
-        ),
-    ]
