@@ -26,6 +26,8 @@ def subcase(domain, node, fuzzy=False):
     subcase_query = _parse_normalize_subcase_query(node)
     ids = _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy)
     if subcase_query.invert:
+        if not ids:
+            return filters.match_all()
         return filters.NOT(filters.doc_id(ids))
     return filters.doc_id(ids)
 

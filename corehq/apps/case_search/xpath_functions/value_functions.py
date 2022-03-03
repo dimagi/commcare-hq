@@ -3,9 +3,7 @@ import datetime
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
 
-
-class XPathFunctionException(Exception):
-    pass
+from .exceptions import XPathFunctionException
 
 
 def date(node):
