@@ -4,7 +4,7 @@ from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
 
 
-def _not(domain, node, fuzzy):
+def not_(domain, node, fuzzy):
     from corehq.apps.case_search.filter_dsl import build_filter_from_ast
 
     if len(node.args) != 1:

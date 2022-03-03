@@ -1,4 +1,4 @@
-from .query_functions import _not
+from .query_functions import not_
 from .subcase_functions import subcase
 from .value_functions import date  # noqa: F401
 
@@ -9,7 +9,7 @@ XPATH_VALUE_FUNCTIONS = {
 
 
 XPATH_QUERY_FUNCTIONS = {
-    'not': _not,
+    'not': not_,
     'subcase-exists': subcase,
     'subcase-count': subcase,
 }
