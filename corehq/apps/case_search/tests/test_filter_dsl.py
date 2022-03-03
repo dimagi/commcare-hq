@@ -59,7 +59,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
@@ -99,7 +99,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
@@ -215,7 +215,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_case_property_existence(self):
         parsed = parse_xpath("property != ''")
@@ -384,7 +384,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_self_reference(self):
         with self.assertRaises(CaseFilterError):
@@ -520,7 +520,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             }
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_nested_parent_lookups(self):
@@ -557,7 +557,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             }
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_exists(self):
@@ -565,7 +565,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"terms": {"_id": [self.parent_case_id]}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_exists_inverted(self):
@@ -573,7 +573,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual(
             [self.child_case1_id, self.child_case2_id, self.grandparent_case_id],
             CaseSearchES().filter(built_filter).values_list('_id', flat=True)
@@ -584,7 +584,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"terms": {"_id": [self.parent_case_id]}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_count_lt(self):
@@ -592,7 +592,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual(
             {self.grandparent_case_id, self.child_case1_id, self.child_case2_id},
             set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
@@ -605,7 +605,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"match_all": {}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_subcase_count_no_match(self):
         # TODO: can we 'exit early' if there are no matching subcases? Seems silly to continue
@@ -616,7 +616,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
         expected_filter = {"terms": {"_id": []}}
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         self.assertEqual([], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_count_eq(self):
