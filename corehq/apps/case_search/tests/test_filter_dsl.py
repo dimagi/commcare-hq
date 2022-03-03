@@ -619,6 +619,17 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
+    def test_subcase_count_eq(self):
+        parsed = parse_xpath("subcase-count('father', house='Tyrell') = 2")
+
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+        self.assertEqual(
+            {self.parent_case_id},
+            set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        )
+
 
 def test_subcase_query_parsing():
     def _check(query, expected):

@@ -18,24 +18,29 @@ class SubCaseQuery:
     subcase_filter: object
     """AST class representing the subcase filter expression"""
 
-    count_op: str
+    op: str
     """One of ['>', '=']"""
 
     count: int
-    """Integer value used in conjunction with count_op to filter parent cases"""
+    """Integer value used in conjunction with op to filter parent cases"""
 
     invert: bool
     """True if the initial expression is one of ['<', '<=']"""
 
     def __post_init__(self):
         ops = ('>', '=')
-        if self.count_op not in ops:
-            raise ValueError(f"count_op must be one of {ops}")
+        if self.op not in ops:
+            raise ValueError(f"op must be one of {ops}")
 
     def as_tuple(self):
         return (
-            self.index_identifier, serialize(self.subcase_filter), self.count_op, self.count, self.invert
+            self.index_identifier, serialize(self.subcase_filter), self.op, self.count, self.invert
         )
+
+    def filter_count(self, count):
+        if self.op == '>':
+            return count > self.count
+        return self.count == count
 
 
 def subcase(domain, node, fuzzy=False):
@@ -92,11 +97,11 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         if indices:
             parent_case_id_counter.update([indices[0]['referenced_id']])
 
-    if subcase_query.count_op == '>' and subcase_query.count <= 0:
+    if subcase_query.op == '>' and subcase_query.count <= 0:
         return list(parent_case_id_counter)
 
     return [
-        case_id for case_id, count in parent_case_id_counter.items() if count > subcase_query.count
+        case_id for case_id, count in parent_case_id_counter.items() if subcase_query.filter_count(count)
     ]
 
 
