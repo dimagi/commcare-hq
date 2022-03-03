@@ -74,8 +74,7 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         if indices:
             parent_case_id_counter.update([indices[0]['referenced_id']])
 
-    # TODO: support '=' as well as '>' for the comparison operator: 'count_op'
-    if subcase_query.count <= 0:
+    if subcase_query.count_op == '>' and subcase_query.count <= 0:
         return list(parent_case_id_counter)
 
     return [
