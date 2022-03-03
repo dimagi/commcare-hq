@@ -245,7 +245,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             return _walk_ancestor_cases(node)
 
         if _is_subcase_count(node):
-            return XPATH_QUERY_FUNCTIONS['subcase_count'](domain, node, fuzzy)
+            return XPATH_QUERY_FUNCTIONS['subcase-count'](domain, node, fuzzy)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf

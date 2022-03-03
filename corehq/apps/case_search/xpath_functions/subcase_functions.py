@@ -84,11 +84,11 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
 
 
 def _parse_normalize_subcase_query(node):
-    """Parse the subcase query and normalize it to the form 'subcase_count > N' or 'subcase_count = N'
+    """Parse the subcase query and normalize it to the form 'subcase-count > N' or 'subcase-count = N'
 
     Supports the following syntax:
-    - subcase_exists[identifier='X'][ {subcase filter} ]
-    - subcase_count[identifier='X'][ {subcase_filter} ] {one of =, !=, >, <, >=, <= } {integer value}
+    - subcase-exists[identifier='X'][ {subcase filter} ]
+    - subcase-count[identifier='X'][ {subcase_filter} ] {one of =, !=, >, <, >=, <= } {integer value}
     - not( subcase query )
 
     :returns: tuple(index_identifier, subcase search predicates, count_op, case_count, invert_condition)
@@ -106,7 +106,7 @@ def _parse_normalize_subcase_query(node):
     # NOTES:
     #  - instead of returning a tuple we could create a dataclass to make it easier to work with and
     #    could encapsulate some functionality:
-    #       subcase_query.include_parent(subcase_count)
+    #       subcase_query.include_parent(subcase-count)
     #       subcase_query.create_parent_filter(matching_parent_ids)
 
     current_node = node
@@ -132,14 +132,14 @@ def _parse_normalize_subcase_query(node):
 
     print(current_node)
     try:
-        assert str(current_node.name) in ["subcase_exists", "subcase_count"]
+        assert str(current_node.name) in ["subcase-exists", "subcase-count"]
     except AssertionError:
         raise ValueError(
             "Xpath incorrectly formatted."
-            f"Expected: subcase_exists or subcase_count. Received: {current_node.name}"
+            f"Expected: subcase-exists or subcase-count. Received: {current_node.name}"
         )
 
-    if str(current_node.name) == "subcase_exists":
+    if str(current_node.name) == "subcase-exists":
         case_count = 0
         count_op = ">"
 
