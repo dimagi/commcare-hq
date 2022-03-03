@@ -7,11 +7,10 @@ from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from nose.tools import assert_in
+from nose.tools import assert_in, assert_raises
 
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
@@ -26,6 +25,7 @@ from ..const import (
 from ..models import (
     FormRepeater,
     SQLFormRepeater,
+    RepeatRecord,
     SQLRepeater,
     are_repeat_records_migrated,
     format_response,
@@ -445,3 +445,9 @@ class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.sql_repeater.connection_settings.delete()
+
+
+def test_attempt_forward_now_kwargs():
+    rr = RepeatRecord()
+    with assert_raises(TypeError):
+        rr.attempt_forward_now(True)

@@ -9,12 +9,12 @@
     <div class="col-sm-8">
       <p class="lead">
         {% blocktrans %}
-          Automatically update and close cases from CommCareHQ
+          Automatically update or close cases from CommCareHQ
         {% endblocktrans %}
       </p>
       <p>
         {% blocktrans %}
-          Create rules for closing cases from CommCareHQ.
+          Create rules for updating or closing cases from CommCareHQ.
           All rules run every day at {{ time }} GMT.
           For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
         {% endblocktrans %}
@@ -24,7 +24,7 @@
   <div class="btn-toolbar">
     <a href="{% url "add_case_rule" domain %}">
       <button type="button" class="btn btn-primary" id="add-new">
-        <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
+        <i class="fa fa-plus"></i> {% trans "Add Automatic Case Update Rule" %}
       </button>
     </a>
   </div>

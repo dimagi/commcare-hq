@@ -171,6 +171,13 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             inline_label="Asynchronous processing"
         )
     )
+    is_available_in_analytics = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=forms.HiddenInput(),
+        help_text=help_text.ANALYTICS
+    )
 
     def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
@@ -182,6 +189,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ('Location', _('locations'))
             )
             self.fields['referenced_doc_type'].choices = choices
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain):
+            self.fields['is_available_in_analytics'].widget = BootstrapCheckboxInput(
+                inline_label="Availabe in Analytics"
+            )
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
@@ -202,6 +214,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'named_expressions',
             'named_filters',
             'asynchronous',
+            'is_available_in_analytics',
         ]
         if data_source_config.get_id:
             fields.append('_id')

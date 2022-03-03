@@ -12,10 +12,9 @@ from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
-from ..backends.sql.dbaccessors import CaseAccessorSQL
 from ..exceptions import AttachmentNotFound, XFormNotFound
 from ..interfaces.processor import ProcessedForms
-from ..models import XFormInstance, XFormOperation
+from ..models import CaseTransaction, XFormInstance, XFormOperation
 from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 from ..parsers.form import apply_deprecation
 from ..utils import get_simple_form_xml, get_simple_wrapped_form
@@ -220,7 +219,7 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(XFormInstance.NORMAL, form.state)
         self.assertEqual(0, len(form.history))
 
-        transactions = CaseAccessorSQL.get_transactions(case_id)
+        transactions = CaseTransaction.objects.get_transactions(case_id)
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
@@ -234,7 +233,7 @@ class XFormInstanceManagerTest(TestCase):
             self.assertEqual(form.form_id, operations[i].form_id)
             self.assertEqual('user1', operations[i].user_id)
 
-            transactions = CaseAccessorSQL.get_transactions(case_id)
+            transactions = CaseTransaction.objects.get_transactions(case_id)
             self.assertEqual(1, len(transactions), transactions)
             self.assertTrue(transactions[0].revoked)
 
@@ -248,7 +247,7 @@ class XFormInstanceManagerTest(TestCase):
             self.assertEqual(form.form_id, operations[i].form_id)
             self.assertEqual('user2', operations[i].user_id)
 
-            transactions = CaseAccessorSQL.get_transactions(case_id)
+            transactions = CaseTransaction.objects.get_transactions(case_id)
             self.assertEqual(1, len(transactions))
             self.assertFalse(transactions[0].revoked)
 

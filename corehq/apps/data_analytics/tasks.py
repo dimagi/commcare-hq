@@ -19,14 +19,14 @@ from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 logger = get_task_logger(__name__)
 
 
-@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
-               acks_late=True, ignore_result=True)
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='2'),
+               ignore_result=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
     task_results = []
     for chunk in chunked(domains, 1000):
-        task_results.append(update_current_MALT_for_domains.delay(last_month, chunk))
+        task_results.append(update_malt.delay(last_month, chunk))
 
     for result in task_results:
         result.get(disable_sync_subtasks=False)
@@ -34,17 +34,17 @@ def build_last_month_MALT():
     send_MALT_complete_email(last_month)
 
 
-@periodic_task(queue='malt_generation_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=2, minute=0, day_of_week='*'),
                ignore_result=True)
 def update_current_MALT():
     today = datetime.date.today()
     this_month_dict = {'month': today.month, 'year': today.year}
     domains = Domain.get_all_names()
     for chunk in chunked(domains, 1000):
-        update_current_MALT_for_domains.delay(this_month_dict, chunk)
+        update_malt.delay(this_month_dict, chunk)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
+@periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='3'),
                acks_late=True, ignore_result=True)
 def build_last_month_GIR():
     last_month = last_month_datespan()
@@ -69,7 +69,7 @@ def build_last_month_GIR():
 
 
 @task(queue='malt_generation_queue')
-def update_current_MALT_for_domains(month_dict, domains):
+def update_malt(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     generate_malt([month], domains=domains)
 

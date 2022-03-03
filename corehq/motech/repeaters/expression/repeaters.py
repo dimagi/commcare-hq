@@ -61,7 +61,7 @@ class BaseExpressionRepeater(Repeater):
 
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
-    friendly_name = _("Configurable Case Repeater")
+    friendly_name = _("Configurable Case Forwarder")
 
     @memoized
     def payload_doc(self, repeat_record):

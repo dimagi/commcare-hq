@@ -214,9 +214,6 @@ class EntriesHelper(object):
 
             EntriesHelper.add_custom_assertions(e, form)
 
-            if module_loads_registry_case(module):
-                EntriesHelper.add_registry_search_instances(e, form)
-
             if (
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
@@ -313,12 +310,6 @@ class EntriesHelper(object):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
-
-    @staticmethod
-    def add_registry_search_instances(entry, form):
-        for prop in form.get_module().search_config.properties:
-            if prop.itemset.instance_id:
-                entry.instances.append(Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri))
 
     @staticmethod
     def add_custom_assertions(entry, form):

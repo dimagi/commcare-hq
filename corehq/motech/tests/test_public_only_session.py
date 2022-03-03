@@ -1,3 +1,17 @@
+"""
+All the tests in this file are testing the behavior of a session that has had
+the make_session_public_only function applied to it.
+
+Such a session differs from the default requests session in that it will reject any requests to an endpoint
+that resolves to a non public IP address (private, loopback, or other special IP range),
+and that this check also applies to a redirect Location.
+
+Where patching is used in these tests (_patch_session_with_hard_coded_response)
+the patching is done deep enough in the code that the logic added by make_session_public_only
+is still executed and thus tested.
+
+"""
+
 from contextlib import contextmanager
 from functools import wraps
 
@@ -10,8 +24,10 @@ from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 def test_public_only_session__simple_success():
     session = _set_up_session()
-    response = session.get('https://example.com/')
-    eq(response.status_code, 200)
+    with _patch_session_with_hard_coded_response(session, 'https://example.com/',
+                                                 _get_200_response()):
+        response = session.get('https://example.com/')
+        eq(response.status_code, 200)
 
 
 def test_public_only_session__simple_invalid_url_local():
@@ -28,8 +44,13 @@ def test_public_only_session__simple_invalid_url_private():
 
 def test_public_only_session__redirect_to_valid_url():
     session = _set_up_session()
-    with _patch_session_with_hard_coded_response(session, 'https://myredirect.com/',
-                                                 _get_redirect_response('https://example.com/')):
+    with (
+        _patch_session_with_hard_coded_response(
+            session, 'https://myredirect.com/', _get_redirect_response('https://example.com/')),
+        _patch_session_with_hard_coded_response(
+            session, 'https://example.com/', _get_200_response())
+    ):
+
         response = session.get('https://myredirect.com/')
         eq(response.status_code, 200)
 
@@ -68,6 +89,15 @@ def _get_redirect_response(redirect_location):
     return response
 
 
+def _get_200_response():
+    """
+    Get a requests.Response object that is a 200 Success
+    """
+    response = requests.Response()
+    response.status_code = 200
+    return response
+
+
 @contextmanager
 def _patch_session_with_hard_coded_response(session, url, response):
     """
@@ -79,6 +109,10 @@ def _patch_session_with_hard_coded_response(session, url, response):
         ...
         session.get(url)  # return hard-coded `response`
         ...
+
+    However, the patching happens deep enough that the functionality of `make_session_public_only` is retained,
+    which would not happen if the `session.get`, `session.post`, etc. methods were patched directly.
+
     """
     def _make_send(original_send):
         @wraps(original_send)

@@ -11,10 +11,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.reprocess import (
     reprocess_form,
@@ -116,7 +113,6 @@ class ReprocessSubmissionStubTests(TestCase):
         super(ReprocessSubmissionStubTests, self).setUp()
         self.factory = CaseFactory(domain=self.domain)
         self.formdb = XFormInstance.objects
-        self.casedb = CaseAccessors(self.domain)
         self.ledgerdb = LedgerAccessors(self.domain)
 
     def tearDown(self):
@@ -146,12 +142,12 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertIsNone(error_forms[0].orig_id)
         self.assertEqual(error_forms[0].form_id, stubs[0].xform_id)
 
-        self.assertEqual(0, len(self.casedb.get_case_ids_in_domain()))
+        self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
         result = reprocess_unfinished_stub(stubs[0])
         self.assertEqual(1, len(result.cases))
 
-        case_ids = self.casedb.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         self.assertEqual(case_id, case_ids[0])
 
@@ -380,7 +376,6 @@ class TestReprocessDuringSubmission(TestCase):
         super(TestReprocessDuringSubmission, self).setUp()
         self.factory = CaseFactory(domain=self.domain)
         self.formdb = XFormInstance.objects
-        self.casedb = CaseAccessors(self.domain)
         self.ledgerdb = LedgerAccessors(self.domain)
 
     def tearDown(self):
@@ -479,10 +474,8 @@ class TestTransactionErrors(TransactionTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
 
-        with patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
-            side_effect=IntegrityError
-        ), self.assertRaises(IntegrityError):
+        error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
+        with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
                 [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,
@@ -502,10 +495,8 @@ class TestTransactionErrors(TransactionTestCase):
             form_id=form_id
         )
 
-        with patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
-            side_effect=IntegrityError
-        ), self.assertRaises(IntegrityError):
+        error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
+        with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
                 [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,

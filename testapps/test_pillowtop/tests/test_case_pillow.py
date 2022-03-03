@@ -9,7 +9,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.es import CaseES, CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -85,7 +85,7 @@ class CasePillowTest(TestCase):
 
         # soft delete the case
         with self.process_case_changes:
-            CaseAccessors(self.domain).soft_delete_cases([case_id])
+            CommCareCase.objects.soft_delete_cases(self.domain, [case_id])
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
 
         # ensure not there anymore

@@ -81,7 +81,7 @@ if [[ $? -ne "0" ]]; then
     echo "The output above from compilemessages should have specifics about the locale/ file and line where the error(s) occurred."
     echo "1. Open those files, go to the appropriate lines and fix the errors."
     echo "2. Run './manage.py compilemessages' again to make sure it's fixed."
-    echo "3. Run 'tx push -st' to update them on transifex."
+    echo "3. Run 'tx push -s -t' to update them on transifex."
     echo "4. Now if you do 'git checkout -- locale' and run this script again, it should succeed."
     echo "5. You should probably also reach out to the translator to make sure they don't mess this up again."
     abort
@@ -89,7 +89,7 @@ fi
 set -e
 
 echo "Pushing updates to transifex."
-tx push -st
+tx push -s -t
 
 has_local_changes=`git diff-index HEAD` && true
 if [[ ! $has_local_changes ]]

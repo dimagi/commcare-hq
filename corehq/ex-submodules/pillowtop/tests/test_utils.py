@@ -5,7 +5,6 @@ from django.test import TestCase
 
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.feed.interface import Change
 from pillowtop.utils import ensure_document_exists
@@ -39,7 +38,7 @@ class TestEnsureDocumentExists(TestCase):
         Should not raise an error when the doc has been deleted
         '''
         change, case = self._create_change()
-        CaseAccessorSQL.soft_delete_cases(self.domain, [case.case_id])
+        CommCareCase.objects.soft_delete_cases(self.domain, [case.case_id])
         ensure_document_exists(change)
 
     def test_handle_missing_doc(self):

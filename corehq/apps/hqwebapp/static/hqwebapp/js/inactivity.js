@@ -140,7 +140,10 @@ hqDefine('hqwebapp/js/inactivity', [
             var selectedAppId = '';
             try {
                 var urlParams = JSON.parse(decodeURIComponent(window.location.hash.substr(1)));
-                selectedAppId = urlParams.appId;
+                if(!urlParams.copyOf){
+                    // Don't show the popup when user came from versions page
+                    selectedAppId = urlParams.appId;
+                }
             } catch (error) {
                 console.log(error);
             }

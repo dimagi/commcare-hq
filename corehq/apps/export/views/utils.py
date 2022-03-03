@@ -147,11 +147,12 @@ class DailySavedExportMixin(object):
 
     def dispatch(self, *args, **kwargs):
         self._priv_check()
-        return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(DailySavedExportMixin, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         instance.is_daily_saved_export = True
@@ -184,9 +185,10 @@ class DashboardFeedMixin(DailySavedExportMixin):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(DashboardFeedMixin, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         instance.export_format = "html"
@@ -194,7 +196,7 @@ class DashboardFeedMixin(DailySavedExportMixin):
 
     @property
     def page_context(self):
-        context = super(DashboardFeedMixin, self).page_context
+        context = super().page_context
         context['format_options'] = ["html"]
         return context
 
@@ -208,7 +210,7 @@ class ODataFeedMixin(object):
 
     @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED))
     def dispatch(self, *args, **kwargs):
-        return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     @property
     def terminology(self):
@@ -223,15 +225,18 @@ class ODataFeedMixin(object):
             """),
         }
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(ODataFeedMixin, self).create_new_export_instance(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings)
         instance.is_odata_config = True
         instance.transform_dates = False
         return instance
 
     @property
     def page_context(self):
-        context = super(ODataFeedMixin, self).page_context
+        context = super().page_context
         context['format_options'] = ["odata"]
         return context
 
@@ -249,7 +254,7 @@ class ODataFeedMixin(object):
         return ODataFeedListView
 
     def get_export_instance(self, schema, original_export_instance):
-        export_instance = super(ODataFeedMixin, self).get_export_instance(schema, original_export_instance)
+        export_instance = super().get_export_instance(schema, original_export_instance)
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
         export_instance.transform_dates = False
