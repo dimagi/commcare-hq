@@ -56,7 +56,6 @@ MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 c
 
 OPERATOR_MAPPING = {
     'and': filters.AND,
-    'not': filters.NOT,
     'or': filters.OR,
 }
 COMPARISON_MAPPING = {
