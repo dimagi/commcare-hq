@@ -154,10 +154,14 @@ def _update_versions_in_place(version_ids, privilege_slug, dry_run=False):
     for version_id in version_ids:
         version = SoftwarePlanVersion.objects.get(id=version_id)
         new_role = _get_or_create_role_with_privilege(version.role.slug, privilege_slug, dry_run=dry_run)
-        if new_role:
-            change_role_for_software_plan_version(
-                version.role.slug, new_role.slug, limit_to_plan_version_id=version_id, dry_run=dry_run
-            )
+        if new_role and not dry_run:
+            if not dry_run:
+                change_role_for_software_plan_version(
+                    version.role.slug, new_role.slug, limit_to_plan_version_id=version_id
+                )
+            else:
+                # change_role_for_software_plan_version raises an exception in dry_run mode
+                logger.info(f'Modified role from {version.role.slug} to {new_role.slug} for version {version_id}.')
 
 
 def _create_new_software_plans(domains_by_plan_version, privilege_slug, dry_run=False):
