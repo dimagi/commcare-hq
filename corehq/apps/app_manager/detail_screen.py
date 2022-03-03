@@ -367,6 +367,7 @@ class Enum(FormattedDetailColumn):
     def _make_xpath(self, type):
         return sx.XPathEnum.build(
             enum=self.column.enum,
+            type=type,
             template=self._xpath_template(type),
             get_template_context=self._xpath_template_context(type),
             get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
@@ -374,9 +375,9 @@ class Enum(FormattedDetailColumn):
 
     def _xpath_template(self, type):
         if type == 'sort':
-            return "if({xpath} = '{key}', {i}, "
+            return ("if(selected({xpath}, '{key}'), {i}, ", "enum")
         if type == 'display':
-            return "if({xpath} = '{key}', ${key_as_var}, "
+            return ("if(selected({xpath}, '{key}'), ${key_as_var}, ''), ", "enum")
         raise ValueError('type must be in sort, display')
 
     def _xpath_template_context(self, type):
@@ -414,7 +415,7 @@ class ConditionalEnum(Enum):
         return node
 
     def _xpath_template(self, type):
-        return "if({key_as_condition}, {key_as_var_name}"
+        return ("if({key_as_condition}, {key_as_var_name}", "conditional-enum")
 
     def _xpath_template_context(self, type):
         return lambda item, i: {
@@ -451,13 +452,17 @@ class EnumImage(Enum):
         return str(width)
 
     def _xpath_template(self, type):
-        return "if({key_as_condition}, {key_as_var_name}"
+        return ("if({key_as_condition}, {key_as_var_name}", "image")
 
     def _xpath_template_context(self, type):
         return lambda item, i: {
             'key_as_condition': item.key_as_condition(self.xpath),
             'key_as_var_name': item.ref_to_key_variable(i, type)
         }
+    
+    @property
+    def format(self):
+        return self.template_form
 
 
 @register_format_type('late-flag')
