@@ -24,6 +24,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -1081,6 +1082,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             self.config.meta.build.initiated_in_place
             and not self.config.meta.build.finished_in_place
         )
+        allowed_ucr_expression = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.request.domain)
         return {
             'form': self.edit_form,
             'data_source': self.config,
@@ -1088,6 +1090,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'used_by_reports': self.get_reports(),
             'is_rebuilding': is_rebuilding,
             'is_rebuilding_inplace': is_rebuilding_inplace,
+            'allowed_ucr_expressions': allowed_ucr_expression,
         }
 
     @property
@@ -1126,15 +1129,18 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         )
 
     def post(self, request, *args, **kwargs):
-        if self.edit_form.is_valid():
-            config = self.edit_form.save(commit=True)
-            messages.success(request, _('Data source "{}" saved!').format(
-                config.display_name
-            ))
-            if self.config_id is None:
-                return HttpResponseRedirect(reverse(
-                    EditDataSourceView.urlname, args=[self.domain, config._id])
-                )
+        try:
+            if self.edit_form.is_valid():
+                config = self.edit_form.save(commit=True)
+                messages.success(request, _('Data source "{}" saved!').format(
+                    config.display_name
+                ))
+                if self.config_id is None:
+                    return HttpResponseRedirect(reverse(
+                        EditDataSourceView.urlname, args=[self.domain, config._id])
+                    )
+        except BadSpecError as e:
+            messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
 
     def get_reports(self):
