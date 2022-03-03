@@ -12,14 +12,14 @@ from corehq.apps.accounting.management.commands.change_role_for_software_plan_ve
 from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
-    Subscription,
+    Subscription, SoftwarePlan,
 )
 from corehq.apps.toggle_ui.utils import find_static_toggle
 
 logger = logging.getLogger(__name__)
 
 NEW_ROLE_SLUG_SUFFIX = "_erm"
-NEW_ROLE_NAME_SUFFIX = " (With ERM)"
+NEW_NAME_SUFFIX = " (With ERM)"
 
 
 class RoleMissingPrivilege(Exception):
@@ -47,12 +47,12 @@ class Command(BaseCommand):
         logger.setLevel(logging.WARNING if quiet else logging.INFO)
         privilege_role_slug = 'release_management'
         active_roles = _get_active_roles()
-        roles_to_update, versions_to_update, versions_to_increment = _get_migration_info(
+        roles_to_update, versions_to_update, plans_to_create = _get_migration_info(
             active_roles, toggles.LINKED_DOMAINS.slug, privilege_role_slug
         )
         _update_roles_in_place(roles_to_update, privilege_role_slug, dry_run=dry_run)
         _update_versions_in_place(versions_to_update, privilege_role_slug, dry_run=dry_run)
-        _create_and_migrate_plan_versions_to_new_roles(versions_to_increment, privilege_role_slug, dry_run=dry_run)
+        _create_new_software_plans(plans_to_create, privilege_role_slug, dry_run=dry_run)
 
 
 def _get_migration_info(roles, toggle_slug, privilege_slug):
@@ -69,8 +69,9 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
 
     roles_to_update = []
     plan_versions_to_update = []
-    plan_versions_to_increment = defaultdict(list)
+    plans_to_create = defaultdict(list)
     for role in roles:
+        # skip public enterprise roles since they are handled in a separate migration
         if _should_skip_role(role, privilege_role, roles_to_skip=['enterprise_plan_v0', 'enterprise_plan_v1']):
             continue
 
@@ -88,9 +89,9 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
             else:
                 domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
                 if domains_with_toggle_enabled:
-                    plan_versions_to_increment[version.id] = domains_with_toggle_enabled
+                    plans_to_create[version.id] = domains_with_toggle_enabled
 
-    return roles_to_update, plan_versions_to_update, plan_versions_to_increment
+    return roles_to_update, plan_versions_to_update, plans_to_create
 
 
 def _contain_public_versions(versions):
@@ -140,12 +141,13 @@ def _get_active_roles():
 
 
 def _update_roles_in_place(role_slugs, privilege_slug, dry_run=False):
+    dry_run_tag = '[DRY_RUN]' if dry_run else ''
     for role_slug in role_slugs:
         role = Role.objects.get(slug=role_slug)
         role_for_privilege = Role.objects.get(slug=privilege_slug)
         if not dry_run:
             Grant.objects.create(from_role=role, to_role=role_for_privilege)
-        logger.info(f'Added {privilege_slug} privilege to {role.slug}.')
+        logger.info(f'{dry_run_tag}Created grant from {role.slug} to {privilege_slug}.')
 
 
 def _update_versions_in_place(version_ids, privilege_slug, dry_run=False):
@@ -154,41 +156,72 @@ def _update_versions_in_place(version_ids, privilege_slug, dry_run=False):
         new_role = _get_or_create_role_with_privilege(version.role.slug, privilege_slug, dry_run=dry_run)
         if new_role:
             change_role_for_software_plan_version(
-                version.role.slug, new_role.slug, limit_to_plan_version_id=version_id
+                version.role.slug, new_role.slug, limit_to_plan_version_id=version_id, dry_run=dry_run
             )
 
 
-def _create_and_migrate_plan_versions_to_new_roles(domains_by_version_id, privilege_slug, dry_run=False):
+def _create_new_software_plans(domains_by_plan_version, privilege_slug, dry_run=False):
     """
-    :param domains_by_version_id: {plan_id: [domains], ...}
-    :param privilege_slug:
-    :param dry_run:
-    :return:
+    :param domains_by_plan_version: {'<plan_version_id>': [domains_for_version]}
+    :param privilege_slug: slug for Role obj representing privilege to add
     """
-    for plan_id, domains in domains_by_version_id:
-        # create a new software plan version for this subscription
-        current_version = SoftwarePlanVersion.objects.get(id=plan_id)
+    dry_run_tag = '[DRY_RUN]' if dry_run else ''
+    for version_id, domains in domains_by_plan_version:
+        current_version = SoftwarePlanVersion.objects.get(id=version_id)
+        current_plan = current_version.plan
+
         new_role = _get_or_create_role_with_privilege(current_version.role.slug, privilege_slug, dry_run=dry_run)
-        new_version = _create_new_plan_version_from_version(current_version, new_role)
-        if new_role and new_version:
+        new_plan = _create_new_software_plan(current_plan, dry_run=dry_run)
+        new_version = _create_new_software_plan_version(new_plan, current_version, new_role, dry_run=dry_run)
+
+        if new_role and new_plan and new_version:
             for domain in domains:
                 subscription = Subscription.get_active_subscription_by_domain(domain)
-                # TODO: do I need to use the more formal upgrade_subscriptions_to_latest_plan_version?
-                subscription.plan_version = new_version
-                subscription.save()
+                subscription.plan_version = new_plan.get_version()
+                if not dry_run:
+                    subscription.save()
+                logger.info(f'{dry_run_tag}Updated subscription\'s software plan to {new_plan.name} for {domain}.')
 
 
-def _create_new_plan_version_from_version(from_version, role_with_privilege, dry_run=False):
+def _create_new_software_plan(from_plan, dry_run=False):
+    """
+    :param from_plan: plan to copy attributes from
+    :param dry_run: if True, will not make changes to the db
+    :return: newly created SoftwarePlan
+    """
+    dry_run_tag = '[DRY_RUN]' if dry_run else ''
+    new_name = from_plan.name + NEW_NAME_SUFFIX
+    new_plan = SoftwarePlan(
+        name=new_name,
+        description=from_plan.description,
+        edition=from_plan.edition,
+        visibility=from_plan.visibility,
+        is_customer_software_plan=from_plan.is_customer_software_plan,
+        max_domains=from_plan.max_domains,
+        is_annual_plan=from_plan.is_annual_plan,
+    )
+    if not dry_run:
+        new_plan.save()
+    logger.info(f"{dry_run_tag}Created new software plan {new_plan.name} from existing plan {from_plan.name}.")
+    return new_plan
+
+
+def _create_new_software_plan_version(new_plan, from_version, privilege_role, dry_run=False):
+    dry_run_tag = '[DRY_RUN]' if dry_run else ''
     new_version = SoftwarePlanVersion(
-        plan=from_version.plan,
+        plan=new_plan,
         product_rate=from_version.product_rate,
-        role=role_with_privilege,
+        role=privilege_role,
     )
     if not dry_run:
         new_version.save()
         new_version.feature_rates.set(list(from_version.feature_rates.all()))
         new_version.save()
         return new_version
+
+    logger.info(
+        f'{dry_run_tag}Created new software plan version for plan {new_plan.name} with role {privilege_role.slug}.'
+    )
 
     return None
 
@@ -197,7 +230,7 @@ def _get_or_create_role_with_privilege(existing_role_slug, privilege_slug, dry_r
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
     existing_role = Role.objects.get(slug=existing_role_slug)
     new_role_slug = existing_role.slug + NEW_ROLE_SLUG_SUFFIX
-    new_role_name = existing_role.name + NEW_ROLE_NAME_SUFFIX
+    new_role_name = existing_role.name + NEW_NAME_SUFFIX
     # search for legacied version of role
     privilege_role = Role.objects.get(slug=privilege_slug)
     new_role = None
@@ -207,8 +240,9 @@ def _get_or_create_role_with_privilege(existing_role_slug, privilege_slug, dry_r
         logger.error(f'{dry_run_tag}Could not find Grant for {new_role_slug} and {privilege_slug}')
         return None
     except ExistingRoleNotFound:
-        if not dry_run:
-            new_role = _create_new_role_from_role(existing_role, new_role_slug, new_role_name, privilege_role)
+        new_role = _create_new_role_from_role(
+            existing_role, new_role_slug, new_role_name, privilege_role, dry_run=dry_run
+        )
     else:
         logger.info(f'{dry_run_tag}Found existing role for {new_role.slug}.')
 
@@ -233,7 +267,7 @@ def _get_existing_role_with_privilege(role_slug, privilege_role):
     return new_role
 
 
-def _create_new_role_from_role(from_role, new_role_slug, new_role_name, privilege_to_add):
+def _create_new_role_from_role(from_role, new_role_slug, new_role_name, privilege_to_add, dry_run=False):
     """
     :param from_role: Role object of existing role to copy
     :param new_role_slug: str object that is new slug (unique)
@@ -241,11 +275,17 @@ def _create_new_role_from_role(from_role, new_role_slug, new_role_name, privileg
     :param privilege_to_add: Role object of privilege to add to new role via Grant
     :return: new role object
     """
+    dry_run_tag = '[DRY_RUN]' if dry_run else ''
     new_role = Role(slug=new_role_slug, name=new_role_name)
-    new_role.save()
-    _copy_existing_grants(from_role, new_role)
-    # add new grant
-    Grant.objects.create(from_role=new_role, to_role=privilege_to_add)
+    if not dry_run:
+        new_role.save()
+        _copy_existing_grants(from_role, new_role)
+        # add new grant
+        Grant.objects.create(from_role=new_role, to_role=privilege_to_add)
+    logger.info(f"""
+    {dry_run_tag}Created new role {new_role.slug} from existing role {from_role.slug} with privilege
+    {privilege_to_add.slug}.
+    """)
     return new_role
 
 
