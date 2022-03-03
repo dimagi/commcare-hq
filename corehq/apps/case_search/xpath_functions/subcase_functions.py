@@ -55,21 +55,21 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
             )
         )
     )
-    subcase_query = (
+    es_query = (
         CaseSearchES().domain(domain)
         .filter(index_query)
         .filter(subcase_filter)
         .source('indices')
     )
 
-    if subcase_query.count() > MAX_RELATED_CASES:
+    if es_query.count() > MAX_RELATED_CASES:
         raise TooManyRelatedCasesError(
             _("The related case lookup you are trying to perform would return too many cases"),
             serialize(subcase_query.subcase_filter)
         )
 
     parent_case_id_counter = Counter()
-    for subcase in subcase_query.run().hits:
+    for subcase in es_query.run().hits:
         indices = [index for index in subcase['indices'] if index['identifier'] == subcase_query.index_identifier]
         if indices:
             parent_case_id_counter.update([indices[0]['referenced_id']])
