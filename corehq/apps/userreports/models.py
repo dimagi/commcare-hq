@@ -23,8 +23,6 @@ from memoized import memoized
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -54,6 +52,7 @@ from corehq.apps.cachehq.mixins import (
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -254,6 +253,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    is_available_in_analytics = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
@@ -822,10 +822,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         y_axis_columns = []
         try:
             for y_axis_column in original_y_axis_columns:
-                if isinstance(y_axis_column, dict):
-                    column_id = y_axis_column['column_id']
-                else:
-                    column_id = y_axis_column
+                column_id = y_axis_column['column_id']
                 column_config = self.report_columns_by_column_id[column_id]
                 if column_config.type == 'expanded':
                     expanded_columns = self.get_expanded_columns(column_config)
@@ -836,6 +833,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
                         })
                 else:
                     y_axis_columns.append(y_axis_column)
+        # catch edge cases where data source table is yet to be created
         except DataSourceConfigurationNotFoundError:
             return original_y_axis_columns
         else:
