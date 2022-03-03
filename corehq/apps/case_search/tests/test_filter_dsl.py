@@ -1,15 +1,16 @@
 from django.test import SimpleTestCase, TestCase
 from testil import eq
 
+from corehq.apps.case_search.xpath_functions.subcase_functions import _parse_normalize_subcase_query
 from corehq.util.es.elasticsearch import ConnectionError
-from eulxml.xpath import parse as parse_xpath, serialize as serialize_xpath
+from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.filter_dsl import (
     CaseFilterError,
-    build_filter_from_ast, _parse_normalize_subcase_query,
+    build_filter_from_ast,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
