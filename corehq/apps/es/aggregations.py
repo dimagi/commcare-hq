@@ -39,7 +39,7 @@ import re
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 
-from corehq.elastic import SIZE_LIMIT
+from corehq.apps.es.const import SIZE_LIMIT
 
 MISSING_KEY = None
 
