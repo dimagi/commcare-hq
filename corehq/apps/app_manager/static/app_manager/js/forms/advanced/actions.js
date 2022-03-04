@@ -272,10 +272,10 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 if (self.auto_select) {
                     var mode = self.auto_select.mode();
                     var valueSource = self.auto_select.value_source();
-                    var value_key = self.auto_select.value_key();
+                    var valueKey = self.auto_select.value_key();
                     if (!mode) {
                         return gettext("Autoselect mode required");
-                    } else if (!value_key && mode !== 'usercase') {
+                    } else if (!valueKey && mode !== 'usercase') {
                         return gettext('Property required');
                     } else if (!valueSource) {
                         if (mode === 'case') {
