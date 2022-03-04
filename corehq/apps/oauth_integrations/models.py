@@ -31,7 +31,7 @@ class LiveGoogleSheetErrorReason():
 
 
 class LiveGoogleSheetRefreshStatus(models.Model):
-    schedule = models.ForeignKey(LiveGoogleSheetSchedule, on_delete=models.deletion.CASCADE)
+    schedule = models.ForeignKey(LiveGoogleSheetSchedule, on_delete=models.CASCADE)
     date_start = models.DateTimeField(auto_now_add=True)
     date_end = models.DateTimeField(null=True, blank=True)
     refresh_error_reason = models.CharField(
