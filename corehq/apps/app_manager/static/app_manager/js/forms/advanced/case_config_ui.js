@@ -449,8 +449,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 if (action.actionType === 'open') {
                     self.open_cases.remove(action);
                 } else if (action.actionType === 'load') {
-                    var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(action),
-                        potential_child;
+                    var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(action);
                     self.load_update_cases.remove(action);
 
                     // remove references to deleted action in subsequent load actions
