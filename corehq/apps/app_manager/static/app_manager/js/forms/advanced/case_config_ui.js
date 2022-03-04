@@ -315,13 +315,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
 
             self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
-                var required_properties = [{
+                var requiredProperties = [{
                     key: 'name',
                     path: a.name_update.question_path,
                     required: true,
                     save_only_if_edited: a.name_update.update_mode === 'edit',
                 }];
-                var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
+                var case_properties = caseConfigUtils.propertyDictToArray(requiredProperties, a.case_properties, caseConfig);
                 a.case_properties = [];
                 var action = openCaseAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
