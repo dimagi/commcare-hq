@@ -23,6 +23,8 @@ from custom.samveg.const import (
     RCH_BENEFICIARY_IDENTIFIER,
     REQUIRED_COLUMNS,
     ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
+    SKIP_CALL_VALIDATOR,
+    SKIP_CALL_VALIDATOR_YES,
     SNCU_BENEFICIARY_IDENTIFIER,
 )
 
@@ -149,6 +151,32 @@ class TestCallValidator(SimpleTestCase):
         self.assertListEqual(
             [error.title for error in errors],
             ['Latest call not in last month']
+        )
+
+    def test_skipping_call_validator(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row[SKIP_CALL_VALIDATOR] = SKIP_CALL_VALIDATOR_YES
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        row_num = 1
+
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        self.assertListEqual(
+            [error.title for error in errors],
+            []
+        )
+
+    def test_skipping_call_validator_unexpected_value(self):
+        raw_row = _sample_valid_rch_upload()
+        raw_row[SKIP_CALL_VALIDATOR] = 'yup'
+        fields_to_update = raw_row.copy()
+        fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
+        row_num = 1
+
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        self.assertListEqual(
+            [error.title for error in errors],
+            ['Unexpected value for skipping call validator column']
         )
 
 
