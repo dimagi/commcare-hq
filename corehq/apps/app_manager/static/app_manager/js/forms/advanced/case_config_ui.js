@@ -387,7 +387,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 if (action.value === 'load' || action.value === 'auto_select' || action.value === 'load_case_from_fixture') {
                     index = self.load_update_cases().length;
                     var tagPrefix = action.value === 'auto_select' ? 'auto' : '',
-                        action_data = {
+                        actionData = {
                             case_type: caseConfig.caseType,
                             details_module: null,
                             case_tag: tagPrefix + 'load_' + caseConfig.caseType + index,
@@ -405,13 +405,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             load_case_from_fixture: null,
                         };
                     if (action.value === 'auto_select') {
-                        action_data.auto_select = {
+                        actionData.auto_select = {
                             mode: '',
                             value_source: '',
                             value_key: '',
                         };
                     } else if (action.value === 'load_case_from_fixture') {
-                        action_data.load_case_from_fixture = {
+                        actionData.load_case_from_fixture = {
                             fixture_nodeset: '',
                             fixture_tag: '',
                             fixture_variable: '',
@@ -422,7 +422,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             arbitrary_datum_function: '',
                         };
                     }
-                    self.load_update_cases.push(loadUpdateAction.wrap(action_data, self.caseConfig));
+                    self.load_update_cases.push(loadUpdateAction.wrap(actionData, self.caseConfig));
                     self.caseConfig.applyAccordion('load', index);
                 } else if (action.value === 'open') {
                     index = self.open_cases().length;
