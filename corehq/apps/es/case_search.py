@@ -158,21 +158,25 @@ def case_property_filter(case_property_name, value):
     )
 
 
-def case_property_query(case_property_name, value, fuzzy=False):
+def case_property_query(case_property_name, value, fuzzy=False, mode=None):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
     if value is None:
         raise TypeError("You cannot pass 'None' as a case property value")
+    if mode not in ['and', 'or', None]:
+        raise ValueError(" 'mode' must be one of: 'and', 'or', None")
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
         return filters.OR(
             # fuzzy match
-            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
+            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator=mode),
             # non-fuzzy match. added to improve the score of exact matches
-            case_property_text_query(case_property_name, value),
+            case_property_text_query(case_property_name, value, operator=mode),
         )
+    if not fuzzy and mode in ['or', 'and']:
+        return case_property_text_query(case_property_name, value, operator=mode)
     return exact_case_property_text_query(case_property_name, value)
 
 
@@ -195,7 +199,7 @@ def exact_case_property_text_query(case_property_name, value):
     )
 
 
-def case_property_text_query(case_property_name, value, fuzziness='0'):
+def case_property_text_query(case_property_name, value, fuzziness='0', operator=None):
     """Filter by case_properties.key and do a text search in case_properties.value
 
     This does not do exact matches on the case property value. If the value has
@@ -205,7 +209,7 @@ def case_property_text_query(case_property_name, value, fuzziness='0'):
     """
     return _base_property_query(
         case_property_name,
-        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
+        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness, operator=operator)
     )
 
 
