@@ -141,25 +141,25 @@ def case_property_filter(case_property_name, value):
     )
 
 
-def case_property_query(case_property_name, value, fuzzy=False, mode=None):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
     if value is None:
         raise TypeError("You cannot pass 'None' as a case property value")
-    if mode not in ['and', 'or', None]:
+    if multivalue_mode not in ['and', 'or', None]:
         raise ValueError(" 'mode' must be one of: 'and', 'or', None")
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
         return filters.OR(
             # fuzzy match
-            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator=mode),
+            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator=multivalue_mode),
             # non-fuzzy match. added to improve the score of exact matches
-            case_property_text_query(case_property_name, value, operator=mode),
+            case_property_text_query(case_property_name, value, operator=multivalue_mode),
         )
-    if not fuzzy and mode in ['or', 'and']:
-        return case_property_text_query(case_property_name, value, operator=mode)
+    if not fuzzy and multivalue_mode in ['or', 'and']:
+        return case_property_text_query(case_property_name, value, operator=multivalue_mode)
     return exact_case_property_text_query(case_property_name, value)
 
 

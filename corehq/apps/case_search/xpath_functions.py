@@ -38,18 +38,6 @@ def date(node):
     )
 
 
-def _selected_query(node, fuzzy, operator):
-    if len(node.args) != 2:
-        raise XPathFunctionException(_(f"The {node.name} function accepts exactly two arguments."))
-    property_name = serialize(node.args[0])
-    search_values = node.args[1]
-    return case_property_query(property_name, search_values, fuzzy=fuzzy, mode=operator)
-
-
-def selected(node, fuzzy):
-    return _selected_query(node, fuzzy=fuzzy, operator='or')
-
-
 def selected_any(node, fuzzy):
     return _selected_query(node, fuzzy=fuzzy, operator='or')
 
@@ -58,12 +46,20 @@ def selected_all(node, fuzzy):
     return _selected_query(node, fuzzy=fuzzy, operator='and')
 
 
+def _selected_query(node, fuzzy, operator):
+    if len(node.args) != 2:
+        raise XPathFunctionException(_(f"The {node.name} function accepts exactly two arguments."))
+    property_name = serialize(node.args[0])
+    search_values = node.args[1]
+    return case_property_query(property_name, search_values, fuzzy=fuzzy, multivalue_mode=operator)
+
+
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
 }
 
 XPATH_QUERY_FUNCTIONS = {
-    'selected': selected,
+    'selected': selected_any,  # selected and selected_any function identically.
     'selected-any': selected_any,
     'selected-all': selected_all,
 }
