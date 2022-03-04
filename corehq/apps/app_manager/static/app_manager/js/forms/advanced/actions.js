@@ -271,13 +271,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             self.validate = ko.computed(function () {
                 if (self.auto_select) {
                     var mode = self.auto_select.mode();
-                    var value_source = self.auto_select.value_source();
+                    var valueSource = self.auto_select.value_source();
                     var value_key = self.auto_select.value_key();
                     if (!mode) {
                         return gettext("Autoselect mode required");
                     } else if (!value_key && mode !== 'usercase') {
                         return gettext('Property required');
-                    } else if (!value_source) {
+                    } else if (!valueSource) {
                         if (mode === 'case') {
                             return gettext('Case required');
                         } else if (mode === 'fixture') {
