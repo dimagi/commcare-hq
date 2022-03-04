@@ -36,7 +36,7 @@ class LiveGoogleSheetRefreshStatus(models.Model):
     date_start = models.DateTimeField(auto_now_add=True)
     date_end = models.DateTimeField(null=True, blank=True)
     refresh_error_reason = models.CharField(
-        max_length=7,
+        max_length=16,
         choices=LiveGoogleSheetErrorReason.CHOICES,
         null=True,
         default=LiveGoogleSheetErrorReason.NO_ERROR,
