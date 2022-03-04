@@ -134,7 +134,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 header={'en': 'Gender'},
                 model='case',
                 field="if(gender = 'male', 'boy', 'girl')",
-                format='enum',
+                format='conditional-enum',
                 enum=[
                     MappingItem(key="boy", value={'en': 'Boy'}),
                     MappingItem(key="girl", value={'en': 'Girl'}),
