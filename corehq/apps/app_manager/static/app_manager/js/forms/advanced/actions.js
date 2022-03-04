@@ -360,7 +360,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
             self.relationshipTypes = actionBase.relationshipTypes;
 
-            var add_circular = function () {
+            var addCircular = function () {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
                 self.allow_product_stock = ko.computed(function () {
                     var supported = self.caseConfig.case_supports_products(self.case_type());
@@ -435,9 +435,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             if (!self.caseConfig.caseConfigViewModel) {
-                _.delay(add_circular);
+                _.delay(addCircular);
             } else {
-                add_circular();
+                addCircular();
             }
 
             // needed for compatibility with shared templates
@@ -611,7 +611,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 return true;
             });
 
-            var add_circular = function () {
+            var addCircular = function () {
                 self.allow_subcase = ko.computed(function () {
                     return self.case_indices || self.caseConfig.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
@@ -644,9 +644,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined
             if (!self.caseConfig.caseConfigViewModel) {
-                _.delay(add_circular);
+                _.delay(addCircular);
             } else {
-                add_circular();
+                addCircular();
             }
 
             // needed for compatibility with shared templates
