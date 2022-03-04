@@ -127,13 +127,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 });
             }
         },
-        suggestedProperties: function (action, allow_parent) {
+        suggestedProperties: function (action, allowParent) {
             var properties = [];
             var propertiesMap = action.caseConfig.propertiesMap;
             var caseType = action.case_type();
             if (_(propertiesMap).has(caseType)) {
                 properties = _.filter(propertiesMap[caseType](), function (p) {
-                    return allow_parent ? true : p.indexOf('/') === -1;
+                    return allowParent ? true : p.indexOf('/') === -1;
                 });
             }
             return properties;
