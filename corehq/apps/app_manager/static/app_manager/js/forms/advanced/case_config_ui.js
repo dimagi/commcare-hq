@@ -61,8 +61,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            var app_manager = hqImport('app_manager/js/app_manager');
-                            app_manager.updateDOM(data.update);
+                            hqImport('app_manager/js/app_manager').updateDOM(data.update);
                             self.setPropertiesMap(data.propertiesMap);
                             self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
                         },
