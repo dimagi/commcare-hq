@@ -7,7 +7,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
             loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
             openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+            initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
         var DEFAULT_CONDITION = function (type) {
             return {
@@ -474,16 +474,16 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             return self;
         };
 
-        if (initial_page_data('has_form_source')) {
-            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
+        if (initialPageData.get('has_form_source')) {
+            var caseConfig = caseConfig(_.extend({}, initialPageData.get("case_config_options"), {
                 home: $('#case-config-ko'),
-                requires: ko.observable(initial_page_data("form_requires")),
+                requires: ko.observable(initialPageData.get("form_requires")),
             }));
             caseConfig.init();
 
-            if (initial_page_data("schedule_options")) {
+            if (initialPageData.get("schedule_options")) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initial_page_data("schedule_options"), {
+                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initialPageData.get("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));
                 visitScheduler.init();
