@@ -25,11 +25,11 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
     };
 
     var actionBase = {
-        validate: function (self, case_type, caseTag) {
+        validate: function (self, caseType, caseTag) {
             if (!self.caseConfig.caseConfigViewModel) {
                 return;
             }
-            if (!case_type) {
+            if (!caseType) {
                 return gettext("Case Type required");
             } else if (!caseTag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
