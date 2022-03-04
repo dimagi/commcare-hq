@@ -1,4 +1,3 @@
-from tkinter import CASCADE
 from django.db import models
 
 from django.contrib.auth.models import User
@@ -32,7 +31,7 @@ class LiveGoogleSheetErrorReason():
 
 
 class LiveGoogleSheetRefreshStatus(models.Model):
-    schedule = models.ForeignKey(LiveGoogleSheetSchedule, on_delete=CASCADE)
+    schedule = models.ForeignKey(LiveGoogleSheetSchedule, on_delete=models.deletion.CASCADE)
     date_start = models.DateTimeField(auto_now_add=True)
     date_end = models.DateTimeField(null=True, blank=True)
     refresh_error_reason = models.CharField(
