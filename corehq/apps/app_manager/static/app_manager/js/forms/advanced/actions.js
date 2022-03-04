@@ -719,12 +719,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.validate = ko.computed(function () {
-                var case_type = self.case_type,
+                var caseType = self.case_type,
                     caseTag = self.case_tag;
                 if (!self.caseConfig.caseConfigViewModel) {
                     return;
                 }
-                if (!case_type) {
+                if (!caseType) {
                     return gettext("Case Type required");
                 }
                 if (caseTag) {
