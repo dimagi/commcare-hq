@@ -282,13 +282,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
                 var preload = caseConfigUtils.preloadDictToArray(a.preload, caseConfig);
-                var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
+                var caseProperties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];
                 var action = loadUpdateAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
-                _(case_properties).each(function (p) {
+                _(caseProperties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
@@ -321,12 +321,12 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     required: true,
                     save_only_if_edited: a.name_update.update_mode === 'edit',
                 }];
-                var case_properties = caseConfigUtils.propertyDictToArray(requiredProperties, a.case_properties, caseConfig);
+                var caseProperties = caseConfigUtils.propertyDictToArray(requiredProperties, a.case_properties, caseConfig);
                 a.case_properties = [];
                 var action = openCaseAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
-                _(case_properties).each(function (p) {
+                _(caseProperties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
