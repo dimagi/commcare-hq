@@ -103,9 +103,9 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return modes;
             };
 
-            self.case_supports_products = function (case_type) {
+            self.case_supports_products = function (caseType) {
                 for (var i = 0; i < self.moduleCaseTypes.length; i++) {
-                    if (self.moduleCaseTypes[i].case_type === case_type &&
+                    if (self.moduleCaseTypes[i].case_type === caseType &&
                         self.moduleCaseTypes[i].module_type === 'AdvancedModule') {
                         return true;
                     }
