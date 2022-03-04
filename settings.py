@@ -2088,3 +2088,5 @@ GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14
