@@ -18,7 +18,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             };
         };
 
-        var caseConfig = function (params) {
+        var CaseConfig = function (params) {
             var self = {};
             self.makePopover = function () {
                 $('.property-description').closest('.read-only').popover({
@@ -473,7 +473,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
         };
 
         if (initialPageData.get('has_form_source')) {
-            var caseConfig = caseConfig(_.extend({}, initialPageData.get("case_config_options"), {
+            var caseConfig = CaseConfig(_.extend({}, initialPageData.get("case_config_options"), {
                 home: $('#case-config-ko'),
                 requires: ko.observable(initialPageData.get("form_requires")),
             }));
