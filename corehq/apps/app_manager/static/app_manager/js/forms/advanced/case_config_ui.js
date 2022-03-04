@@ -386,11 +386,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 var index;
                 if (action.value === 'load' || action.value === 'auto_select' || action.value === 'load_case_from_fixture') {
                     index = self.load_update_cases().length;
-                    var tag_prefix = action.value === 'auto_select' ? 'auto' : '',
+                    var tagPrefix = action.value === 'auto_select' ? 'auto' : '',
                         action_data = {
                             case_type: caseConfig.caseType,
                             details_module: null,
-                            case_tag: tag_prefix + 'load_' + caseConfig.caseType + index,
+                            case_tag: tagPrefix + 'load_' + caseConfig.caseType + index,
                             case_index: {
                                 tag: '',
                                 reference_id: 'parent',
