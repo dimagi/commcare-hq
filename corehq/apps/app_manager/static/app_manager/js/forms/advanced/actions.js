@@ -85,7 +85,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 var count = {};
                 _(self.case_properties()).each(function (p) {
                     var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
+                    if (!_.has(count, key)) {
                         count[key] = 0;
                     }
                     return count[key] += 1;
@@ -304,7 +304,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 var count = {};
                 _(self.preload()).each(function (p) {
                     var path = p.path();
-                    if (!count.hasOwnProperty(path)) {
+                    if (!_.has(count, path)) {
                         count[path] = 0;
                     }
                     return count[path] += 1;
