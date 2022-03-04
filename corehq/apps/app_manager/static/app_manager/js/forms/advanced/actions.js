@@ -25,20 +25,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
     };
 
     var actionBase = {
-        validate: function (self, case_type, case_tag) {
+        validate: function (self, case_type, caseTag) {
             if (!self.caseConfig.caseConfigViewModel) {
                 return;
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
+            } else if (!caseTag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
             }
-            if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+            if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(caseTag)) {
                 return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
             }
             var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
-            if (_.where(tags, { value: case_tag }).length > 1) {
+            if (_.where(tags, { value: caseTag }).length > 1) {
                 return gettext("Case Tag already in use");
             }
             return null;
