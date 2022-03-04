@@ -448,8 +448,10 @@ class CommCareUserActionForm(BaseUpdateUserForm):
                 ),
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
-                        Submit(
-                            'submit', _('Update user'),
+                        StrictButton(
+                            _('Update user'),
+                            type='submit',
+                            css_class='btn-primary',
                             # This button submits the "user_information" form.
                             form='user_information',
                         )
