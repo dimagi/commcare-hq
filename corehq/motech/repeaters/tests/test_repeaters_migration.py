@@ -143,6 +143,8 @@ class RepeaterSyncTestsBase(TestCase):
 
     def setUp(self):
         self.url = "http://example.com"
+        ConnectionSettings.objects.all().delete()
+        # figure out why conn already exists
         self.conn = ConnectionSettings.objects.create(id=1, domain=DOMAIN, name=self.url, url=self.url)
         return super().setUp()
 
@@ -482,11 +484,10 @@ class TestSQLDhis2Repeater(RepeaterSyncTestsBase):
         self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
         self.assertEqual(sql_repeater.dhis2_config, couch_repeater.dhis2_config.to_json())
         self.assertEqual(sql_repeater.dhis2_version, couch_repeater.dhis2_version)
-        # Todo: How to handle datetimes in OptionValue
-        # self.assertEqual(
-        #   sql_repeater.dhis2_version_last_modified,
-        #   couch_repeater.dhis2_version_last_modified.isoformat()
-        # )
+        self.assertEqual(
+            sql_repeater.dhis2_version_last_modified,
+            couch_repeater.dhis2_version_last_modified
+        )
         self.assertEqual(sql_repeater.include_app_id_param, couch_repeater.include_app_id_param)
         self.assertEqual(sql_repeater.white_listed_form_xmlns, couch_repeater.white_listed_form_xmlns)
 
@@ -519,11 +520,9 @@ class TestSQLDhis2EntityRepeater(RepeaterSyncTestsBase):
 
     def _assert_same_repeater_objects(self, sql_repeater, couch_repeater):
         self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
-        # Todo: Figure out why this is failing
-        # self.assertEqual(sql_repeater.dhis2_entity_config, couch_repeater.dhis2_entity_config.to_json())
+        self.assertEqual(sql_repeater.dhis2_entity_config, couch_repeater.dhis2_entity_config.to_json())
         self.assertEqual(sql_repeater.dhis2_version, couch_repeater.dhis2_version)
-        # Todo: How to handle datetimes in OptionValue
-        #self.assertEqual(sql_repeater.dhis2_version_last_modified, couch_repeater.dhis2_version_last_modified)
+        self.assertEqual(sql_repeater.dhis2_version_last_modified, couch_repeater.dhis2_version_last_modified)
         self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
         self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
 
