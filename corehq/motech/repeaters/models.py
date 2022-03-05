@@ -1621,11 +1621,8 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def attempt_forward_now(self, is_retry=False, fire_synchronously=False):
-        from corehq.motech.repeaters.tasks import (
-            process_repeat_record,
-            retry_process_repeat_record,
-        )
+    def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
+        from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
 
         def is_ready():
             return self.next_check < datetime.utcnow()
