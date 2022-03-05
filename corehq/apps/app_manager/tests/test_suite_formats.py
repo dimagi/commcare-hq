@@ -134,7 +134,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 header={'en': 'Gender'},
                 model='case',
                 field="if(gender = 'male', 'boy', 'girl')",
-                format='conditional-enum',
+                format='enum',
                 enum=[
                     MappingItem(key="boy", value={'en': 'Boy'}),
                     MappingItem(key="girl", value={'en': 'Girl'}),
@@ -146,7 +146,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template>
             <text>
-              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
+              <xpath function="replace(join(' ', if(selected(if(gender = 'male', 'boy', 'girl'), 'boy'), $kboy, ''), if(selected(if(gender = 'male', 'boy', 'girl'), 'girl'), $kgirl, '')), '  ', '')">
                 <variable name="kboy">
                   <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
                 </variable>
