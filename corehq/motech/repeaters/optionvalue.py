@@ -1,5 +1,16 @@
 import attr
 
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
+
+
+class DateTimeCoder:
+
+    def to_json(value):
+        return json_format_datetime(value) if value is not None else None
+
+    def from_json(value):
+        return string_to_utc_datetime(value) if value is not None else None
+
 
 class OptionValue(property):
 
@@ -10,12 +21,14 @@ class OptionValue(property):
         default=NOT_SET,
         choices=None,
         schema=None,
+        coder=None,
     ):
         if schema and default is not self.NOT_SET:
             raise ValueError("default not allowed with schema")
         self.default = default
         self.choices = choices
         self.schema = schema
+        self.coder = coder
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -23,6 +36,8 @@ class OptionValue(property):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
+        if self.coder:
+            return self.coder.from_json(obj.options[self.name])
         if self.schema:
             return self.schema(obj.options.setdefault(self.name, {}))
         if self.name in obj.options:
@@ -42,7 +57,8 @@ class OptionValue(property):
                     f"Expected {self.name} to be of type {self.schema.__name__} but got {type(value).__name__}"
                 )
             value = value.options
-
+        if self.coder:
+            value = self.coder.to_json(value)
         obj.options[self.name] = value
 
 
