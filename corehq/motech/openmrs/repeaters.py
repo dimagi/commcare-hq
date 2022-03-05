@@ -271,12 +271,6 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
     atom_feed_status = OptionValue(default=dict)
     openmrs_config = OptionValue(default=dict)
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__)
-            and self.id == other.id
-        )
-
     @cached_property
     def requests(self):
         # Used by atom_feed module and views that don't have a payload
