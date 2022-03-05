@@ -10,6 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests import RequestException
 from urllib3.exceptions import HTTPError
+from corehq.motech.repeaters.optionvalue import DateTimeCoder
 
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (
@@ -239,7 +240,7 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
 class SQLDhis2Instance(object):
 
     dhis2_version = OptionValue(default=None)
-    dhis2_version_last_modified = OptionValue(default=None)
+    dhis2_version_last_modified = OptionValue(default=None, coder=DateTimeCoder)
 
     def get_api_version(self) -> int:
         if (
