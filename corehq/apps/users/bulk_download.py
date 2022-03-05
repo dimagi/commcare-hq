@@ -215,10 +215,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
         if EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
-            deactivation_triggers = dict(
-                (f.user_id, f.deactivate_after.strftime('%m-%Y'))
+            deactivation_triggers = {
+                f.user_id: f.deactivate_after.strftime('%m-%Y')
                 for f in DeactivateMobileWorkerTrigger.objects.filter(domain=domain)
-            )
+            }
         else:
             deactivation_triggers = {}
         for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
