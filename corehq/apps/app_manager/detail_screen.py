@@ -460,10 +460,6 @@ class EnumImage(Enum):
             'key_as_condition': item.key_as_condition(self.xpath),
             'key_as_var_name': item.ref_to_key_variable(i, type)
         }
-    
-    @property
-    def format(self):
-        return self.template_form
 
 
 @register_format_type('late-flag')
