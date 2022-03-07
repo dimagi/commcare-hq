@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-import os
 import re
-import traceback
-import sys
 import warnings
 
 from django.conf import settings
@@ -67,7 +64,7 @@ def json_handler(obj):
     elif isinstance(obj, time):
         return obj.strftime('%H:%M:%S')
     elif isinstance(obj, Decimal):
-        return float(obj) # warning, potential loss of precision
+        return float(obj)  # warning, potential loss of precision
     elif isinstance(obj, Promise):
         return force_str(obj)  # to support ugettext_lazy
     elif isinstance(obj, bytes):

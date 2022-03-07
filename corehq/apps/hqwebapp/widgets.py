@@ -26,7 +26,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
             result = self.check_test(value)
-        except: # Silently catch exceptions
+        except Exception:  # Silently catch exceptions
             result = False
         if result:
             final_attrs['checked'] = 'checked'
