@@ -4,7 +4,8 @@ import time
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -15,6 +16,76 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
+class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_nopermission', [])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_baseitem', ['base_item_expression'])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_related_doc', ['related_doc'])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions(
+            'domain_both',
+            ['related_doc', 'base_item_expression']
+        )
+        cls.config = get_sample_data_source()
+        cls.config = cls.config.to_json()
+        cls.config['configured_indicators'].append({
+            "type": "expression",
+            "is_primary_key": False,
+            "is_nullable": True,
+            "datatype": "string",
+            "expression": {
+                "value_expression": {
+                    "datatype": None,
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                    "datatype": None,
+                    "type": "property_name",
+                    "property_name": "health_post_id"
+                }
+            },
+            "column_id": "health_post_name"
+        })
+        cls.config['base_item_expression'] = {
+            "datatype": None,
+            "property_name": "actions",
+            "type": "property_name"
+        }
+        cls.config = DataSourceConfiguration.wrap(cls.config)
+        return super().setUpClass()
+
+    def test_raises_when_domain_has_no_permission(self):
+        self.config.domain = 'domain_nopermission'
+        err_msg = f'base_item_expression is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_raises_when_related_doc_used_without_permission(self):
+        self.config.domain = 'domain_baseitem'
+        err_msg = f'related_doc is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_raises_when_domain_has_only_related_doc(self):
+        self.config.domain = 'domain_related_doc'
+        err_msg = f'base_item_expression is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_does_not_raise_with_permissions(self):
+        self.config.domain = 'domain_both'
+        self.assertIsNone(self.config.validate())
+
+    def test_allows_domains_with_no_explicit_permissions(self):
+        self.config.domain = 'random_domain'
+        self.assertIsNone(self.config.validate())
+
+
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -322,6 +393,7 @@ class DataSourceConfigurationDbTest(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def setUp(self):
