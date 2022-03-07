@@ -76,6 +76,5 @@ branches:
     - ad/multivalued-search-functions # Addison Mar 2
     - do/multi-select-id-mapping # Dominic Mar 2
     - ml/check-for-historical-xss # Minha Mar 3
-    - mk/samveg/skip-last-month-date # Akash Mar 4
     - dependabot/npm_and_yarn/markdown-it-12.3.2 # Amit Mar 7
 submodules: { }
