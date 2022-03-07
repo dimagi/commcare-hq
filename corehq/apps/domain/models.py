@@ -330,7 +330,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
-    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -444,7 +443,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
-    launch_date = DateTimeProperty
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
