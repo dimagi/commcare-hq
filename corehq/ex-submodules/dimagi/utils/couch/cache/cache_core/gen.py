@@ -1,7 +1,7 @@
 import importlib
+from urllib.parse import quote
 
 from django.conf import settings
-from django.utils import http
 
 import simplejson
 from couchdbkit import ResourceNotFound
@@ -77,7 +77,7 @@ class GenerationCache(object):
         """
         param_string = ""
         if isinstance(params, dict):
-            param_string = http.urlquote('|'.join(["%s::%s" % (k, v) for k, v in params.items()]))
+            param_string = quote('|'.join(["%s::%s" % (k, v) for k, v in params.items()]))
         elif params == '*':
             param_string = params
 
