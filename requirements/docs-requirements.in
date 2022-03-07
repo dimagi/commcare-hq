@@ -3,6 +3,6 @@
 django-extensions
 docutils
 myst-parser
-Sphinx
+Sphinx~=4.4.0
 sphinxcontrib-django
 sphinx-rtd-theme
