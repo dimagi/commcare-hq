@@ -1,4 +1,5 @@
 import datetime
+import re
 from calendar import month_name
 
 from django.utils.translation import ugettext_lazy as _
@@ -492,3 +493,13 @@ def get_start_and_end_dates_of_month(year, month):
     date_start = datetime.date(year, month, 1)
     date_end = add_months_to_date(date_start, 1) - datetime.timedelta(days=1)
     return date_start, date_end
+
+
+def get_date_from_month_and_year_string(mm_yyyy):
+    if not re.match(r'^(\d\d)-(\d{4})$', mm_yyyy):
+        raise ValueError
+    try:
+        parts = mm_yyyy.split('-')
+        return datetime.date(int(parts[1]), int(parts[0]), 1)
+    except IndexError:
+        raise ValueError
