@@ -756,6 +756,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
     'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'COVID_US_SET_ACTIVITY_COMPLETE_TODAY':
+        'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
     'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
         'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
 }

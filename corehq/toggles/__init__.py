@@ -1055,14 +1055,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-ENABLE_LOADTEST_USERS = StaticToggle(
-    'enable_loadtest_users',
-    'Enable creating loadtest users on HQ',
-    TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Loadtest+Users',
-)
-
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -2158,6 +2150,13 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
+    'support_expanded_column_in_reports',
+    'Support count per choice column to show up in multibar graph in reports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     'save-only-edited-form-fields',
     'Save a form field only if the answer has been edited',
@@ -2179,4 +2178,11 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
     on the Exports page.
     """
+)
+
+SUPERSET_ANALYTICS = StaticToggle(
+    'superset-analytics',
+    'Activates Analytics features to create Superset based reports and dashboards using UCR data',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )
