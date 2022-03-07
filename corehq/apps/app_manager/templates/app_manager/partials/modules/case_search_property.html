@@ -140,34 +140,38 @@
                   </div>
                 </div>
                 </fieldset>
-                {% if js_options.has_geocoder_privs %}
+                {% if js_options.has_geocoder_privs or js_options.exclude_from_search_enabled %}
                     <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearance() == ''">
                       <legend>{% trans "Advanced Options" %}</legend>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Geocoder Receiver Expression" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input class="form-control" type="text" data-bind="value: receiverExpression"/>
+                      {% if js_options.has_geocoder_privs %}
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Geocoder Receiver Expression" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input class="form-control" type="text" data-bind="value: receiverExpression"/>
+                          </div>
                         </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Hide in Search Screen" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input type="checkbox" data-bind="checked: hidden" />
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Hide in Search Screen" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input type="checkbox" data-bind="checked: hidden" />
+                          </div>
                         </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3">
-                          {% trans "Exclude From Search Filters" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-9">
-                          <input type="checkbox" data-bind="checked: excludeFromSearch"/>
+                      {% endif %}
+                      {% if js_options.exclude_from_search_enabled %}
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Exclude From Search Filters" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input type="checkbox" data-bind="checked: excludeFromSearch"/>
+                          </div>
                         </div>
-                      </div>
-                  </fieldset>
+                      {% endif %}
+                    </fieldset>
                 {% endif %}
                 <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
                   <legend  data-bind="text: dropdownLabels().advancedLabel"></legend>
