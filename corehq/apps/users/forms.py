@@ -55,6 +55,7 @@ from corehq.apps.users.util import (
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from dimagi.utils.dates import get_date_from_month_and_year_string
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -101,9 +102,8 @@ def clean_deactivate_after_date(deactivate_after_date):
     if not deactivate_after_date:
         return None
     try:
-        parts = deactivate_after_date.split('-')
-        return datetime.date(int(parts[1]), int(parts[0]), 1)
-    except (IndexError, ValueError):
+        return get_date_from_month_and_year_string(deactivate_after_date)
+    except ValueError:
         raise forms.ValidationError(
             _("Invalid Deactivation Date format (expects MM-YYYY).")
         )
