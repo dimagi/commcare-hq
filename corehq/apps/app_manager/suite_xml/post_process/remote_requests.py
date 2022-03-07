@@ -205,7 +205,10 @@ class RemoteRequestFactory(object):
         ]
 
         datums.extend(
-            QueryData(key=c.property, ref=c.defaultValue)
+            QueryData(
+                key=c.property,
+                ref=self._convert_curly_braces_to_concat(c.defaultValue)
+            )
             for c in self.module.search_config.default_properties
         )
         if self.module.search_config.blacklisted_owner_ids_expression:
@@ -230,6 +233,25 @@ class RemoteRequestFactory(object):
                 )
             )
         return datums
+
+    # Enables app builders to use a special {} bracket syntax (mimicing python) to insert
+    # variables for interpretation by formplayer.
+    @staticmethod
+    def _convert_curly_braces_to_concat(xpath_query):
+
+        if '{' in xpath_query:
+            # If string uses double quotes remove them because we are going to add a concat.
+            if xpath_query[0:1] == '\"':
+                xpath_query = xpath_query[1:]
+            if xpath_query[len(xpath_query) - 1: len(xpath_query)] == '\"':
+                xpath_query = xpath_query[0: len(xpath_query[1:])]
+
+            xpath_query = 'concat("' + xpath_query
+            xpath_query = xpath_query.replace('{', '\", ')
+            xpath_query = xpath_query.replace('}', ', \"')
+            xpath_query = xpath_query + '")'
+
+        return xpath_query
 
     def build_query_prompts(self):
         prompts = []
