@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import Promise
 
 
@@ -20,5 +20,5 @@ class LazyEncoder(DecimalEncoder):
 
     def default(self, obj):
         if isinstance(obj, Promise):
-            return force_text(obj)
+            return force_str(obj)
         return super(LazyEncoder, self).default(obj)

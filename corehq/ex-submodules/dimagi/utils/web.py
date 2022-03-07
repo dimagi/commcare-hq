@@ -10,7 +10,7 @@ import warnings
 from django.conf import settings
 from django.http import HttpResponse
 import json
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime, time
@@ -69,7 +69,7 @@ def json_handler(obj):
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     elif isinstance(obj, Promise):
-        return force_text(obj)  # to support ugettext_lazy
+        return force_str(obj)  # to support ugettext_lazy
     elif isinstance(obj, bytes):
         return obj.decode('utf-8')
     else:

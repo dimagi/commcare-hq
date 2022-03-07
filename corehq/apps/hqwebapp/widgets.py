@@ -4,7 +4,7 @@ import json
 from django import forms
 from django.forms.utils import flatatt
 from django.forms.widgets import CheckboxInput, Input
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html, conditional_escape
 from django.utils.translation import ugettext_noop
@@ -32,7 +32,7 @@ class BootstrapCheckboxInput(CheckboxInput):
             final_attrs['checked'] = 'checked'
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_text(value)
+            final_attrs['value'] = force_str(value)
         return format_html(
             '<label class="checkbox"><input{} /> {}</label>',
             mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
