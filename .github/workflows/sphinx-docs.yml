@@ -1,0 +1,16 @@
+name: Build Sphinx Docs
+on:
+  pull_request:
+    branches:
+    - master
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: ammaraskar/sphinx-action@0.4
+      with:
+        pre-build-command: "apt-get update -y && apt-get install -y git libpq-dev python3-dev gcc libffi-dev"
+        docs-folder: "docs/"
