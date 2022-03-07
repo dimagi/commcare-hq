@@ -81,9 +81,6 @@ from . import toggles
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
 
-    report_set = None
-    if project.report_whitelist:
-        report_set = set(project.report_whitelist)
     reports = []
 
     reports.extend(_get_configurable_reports(project))
@@ -116,10 +113,6 @@ def REPORTS(project):
         deployments.ApplicationErrorReport,
     )
 
-    monitoring_reports = _filter_reports(report_set, monitoring_reports)
-    inspect_reports = _filter_reports(report_set, inspect_reports)
-    deployments_reports = _filter_reports(report_set, deployments_reports)
-
     reports.extend([
         (ugettext_lazy("Monitor Workers"), monitoring_reports),
         (ugettext_lazy("Inspect Data"), inspect_reports),
@@ -133,7 +126,6 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
     reports = list(_get_report_builder_reports(project)) + reports
@@ -158,20 +150,12 @@ def REPORTS(project):
         sms.ScheduleInstanceReport,
     ])
 
-    messaging_reports = _filter_reports(report_set, messaging_reports)
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
 
     reports.extend(_get_dynamic_reports(project))
 
     return reports
-
-
-def _filter_reports(report_set, reports):
-    if report_set:
-        return [r for r in reports if r.slug in report_set]
-    else:
-        return reports
 
 
 def _get_dynamic_reports(project):
