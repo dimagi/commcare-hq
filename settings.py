@@ -874,6 +874,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
