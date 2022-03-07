@@ -341,7 +341,8 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domai
     )
 
 
-def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=['access_apis']):
+def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=None):
+    oauth_scopes = oauth_scopes or ['access_apis']
     return _login_or_challenge(
         _oauth2_check(oauth_scopes),
         allow_cc_users=allow_cc_users,
@@ -351,7 +352,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=['access_apis']):
+def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -361,6 +362,8 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=['acc
              endpoints we validate each formplayer request using a shared key. See the auth
              function for more details.
     """
+    oauth_scopes = oauth_scopes or ['access_apis']
+
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -410,8 +413,9 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=['access_apis']):
+def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=None):
     # get a mapped set of decorators for different auth types with the specified parameters
+    oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
         'allow_cc_users': allow_cc_users,
         'require_domain': require_domain,
