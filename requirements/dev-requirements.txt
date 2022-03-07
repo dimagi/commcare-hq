@@ -12,6 +12,8 @@ amqp==2.6.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
+asgiref==3.5.0
+    # via django
 asttokens==2.0.5
     # via stack-data
 attrs==18.2.0
@@ -95,7 +97,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==2.2.27
+django==3.2.12
     # via
     #   -r base-requirements.in
     #   django-appconf
