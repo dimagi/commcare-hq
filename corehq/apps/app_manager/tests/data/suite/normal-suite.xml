@@ -115,7 +115,7 @@
         </header>
         <template>
             <text>
-                <xpath function="replace(join(' ', if(selected(enum, 'a'), $ka, ''), if(selected(enum, 'b'), $kb, '')), '  ', '')">
+                <xpath function="replace(join(' ', if(selected(enum, 'a'), $ka, ''), if(selected(enum, 'b'), $kb, '')), '\s+$', '')">
                     <variable name="ka">
                         <locale id="m0.case_short.case_enum_5.enum.ka"/>
                     </variable>
@@ -231,7 +231,7 @@
         </header>
         <template>
             <text>
-                <xpath function="replace(join(' ', if(selected(enum, 'a'), $ka, ''), if(selected(enum, 'b'), $kb, '')), '  ', '')">
+                <xpath function="replace(join(' ', if(selected(enum, 'a'), $ka, ''), if(selected(enum, 'b'), $kb, '')), '\s+$', '')">
                     <variable name="ka">
                         <locale id="m0.case_long.case_enum_5.enum.ka"/>
                     </variable>
