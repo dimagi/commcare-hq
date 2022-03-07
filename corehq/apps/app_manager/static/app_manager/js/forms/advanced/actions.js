@@ -25,20 +25,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
     };
 
     var actionBase = {
-        validate: function (self, case_type, case_tag) {
+        validate: function (self, caseType, caseTag) {
             if (!self.caseConfig.caseConfigViewModel) {
                 return;
             }
-            if (!case_type) {
+            if (!caseType) {
                 return gettext("Case Type required");
-            } else if (!case_tag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
+            } else if (!caseTag || (self.warn_blank_case_tag() && !toggles.toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
             }
-            if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+            if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(caseTag)) {
                 return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
             }
             var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
-            if (_.where(tags, { value: case_tag }).length > 1) {
+            if (_.where(tags, { value: caseTag }).length > 1) {
                 return gettext("Case Tag already in use");
             }
             return null;
@@ -85,7 +85,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 var count = {};
                 _(self.case_properties()).each(function (p) {
                     var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
+                    if (!_.has(count, key)) {
                         count[key] = 0;
                     }
                     return count[key] += 1;
@@ -127,13 +127,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 });
             }
         },
-        suggestedProperties: function (action, allow_parent) {
+        suggestedProperties: function (action, allowParent) {
             var properties = [];
             var propertiesMap = action.caseConfig.propertiesMap;
             var caseType = action.case_type();
             if (_(propertiesMap).has(caseType)) {
                 properties = _.filter(propertiesMap[caseType](), function (p) {
-                    return allow_parent ? true : p.indexOf('/') === -1;
+                    return allowParent ? true : p.indexOf('/') === -1;
                 });
             }
             return properties;
@@ -271,13 +271,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             self.validate = ko.computed(function () {
                 if (self.auto_select) {
                     var mode = self.auto_select.mode();
-                    var value_source = self.auto_select.value_source();
-                    var value_key = self.auto_select.value_key();
+                    var valueSource = self.auto_select.value_source();
+                    var valueKey = self.auto_select.value_key();
                     if (!mode) {
                         return gettext("Autoselect mode required");
-                    } else if (!value_key && mode !== 'usercase') {
+                    } else if (!valueKey && mode !== 'usercase') {
                         return gettext('Property required');
-                    } else if (!value_source) {
+                    } else if (!valueSource) {
                         if (mode === 'case') {
                             return gettext('Case required');
                         } else if (mode === 'fixture') {
@@ -304,7 +304,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 var count = {};
                 _(self.preload()).each(function (p) {
                     var path = p.path();
-                    if (!count.hasOwnProperty(path)) {
+                    if (!_.has(count, path)) {
                         count[path] = 0;
                     }
                     return count[path] += 1;
@@ -360,7 +360,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
             self.relationshipTypes = actionBase.relationshipTypes;
 
-            var add_circular = function () {
+            var addCircular = function () {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
                 self.allow_product_stock = ko.computed(function () {
                     var supported = self.caseConfig.case_supports_products(self.case_type());
@@ -435,9 +435,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             if (!self.caseConfig.caseConfigViewModel) {
-                _.delay(add_circular);
+                _.delay(addCircular);
             } else {
-                add_circular();
+                addCircular();
             }
 
             // needed for compatibility with shared templates
@@ -611,7 +611,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 return true;
             });
 
-            var add_circular = function () {
+            var addCircular = function () {
                 self.allow_subcase = ko.computed(function () {
                     return self.case_indices || self.caseConfig.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
@@ -644,9 +644,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined
             if (!self.caseConfig.caseConfigViewModel) {
-                _.delay(add_circular);
+                _.delay(addCircular);
             } else {
-                add_circular();
+                addCircular();
             }
 
             // needed for compatibility with shared templates
@@ -719,20 +719,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.validate = ko.computed(function () {
-                var case_type = self.case_type,
-                    case_tag = self.case_tag;
+                var caseType = self.case_type,
+                    caseTag = self.case_tag;
                 if (!self.caseConfig.caseConfigViewModel) {
                     return;
                 }
-                if (!case_type) {
+                if (!caseType) {
                     return gettext("Case Type required");
                 }
-                if (case_tag) {
-                    if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+                if (caseTag) {
+                    if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(caseTag)) {
                         return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
                     }
                     var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
-                    if (_.where(tags, { value: case_tag }).length > 1) {
+                    if (_.where(tags, { value: caseTag }).length > 1) {
                         return gettext("Case Tag already in use");
                     }
                 }

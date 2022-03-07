@@ -1,8 +1,5 @@
 import datetime
-import logging
 import textwrap
-
-from django.core.management.base import BaseCommand
 
 from jsonobject.api import re_date
 
@@ -14,18 +11,11 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     exact_case_property_text_query,
 )
-from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.util.dates import iso_string_to_date
-from corehq.util.log import with_progress_bar
-
-# logger.debug will record something to a file but not print it
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.FileHandler('all_activity_complete_date.txt'))
-logger.setLevel(logging.DEBUG)
+from custom.covid.management.commands.update_cases import CaseUpdateCommand
 
 
-class Command(BaseCommand):
+class Command(CaseUpdateCommand):
     help = textwrap.dedent("""
         Twice-off script created 2022-02-03, updated 2022-02-11. A bunch of
         cases had the property all_activity_complete_date inadvertently set to
@@ -35,68 +25,43 @@ class Command(BaseCommand):
         to an actual date.
     """)
 
-    def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('case_type', choices=['patient', 'contact'])
-        parser.add_argument('--username', type=str)
-        parser.add_argument('--and-linked', action='store_true', default=False)
-        parser.add_argument('--throttle-secs', type=float, default=0)
+    logger_name = __name__
 
-    def handle(self, domain, **options):
-        logger.debug(f"{datetime.datetime.utcnow()} Starting run: {options}")
+    def find_case_ids(self, domain):
+        query = (CaseSearchES()
+                .domain(domain)
+                .filter(exact_case_property_text_query('current_status', 'closed'))
+                .filter(case_property_missing("all_activity_complete_date"))
+                .case_type(self.case_type)
+                .owner(INACTIVE_LOCATION_IDS))
 
-        domains = {domain}
-        if options["and_linked"]:
-            domains = domains | {link.linked_domain for link in get_linked_domains(domain)}
+        if self.case_type == 'contact':
+            query = (query.modified_range(gte=datetime.date(2022, 2, 2))
+                .NOT(
+                    exact_case_property_text_query('final_disposition', 'converted_to_pui')
+            ))
 
-        for i, domain in enumerate(sorted(domains), start=1):
-            bad_case_ids = _get_bad_case_ids(domain, options['case_type'])
-            print(f"Updating {len(bad_case_ids)} cases on {domain} ({i}/{len(domains)})")
-            update_cases(
-                domain=domain,
-                update_fn=_correct_bad_property,
-                case_ids=with_progress_bar(bad_case_ids, oneline=False),
-                form_meta=SystemFormMeta.for_script(__name__, options['username']),
-                throttle_secs=options['throttle_secs'],
-            )
+        return list(query.scroll_ids())
 
+    def case_blocks(self, case):
+        if (
+                # Double check filters in case ES data is stale
+                case.get_case_property('all_activity_complete_date')
+                or case.get_case_property('current_status') != 'closed'
+                or (case.type == 'contact'
+                    and case.get_case_property('final_disposition') == 'converted_to_pui')
+                or case.owner_id not in INACTIVE_LOCATION_IDS
+        ):
+            return None
 
-def _get_bad_case_ids(domain, case_type):
-    query = (CaseSearchES()
-             .domain(domain)
-             .filter(exact_case_property_text_query('current_status', 'closed'))
-             .filter(case_property_missing("all_activity_complete_date"))
-             .case_type(case_type)
-             .owner(INACTIVE_LOCATION_IDS))
-
-    if case_type == 'contact':
-        query = (query.modified_range(gte=datetime.date(2022, 2, 2))
-            .NOT(
-                exact_case_property_text_query('final_disposition', 'converted_to_pui')
-        ))
-
-    return list(query.scroll_ids())
-
-
-def _correct_bad_property(case):
-    if (
-            # Double check filters in case ES data is stale
-            case.get_case_property('all_activity_complete_date')
-            or case.get_case_property('current_status') != 'closed'
-            or (case.type == 'contact'
-                and case.get_case_property('final_disposition') == 'converted_to_pui')
-            or case.owner_id not in INACTIVE_LOCATION_IDS
-    ):
-        return None
-
-    logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
-    date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
-    new_value = date_func(case)
-    return CaseBlock(
-        create=False,
-        case_id=case.case_id,
-        update={"all_activity_complete_date": new_value},
-    )
+        self.logger.debug(f"_correct_bad_case_property {case.domain} {case.case_id}")
+        date_func = _get_new_contact_date_value if case.type == 'contact' else _get_new_patient_date_value
+        new_value = date_func(case)
+        return [CaseBlock(
+            create=False,
+            case_id=case.case_id,
+            update={"all_activity_complete_date": new_value},
+        )]
 
 
 def _get_new_patient_date_value(case):

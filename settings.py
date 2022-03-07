@@ -756,6 +756,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
     'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'COVID_US_SET_ACTIVITY_COMPLETE_TODAY':
+        'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
     'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
         'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
 }
@@ -872,6 +874,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -2086,3 +2089,5 @@ GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14
