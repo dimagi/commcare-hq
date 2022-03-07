@@ -3,7 +3,9 @@ AppES
 -----
 """
 from . import filters, queries
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class AppES(HQESQuery):
@@ -19,6 +21,20 @@ class AppES(HQESQuery):
             cloudcare_enabled,
             app_id,
         ] + super(AppES, self).builtin_filters
+
+
+class ElasticApp(ElasticDocumentAdapter):
+
+    _index_name = "hqapps_2020-02-26"
+    type = "app"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def build_comment(comment):
