@@ -116,3 +116,42 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             'parent/foo': ['', 'blackbeard'],
         }).get_ids()
         self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])
+
+    def test_multivalued_property_case_search(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'x_commcare_description_config': "selected-any(description, 'New York Boston')"},
+            ),
+            None,
+            ['c1', 'c3']
+        )
+
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'New York Boston'},
+            {'_id': 'c4', 'case_type': 'song', 'description': 'New York Manchester'},
+            {'_id': 'c5', 'case_type': 'song', 'description': 'New York Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'x_commcare_description_config': "selected-all(description, 'New York Boston')"},
+            ),
+            None,
+            ['c3', 'c5']
+        )
