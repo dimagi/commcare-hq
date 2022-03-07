@@ -344,6 +344,160 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast("domain", parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
+    def test_selected(self):
+        parsed = parse_xpath("selected(first_name, 'Jon')")
+        expected_filter_single = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon",
+                                    "operator": "or",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter_single, built_filter, is_raw_query=True)
+
+        parsed = parse_xpath("selected(first_name, 'Jon John Jhon')")
+        expected_filter_many = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon John Jhon",
+                                    "operator": "or",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter_many, built_filter, is_raw_query=True)
+
+    def test_selected_any(self):
+        parsed = parse_xpath("selected-any(first_name, 'Jon John Jhon')")
+        expected_filter = {
+            "bool": {
+                "should": [
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "first_name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "Jon John Jhon",
+                                                "operator": "or",
+                                                "fuzziness": "AUTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "first_name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "Jon John Jhon",
+                                                "operator": "or",
+                                                "fuzziness": "0"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=True)  # Note fuzzy is on for this one
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
+    def test_selected_all(self):
+        parsed = parse_xpath("selected-all(first_name, 'Jon John Jhon')")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon John Jhon",
+                                    "operator": "and",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
     def test_self_reference(self):
         with self.assertRaises(CaseFilterError):
             build_filter_from_ast(None, parse_xpath("name = other_property"))
