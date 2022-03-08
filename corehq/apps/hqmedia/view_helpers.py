@@ -4,8 +4,6 @@ import openpyxl
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from lxml import etree
-
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.translations.app_translations.download import get_bulk_app_single_sheet_by_name
 from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers

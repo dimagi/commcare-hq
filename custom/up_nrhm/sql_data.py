@@ -4,7 +4,6 @@ from sqlagg.filters import BETWEEN, EQ, LTE, GTE, OR, ISNULL
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.sql import get_indicator_table
 from corehq.apps.userreports.util import get_table_name
 from django.utils.translation import gettext as _
 
