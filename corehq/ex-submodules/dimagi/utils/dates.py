@@ -496,10 +496,8 @@ def get_start_and_end_dates_of_month(year, month):
 
 
 def get_date_from_month_and_year_string(mm_yyyy):
-    if not re.match(r'^(\d\d)-(\d{4})$', mm_yyyy):
-        raise ValueError
-    try:
-        parts = mm_yyyy.split('-')
-        return datetime.date(int(parts[1]), int(parts[0]), 1)
-    except IndexError:
-        raise ValueError
+    match = re.match(r'^(\d\d)-(\d{4})$', mm_yyyy)
+    if not match:
+        raise ValueError(mm_yyyy)
+    month, year = match.groups()
+    return datetime.date(int(year), int(month), 1)
