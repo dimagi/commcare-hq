@@ -261,22 +261,6 @@ class CaseDisplaySettings(DocumentSchema):
         verbose_name="Mapping of form xmlns to definitions of properties "
                      "to display for individual forms")
 
-    # todo: case list
-
-
-class DynamicReportConfig(DocumentSchema):
-    """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty()  # fully-qualified path to template report class
-    name = StringProperty()  # report display name in sidebar
-    kwargs = DictProperty()  # arbitrary settings to configure report
-    previewers_only = BooleanProperty()
-
-
-class DynamicReportSet(DocumentSchema):
-    """a set of dynamic reports grouped under a section header in the sidebar"""
-    section_title = StringProperty()
-    reports = SchemaListProperty(DynamicReportConfig)
-
 
 LOGO_ATTACHMENT = 'logo.png'
 
@@ -436,8 +420,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
-
-    dynamic_reports = SchemaListProperty(DynamicReportSet)
 
     # extra user specified properties
     tags = StringListProperty()

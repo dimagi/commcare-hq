@@ -162,8 +162,6 @@ def REPORTS(project):
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
 
-    reports.extend(_get_dynamic_reports(project))
-
     return reports
 
 
@@ -172,40 +170,6 @@ def _filter_reports(report_set, reports):
         return [r for r in reports if r.slug in report_set]
     else:
         return reports
-
-
-def _get_dynamic_reports(project):
-    """include any reports that can be configured/customized with static parameters for this domain"""
-    for reportset in project.dynamic_reports:
-        reports = (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)
-        yield (reportset.section_title, [_f for _f in reports if _f])
-
-
-def _make_dynamic_report(report_config, keyprefix):
-    """create a report class the descends from a generic report class but has specific parameters set"""
-    # a unique key to distinguish this particular configuration of the generic report
-    report_key = keyprefix + [report_config.report, report_config.name]
-    slug = hashlib.sha1(':'.join(report_key)).hexdigest()[:12]
-    kwargs = dict(report_config.kwargs)
-    kwargs.update({
-        'name': report_config.name,
-        'slug': slug,
-    })
-    if report_config.previewers_only:
-        # note this is a classmethod that will be injected into the dynamic class below
-        @classmethod
-        def show_in_navigation(cls, domain=None, project=None, user=None):
-            return user and user.is_previewer()
-        kwargs['show_in_navigation'] = show_in_navigation
-
-    try:
-        metaclass = to_function(report_config.report, failhard=True)
-    except Exception:
-        logging.error('dynamic report config for [%s] is invalid' % report_config.report)
-        return None
-
-    # dynamically create a report class
-    return type('DynamicReport%s' % slug, (metaclass,), kwargs)
 
 
 def _safely_get_report_configs(project_name):
