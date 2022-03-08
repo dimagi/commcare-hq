@@ -301,7 +301,7 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
     # because these are in JSON and cannot be serialized
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,

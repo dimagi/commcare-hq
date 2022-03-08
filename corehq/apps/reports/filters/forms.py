@@ -2,7 +2,7 @@ from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
@@ -86,10 +86,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         Application or Application-Deleted).
     """
     slug = "form"
-    label = ugettext_lazy("Filter Forms")
+    label = gettext_lazy("Filter Forms")
     css_class = "span5"
-    drilldown_empty_text = ugettext_lazy("You don't have any applications set up, so there are no forms "
-                                         "to choose from. Please create an application!")
+    drilldown_empty_text = gettext_lazy("You don't have any applications set up, so there are no forms "
+                                        "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
@@ -609,15 +609,15 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"
-    label = ugettext_lazy("Filter Dates By")
+    label = gettext_lazy("Filter Dates By")
     css_class = "span2"
-    default_text = ugettext_lazy("Completion Time")
+    default_text = gettext_lazy("Completion Time")
 
     def _generate_help_message():
-        completion_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        completion_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
             "<strong>Completion</strong> time is when the form is completed on the phone."))
 
-        submission_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        submission_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
             "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
                 hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
 

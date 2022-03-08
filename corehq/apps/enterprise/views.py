@@ -14,7 +14,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
 
 from django_prbac.utils import has_privilege
@@ -164,7 +164,7 @@ def edit_enterprise_settings(request, domain):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class BaseEnterpriseAdminView(BaseDomainView):
-    section_name = ugettext_lazy("Enterprise Console")
+    section_name = gettext_lazy("Enterprise Console")
 
     @property
     def section_url(self):
@@ -179,11 +179,11 @@ class BaseEnterpriseAdminView(BaseDomainView):
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'enterprise_billing_statements'
-    page_title = ugettext_lazy("Billing Statements")
+    page_title = gettext_lazy("Billing Statements")
 
-    limit_text = ugettext_lazy("statements per page")
-    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
-    loading_message = ugettext_lazy("Loading statements...")
+    limit_text = gettext_lazy("statements per page")
+    empty_notification = gettext_lazy("No Billing Statements match the current criteria.")
+    loading_message = gettext_lazy("Loading statements...")
 
     @property
     def stripe_cards(self):

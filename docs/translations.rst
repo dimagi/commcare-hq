@@ -11,7 +11,7 @@ Tagging strings in views
 ------------------------
 
 **TL;DR**: ``ugettext`` should be used in code that will be run per-request.
-``ugettext_lazy`` should be used in code that is run at module import.
+``gettext_lazy`` should be used in code that is run at module import.
 
 The management command ``makemessages`` pulls out strings marked for
 translation so they can be translated via transifex.  All three ugettext
@@ -20,7 +20,7 @@ separately.  This is where the ugettext functions differ.
 
 * ``ugettext``: The function immediately returns the translation for the
   currently selected language.
-* ``ugettext_lazy``: The function converts the string to a translation
+* ``gettext_lazy``: The function converts the string to a translation
   "promise" object.  This is later coerced to a string when rendering a
   template or otherwise forcing the promise.
 * ``ugettext_noop``: This function only marks a string as translation string,
@@ -42,14 +42,14 @@ The most common case is just wrapping text with ugettext.
 
 Typically when code is run as a result of a module being imported, there is
 not yet a user whose locale can be used for translations, so it must be
-delayed. This is where `ugettext_lazy` comes in.  It will mark a string for
+delayed. This is where `gettext_lazy` comes in.  It will mark a string for
 translation, but delay the actual translation as long as possible.
 
 .. code-block:: python
 
     class MyAccountSettingsView(BaseMyAccountView):
         urlname = 'my_account_settings'
-        page_title = ugettext_lazy("My Information")
+        page_title = gettext_lazy("My Information")
         template_name = 'settings/edit_my_account.html'
 
 When variables are needed in the middle of translated strings, interpolation
@@ -67,10 +67,10 @@ This ends up in the translations file as::
 
     msgid "User '{user}' has successfully been {action}."
 
-Using ``ugettext_lazy``
+Using ``gettext_lazy``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The `ugettext_lazy` method will work in the majority of translation situations.
+The `gettext_lazy` method will work in the majority of translation situations.
 It flags the string for translation but does not translate it until it is
 rendered for display. If the string needs to be immediately used or
 manipulated by other methods, this might not work.
@@ -84,19 +84,19 @@ When using the value immediately, there is no reason to do lazy translation.
 
 It is easy to forget to translate form field names, as Django normally builds
 nice looking text for you. When writing forms, make sure to specify labels with
-a translation flagged value. These will need to be done with `ugettext_lazy`.
+a translation flagged value. These will need to be done with `gettext_lazy`.
 
 .. code-block:: python
 
     class BaseUserInfoForm(forms.Form):
-        first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
-        last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+        first_name = forms.CharField(label=gettext_lazy('First Name'), max_length=50, required=False)
+        last_name = forms.CharField(label=gettext_lazy('Last Name'), max_length=50, required=False)
 
 
-``ugettext_lazy``, a cautionary tale
+``gettext_lazy``, a cautionary tale
 ************************************
 
-``ugettext_lazy`` does not return a string.  This can cause complications.
+``gettext_lazy`` does not return a string.  This can cause complications.
 
 When using methods to manipulate a string, lazy translated strings will not
 work properly.
@@ -106,17 +106,17 @@ work properly.
     group_name = ugettext("mobile workers")
     return group_name.upper()
 
-Converting ``ugettext_lazy`` objects to json will crash.  You should use
+Converting ``gettext_lazy`` objects to json will crash.  You should use
 ``dimagi.utils.web.json_handler`` to properly coerce it to a string.
 
 .. code-block:: python
 
     >>> import json
-    >>> from django.utils.translation import ugettext_lazy
-    >>> json.dumps({"message": ugettext_lazy("Hello!")})
+    >>> from django.utils.translation import gettext_lazy
+    >>> json.dumps({"message": gettext_lazy("Hello!")})
     TypeError: <django.utils.functional.__proxy__ object at 0x7fb50766f3d0> is not JSON serializable
     >>> from dimagi.utils.web import json_handler
-    >>> json.dumps({"message": ugettext_lazy("Hello!")}, default=json_handler)
+    >>> json.dumps({"message": gettext_lazy("Hello!")}, default=json_handler)
     '{"message": "Hello!"}'
 
 

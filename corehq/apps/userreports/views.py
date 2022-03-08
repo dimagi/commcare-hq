@@ -13,7 +13,7 @@ from django.http.response import Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
@@ -194,7 +194,7 @@ def swallow_programming_errors(fn):
 
 @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
-    section_name = ugettext_lazy("Configurable Reports")
+    section_name = gettext_lazy("Configurable Reports")
 
     @property
     def main_context(self):
@@ -232,7 +232,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
-    page_title = ugettext_lazy("Reports Home")
+    page_title = gettext_lazy("Reports Home")
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -299,12 +299,12 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
 class EditConfigReportView(BaseEditConfigReportView):
     urlname = 'edit_configurable_report'
-    page_title = ugettext_lazy("Edit Report")
+    page_title = gettext_lazy("Edit Report")
 
 
 class CreateConfigReportView(BaseEditConfigReportView):
     urlname = 'create_configurable_report'
-    page_title = ugettext_lazy("Create Report")
+    page_title = gettext_lazy("Create Report")
 
 
 class ReportBuilderView(BaseDomainView):
@@ -352,7 +352,7 @@ def paywall_home(domain):
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
-    page_title = ugettext_lazy('Subscribe')
+    page_title = gettext_lazy('Subscribe')
 
     @property
     def section_name(self):
@@ -371,7 +371,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/pricing.html"
     urlname = 'report_builder_paywall_pricing'
-    page_title = ugettext_lazy('Pricing')
+    page_title = gettext_lazy('Pricing')
 
     @property
     def page_context(self):
@@ -411,7 +411,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
-    page_title = ugettext_lazy('Create Report')
+    page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
     @property
@@ -483,7 +483,7 @@ class EditReportInBuilder(View):
 
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
-    page_title = ugettext_lazy("Configure Report")
+    page_title = gettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     report_title = '{}'
     existing_report = None
@@ -862,7 +862,7 @@ def undelete_report(request, domain, report_id):
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
-    page_title = ugettext_lazy("Import Report")
+    page_title = gettext_lazy("Import Report")
     template_name = "userreports/import_report.html"
     urlname = 'import_configurable_report'
 
@@ -907,13 +907,13 @@ def report_source_json(request, domain, report_id):
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/expression_debugger.html'
-    page_title = ugettext_lazy("Expression Debugger")
+    page_title = gettext_lazy("Expression Debugger")
 
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/data_source_debugger.html'
-    page_title = ugettext_lazy("Data Source Debugger")
+    page_title = gettext_lazy("Data Source Debugger")
 
 
 @login_and_domain_required
@@ -1029,7 +1029,7 @@ def evaluate_data_source(request, domain):
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
     template_name = "userreports/data_source_from_app.html"
-    page_title = ugettext_lazy("Create Data Source from Application")
+    page_title = gettext_lazy("Create Data Source from Application")
 
     @property
     @memoized
@@ -1169,12 +1169,12 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
 class CreateDataSourceView(BaseEditDataSourceView):
     urlname = 'create_configurable_data_source'
-    page_title = ugettext_lazy("Create Data Source")
+    page_title = gettext_lazy("Create Data Source")
 
 
 class EditDataSourceView(BaseEditDataSourceView):
     urlname = 'edit_configurable_data_source'
-    page_title = ugettext_lazy("Edit Data Source")
+    page_title = gettext_lazy("Edit Data Source")
 
     @property
     def page_name(self):
@@ -1310,7 +1310,7 @@ def data_source_json(request, domain, config_id):
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
     template_name = "userreports/preview_data.html"
-    page_title = ugettext_lazy("Preview Data Source")
+    page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
     def dispatch(self, request, *args, **kwargs):
@@ -1421,7 +1421,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             Format.XLS_2007,
         ]
         if params.format not in allowed_formats:
-            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            msg = gettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
@@ -1457,7 +1457,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = ugettext_lazy(
+            msg = gettext_lazy(
                 "There was a problem executing your query, "
                 "please make sure your parameters are valid."
             )
@@ -1500,7 +1500,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
     template_name = "userreports/summary_data_source.html"
-    page_title = ugettext_lazy("Data Source Summary")
+    page_title = gettext_lazy("Data Source Summary")
 
     @property
     def config_id(self):

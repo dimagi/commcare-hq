@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import ugettext, gettext_lazy
 from django.views import View
 
 from couchdbkit import ResourceNotFound
@@ -269,7 +269,7 @@ def pull_missing_multimedia(request, domain, app_id):
 @method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Linked Project Spaces")
+    page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
 
     @use_multiselect
@@ -557,7 +557,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
         name = LINKED_MODELS_MAP[record.model]
         if record.model == MODEL_APP:
             detail = record.wrapped_detail
-            app_name = ugettext_lazy('Unknown App')
+            app_name = gettext_lazy('Unknown App')
             if detail:
                 app_names = self.linked_app_names(self.selected_link.linked_domain)
                 app_name = app_names.get(detail.app_id, detail.app_id)
@@ -565,7 +565,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_FIXTURE:
             detail = record.wrapped_detail
-            tag = ugettext_lazy('Unknown')
+            tag = gettext_lazy('Unknown')
             if detail:
                 data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
                 if data_type:
@@ -574,7 +574,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_REPORT:
             detail = record.wrapped_detail
-            report_name = ugettext_lazy('Unknown Report')
+            report_name = gettext_lazy('Unknown Report')
             if detail:
                 try:
                     report_name = ReportConfiguration.get(detail.report_id).title
@@ -584,7 +584,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_KEYWORD:
             detail = record.wrapped_detail
-            keyword_name = ugettext_lazy('Unknown Keyword')
+            keyword_name = gettext_lazy('Unknown Keyword')
             if detail:
                 try:
                     keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword

@@ -1,7 +1,7 @@
 import datetime
 from calendar import month_name
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import dateutil
 import pytz

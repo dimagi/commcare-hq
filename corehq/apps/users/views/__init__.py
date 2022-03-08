@@ -27,7 +27,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ngettext, gettext_lazy, ugettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
 from dimagi.utils.couch import CriticalSection
@@ -543,7 +543,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
 class EnterpriseUsersView(BaseRoleAccessView):
     template_name = 'users/enterprise_users.html'
-    page_title = ugettext_lazy("Enterprise Users")
+    page_title = gettext_lazy("Enterprise Users")
     urlname = 'enterprise_users'
 
     @property
@@ -557,7 +557,7 @@ class EnterpriseUsersView(BaseRoleAccessView):
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
-    page_title = ugettext_lazy("Web Users")
+    page_title = gettext_lazy("Web Users")
     urlname = 'web_users'
 
 
@@ -643,7 +643,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
 
 class ListRolesView(BaseRoleAccessView):
     template_name = 'users/roles_and_permissions.html'
-    page_title = ugettext_lazy("Roles & Permissions")
+    page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
     @method_decorator(require_can_view_roles)
@@ -992,7 +992,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_lazy("Invite Web User to Project")
+    page_title = gettext_lazy("Invite Web User to Project")
 
     @property
     @memoized

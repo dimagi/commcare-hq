@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
 from django.views.generic import View
 
@@ -73,7 +73,7 @@ class BaseInternalDomainSettingsView(BaseProjectSettingsView):
 
 class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
-    page_title = ugettext_lazy("Project Information")
+    page_title = gettext_lazy("Project Information")
     template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
@@ -217,7 +217,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_calculations'
-    page_title = ugettext_lazy("Calculated Properties")
+    page_title = gettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
     @method_decorator(always_allow_project_access)
@@ -238,7 +238,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 @method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
-    page_title = ugettext_lazy("Feature Flags and Privileges")
+    page_title = gettext_lazy("Feature Flags and Privileges")
     template_name = 'domain/admin/flags_and_privileges.html'
 
     def _get_toggles(self):
@@ -284,7 +284,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 @method_decorator(require_superuser, name='dispatch')
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
-    page_title = ugettext_lazy("Project Limits")
+    page_title = gettext_lazy("Project Limits")
     template_name = 'domain/admin/project_limits.html'
 
     @property
@@ -314,7 +314,7 @@ def _get_rate_limits(scope, rate_limiter):
 
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
-    page_title = ugettext_lazy("Transfer Project")
+    page_title = gettext_lazy("Transfer Project")
     template_name = 'domain/admin/transfer_domain.html'
 
     @property

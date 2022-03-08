@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from corehq.apps.es.groups import GroupES
 from corehq.apps.reports.filters.base import (
@@ -99,8 +99,8 @@ class EventStatusFilter(BaseSingleOptionFilter):
 
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = "phone_number"
-    label = ugettext_lazy("Phone Number")
-    help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")
+    label = gettext_lazy("Phone Number")
+    help_inline = gettext_lazy("Enter a full or partial phone number to filter results")
 
 
 class RequiredPhoneNumberFilter(PhoneNumberFilter):
@@ -113,9 +113,9 @@ class RequiredPhoneNumberFilter(PhoneNumberFilter):
 
 class PhoneNumberOrEmailFilter(BaseSimpleFilter):
     slug = "phone_number_or_email_address"
-    label = ugettext_lazy("Phone Number or Email Address")
-    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email "
-                                "address to filter results")
+    label = gettext_lazy("Phone Number or Email Address")
+    help_inline = gettext_lazy("Enter a full or partial phone number or a full or partial email "
+                               "address to filter results")
 
 
 class PhoneNumberReportFilter(BaseReportFilter):

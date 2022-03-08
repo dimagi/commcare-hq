@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 import xlrd
 
@@ -72,7 +72,7 @@ class CaseRowError(Exception):
 
 class InvalidOwnerName(CaseRowError):
     title = ugettext_noop('Invalid Owner Name')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Owner name was used in the mapping but there were errors when "
         "uploading because of these values."
     )
@@ -80,7 +80,7 @@ class InvalidOwnerName(CaseRowError):
 
 class InvalidOwner(CaseRowError):
     title = ugettext_noop('Invalid Owner')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Owners were provided in the mapping but there were errors when "
         "uploading because of these values. Make sure the owners in this "
         "column are users, case sharing groups, or locations."
@@ -89,7 +89,7 @@ class InvalidOwner(CaseRowError):
 
 class InvalidParentId(CaseRowError):
     title = ugettext_noop('Invalid Parent ID')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "An invalid or unknown parent case was specified for the "
         "uploaded case."
     )
@@ -97,14 +97,14 @@ class InvalidParentId(CaseRowError):
 
 class InvalidDate(CaseRowError):
     title = ugettext_noop('Invalid Date')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         'Required format: YYYY-MM-DD (e.g. "2021-12-31")'
     )
 
 
 class InvalidSelectValue(CaseRowError):
     title = ugettext_noop('Unexpected multiple choice value')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Multiple choice values were specified that are not listed "
         "in the valid values defined in the property's data dictionary."
     )
@@ -112,7 +112,7 @@ class InvalidSelectValue(CaseRowError):
 
 class BlankExternalId(CaseRowError):
     title = ugettext_noop('Blank External ID')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Blank external ids were found in these rows causing as error "
         "when importing cases."
     )
@@ -120,14 +120,14 @@ class BlankExternalId(CaseRowError):
 
 class CaseGeneration(CaseRowError):
     title = ugettext_noop('Case Generation Error')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "These rows failed to generate cases for unknown reasons"
     )
 
 
 class DuplicateLocationName(CaseRowError):
     title = ugettext_noop('Duplicated Location Name')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Owner ID was used in the mapping, but there were errors when "
         "uploading because of these values. There are multiple locations "
         "with this same name, try using site-code instead."
@@ -136,7 +136,7 @@ class DuplicateLocationName(CaseRowError):
 
 class InvalidLocation(CaseRowError):
     title = ugettext_noop('Invalid Location')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "The location of the case owner needs to be at or below the "
         "location of the user importing the cases."
     )
@@ -144,7 +144,7 @@ class InvalidLocation(CaseRowError):
 
 class InvalidInteger(CaseRowError):
     title = ugettext_noop('Invalid Integer')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Integer values were specified, but the values in Excel were not "
         "all integers"
     )
@@ -152,14 +152,14 @@ class InvalidInteger(CaseRowError):
 
 class ImportErrorMessage(CaseRowError):
     title = ugettext_noop('Import Error')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "Problems in importing cases. Please check the Excel file."
     )
 
 
 class TooManyMatches(CaseRowError):
     title = ugettext_noop('Too Many Matches')
-    message = ugettext_lazy(
+    message = gettext_lazy(
         "These rows matched more than one case at the same time - this means "
         "that there are cases in your system with the same external ID."
     )
@@ -167,14 +167,14 @@ class TooManyMatches(CaseRowError):
 
 class CaseNameTooLong(CaseRowError):
     title = ugettext_noop('Name Too Long')
-    message = ugettext_lazy(f"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
+    message = gettext_lazy(f"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
 
 
 class ExternalIdTooLong(CaseRowError):
     title = ugettext_noop('External ID Too Long')
-    message = ugettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
+    message = gettext_lazy(f"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters")
 
 
 class UnexpectedError(CaseRowError):
     title = ugettext_noop('Unexpected error')
-    message = ugettext_lazy('Could not process case. If this persists, Please report an issue to CommCareHQ')
+    message = gettext_lazy('Could not process case. If this persists, Please report an issue to CommCareHQ')

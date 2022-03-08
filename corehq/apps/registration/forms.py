@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy

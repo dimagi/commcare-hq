@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from memoized import memoized
 
@@ -104,8 +104,8 @@ class FormManagementMode(object):
     ARCHIVE_MODE = "archive"
     RESTORE_MODE = "restore"
 
-    filter_options = [(ARCHIVE_MODE, ugettext_lazy('Normal Forms')),
-                      (RESTORE_MODE, ugettext_lazy('Archived Forms'))]
+    filter_options = [(ARCHIVE_MODE, gettext_lazy('Normal Forms')),
+                      (RESTORE_MODE, gettext_lazy('Archived Forms'))]
 
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:
@@ -149,7 +149,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     slug = 'archive_or_restore'
     placeholder = ''
     default_text = None
-    label = ugettext_lazy('Archived/Restored')
+    label = gettext_lazy('Archived/Restored')
     help_text = mark_safe(  # nosec: no user input
         "Archived forms are removed from reports and exports and "
         "any case changes they make are reversed. Archiving forms "

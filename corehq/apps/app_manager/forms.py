@@ -2,7 +2,7 @@ from django import forms
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -26,11 +26,11 @@ from ...privileges import RELEASE_MANAGEMENT
 
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
-        label=ugettext_lazy("Copy this app to project"),
+        label=gettext_lazy("Copy this app to project"),
         widget=forms.Select(choices=[], attrs={
             "data-bind": "autocompleteSelect2: domainNames, event:{ change: domainChanged }",
         }))
-    name = forms.CharField(required=True, label=ugettext_lazy('Name'))
+    name = forms.CharField(required=True, label=gettext_lazy('Name'))
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
@@ -100,13 +100,13 @@ class CopyApplicationForm(forms.Form):
 
 class PromptUpdateSettingsForm(forms.Form):
     app_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to App"),
+        label=gettext_lazy("Prompt Updates to App"),
         choices=(
-            ('off', ugettext_lazy('Off')),
-            ('on', ugettext_lazy('On')),
-            ('forced', ugettext_lazy('Forced')),
+            ('off', gettext_lazy('Off')),
+            ('on', gettext_lazy('On')),
+            ('forced', gettext_lazy('Forced')),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "If enabled, users will receive in-app prompts to update "
             "to the selected version of the app, if they are not "
             "already on it. (Selecting 'Forced' will make it so that users "
@@ -115,13 +115,13 @@ class PromptUpdateSettingsForm(forms.Form):
     )
 
     apk_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to CommCare"),
+        label=gettext_lazy("Prompt Updates to CommCare"),
         choices=(
-            ('off', ugettext_lazy('Off')),
-            ('on', ugettext_lazy('On')),
-            ('forced', ugettext_lazy('Forced')),
+            ('off', gettext_lazy('Off')),
+            ('on', gettext_lazy('On')),
+            ('forced', gettext_lazy('Forced')),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "If enabled, users will receive in-app prompts to update "
             "to the selected version of CommCare, if they are not already "
             "on it. (Selecting 'Forced' will make it so that users cannot "
@@ -130,10 +130,10 @@ class PromptUpdateSettingsForm(forms.Form):
     )
 
     apk_version = forms.ChoiceField(
-        label=ugettext_lazy("CommCare Version")
+        label=gettext_lazy("CommCare Version")
     )
     app_version = forms.ChoiceField(
-        label=ugettext_lazy("Application Version")
+        label=gettext_lazy("Application Version")
     )
 
     def __init__(self, *args, **kwargs):

@@ -12,7 +12,7 @@ from django.forms.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -40,14 +40,14 @@ from .models import (
 NO_RESPONSE = "none"
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, ugettext_lazy("SMS")),
-    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
-    (NO_RESPONSE, ugettext_lazy("No Response")),
+    (METHOD_SMS, gettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, gettext_lazy("SMS Survey")),
+    (NO_RESPONSE, gettext_lazy("No Response")),
 )
 
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
-    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
+    (RECIPIENT_USER_GROUP, gettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, gettext_lazy("The case's owner")),
 )
 
 

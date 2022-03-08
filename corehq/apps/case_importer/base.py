@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_upload_record_count,
@@ -16,7 +16,7 @@ def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
 
 @conditionally_location_safe(location_safe_case_imports_enabled)
 class ImportCases(DataInterface):
-    name = ugettext_lazy("Import Cases from Excel")
+    name = gettext_lazy("Import Cases from Excel")
     slug = "import_cases"
     report_template_path = "case_importer/import_cases.html"
     hide_filters = True

@@ -20,7 +20,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
@@ -120,16 +120,16 @@ from corehq.apps.users.models import Permissions
 from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
-    400: ugettext_lazy('Your request was not formatted properly.'),
-    403: ugettext_lazy('Forbidden.'),
-    404: ugettext_lazy('Page not found.'),
-    500: ugettext_lazy("There was an error processing your request."
+    400: gettext_lazy('Your request was not formatted properly.'),
+    403: gettext_lazy('Forbidden.'),
+    404: gettext_lazy('Page not found.'),
+    500: gettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
 
 class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
-    page_title = ugettext_lazy("Upgrade Required")
+    page_title = gettext_lazy("Upgrade Required")
     template_name = "domain/insufficient_privilege_notification.html"
 
     @property
@@ -207,7 +207,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
     template_name = 'domain/current_subscription.html'
-    page_title = ugettext_lazy("Current Subscription")
+    page_title = gettext_lazy("Current Subscription")
 
     @property
     def can_purchase_credits(self):
@@ -388,7 +388,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = ugettext_lazy("Billing Information")
+    page_title = gettext_lazy("Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -450,11 +450,11 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'domain_billing_statements'
-    page_title = ugettext_lazy("Billing Statements")
+    page_title = gettext_lazy("Billing Statements")
 
-    limit_text = ugettext_lazy("statements per page")
-    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
-    loading_message = ugettext_lazy("Loading statements...")
+    limit_text = gettext_lazy("statements per page")
+    empty_notification = gettext_lazy("No Billing Statements match the current criteria.")
+    loading_message = gettext_lazy("Loading statements...")
 
     @property
     def stripe_cards(self):
@@ -870,7 +870,7 @@ class BillingStatementPdfView(View):
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     template_name = 'domain/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
-    page_title = ugettext_lazy("Dimagi Internal Subscription Management")
+    page_title = gettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(always_allow_project_access)
@@ -965,10 +965,10 @@ PlanOption = namedtuple(
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
-    page_title = ugettext_lazy("Change Plan")
-    step_title = ugettext_lazy("Select Plan")
+    page_title = gettext_lazy("Change Plan")
+    step_title = gettext_lazy("Select Plan")
     edition = None
-    lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+    lead_text = gettext_lazy("Please select a plan below that fits your organization's needs.")
 
     @property
     @memoized
@@ -1106,7 +1106,7 @@ class SelectPlanView(DomainAccountingSettings):
 class SelectedEnterprisePlanView(SelectPlanView):
     template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
-    step_title = ugettext_lazy("Contact Dimagi")
+    step_title = gettext_lazy("Contact Dimagi")
     edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
@@ -1148,7 +1148,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
 class SelectedAnnualPlanView(SelectPlanView):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
-    step_title = ugettext_lazy("Contact Dimagi")
+    step_title = gettext_lazy("Contact Dimagi")
     edition = None
 
     @property
@@ -1336,7 +1336,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
-    step_title = ugettext_lazy("Confirm Billing Information")
+    step_title = gettext_lazy("Confirm Billing Information")
     is_new = False
     async_handlers = [
         Select2BillingInfoHandler,
@@ -1530,14 +1530,14 @@ class SubscriptionMixin(object):
 
 class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
-    page_title = ugettext_lazy("Renew Plan")
-    step_title = ugettext_lazy("Renew Plan")
+    page_title = gettext_lazy("Renew Plan")
+    step_title = gettext_lazy("Renew Plan")
     template_name = "domain/renew_plan.html"
 
     @property
     def lead_text(self):
-        return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
-                             .format(plan=self.current_subscription.plan_version.plan.edition))
+        return gettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
+                            .format(plan=self.current_subscription.plan_version.plan.edition))
 
     @property
     def page_context(self):
@@ -1563,8 +1563,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
 class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
-    page_title = ugettext_lazy("Confirm Billing Information")
-    step_title = ugettext_lazy("Confirm Billing Information")
+    page_title = gettext_lazy("Confirm Billing Information")
+    step_title = gettext_lazy("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]

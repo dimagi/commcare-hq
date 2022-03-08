@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
@@ -17,60 +17,60 @@ from corehq.privileges import DEFAULT_EXPORT_SETTINGS
 
 class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
-        label=ugettext_lazy("Restrict Project Space Creation"),
+        label=gettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
-                                "to create new project spaces."),
+        help_text=gettext_lazy("Do not allow current web users, other than enterprise admins, "
+                               "to create new project spaces."),
     )
     restrict_signup = forms.BooleanField(
-        label=ugettext_lazy("Restrict User Signups"),
+        label=gettext_lazy("Restrict User Signups"),
         required=False,
-        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+        help_text=gettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
     )
     restrict_signup_message = forms.CharField(
         label="Signup Restriction Message",
         required=False,
-        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        help_text=gettext_lazy("Message to display to users who attempt to sign up for an account"),
         widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
     )
 
     forms_filetype = forms.ChoiceField(
-        label=ugettext_lazy("Default File Type"),
+        label=gettext_lazy("Default File Type"),
         required=False,
         initial=ExportFileType.EXCEL_2007_PLUS,
         choices=ExportFileType.CHOICES,
     )
 
     forms_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        label=gettext_lazy("Excel Date & Multimedia Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically convert dates and multimedia links for Excel"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
-                                "Otherwise they will appear as a normal text format. This also allows "
-                                "for hyperlinks to the multimedia captured by your form submission.")
+        help_text=gettext_lazy("Leaving this checked will ensure dates appear in excel format. "
+                               "Otherwise they will appear as a normal text format. This also allows "
+                               "for hyperlinks to the multimedia captured by your form submission.")
     )
 
     forms_auto_format_cells = forms.BooleanField(
-        label=ugettext_lazy("Excel Cell Format"),
+        label=gettext_lazy("Excel Cell Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically format cells for Excel 2007+"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("If this setting is not selected, your export will be in Excel's generic format. "
-                                "If you enable this setting, Excel will format dates, integers, decimals, "
-                                "boolean values (True/False), and currencies.")
+        help_text=gettext_lazy("If this setting is not selected, your export will be in Excel's generic format. "
+                               "If you enable this setting, Excel will format dates, integers, decimals, "
+                               "boolean values (True/False), and currencies.")
     )
 
     forms_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Checkbox Format"),
+        label=gettext_lazy("Checkbox Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Expand checkbox questions"
             ),
         ),
@@ -78,33 +78,33 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     cases_filetype = forms.ChoiceField(
-        label=ugettext_lazy("Default File Type"),
+        label=gettext_lazy("Default File Type"),
         required=False,
         initial=ExportFileType.EXCEL_2007_PLUS,
         choices=ExportFileType.CHOICES,
     )
 
     cases_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        label=gettext_lazy("Excel Date & Multimedia Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically convert dates and multimedia links for Excel"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
-                                "Otherwise they will appear as a normal text format. This also allows "
-                                "for hyperlinks to the multimedia captured by your form submission.")
+        help_text=gettext_lazy("Leaving this checked will ensure dates appear in excel format. "
+                               "Otherwise they will appear as a normal text format. This also allows "
+                               "for hyperlinks to the multimedia captured by your form submission.")
     )
 
     odata_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Checkbox Format"),
+        label=gettext_lazy("Checkbox Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Expand checkbox questions"
             ),
         ),
-        help_text=ugettext_lazy("Only applies to form exports."),
+        help_text=gettext_lazy("Only applies to form exports."),
         required=False,
     )
 

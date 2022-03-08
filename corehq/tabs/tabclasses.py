@@ -4,7 +4,7 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils.html import format_html, strip_tags
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -840,7 +840,7 @@ class ProjectDataTab(UITab):
                 if edit_section:
                     edit_section[0][1].append(automatic_update_rule_list_view)
                 else:
-                    edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
             if self.can_deduplicate_cases:
                 from corehq.apps.data_interfaces.views import DeduplicationRuleListView
@@ -1149,7 +1149,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
             supply_urls.append(
-                {'title': ugettext_lazy("Subscribe to SMS Reports"),
+                {'title': gettext_lazy("Subscribe to SMS Reports"),
                  'url': reverse(SubscribeSMSView.urlname, args=[self.domain])}
             )
 
@@ -1208,9 +1208,9 @@ class MessagingTab(UITab):
 
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             settings_urls.extend([
-                {'title': ugettext_lazy("General Settings"),
+                {'title': gettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
-                {'title': ugettext_lazy("Languages"),
+                {'title': gettext_lazy("Languages"),
                  'url': reverse('sms_languages', args=[self.domain])},
             ])
 

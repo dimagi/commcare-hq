@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.utils.encoding import force_str
-from django.utils.translation import ugettext_lazy, ugettext_noop, ugettext as _
+from django.utils.translation import gettext_lazy, ugettext_noop, ugettext as _
 
 import jsonfield
 
@@ -458,9 +458,9 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
         ]
 
     STATUS_CHOICES = (
-        (CALLBACK_PENDING, ugettext_lazy("Pending")),
-        (CALLBACK_RECEIVED, ugettext_lazy("Received")),
-        (CALLBACK_MISSED, ugettext_lazy("Missed")),
+        (CALLBACK_PENDING, gettext_lazy("Pending")),
+        (CALLBACK_RECEIVED, gettext_lazy("Received")),
+        (CALLBACK_MISSED, gettext_lazy("Missed")),
     )
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -1605,8 +1605,8 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     IVR = 'IVR'
 
     TYPE_CHOICES = (
-        (SMS, ugettext_lazy('SMS')),
-        (IVR, ugettext_lazy('IVR')),
+        (SMS, gettext_lazy('SMS')),
+        (IVR, gettext_lazy('IVR')),
     )
 
     UUIDS_TO_GENERATE = ['couch_id', 'inbound_api_key']

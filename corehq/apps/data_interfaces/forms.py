@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
@@ -228,7 +228,7 @@ class CaseUpdateRuleForm(forms.Form):
     prefix = "rule"
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=True,
     )
 
@@ -267,7 +267,7 @@ class CaseRuleCriteriaForm(forms.Form):
     prefix = "criteria"
 
     case_type = forms.ChoiceField(
-        label=ugettext_lazy("Case Type"),
+        label=gettext_lazy("Case Type"),
         required=True,
     )
 

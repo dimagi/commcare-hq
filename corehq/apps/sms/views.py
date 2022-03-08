@@ -19,7 +19,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -365,8 +365,8 @@ def send_to_recipients(request, domain):
 class TestSMSMessageView(BaseDomainView):
     urlname = 'message_test'
     template_name = 'sms/message_tester.html'
-    section_name = ugettext_lazy("Messaging")
-    page_title = ugettext_lazy("Test SMS Message")
+    section_name = gettext_lazy("Messaging")
+    page_title = gettext_lazy("Test SMS Message")
 
     @property
     def section_url(self):
@@ -502,7 +502,7 @@ def api_send_sms(request, domain):
 class GlobalBackendMap(BaseAdminSectionView):
     urlname = 'global_backend_map'
     template_name = 'sms/backend_map.html'
-    page_title = ugettext_lazy("Default Gateways")
+    page_title = gettext_lazy("Default Gateways")
 
     @property
     def page_url(self):
@@ -1200,7 +1200,7 @@ class AddGatewayViewMixin(object):
 class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'sms/add_gateway.html'
-    page_title = ugettext_lazy("Add SMS Gateway")
+    page_title = gettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1251,7 +1251,7 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
 
 class EditDomainGatewayView(AddDomainGatewayView):
     urlname = 'edit_domain_gateway'
-    page_title = ugettext_lazy("Edit SMS Gateway")
+    page_title = gettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):
@@ -1433,7 +1433,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     urlname = 'add_global_gateway'
     template_name = 'sms/add_gateway.html'
-    page_title = ugettext_lazy("Add SMS Gateway")
+    page_title = gettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1482,7 +1482,7 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
 class EditGlobalGatewayView(AddGlobalGatewayView):
     urlname = 'edit_global_gateway'
-    page_title = ugettext_lazy("Edit SMS Gateway")
+    page_title = gettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):

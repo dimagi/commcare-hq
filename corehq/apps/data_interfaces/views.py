@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
@@ -154,7 +154,7 @@ class DataInterfaceSection(BaseDomainView):
 class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
-    page_title = ugettext_lazy("Explore Case Data")
+    page_title = gettext_lazy("Explore Case Data")
 
     @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
@@ -193,13 +193,13 @@ class ExploreCaseDataView(BaseDomainView):
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = "data_interfaces/list_case_groups.html"
     urlname = 'case_group_list'
-    page_title = ugettext_lazy("Case Groups")
+    page_title = gettext_lazy("Case Groups")
 
-    limit_text = ugettext_lazy("groups per page")
-    empty_notification = ugettext_lazy("You have no case groups. Please create one!")
-    loading_message = ugettext_lazy("Loading groups...")
-    deleted_items_header = ugettext_lazy("Deleted Groups:")
-    new_items_header = ugettext_lazy("New Groups:")
+    limit_text = gettext_lazy("groups per page")
+    empty_notification = gettext_lazy("You have no case groups. Please create one!")
+    loading_message = gettext_lazy("Loading groups...")
+    deleted_items_header = gettext_lazy("Deleted Groups:")
+    new_items_header = gettext_lazy("New Groups:")
 
     @property
     def page_url(self):
@@ -631,12 +631,12 @@ def find_by_id(request, domain):
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Update Cases")
+    page_title = gettext_lazy("Automatically Update Cases")
 
-    limit_text = ugettext_lazy("rules per page")
-    empty_notification = ugettext_lazy("You have no case rules.")
-    loading_message = ugettext_lazy("Loading rules...")
-    deleted_items_header = ugettext_lazy("Deleted Rules")
+    limit_text = gettext_lazy("rules per page")
+    empty_notification = gettext_lazy("You have no case rules.")
+    loading_message = gettext_lazy("Loading rules...")
+    deleted_items_header = gettext_lazy("Deleted Rules")
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
@@ -773,7 +773,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 class AddCaseRuleView(DataInterfaceSection):
     template_name = "data_interfaces/case_rule.html"
     urlname = 'add_case_rule'
-    page_title = ugettext_lazy("Add Case Rule")
+    page_title = gettext_lazy("Add Case Rule")
 
     @property
     def page_url(self):
@@ -873,7 +873,7 @@ class AddCaseRuleView(DataInterfaceSection):
 
 class EditCaseRuleView(AddCaseRuleView):
     urlname = 'edit_case_rule'
-    page_title = ugettext_lazy("Edit Case Rule")
+    page_title = gettext_lazy("Edit Case Rule")
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
 
@@ -906,7 +906,7 @@ class EditCaseRuleView(AddCaseRuleView):
 class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
-    page_title = ugettext_lazy("Deduplicate Cases")
+    page_title = gettext_lazy("Deduplicate Cases")
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
 
@@ -957,7 +957,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
-    page_title = ugettext_lazy("Create Deduplication Rule")
+    page_title = gettext_lazy("Create Deduplication Rule")
 
     @property
     def page_context(self):
@@ -1082,7 +1082,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
-    page_title = ugettext_lazy("Edit Deduplication Rule")
+    page_title = gettext_lazy("Edit Deduplication Rule")
 
     @property
     def page_url(self):

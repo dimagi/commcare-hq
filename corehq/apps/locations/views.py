@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
@@ -163,7 +163,7 @@ def check_pending_locations_import(redirect=False):
 
 
 class BaseLocationView(BaseDomainView):
-    section_name = ugettext_lazy("Locations")
+    section_name = gettext_lazy("Locations")
 
     @property
     def can_access_all_locations(self):
@@ -275,7 +275,7 @@ class LocationsSearchView(EmwfOptionsView):
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
-    entity_string = ugettext_lazy("Location")
+    entity_string = gettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(locations_access_required)
@@ -289,7 +289,7 @@ class LocationTypesView(BaseDomainView):
     urlname = 'location_types'
     page_title = ugettext_noop("Organization Levels")
     template_name = 'locations/location_types.html'
-    section_name = ugettext_lazy("Locations")
+    section_name = gettext_lazy("Locations")
 
     @property
     def section_url(self):
@@ -1061,8 +1061,8 @@ class DowngradeLocationsView(BaseDomainView):
     """
     template_name = 'locations/downgrade_locations.html'
     urlname = 'downgrade_locations'
-    section_name = ugettext_lazy("Project Settings")
-    page_title = ugettext_lazy("Project Access")
+    section_name = gettext_lazy("Project Settings")
+    page_title = gettext_lazy("Project Access")
 
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect

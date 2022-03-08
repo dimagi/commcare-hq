@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -1335,7 +1335,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
 
 class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
-    name = ugettext_lazy('Scheduled Messaging Events')
+    name = gettext_lazy('Scheduled Messaging Events')
     slug = 'scheduled_messaging_events'
     fields = [
         ScheduleInstanceFilter,

@@ -12,7 +12,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 from django.views.generic import View
 from django.views.decorators.http import require_GET, require_POST
 
@@ -525,21 +525,21 @@ def add_export_email_request(request, domain):
     download_id = request.POST.get('download_id')
     user_id = request.couch_user.user_id
     if download_id is None or user_id is None:
-        return HttpResponseBadRequest(ugettext_lazy('Download ID or User ID blank/not provided'))
+        return HttpResponseBadRequest(gettext_lazy('Download ID or User ID blank/not provided'))
     try:
         download_context = get_download_context(download_id)
     except TaskFailedError:
-        return HttpResponseServerError(ugettext_lazy('Export failed'))
+        return HttpResponseServerError(gettext_lazy('Export failed'))
     if download_context.get('is_ready', False):
         try:
             couch_user = CouchUser.get_by_user_id(user_id, domain=domain)
         except CouchUser.AccountTypeError:
-            return HttpResponseBadRequest(ugettext_lazy('Invalid user'))
+            return HttpResponseBadRequest(gettext_lazy('Invalid user'))
         if couch_user is not None:
             process_email_request(domain, download_id, couch_user.get_email())
     else:
         EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
-    return HttpResponse(ugettext_lazy('Export e-mail request sent.'))
+    return HttpResponse(gettext_lazy('Export e-mail request sent.'))
 
 
 @method_decorator(login_and_domain_required, name='dispatch')

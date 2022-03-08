@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_noop, gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -26,7 +26,7 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
     label = ""
     placeholder = "place"
-    default_text = ugettext_lazy("Select a Table")
+    default_text = gettext_lazy("Select a Table")
 
     @property
     def selected(self):

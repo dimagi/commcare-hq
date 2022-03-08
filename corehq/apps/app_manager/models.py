@@ -30,7 +30,7 @@ from django.urls import reverse
 from django.utils.safestring import SafeBytes
 from django.utils.translation import override
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import qrcode
 from couchdbkit import ResourceNotFound
@@ -2954,7 +2954,7 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
-            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+            options = [(self.shadow_parent_form_id, gettext_lazy("Unknown, please change"))] + options
         return options
 
     @staticmethod

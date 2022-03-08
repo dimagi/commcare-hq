@@ -11,7 +11,7 @@ from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -127,7 +127,7 @@ class LanguageField(forms.CharField):
         self.max_length = 3
 
     default_error_messages = {
-        'invalid': ugettext_lazy('Please enter a valid two or three digit language code.'),
+        'invalid': gettext_lazy('Please enter a valid two or three digit language code.'),
     }
     default_validators = [wrapped_language_validation]
 
@@ -260,14 +260,14 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=30, required=False)
-    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=30, required=False)
-    email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
+    first_name = forms.CharField(label=gettext_lazy('First Name'), max_length=30, required=False)
+    last_name = forms.CharField(label=gettext_lazy('Last Name'), max_length=30, required=False)
+    email = forms.EmailField(label=gettext_lazy("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
         initial=None,
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "<i class=\"fa fa-info-circle\"></i> "
             "Becomes default language seen in Web Apps and reports (if applicable), "
             "but does not affect mobile applications. "
@@ -284,8 +284,8 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     analytics_enabled = forms.BooleanField(
         required=False,
-        label=ugettext_lazy("Enable Tracking"),
-        help_text=ugettext_lazy(
+        label=gettext_lazy("Enable Tracking"),
+        help_text=gettext_lazy(
             "Allow Dimagi to collect usage information to improve CommCare. "
             "You can learn more about the information we collect and the ways "
             "we use it in our "
@@ -303,10 +303,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         username_controls = []
         if self.username:
             username_controls.append(hqcrispy.StaticField(
-                ugettext_lazy('Username'), self.username)
+                gettext_lazy('Username'), self.username)
             )
 
-        self.fields['language'].label = ugettext_lazy("My Language")
+        self.fields['language'].label = gettext_lazy("My Language")
 
         self.new_helper = FormHelper()
         self.new_helper.form_method = 'POST'
@@ -343,22 +343,22 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.new_helper.layout = crispy.Layout(
             crispy.Fieldset(
-                ugettext_lazy("Basic"),
+                gettext_lazy("Basic"),
                 *basic_fields
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
-                ugettext_lazy("Other Options"),
+                gettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 crispy.Div(hqcrispy.StaticField(
-                    ugettext_lazy('API Key'),
+                    gettext_lazy('API Key'),
                     format_html_lazy(
-                        ugettext_lazy('API key management has moved <a href="{}">here</a>.'),
+                        gettext_lazy('API key management has moved <a href="{}">here</a>.'),
                         reverse(ApiKeyView.urlname)),
                 )),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update My Information"),
+                    gettext_lazy("Update My Information"),
                     type='submit',
                     css_class='btn-primary',
                 )
@@ -393,7 +393,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
         required=False, min_value=1, max_value=50000,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "Multiply this user's case load by a number for load testing on phones. "
             "Leave blank for normal users."
         ),
@@ -495,15 +495,15 @@ class CommCareAccountForm(forms.Form):
     Form for CommCareAccounts
     """
     username = forms.CharField(required=True)
-    password_1 = forms.CharField(label=ugettext_lazy('Password'), widget=PasswordInput(),
+    password_1 = forms.CharField(label=gettext_lazy('Password'), widget=PasswordInput(),
                                  required=True, min_length=1)
-    password_2 = forms.CharField(label=ugettext_lazy('Password (reenter)'), widget=PasswordInput(),
+    password_2 = forms.CharField(label=gettext_lazy('Password (reenter)'), widget=PasswordInput(),
                                  required=True, min_length=1)
     phone_number = forms.CharField(
         max_length=80,
         required=False,
-        help_text=ugettext_lazy("Please enter number, including "
-                                "international code, in digits only.")
+        help_text=gettext_lazy("Please enter number, including "
+                               "international code, in digits only.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -552,7 +552,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-validate_username = EmailValidator(message=ugettext_lazy('Username contains invalid characters.'))
+validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
 
 
 class NewMobileWorkerForm(forms.Form):
@@ -637,7 +637,7 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['new_password'].widget = forms.TextInput()
             self.fields['new_password'].help_text = format_html_lazy(
                 '<i class="fa fa-warning"></i>{}<br />',
-                ugettext_lazy(
+                gettext_lazy(
                     'This password is automatically generated. '
                     'Please copy it or create your own. It will not be shown again.'))
 
@@ -807,7 +807,7 @@ class NewMobileWorkerForm(forms.Form):
 
 class GroupMembershipForm(forms.Form):
     selected_ids = forms.Field(
-        label=ugettext_lazy("Group Membership"),
+        label=gettext_lazy("Group Membership"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -815,7 +815,7 @@ class GroupMembershipForm(forms.Form):
     def __init__(self, group_api_url, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
         fieldset_title = kwargs.pop(
-            'fieldset_title', ugettext_lazy("Edit Group Membership"))
+            'fieldset_title', gettext_lazy("Edit Group Membership"))
 
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
@@ -877,13 +877,13 @@ class MultipleSelectionForm(forms.Form):
         });
     """
     selected_ids = forms.MultipleChoiceField(
-        label=ugettext_lazy("Group Membership"),
+        label=gettext_lazy("Group Membership"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
-        fieldset_title = kwargs.pop('fieldset_title', ugettext_lazy("Edit Group Membership"))
+        fieldset_title = kwargs.pop('fieldset_title', gettext_lazy("Edit Group Membership"))
 
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -952,7 +952,7 @@ class CommtrackUserForm(forms.Form):
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
         required=False,
-        help_text=ugettext_lazy('Primary Location must always be set to one of above locations')
+        help_text=gettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
         label=ugettext_noop("Program"),
@@ -1159,12 +1159,12 @@ class CommtrackUserForm(forms.Form):
 
 
 class DomainRequestForm(forms.Form):
-    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True,
+    full_name = forms.CharField(label=gettext_lazy('Full Name'), required=True,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.CharField(
-        label=ugettext_lazy('Email Address'),
+        label=gettext_lazy('Email Address'),
         required=True,
-        help_text=ugettext_lazy('You will use this email to log in.'),
+        help_text=gettext_lazy('You will use this email to log in.'),
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
     domain = forms.CharField(widget=forms.HiddenInput(), required=True)
@@ -1173,7 +1173,7 @@ class DomainRequestForm(forms.Form):
     def form_actions(self):
         return hqcrispy.FormActions(
             twbscrispy.StrictButton(
-                ugettext_lazy('Request Access'),
+                gettext_lazy('Request Access'),
                 type='submit',
                 css_class='btn-primary',
             )
@@ -1254,7 +1254,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
-        max_length=50, help_text=ugettext_lazy('Please enter number, including country code, in digits only.')
+        max_length=50, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
     )
 
     form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)
@@ -1279,7 +1279,7 @@ class AddPhoneNumberForm(forms.Form):
                 )
             )
         )
-        self.fields['phone_number'].label = ugettext_lazy('Phone number')
+        self.fields['phone_number'].label = gettext_lazy('Phone number')
 
 
 class CommCareUserFormSet(object):
@@ -1337,9 +1337,9 @@ class UserFilterForm(forms.Form):
         (INACTIVE, _('Only Deactivated'))
     ]
 
-    role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
+    role_id = forms.ChoiceField(label=gettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
-        label=ugettext_lazy('Name or Username'),
+        label=gettext_lazy('Name or Username'),
         max_length=30,
         required=False
     )

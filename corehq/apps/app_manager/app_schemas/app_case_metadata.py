@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, gettext_lazy
 
 from jsonobject.base import DefaultProperty
 
@@ -489,7 +489,7 @@ class AppCaseMetadata(JsonObject):
                     return parent_props
             else:
                 params = {'case_type': root_case_type, 'relationship': parent_rel}
-                raise CaseMetaException(ugettext_lazy(
+                raise CaseMetaException(gettext_lazy(
                     "Case type '%(case_type)s' has no '%(relationship)s' "
                     "relationship to any other case type.") % params)
 

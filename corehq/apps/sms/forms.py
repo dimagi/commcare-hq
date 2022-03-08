@@ -15,7 +15,7 @@ from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
@@ -88,10 +88,10 @@ WELCOME_RECIPIENT_MOBILE_WORKER = 'MOBILE_WORKER'
 WELCOME_RECIPIENT_ALL = 'ALL'
 
 WELCOME_RECIPIENT_CHOICES = (
-    (WELCOME_RECIPIENT_NONE, ugettext_lazy('Nobody')),
-    (WELCOME_RECIPIENT_CASE, ugettext_lazy('Cases only')),
-    (WELCOME_RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Workers only')),
-    (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
+    (WELCOME_RECIPIENT_NONE, gettext_lazy('Nobody')),
+    (WELCOME_RECIPIENT_CASE, gettext_lazy('Cases only')),
+    (WELCOME_RECIPIENT_MOBILE_WORKER, gettext_lazy('Mobile Workers only')),
+    (WELCOME_RECIPIENT_ALL, gettext_lazy('Cases and Mobile Workers')),
 )
 
 LANGUAGE_FALLBACK_NONE = 'NONE'
@@ -100,17 +100,17 @@ LANGUAGE_FALLBACK_DOMAIN = 'DOMAIN'
 LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
 
 LANGUAGE_FALLBACK_CHOICES = (
-    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_NONE, gettext_lazy("""
         Only send message if text is available in recipient's preferred language
     """)),
-    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_SCHEDULE, gettext_lazy("""
         Use text from the alert or broadcast's default language as a backup
     """)),
-    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_DOMAIN, gettext_lazy("""
         Use text from the project's default language as a backup
         if the alert or broadcast's language is also unavailable
     """)),
-    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_UNTRANSLATED, gettext_lazy("""
         Use all available text backups, including untranslated content
     """)),
 )
@@ -175,9 +175,9 @@ class SettingsForm(Form):
 
     sms_survey_date_format = ChoiceField(
         required=False,
-        label=ugettext_lazy("SMS Survey Date Format"),
+        label=gettext_lazy("SMS Survey Date Format"),
         choices=(
-            (df.human_readable_format, ugettext_lazy(df.human_readable_format))
+            (df.human_readable_format, gettext_lazy(df.human_readable_format))
             for df in ALLOWED_SURVEY_DATE_FORMATS
         ),
     )
@@ -272,11 +272,11 @@ class SettingsForm(Form):
     )
     registration_welcome_message = ChoiceField(
         choices=WELCOME_RECIPIENT_CHOICES,
-        label=ugettext_lazy("Send registration welcome message to"),
+        label=gettext_lazy("Send registration welcome message to"),
     )
     language_fallback = ChoiceField(
         choices=LANGUAGE_FALLBACK_CHOICES,
-        label=ugettext_lazy("Backup behavior for missing translations"),
+        label=gettext_lazy("Backup behavior for missing translations"),
     )
     twilio_whatsapp_phone_number = CharField(
         required=False,
@@ -286,7 +286,7 @@ class SettingsForm(Form):
     override_daily_outbound_sms_limit = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_lazy("Override Daily Outbound SMS Limit"),
+        label=gettext_lazy("Override Daily Outbound SMS Limit"),
     )
     custom_daily_outbound_sms_limit = IntegerField(
         required=False,
@@ -907,7 +907,7 @@ class BackendForm(Form):
     authorized_domains = CharField(
         required=False,
         label=ugettext_noop("List of authorized domains"),
-        help_text=ugettext_lazy("A comma-separated list of domain names")
+        help_text=gettext_lazy("A comma-separated list of domain names")
     )
     reply_to_phone_number = CharField(
         required=False,
@@ -915,18 +915,18 @@ class BackendForm(Form):
     )
     inbound_api_key = CharField(
         required=False,
-        label=ugettext_lazy("Inbound API Key"),
+        label=gettext_lazy("Inbound API Key"),
         disabled=True,
     )
     opt_out_keywords = CharField(
         required=False,
         label=ugettext_noop("List of opt out keywords"),
-        help_text=ugettext_lazy("A comma-separated list of keywords")
+        help_text=gettext_lazy("A comma-separated list of keywords")
     )
     opt_in_keywords = CharField(
         required=False,
         label=ugettext_noop("List of opt in keywords"),
-        help_text=ugettext_lazy("A comma-separated list of keywords")
+        help_text=gettext_lazy("A comma-separated list of keywords")
     )
 
     @property
@@ -1076,7 +1076,7 @@ class BackendForm(Form):
 
 class BackendMapForm(Form):
     catchall_backend_id = ChoiceField(
-        label=ugettext_lazy("Catch-All Gateway"),
+        label=gettext_lazy("Catch-All Gateway"),
         required=False
     )
     backend_map = CharField(required=False)
@@ -1227,33 +1227,33 @@ class InitiateAddSMSBackendForm(Form):
 
 class SubscribeSMSForm(Form):
     stock_out_facilities = BooleanField(
-        label=ugettext_lazy("Receive stockout facilities SMS alert"),
+        label=gettext_lazy("Receive stockout facilities SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with specific users/facilities that are "
             "stocked out of your commodities"
         )
     )
     stock_out_commodities = BooleanField(
-        label=ugettext_lazy("Receive stockout commodities SMS alert"),
+        label=gettext_lazy("Receive stockout commodities SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with specific commodities that are stocked "
             "out by your users/facilities"
         )
     )
     stock_out_rates = BooleanField(
-        label=ugettext_lazy("Receive stockout SMS alert"),
+        label=gettext_lazy("Receive stockout SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with the percent of facilities that are "
             "stocked out of a specific commodity"
         )
     )
     non_report = BooleanField(
-        label=ugettext_lazy("Receive non-reporting SMS alert"),
+        label=gettext_lazy("Receive non-reporting SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This alert highlight users/facilities which have not submitted "
             "their CommCare Supply stock report."
         )
@@ -1296,8 +1296,8 @@ class SubscribeSMSForm(Form):
 class ComposeMessageForm(forms.Form):
 
     recipients = forms.CharField(widget=forms.Textarea,
-                                 help_text=ugettext_lazy("Type a username, group name or 'send to all'"))
-    message = forms.CharField(widget=forms.Textarea, help_text=ugettext_lazy('0 characters (160 max)'))
+                                 help_text=gettext_lazy("Type a username, group name or 'send to all'"))
+    message = forms.CharField(widget=forms.Textarea, help_text=gettext_lazy('0 characters (160 max)'))
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')

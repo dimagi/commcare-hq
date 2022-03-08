@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 import openpyxl
 import polib
@@ -339,7 +339,7 @@ class BlacklistTranslations(BaseTranslationsView):
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
 class AppTranslations(BaseTranslationsView):
-    page_title = ugettext_lazy('App Translations')
+    page_title = gettext_lazy('App Translations')
     urlname = 'app_translations'
     template_name = 'app_translations.html'
 
@@ -469,7 +469,7 @@ class AppTranslations(BaseTranslationsView):
 
 
 class DownloadTranslations(BaseTranslationsView):
-    page_title = ugettext_lazy('Download Translations')
+    page_title = gettext_lazy('Download Translations')
     urlname = 'download_translations'
     template_name = 'download_translations.html'
 
@@ -497,7 +497,7 @@ class DownloadTranslations(BaseTranslationsView):
 
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
 class MigrateTransifexProject(BaseTranslationsView):
-    page_title = ugettext_lazy('Migrate Project')
+    page_title = gettext_lazy('Migrate Project')
     urlname = 'migrate_transifex_project'
     template_name = 'migrate_project.html'
 

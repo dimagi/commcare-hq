@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 import pytz
 from memoized import memoized
@@ -173,13 +173,13 @@ class CompletionOrSubmissionTimeMixin(object):
 @location_safe
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
-    name = ugettext_lazy('Case Activity')
+    name = gettext_lazy('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
     display_data = ['percent']
     emailable = True
-    description = ugettext_lazy("Followup rates on active cases.")
+    description = gettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
@@ -769,8 +769,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 @location_safe
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = ugettext_lazy("Daily Form Activity")
-    bad_request_error_text = ugettext_lazy(
+    name = gettext_lazy("Daily Form Activity")
+    bad_request_error_text = gettext_lazy(
         "Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
@@ -779,7 +779,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
-    description = ugettext_lazy("Number of submissions per day.")
+    description = gettext_lazy("Number of submissions per day.")
 
     fix_left_col = False
     emailable = True
@@ -989,14 +989,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 @location_safe
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
-    name = ugettext_lazy("Form Completion Time")
+    name = gettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    description = ugettext_lazy("Statistics on time spent on a particular form.")
+    description = gettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
 
     @property
@@ -1378,9 +1378,9 @@ def _worker_activity_is_location_safe(view, request, *args, **kwargs):
 @conditionally_location_safe(_worker_activity_is_location_safe)
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_lazy("Worker Activity")
-    description = ugettext_lazy("Summary of form and case activity by user or group.")
-    section_name = ugettext_lazy("Project Reports")
+    name = gettext_lazy("Worker Activity")
+    description = gettext_lazy("Summary of form and case activity by user or group.")
+    section_name = gettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 

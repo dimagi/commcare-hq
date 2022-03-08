@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, ugettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Submit
@@ -105,9 +105,9 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
     server_type = forms.CharField(
         label=_('GAEN Server Type'),
         widget=forms.Select(choices=[
-            ("", ugettext_lazy("Select server type")),
-            ('NEARFORM', ugettext_lazy('NearForm OTP Server')),
-            ('APHL', ugettext_lazy('APHL Exposure Notifications')),
+            ("", gettext_lazy("Select server type")),
+            ('NEARFORM', gettext_lazy('NearForm OTP Server')),
+            ('APHL', gettext_lazy('APHL Exposure Notifications')),
         ]),
     )
 
@@ -301,7 +301,7 @@ class SimprintsIntegrationForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', ugettext_lazy("Update"))
+                    Submit('submit', gettext_lazy("Update"))
                 )
             )
         )

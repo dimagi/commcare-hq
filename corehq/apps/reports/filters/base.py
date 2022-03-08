@@ -335,7 +335,7 @@ class BaseSimpleFilter(BaseReportFilter):
     template = "reports/filters/simple.html"
     slug = None
 
-    # use ugettext_lazy for below properties
+    # use gettext_lazy for below properties
     label = None
     help_title = None
     help_content = None

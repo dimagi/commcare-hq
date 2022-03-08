@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from memoized import memoized
 
