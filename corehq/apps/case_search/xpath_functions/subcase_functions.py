@@ -213,4 +213,10 @@ def _extract_subcase_query_parts(node):
     index_identifier = args[0]
     subcase_filter = args[1] if len(args) == 2 else None
 
+    if not isinstance(index_identifier, str):
+        raise XPathFunctionException(
+            _("'{name}' error. Index identifier must be a string").format(name=current_node.name),
+            serialize(node)
+        )
+
     return index_identifier, subcase_filter, count_op, case_count

@@ -112,4 +112,14 @@ def test_subcase_query_parsing_validations():
             "subcase-count('p', name = 'bob') > date('2020-01-01')",
             "'subcase-count' must be compared to a positive integer"
         ),
+        (
+            _check,
+            "subcase-count(parent) = 1",
+            "'subcase-count' error. Index identifier must be a string"
+        ),
+        (
+            _check,
+            "subcase-exists(3)",
+            "'subcase-exists' error. Index identifier must be a string"
+        ),
     ]
