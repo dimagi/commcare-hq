@@ -464,11 +464,18 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                     "house": "Tyrell",
                 },
             },
-            indices=[CaseIndex(
-                parent_case,
-                identifier='father',
-                relationship='extension',
-            )],
+            indices=[
+                CaseIndex(
+                    parent_case,
+                    identifier='father',
+                    relationship='extension',
+                ),
+                CaseIndex(
+                    grandparent_case,
+                    identifier='grandmother',
+                    relationship='child',
+                )
+            ],
             walk_related=False,
         )
         for case in factory.create_or_update_cases([child_case1, child_case2]):
@@ -621,3 +628,15 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             {self.parent_case_id},
             set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
         )
+
+    def test_subcase_filter_relationship(self):
+        parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
+        expected_filter = {"terms": {"_id": [self.grandparent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_filter_relationship_no_hits(self):
+        parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') > 1")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
