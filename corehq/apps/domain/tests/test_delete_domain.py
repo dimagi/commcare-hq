@@ -1059,6 +1059,19 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
+    def test_delete_domain_with_cases(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CaseFactory(domain_name).create_case()
+            self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
+
+        call_command('delete_domain', self.domain.name, noinput=True)
+
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
+
+        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
     def test_hard_delete_cases(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
