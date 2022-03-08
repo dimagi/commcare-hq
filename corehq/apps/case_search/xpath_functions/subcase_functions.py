@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from django.utils.translation import ugettext as _
 
-from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize
+from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize, UnaryExpression
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import CaseSearchES, filters, queries, aggregations
@@ -167,15 +167,18 @@ def _extract_subcase_query_parts(node):
                 serialize(node)
             )
 
+        if isinstance(case_count, UnaryExpression):
+            if case_count.op == '+':
+                case_count = case_count.right
+            else:
+                raise XPathFunctionException(
+                    _("'subcase-count' must be compared to a positive integer"),
+                    serialize(node)
+                )
+
         try:
             case_count = int(case_count)
         except ValueError:
-            raise XPathFunctionException(
-                _("'subcase-count' must be compared to a positive integer"),
-                serialize(node)
-            )
-
-        if case_count < 0:
             raise XPathFunctionException(
                 _("'subcase-count' must be compared to a positive integer"),
                 serialize(node)
@@ -197,7 +200,13 @@ def _extract_subcase_query_parts(node):
         case_count = 0
         count_op = ">"
 
-    index_identifier = current_node.args[0]
-    subcase_filter = current_node.args[1]
+    args = current_node.args
+    if len(args) != 2:
+        raise XPathFunctionException(
+            _("'{name}' expects two arguments").format(name=current_node.name),
+            serialize(node)
+        )
+    index_identifier = args[0]
+    subcase_filter = args[1]
 
     return index_identifier, subcase_filter, count_op, case_count

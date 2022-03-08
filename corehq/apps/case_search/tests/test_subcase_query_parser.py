@@ -1,6 +1,7 @@
 from eulxml.xpath import parse as parse_xpath
-from testil import eq
+from testil import eq, assert_raises
 
+from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.case_search.xpath_functions.subcase_functions import _parse_normalize_subcase_query
 
 
@@ -55,5 +56,40 @@ def test_subcase_query_parsing():
             _check,
             "subcase-count('p', prop=1) != 2",
             ("p", "prop=1", "=", 2, True)
+        ),
+    ]
+
+
+def test_subcase_query_parsing_validations():
+    def _check(query, msg):
+        node = parse_xpath(query)
+        with assert_raises(XPathFunctionException, msg=msg):
+            _parse_normalize_subcase_query(node)
+
+    yield from [
+        (
+            _check,
+            "subcase-exists()",
+            "'subcase-exists' expects two arguments"
+        ),
+        (
+            _check,
+            "subcase-count() > 1",
+            "'subcase-count' expects two arguments"
+        ),
+        (
+            _check,
+            "subcase-count()",
+            "XPath incorrectly formatted. Expected 'subcase-exists'"
+        ),
+        (
+            _check,
+            "subcase-count('p', name = 'bob') > -1",
+            "'subcase-count' must be compared to a positive integer"
+        ),
+        (
+            _check,
+            "subcase-count('p', name = 'bob') + 1",
+            "Unsupported operator for use with 'subcase-count': +"
         ),
     ]
