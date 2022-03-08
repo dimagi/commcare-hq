@@ -1,3 +1,4 @@
+import re
 import signal
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
@@ -12,6 +13,7 @@ from corehq.apps.app_manager.exceptions import DangerousXmlException, XFormExcep
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.log import with_progress_bar
 from corehq.util.doc_processor.couch import resumable_view_iterator
+from lxml.html.clean import Cleaner
 
 
 class Command(BaseCommand):
@@ -24,6 +26,7 @@ class Command(BaseCommand):
         self.entities_found = 0
         self.total_forms = 0
         self.start_time = None
+        self.xss_attempt_found = 0
 
     def add_arguments(self, parser):
         parser.add_argument('--all', action='store_true',
@@ -32,8 +35,10 @@ class Command(BaseCommand):
         parser.add_argument('--reset', action='store_true', help='trigger a fresh run')
         parser.add_argument('--path', default='output.log', help='the path to write log output')
         parser.add_argument('--batchsize', default=10, type=int, help='number of apps to pull simultaneously')
+        #this is temp
+        parser.add_argument('--xss', action='store_true', help="check for xss instead of xxe")
 
-    def handle(self, all, limit, reset, path, batchsize, *args, **kwargs):
+    def handle(self, all, limit, xss, reset, path, batchsize, *args, **kwargs):
         write_mode = 'w' if reset else 'a'  # Only overwrite on fresh runs
 
         # NOTE: Outputting to a file, rather than stdout for some messages due to the progress bar.
@@ -49,8 +54,24 @@ class Command(BaseCommand):
                 self.broadcast('Searching for entities in CURRENT forms')
 
             self.start_time = datetime.now()
-            self.process_forms(all, limit, reset, batchsize)
-            self.report_results()
+            if xss:
+                self.find_XSS(all, limit, reset, batchsize)
+                self.report_results(True)
+            else:
+                self.process_forms(all, limit, reset, batchsize)
+                self.report_results()
+
+    def find_XSS(self, all, limit, reset, batchsize):
+        get_apps = self.get_all_apps if all else get_current_apps
+
+        for app in get_apps(reset, batchsize):
+            for form in get_forms(app):
+                if form_contains_xss_attempt(form):
+                    handle_entity_form(form, app, self.log_file, True)
+                    self.xss_attempt_found += 1
+                self.total_forms += 1
+                if limit > 0 and self.total_forms >= limit:
+                    return
 
     def process_forms(self, all, limit, reset, batchsize):
         get_apps = self.get_all_apps if all else get_current_apps
@@ -64,9 +85,12 @@ class Command(BaseCommand):
                 if limit > 0 and self.total_forms >= limit:
                     return
 
-    def report_results(self):
+    def report_results(self, xss=False):
         elapsed = datetime.now() - self.start_time
-        self.broadcast(f'Found {self.entities_found} entities in {self.total_forms} forms')
+        if xss:
+            self.broadcast(f'Found {self.xss_attempt_found} XSS attempts in {self.total_forms} forms')
+        else:
+            self.broadcast(f'Found {self.entities_found} entities in {self.total_forms} forms')
         self.broadcast(f'Completed search in {elapsed}')
 
     def setup_interrupt_handler(self):
@@ -189,8 +213,11 @@ def form_contains_entities(form):
     return False
 
 
-def handle_entity_form(form, app, log_file):
-    print('Found entity', file=log_file)
+def handle_entity_form(form, app, log_file, xss=False):
+    if xss:
+        print('Found XSS attempt', file=log_file)
+    else:
+        print('Found entity', file=log_file)
     print(f'\tForm: {form.unique_id}, app {app._id}', file=log_file)
     if app.copy_of:
         print(f'\tApp is a copy of {app.copy_of}. Found on version {app.version}', file=log_file)
@@ -198,3 +225,42 @@ def handle_entity_form(form, app, log_file):
     host = settings.BASE_ADDRESS
     url = reverse('get_xform_source', args=(app.domain, app._id, form.unique_id,))
     print(f'\tview document at: {protocol}://{host}{url}', file=log_file)
+
+
+def form_contains_xss_attempt(form):
+    """
+    This is a test run - it'll likely change!!
+
+    The idea is to have lxml clean an html snippet (user input) with and without
+    the function that eliminates javascript/unsafe attributes and compare the two to
+    identify any html that did have those things.
+    """
+
+    regex = '(?<=<value>)(.*?)(?=\s*<\/value>)'
+    regexoutput = '(?<=<output)(.*?)(?=\s*>)'
+
+    cleaner = Cleaner()
+    clean_html = cleaner.clean_html
+    cleaner_js = Cleaner(javascript=False, safe_attrs_only=False)
+    cleaner_html_js = cleaner_js.clean_html
+    #this parts copied
+    try:
+        source = form.source
+    except ResourceNotFound:
+        return False
+
+    for value in re.findall(regex, form.source):
+        if '&lt;' and '&gt;' in value:
+            value = value.replace("&lt;", "<").replace("&gt;", ">")
+        if '<output' in value:
+            for output in re.findall(regexoutput, value):
+                value = value.replace(output, '')
+            value = value.replace("<output>", '').replace("</output>", '')
+
+        cleaned_js = cleaner_html_js("<div>" + value + "</div>")[5:-6]
+        cleaned = clean_html("<div>" + value + "</div>")[5:-6]
+
+        if cleaned != cleaned_js:
+            print(cleaned_js)
+            return True
+    return False
