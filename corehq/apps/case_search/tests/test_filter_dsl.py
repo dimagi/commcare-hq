@@ -565,69 +565,47 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_exists(self):
         parsed = parse_xpath("subcase-exists('father', name='Margaery')")
-
         expected_filter = {"terms": {"_id": [self.parent_case_id]}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_exists_inverted(self):
         parsed = parse_xpath("not(subcase-exists('father', name='Margaery'))")
-
         expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual(
-            [self.child_case1_id, self.child_case2_id, self.grandparent_case_id],
-            CaseSearchES().filter(built_filter).values_list('_id', flat=True)
-        )
 
     def test_subcase_count_gt(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') > 1")
-
         expected_filter = {"terms": {"_id": [self.parent_case_id]}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.parent_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_count_lt(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') < 1")
-
         expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual(
-            {self.grandparent_case_id, self.child_case1_id, self.child_case2_id},
-            set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
-        )
 
     def test_subcase_count_lt_no_match(self):
         """Subcase filter matches no cases and since it's an 'inverted' filter (lt)
         we don't need to apply any filtering to the parent query"""
         parsed = parse_xpath("subcase-count('father', house='Reyne') < 1")
-
         expected_filter = {"match_all": {}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_subcase_count_no_match(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') > 2")
-
         expected_filter = {"terms": {"_id": []}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_subcase_count_eq(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') = 2")
-
         expected_filter = {"terms": {"_id": [self.parent_case_id]}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual(
-            {self.parent_case_id},
-            set(CaseSearchES().filter(built_filter).values_list('_id', flat=True))
-        )
 
     def test_subcase_filter_relationship(self):
         parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
