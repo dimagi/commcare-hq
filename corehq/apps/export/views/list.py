@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -699,13 +699,13 @@ def commit_filters(request, domain):
 @location_safe
 class FormExportListView(BaseExportListView, FormExportListHelper):
     urlname = 'list_form_exports'
-    page_title = ugettext_noop("Export Form Data")
+    page_title = gettext_noop("Export Form Data")
 
 
 @location_safe
 class CaseExportListView(BaseExportListView, CaseExportListHelper):
     urlname = 'list_case_exports'
-    page_title = ugettext_noop("Export Case Data")
+    page_title = gettext_noop("Export Case Data")
 
     @property
     def page_name(self):
@@ -740,20 +740,20 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
 
 
 class DeIdFormExportListView(FormExportListView, DeIdFormExportListHelper):
-    page_title = ugettext_noop("Export De-Identified Form Data")
+    page_title = gettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
 
 
 @location_safe
 class DeIdDailySavedExportListView(DailySavedExportListView, DeIdDailySavedExportListHelper):
     urlname = 'list_deid_daily_saved_exports'
-    page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
+    page_title = gettext_noop("Export De-Identified Daily Saved Exports")
 
 
 @location_safe
 class DeIdDashboardFeedListView(DashboardFeedListView, DeIdDashboardFeedListHelper):
     urlname = 'list_deid_dashboard_feeds'
-    page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
+    page_title = gettext_noop("Export De-Identified Dashboard Feeds")
 
 
 def can_download_daily_saved_export(export, domain, couch_user):

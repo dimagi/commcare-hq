@@ -2,7 +2,7 @@ from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
@@ -603,7 +603,7 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     """
         Same as its superclass, except you _must_ select one form by the end of it.
     """
-    label = ugettext_noop("Choose a Form")
+    label = gettext_noop("Choose a Form")
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
 

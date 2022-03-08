@@ -14,7 +14,7 @@ from django.http import (
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
@@ -144,7 +144,7 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
 
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
-    section_name = ugettext_noop("Reports")
+    section_name = gettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
@@ -638,8 +638,8 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 @conditionally_location_safe(_ucr_view_is_safe)
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
-    page_title = ugettext_noop('Download UCR Status')
-    section_name = ugettext_noop("Reports")
+    page_title = gettext_noop('Download UCR Status')
+    section_name = gettext_noop("Reports")
 
     @property
     def section_url(self):

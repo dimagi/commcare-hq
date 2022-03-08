@@ -12,7 +12,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.generic import View
 from django.views.decorators.http import require_GET, require_POST
 
@@ -400,7 +400,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     export_filter_class = ExpandedMobileWorkerFilter
     show_date_range = True
-    page_title = ugettext_noop("Download Form Data Export")
+    page_title = gettext_noop("Download Form Data Export")
     check_for_multimedia = True
     form_or_case = 'form'
 
@@ -488,7 +488,7 @@ def has_multimedia(request, domain):
 class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
     export_filter_class = CaseListFilter
-    page_title = ugettext_noop("Download Case Data Export")
+    page_title = gettext_noop("Download Case Data Export")
     form_or_case = 'case'
 
     @property
@@ -502,7 +502,7 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
-    page_title = ugettext_noop("Export SMS Messages")
+    page_title = gettext_noop("Export SMS Messages")
     form_or_case = None
     export_id = None
     sms_export = True
@@ -514,7 +514,7 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Data Exports")
+    page_title = gettext_noop("Download Form Data Exports")
     export_filter_class = ExpandedMobileWorkerFilter
     check_for_multimedia = False
 

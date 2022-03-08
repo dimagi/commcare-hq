@@ -5,7 +5,7 @@ from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
 from sqlagg.columns import *
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, gettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter,\
@@ -240,7 +240,7 @@ class DistrictWeekly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly_ucr'
-    name = ugettext_noop("mc_report_dist_weekly")
+    name = gettext_noop("mc_report_dist_weekly")
     section = DISTRICT_WEEKLY_REPORT
 
     @property
@@ -384,7 +384,7 @@ class DistrictMonthly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly_ucr'
-    name = ugettext_noop("mc_report_dist_monthly")
+    name = gettext_noop("mc_report_dist_monthly")
     section = DISTRICT_MONTHLY_REPORT
 
     @property
@@ -635,7 +635,7 @@ class HeathFacilityMonthly(DistrictMonthly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("mc_report_hf_monthly")
+    name = gettext_noop("mc_report_hf_monthly")
     section = HF_MONTHLY_REPORT
 
 
@@ -647,7 +647,7 @@ class HealthFacilityWeekly(DistrictWeekly):
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly_ucr'
-    name = ugettext_noop("mc_report_hf_weekly")
+    name = gettext_noop("mc_report_hf_weekly")
     section = HF_WEEKLY_REPORT
 
     @property

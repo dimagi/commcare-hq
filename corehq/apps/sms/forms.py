@@ -15,7 +15,7 @@ from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
@@ -48,21 +48,21 @@ ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 
 ENABLED_DISABLED_CHOICES = (
-    (DISABLED, ugettext_noop("Disabled")),
-    (ENABLED, ugettext_noop("Enabled")),
+    (DISABLED, gettext_noop("Disabled")),
+    (ENABLED, gettext_noop("Enabled")),
 )
 
 DEFAULT = "DEFAULT"
 CUSTOM = "CUSTOM"
 
 DEFAULT_CUSTOM_CHOICES = (
-    (DEFAULT, ugettext_noop("Default")),
-    (CUSTOM, ugettext_noop("Custom")),
+    (DEFAULT, gettext_noop("Default")),
+    (CUSTOM, gettext_noop("Custom")),
 )
 
 MESSAGE_COUNTER_CHOICES = (
-    (DEFAULT, ugettext_noop("Don't use counter")),
-    (CUSTOM, ugettext_noop("Use counter with threshold:")),
+    (DEFAULT, gettext_noop("Don't use counter")),
+    (CUSTOM, gettext_noop("Use counter with threshold:")),
 )
 
 SMS_CONVERSATION_LENGTH_CHOICES = (
@@ -153,7 +153,7 @@ class SettingsForm(Form):
     # General Settings
     use_default_sms_response = ChoiceField(
         required=False,
-        label=ugettext_noop("Default SMS Response"),
+        label=gettext_noop("Default SMS Response"),
         choices=ENABLED_DISABLED_CHOICES,
     )
     default_sms_response = TrimmedCharField(
@@ -162,10 +162,10 @@ class SettingsForm(Form):
     )
     use_restricted_sms_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Send SMS on..."),
+        label=gettext_noop("Send SMS on..."),
         choices=(
-            (DISABLED, ugettext_noop("any day, at any time")),
-            (ENABLED, ugettext_noop("only specific days and times")),
+            (DISABLED, gettext_noop("any day, at any time")),
+            (ENABLED, gettext_noop("only specific days and times")),
         ),
     )
     restricted_sms_times_json = CharField(
@@ -189,7 +189,7 @@ class SettingsForm(Form):
     )
     custom_case_username = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=gettext_noop("Enter a Case Property"),
     )
     use_custom_message_count_threshold = ChoiceField(
         required=False,
@@ -197,11 +197,11 @@ class SettingsForm(Form):
     )
     custom_message_count_threshold = IntegerField(
         required=False,
-        label=ugettext_noop("Enter a Number"),
+        label=gettext_noop("Enter a Number"),
     )
     use_sms_conversation_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Delay Automated SMS"),
+        label=gettext_noop("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
         widget=SelectToggle(choices=ENABLED_DISABLED_CHOICES, attrs={"ko_value": "use_sms_conversation_times"}),
     )
@@ -211,25 +211,25 @@ class SettingsForm(Form):
     )
     sms_conversation_length = ChoiceField(
         required=False,
-        label=ugettext_noop("Conversation Duration"),
+        label=gettext_noop("Conversation Duration"),
         choices=SMS_CONVERSATION_LENGTH_CHOICES,
     )
     survey_traffic_option = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey Traffic"),
+        label=gettext_noop("Survey Traffic"),
         choices=(
-            (SHOW_ALL, ugettext_noop("Show all survey traffic")),
-            (SHOW_INVALID, ugettext_noop("Hide all survey traffic except "
-                                         "invalid responses")),
-            (HIDE_ALL, ugettext_noop("Hide all survey traffic")),
+            (SHOW_ALL, gettext_noop("Show all survey traffic")),
+            (SHOW_INVALID, gettext_noop("Hide all survey traffic except "
+                                        "invalid responses")),
+            (HIDE_ALL, gettext_noop("Hide all survey traffic")),
         ),
     )
     count_messages_as_read_by_anyone = ChoiceField(
         required=False,
-        label=ugettext_noop("A Message is Read..."),
+        label=gettext_noop("A Message is Read..."),
         choices=(
-            (ENABLED, ugettext_noop("when it is read by anyone")),
-            (DISABLED, ugettext_noop("only for the user that reads it")),
+            (ENABLED, gettext_noop("when it is read by anyone")),
+            (DISABLED, gettext_noop("only for the user that reads it")),
         ),
     )
     use_custom_chat_template = ChoiceField(
@@ -238,37 +238,37 @@ class SettingsForm(Form):
     )
     custom_chat_template = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter Chat Template Identifier"),
+        label=gettext_noop("Enter Chat Template Identifier"),
     )
 
     # Registration settings
     sms_case_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("Case Self-Registration"),
+        label=gettext_noop("Case Self-Registration"),
     )
     sms_case_registration_type = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Default Case Type"),
+        label=gettext_noop("Default Case Type"),
     )
     sms_case_registration_owner_id = CharField(
         required=False,
-        label=ugettext_noop("Default Case Owner"),
+        label=gettext_noop("Default Case Owner"),
         widget=forms.Select(choices=[]),
     )
     sms_case_registration_user_id = CharField(
         required=False,
-        label=ugettext_noop("Registration Submitter"),
+        label=gettext_noop("Registration Submitter"),
         widget=forms.Select(choices=[]),
     )
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("SMS Mobile Worker Registration"),
+        label=gettext_noop("SMS Mobile Worker Registration"),
     )
     sms_worker_registration_alert_emails = MultiEmailField(
         required=False,
-        label=ugettext_noop("Emails to send alerts for new mobile worker registrations"),
+        label=gettext_noop("Emails to send alerts for new mobile worker registrations"),
     )
     registration_welcome_message = ChoiceField(
         choices=WELCOME_RECIPIENT_CHOICES,
@@ -290,7 +290,7 @@ class SettingsForm(Form):
     )
     custom_daily_outbound_sms_limit = IntegerField(
         required=False,
-        label=ugettext_noop("Daily Outbound SMS Limit"),
+        label=gettext_noop("Daily Outbound SMS Limit"),
         min_value=1000,
     )
 
@@ -889,29 +889,29 @@ class BackendForm(Form):
     domain = None
     backend_id = None
     name = CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     display_name = CharField(
-        label=ugettext_noop("Display Name"),
+        label=gettext_noop("Display Name"),
         required=False,
     )
     description = CharField(
-        label=ugettext_noop("Description"),
+        label=gettext_noop("Description"),
         widget=forms.Textarea,
         required=False,
     )
     give_other_domains_access = BooleanField(
         required=False,
-        label=ugettext_noop("Give other domains access.")
+        label=gettext_noop("Give other domains access.")
     )
     authorized_domains = CharField(
         required=False,
-        label=ugettext_noop("List of authorized domains"),
+        label=gettext_noop("List of authorized domains"),
         help_text=gettext_lazy("A comma-separated list of domain names")
     )
     reply_to_phone_number = CharField(
         required=False,
-        label=ugettext_noop("Reply-To Phone Number"),
+        label=gettext_noop("Reply-To Phone Number"),
     )
     inbound_api_key = CharField(
         required=False,
@@ -920,12 +920,12 @@ class BackendForm(Form):
     )
     opt_out_keywords = CharField(
         required=False,
-        label=ugettext_noop("List of opt out keywords"),
+        label=gettext_noop("List of opt out keywords"),
         help_text=gettext_lazy("A comma-separated list of keywords")
     )
     opt_in_keywords = CharField(
         required=False,
-        label=ugettext_noop("List of opt in keywords"),
+        label=gettext_noop("List of opt in keywords"),
         help_text=gettext_lazy("A comma-separated list of keywords")
     )
 

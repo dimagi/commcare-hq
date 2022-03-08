@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
 import qrcode
@@ -541,7 +541,7 @@ class TwoFactorResetView(TwoFactorSetupView):
 
 
 class BaseProjectDataView(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
 
     @property
     def section_url(self):

@@ -1,7 +1,7 @@
 from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.utils.html import format_html
 
 from crispy_forms.bootstrap import PrependedText
@@ -18,7 +18,7 @@ from corehq.apps.products.models import SQLProduct
 
 class CommTrackSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=ugettext_noop("Use default emergency levels"), required=False)
+        label=gettext_noop("Use default emergency levels"), required=False)
 
     stock_emergency_level = forms.DecimalField(
         label=gettext_lazy("Emergency Level (months)"), required=False)

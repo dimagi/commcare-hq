@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -306,11 +306,11 @@ class UserRolePresets(object):
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,
     # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
-    APP_EDITOR = ugettext_noop("App Editor")
-    READ_ONLY = ugettext_noop("Read Only")
-    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
-    BILLING_ADMIN = ugettext_noop("Billing Admin")
+    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
+    APP_EDITOR = gettext_noop("App Editor")
+    READ_ONLY = gettext_noop("Read Only")
+    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
+    BILLING_ADMIN = gettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,

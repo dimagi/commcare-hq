@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
@@ -1135,14 +1135,14 @@ class CustomerInvoicePdfView(View):
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     template_name = 'accounting/accounting_admins.html'
     urlname = 'accounting_manage_admins'
-    page_title = ugettext_noop("Accounting Admins")
+    page_title = gettext_noop("Accounting Admins")
 
-    limit_text = ugettext_noop("Admins per page")
-    empty_notification = ugettext_noop("You haven't specified any accounting admins. "
-                                       "How are you viewing this page??! x_x")
-    loading_message = ugettext_noop("Loading admin list...")
-    deleted_items_header = ugettext_noop("Removed Users:")
-    new_items_header = ugettext_noop("Added Users:")
+    limit_text = gettext_noop("Admins per page")
+    empty_notification = gettext_noop("You haven't specified any accounting admins. "
+                                      "How are you viewing this page??! x_x")
+    loading_message = gettext_noop("Loading admin list...")
+    deleted_items_header = gettext_noop("Removed Users:")
+    new_items_header = gettext_noop("Added Users:")
 
     @property
     def page_url(self):

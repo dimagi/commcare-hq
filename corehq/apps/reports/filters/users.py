@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
@@ -94,8 +94,8 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
-    label = ugettext_noop("Select Case Owner")
-    default_text = ugettext_noop("All Case Owners")
+    label = gettext_noop("Select Case Owner")
+    default_text = gettext_noop("All Case Owners")
 
     @property
     def options(self):
@@ -532,8 +532,8 @@ class ChangedByUserFilter(EnterpriseUserFilter):
 
 
 class UserPropertyFilter(BaseSingleOptionFilter):
-    label = ugettext_noop('Modified Property')
-    default_text = ugettext_noop('Select Property')
+    label = gettext_noop('Modified Property')
+    default_text = gettext_noop('Select Property')
     slug = 'user_property'
 
     @property
@@ -547,22 +547,22 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 class ChangeActionFilter(BaseMultipleOptionFilter):
     ALL = '0'
 
-    label = ugettext_noop('Action')
-    default_text = ugettext_noop('Select Action')
+    label = gettext_noop('Action')
+    default_text = gettext_noop('Select Action')
     slug = 'action'
 
     options = [
-        (ALL, ugettext_noop('All')),
-        (str(UserHistory.CREATE), ugettext_noop('Create')),
-        (str(UserHistory.UPDATE), ugettext_noop('Update')),
-        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+        (ALL, gettext_noop('All')),
+        (str(UserHistory.CREATE), gettext_noop('Create')),
+        (str(UserHistory.UPDATE), gettext_noop('Update')),
+        (str(UserHistory.DELETE), gettext_noop('Delete')),
     ]
     default_options = ['0']
 
 
 class UserUploadRecordFilter(BaseSingleOptionFilter):
-    label = ugettext_noop('User Bulk Upload')
-    default_text = ugettext_noop('Select upload')
+    label = gettext_noop('User Bulk Upload')
+    default_text = gettext_noop('Select upload')
     slug = 'user_upload_record'
 
     @property

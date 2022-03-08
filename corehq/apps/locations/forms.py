@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -567,7 +567,7 @@ class LocationFilterForm(forms.Form):
     )
 
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
     )
     selected_location_only = forms.BooleanField(

@@ -12,7 +12,7 @@ from django.forms.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -125,84 +125,84 @@ class RecordListField(Field):
 class KeywordForm(Form):
     domain = None
     keyword_id = None
-    keyword = CharField(label=ugettext_noop("Keyword"))
-    description = TrimmedCharField(label=ugettext_noop("Description"))
+    keyword = CharField(label=gettext_noop("Keyword"))
+    description = TrimmedCharField(label=gettext_noop("Description"))
     override_open_sessions = BooleanField(
         required=False,
         initial=False,
-        label=ugettext_noop("Override open SMS Surveys"),
+        label=gettext_noop("Override open SMS Surveys"),
     )
     allow_keyword_use_by = ChoiceField(
         required=False,
-        label=ugettext_noop("Allow Keyword Use By"),
+        label=gettext_noop("Allow Keyword Use By"),
         initial='any',
         choices=(
-            ('any', ugettext_noop("Both Mobile Workers and Cases")),
-            ('users', ugettext_noop("Mobile Workers Only")),
-            ('cases', ugettext_noop("Cases Only")),
+            ('any', gettext_noop("Both Mobile Workers and Cases")),
+            ('users', gettext_noop("Mobile Workers Only")),
+            ('cases', gettext_noop("Cases Only")),
         )
     )
     sender_content_type = ChoiceField(
-        label=ugettext_noop("Send to Sender"),
+        label=gettext_noop("Send to Sender"),
     )
     sender_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
     )
     sender_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     other_recipient_content_type = ChoiceField(
         required=False,
-        label=ugettext_noop("Notify Another Person"),
+        label=gettext_noop("Notify Another Person"),
         initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
-        label=ugettext_noop("Recipient"),
+        label=gettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
     )
     other_recipient_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Group Name"),
+        label=gettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
     )
     other_recipient_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     process_structured_sms = BooleanField(
         required=False,
-        label=ugettext_noop("Process incoming keywords as a Structured Message"),
+        label=gettext_noop("Process incoming keywords as a Structured Message"),
     )
     structured_sms_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     use_custom_delimiter = BooleanField(
         required=False,
-        label=ugettext_noop("Use Custom Delimiter"),
+        label=gettext_noop("Use Custom Delimiter"),
     )
     delimiter = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Delimiter"),
+        label=gettext_noop("Please Specify Delimiter"),
     )
     use_named_args_separator = BooleanField(
         required=False,
-        label=ugettext_noop("Use Joining Character"),
+        label=gettext_noop("Use Joining Character"),
     )
     use_named_args = BooleanField(
         required=False,
-        label=ugettext_noop("Use Named Answers"),
+        label=gettext_noop("Use Named Answers"),
     )
     named_args_separator = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Joining Characcter"),
+        label=gettext_noop("Please Specify Joining Characcter"),
     )
     named_args = RecordListField(
         input_name="named_args",

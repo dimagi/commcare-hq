@@ -27,7 +27,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ngettext, gettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
 from dimagi.utils.couch import CriticalSection
@@ -141,7 +141,7 @@ def _users_context(request, domain):
 
 
 class BaseUserSettingsView(BaseDomainView):
-    section_name = ugettext_noop("Users")
+    section_name = gettext_noop("Users")
 
     @property
     @memoized
@@ -359,7 +359,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
-    page_title = ugettext_noop("Edit Web User")
+    page_title = gettext_noop("Edit Web User")
 
     @property
     def page_name(self):
@@ -610,7 +610,7 @@ def download_web_users(request, domain):
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):
     urlname = 'download_web_users_status'
-    page_title = ugettext_noop('Download Web Users Status')
+    page_title = gettext_noop('Download Web Users Status')
 
     @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -1160,7 +1160,7 @@ class BaseUploadUser(BaseUserSettingsView):
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_web_users'
-    page_title = ugettext_noop("Bulk Upload Web Users")
+    page_title = gettext_noop("Bulk Upload Web Users")
     is_web_upload = True
 
     @method_decorator(always_allow_project_access)
@@ -1182,7 +1182,7 @@ class UploadWebUsers(BaseUploadUser):
 
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
-    page_title = ugettext_noop('Web User Upload Status')
+    page_title = gettext_noop('Web User Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(WebUserUploadStatusView, self).main_context

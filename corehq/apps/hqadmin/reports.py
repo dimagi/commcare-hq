@@ -2,7 +2,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from dateutil.parser import parse
@@ -29,7 +29,7 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = 'reports/base_template.html'
     report_template_path = "reports/tabular.html"
-    section_name = ugettext_noop("ADMINREPORT")
+    section_name = gettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
 

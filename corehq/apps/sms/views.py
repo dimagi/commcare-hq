@@ -19,7 +19,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -134,9 +134,9 @@ from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
-    (ugettext_noop("Yesterday"), 1),
-    (ugettext_noop("1 Week"), 7),
-    (ugettext_noop("30 Days"), 30),
+    (gettext_noop("Yesterday"), 1),
+    (gettext_noop("1 Week"), 7),
+    (gettext_noop("30 Days"), 30),
 )
 
 
@@ -147,7 +147,7 @@ def default(request, domain):
 
 
 class BaseMessagingSectionView(BaseDomainView):
-    section_name = ugettext_noop("Messaging")
+    section_name = gettext_noop("Messaging")
 
     @cached_property
     def can_use_inbound_sms(self):
@@ -939,7 +939,7 @@ class ChatLastReadMessage(View, DomainViewMixin):
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends'
-    page_title = ugettext_noop("SMS Connectivity")
+    page_title = gettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
@@ -1326,7 +1326,7 @@ class EditDomainGatewayView(AddDomainGatewayView):
 class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     template_name = "sms/global_gateway_list.html"
     urlname = 'list_global_backends'
-    page_title = ugettext_noop("SMS Connectivity")
+    page_title = gettext_noop("SMS Connectivity")
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -1551,7 +1551,7 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"
     urlname = 'subscribe_sms'
-    page_title = ugettext_noop("Subscribe SMS")
+    page_title = gettext_noop("Subscribe SMS")
 
     @property
     def commtrack_settings(self):
@@ -1595,7 +1595,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
 class SMSLanguagesView(BaseMessagingSectionView):
     urlname = 'sms_languages'
     template_name = "sms/languages.html"
-    page_title = ugettext_noop("Languages")
+    page_title = gettext_noop("Languages")
 
     @use_jquery_ui
     @method_decorator(domain_admin_required)
@@ -1712,7 +1712,7 @@ def upload_sms_translations(request, domain):
 class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = "sms_settings"
     template_name = "sms/settings.html"
-    page_title = ugettext_noop("SMS Settings")
+    page_title = gettext_noop("SMS Settings")
     async_handlers = [SMSSettingsAsyncHandler]
 
     @property

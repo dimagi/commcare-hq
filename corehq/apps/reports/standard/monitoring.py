@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 import pytz
 from memoized import memoized
@@ -80,7 +80,7 @@ from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 
-TOO_MUCH_DATA = ugettext_noop(
+TOO_MUCH_DATA = gettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
 )
 
@@ -656,7 +656,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin,
                               CompletionOrSubmissionTimeMixin):
-    name = ugettext_noop("Submissions By Form")
+    name = gettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -667,7 +667,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     fix_left_col = True
     emailable = True
     is_cacheable = True
-    description = ugettext_noop("Number of submissions by form.")
+    description = gettext_noop("Number of submissions by form.")
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -1105,12 +1105,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 @location_safe
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
                                              MultiFormDrilldownMixin, DatespanMixin):
-    name = ugettext_noop("Form Completion vs. Submission Trends")
+    name = gettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
 
-    description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
+    description = gettext_noop("Time lag between when forms were completed and when forms were successfully "
+                               "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1253,12 +1253,12 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
 @location_safe
 class WorkerActivityTimes(WorkerMonitoringChartBase,
     MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
-    name = ugettext_noop("Worker Activity Times")
+    name = gettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
     is_cacheable = True
 
-    description = ugettext_noop("Graphical representation of when forms are "
-                                "completed or submitted.")
+    description = gettext_noop("Graphical representation of when forms are "
+                               "completed or submitted.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -1388,7 +1388,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     emailable = True
     exportable_all = True
 
-    NO_FORMS_TEXT = ugettext_noop('None')
+    NO_FORMS_TEXT = gettext_noop('None')
 
     @property
     def include_active_cases(self):

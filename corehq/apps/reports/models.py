@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from jsonfield import JSONField
 
@@ -23,12 +23,12 @@ class HQUserType(object):
     DEACTIVATED = 5
     WEB = 6
     human_readable = [settings.COMMCARE_USER_TERM,
-                      ugettext_noop("demo_user"),
-                      ugettext_noop("admin"),
-                      ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply"),
-                      ugettext_noop("Deactivated Mobile Workers"),
-                      ugettext_noop("Web Users"), ]
+                      gettext_noop("demo_user"),
+                      gettext_noop("admin"),
+                      gettext_noop("Unknown Users"),
+                      gettext_noop("CommCare Supply"),
+                      gettext_noop("Deactivated Mobile Workers"),
+                      gettext_noop("Web Users"), ]
     toggle_defaults = (True, False, False, False, False, True, True)
     count = len(human_readable)
     included_defaults = (True, True, True, True, False, True, True)

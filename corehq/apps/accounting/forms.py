@@ -16,7 +16,7 @@ from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
@@ -1871,15 +1871,15 @@ class ProductRateForm(forms.ModelForm):
 
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=gettext_noop("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
         widget=forms.Textarea
     )
 
@@ -1935,15 +1935,15 @@ class EnterprisePlanContactForm(forms.Form):
 
 class AnnualPlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=gettext_noop("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
         widget=forms.Textarea
     )
 

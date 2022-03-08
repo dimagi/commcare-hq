@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
@@ -29,7 +29,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
     base_template = "reports/standard/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
@@ -42,7 +42,7 @@ class DataInterface(GenericReportView):
 
 @location_safe
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
-    name = ugettext_noop("Reassign Cases")
+    name = gettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
@@ -170,7 +170,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 
 @location_safe
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
-    name = ugettext_noop("Manage Forms")
+    name = gettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
 

@@ -27,7 +27,7 @@ from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -233,7 +233,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = ugettext_noop("My Saved Reports")
+    page_title = gettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
@@ -852,8 +852,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
-    not_found_error = ugettext_noop('Could not find the requested Scheduled Report')
-    broken_link_error = ugettext_noop('Invalid unsubscribe link')
+    not_found_error = gettext_noop('Could not find the requested Scheduled Report')
+    broken_link_error = gettext_noop('Invalid unsubscribe link')
     report = None
 
     def get(self, request, *args, **kwargs):
@@ -865,7 +865,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
                 if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
                     raise ValidationError(self.broken_link_error)
                 if email not in self.report.all_recipient_emails:
-                    raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
+                    raise ValidationError(gettext_noop('This email address has already been unsubscribed.'))
             except ResourceNotFound:
                 kwargs['error'] = self.not_found_error
             except ValidationError as err:
@@ -898,7 +898,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
             else:
                 self.report.delete()
 
-            kwargs['success'] = ugettext_noop('Successfully unsubscribed from report notification.')
+            kwargs['success'] = gettext_noop('Successfully unsubscribed from report notification.')
         except ResourceNotFound:
             kwargs['error'] = self.not_found_error
         except ValidationError as err:

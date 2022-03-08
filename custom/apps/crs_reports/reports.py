@@ -3,7 +3,7 @@
 # completed (2021-05-12) will either cause errors or incorrect report output.
 from datetime import timedelta
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.utils.html import format_html
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
@@ -183,7 +183,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
 class HBNCMotherReport(BaseHNBCReport):
 
-    name = ugettext_noop('Mother HBNC Form')
+    name = gettext_noop('Mother HBNC Form')
     slug = 'hbnc_mother_report'
     report_template_name = 'mothers_form_reports_template'
     default_case_type = 'pregnant_mother'

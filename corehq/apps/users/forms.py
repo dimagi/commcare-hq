@@ -11,7 +11,7 @@ from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -430,7 +430,7 @@ class RoleForm(forms.Form):
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
-        label=ugettext_noop("New password"),
+        label=gettext_noop("New password"),
         widget=forms.PasswordInput(),
     )
 
@@ -572,32 +572,32 @@ class NewMobileWorkerForm(forms.Form):
                 <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
             </span>
         """,
-        label=ugettext_noop("Username"),
+        label=gettext_noop("Username"),
     )
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("First Name"),
+        label=gettext_noop("First Name"),
     )
     last_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("Last Name")
+        label=gettext_noop("Last Name")
     )
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
     )
     force_account_confirmation = forms.BooleanField(
-        label=ugettext_noop("Require Account Confirmation?"),
-        help_text=ugettext_noop(
+        label=gettext_noop("Require Account Confirmation?"),
+        help_text=gettext_noop(
             "The user's account will not be active until "
             "they have confirmed their email and set a password."
         ),
         required=False,
     )
     email = forms.EmailField(
-        label=ugettext_noop("Email"),
+        label=gettext_noop("Email"),
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
@@ -608,8 +608,8 @@ class NewMobileWorkerForm(forms.Form):
         """
     )
     send_account_confirmation_email = forms.BooleanField(
-        label=ugettext_noop("Send Account Confirmation Email Now?"),
-        help_text=ugettext_noop(
+        label=gettext_noop("Send Account Confirmation Email Now?"),
+        help_text=gettext_noop(
             "The user will be sent their account confirmation email now. "
             "Otherwise it must be sent manually from the Mobile Worker 'Deactivated Users' list."
         ),
@@ -619,7 +619,7 @@ class NewMobileWorkerForm(forms.Form):
         widget=forms.PasswordInput(),
         required=True,
         min_length=1,
-        label=ugettext_noop("Password"),
+        label=gettext_noop("Password"),
     )
 
     def __init__(self, project, request_user, *args, **kwargs):
@@ -945,17 +945,17 @@ class PrimaryLocationWidget(forms.Widget):
 
 class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
-        label=ugettext_noop("Locations"),
+        label=gettext_noop("Locations"),
         required=False,
         widget=forms.SelectMultiple(choices=[]),
     )
     primary_location = forms.CharField(
-        label=ugettext_noop("Primary Location"),
+        label=gettext_noop("Primary Location"),
         required=False,
         help_text=gettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
-        label=ugettext_noop("Program"),
+        label=gettext_noop("Program"),
         choices=(),
         required=False
     )
@@ -1326,8 +1326,8 @@ class CommCareUserFormSet(object):
 class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
-        ('all', ugettext_noop('All')),
-        (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
+        ('all', gettext_noop('All')),
+        (USERNAMES_COLUMN_OPTION, gettext_noop('Only Usernames'))
     )
     ACTIVE = 'active'
     INACTIVE = 'inactive'
@@ -1345,7 +1345,7 @@ class UserFilterForm(forms.Form):
         required=False
     )
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
     )
     selected_location_only = forms.BooleanField(
@@ -1360,7 +1360,7 @@ class UserFilterForm(forms.Form):
     )
     columns = forms.ChoiceField(
         required=False,
-        label=ugettext_noop("Columns"),
+        label=gettext_noop("Columns"),
         choices=COLUMNS_CHOICES,
         widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=False),
     )

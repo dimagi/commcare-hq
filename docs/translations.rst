@@ -23,7 +23,7 @@ separately.  This is where the ugettext functions differ.
 * ``gettext_lazy``: The function converts the string to a translation
   "promise" object.  This is later coerced to a string when rendering a
   template or otherwise forcing the promise.
-* ``ugettext_noop``: This function only marks a string as translation string,
+* ``gettext_noop``: This function only marks a string as translation string,
   it does not have any other effect; that is, it always returns the string
   itself. This should be considered an advanced tool and generally avoided.
   It could be useful if you need access to both the translated and untranslated

@@ -20,7 +20,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
@@ -153,7 +153,7 @@ def _can_edit_workers_location(web_user, mobile_worker):
 @location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
-    page_title = ugettext_noop("Edit Mobile Worker")
+    page_title = gettext_noop("Edit Mobile Worker")
 
     @property
     def page_name(self):
@@ -364,7 +364,7 @@ class EditCommCareUserView(BaseEditUserView):
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
     template_name = 'users/extra_users_confirm_billing.html'
-    page_title = ugettext_noop("Confirm Billing Information")
+    page_title = gettext_noop("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -528,7 +528,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
     template_name = 'users/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
-    page_title = ugettext_noop("Turn off Demo mode")
+    page_title = gettext_noop("Turn off Demo mode")
 
     @property
     def page_context(self):
@@ -547,7 +547,7 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
 
 class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
-    page_title = ugettext_noop('Demo User Status')
+    page_title = gettext_noop('Demo User Status')
 
     def dispatch(self, request, *args, **kwargs):
         return super(DemoRestoreStatusView, self).dispatch(request, *args, **kwargs)
@@ -632,7 +632,7 @@ def update_user_groups(request, domain, couch_user_id):
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
-    page_title = ugettext_noop("Mobile Workers")
+    page_title = gettext_noop("Mobile Workers")
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
@@ -1034,7 +1034,7 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
 class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
-    page_title = ugettext_noop("Bulk Upload Mobile Workers")
+    page_title = gettext_noop("Bulk Upload Mobile Workers")
     is_web_upload = False
 
     @method_decorator(require_can_edit_commcare_users)
@@ -1054,7 +1054,7 @@ class UploadCommCareUsers(BaseUploadUser):
 
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
-    page_title = ugettext_noop('Mobile Worker Upload Status')
+    page_title = gettext_noop('Mobile Worker Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
@@ -1098,7 +1098,7 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
 @location_safe
 class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
-    page_title = ugettext_noop('Download Users Status')
+    page_title = gettext_noop('Download Users Status')
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -1146,7 +1146,7 @@ class FilteredUserDownload(BaseUserSettingsView):
 
 @location_safe
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
-    page_title = ugettext_noop('Filter and Download Mobile Workers')
+    page_title = gettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
@@ -1158,7 +1158,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
-    page_title = ugettext_noop('Filter and Download Users')
+    page_title = gettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
@@ -1212,7 +1212,7 @@ class UsernameUploadMixin(object):
 
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
-    page_title = ugettext_noop('Bulk Delete')
+    page_title = gettext_noop('Bulk Delete')
     template_name = 'users/bulk_delete.html'
 
     @property
@@ -1285,7 +1285,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
-    page_title = ugettext_noop('Mobile Workers Bulk Lookup')
+    page_title = gettext_noop('Mobile Workers Bulk Lookup')
     template_name = 'users/bulk_lookup.html'
 
     @property

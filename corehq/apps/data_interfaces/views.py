@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
@@ -138,7 +138,7 @@ class BulkUploadCasesException(Exception):
 
 
 class DataInterfaceSection(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
     urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
@@ -279,13 +279,13 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
-    page_title = ugettext_noop("Manage Case Group")
+    page_title = gettext_noop("Manage Case Group")
 
-    limit_text = ugettext_noop("cases per page")
-    empty_notification = ugettext_noop("You have no cases in your group.")
-    loading_message = ugettext_noop("Loading cases...")
-    deleted_items_header = ugettext_noop("Removed Cases:")
-    new_items_header = ugettext_noop("Added Cases:")
+    limit_text = gettext_noop("cases per page")
+    empty_notification = gettext_noop("You have no cases in your group.")
+    loading_message = gettext_noop("Loading cases...")
+    deleted_items_header = gettext_noop("Removed Cases:")
+    new_items_header = gettext_noop("Added Cases:")
 
     @property
     def group_id(self):
@@ -480,7 +480,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 @location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
-    page_title = ugettext_noop('Form Management')
+    page_title = gettext_noop('Form Management')
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
@@ -558,7 +558,7 @@ class XFormManagementView(DataInterfaceSection):
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
-    page_title = ugettext_noop('Form Status')
+    page_title = gettext_noop('Form Status')
 
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context

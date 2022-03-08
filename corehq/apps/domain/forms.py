@@ -31,7 +31,7 @@ from django.utils.functional import cached_property, lazy
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.utils.translation import gettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
@@ -315,11 +315,11 @@ class DomainGlobalSettingsForm(forms.Form):
             "Please provide a short description of your project (Max 1000 characters)."
         )
     )
-    default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
+    default_timezone = TimeZoneChoiceField(label=gettext_noop("Default Timezone"), initial="UTC")
 
     default_geocoder_location = Field(
         widget=GeoCoderInput(attrs={'placeholder': gettext_lazy('Select a location')}),
-        label=ugettext_noop("Default project location"),
+        label=gettext_noop("Default project location"),
         required=False,
         help_text=gettext_lazy("Please select your project's default location.")
     )
@@ -1858,7 +1858,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             hqcrispy.FormActions(
                 crispy.Submit(
                     self.slug,
-                    ugettext_noop('Update'),
+                    gettext_noop('Update'),
                     css_class='disable-on-submit',
                 ),
             ),
@@ -1867,14 +1867,14 @@ class InternalSubscriptionManagementForm(forms.Form):
 
 class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     slug = 'dimagi_only_enterprise'
-    subscription_type = ugettext_noop('Test or Demo Project')
+    subscription_type = gettext_noop('Test or Demo Project')
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.HTML('<div class="alert alert-info">' + ugettext_noop(
+            crispy.HTML('<div class="alert alert-info">' + gettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
@@ -1919,15 +1919,15 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('Extended Trial')
+    subscription_type = gettext_noop('Extended Trial')
 
     organization_name = forms.CharField(
-        label=ugettext_noop('Organization Name'),
+        label=gettext_noop('Organization Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        label=ugettext_noop('Partner Contact Emails'),
+        label=gettext_noop('Partner Contact Emails'),
     )
 
     trial_length = forms.ChoiceField(
@@ -2005,7 +2005,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
 class ContractedPartnerForm(InternalSubscriptionManagementForm):
     slug = 'contracted_partner'
-    subscription_type = ugettext_noop('Contracted Partner')
+    subscription_type = gettext_noop('Contracted Partner')
 
     software_plan_edition = forms.ChoiceField(
         choices=(
@@ -2013,43 +2013,43 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             (SoftwarePlanEdition.PRO, SoftwarePlanEdition.PRO),
             (SoftwarePlanEdition.ADVANCED, SoftwarePlanEdition.ADVANCED),
         ),
-        label=ugettext_noop('Software Plan'),
+        label=gettext_noop('Software Plan'),
     )
 
     fogbugz_client_name = forms.CharField(
-        label=ugettext_noop('Fogbugz Client Name'),
+        label=gettext_noop('Fogbugz Client Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        help_text=ugettext_noop(
+        help_text=gettext_noop(
             'This is who will receive invoices if the Client exceeds the user '
             'or SMS limits in their plan.'
         ),
-        label=ugettext_noop('Partner Contact Emails'),
+        label=gettext_noop('Partner Contact Emails'),
     )
 
     start_date = forms.DateField(
-        help_text=ugettext_noop('Date the project needs access to features.'),
-        label=ugettext_noop('Start Date'),
+        help_text=gettext_noop('Date the project needs access to features.'),
+        label=gettext_noop('Start Date'),
     )
 
     end_date = forms.DateField(
-        help_text=ugettext_noop(
+        help_text=gettext_noop(
             'Specify the End Date based on the Start Date plus number of '
             'months of software plan in the contract with the Client.'
         ),
-        label=ugettext_noop('End Date'),
+        label=gettext_noop('End Date'),
     )
 
     sms_credits = forms.DecimalField(
         initial=0,
-        label=ugettext_noop('SMS Credits'),
+        label=gettext_noop('SMS Credits'),
     )
 
     user_credits = forms.IntegerField(
         initial=0,
-        label=ugettext_noop('User Credits'),
+        label=gettext_noop('User Credits'),
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
@@ -2252,12 +2252,12 @@ INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS = [
 class SelectSubscriptionTypeForm(forms.Form):
     subscription_type = forms.ChoiceField(
         choices=[
-            ('', ugettext_noop('Select a subscription type...'))
+            ('', gettext_noop('Select a subscription type...'))
         ] + [
             (form.slug, form.subscription_type)
             for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
         ],
-        label=ugettext_noop('Subscription Type'),
+        label=gettext_noop('Subscription Type'),
         required=False,
     )
 
