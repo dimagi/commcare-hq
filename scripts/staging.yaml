@@ -62,7 +62,6 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - ml/remove-pickles-reports # Minha Jan 24
-    - jls/drop-case-search-limit # Jenny Jan 31
     - do/compare-case-properties # Dominic Feb 2
     - ml/remove-pickles-user-importer # Minha Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
