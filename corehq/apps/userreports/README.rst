@@ -972,8 +972,8 @@ If an expression is deemed invalid, then the relevant error is stored in the ``I
                 "property_value": ["yes", "no"]
             }
        }],
-       "configured_filter": {...},
-       "configured_indicators": [...]
+       "configured_filter": { },
+       "configured_indicators": [ ]
    }
 
 Report Configurations
@@ -1258,7 +1258,6 @@ the `translations transform <#translations-and-arbitrary-mappings>`__.
        "type": "choice_list",
        "slug": "state",
        "display": {"en": "State", "fr": "État"},
-       ...
    }
 
 Report Columns
