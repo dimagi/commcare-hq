@@ -300,6 +300,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
         'CaseProperty', 'CasePropertyAllowedValue', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
     ]),
+    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
@@ -324,7 +325,6 @@ DOMAIN_DELETE_OPERATIONS = [
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
-    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'TimedEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'RandomTimedEvent', 'schedule__domain'),
