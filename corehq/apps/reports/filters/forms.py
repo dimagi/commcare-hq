@@ -94,7 +94,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
-    display_app_type = False # whether we're displaying the application type select box in the filter
+    display_app_type = False  # whether we're displaying the application type select box in the filter
 
     @property
     def display_lang(self):
@@ -114,13 +114,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         labels = self.get_labels()
         if self.drilldown_map and self.drilldown_map[0]['val'] == PARAM_VALUE_STATUS_ACTIVE:
             labels = [
-                 (_('Application Type'),
-                  _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
-                  'status'),
-                 (_('Application'),
-                  _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  PARAM_SLUG_APP_ID),
-             ] + labels[1:]
+                (_('Application Type'),
+                 _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
+                 'status'),
+                (_('Application'),
+                 _("Select Application...") if self.use_only_last else _(
+                     "Show all Forms of this Application Type..."),
+                 PARAM_SLUG_APP_ID),
+            ] + labels[1:]
         return labels
 
     @property
@@ -145,7 +146,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         })
 
         show_advanced = self.request.GET.get('show_advanced') == 'on'
-        
+
         #set Default app type to active only when advanced option is not selected
         if self.display_app_type and not context['selected'] and not show_advanced:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
@@ -287,12 +288,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             }
         """
         data = get_all_form_details(self.domain)
-        default_module = lambda num: {'module': None, 'forms': []}
+        default_module = lambda num: {'module': None, 'forms': []}  # noqa: E731
         app_forms = {}
         for app_structure in data:
             index_offset = 1 if app_structure.is_user_registration else 0
             app_id = app_structure.app.id
-            if not app_id in app_forms:
+            if app_id not in app_forms:
                 app_forms[app_id] = {
                     'app': app_structure.app,
                     'is_user_registration': app_structure.is_user_registration,

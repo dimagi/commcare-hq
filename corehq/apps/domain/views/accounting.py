@@ -84,7 +84,6 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
     get_customer_cards,
-    get_privileges,
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
@@ -1560,7 +1559,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         return context
 
 
-class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
+class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
+                                     AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
     page_title = gettext_lazy("Confirm Billing Information")
@@ -1721,7 +1721,7 @@ class CardView(BaseCardView):
                 self.payment_method.unset_autopay(card, self.account)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
-        except Exception as e:
+        except Exception:
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
@@ -1749,7 +1749,7 @@ class CardsView(BaseCardView):
             self.payment_method.create_card(stripe_token, self.account, domain, autopay)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
-        except Exception as e:
+        except Exception:
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})

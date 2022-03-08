@@ -1,7 +1,5 @@
 import logging
-import re
 from datetime import datetime
-from decimal import Decimal
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -11,7 +9,6 @@ from lxml import etree
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq import toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,

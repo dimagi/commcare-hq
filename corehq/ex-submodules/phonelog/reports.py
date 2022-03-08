@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.db.models import Q
@@ -30,7 +31,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
-from six.moves.urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,8 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
             DataTablesColumn(gettext_lazy("Device ID"), span=2, prop_name='device_id'),
             DataTablesColumn(gettext_lazy("Message"), span=5, prop_name='msg'),
             DataTablesColumn(gettext_lazy("App Version"), span=1, prop_name='app_version'),
-            DataTablesColumn(gettext_lazy("CommCare Version"), span=1, prop_name='commcare_version', sortable=False),
+            DataTablesColumn(gettext_lazy("CommCare Version"), span=1,
+                             prop_name='commcare_version', sortable=False),
         )
 
     @property

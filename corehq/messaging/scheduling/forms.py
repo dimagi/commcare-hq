@@ -993,8 +993,7 @@ class ScheduleForm(Form):
         label=gettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
-            tuple((str(x), '') for x in range(-3, 0)) +
-            tuple((str(x), '') for x in range(1, 29))
+            tuple((str(x), '') for x in range(-3, 29) if x)
         )
     )
     send_time_type = ChoiceField(

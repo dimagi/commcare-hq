@@ -10,10 +10,7 @@ from django.http.response import (
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import (
-    ugettext as _,
-    gettext_lazy,
-)
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from corehq import toggles

@@ -552,6 +552,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
+
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
 
 
@@ -692,7 +693,6 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: send_account_confirmation_email',
             )
-
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
@@ -1202,7 +1202,8 @@ class DomainRequestForm(forms.Form):
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
-        super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        super(ConfirmExtraUserChargesForm, self).__init__(
+            account, domain, creating_user, data=data, *args, **kwargs)
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1218,7 +1219,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',

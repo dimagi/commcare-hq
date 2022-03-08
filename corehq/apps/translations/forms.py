@@ -82,8 +82,8 @@ class ConvertTranslationsForm(forms.Form):
                 zipfile = ZipFile(uploaded_file)
                 for fileinfo in zipfile.filelist:
                     filename = fileinfo.filename
-                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx') and
-                            not filename.endswith('.po')):
+                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx')
+                            and not filename.endswith('.po')):
                         raise forms.ValidationError(
                             _('Unexpected file passed within zip. Please upload xls/xlsx/po files.'))
                 return uploaded_file
@@ -146,8 +146,8 @@ class AppTranslationsForm(forms.Form):
     transifex_project_slug = forms.ChoiceField(label=gettext_lazy("Transifex project"), choices=(),
                                                required=True)
     target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
-                                    choices=([(None, gettext_lazy('Select Translated Language'))] +
-                                             langcodes.get_all_langs_for_select()),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
                                     required=False,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
@@ -206,8 +206,8 @@ class AppTranslationsForm(forms.Form):
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
                 self.add_error('version', gettext_lazy('Version not available for app'))
-        if (not cleaned_data['target_lang'] and
-                (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
+        if (not cleaned_data['target_lang']
+                and (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
             self.add_error('target_lang', gettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
 

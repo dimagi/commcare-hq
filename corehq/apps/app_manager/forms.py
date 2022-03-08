@@ -4,7 +4,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import gettext_lazy
 
-from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper

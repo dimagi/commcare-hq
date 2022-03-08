@@ -19,7 +19,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import gettext_lazy, ugettext_noop
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
@@ -343,8 +343,8 @@ class BillingAccountBasicForm(forms.Form):
                     if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
                         errors.append("{} is restricted by {}".format(domain, account.name))
             if errors:
-                raise ValidationError("The following domains are already restricted by another account: " +
-                                      ", ".join(errors))
+                raise ValidationError("The following domains are already restricted by another account: "
+                                      + ", ".join(errors))
             return domains
         else:
             # Do not return a list with an empty string
@@ -629,7 +629,8 @@ class SubscriptionForm(forms.Form):
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
             self.fields['do_not_email_reminder'].initial = subscription.do_not_email_reminder
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
-            self.fields['skip_invoicing_if_no_feature_charges'].initial = subscription.skip_invoicing_if_no_feature_charges
+            self.fields['skip_invoicing_if_no_feature_charges'].initial = \
+                subscription.skip_invoicing_if_no_feature_charges
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
@@ -1688,9 +1689,9 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             self.new_product_rate = self._retrieve_product_rate(rate_form)
             self.is_update = (
-                self.is_update or
-                self.plan_version is None or
-                self.new_product_rate.id != self.plan_version.product_rate.id
+                self.is_update
+                or self.plan_version is None
+                or self.new_product_rate.id != self.plan_version.product_rate.id
             )
         return original_data
 
@@ -2099,13 +2100,11 @@ class TriggerInvoiceForm(forms.Form):
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=prev_invoices.count(),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
-                                edit_url=reverse(InvoiceSummaryView.urlname,
-                                                 args=(x.id,)),
-                                name=x.invoice_number
-                            ) for x in prev_invoices.all()]
+                            edit_url=reverse(InvoiceSummaryView.urlname, args=(x.id,)),
+                            name=x.invoice_number
+                        ) for x in prev_invoices.all()]
                     ),
                 )
             )
@@ -2188,7 +2187,6 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=len(prev_invoices),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
                             edit_url=reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)),

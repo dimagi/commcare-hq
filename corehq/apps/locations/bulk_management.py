@@ -12,7 +12,6 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
-from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import gettext_lazy
 

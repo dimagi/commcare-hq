@@ -438,10 +438,10 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
-        if (cleaned_data.get('call_center_enabled') and
-                (not cleaned_data.get('call_center_case_type') or
-                 not cleaned_data.get('call_center_case_owner') or
-                 not cleaned_data.get('call_center_type'))):
+        if (cleaned_data.get('call_center_enabled')
+            and (not cleaned_data.get('call_center_case_type')
+                 or not cleaned_data.get('call_center_case_owner')
+                 or not cleaned_data.get('call_center_type'))):
             raise forms.ValidationError(_(
                 'You must choose a Call Center Type, Owner, and Case Type to use the call center application. '
                 'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
@@ -534,7 +534,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
     def __init__(self, *args, **kwargs):
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        if self.project.cloudcare_releases == 'default' or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+        if self.project.cloudcare_releases == 'default' \
+                or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
@@ -1629,7 +1630,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1706,7 +1707,7 @@ class ProBonoForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            _('Pro-Bono Application'),
+                _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
                 crispy.Div(
@@ -1751,8 +1752,7 @@ class ProBonoForm(forms.Form):
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
-                          "Contact: %s" % self.cleaned_data['contact_email']
-            )
+                          "Contact: %s" % self.cleaned_data['contact_email'])
 
 
 class InternalSubscriptionManagementForm(forms.Form):
