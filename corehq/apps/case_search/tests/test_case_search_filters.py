@@ -117,7 +117,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         }).get_ids()
         self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])
 
-    def test_multivalued_property_case_search(self):
+    def test_selected_any_function(self):
         self._create_case_search_config()
         cases = [
             {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
@@ -130,12 +130,13 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             get_case_search_query(
                 self.domain,
                 ['song'],
-                {'x_commcare_description_config': "selected-any(description, 'New York Boston')"},
+                {'_xpath_query': "selected-any(description, 'New York Boston')"},
             ),
             None,
             ['c1', 'c3']
         )
 
+    def test_selected_all_function(self):
         self._create_case_search_config()
         cases = [
             {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
@@ -150,7 +151,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             get_case_search_query(
                 self.domain,
                 ['song'],
-                {'x_commcare_description_config': "selected-all(description, 'New York Boston')"},
+                {'_xpath_query': "selected-all(description, 'New York Boston')"},
             ),
             None,
             ['c3', 'c5']
