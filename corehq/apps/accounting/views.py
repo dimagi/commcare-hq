@@ -1,6 +1,7 @@
 import datetime
 import json
 from datetime import date
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -25,7 +26,6 @@ from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
@@ -425,8 +425,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def cancel_form(self):
-        if (self.request.method == 'POST'
-            and 'cancel_subscription' in self.request.POST):
+        if self.request.method == 'POST' and 'cancel_subscription' in self.request.POST:
             return CancelForm(self.subscription, self.request.POST)
         return CancelForm(self.subscription)
 
@@ -514,9 +513,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         elif SuppressSubscriptionForm.submit_kwarg in self.request.POST and self.suppress_form.is_valid():
             self.suppress_subscription()
             return HttpResponseRedirect(SubscriptionInterface.get_url())
-        elif ('subscription_change_note' in self.request.POST
-              and self.change_subscription_form.is_valid()
-        ):
+        elif 'subscription_change_note' in self.request.POST and self.change_subscription_form.is_valid():
             try:
                 new_sub = self.change_subscription_form.change_subscription()
                 return HttpResponseRedirect(reverse(self.urlname, args=[new_sub.id]))

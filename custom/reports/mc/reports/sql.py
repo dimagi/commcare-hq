@@ -4,7 +4,15 @@ from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
-from sqlagg.columns import *
+from sqlagg.columns import (
+    CountColumn,
+    DISTRICT_WEEKLY_REPORT,
+    DISTRICT_MONTHLY_REPORT,
+    HF_MONTHLY_REPORT,
+    HF_WEEKLY_REPORT,
+    SimpleColumn,
+    SumColumn,
+)
 from django.utils.translation import ugettext as _, gettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -12,7 +20,9 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
     SqlTabularReport, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.users.util import raw_username
-from .definitions import *
+from .definitions import (
+    HF_WEEKLY_MESSAGES,
+)
 
 
 NO_VALUE = '\u2014'
@@ -341,7 +351,10 @@ class DistrictWeekly(BaseReport):
                                'doc_id',
                                alias='patients_correctly_referred_num',
                                filters=self.filters + [OR([
-                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([
+                                       EQ('referral_needed_newborn', 'one'),
+                                       EQ('referral_given_newborn', 'one')
+                                   ]),
                                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
                                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
             DatabaseColumn(_('patients_correctly_referred_denum'),
@@ -529,7 +542,7 @@ class DistrictMonthly(BaseReport):
                                        filters=self.filters + [EQ('deaths_mothers', 'one')])),
             DatabaseColumn(_('deaths_others'),
                            SumColumn('deaths_others', alias='deaths_other',
-                                       filters=self.filters + [NOTEQ('deaths_others', 'zero')])),
+                                     filters=self.filters + [NOTEQ('deaths_others', 'zero')])),
             AggregateColumn(_('deaths_total'), add_all, [
                 AliasColumn('deaths_newborn'),
                 AliasColumn('deaths_children'),
@@ -538,7 +551,7 @@ class DistrictMonthly(BaseReport):
             ], slug='deaths_total'),
             DatabaseColumn(_('heath_ed_talks'),
                            SumColumn('heath_ed_talks', alias='heath_ed_talks',
-                                       filters=self.filters + [NOTEQ('heath_ed_talks', 'zero')])),
+                                     filters=self.filters + [NOTEQ('heath_ed_talks', 'zero')])),
             DatabaseColumn(_('heath_ed_participants'),
                            SumColumn('heath_ed_participants', alias='heath_ed_participants',
                                      filters=self.filters + [NOTEQ('heath_ed_participants', 'zero')]))
@@ -747,7 +760,10 @@ class HealthFacilityWeekly(DistrictWeekly):
                                'doc_id',
                                alias='patients_correctly_referred_num',
                                filters=self.filters + [OR([
-                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([
+                                       EQ('referral_needed_newborn', 'one'),
+                                       EQ('referral_given_newborn', 'one'),
+                                   ]),
                                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
                                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
             DatabaseColumn(_('patients_correctly_referred_denum'),

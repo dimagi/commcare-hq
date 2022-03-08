@@ -233,7 +233,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = gettext_noop('Inventory by Location')
     slug = SimplifiedInventoryDataSource.slug
-    special_notice = gettext_noop('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
+    special_notice = gettext_noop('A maximum of 100 locations will be shown. '
+                                  'Filter by location if you need to see more.')
     exportable = True
     emailable = True
     fields = [

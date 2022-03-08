@@ -1,13 +1,9 @@
-import copy
-import json
 import re
 from datetime import time
 
-from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import Field, Widget
-from django.forms.fields import *
+from django.forms.fields import BooleanField, CharField, ChoiceField
 from django.forms.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -79,16 +75,18 @@ def validate_app_and_form_unique_id(app_and_form_unique_id, domain):
 
 
 class RecordListWidget(Widget):
-    
-    # When initialized, expects to be passed attrs={"input_name" : < first dot-separated name of all related records in the html form >}
-    
+
+    # When initialized, expects to be passed attrs={
+    #   "input_name" : < first dot-separated name of all related records in the html form >
+    # }
+
     def value_from_datadict(self, data, files, name, *args, **kwargs):
         input_name = self.attrs["input_name"]
         raw = {}
         for key in data:
             if key.startswith(input_name + "."):
                 raw[key] = data[key]
-        
+
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
@@ -111,11 +109,12 @@ class RecordListField(Field):
     widget = None
     help_text = None
 
-    # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
+    # When initialized, expects to be passed kwarg input_name, which is the
+    # first dot-separated name of all related records in the html form
 
     def __init__(self, *args, **kwargs):
         input_name = kwargs.pop('input_name')
-        kwargs['widget'] = RecordListWidget(attrs={"input_name" : input_name})
+        kwargs['widget'] = RecordListWidget(attrs={"input_name": input_name})
         super(RecordListField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -546,9 +545,7 @@ class KeywordForm(Form):
                         "Name and xpath are both required fields."
                     ))
                 for k, v in data_dict.items():
-                    if (not use_named_args_separator
-                        and (k.startswith(name) or name.startswith(k))
-                    ):
+                    if (not use_named_args_separator and (k.startswith(name) or name.startswith(k))):
                         raise ValidationError(
                             _("Cannot have two names overlap: ") + "(%s, %s)"
                             % (k, name)
@@ -568,7 +565,8 @@ class KeywordForm(Form):
 
     def clean_named_args_separator(self):
         value = self.cleaned_data["named_args_separator"]
-        if (self.process_structured_sms
+        if (
+            self.process_structured_sms
             and self.cleaned_data["use_named_args"]
             and self.cleaned_data["use_named_args_separator"]
         ):

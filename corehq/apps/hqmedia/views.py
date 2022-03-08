@@ -6,7 +6,6 @@ import os
 import shutil
 import uuid
 import zipfile
-from collections import defaultdict
 from datetime import datetime
 from mimetypes import guess_all_extensions, guess_type
 
@@ -19,13 +18,13 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView, View
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -35,7 +34,6 @@ from memoized import memoized
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.util import expose_cached_download
 
@@ -566,7 +564,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
-        if not self.mime_type in self.valid_mime_types():
+        if self.mime_type not in self.valid_mime_types():
             raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
             raise BadMediaFileException(_("There is no ZIP file."))
@@ -849,7 +847,8 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
+def iter_app_files(app, include_multimedia_files, include_index_files,
+                   build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
     index_file_count = 0

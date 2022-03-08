@@ -1,3 +1,4 @@
+# flake8: noqa
 from django.utils.translation import gettext_noop
 
 STATICALLY_ANALYZABLE_TRANSLATIONS = [
