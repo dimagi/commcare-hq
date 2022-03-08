@@ -32,8 +32,9 @@ class SubCaseQuery:
             raise ValueError(f"op must be one of {ops}")
 
     def as_tuple(self):
+        subcase_filter = serialize(self.subcase_filter) if self.subcase_filter else None
         return (
-            self.index_identifier, serialize(self.subcase_filter), self.op, self.count, self.invert
+            self.index_identifier, subcase_filter, self.op, self.count, self.invert
         )
 
     def filter_count(self, count):
@@ -72,7 +73,10 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         build_filter_from_ast,
     )
 
-    subcase_filter = build_filter_from_ast(domain, subcase_query.subcase_filter, fuzzy=fuzzy)
+    if subcase_query.subcase_filter:
+        subcase_filter = build_filter_from_ast(domain, subcase_query.subcase_filter, fuzzy=fuzzy)
+    else:
+        subcase_filter = filters.match_all()
 
     index_identifier_filter = filters.term('indices.identifier', subcase_query.index_identifier)
     index_query = queries.nested(
@@ -201,12 +205,12 @@ def _extract_subcase_query_parts(node):
         count_op = ">"
 
     args = current_node.args
-    if len(args) != 2:
+    if not 1 <= len(args) <= 2:
         raise XPathFunctionException(
-            _("'{name}' expects two arguments").format(name=current_node.name),
+            _("'{name}' expects one or two arguments").format(name=current_node.name),
             serialize(node)
         )
     index_identifier = args[0]
-    subcase_filter = args[1]
+    subcase_filter = args[1] if len(args) == 2 else None
 
     return index_identifier, subcase_filter, count_op, case_count

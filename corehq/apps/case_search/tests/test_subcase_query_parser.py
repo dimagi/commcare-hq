@@ -57,6 +57,16 @@ def test_subcase_query_parsing():
             "subcase-count('p', prop=1) != 2",
             ("p", "prop=1", "=", 2, True)
         ),
+        (
+            _check,
+            "subcase-count('p') = 2",
+            ("p", None, "=", 2, False)
+        ),
+        (
+            _check,
+            "subcase-exists('p')",
+            ("p", None, ">", 0, False)
+        ),
     ]
 
 
@@ -70,12 +80,12 @@ def test_subcase_query_parsing_validations():
         (
             _check,
             "subcase-exists()",
-            "'subcase-exists' expects two arguments"
+            "'subcase-exists' expects one or two arguments"
         ),
         (
             _check,
             "subcase-count() > 1",
-            "'subcase-count' expects two arguments"
+            "'subcase-count' expects one or two arguments"
         ),
         (
             _check,

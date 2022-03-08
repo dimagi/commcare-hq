@@ -569,9 +569,33 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_subcase_exists__filter_no_match(self):
+        parsed = parse_xpath("subcase-exists('father', name='Mace')")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_exists__no_subase_filter(self):
+        parsed = parse_xpath("subcase-exists('father')")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_subcase_exists_inverted(self):
         parsed = parse_xpath("not(subcase-exists('father', name='Margaery'))")
         expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count__no_subcase_filter(self):
+        parsed = parse_xpath("subcase-count('father') > 1")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count__filter_no_match(self):
+        parsed = parse_xpath("subcase-count('father', house='Martel') > 0")
+        expected_filter = {"terms": {"_id": []}}
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
