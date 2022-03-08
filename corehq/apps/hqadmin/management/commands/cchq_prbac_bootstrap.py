@@ -176,6 +176,9 @@ class Command(BaseCommand):
         Role(slug=privileges.LITE_RELEASE_MANAGEMENT,
              name='Lite Release Management',
              description='A limited version of Release Management'),
+        Role(slug=privileges.LOADTEST_USERS,
+             name='Loadtest Users',
+             description='Allows creating loadtest users'),
     ]
 
     BOOTSTRAP_PLANS = [
