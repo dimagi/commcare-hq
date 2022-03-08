@@ -182,7 +182,7 @@ def _extract_subcase_query_parts(node):
 
         try:
             case_count = int(case_count)
-        except ValueError:
+        except (ValueError, TypeError):
             raise XPathFunctionException(
                 _("'subcase-count' must be compared to a positive integer"),
                 serialize(node)

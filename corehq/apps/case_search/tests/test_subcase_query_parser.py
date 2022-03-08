@@ -102,4 +102,14 @@ def test_subcase_query_parsing_validations():
             "subcase-count('p', name = 'bob') + 1",
             "Unsupported operator for use with 'subcase-count': +"
         ),
+        (
+            _check,
+            "subcase-count('p', name = 'bob') > 'bob'",
+            "'subcase-count' must be compared to a positive integer"
+        ),
+        (
+            _check,
+            "subcase-count('p', name = 'bob') > date('2020-01-01')",
+            "'subcase-count' must be compared to a positive integer"
+        ),
     ]
