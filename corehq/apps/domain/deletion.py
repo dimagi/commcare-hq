@@ -233,7 +233,7 @@ def _delete_demo_user_restores(domain_name):
         users = get_all_commcare_users_by_domain(domain_name)
 
     for user in users:
-        if user.demo_restore_id:
+        if getattr(user, "demo_restore_id", None):
             try:
                 DemoUserRestore.objects.get(id=user.demo_restore_id).delete()
             except DemoUserRestore.DoesNotExist:
