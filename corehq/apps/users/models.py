@@ -47,7 +47,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
-from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.dates import (
+    force_to_datetime,
+    get_date_from_month_and_year_string,
+)
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
@@ -3139,9 +3142,8 @@ class DeactivateMobileWorkerTrigger(models.Model):
             return
         if isinstance(deactivate_after, str):
             try:
-                parts = deactivate_after.split('-')
-                deactivate_after = date(int(parts[1]), int(parts[0]), 1)
-            except (IndexError, ValueError):
+                deactivate_after = get_date_from_month_and_year_string(deactivate_after)
+            except ValueError:
                 raise ValueError("Deactivate After Date is not in MM-YYYY format")
         if isinstance(deactivate_after, date):
             if existing_trigger.exists():
