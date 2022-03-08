@@ -79,7 +79,7 @@ def iter_ids(model_class, field, domain, chunk_size=1000):
         model_class,
         where,
         values=[field],
-        load_source='couch_to_sql_migration',
+        load_source='delete_domain',
         query_size=chunk_size,
     )
     yield from with_progress_bar(
