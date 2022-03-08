@@ -4,7 +4,7 @@ from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from pillowtop.es_utils import ElasticsearchIndexInfo, USER_HQ_INDEX_NAME
 
 
-USER_INDEX = prefix_for_tests("hqusers_2017-09-07")
+USER_INDEX = prefix_for_tests("hqusers_2022-03-08")
 USER_MAPPING = {'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
@@ -54,7 +54,10 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                      'role_id': {'type': 'string'},
                                                      'timezone': {'type': 'string'},
                                                      'location_id': {'index': 'not_analyzed',
-                                                                     'type': 'string'}},
+                                                                     'type': 'string'},
+                                                     'assigned_location_ids': {
+                                                         'type': 'string'},
+                                                     },
                                       'type': 'object'},
                 'analytics_enabled': {'type': 'boolean'},
                 'eulas': {'dynamic': False,
