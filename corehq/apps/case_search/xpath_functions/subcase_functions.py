@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.es import CaseSearchES, filters, queries
+from corehq.apps.es import CaseSearchES, filters, queries, aggregations
 
 
 @dataclass
@@ -72,16 +72,15 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         build_filter_from_ast,
     )
 
-    from ..exceptions import TooManyRelatedCasesError
-
     subcase_filter = build_filter_from_ast(domain, subcase_query.subcase_filter, fuzzy=fuzzy)
 
+    index_identifier_filter = filters.term('indices.identifier', subcase_query.index_identifier)
     index_query = queries.nested(
         'indices',
         queries.filtered(
             queries.match_all(),
             filters.AND(
-                filters.term('indices.identifier', subcase_query.index_identifier),
+                index_identifier_filter,
                 filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
             )
         )
@@ -90,26 +89,34 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         CaseSearchES().domain(domain)
         .filter(index_query)
         .filter(subcase_filter)
-        .source('indices')
+        .aggregation(
+            aggregations.NestedAggregation(
+                'indices', 'indices',
+            ).aggregation(
+                aggregations.FilterAggregation(
+                    'matching_indices', index_identifier_filter
+                ).aggregation(
+                    aggregations.TermsAggregation(
+                        'referenced_id', 'indices.referenced_id'
+                    )
+                )
+            )
+        )
     )
 
     if es_query.count() > MAX_RELATED_CASES:
+        from ..exceptions import TooManyRelatedCasesError
         raise TooManyRelatedCasesError(
             _("The related case lookup you are trying to perform would return too many cases"),
             serialize(subcase_query.subcase_filter)
         )
 
-    parent_case_id_counter = Counter()
-    for subcase in es_query.run().hits:
-        indices = [index for index in subcase['indices'] if index['identifier'] == subcase_query.index_identifier]
-        if indices:
-            parent_case_id_counter.update([indices[0]['referenced_id']])
-
+    counts_by_parent_id = es_query.run().aggregations.indices.matching_indices.referenced_id.counts_by_bucket()
     if subcase_query.op == '>' and subcase_query.count <= 0:
-        return list(parent_case_id_counter)
+        return list(counts_by_parent_id)
 
     return [
-        case_id for case_id, count in parent_case_id_counter.items() if subcase_query.filter_count(count)
+        case_id for case_id, count in counts_by_parent_id.items() if subcase_query.filter_count(count)
     ]
 
 
