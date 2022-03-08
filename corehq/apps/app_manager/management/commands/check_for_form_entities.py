@@ -237,7 +237,7 @@ def form_contains_xss_attempt(form):
     """
 
     regex = '(?<=<value>)(.*?)(?=\s*<\/value>)'
-    regexoutput = '(?<=<output)(.*?)(?=\s*\/>)'
+    regexoutput = '(?<=<output)(.*?)(?=\s*>)'
 
     cleaner = Cleaner()
     clean_html = cleaner.clean_html
@@ -255,11 +255,12 @@ def form_contains_xss_attempt(form):
         if '<output' in value:
             for output in re.findall(regexoutput, value):
                 value = value.replace(output, '')
-            value = value.replace("<output />", '')
+            value = value.replace("<output>", '').replace("</output>", '')
 
         cleaned_js = cleaner_html_js("<div>" + value + "</div>")[5:-6]
         cleaned = clean_html("<div>" + value + "</div>")[5:-6]
 
         if cleaned != cleaned_js:
+            print(cleaned_js)
             return True
     return False
