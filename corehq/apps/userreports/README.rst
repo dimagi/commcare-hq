@@ -466,7 +466,7 @@ Here is a sample JSON format for simple ``boolean_expression`` filter:
 This is equivalent to the python statement: ``doc["age"] > 21``
 
 Operators
-^^^^^^^^^
+'''''''''
 
 The following operators are currently supported:
 
@@ -518,7 +518,7 @@ complicated boolean logic on data. There are three types of filters,
 below. Hopefully these are self explanatory.
 
 "And" Filters
-^^^^^^^^^^^^^
+'''''''''''''
 
 The following filter represents the statement:
 ``doc["age"] < 21 and doc["nationality"] == "american"``:
@@ -551,7 +551,7 @@ The following filter represents the statement:
    }
 
 "Or" Filters
-^^^^^^^^^^^^
+''''''''''''
 
 The following filter represents the statement:
 ``doc["age"] > 21 or doc["nationality"] == "european"``:
@@ -584,7 +584,7 @@ The following filter represents the statement:
    }
 
 "Not" Filters
-^^^^^^^^^^^^^
+'''''''''''''
 
 The following filter represents the statement:
 ``!(doc["nationality"] == "european")``:
@@ -690,7 +690,7 @@ shortcuts around the functionality of these ones they are left out of
 the current docs.*
 
 Boolean indicators
-^^^^^^^^^^^^^^^^^^
+''''''''''''''''''
 
 Now we see again the power of our filter framework defined above!
 Boolean indicators take any arbitrarily complicated filter expression
@@ -715,7 +715,7 @@ form has a question with ID ``is_pregnant`` with a value of ``"yes"``:
    }
 
 Expression indicators
-^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''
 
 Similar to the boolean indicators - expression indicators leverage the
 expression structure defined above to create arbitrarily complex
@@ -772,7 +772,7 @@ to an integer column in the database:
    }
 
 Choice list indicators
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 Choice list indicators take a single choice column (select or
 multiselect) and expand it into multiple columns where each column
@@ -798,7 +798,7 @@ A sample spec is below:
    }
 
 Ledger Balance Indicators
-^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''
 
 Ledger Balance indicators take a list of product codes and a ledger
 section, and produce a column for each product code, saving the value
@@ -861,7 +861,7 @@ These are some practical notes for how to choose what indicators to
 create.
 
 Fractions
-^^^^^^^^^
+'''''''''
 
 All indicators output single values. Though fractional indicators are
 common, these should be modeled as two separate indicators (for
@@ -1162,7 +1162,7 @@ Simple example assuming "village" is a name:
    }
 
 Choice providers
-^^^^^^^^^^^^^^^^
+''''''''''''''''
 
 Currently the supported ``choice_provider``\ s are supported:
 
@@ -1327,7 +1327,7 @@ had danger signs.
    }
 
 Formats
-^^^^^^^
+'''''''
 
 The following percentage formats are supported.
 
@@ -1589,7 +1589,7 @@ be used in aggregate reports.
 +--------------+------------------------------------------+
 
 Column IDs
-^^^^^^^^^^
+''''''''''
 
 Column IDs in percentage fields *must be unique for the whole report*.
 If you use a field in a normal column and in a percent column you must
@@ -1827,7 +1827,7 @@ If the format string is not valid or the input is not a number then the
 original input will be returned.
 
 Round to the nearest whole number
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. code:: json
 
@@ -1837,7 +1837,7 @@ Round to the nearest whole number
    }
 
 Always round to 3 decimal places
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''
 
 .. code:: json
 
@@ -2144,7 +2144,7 @@ This is configured in ``export_data_source`` and tested in
 additional filter types.
 
 Export example
-~~~~~~~~~~~~~~
+--------------
 
 Let's say you want to restrict the results to only cases owned by a
 particular user, opened in the last 90 days, and with a child between 12
