@@ -27,7 +27,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ngettext, gettext_lazy, gettext_noop
+from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
 from dimagi.utils.couch import CriticalSection

@@ -2,7 +2,7 @@ import inspect
 
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from corehq.apps.auditcare.models import NavigationEventAudit

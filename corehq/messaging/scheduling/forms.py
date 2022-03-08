@@ -25,7 +25,7 @@ from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
-from django.utils.translation import ugettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm

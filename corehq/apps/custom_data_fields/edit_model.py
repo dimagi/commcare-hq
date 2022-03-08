@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges

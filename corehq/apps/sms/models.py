@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.utils.encoding import force_str
-from django.utils.translation import gettext_lazy, gettext_noop, ugettext as _
+from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
 
 import jsonfield
 

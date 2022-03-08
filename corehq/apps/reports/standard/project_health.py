@@ -3,7 +3,7 @@ from collections import namedtuple
 from itertools import chain
 
 from django.db.models import Sum
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from memoized import memoized

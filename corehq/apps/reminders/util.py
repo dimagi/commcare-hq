@@ -2,7 +2,6 @@ from datetime import datetime, time
 from functools import wraps
 
 from django.http import Http404
-from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege

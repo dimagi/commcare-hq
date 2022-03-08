@@ -8,7 +8,7 @@ from custom.up_nrhm.reports import LangMixin
 from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext as _, gettext_noop
+from django.utils.translation import gettext as _, gettext_noop
 
 
 class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomProjectReport, LangMixin):

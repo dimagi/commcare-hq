@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import gettext_noop, ugettext as _
+from django.utils.translation import gettext_noop, gettext as _
 
 from memoized import memoized_property
 from tastypie import fields, http

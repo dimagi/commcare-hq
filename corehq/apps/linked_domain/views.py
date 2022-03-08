@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext, gettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from django.views import View
 
 from couchdbkit import ResourceNotFound
@@ -258,8 +258,8 @@ def pull_missing_multimedia(request, domain, app_id):
     if async_update:
         pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email, force)
         messages.success(request,
-                         ugettext('Your request has been submitted. '
-                                  'We will notify you via email once completed.'))
+                         gettext('Your request has been submitted. '
+                                 'We will notify you via email once completed.'))
     else:
         app = get_app(domain, app_id)
         pull_missing_multimedia_for_app(app, force=force)
@@ -396,7 +396,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         return {
             'success': True,
-            'message': ugettext('''
+            'message': gettext('''
                 Your release has begun. You will receive an email when it is complete.
                 Until then, to avoid linked domains receiving inconsistent content, please
                 avoid editing any of the data contained in the release.
@@ -435,18 +435,18 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 def link_domains(couch_user, upstream_domain, downstream_domain):
     if not domain_exists(downstream_domain):
-        error = ugettext("The project space {} does not exist. Verify that the name is correct, and that the "
-                         "domain has not been deleted.").format(downstream_domain)
+        error = gettext("The project space {} does not exist. Verify that the name is correct, and that the "
+                        "domain has not been deleted.").format(downstream_domain)
         raise DomainDoesNotExist(error)
 
     if get_active_domain_link(upstream_domain, downstream_domain):
-        error = ugettext(
+        error = gettext(
             "The project space {} is already a downstream project space of {}."
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
     if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = ugettext("You must be an admin in both project spaces to create a link.")
+        error = gettext("You must be an admin in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
@@ -598,10 +598,10 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def headers(self):
         tzname = self.timezone.localize(datetime.utcnow()).tzname()
         columns = [
-            DataTablesColumn(ugettext('Link')),
-            DataTablesColumn(ugettext('Date ({})'.format(tzname))),
-            DataTablesColumn(ugettext('Data Model')),
-            DataTablesColumn(ugettext('User')),
+            DataTablesColumn(gettext('Link')),
+            DataTablesColumn(gettext('Date ({})'.format(tzname))),
+            DataTablesColumn(gettext('Data Model')),
+            DataTablesColumn(gettext('User')),
         ]
 
         return DataTablesHeader(*columns)

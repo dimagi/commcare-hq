@@ -10,7 +10,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
 from django.forms.fields import ChoiceField
 from django.forms.forms import Form
-from django.utils.translation import ugettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 
 class TelerivetBackendForm(BackendForm):

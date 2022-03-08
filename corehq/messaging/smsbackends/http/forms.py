@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.forms.fields import BooleanField, ChoiceField
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from crispy_forms import layout as crispy

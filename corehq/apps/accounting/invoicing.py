@@ -7,7 +7,7 @@ import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import ungettext
 
 from dateutil.relativedelta import relativedelta

@@ -2,7 +2,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.utils.translation import ugettext, gettext_noop
+from django.utils.translation import gettext, gettext_noop
 
 import yaml
 from memoized import memoized
@@ -25,9 +25,9 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 def _translate_setting(setting, prop):
     value = setting[prop]
     if not isinstance(value, str):
-        return [ugettext(v) for v in value]
+        return [gettext(v) for v in value]
     else:
-        return ugettext(value)
+        return gettext(value)
 
 
 def _load_custom_commcare_settings():

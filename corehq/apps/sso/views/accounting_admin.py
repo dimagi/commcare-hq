@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 from django.utils.html import format_html
 
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher

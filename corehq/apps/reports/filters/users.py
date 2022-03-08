@@ -2,7 +2,7 @@ from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized

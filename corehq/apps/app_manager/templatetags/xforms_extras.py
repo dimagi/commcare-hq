@@ -2,7 +2,7 @@ from django import template
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.translation import (
-    ugettext as _,
+    gettext as _,
     gettext_lazy
 )
 

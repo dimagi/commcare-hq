@@ -1,5 +1,5 @@
 from django.utils.translation import get_language
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from memoized import memoized

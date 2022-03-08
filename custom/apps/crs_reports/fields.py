@@ -1,7 +1,7 @@
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.users import SelectCaseOwnerFilter
 from django.utils.translation import gettext_noop
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from corehq.apps.es import CaseES
 
 

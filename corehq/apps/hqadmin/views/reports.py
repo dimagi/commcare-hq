@@ -4,7 +4,7 @@ from collections import defaultdict
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from dimagi.utils.dates import add_months

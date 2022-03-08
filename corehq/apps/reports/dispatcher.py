@@ -2,7 +2,7 @@ from django.conf import settings
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.views.generic.base import View
 
 from django_prbac.exceptions import PermissionDenied
@@ -35,7 +35,7 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-_ = lambda message: ugettext(message) if message is not None else None
+_ = lambda message: gettext(message) if message is not None else None
 
 
 class ReportDispatcher(View):

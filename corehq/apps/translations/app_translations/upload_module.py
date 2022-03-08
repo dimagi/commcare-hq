@@ -3,7 +3,7 @@ import re
 from collections import Counter
 
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule

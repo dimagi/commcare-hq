@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.utils.translation import ugettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 logger = logging.getLogger()
 

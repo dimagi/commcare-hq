@@ -2,7 +2,7 @@ import calendar
 import datetime
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain

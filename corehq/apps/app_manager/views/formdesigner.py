@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
 from couchdbkit.exceptions import ResourceConflict

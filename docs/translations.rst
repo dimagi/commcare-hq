@@ -10,15 +10,15 @@ or `this helpful blog post <http://blog.bessas.me/post/65775299341/using-gettext
 Tagging strings in views
 ------------------------
 
-**TL;DR**: ``ugettext`` should be used in code that will be run per-request.
+**TL;DR**: ``gettext`` should be used in code that will be run per-request.
 ``gettext_lazy`` should be used in code that is run at module import.
 
 The management command ``makemessages`` pulls out strings marked for
-translation so they can be translated via transifex.  All three ugettext
+translation so they can be translated via transifex.  All three gettext
 functions mark strings for translation.  The actual translation is performed
-separately.  This is where the ugettext functions differ.
+separately.  This is where the gettext functions differ.
 
-* ``ugettext``: The function immediately returns the translation for the
+* ``gettext``: The function immediately returns the translation for the
   currently selected language.
 * ``gettext_lazy``: The function converts the string to a translation
   "promise" object.  This is later coerced to a string when rendering a
@@ -30,11 +30,11 @@ separately.  This is where the ugettext functions differ.
   strings.
 
 
-The most common case is just wrapping text with ugettext.
+The most common case is just wrapping text with gettext.
 
 .. code-block:: python
 
-    from django.utils.translation import ugettext as _
+    from django.utils.translation import gettext as _
 
     def my_view(request):
         messages.success(request, _("Welcome!"))
@@ -79,7 +79,7 @@ When using the value immediately, there is no reason to do lazy translation.
 
 .. code-block:: python
 
-    return HttpResponse(ugettext("An error was encountered."))
+    return HttpResponse(gettext("An error was encountered."))
 
 
 It is easy to forget to translate form field names, as Django normally builds
@@ -103,7 +103,7 @@ work properly.
 
 .. code-block:: python
 
-    group_name = ugettext("mobile workers")
+    group_name = gettext("mobile workers")
     return group_name.upper()
 
 Converting ``gettext_lazy`` objects to json will crash.  You should use

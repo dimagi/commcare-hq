@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.exceptions import PermissionDenied
 from lxml import etree

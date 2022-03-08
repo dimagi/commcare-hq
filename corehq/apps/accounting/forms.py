@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html, format_html_join
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import layout as crispy

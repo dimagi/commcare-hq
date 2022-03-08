@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.utils.translation import ugettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 from jsonobject.base import DefaultProperty
 

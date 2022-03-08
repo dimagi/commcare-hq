@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from corehq.util.es.elasticsearch import TransportError

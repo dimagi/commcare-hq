@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from dimagi.utils.dates import DateSpan, add_months

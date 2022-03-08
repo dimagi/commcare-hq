@@ -14,7 +14,7 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound

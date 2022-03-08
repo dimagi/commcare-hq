@@ -1,6 +1,6 @@
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.utils.html import format_html
 

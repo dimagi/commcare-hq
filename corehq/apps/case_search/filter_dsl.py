@@ -1,6 +1,6 @@
 import re
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize

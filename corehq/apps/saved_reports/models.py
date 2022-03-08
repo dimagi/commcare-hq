@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,

@@ -6,7 +6,7 @@ import datetime
 from django.utils.translation import gettext_noop
 from django.utils.html import format_html
 from django.urls import reverse, NoReverseMatch
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 
 from corehq.apps.es import filters

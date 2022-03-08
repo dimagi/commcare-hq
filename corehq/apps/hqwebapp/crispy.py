@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
@@ -137,7 +137,7 @@ class FormStepNumber(LayoutObject):
     template = 'hqwebapp/crispy/form_step_number.html'
 
     def __init__(self, step_num, total_steps):
-        self.step_label = ugettext("Step {} of {}".format(step_num, total_steps))
+        self.step_label = gettext("Step {} of {}".format(step_num, total_steps))
 
     def render(self, form, form_style, context, template_pack=None):
         context.update({

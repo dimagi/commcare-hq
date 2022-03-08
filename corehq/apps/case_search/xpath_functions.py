@@ -1,7 +1,7 @@
 import datetime
 
 from django.utils.dateparse import parse_date
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 
 class XPathFunctionException(Exception):
