@@ -440,8 +440,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     requested_report_builder_subscription = StringListProperty()
 
-    report_whitelist = StringListProperty()
-
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
