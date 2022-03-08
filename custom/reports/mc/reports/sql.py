@@ -4,15 +4,7 @@ from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
-from sqlagg.columns import (
-    CountColumn,
-    DISTRICT_WEEKLY_REPORT,
-    DISTRICT_MONTHLY_REPORT,
-    HF_MONTHLY_REPORT,
-    HF_WEEKLY_REPORT,
-    SimpleColumn,
-    SumColumn,
-)
+from sqlagg.columns import CountColumn, SimpleColumn, SumColumn
 from django.utils.translation import gettext as _, gettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -21,7 +13,11 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.users.util import raw_username
 from .definitions import (
+    DISTRICT_WEEKLY_REPORT,
+    DISTRICT_MONTHLY_REPORT,
+    HF_MONTHLY_REPORT,
     HF_WEEKLY_MESSAGES,
+    HF_WEEKLY_REPORT,
 )
 
 
