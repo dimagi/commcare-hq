@@ -68,8 +68,6 @@ branches:
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - ap/link-permissions-to-expressions # Amit Feb 28
-    - jm/elastic-client-adapter  # Joel Mar 1
     - sk/remove-legacy-perm-check+bmb/whh-003+nh/loadtest_users_ga+others  # Simon Mar 7
     - sk/remove-legacy-perm-check  # Simon Mar 7
     - bmb/whh-003 # Biyeun Mar 1
@@ -77,6 +75,5 @@ branches:
     - ad/multivalued-search-functions # Addison Mar 2
     - do/multi-select-id-mapping # Dominic Mar 2
     - ml/check-for-historical-xss # Minha Mar 3
-    - dependabot/npm_and_yarn/markdown-it-12.3.2 # Amit Mar 7
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
 submodules: { }
