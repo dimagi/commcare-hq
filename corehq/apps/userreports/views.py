@@ -1315,9 +1315,16 @@ def build_data_source_in_place(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
-    config, _ = get_datasource_config_or_404(config_id, domain)
-    config._doc.pop('_rev', None)
-    return json_response(config)
+    try:
+        config, _ = get_datasource_config_or_404(config_id, domain)
+        config._doc.pop('_rev', None)
+        return json_response(config)
+    except BadSpecError as err:
+        err_text = f"Unable to generate JSON for this Web Report Source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
