@@ -1193,7 +1193,7 @@ def delete_data_source(request, domain, config_id):
     try:
         delete_data_source_shared(domain, config_id, request)
     except BadSpecError as err:
-        err_text = f"Unable to delete this data source because {str(err)}"
+        err_text = f"Unable to delete this Web Report Source because {str(err)}"
         messages.error(request, err_text)
         return HttpResponseRedirect(reverse(
             EditDataSourceView.urlname, args=[domain, config_id]
