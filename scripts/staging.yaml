@@ -76,4 +76,5 @@ branches:
     - do/multi-select-id-mapping # Dominic Mar 2
     - ml/check-for-historical-xss # Minha Mar 3
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
+    - dm/django3.0-part1 # Daniel 3/9
 submodules: { }
