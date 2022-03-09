@@ -1,7 +1,15 @@
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING
+
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element, tostring
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
+
+if TYPE_CHECKING:
+    from casexml.apps.phone.restore import RestoreState
 
 
 def transform_loadtest_update(update, factor):
@@ -19,7 +27,11 @@ def transform_loadtest_update(update, factor):
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
-def get_xml_for_response(update, restore_state):
+def get_xml_for_response(
+    update: CaseSyncUpdate,
+    restore_state: RestoreState,
+    total_cases: int,
+) -> list[str]:
     """
     Adds the XML from the case_update to the restore response.
     If factor is > 1 it will append that many updates to the response for load testing purposes.
@@ -27,11 +39,12 @@ def get_xml_for_response(update, restore_state):
     current_count = 0
     original_update = update
     elements = []
-    while current_count < restore_state.loadtest_factor:
+    loadtest_factor = restore_state.get_safe_loadtest_factor(total_cases)
+    while current_count < loadtest_factor:
         element = get_case_element(update.case, update.required_updates, restore_state.version)
         elements.append(tostring(element))
         current_count += 1
-        if current_count < restore_state.loadtest_factor:
+        if current_count < loadtest_factor:
             update = transform_loadtest_update(original_update, current_count)
         # only add user case on the first iteration
         if original_update.case.type == USERCASE_TYPE:
