@@ -93,7 +93,6 @@ class SearchCriteria:
         disallowed_parameters = [
             CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
             'owner_id',
-            # CASE_SEARCH_XPATH_QUERY_KEY,
         ]
 
         if self.key in disallowed_parameters or self.is_daterange:
