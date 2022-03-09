@@ -79,5 +79,4 @@ branches:
     - ml/check-for-historical-xss # Minha Mar 3
     - dependabot/npm_and_yarn/markdown-it-12.3.2 # Amit Mar 7
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
-    - cs/SC-1789_webusers_domain_membership_check # Charl March 9
 submodules: { }
