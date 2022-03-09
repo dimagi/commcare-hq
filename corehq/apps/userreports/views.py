@@ -1190,7 +1190,14 @@ class EditDataSourceView(BaseEditDataSourceView):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
-    delete_data_source_shared(domain, config_id, request)
+    try:
+        delete_data_source_shared(domain, config_id, request)
+    except BadSpecError as err:
+        err_text = f"Unable to delete this data source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
