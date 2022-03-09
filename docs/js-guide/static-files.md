@@ -58,7 +58,7 @@ Cons:
 
 NOTE: If you are debugging `OfflineCompressionError`s from production or staging, you should be compressing offline locally to figure out the issue.
 
-##### How to enable?
+#### How to enable?
 
 Do everything from Option 2 for LESS compilers setup.
 

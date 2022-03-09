@@ -1074,6 +1074,12 @@ class AllowedUCRExpressionSettings(models.Model):
             }
         )
 
+    @classmethod
+    def disallowed_ucr_expressions(cls, domain_name):
+        allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        return restricted_expressions - allowed_expressions_for_domain
+
 
 class ProjectLimitType():
     LIVE_GOOGLE_SHEETS = 'lgs'

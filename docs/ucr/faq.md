@@ -10,4 +10,3 @@ This problem is probably occurring for you locally. On Staging and Production en
 ```
 ./manage.py rebuild_tables_by_domain <domain-name> --initiated_by <HQ_user_id>
 ```
-_______

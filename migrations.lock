@@ -88,6 +88,7 @@ aggregate_ucrs
  0002_auto_20180827_1148
 analytics
  0001_initial
+ 0002_data_point_unique_constraint
 api
  0001_initial
  0002_alter_permissions

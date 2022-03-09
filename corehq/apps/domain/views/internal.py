@@ -178,8 +178,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             log_domain_changes(
                 self.request.couch_user.username,
                 self.domain,
-                old_ucr_permissions,
                 self.internal_settings_form.cleaned_data['active_ucr_expressions'],
+                old_ucr_permissions,
             )
             eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
                                   bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
