@@ -24,6 +24,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -53,7 +54,7 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import api_auth_with_scope, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
@@ -71,6 +72,7 @@ from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
@@ -193,7 +195,7 @@ def swallow_programming_errors(fn):
 
 @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
-    section_name = ugettext_lazy("Configurable Reports")
+    section_name = ugettext_lazy("Custom Web Reports")
 
     @property
     def main_context(self):
@@ -429,8 +431,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -454,7 +456,9 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
-            if app_source.registry_slug != '':
+            registry_permission_checker = RegistryPermissionCheck(self.domain, self.request.couch_user)
+            if app_source.registry_slug != '' and \
+                    registry_permission_checker.can_view_some_data_registry_contents():
                 get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -1079,6 +1083,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             self.config.meta.build.initiated_in_place
             and not self.config.meta.build.finished_in_place
         )
+        allowed_ucr_expression = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.request.domain)
         return {
             'form': self.edit_form,
             'data_source': self.config,
@@ -1086,6 +1091,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'used_by_reports': self.get_reports(),
             'is_rebuilding': is_rebuilding,
             'is_rebuilding_inplace': is_rebuilding_inplace,
+            'allowed_ucr_expressions': allowed_ucr_expression,
         }
 
     @property
@@ -1124,15 +1130,18 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         )
 
     def post(self, request, *args, **kwargs):
-        if self.edit_form.is_valid():
-            config = self.edit_form.save(commit=True)
-            messages.success(request, _('Data source "{}" saved!').format(
-                config.display_name
-            ))
-            if self.config_id is None:
-                return HttpResponseRedirect(reverse(
-                    EditDataSourceView.urlname, args=[self.domain, config._id])
-                )
+        try:
+            if self.edit_form.is_valid():
+                config = self.edit_form.save(commit=True)
+                messages.success(request, _('Data source "{}" saved!').format(
+                    config.display_name
+                ))
+                if self.config_id is None:
+                    return HttpResponseRedirect(reverse(
+                        EditDataSourceView.urlname, args=[self.domain, config._id])
+                    )
+        except BadSpecError as e:
+            messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
 
     def get_reports(self):
@@ -1181,7 +1190,14 @@ class EditDataSourceView(BaseEditDataSourceView):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
-    delete_data_source_shared(domain, config_id, request)
+    try:
+        delete_data_source_shared(domain, config_id, request)
+    except BadSpecError as err:
+        err_text = f"Unable to delete this Web Report Source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
@@ -1299,9 +1315,16 @@ def build_data_source_in_place(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
-    config, _ = get_datasource_config_or_404(config_id, domain)
-    config._doc.pop('_rev', None)
-    return json_response(config)
+    try:
+        config, _ = get_datasource_config_or_404(config_id, domain)
+        config._doc.pop('_rev', None)
+        return json_response(config)
+    except BadSpecError as err:
+        err_text = f"Unable to generate JSON for this Web Report Source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
@@ -1394,7 +1417,7 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@api_auth
+@api_auth_with_scope(['reports:view'])
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):

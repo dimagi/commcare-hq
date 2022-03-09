@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-09 20:05+0000\n"
+"POT-Creation-Date: 2022-03-09 21:12+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -74,8 +74,8 @@ msgid ""
 "p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
 "Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
 "p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact "
-"%>'><%- invoicingContact %></a>.</p>"
+"subscription, please reach out to <a href='mailto: <%- invoicingContact %>'><"
+"%- invoicingContact %></a>.</p>"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:120
@@ -208,7 +208,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:92
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50397
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50814
 msgid "Lookup Table"
@@ -450,110 +450,110 @@ msgid ""
 "please report an issue."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:32
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:713
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:33
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:728
 msgid "Case Type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:34
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:35
 msgid "Case Tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:37
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:717
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:38
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:732
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:41
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:721
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:42
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:736
 msgid "Case Tag already in use"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:110
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:111
 msgid "subcase of"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:116
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:117
 msgid "autoselect mode: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:119
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:120
 msgid " (from fixture)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:276
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:277
 msgid "Autoselect mode required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:278
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:279
 msgid "Property required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:281
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:282
 msgid "Case required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:283
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:284
 msgid "Lookup table tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:287
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:288
 msgid "Expected case type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:386
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:621
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:387
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:629
 msgid "Subcase parent reference is missing"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:388
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:623
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:389
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:631
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:395
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:630
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:396
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:638
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:530
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:538
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:86
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:85
 msgid "Raw"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:89
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:88
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:95
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:94
 msgid "User Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:100
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:99
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:348
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:336
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:351
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:339
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:354
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:342
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:362
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:350
 msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:71
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:523
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:540
 msgid "Property updated by two questions"
 msgstr ""
 
@@ -563,7 +563,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:527
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:544
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -576,15 +576,15 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:53
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:54
 msgid "You have unchanged case settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:88
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:89
 msgid "You have unchanged user properties settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:532
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:549
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
@@ -3110,6 +3110,18 @@ msgstr ""
 msgid "Search Countries..."
 msgstr ""
 
+#: corehq/apps/domain/static/domain/js/internal_settings.js:83
+msgid "Inactive Expressions"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js:84
+msgid "Active Expressions"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/internal_settings.js:85
+msgid "Search Expressions"
+msgstr ""
+
 #: corehq/apps/domain/static/domain/js/my_project_settings.js:42
 msgid "Reset to Default"
 msgstr ""
@@ -3332,15 +3344,15 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:208
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:211
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:225
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:228
 msgid "There was a problem, please refresh and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:230
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:233
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:49
 msgid "Done"
 msgstr ""
@@ -4092,7 +4104,7 @@ msgid "Please check above for any errors in your configuration."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
-msgid "Edit a report or data source"
+msgid "Edit a custom web report or custom web report source"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
@@ -4356,11 +4368,11 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:362
-msgid "Create and Edit Configurable Reports"
+msgid "Create and Edit Custom Web Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:365
-msgid "Allow role to create and edit configurable reports."
+msgid "Allow role to create and edit custom web reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:373

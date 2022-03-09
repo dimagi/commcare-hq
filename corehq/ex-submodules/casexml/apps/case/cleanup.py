@@ -32,7 +32,7 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         user_id = user
         username = user
 
-    case_blocks = [ElementTree.tostring(CaseBlock.deprecated_init(
+    case_blocks = [ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
         close=True,
@@ -104,7 +104,7 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
         host_type = case.type
         host_name = case.name
     identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    claim_case_block = CaseBlock.deprecated_init(
+    claim_case_block = CaseBlock(
         create=True,
         case_id=claim_id,
         case_name=host_name,

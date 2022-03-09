@@ -51,6 +51,9 @@ eulxml
 Faker
 gevent
 ghdiff
+google-api-python-client==2.32.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
 hiredis
@@ -87,7 +90,6 @@ psycopg2>=2.8.4  # Python 3.8 support
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
-Pygments
 pygooglechart
 python-dateutil
 python-imap

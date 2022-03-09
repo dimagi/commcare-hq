@@ -44,7 +44,7 @@ class ReprocessXFormErrorsTest(TestCase):
     def test_reprocess_xform_error(self):
         case_id = uuid.uuid4().hex
         parent_case_id = uuid.uuid4().hex
-        case = CaseBlock.deprecated_init(
+        case = CaseBlock(
             create=True,
             case_id=case_id,
             user_id='user1',
@@ -65,7 +65,7 @@ class ReprocessXFormErrorsTest(TestCase):
         error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
-        case = CaseBlock.deprecated_init(
+        case = CaseBlock(
             create=True,
             case_id=parent_case_id,
             user_id='user1',
@@ -158,13 +158,13 @@ class ReprocessSubmissionStubTests(TestCase):
         case_id = uuid.uuid4().hex
         form_ids = []
         form_ids.append(submit_case_blocks(
-            CaseBlock.deprecated_init(case_id=case_id, create=True, case_type='box').as_text(),
+            CaseBlock(case_id=case_id, create=True, case_type='box').as_text(),
             self.domain
         )[0].form_id)
 
         with _patch_save_to_raise_error(self):
             submit_case_blocks(
-                CaseBlock.deprecated_init(case_id=case_id, update={'prop': 'a'}).as_text(),
+                CaseBlock(case_id=case_id, update={'prop': 'a'}).as_text(),
                 self.domain
             )
 
@@ -175,7 +175,7 @@ class ReprocessSubmissionStubTests(TestCase):
 
         # submit second form with case update
         form_ids.append(submit_case_blocks(
-            CaseBlock.deprecated_init(case_id=case_id, update={'prop': 'b'}).as_text(),
+            CaseBlock(case_id=case_id, update={'prop': 'b'}).as_text(),
             self.domain
         )[0].form_id)
 
@@ -241,7 +241,7 @@ class ReprocessSubmissionStubTests(TestCase):
         form_ids = []
         form_ids.append(submit_case_blocks(
             [
-                CaseBlock.deprecated_init(case_id=case_id, create=True, case_type='shop').as_text(),
+                CaseBlock(case_id=case_id, create=True, case_type='shop').as_text(),
                 get_single_balance_block(case_id, 'product1', 100),
             ],
             self.domain
@@ -296,7 +296,7 @@ class ReprocessSubmissionStubTests(TestCase):
         form_id = uuid.uuid4().hex
         with failing_signal_handler('signal death'):
             submit_case_blocks(
-                CaseBlock.deprecated_init(case_id=case_id, create=True, case_type='box').as_text(),
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_text(),
                 self.domain,
                 form_id=form_id
             )
@@ -318,7 +318,7 @@ class ReprocessSubmissionStubTests(TestCase):
     def test_reprocess_normal_form(self):
         case_id = uuid.uuid4().hex
         form, cases = submit_case_blocks(
-            CaseBlock.deprecated_init(case_id=case_id, create=True, case_type='box').as_text(),
+            CaseBlock(case_id=case_id, create=True, case_type='box').as_text(),
             self.domain
         )
         self.assertTrue(form.is_normal)
@@ -387,7 +387,7 @@ class TestReprocessDuringSubmission(TestCase):
         form_id = uuid.uuid4().hex
         with _patch_save_to_raise_error(self):
             submit_case_blocks(
-                CaseBlock.deprecated_init(case_id=case_id, create=True, case_type='box').as_text(),
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_text(),
                 self.domain,
                 form_id=form_id
             )
@@ -421,7 +421,7 @@ class TestReprocessDuringSubmission(TestCase):
         parent_case_id = uuid.uuid4().hex
         form_id = uuid.uuid4().hex
         form, _ = submit_case_blocks(
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=case_id, create=True, case_type='box',
                 index={'cupboard': ('cupboard', parent_case_id)},
             ).as_text(),
@@ -441,7 +441,7 @@ class TestReprocessDuringSubmission(TestCase):
 
         # create parent case
         submit_case_blocks(
-            CaseBlock.deprecated_init(case_id=parent_case_id, create=True, case_type='cupboard').as_text(),
+            CaseBlock(case_id=parent_case_id, create=True, case_type='cupboard').as_text(),
             self.domain,
         )
 
@@ -477,7 +477,7 @@ class TestTransactionErrors(TransactionTestCase):
         error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
         with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
-                [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
+                [CaseBlock(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,
                 form_id=form_id
             )
@@ -490,7 +490,7 @@ class TestTransactionErrors(TransactionTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         submit_case_blocks(
-            [CaseBlock.deprecated_init(case_id=case_id, update={'a': "1"}).as_text()],
+            [CaseBlock(case_id=case_id, update={'a': "1"}).as_text()],
             self.domain,
             form_id=form_id
         )
@@ -498,7 +498,7 @@ class TestTransactionErrors(TransactionTestCase):
         error_on_save = patch.object(CommCareCase, 'save', side_effect=IntegrityError)
         with error_on_save, self.assertRaises(IntegrityError):
             submit_case_blocks(
-                [CaseBlock.deprecated_init(case_id=case_id, update={'a': "2"}).as_text()],
+                [CaseBlock(case_id=case_id, update={'a': "2"}).as_text()],
                 self.domain,
                 form_id=form_id
             )
@@ -514,12 +514,12 @@ class TestTransactionErrors(TransactionTestCase):
         form_id, case_id, product_id = uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex
 
         # setup by creating the case
-        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, create=True).as_text()], self.domain)
+        submit_case_blocks([CaseBlock(case_id=case_id, create=True).as_text()], self.domain)
 
         # submit a form that updates the case and ledger
         submit_case_blocks(
             [
-                CaseBlock.deprecated_init(case_id=case_id, update={'a': "1"}).as_text(),
+                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
                 get_single_balance_block(case_id, product_id, 100),
             ],
             self.domain,
@@ -533,7 +533,7 @@ class TestTransactionErrors(TransactionTestCase):
         # re-submit the form again
         submit_case_blocks(
             [
-                CaseBlock.deprecated_init(case_id=case_id, update={'a': "1"}).as_text(),
+                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
                 get_single_balance_block(case_id, product_id, 100),
             ],
             self.domain,

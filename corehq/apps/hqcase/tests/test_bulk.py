@@ -22,7 +22,7 @@ class TestUpdateCases(TestCase):
     def test(self):
         case_ids = [str(uuid.uuid4()) for i in range(1, 18)]
 
-        with CaseBulkDB(self.domain, 'my_user_id', 'my_device_id') as bulk_db:
+        with CaseBulkDB(self.domain) as bulk_db:
             for i, case_id in enumerate(case_ids):
                 bulk_db.save(CaseBlock(
                     create=True,
@@ -38,7 +38,7 @@ class TestUpdateCases(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain)), 4)
         self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain)), len(case_ids))
 
-        update_cases(self.domain, _set_phase_2, case_ids, 'my_user_id', 'my_device_id')
+        update_cases(self.domain, _set_phase_2, case_ids)
 
         for case in CommCareCase.objects.get_cases(case_ids):
             correct_phase = '2' if case.get_case_property('to_update') == 'yes' else '1'
@@ -47,7 +47,7 @@ class TestUpdateCases(TestCase):
 
 def _set_phase_2(case):
     if case.get_case_property('to_update') == 'yes':
-        return CaseBlock(
+        return [CaseBlock(
             case_id=case.case_id,
             update={'phase': '2'},
-        )
+        )]

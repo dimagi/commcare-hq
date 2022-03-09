@@ -180,8 +180,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
-        // ToDo: to be removed post displayFormat change for Markdown is deployed
-        var templateForms = detailObject.get('templateForms') || [];
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -193,13 +191,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (obj.style.displayFormat === 'Markdown') {
                 obj.html = DOMPurify.sanitize(md.render(details[i]));
             }
-            // ToDo: to be removed post displayFormat change for Markdown is deployed
-            else if (templateForms[i] === 'markdown') {
-                // populate displayFormat based on legacy property
-                obj.style.displayFormat = 'Markdown';
-                obj.html = DOMPurify.sanitize(md.render(details[i]));
-            }
-            // EndToDo
             detailModel.push(obj);
         }
         var detailCollection = new Backbone.Collection();

@@ -110,7 +110,6 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 
 

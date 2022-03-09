@@ -273,9 +273,9 @@ class AutomaticUpdateRule(models.Model):
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
-                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)
                 elif isinstance(schedule, TimedSchedule):
-                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id.hex)
                 else:
                     raise TypeError("Unexpected schedule type")
 
@@ -876,7 +876,6 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
-
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 

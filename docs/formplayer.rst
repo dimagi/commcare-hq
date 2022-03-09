@@ -14,8 +14,7 @@ built on top of it:
 
 * Web Apps is a single-page application, inlined into a CommCare HQ template, that provides a web UI backed by the formplayer API.
 * App Preview is essentially the same as web apps, but embedded as a cell-phone-shaped iframe within the App Builder.
-* SMS Forms serializes a form filling session over SMS in a question / answer sequence that is handled
-by the main HQ process, which hits formplayer's API to send answers and get the next question.
+* SMS Forms serializes a form filling session over SMS in a question / answer sequence that is handled by the main HQ process, which hits formplayer's API to send answers and get the next question.
 
 Repository Overview
 ^^^^^^^^^^^^^^^^^^^

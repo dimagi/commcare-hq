@@ -23,6 +23,7 @@ from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.data_source_meta import (
     APP_DATA_SOURCE_TYPE_VALUES,
@@ -606,7 +607,7 @@ class ApplicationFormDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         self.app = app
         super().__init__(domain, source_type, source_id)
         self.source_form = self.app.get_form(source_id)
-        self.source_xform = XForm(self.source_form.source)
+        self.source_xform = XForm(self.source_form.source, domain=app.domain)
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """
@@ -972,15 +973,19 @@ def get_data_source_interface(domain, app, source_type, source_id, registry_slug
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
 
-    def __init__(self, domain, max_allowed_reports, *args, **kwargs):
+    def __init__(self, domain, max_allowed_reports, request_user, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.max_allowed_reports = max_allowed_reports
+        self.request_user = request_user
 
+        self.registry_permission_checker = RegistryPermissionCheck(self.domain, self.request_user)
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper(
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
-            enable_registry=DATA_REGISTRY.enabled(self.domain)
+            enable_registry=(DATA_REGISTRY.enabled(self.domain)
+                             and self.registry_permission_checker.can_view_some_data_registry_contents()),
+            registry_permission_checker=self.registry_permission_checker
         )
         self.app_source_helper.bootstrap(self.domain)
         self.fields.update(self.app_source_helper.get_fields())
@@ -1014,7 +1019,8 @@ class DataSourceForm(forms.Form):
         )
 
     def get_data_layout(self):
-        if not DATA_REGISTRY.enabled(self.domain):
+        if not (DATA_REGISTRY.enabled(self.domain)
+                and self.registry_permission_checker.can_view_some_data_registry_contents()):
             return crispy.Fieldset(
                 _('Data'), *self.app_source_helper.get_crispy_fields(),
             )
@@ -1776,7 +1782,9 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                 return [{
                     "type": "multibar",
                     "x_axis_column": agged_columns[0]['column_id'] if agged_columns else '',
-                    # TODO: Possibly use more columns?
+                    # Populate only the top level columns here.
+                    # During chart render all possible columns for the chart are fetched based on records in DB
+                    # checkout ReportConfiguration.charts
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in non_agged_columns
                     ],

@@ -5,7 +5,6 @@ import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from uuid import UUID
-from warnings import warn
 
 from django.conf import settings
 from django.db import InternalError, transaction, router
@@ -26,9 +25,6 @@ from corehq.form_processor.exceptions import (
 )
 from corehq.form_processor.interfaces.dbaccessors import AbstractLedgerAccessor
 from corehq.form_processor.models import (
-    CaseAttachment,
-    CaseTransaction,
-    CommCareCaseIndex,
     CommCareCase,
     LedgerTransaction,
     LedgerValue,
@@ -374,7 +370,7 @@ class CaseReindexAccessor(ReindexAccessor):
 
     def get_doc(self, doc_id):
         try:
-            return CaseAccessorSQL.get_case(doc_id)
+            return CommCareCase.objects.get_case(doc_id)
         except CaseNotFound:
             pass
 
@@ -389,205 +385,6 @@ class CaseReindexAccessor(ReindexAccessor):
         if self.case_type is not None:
             filters.append(Q(type=self.case_type))
         return filters
-
-
-class CaseAccessorSQL:
-
-    @staticmethod
-    def get_case(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_case(case_id)
-
-    @staticmethod
-    def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_cases(case_ids, ordered, prefetched_indices)
-
-    @staticmethod
-    def get_case_ids_that_exist(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
-
-    @staticmethod
-    def get_case_xform_ids(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_case_xform_ids(case_id)
-
-    @staticmethod
-    def get_indices(domain, case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCaseIndex.objects.get_indices(domain, case_id)
-
-    @staticmethod
-    def get_reverse_indices(domain, case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCaseIndex.objects.get_reverse_indices(domain, case_id)
-
-    @staticmethod
-    def get_all_reverse_indices_info(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, case_ids)
-
-    @staticmethod
-    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids, case_types, is_closed)
-
-    @staticmethod
-    def check_transaction_order_for_case(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.check_order_for_case(case_id)
-
-    @staticmethod
-    def hard_delete_cases(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.hard_delete_cases(domain, case_ids)
-
-    @staticmethod
-    def get_attachment_by_name(case_id, attachment_name):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAttachment.objects.get_attachment_by_name(case_id, attachment_name)
-
-    @staticmethod
-    def get_attachment_content(case_id, attachment_name):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAttachment.get_content(case_id, attachment_name)
-
-    @staticmethod
-    def get_attachments(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAttachment.objects.get_attachments(case_id)
-
-    @staticmethod
-    def get_transactions(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.get_transactions(case_id)
-
-    @staticmethod
-    def get_transaction_by_form_id(case_id, form_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.get_transaction_by_form_id(case_id, form_id)
-
-    @staticmethod
-    def get_most_recent_form_transaction(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.get_most_recent_form_transaction(case_id)
-
-    @staticmethod
-    def get_transactions_by_type(case_id, transaction_type):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.get_transactions_by_type(case_id, transaction_type)
-
-    @staticmethod
-    def get_transactions_for_case_rebuild(case_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.get_transactions_for_case_rebuild(case_id)
-
-    @staticmethod
-    def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date)
-
-    @staticmethod
-    def get_case_by_location(domain, location_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_case_by_location(domain, location_id)
-
-    @staticmethod
-    def get_case_ids_in_domain(domain, type_=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
-
-    @staticmethod
-    def get_deleted_case_ids_in_domain(domain):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
-
-    @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None, case_type=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=case_type,
-                                                       owner_ids=owner_ids, is_closed=closed)
-
-    @staticmethod
-    def save_case(case):
-        warn("DEPRECATED", DeprecationWarning)
-        return case.save(with_tracked_models=True)
-
-    @staticmethod
-    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAccessorSQL._get_case_ids_in_domain(
-            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
-        )
-
-    @staticmethod
-    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects._get_case_ids_in_domain(domain, case_type, owner_ids, is_closed, deleted)
-
-    @staticmethod
-    def get_related_indices(domain, case_ids, exclude_indices):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCaseIndex.objects.get_related_indices(domain, case_ids, exclude_indices)
-
-    @staticmethod
-    def get_closed_and_deleted_ids(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_closed_and_deleted_ids(domain, case_ids)
-
-    @staticmethod
-    def get_modified_case_ids(accessor, case_ids, sync_log):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_modified_case_ids(accessor.domain, case_ids, sync_log)
-
-    @staticmethod
-    def get_extension_case_ids(domain, case_ids, include_closed=True, exclude_for_case_type=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCaseIndex.objects.get_extension_case_ids(
-            domain, case_ids, include_closed, exclude_for_case_type)
-
-    @staticmethod
-    def get_last_modified_dates(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_last_modified_dates(domain, case_ids)
-
-    @staticmethod
-    def get_cases_by_external_id(domain, external_id, case_type=None):
-        warn("DEPRECATED", DeprecationWarning)
-        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, case_type)
-        return [case] if case is not None else []
-
-    @staticmethod
-    def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.get_case_by_external_id(domain, user_id, case_type)
-
-    @staticmethod
-    def soft_undelete_cases(domain, case_ids):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.soft_undelete_cases(domain, case_ids)
-
-    @staticmethod
-    def get_deleted_case_ids_by_owner(domain, owner_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
-
-    @staticmethod
-    def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
-        warn("DEPRECATED", DeprecationWarning)
-        return CommCareCase.objects.soft_delete_cases(domain, case_ids, deletion_date, deletion_id)
-
-    @staticmethod
-    def form_has_case_transactions(form_id):
-        warn("DEPRECATED", DeprecationWarning)
-        return CaseTransaction.objects.exists_for_form(form_id)
-
-    @staticmethod
-    def get_case_transactions_by_case_id(case, updated_xforms=None):
-        warn("DEPRECATED", DeprecationWarning)
-        from .update_strategy import SqlCaseUpdateStrategy
-        return SqlCaseUpdateStrategy(case).get_transactions_for_rebuild(updated_xforms)
 
 
 class LedgerReindexAccessor(ReindexAccessor):
