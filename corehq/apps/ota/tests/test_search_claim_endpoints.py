@@ -10,6 +10,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -25,8 +26,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -62,32 +62,18 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
                             "bool": {
                                 "must_not": {
-                                    "term": {
-                                        "owner_id": "id1"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id2"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must_not": {
-                                    "term": {
-                                        "owner_id": "id3,id4"
+                                    "terms": {
+                                        "owner_id": [
+                                            "id1",
+                                            "id2",
+                                            "id3,id4"
+                                        ]
                                     }
                                 }
                             }
@@ -107,7 +93,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         }
 
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected
         )
 
@@ -158,8 +144,8 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'term': {'domain.exact': 'swashbucklers'}},
-                        {"term": {"type.exact": "case_type"}},
+                        {'terms': {'domain.exact': ['swashbucklers']}},
+                        {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
                     ],
@@ -298,13 +284,14 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "size": CASE_SEARCH_MAX_RESULTS
         }
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            CaseSearchCriteria(DOMAIN, ['case_type'], criteria).search_es,
             expected,
             validate_query=False
         )
 
 
 @es_test
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
@@ -330,30 +317,28 @@ class CaseClaimEndpointTests(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         cache = get_redis_default_cache()
         cache.clear()
 
-    @run_with_all_backends
     def test_claim_case(self):
         """
         A claim case request should create an extension case
         """
-        self.assertEqual(len(CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)), 0)
+        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)), 0)
 
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
         client.post(url, {'case_id': self.case_id})
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
-        claim = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
 
-    @run_with_all_backends
     def test_duplicate_client_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
@@ -369,7 +354,6 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
-    @run_with_all_backends
     def test_duplicate_user_claim(self):
         """
         Server should not allow the same user to claim the same case more than once
@@ -388,7 +372,6 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @flaky
-    @run_with_all_backends
     def test_claim_restore_as(self):
         """Server should assign cases to the correct user
         """
@@ -404,10 +387,10 @@ class CaseClaimEndpointTests(TestCase):
             'commcare_login_as': other_user_username
         })
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
-        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim_case.owner_id, other_user._id)
 
     def test_claim_restore_as_proper_cache(self):
@@ -428,10 +411,10 @@ class CaseClaimEndpointTests(TestCase):
             'commcare_login_as': other_user_username
         })
 
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
 
-        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim_case.owner_id, other_user._id)
 
         client.post(url, {
@@ -440,14 +423,13 @@ class CaseClaimEndpointTests(TestCase):
         })
 
         # We've now created two claims
-        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 2)
 
         # The most recent one should be the extension owned by the other user
-        claim_cases = CaseAccessors(DOMAIN).get_cases(claim_ids)
+        claim_cases = CommCareCase.objects.get_cases(claim_ids, DOMAIN)
         self.assertIn(another_user._id, [case.owner_id for case in claim_cases])
 
-    @run_with_all_backends
     def test_search_endpoint(self):
         self.maxDiff = None
         client = Client()
@@ -487,7 +469,7 @@ class CaseClaimEndpointTests(TestCase):
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
             '<commcare_search_score>xxx</commcare_search_score>'
-            '<location_id>None</location_id>'
+            '<opened_by>nerc</opened_by>'
             '</case>'
             '</results>'.format(
                 case_id=self.case_id,

@@ -3,7 +3,7 @@ from random import choice, randint
 from django.apps import apps
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq import toggles
 from corehq.apps.accounting.tests.generator import init_default_currency

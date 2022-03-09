@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 
 import requests
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER

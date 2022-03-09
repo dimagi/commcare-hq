@@ -14,6 +14,10 @@ from corehq.motech.openmrs.views import (
     EditOpenmrsRepeaterView,
     config_openmrs_repeater,
 )
+from corehq.motech.repeaters.expression.views import (
+    AddCaseExpressionRepeaterView,
+    EditCaseExpressionRepeaterView,
+)
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
     AddFormRepeaterView,
@@ -31,6 +35,7 @@ from corehq.motech.views import (
     ConnectionSettingsListView,
     MotechLogDetailView,
     MotechLogListView,
+    motech_log_export_view,
     test_connection_settings,
 )
 
@@ -61,6 +66,10 @@ urlpatterns = [
         {'repeater_type': 'SearchByParamsRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/ReferCaseRepeater/$', AddCaseRepeaterView.as_view(),
         {'repeater_type': 'ReferCaseRepeater'}, name=AddCaseRepeaterView.urlname),
+    url(r'^forwarding/new/DataRegistryCaseUpdateRepeater/$', AddCaseRepeaterView.as_view(),
+        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=AddCaseRepeaterView.urlname),
+    url(r'^forwarding/new/CaseExpressionRepeater/$', AddCaseExpressionRepeaterView.as_view(),
+        {'repeater_type': 'CaseExpressionRepeater'}, name=AddCaseExpressionRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
@@ -69,6 +78,8 @@ urlpatterns = [
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
     url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
         {'repeater_type': 'ReferCaseRepeater'}, name=EditCaseRepeaterView.urlname),
+    url(r'^forwarding/edit/DataRegistryCaseUpdateRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
+        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/OpenmrsRepeater/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
     url(r'^forwarding/edit/Dhis2Repeater/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
@@ -77,6 +88,12 @@ urlpatterns = [
         {'repeater_type': 'Dhis2EntityRepeater'}, name=EditDhis2EntityRepeaterView.urlname),
     url(r'^forwarding/edit/FHIRRepeater/(?P<repeater_id>\w+)/$', EditFHIRRepeaterView.as_view(),
         {'repeater_type': 'FHIRRepeater'}, name=EditFHIRRepeaterView.urlname),
+    url(
+        r'^forwarding/edit/CaseExpressionRepeater/(?P<repeater_id>\w+)/$',
+        EditCaseExpressionRepeaterView.as_view(),
+        {'repeater_type': 'CaseExpressionRepeater'},
+        name=EditCaseExpressionRepeaterView.urlname
+    ),
     url(r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 
@@ -95,4 +112,6 @@ urlpatterns = [
 
     url(r'^logs/$', MotechLogListView.as_view(), name=MotechLogListView.urlname),
     url(r'^logs/(?P<pk>\d+)/$', MotechLogDetailView.as_view(), name=MotechLogDetailView.urlname),
+    url(r'^logs/remote_api_logs.csv$', motech_log_export_view,
+        name='motech_log_export_view'),
 ]

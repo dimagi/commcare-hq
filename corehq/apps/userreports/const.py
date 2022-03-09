@@ -5,6 +5,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.change_feed import topics
 
+
+TEMP_REPORT_PREFIX = '__tmp'  # reports made by the report bulider use this
+
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'
 
 DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
@@ -27,9 +30,7 @@ UCR_CELERY_QUEUE = 'ucr_queue'
 UCR_INDICATOR_CELERY_QUEUE = 'ucr_indicator_queue'
 
 KAFKA_TOPICS = (
-    topics.CASE,
     topics.CASE_SQL,
-    topics.FORM,
     topics.FORM_SQL,
     topics.LOCATION,
     topics.COMMCARE_USER,

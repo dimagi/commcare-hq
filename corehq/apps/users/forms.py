@@ -25,9 +25,11 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -38,12 +40,14 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+from corehq.apps.user_importer.helpers import UserChangeLogger
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import DomainPermissionsMirror, SQLUserRole
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.util import (
     cc_user_domain,
     format_username,
-    log_user_role_update,
+    log_user_change,
 )
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -156,24 +160,49 @@ class BaseUpdateUserForm(forms.Form):
 
     def update_user(self, save=True):
         is_update_successful = False
+        props_updated = {}
 
         for prop in self.direct_properties:
+            if getattr(self.existing_user, prop) != self.cleaned_data[prop]:
+                props_updated[prop] = self.cleaned_data[prop]
             setattr(self.existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
         if is_update_successful and save:
             self.existing_user.save()
-        return is_update_successful
+            if props_updated:
+                # This form is used either by a web user to edit their info where there is no domain or
+                # to edit a web/commcare user on a domain, so by_ and for_domain would be the same domain
+                log_user_change(
+                    by_domain=self.request.domain if self.domain else None,
+                    for_domain=self.request.domain if self.domain else None,
+                    couch_user=self.existing_user,
+                    changed_by_user=self.request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    fields_changed=props_updated,
+                    by_domain_required_for_log=bool(self.domain),
+                    for_domain_required_for_log=bool(self.domain)
+                )
+        return is_update_successful, props_updated
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
-    def update_user(self):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(save=False)
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role == 'none' and self.existing_user.is_web_user():
+            raise forms.ValidationError(_('Role is required for web users.'))
+        return role
+
+    def update_user(self, metadata_updated=False, profile_updated=False):
+        is_update_successful, props_updated = super(UpdateUserRoleForm, self).update_user(save=False)
+        role_updated = False
+        user_new_role = None
 
         if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
+            user_current_role = self.existing_user.get_role(domain=self.domain)
             try:
                 self.existing_user.set_role(self.domain, role)
                 if self.existing_user.is_commcare_user():
@@ -181,13 +210,45 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
                 else:
                     self.existing_user.save()
                 is_update_successful = True
-                log_user_role_update(self.domain, self.existing_user, self.request.user, USER_CHANGE_VIA_WEB)
             except KeyError:
                 pass
+            else:
+                user_new_role = self.existing_user.get_role(self.domain, checking_global_admin=False)
+                role_updated = self._role_updated(user_current_role, user_new_role)
         elif is_update_successful:
             self.existing_user.save()
 
+        if is_update_successful and (props_updated or role_updated or metadata_updated):
+            change_messages = {}
+            profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
+            if role_updated:
+                change_messages.update(UserChangeMessage.role_change(user_new_role))
+            if metadata_updated:
+                props_updated['user_data'] = self.existing_user.user_data
+            if profile_updated:
+                profile_name = None
+                if profile_id:
+                    profile_name = CustomDataFieldsProfile.objects.get(id=profile_id).name
+                change_messages.update(UserChangeMessage.profile_info(profile_id, profile_name))
+            # this form is used to edit a web/commcare user on a domain so set domain for both by_ and for_domain
+            log_user_change(
+                by_domain=self.request.domain,
+                for_domain=self.domain,
+                couch_user=self.existing_user,
+                changed_by_user=self.request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                fields_changed=props_updated,
+                change_messages=change_messages
+            )
         return is_update_successful
+
+    @staticmethod
+    def _role_updated(old_role, new_role):
+        if bool(old_role) ^ bool(new_role):
+            return True
+        if old_role and new_role and new_role.get_qualified_id() != old_role.get_qualified_id():
+            return True
+        return False
 
     def load_roles(self, role_choices=None, current_role=None):
         if role_choices is None:
@@ -196,19 +257,6 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if current_role:
             self.initial['role'] = current_role
-
-
-class UpdateUserPermissionForm(forms.Form):
-    super_user = forms.BooleanField(label=ugettext_lazy('System Super User'), required=False)
-
-    def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
-        is_update_successful = False
-        if editable_user and couch_user.is_superuser:
-            editable_user.is_superuser = is_super_user
-            editable_user.save()
-            is_update_successful = True
-
-        return is_update_successful
 
 
 class BaseUserInfoForm(forms.Form):
@@ -223,7 +271,7 @@ class BaseUserInfoForm(forms.Form):
             "<i class=\"fa fa-info-circle\"></i> "
             "Becomes default language seen in Web Apps and reports (if applicable), "
             "but does not affect mobile applications. "
-            "Supported languages for reports are en, fr (partial), and hin (partial)."
+            "Supported languages for reports are en, fra (partial), and hin (partial)."
         )
     )
 
@@ -248,10 +296,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        self.is_using_sso = (
-            toggles.ENTERPRISE_SSO.enabled_for_request(kwargs['request'])
-            and is_request_using_sso(kwargs['request'])
-        )
+        self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -397,11 +442,7 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = format_html_lazy(
-                ('<i class="fa fa-warning"></i>{}<br />'
-                    '<span data-bind="text: passwordHelp, css: color">'),
-                ugettext_lazy(
-                    "This password is automatically generated. "
-                    "Please copy it or create your own. It will not be shown again."))
+                '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -412,6 +453,19 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[project.name, user_id])
+        if self.project.strong_mobile_passwords:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'),
+                           data_bind="enable: passwordSufficient(), click: submitCheck")
+                )
+            )
+        else:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'))
+                )
+            )
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
@@ -424,11 +478,7 @@ class SetUserPasswordForm(SetPasswordForm):
                     'new_password2',
                     value=initial_password,
                 ),
-                hqcrispy.FormActions(
-                    crispy.ButtonHolder(
-                        Submit('submit', _('Reset Password'))
-                    )
-                ),
+                submitButton,
                 css_class="check-password",
             ),
         )
@@ -818,12 +868,11 @@ class MultipleSelectionForm(forms.Form):
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget(
-                    'id_of_multiselect_field',
-                    django.gettext("Available Things"),
-                    django.gettext("Things Selected"),
-                    django.gettext("Search Things...")
-                );
+                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
+                    selectableHeaderTitle: gettext("Available Things"),
+                    selectedHeaderTitle: gettext("Things Selected"),
+                    searchItemTitle: gettext("Search Things..."),
+                });
             });
         });
     """
@@ -913,6 +962,7 @@ class CommtrackUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
@@ -947,39 +997,140 @@ class CommtrackUserForm(forms.Form):
 
     def save(self, user):
         # todo: Avoid multiple user.save
+        user_change_logger = UserChangeLogger(
+            upload_domain=self.domain,
+            user_domain=self.domain,
+            user=user,
+            is_new_user=False,
+            changed_by_user=self.request.couch_user,
+            changed_via=USER_CHANGE_VIA_WEB,
+            upload_record_id=None,
+        )
+        updated_program_id = None
         domain_membership = user.get_domain_membership(self.domain)
         if self.commtrack_enabled:
-            domain_membership.program_id = self.cleaned_data['program_id']
+            program_id = self.cleaned_data['program_id']
+            if domain_membership.program_id != program_id:
+                updated_program_id = program_id
+            domain_membership.program_id = program_id
 
-        self._update_location_data(user)
+        location_updates = self._update_location_data(user)
+        if user.is_commcare_user():
+            self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
+        else:
+            self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
     def _update_location_data(self, user):
-        location_id = self.cleaned_data['primary_location']
-        location_ids = self.cleaned_data['assigned_locations']
+        new_location_id = self.cleaned_data['primary_location']
+        new_location_ids = self.cleaned_data['assigned_locations']
+        updates = {}
 
         if user.is_commcare_user():
+            # fetch this before set_location is called
+            old_assigned_location_ids = set(user.assigned_location_ids)
             old_location_id = user.location_id
-            if location_id != old_location_id:
-                if location_id:
-                    user.set_location(SQLLocation.objects.get(location_id=location_id))
+            if new_location_id != old_location_id:
+                if new_location_id:
+                    user.set_location(SQLLocation.objects.get(location_id=new_location_id))
                 else:
                     user.unset_location()
 
             old_location_ids = user.assigned_location_ids
-            if set(location_ids) != set(old_location_ids):
-                user.reset_locations(location_ids)
+            if set(new_location_ids) != set(old_location_ids):
+                user.reset_locations(new_location_ids)
+            if old_assigned_location_ids != set(new_location_ids):
+                updates['location_ids'] = new_location_ids
         else:
             domain_membership = user.get_domain_membership(self.domain)
+            # fetch this before set_location is called
+            old_assigned_location_ids = set(domain_membership.assigned_location_ids)
             old_location_id = domain_membership.location_id
-            if location_id != old_location_id:
-                if location_id:
-                    user.set_location(self.domain, SQLLocation.objects.get(location_id=location_id))
+            if new_location_id != old_location_id:
+                if new_location_id:
+                    user.set_location(self.domain, SQLLocation.objects.get(location_id=new_location_id))
                 else:
                     user.unset_location(self.domain)
 
             old_location_ids = domain_membership.assigned_location_ids
-            if set(location_ids) != set(old_location_ids):
-                user.reset_locations(self.domain, location_ids)
+            if set(new_location_ids) != set(old_location_ids):
+                user.reset_locations(self.domain, new_location_ids)
+            if old_assigned_location_ids != set(new_location_ids):
+                updates['location_ids'] = new_location_ids
+
+        # check for this post reset_locations which can also update location_id
+        new_primary_location = user.get_sql_location(self.domain)
+        if new_primary_location and old_location_id != new_primary_location.location_id:
+            updates['location_id'] = new_location_id
+        elif old_location_id and not new_primary_location:
+            updates['location_id'] = None
+        return updates
+
+    def _log_commcare_user_changes(self, user_change_logger, location_updates, program_id):
+        if 'location_ids' in location_updates:
+            location_ids = location_updates['location_ids']
+            user_change_logger.add_changes({'assigned_location_ids': location_ids})
+            if location_ids:
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info(locations)
+                )
+            else:
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info([])
+                )
+
+        if 'location_id' in location_updates:
+            location_id = location_updates['location_id']
+            user_change_logger.add_changes({'location_id': location_id})
+            if location_id:
+                primary_location = SQLLocation.objects.get(location_id=location_id)
+                user_change_logger.add_info(
+                    UserChangeMessage.primary_location_info(primary_location)
+                )
+            else:
+                user_change_logger.add_info(UserChangeMessage.primary_location_removed())
+
+        if program_id is not None:
+            self._log_program_changes(user_change_logger, program_id)
+        user_change_logger.save()
+
+    @staticmethod
+    def _log_program_changes(user_change_logger, program_id):
+        if program_id:
+            program = Program.get(program_id)
+            user_change_logger.add_info(UserChangeMessage.program_change(program))
+        else:
+            user_change_logger.add_info(UserChangeMessage.program_change(None))
+
+    def _log_web_user_changes(self, user_change_logger, location_updates, program_id):
+        if 'location_ids' in location_updates:
+            location_ids = location_updates['location_ids']
+            if location_ids:
+                locations = SQLLocation.objects.filter(location_id__in=location_ids)
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info(locations)
+                )
+            else:
+                user_change_logger.add_info(
+                    UserChangeMessage.assigned_locations_info([])
+                )
+
+        if 'location_id' in location_updates:
+            location_id = location_updates['location_id']
+            if location_id:
+                primary_location = SQLLocation.objects.get(location_id=location_id)
+                user_change_logger.add_info(
+                    UserChangeMessage.primary_location_info(primary_location)
+                )
+            else:
+                user_change_logger.add_info(
+                    UserChangeMessage.primary_location_removed()
+                )
+
+        if program_id is not None:
+            self._log_program_changes(user_change_logger, program_id)
+
+        user_change_logger.save()
 
     def clean_assigned_locations(self):
         from corehq.apps.locations.models import SQLLocation
@@ -1166,8 +1317,9 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
-        return self.user_form.update_user()
+        metadata_updated, profile_updated = self.user_form.existing_user.update_metadata(
+            self.custom_data.get_data_to_save())
+        return self.user_form.update_user(metadata_updated=metadata_updated, profile_updated=profile_updated)
 
 
 class UserFilterForm(forms.Form):
@@ -1176,6 +1328,15 @@ class UserFilterForm(forms.Form):
         ('all', ugettext_noop('All')),
         (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
     )
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+    USER_ACTIVE_STATUS = [
+        ('show_all', _('Show All')),
+        (ACTIVE, _('Only Active')),
+        (INACTIVE, _('Only Deactivated'))
+    ]
+
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
         label=ugettext_lazy('Name or Username'),
@@ -1185,6 +1346,16 @@ class UserFilterForm(forms.Form):
     location_id = forms.CharField(
         label=ugettext_noop("Location"),
         required=False,
+    )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include mobile workers at the selected location'),
+    )
+    user_active_status = forms.ChoiceField(
+        label=_('Active / Deactivated'),
+        choices=USER_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=USER_ACTIVE_STATUS, attrs={'ko_value': 'user_active_status'}),
     )
     columns = forms.ChoiceField(
         required=False,
@@ -1206,18 +1377,29 @@ class UserFilterForm(forms.Form):
         if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+            attrs={'data-bind': 'value: location_id'},
+        )
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
+
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = SQLUserRole.objects.get_by_domain(self.domain)
+        roles = UserRole.objects.get_by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role.get_id, role.name or _('(No Name)')) for role in roles
         ]
 
+        subdomains = EnterprisePermissions.get_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
-                                         [(domain, domain) for domain in
-                                          DomainPermissionsMirror.mirror_domains(self.domain)]
+                                         [(domain, domain) for domain in subdomains]
+
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1230,7 +1412,7 @@ class UserFilterForm(forms.Form):
         self.helper.form_text_inline = True
 
         fields = []
-        if len(DomainPermissionsMirror.mirror_domains(self.domain)) > 0:
+        if subdomains:
             fields += [crispy.Field("domains", data_bind="value: domains")]
         fields += [
             crispy.Div(
@@ -1243,18 +1425,29 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
+
+        fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
+            fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id", data_bind="value: location_id"),
+                    crispy.Field("location_id",),
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
+                crispy.Div(
+                    crispy.Field(
+                        "selected_location_only",
+                        data_bind="checked: selected_location_only"
+                    ),
+                    data_bind="slideVisible: !isCrossDomain() && location_id",
+                ),
+                crispy.Field("user_active_status",),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Filter and Download Users"),
+                fieldset_label,
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1273,8 +1466,8 @@ class UserFilterForm(forms.Form):
             return None
 
         try:
-            SQLUserRole.objects.by_couch_id(role_id, domain=self.domain)
-        except SQLUserRole.DoesNotExist:
+            UserRole.objects.by_couch_id(role_id, domain=self.domain)
+        except UserRole.DoesNotExist:
             raise forms.ValidationError(_("Invalid Role"))
         return role_id
 
@@ -1291,34 +1484,29 @@ class UserFilterForm(forms.Form):
             domains = self.data.getlist('domains[]', [self.domain])
 
         if 'all_project_spaces' in domains:
-            domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
-        return domains
+        return sorted(domains)
 
+    def clean_user_active_status(self):
+        user_active_status = self.cleaned_data['user_active_status']
 
-class CreateDomainPermissionsMirrorForm(forms.Form):
-    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        self.mirror_domain = None
-        super().__init__(*args, **kwargs)
+        if user_active_status == self.ACTIVE:
+            return True
+        if user_active_status == self.INACTIVE:
+            return False
+        return None
 
-    def clean_mirror_domain(self):
-        mirror_domain_name = self.data.get('mirror_domain')
-        if self.domain == mirror_domain_name:
-            raise forms.ValidationError(_("""
-                Enterprise permissions cannot be granted from a project space to itself.
-            """))
-        self.mirror_domain = Domain.get_by_name(mirror_domain_name)
-        if not self.mirror_domain:
-            raise forms.ValidationError(_('Please enter valid project space.'))
-        if DomainPermissionsMirror.objects.filter(mirror=self.mirror_domain).exists():
-            message = _('"{mirror_domain_name}" has already been added.')
-            raise forms.ValidationError(message.format(mirror_domain_name=mirror_domain_name))
-        return mirror_domain_name
+    def clean(self):
+        data = self.cleaned_data
+        user = self.couch_user
 
-    def save_mirror_domain(self):
-        mirror = DomainPermissionsMirror(source=self.domain, mirror=self.mirror_domain)
-        mirror.save()
+        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
+            # Add (web) user assigned_location_ids so as to
+            # 1) reflect all locations user is assigned to ('All' option)
+            # 2) restrict user access
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership and domain_membership.assigned_location_ids:
+                data['web_user_assigned_location_ids'] = list(domain_membership.assigned_location_ids)
+
+        return data

@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.export.const import (
     EMPTY_VALUE,

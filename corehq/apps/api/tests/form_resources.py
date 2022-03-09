@@ -7,15 +7,14 @@ from django.test import TestCase
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -42,7 +41,6 @@ class TestXFormInstanceResource(APIResourceTest):
         reset_es_index(XFORM_INDEX_INFO)
         initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
-    @run_with_all_backends
     def test_fetching_xform_cases(self):
 
         # Create an xform that touches a case
@@ -71,12 +69,12 @@ class TestXFormInstanceResource(APIResourceTest):
         # list of form tuples [(xmlns, received_on)]
         to_ret = []
         for xmlns, received_on in forms:
-            backend_form = XFormInstance(
+            backend_form = create_form_for_test(
                 xmlns=xmlns or 'fake-xmlns',
                 domain=self.domain.name,
                 received_on=received_on or datetime.utcnow(),
                 edited_on=datetime.utcnow(),
-                form={
+                form_data={
                     '#type': 'fake-type',
                     '@xmlns': xmlns or 'fake-xmlns',
                     'meta': {'userID': 'metadata-user-id'},
@@ -87,9 +85,8 @@ class TestXFormInstanceResource(APIResourceTest):
                     'authenticated': True,
                 },
             )
-            backend_form.save()
+
             to_ret.append(backend_form)
-            self.addCleanup(backend_form.delete)
             send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
         return to_ret

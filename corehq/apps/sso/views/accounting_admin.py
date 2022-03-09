@@ -2,7 +2,6 @@ from memoized import memoized
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.decorators import method_decorator
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -18,7 +17,6 @@ from corehq.apps.accounting.views import AccountingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sso.certificates import get_certificate_response
-from corehq.toggles import ENTERPRISE_SSO
 
 from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
@@ -45,10 +43,6 @@ class IdentityProviderInterface(AddItemInterface):
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.accounting.interface.NameFilter',
     ]
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return ENTERPRISE_SSO.enabled(user.username)
 
     @property
     def new_item_view(self):
@@ -97,7 +91,6 @@ class IdentityProviderInterface(AddItemInterface):
         return queryset
 
 
-@method_decorator(ENTERPRISE_SSO.required_decorator(), name='dispatch')
 class BaseIdentityProviderAdminView(AccountingSectionView):
     @property
     def parent_pages(self):

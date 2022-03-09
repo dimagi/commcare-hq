@@ -12,12 +12,13 @@ CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
 COMMCARE_USER_TYPE_DEMO = 'demo'
+COMMCARE_PROJECT = "commcare_project"
 
 # This stores the id of the user's CustomDataFieldsProfile, if any
 PROFILE_SLUG = "commcare_profile"
 
-# This list is used to grandfather in existing data, any new fields should use
-# the system prefix defined below
+# Any new fields should use the system prefix defined by SYSTEM_PREFIX.
+# SYSTEM_FIELDS is a list of fields predating SYSTEM_PREFIX that are exempt from that convention.
 SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id',
                  COMMCARE_USER_TYPE_KEY)
 SYSTEM_PREFIX = "commcare"

@@ -1,0 +1,15 @@
+# Don't forget to rebuild and start the elasticsearch5 image after changing this file:
+#     $ ./scripts/docker rebuild elasticsearch5
+#     $ ./scripts/docker up -d elasticsearch5
+
+cluster.name: travis_hq_5
+network.host: 0.0.0.0
+http.port: 9200
+
+discovery.type: single-node
+
+# dev-only setting to allow client-side ES front-ends
+http.cors.allow-origin: "*"
+http.cors.enabled: true
+
+action.auto_create_index: ".watches,.triggered_watches,.watcher-history-*"

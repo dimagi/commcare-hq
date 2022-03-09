@@ -82,7 +82,7 @@ def check_compare(method_class, a, b, expected):
 class TestPatientCandidates(SimpleTestCase):
 
     def test_with_commcare_id(self):
-        case_id = uuid4().hex
+        case_id = str(uuid4())
         patient = {
             'id': case_id,
             'name': [{
@@ -104,7 +104,7 @@ class TestPatientCandidates(SimpleTestCase):
                 }],
                 'identifier': [{
                     'system': SYSTEM_URI_CASE_ID,
-                    'value': uuid4().hex,
+                    'value': str(uuid4()),
                 }],
             },
             {

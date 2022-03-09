@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
     @signalcommand
     def handle(self, username, **options):
-        if settings.IS_SAAS_ENVIRONMENT or settings.IS_INDIA_ENVIRONMENT:
+        if not settings.ALLOW_MAKE_SUPERUSER_COMMAND:
             from dimagi.utils.web import get_site_domain
             raise CommandError(f"""You cannot run this command in SaaS Enviornments.
             Use https://{get_site_domain()}/hq/admin/superuser_management/ for granting superuser permissions""")
@@ -44,7 +44,8 @@ class Command(BaseCommand):
             logger.info("✓ User {} exists".format(couch_user.username))
         else:
             password = self.get_password_from_user()
-            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__)
+            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__,
+                                        by_domain_required_for_log=False)
             logger.info("→ User {} created".format(couch_user.username))
 
         is_superuser_changed = not couch_user.is_superuser

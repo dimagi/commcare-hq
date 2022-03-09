@@ -178,7 +178,8 @@ class LocationType(models.Model):
     def sync_administrative_status(self, sync_supply_points=True):
         from .tasks import sync_administrative_status
         if self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            if sync_supply_points:
+                sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
     def __str__(self):
@@ -322,10 +323,8 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
         """
-        return self.get_queryset_descendants(
-            self.filter(location_id__in=location_ids),
-            include_self=True
-        )
+        locations = self.filter(location_id__in=location_ids)
+        return self.get_queryset_descendants(locations, include_self=True)
 
     def get_locations_and_children_ids(self, location_ids):
         return list(self.get_locations_and_children(location_ids).location_ids())

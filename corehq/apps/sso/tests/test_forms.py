@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from mock import patch
+from unittest.mock import patch
 
 from django import forms
 from django.test import TestCase
@@ -35,7 +35,7 @@ class BaseSSOFormTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.accounting_admin.delete(None)
+        cls.accounting_admin.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         cls.account.delete()
         super().tearDownClass()

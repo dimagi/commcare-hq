@@ -39,7 +39,7 @@ def select(request, do_not_redirect=False, next_view=None):
     domain_links = get_domain_links_for_dropdown(request.couch_user, view_name=next_view)
     if not domain_links:
         return redirect('registration_domain')
-    domain_links += get_mirror_domain_links_for_dropdown(request.couch_user, view_name=next_view)
+    domain_links += get_enterprise_links_for_dropdown(request.couch_user, view_name=next_view)
     domain_links = sorted(domain_links, key=lambda link: link['display_name'].lower())
 
     email = request.couch_user.get_email()
@@ -65,7 +65,7 @@ def select(request, do_not_redirect=False, next_view=None):
         if domain_obj and domain_obj.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain_obj, allow_mirroring=True)
+                request.couch_user.is_member_of(domain_obj, allow_enterprise=True)
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
@@ -96,19 +96,19 @@ def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
     return _domains_to_links(Domain.active_for_user(couch_user), view_name)
 
 
-# Returns domains where given user has access only by virtue of a DomainPermissionsMirror
+# Returns domains where given user has access only by virtue of enterprise permissions
 @quickcache(['couch_user.username'])
-def get_mirror_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
+def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
-    from corehq.apps.users.models import DomainPermissionsMirror
+    from corehq.apps.enterprise.models import EnterprisePermissions
     domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
-    mirror_domain_objects_by_name = {}
+    subdomain_objects_by_name = {}
     for domain_name in domain_links_by_name:
-        for mirror_domain in DomainPermissionsMirror.mirror_domains(domain_name):
-            if mirror_domain not in domain_links_by_name:
-                mirror_domain_objects_by_name[mirror_domain] = Domain.get_by_name(mirror_domain)
+        for subdomain in EnterprisePermissions.get_domains(domain_name):
+            if subdomain not in domain_links_by_name:
+                subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 
-    return _domains_to_links(mirror_domain_objects_by_name.values(), view_name)
+    return _domains_to_links(subdomain_objects_by_name.values(), view_name)
 
 
 def _domains_to_links(domain_objects, view_name):

@@ -4,7 +4,7 @@ import re
 from django.test import SimpleTestCase
 
 import commcare_translations
-import mock
+from unittest import mock
 from lxml.etree import tostring
 
 from corehq.apps.app_manager.exceptions import (
@@ -33,6 +33,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
+    ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -384,7 +385,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         child_form = app.new_form(0, "Untitled Form", None)
         child_form.xmlns = 'http://id_m1-f0'
         child_form.requires = 'case'
-        child_form.actions.usercase_update = UpdateCaseAction(update={'name': '/data/question1'})
+        child_form.actions.usercase_update = UpdateCaseAction(
+            update={'name': ConditionalCaseUpdate(question_path='/data/question1')})
         child_form.actions.usercase_update.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
@@ -412,11 +414,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         form = app.new_form(0, "Untitled Form", None)
         form.xmlns = 'http://m0-f0'
-        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case = OpenCaseAction(name_update=ConditionalCaseUpdate(question_path="/data/question1"))
         form.actions.open_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type='tablet',
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -432,11 +434,12 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         form = app.new_form(0, "Untitled Form", None)
         form.xmlns = 'http://m0-f0'
         form.requires = 'case'
-        form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        form.actions.update_case = UpdateCaseAction(
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
         form.actions.update_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=module.case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -1062,25 +1065,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module_0.case_type = 'parent'
         form = app.new_form(0, "Form", None)
 
-        form.actions.open_case = OpenCaseAction(name_path="/data/question1")
+        form.actions.open_case = OpenCaseAction(name_update=ConditionalCaseUpdate(question_path="/data/question1"))
         form.actions.open_case.condition.type = 'always'
 
         child_case_type = 'child'
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
         # subcase in the middle that has a repeat context
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/repeat/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/repeat/question1"),
             repeat_context='/data/repeat',
             condition=FormActionCondition(type='always')
         ))
         form.actions.subcases.append(OpenSubCaseAction(
             case_type=child_case_type,
-            case_name="/data/question1",
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             condition=FormActionCondition(type='always')
         ))
 
@@ -1102,11 +1105,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         app = Application.new_app('domain', "Untitled Application")
 
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.unique_id = 'report_module'
         report = get_sample_report_config()
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
-
         report_app_config = ReportAppConfig(
             report_id=report._id,
             header={'en': 'CommBugz'},
@@ -1122,6 +1122,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             },
         )
         report_app_config._report = report
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.unique_id = 'report_module'
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
         self.assertXmlPartialEqual(
@@ -1140,36 +1142,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         report_module.media_image = {
             'en': 'jr://file/commcare/image/module0_en.png',
         }
+        report_module.get_details.reset_cache(report_module)
+        actual_suite = app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_menu_multimedia'),
-            app.create_suite(),
+            actual_suite,
             "./menu",
         )
 
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_xpath_description'),
-            app.create_suite(),
+            actual_suite,
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
-            app.create_suite(),
+            actual_suite,
             "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
 
         report_app_config.show_data_table = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_hide_data_table'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
-        report_app_config.show_data_table = True
 
+        report_app_config.show_data_table = True
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
             app.create_suite(),
@@ -1181,6 +1187,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
         report_app_config.use_xpath_description = False
+        report_module.get_details.reset_cache(report_module)
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_summary_detail_use_localized_description'),
             app.create_suite(),
@@ -1218,6 +1225,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 'translations': translation_format,
             }
             report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            report_module.get_details.reset_cache(report_module)
             self.assertXmlPartialEqual(
                 self.get_xml(expected_output),
                 app.create_suite(),

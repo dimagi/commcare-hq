@@ -21,7 +21,7 @@ from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.translations.app_translations.upload_form import (
     BulkAppTranslationFormUpdater,
 )
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, flag_disabled
 
 
 def get_app():
@@ -180,18 +180,19 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         # wrap to have assign_references called
         app = Application.wrap(factory.app.to_json())
 
-        # default language
-        self.assertEqual(app.default_language, 'en')
-        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
-        self.assertEqual(en_app_strings['case_search.m0'], 'Search All Cases')
-        self.assertEqual(en_app_strings['case_search.m0.again'], 'Search Again')
-        self.assertFalse('case_search.m0.icon' in en_app_strings)
-        self.assertFalse('case_search.m0.audio' in en_app_strings)
+        with flag_disabled('USH_CASE_CLAIM_UPDATES'):
+            # default language
+            self.assertEqual(app.default_language, 'en')
+            en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            self.assertEqual(en_app_strings['case_search.m0'], 'Search All Cases')
+            self.assertEqual(en_app_strings['case_search.m0.again'], 'Search Again')
+            self.assertFalse('case_search.m0.icon' in en_app_strings)
+            self.assertFalse('case_search.m0.audio' in en_app_strings)
 
-        # non-default language
-        es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
-        self.assertEqual(es_app_strings['case_search.m0'], 'Search All Cases')
-        self.assertEqual(es_app_strings['case_search.m0.again'], 'Search Again')
+            # non-default language
+            es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
+            self.assertEqual(es_app_strings['case_search.m0'], 'Search All Cases')
+            self.assertEqual(es_app_strings['case_search.m0.again'], 'Search Again')
 
         with flag_enabled('USH_CASE_CLAIM_UPDATES'):
             # default language

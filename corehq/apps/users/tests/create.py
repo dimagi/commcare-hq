@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, SQLUserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, UserRole
 from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 
 
@@ -24,7 +24,7 @@ class CreateTestCase(TestCase):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, None, None, email=email)
-        self.addCleanup(couch_user.delete, deleted_by=None)
+        self.addCleanup(couch_user.delete, domain, deleted_by=None)
 
         self.assertEqual(couch_user.domains, [domain])
         self.assertEqual(couch_user.email, email)
@@ -48,7 +48,7 @@ class CreateTestCase(TestCase):
         self.addCleanup(domain2.delete)
         self.addCleanup(domain1.delete)
         couch_user = WebUser.create(None, username, password, None, None, email=email)
-        self.addCleanup(couch_user.delete, deleted_by=None)
+        self.addCleanup(couch_user.delete, domain1, deleted_by=None)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
         couch_user.add_domain_membership('domain1')
@@ -64,8 +64,8 @@ class TestDomainMemberships(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.webuser.delete(deleted_by=None)
-        cls.webuser2.delete(deleted_by=None)
+        cls.webuser.delete(cls.domain, deleted_by=None)
+        cls.webuser2.delete(cls.domain, deleted_by=None)
         cls.project.delete()
         super(TestDomainMemberships, cls).tearDownClass()
 
@@ -88,7 +88,7 @@ class TestDomainMemberships(TestCase):
         cls.ccuser = CommCareUser.create(cls.domain, cc_username, password, None, None)
 
         initialize_domain_with_default_roles(cls.domain)
-        role = SQLUserRole.objects.get(domain=cls.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
+        role = UserRole.objects.get(domain=cls.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
         cls.field_implementer_role_id = role.get_qualified_id()
 
     def setUp(self):

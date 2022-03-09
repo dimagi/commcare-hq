@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 import yaml
@@ -18,6 +19,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -37,6 +39,7 @@ from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
@@ -58,6 +61,9 @@ from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_number_of_report_configs_by_data_source,
     get_report_configs_for_domain,
+    get_all_registry_data_source_ids,
+    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_number_of_registry_report_configs_by_data_source,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -83,7 +89,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter,
+    get_indicator_adapter, wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -139,14 +145,8 @@ class SQLPartition(DocumentSchema):
     constraint = StringProperty()
 
 
-class CitusConfig(DocumentSchema):
-    distribution_type = StringProperty(choices=['reference', 'hash'])
-    distribution_column = StringProperty()
-
-
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)  # no longer used
-    citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 
 
@@ -161,6 +161,8 @@ class DataSourceBuildInformation(DocumentSchema):
     app_id = StringProperty()
     # The version of the app at the time of the data source's configuration.
     app_version = IntegerProperty()
+    # The registry_slug associated with the registry of the report.
+    registry_slug = StringProperty()
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -254,6 +256,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     def __str__(self):
         return '{} - {}'.format(self.domain, self.display_name)
+
+    @property
+    def is_deleted(self):
+        return is_deleted(self)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
@@ -516,6 +522,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
             raise BadSpecError("No two engine_ids should point to the same database")
 
+    @property
+    def data_domains(self):
+        return [self.domain]
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -617,6 +627,80 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
+
+
+class RegistryDataSourceConfiguration(DataSourceConfiguration):
+    """This is a special data source that can contain data from
+    multiple domains. These data sources are built from
+    data accessible to the domain via a Data Registry."""
+
+    # this field indicates whether the data source is available
+    # to all domains participating in the registry
+    globally_accessible = BooleanProperty(default=False)
+    registry_slug = StringProperty(required=True)
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+
+    @property
+    def data_domains(self):
+        if self.globally_accessible:
+            return self.registry_helper.participating_domains
+        else:
+            return self.registry_helper.visible_domains
+
+    def validate(self, required=True):
+        super().validate(required)
+        if self.referenced_doc_type != 'CommCareCase':
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
+
+    def _get_domain_filter_spec(self):
+        return {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "in",
+            "property_value": self.data_domains,
+        }
+
+    @property
+    @memoized
+    def default_indicators(self):
+        default_indicators = super().default_indicators
+        default_indicators.append(IndicatorFactory.from_spec({
+            "column_id": "commcare_project",
+            "type": "expression",
+            "display_name": "Project Space",
+            "datatype": "string",
+            "is_nullable": False,
+            "create_index": True,
+            "expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "domain"
+                }
+            }
+        }, self.get_factory_context()))
+        return default_indicators
+
+    @classmethod
+    def by_domain(cls, domain):
+        return get_registry_data_sources_by_domain(domain)
+
+    @classmethod
+    def all_ids(cls):
+        return get_all_registry_data_source_ids()
+
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return RegistryReportConfiguration.count_by_data_source(self.domain, self._id)
 
 
 class ReportMeta(DocumentSchema):
@@ -800,6 +884,38 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
+
+
+class RegistryReportConfiguration(ReportConfiguration):
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain'])
+    def by_domain(cls, domain):
+        return get_registry_report_configs_for_domain(domain)
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
+
+    @property
+    def registry_slug(self):
+        return self.config.registry_slug
+
+    @cached_property
+    def registry_helper(self):
+        return DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+
+    @property
+    @memoized
+    def config(self):
+        try:
+            config = get_document_or_not_found(RegistryDataSourceConfiguration, self.domain, self.config_id)
+        except DocumentNotFound:
+            raise DataSourceConfigurationNotFoundError(_(
+                'The data source referenced by this report could not be found.'
+            ))
+        return config
 
 
 class StaticDataSourceConfiguration(JsonObject):
@@ -1200,7 +1316,10 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             try:
                 config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
-                _raise_not_found()
+                try:
+                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+                except DocumentNotFound:
+                    _raise_not_found()
         return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -1257,7 +1376,7 @@ def get_report_configs(config_ids, domain):
     dynamic_report_configs = []
     if dynamic_report_config_ids:
         dynamic_report_configs = [
-            ReportConfiguration.wrap(doc) for doc in
+            wrap_report_config_by_type(doc) for doc in
             get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 

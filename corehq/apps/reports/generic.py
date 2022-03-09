@@ -722,6 +722,15 @@ class GenericReportView(object):
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
 
     @classmethod
+    def allow_access(cls, request):
+        """
+        Override to add additional constraints on report access on top of
+        what's provided by the dispatcher. For feature flags, see the toggles
+        attribute
+        """
+        return True
+
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
 
@@ -1121,30 +1130,6 @@ def summary_context(report):
     # will intentionally break if used with something that doesn't have
     # a summary_values attribute
     return {"summary_values": report.summary_values}
-
-
-class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
-    extra_context_providers = [summary_context]
-
-    @property
-    def data(self):
-        """
-        Should return a list of data values, that corresponds to the
-        headers.
-        """
-        raise NotImplementedError("Override this function!")
-
-    @property
-    def rows(self):
-        # for backwards compatibility / easy switching with a single-row table
-        return [self.data]
-
-    @property
-    def summary_values(self):
-        headers = list(self.headers)
-        assert (len(self.data) == len(headers))
-        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

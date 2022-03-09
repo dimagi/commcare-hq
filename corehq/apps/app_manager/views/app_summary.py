@@ -239,6 +239,12 @@ def _get_translated_module_name(app, module_id, language):
     return _translate_name(_get_name_map(app)[module_id]['module_name'], language)
 
 
+def _get_translated_form_link_name(app, form_link, language):
+    if form_link.module_unique_id:
+        return _get_translated_module_name(app, form_link.module_unique_id, language)
+    return _get_translated_form_name(app, form_link.form_id, language)
+
+
 APP_SUMMARY_EXPORT_HEADER_NAMES = [
     'app',
     'module',
@@ -297,10 +303,10 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             for form in module.get_forms():
                 post_form_workflow = form.post_form_workflow
                 if form.post_form_workflow == WORKFLOW_FORM:
-                    post_form_workflow = "form:\n{}".format(
+                    post_form_workflow = "link:\n{}".format(
                         "\n".join(
                             ["{form}: {xpath} [{datums}]".format(
-                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                form=_get_translated_form_link_name(self.app, link, language),
                                 xpath=link.xpath,
                                 datums=", ".join(
                                     "{}: {}".format(

@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging
@@ -10,7 +17,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
-from time import time
+from time import sleep, time
 from unittest import SkipTest, TestCase
 
 from django.conf import settings
@@ -19,7 +26,7 @@ from django.db.backends import utils
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
-import mock
+from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -426,6 +433,7 @@ def timelimit(limit):
         limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
+
     @wraps(func)
     def time_limit(*args, **kw):
         from corehq.tests.noseplugins.timing import add_time_limit
@@ -518,7 +526,7 @@ def patch_foreign_value_caches():
     TransactionTestCase._post_teardown = post_teardown
 
 
-def get_form_ready_to_save(metadata, is_db_test=False):
+def get_form_ready_to_save(metadata, is_db_test=False, form_id=None):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -526,7 +534,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
-    form_id = uuid.uuid4().hex
+    form_id = form_id or uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
 
     if is_db_test:
@@ -566,6 +574,11 @@ def create_and_save_a_form(domain):
 
 
 def _create_case(domain, **kwargs):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
@@ -575,7 +588,11 @@ def _create_case(domain, **kwargs):
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
         drop_signals=True, owner_id=None, user_id=None, index=None):
-    from casexml.apps.case.signals import case_post_save
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
@@ -597,7 +614,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             form, cases = _create_case(domain, **kwargs)
     else:
         form, cases = _create_case(domain, **kwargs)
@@ -608,9 +625,13 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 @contextmanager
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
         case_id=None, owner_id=None, user_id=None):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-    from corehq.form_processor.utils.general import should_use_sql_backend
+    from corehq.form_processor.models import CommCareCase
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -621,10 +642,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 create_test_case.__test__ = False
@@ -819,3 +837,33 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+def disable_quickcache(test_case=None):
+    """A patch/decorator that disables quickcache
+
+    :param test_case: Optional test class or function. The patch is
+    applied as a decorator to this object if provided.
+    :returns: A `mock.patch` object that disables the cache when started
+    and re-enables it when stopped OR a decorated test case when
+    `test_case` is provided.
+    """
+    def call(self, *args, **kw):
+        return self.fn(*args, **kw)
+    patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
+    return patch if test_case is None else patch(test_case)
+
+
+def flaky_slow(test=None, max_runs=5, min_passes=1, rerun_filter=lambda *a: True):
+    """A flaky test decorator that waits between reruns
+
+    Use for tests that depend on eventual database consistency.
+    """
+    from flaky import flaky
+
+    def rerun(*args):
+        sleep(0.5)
+        return rerun_filter(*args)
+
+    deco = flaky(max_runs=max_runs, min_passes=min_passes, rerun_filter=rerun)
+    return deco if test is None else deco(test)

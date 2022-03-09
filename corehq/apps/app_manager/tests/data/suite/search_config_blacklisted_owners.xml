@@ -32,7 +32,7 @@
         </prompt>
       </query>
       <datum id="search_case_id"
-             nodeset="instance('results')/results/case[@case_type='case']"
+             nodeset="instance('results')/results/case[@case_type='case'][not(commcare_is_related_case=true())]"
              value="./@case_id"
              detail-confirm="m0_search_long"
              detail-select="m0_search_short"/>

@@ -158,7 +158,7 @@ def transform_array(item):
     return [item]
 
 
-def transform_from_datatype(datatype):
+def transform_for_datatype(datatype):
     """
     Given a datatype, return a transform for that type.
     """

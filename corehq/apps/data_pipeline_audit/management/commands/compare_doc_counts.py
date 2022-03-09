@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_pipeline_audit.tools import get_doc_counts_for_domain
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.markup import (
     CSVRowFormatter,
     SimpleTableWriter,
@@ -32,9 +31,8 @@ class Command(BaseCommand):
         writer = SimpleTableWriter(self.stdout, row_formatter)
         writer.write_headers(['Domain', 'Backend', 'Doc Type', 'Primary', 'ES'])
         for domain in domains:
-            backend = 'sql' if should_use_sql_backend(domain) else 'couch'
             rows = get_doc_counts_for_domain(domain)
-            writer.write_rows(((domain, backend) + row for row in rows))
+            writer.write_rows(((domain, 'sql') + row for row in rows))
 
 
 def _get_row_color(row):

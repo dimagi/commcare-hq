@@ -35,6 +35,8 @@ class SsoBackend(ModelBackend):
         if not (request and username and idp_slug and is_handshake_successful):
             return None
 
+        username = username.lower()
+
         try:
             identity_provider = IdentityProvider.objects.get(slug=idp_slug)
         except IdentityProvider.DoesNotExist:

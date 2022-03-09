@@ -4,3 +4,7 @@ class RequestConnectionError(Exception):
 
 class ReferralError(Exception):
     pass
+
+
+class DataRegistryCaseUpdateError(Exception):
+    pass

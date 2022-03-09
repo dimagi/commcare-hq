@@ -289,7 +289,7 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(domain, export_ids, exports_type, username, filters, owner_id, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
@@ -298,7 +298,7 @@ def get_export_download(domain, export_ids, exports_type, username, filters, own
         export_ids,
         exports_type,
         username,
-        filters,
+        es_filters,
         download.download_id,
         owner_id,
         filename=filename
@@ -306,29 +306,35 @@ def get_export_download(domain, export_ids, exports_type, username, filters, own
     return download
 
 
-def get_export_file(export_instances, filters, temp_path, progress_tracker=None):
+def get_export_file(export_instances, es_filters, temp_path, progress_tracker=None):
     """
     Return an export file for the given ExportInstance and list of filters
     """
     writer = get_export_writer(export_instances, temp_path)
     with writer.open(export_instances):
         for export_instance in export_instances:
-            docs = get_export_documents(export_instance, filters)
+            docs = get_export_documents(export_instance, es_filters, are_filters_es_formatted=True)
             write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
 
-def get_export_documents(export_instance, filters):
+def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
     # Pull doc ids from elasticsearch and stream to disk
-    query = get_export_query(export_instance, filters)
+    query = get_export_query(export_instance, filters, are_filters_es_formatted)
     return iter_es_docs_from_query(query)
 
 
-def get_export_query(export_instance, filters):
+def get_export_query(export_instance, filters, are_filters_es_formatted=False):
+    """
+    :param filters: either a list of ExportFilter objects, or a list of json serializable dicts
+    :param are_filters_es_formatted: used to determine if filters are already json serializable dicts
+    :return:
+    """
     query = _get_base_query(export_instance)
-    for filter in filters:
-        query = query.filter(filter.to_es_filter())
+    for f in filters:
+        es_filter = f if are_filters_es_formatted else f.to_es_filter()
+        query = query.filter(es_filter)
     return query
 
 
@@ -442,9 +448,10 @@ def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
     """
-    filters = export_instance.get_filters()
+    filters = export_instance.get_filters() or []
+    es_filters = [f.to_es_filter() for f in filters]
     with TransientTempfile() as temp_path:
-        export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
+        export_file = get_export_file([export_instance], es_filters, temp_path, progress_tracker)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 

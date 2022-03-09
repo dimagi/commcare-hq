@@ -111,7 +111,7 @@
         {% endif %}
         <div id="message-alerts"
              class="ko-template"
-             data-bind="foreach: alerts">
+             data-bind="foreach: {data: alerts, beforeRemove: fadeOut}">
           <div data-bind="attr: {'class': alert_class}">
             <a class="close"
                data-dismiss="alert" href="#">&times;</a>

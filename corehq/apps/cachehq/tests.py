@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.conf import settings
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 

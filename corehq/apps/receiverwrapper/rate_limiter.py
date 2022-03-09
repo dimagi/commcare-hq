@@ -1,3 +1,5 @@
+import time
+
 from django.conf import settings
 
 from corehq.project_limits.rate_limiter import (
@@ -65,31 +67,80 @@ global_submission_rate_limiter = RateLimiter(
 )
 
 
+global_case_rate_limiter = RateLimiter(
+    feature_key='global_case_updates',
+    get_rate_limits=lambda: get_dynamic_rate_definition(
+        'global_case_updates',
+        default=RateDefinition(
+            per_hour=170000,
+            per_minute=4000,
+            per_second=300,
+        )
+    ).get_rate_limits(),
+    scope_length=0,
+)
+
+
+def _get_per_user_case_rate_definition(domain):
+    return PerUserRateDefinition(
+        per_user_rate_definition=get_dynamic_rate_definition(
+            'case_updates_per_user',
+            default=get_standard_ratio_rate_definition(events_per_day=460),
+        ),
+        constant_rate_definition=get_dynamic_rate_definition(
+            'baseline_case_updates_per_project',
+            default=RateDefinition(
+                per_week=1000,
+                per_day=500,
+                per_hour=300,
+                per_minute=100,
+                per_second=10,
+            ),
+        ),
+    ).get_rate_limits(domain)
+
+
+domain_case_rate_limiter = RateLimiter(
+    feature_key='domain_case_updates',
+    get_rate_limits=lambda domain: _get_per_user_case_rate_definition(domain)
+)
+
+
 SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
-@run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
+@run_only_when(lambda: SHOULD_RATE_LIMIT_SUBMISSIONS)
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
-def rate_limit_submission(domain):
+def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
     if TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE.enabled(domain):
         return True
-    should_allow_usage = (
+    allow_form_usage = (
         global_submission_rate_limiter.allow_usage()
         or submission_rate_limiter.allow_usage(domain))
 
-    if should_allow_usage:
+    allow_case_usage = (
+        global_case_rate_limiter.allow_usage()
+        or case_rate_limiter.allow_usage(domain))
+
+    if allow_form_usage:
         allow_usage = True
     elif DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain):
         # If we're disabling rate limiting on a domain then allow it
         # but still delay and record whether they'd be rate limited under the 'test' metric
         allow_usage = True
         _delay_and_report_rate_limit_submission(
-            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited.test')
+            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+            datadog_metric='commcare.xform_submissions.rate_limited.test')
     else:
         allow_usage = _delay_and_report_rate_limit_submission(
-            domain, max_wait=15, datadog_metric='commcare.xform_submissions.rate_limited')
+            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+            datadog_metric='commcare.xform_submissions.rate_limited')
 
+    if allow_form_usage and not allow_case_usage:
+        _delay_and_report_rate_limit_submission(
+            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+            datadog_metric='commcare.case_updates.rate_limited.test')
     return not allow_usage
 
 
@@ -102,11 +153,37 @@ def report_submission_usage(domain):
     _report_current_global_submission_thresholds()
 
 
-def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
+def report_case_usage(domain, num_cases):
+    global_case_rate_limiter.report_usage(delta=num_cases)
+    domain_case_rate_limiter.report_usage(scope=domain, delta=num_cases)
+    _report_current_global_case_update_thresholds()
+
+
+def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_reject, datadog_metric):
+    """
+    Attempt to acquire permission from the rate limiter waiting up to 15 seconds.
+
+    When delay_rather_than_reject is False
+
+        If it's acquired, report throttle_method:delay and duration:<bucketed duration>;
+        otherwise report throttle_method:reject and duration:delayed_reject or quick_reject,
+        depending on whether the rate limiter bothered to wait or could tell there was no chance.
+
+    When delay_rather_than_reject is True
+
+        If it's acquired, report throttle_method:delay and duration:<bucketed duration> (as before);
+        otherwise report throttle_method:delay and duration:delay_rather_than_reject
+
+    Returns whether the permission was eventually acquired (with no variation on delay_rather_than_reject).
+    """
     with TimingContext() as timer:
         acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
     if acquired:
         duration_tag = bucket_value(timer.duration, [.5, 1, 5, 10, 15], unit='s')
+    elif delay_rather_than_reject:
+        if timer.duration < max_wait:
+            time.sleep(max_wait - timer.duration)
+        duration_tag = 'delay_rather_than_reject'
     elif timer.duration < max_wait:
         duration_tag = 'quick_reject'
     else:
@@ -114,7 +191,7 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
     metrics_counter(datadog_metric, tags={
         'domain': domain,
         'duration': duration_tag,
-        'throttle_method': "delay" if acquired else "reject"
+        'throttle_method': "delay" if acquired or delay_rather_than_reject else "reject"
     })
     return acquired
 
@@ -126,5 +203,16 @@ def _report_current_global_submission_thresholds():
             'window': window
         }, multiprocess_mode='max')
         metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
+            'window': window
+        }, multiprocess_mode='max')
+
+
+@quickcache([], timeout=60)  # Only report up to once a minute
+def _report_current_global_case_update_thresholds():
+    for window, value, threshold in global_case_rate_limiter.iter_rates():
+        metrics_gauge('commcare.case_updates.global_threshold', threshold, tags={
+            'window': window
+        }, multiprocess_mode='max')
+        metrics_gauge('commcare.case_updates.global_usage', value, tags={
             'window': window
         }, multiprocess_mode='max')

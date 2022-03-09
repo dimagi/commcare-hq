@@ -1,15 +1,19 @@
 """
 Shortcuts for working with domains and users.
 """
+from django.contrib.auth.models import User
+
+from corehq.apps.domain.models import Domain
 
 
-def create_domain(name, active=True, use_sql_backend=False):
+def create_domain(name, active=True):
     """Create domain without secure submissions for tests"""
     return Domain.get_or_create_with_name(name=name, is_active=active,
-                                          secure_submissions=False, use_sql_backend=use_sql_backend)
+                                          secure_submissions=False)
 
 
-def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, password_hashed=False, **kwargs):
+def create_user(username, password, is_staff=False, is_superuser=False,
+                is_active=True, password_hashed=False, **kwargs):
     user = User()
     user.username = username.lower()
     for key, val in kwargs.items():
@@ -47,8 +51,3 @@ def _domain_to_change_meta(domain_obj):
         data_source_type=data_sources.SOURCE_COUCH,
         data_source_name=Domain.get_db().dbname,
     )
-
-
-from django.contrib.auth.models import User
-
-from corehq.apps.domain.models import Domain

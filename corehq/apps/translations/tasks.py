@@ -20,7 +20,7 @@ from corehq.apps.translations.integrations.transifex.project_migrator import (
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
-@task(serializer='pickle')
+@task
 def delete_resources_on_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,
@@ -44,7 +44,7 @@ def delete_resources_on_transifex(domain, data, email):
     email.send()
 
 
-@task(serializer='pickle')
+@task
 def push_translation_files_to_transifex(domain, data, email):
     upload_status = None
     if data.get('target_lang'):
@@ -83,7 +83,7 @@ def push_translation_files_to_transifex(domain, data, email):
         email.send()
 
 
-@task(serializer='pickle')
+@task
 def pull_translation_files_from_transifex(domain, data, user_email=None):
     def notify_error(error):
         email = EmailMessage(
@@ -123,7 +123,7 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
             os.remove(translation_file.name)
 
 
-@task(serializer='pickle')
+@task
 def backup_project_from_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,

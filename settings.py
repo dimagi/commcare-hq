@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: F405
 
 import inspect
 from collections import defaultdict
@@ -229,7 +230,10 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -246,7 +250,6 @@ HQ_APPS = (
     'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
-    'corehq.apps.couch_sql_migration',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
@@ -266,17 +269,17 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
-    'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db.app_config.SqlDbAppConfig',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows',
+    'corehq.pillows.app_config.PillowsAppConfig',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -303,6 +306,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
+    'corehq.apps.oauth_integrations',
     'corehq.messaging',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -346,11 +350,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
-    'fluff',
-    'fluff.fluff_filter',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -362,6 +362,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
     'corehq.blobs',
@@ -370,14 +371,10 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.succeed',
     'custom.ucla',
 
-    'custom.intrahealth',
     'custom.up_nrhm',
 
     'custom.common',
@@ -537,6 +534,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "corehq.apps.registry.fixtures.registry_fixture_generator",
 ]
 
 ### Shared drive settings ###
@@ -603,6 +601,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
+    "malt_generation_queue": 6 * 60 * 60,
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
@@ -723,9 +722,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
+    'MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_mobile_worker_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
+    'LOCATION_CASE_OWNER_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_location_case_owner_parent_location_old_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 
@@ -738,16 +740,25 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION_PARENT':
         ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+    'MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_mobile_worker_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
+    'LOCATION_CASE_OWNER_PARENT_LOCATION':
+        ['custom.abt.messaging.custom_recipients.abt_location_case_owner_parent_location_new_framework',
+         "Abt: The case owner location's parent location"],
 }
 
 LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
-AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {
+    'COVID_US_ASSOCIATED_USER_CASES': 'custom.covid.rules.custom_criteria.associated_usercase_closed'
+}
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
+        'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
+}
 
 ####### auditcare parameters #######
 AUDIT_ALL_VIEWS = False
@@ -787,6 +798,7 @@ LOCAL_PILLOWTOPS = {}
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
+RUN_DEDUPLICATION_PILLOW = True
 
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
@@ -800,6 +812,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.CreateCaseRepeater',
     'corehq.motech.repeaters.models.UpdateCaseRepeater',
     'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.DataRegistryCaseUpdateRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
@@ -810,6 +823,7 @@ REPEATER_CLASSES = [
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
+    'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -819,6 +833,9 @@ LOCAL_REPEATER_CLASSES = []
 # Set to None to enable all or empty tuple to disable all.
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
+
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
@@ -1078,8 +1095,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.succeed.commcare_extensions",
-    "custom.nutrition_project.commcare_extensions"
+    "custom.nutrition_project.commcare_extensions",
+    "custom.samveg.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1162,7 +1179,7 @@ _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
-IS_INDIA_ENVIRONMENT = SERVER_ENVIRONMENT == 'india'
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1205,6 +1222,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
+                'corehq.util.context_processors.status_page',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1223,7 +1241,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s'
         },
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
@@ -1325,10 +1343,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'notify_exception': {
-            'level': 'ERROR',
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -1380,7 +1394,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1441,7 +1455,7 @@ LOGGING = {
         },
         'commcare_auth': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         }
     }
@@ -1513,7 +1527,6 @@ COUCHDB_APPS = [
     'dhis2',
     'ext',
     'facilities',
-    'fluff_filter',
     'hqcase',
     'hqmedia',
     'case_importer',
@@ -1539,20 +1552,13 @@ COUCHDB_APPS = [
     'registration',
     'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
-    'pact',
     'accounting',
-    'succeed',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
-    ('fluff', 'fluff-bihar'),
-    ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1686,8 +1692,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {}
-
-CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
     'core': [
@@ -1843,12 +1847,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
-    'fluff': [
-        'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.IntraHealthFormFluffPillow',
-        'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
-    ],
     'experimental': [
         {
             'name': 'CaseSearchToElasticsearchPillow',
@@ -1882,8 +1880,6 @@ STATIC_UCR_REPORTS = [
 STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1895,18 +1891,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1932,10 +1916,8 @@ COUCH_CACHE_BACKENDS = [
 # Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
     'commtrack-public-demo',
     'crs-remind',
-    'succeed',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -1944,8 +1926,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
-    'pact',
-    'succeed'
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1961,24 +1941,17 @@ CUSTOM_MODULES = [
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
-    'ipm-senegal': 'custom.intrahealth',
-    'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
-    # From DOMAIN_MODULE_CONFIG on production
-    'test-pna': 'custom.intrahealth',
-
-    #vectorlink domains
+    # vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
@@ -1991,6 +1964,7 @@ DOMAIN_MODULE_MAP = {
     'airstanzania': 'custom.abt',
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
+    'kenya-vca': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
@@ -2027,19 +2001,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-# Domains that we want to tag in metrics provider
-METRICS_TAGGED_DOMAINS = {
-    # ("env", "domain"),
-    ("production", "born-on-time-2"),
-    ("production", "hki-nepal-suaahara-2"),
-    ("production", "malawi-fp-study"),
-    ("production", "no-lean-season"),
-    ("production", "rec"),
-    ("production", "isth-production"),
-    ("production", "sauti-1"),
-    ("production", "ndoh-wbot"),
-}
-
 #### Django Compressor Stuff after localsettings overrides ####
 
 COMPRESS_OFFLINE_CONTEXT = {
@@ -2055,6 +2016,15 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
+# Remove after upgrading django_redis to a version that does that.
+# See also corehq.tests.test_pickle.test_django_redis_protocol
+from pickle import DEFAULT_PROTOCOL as _protocol
+for _value in CACHES.values():
+    if _value.get("BACKEND", "").startswith("django_redis"):
+        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
+del _value, _protocol
 
 
 REST_FRAMEWORK = {
@@ -2107,3 +2077,12 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
+# Scopes to give read/write access to the code that generates the spreadsheets
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"

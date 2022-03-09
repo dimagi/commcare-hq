@@ -35,7 +35,7 @@ class MarkLatestSubmissionTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super(MarkLatestSubmissionTest, cls).tearDownClass()
 
     def test_mark_latest_submission_basic(self):

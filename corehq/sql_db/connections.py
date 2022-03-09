@@ -3,11 +3,10 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.core import signals
 from django.db import DEFAULT_DB_ALIAS
-from django.utils.functional import cached_property
 
 import sqlalchemy
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 
@@ -17,7 +16,6 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
 
 def get_db_alias_or_none(enigne_id):
@@ -25,35 +23,6 @@ def get_db_alias_or_none(enigne_id):
         return connection_manager.get_django_db_alias(enigne_id)
     except KeyError:
         return None
-
-
-def is_citus_db(connection):
-    """
-    :param connection: either a sqlalchemy connection or a Django cursor
-    """
-    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
-    if res is None:
-        res = list(connection)
-    return bool(list(res))
-
-
-_IS_CITUS_URLS = {}
-
-
-def is_citus(connection_url: str, engine=None):
-    if connection_url not in _IS_CITUS_URLS:
-        dispose = False
-        if not engine:
-            engine = create_engine(connection_url)
-            dispose = True
-
-        try:
-            _IS_CITUS_URLS[connection_url] = is_citus_db(engine)
-        finally:
-            if dispose:
-                engine.dispose()
-
-    return _IS_CITUS_URLS[connection_url]
 
 
 def create_engine(connection_url: str, connect_args: dict = None):
@@ -92,10 +61,6 @@ class SessionHelper(object):
                 session.close()
 
         return session_scope
-
-    @cached_property
-    def is_citus_db(self):
-        return is_citus(self.engine.url, engine=self.engine)
 
 
 class ConnectionManager(object):

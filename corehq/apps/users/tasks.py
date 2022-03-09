@@ -26,13 +26,8 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import UserArchivedRebuild
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, UserArchivedRebuild, XFormInstance
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
@@ -86,15 +81,18 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
     }
 
 
-@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
+# rate limit to two bulk saves per second so cloudant has time to reindex
+@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
+    from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
-    NotAllowed.check(domain)
-    CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
+    CommCareCase.objects.soft_delete_cases(domain, list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_schedule_instances_for_cases.delay(domain, case_ids)
+    if toggles.CASE_DEDUPE.enabled(domain):
+        delete_duplicates_for_cases.delay(case_ids)
 
 
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
@@ -108,7 +106,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
 
-    for form in FormAccessors(domain).iter_forms(form_id_list):
+    for form in XFormInstance.objects.iter_forms(form_id_list, domain):
         if form.domain != domain or not form.is_normal:
             continue
 
@@ -116,7 +114,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
         cases_to_rebuild.update(get_case_ids_from_form(form))
 
     # do this after getting case_id's since iter_forms won't return deleted forms
-    FormAccessors(domain).soft_delete_forms(list(form_id_list), deletion_date, deletion_id)
+    XFormInstance.objects.soft_delete_forms(domain, list(form_id_list), deletion_date, deletion_id)
 
     detail = UserArchivedRebuild(user_id=user_id)
     for case_id in cases_to_rebuild - deleted_cases:
@@ -132,7 +130,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
     form_ids_to_modify = set()
     for case_id in modified_cases:
         try:
-            xform_ids = CaseAccessors(domain).get_case(case_id).xform_ids
+            xform_ids = CommCareCase.objects.get_case(case_id, domain).xform_ids
         except CaseNotFound:
             xform_ids = []
         form_ids_to_modify |= set(xform_ids) - modified_forms
@@ -143,7 +141,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
 
         case_ids = get_case_ids_from_form(form)
         # all cases touched by the form and not already modified
-        for case in CaseAccessors(domain).iter_cases(case_ids - modified_cases):
+        for case in CommCareCase.objects.iter_cases(case_ids - modified_cases):
             if case.is_deleted != is_deletion:
                 # we can't delete/undelete this form - this would change the state of `case`
                 return False
@@ -151,25 +149,21 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    if is_deletion or Domain.get_by_name(domain).use_sql_backend:
-        all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
-    else:
-        # accessor.iter_forms doesn't include deleted forms on the couch backend
-        all_forms = list(map(FormAccessors(domain).get_form, form_ids_to_modify))
+    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify, domain)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
     to_delete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=True)
-    FormAccessors(domain).soft_delete_forms(to_delete, deletion_date, deletion_id)
+    XFormInstance.objects.soft_delete_forms(domain, to_delete, deletion_date, deletion_id)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def undelete_system_forms(domain, deleted_forms, deleted_cases):
     """The reverse of tag_system_forms_as_deleted; called on user.unretire()"""
     to_undelete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=False)
-    FormAccessors(domain).soft_undelete_forms(to_undelete)
+    XFormInstance.objects.soft_undelete_forms(domain, to_undelete)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
@@ -193,7 +187,8 @@ def _remove_indices_from_deleted_cases_task(domain, case_ids):
 def remove_indices_from_deleted_cases(domain, case_ids):
     from corehq.apps.hqcase.utils import submit_case_blocks
     deleted_ids = set(case_ids)
-    indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
+    indexes_referencing_deleted_cases = \
+        CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, list(case_ids))
     case_updates = [
         CaseBlock.deprecated_init(
             case_id=index_info.case_id,
@@ -292,7 +287,7 @@ def remove_unused_custom_fields_from_users_task(domain):
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id)
-    domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
+    domain_membership = user.get_domain_membership(domain, allow_enterprise=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):

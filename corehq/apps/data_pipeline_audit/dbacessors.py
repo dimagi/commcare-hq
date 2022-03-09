@@ -2,19 +2,12 @@ from collections import Counter
 
 import dateutil
 
-from casexml.apps.case.models import CommCareCase
 from couchforms.const import DEVICE_LOG_XMLNS
-from couchforms.models import all_known_formlike_doc_types
 
 from corehq.apps import es
-from corehq.apps.domain.dbaccessors import (
-    get_doc_count_in_domain_by_type,
-    get_doc_ids_in_domain_by_type,
-)
 from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -96,55 +89,9 @@ def get_es_user_counts_by_doc_type(domain):
 
 
 def get_primary_db_form_counts(domain, startdate=None, enddate=None):
-    if should_use_sql_backend(domain):
-        return _get_sql_forms_by_doc_type(domain, startdate, enddate)
-    else:
-        return _get_couch_forms_by_doc_type(domain)
-
-
-def get_primary_db_form_ids(domain, doc_type, startdate, enddate):
-    if should_use_sql_backend(domain):
-        return get_sql_form_ids(domain, doc_type, startdate, enddate)
-    else:
-        # date filtering not supported for couch
-        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
-
-
-def get_primary_db_case_counts(domain, startdate=None, enddate=None):
-    if should_use_sql_backend(domain):
-        return _get_sql_cases_by_doc_type(domain, startdate, enddate)
-    else:
-        return _get_couch_cases_by_doc_type(domain)
-
-
-def get_primary_db_case_ids(domain, doc_type, startdate, enddate):
-    if should_use_sql_backend(domain):
-        return get_sql_case_ids(domain, doc_type, startdate, enddate)
-    else:
-        # date filtering not supported for couch
-        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
-
-
-def _get_couch_forms_by_doc_type(domain):
-    return _get_couch_doc_counts(CommCareCase.get_db(), domain, all_known_formlike_doc_types())
-
-
-def _get_couch_cases_by_doc_type(domain):
-    return _get_couch_doc_counts(CommCareCase.get_db(), domain, ('CommCareCase', 'CommCareCase-Deleted'))
-
-
-def _get_couch_doc_counts(couch_db, domain, doc_types):
-    counter = Counter()
-    for doc_type in doc_types:
-        count = get_doc_count_in_domain_by_type(domain, doc_type, couch_db)
-        counter.update({doc_type: count})
-    return counter
-
-
-def _get_sql_forms_by_doc_type(domain, startdate=None, enddate=None):
     counter = Counter()
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = XFormInstanceSQL.objects.using(db_alias).filter(domain=domain)
+        queryset = XFormInstance.objects.using(db_alias).filter(domain=domain)
         if startdate is not None:
             queryset = queryset.filter(received_on__gte=startdate)
         if enddate is not None:
@@ -153,16 +100,16 @@ def _get_sql_forms_by_doc_type(domain, startdate=None, enddate=None):
         for doc_type, state in doc_type_to_state.items():
             counter[doc_type] += queryset.filter(state=state).count()
 
-        where_clause = 'state & {0} = {0}'.format(XFormInstanceSQL.DELETED)
+        where_clause = 'state & {0} = {0}'.format(XFormInstance.DELETED)
         counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
 
     return counter
 
 
-def _get_sql_cases_by_doc_type(domain, startdate=None, enddate=None):
+def get_primary_db_case_counts(domain, startdate=None, enddate=None):
     counter = Counter()
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
+        queryset = CommCareCase.objects.using(db_alias).filter(domain=domain)
         if startdate is not None:
             queryset = queryset.filter(server_modified_on__gte=startdate)
         if enddate is not None:
@@ -173,11 +120,11 @@ def _get_sql_cases_by_doc_type(domain, startdate=None, enddate=None):
     return counter
 
 
-def get_sql_case_ids(domain, doc_type, startdate, enddate):
+def get_primary_db_case_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     deleted = doc_type == 'CommCareCase-Deleted'
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = CommCareCaseSQL.objects.using(db_alias) \
+        queryset = CommCareCase.objects.using(db_alias) \
             .filter(domain=domain, deleted=deleted)
 
         if startdate:
@@ -190,11 +137,11 @@ def get_sql_case_ids(domain, doc_type, startdate, enddate):
     return sql_ids
 
 
-def get_sql_form_ids(domain, doc_type, startdate, enddate):
+def get_primary_db_form_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     state = doc_type_to_state[doc_type]
     for db_alias in get_db_aliases_for_partitioned_query():
-        queryset = XFormInstanceSQL.objects.using(db_alias) \
+        queryset = XFormInstance.objects.using(db_alias) \
             .filter(domain=domain, state=state) \
             .exclude(xmlns=DEVICE_LOG_XMLNS)
 

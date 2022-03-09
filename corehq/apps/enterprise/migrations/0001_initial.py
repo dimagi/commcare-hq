@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ("accounting", "0001_squashed_0052_ensure_report_builder_plans"),
     ]
 
     operations = [

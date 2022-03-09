@@ -106,7 +106,12 @@ def sso_saml_acs(request, idp_slug):
         async_signup = AsyncSignupRequest.get_by_username(user.username)
         if async_signup and async_signup.project_name:
             try:
-                request_new_domain(request, async_signup.project_name, is_new_user=True)
+                request_new_domain(
+                    request,
+                    async_signup.project_name,
+                    is_new_user=True,
+                    is_new_sso_user=True
+                )
             except NameUnavailableException:
                 # this should never happen, but in the off chance it does
                 # we don't want to throw a 500 on this view

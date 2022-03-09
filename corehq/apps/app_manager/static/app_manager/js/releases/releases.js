@@ -47,7 +47,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             if (self.doc_type() !== "LinkedApplication") {
                 return "";
             }
-            var brief = releasesMain.masterBriefsById[self.upstream_app_id()] || {};
+            var brief = releasesMain.upstreamBriefsById[self.upstream_app_id()] || {};
             return brief.name || gettext("Unknown App");
         });
 
@@ -250,7 +250,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
         self.buildComment = ko.observable();
-        self.masterBriefsById = _.indexBy(self.options.masterBriefs, '_id');
+        self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
 
         self.download_modal = $(self.options.download_modal_id);

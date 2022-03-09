@@ -57,6 +57,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         url: self.save_url,
                         data: {
                             actions: actions,
+                            arbitrary_datums: ko.mapping.toJSON(self.caseConfigViewModel.arbitrary_datums),
                         },
                         dataType: 'json',
                         success: function (data) {
@@ -159,10 +160,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
             };
 
-            self.refreshQuestions = function (url, formUniqueId, event) {
-                return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
-            };
-
             self.getAnswers = function (condition) {
                 return caseConfigUtils.getAnswers(self.questions(), condition);
             };
@@ -221,6 +218,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     $('.hq-help-template').each(function () {
                         hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                     });
+
+                    caseConfigUtils.initRefreshQuestions(self.questions);
                 });
             };
             return self;
@@ -282,7 +281,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             };
 
             self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-                var preload = caseConfigUtils.propertyDictToArray([], a.preload, caseConfig, true);
+                var preload = caseConfigUtils.preloadDictToArray(a.preload, caseConfig);
                 var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];
@@ -293,23 +292,34 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
-                // needed for compatibility with shared templates
-                action.searchAndFilter = false;
-                action.visible_case_properties = ko.computed(function () {
-                    return action.case_properties();
-                });
-
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
                 });
                 return action;
             }));
 
+
+            self.arbitrary_datums = ko.mapping.fromJS(params.arbitrary_datums);
+
+            self.arbitrary_datums.subscribe(function () {
+                self.caseConfig.saveButton.fire('change');
+            });
+
+            self.addDatum = function () {
+                self.arbitrary_datums.push(ko.mapping.fromJSON('{"datum_id": "", "datum_function": ""}'));
+            };
+
+            self.removeDatum = function (datum) {
+                self.arbitrary_datums.remove(datum);
+            };
+
+
             self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
                 var required_properties = [{
                     key: 'name',
-                    path: a.name_path,
+                    path: a.name_update.question_path,
                     required: true,
+                    save_only_if_edited: a.name_update.update_mode === 'edit',
                 }];
                 var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
                 a.case_properties = [];
@@ -318,12 +328,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 // before it is defined
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
-                });
-
-                // needed for compatibility with shared templates
-                action.searchAndFilter = false;
-                action.visible_case_properties = ko.computed(function () {
-                    return action.case_properties();
                 });
 
                 return action;
@@ -424,12 +428,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     index = self.open_cases().length;
                     self.open_cases.push(openCaseAction.wrap({
                         case_type: caseConfig.caseType,
-                        name_path: '',
+                        name_update: '',
                         case_tag: 'open_' + caseConfig.caseType + '_' + index,
                         case_properties: [{
                             path: '',
                             key: 'name',
                             required: true,
+                            save_only_if_edited: false,
                         }],
                         repeat_context: '',
                         case_indices: [],

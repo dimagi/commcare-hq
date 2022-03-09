@@ -76,7 +76,7 @@ from corehq.apps.userreports.util import (
     get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
-    has_report_builder_trial,
+    has_report_builder_trial, wrap_report_config_by_type, get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from corehq.util.couch import (
@@ -132,7 +132,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
 
 @contextmanager
-def tmp_report_config(report_config):
+def delete_report_config(report_config):
     yield report_config
     report_config.delete()
 
@@ -196,7 +196,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+            return get_report_config_or_not_found(self.domain, self.report_config_id)
 
     def get_spec_or_404(self):
         try:
@@ -577,30 +577,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return result
 
     @classmethod
-    def report_preview_data(cls, domain, temp_report):
-
-        with tmp_report_config(temp_report) as report_config:
-            view = cls(request=HttpRequest())
-            view._domain = domain
-            view._lang = "en"
-            view._report_config_id = report_config._id
-            try:
-                export_table = view.export_table
-                datatables_data = json.loads(view.get_ajax({}).content)
-            except UserReportsError:
-                # User posted an invalid report configuration
-                return None
-            except DataSourceConfigurationNotFoundError:
-                # A temporary data source has probably expired
-                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-                return None
-            else:
-                return {
-                    "table": cls.sanitize_export_table(export_table[0][1]),
-                    "map_config": view.spec.map_config,
-                    "chart_configs": view.spec.charts,
-                    "aaData": datatables_data['aaData'],
-                }
+    def report_preview_data(cls, domain, report_config):
+        try:
+            export = ReportExport(domain, report_config.title, report_config, "en", {})
+            return {
+                "table": cls.sanitize_export_table(export.get_table_data()),
+                "map_config": report_config.map_config,
+                "chart_configs": report_config.charts,
+                "aaData": cls.sanitize_page(export.get_data()),
+            }
+        except UserReportsError:
+            # User posted an invalid report configuration
+            return None
+        except DataSourceConfigurationNotFoundError:
+            # A temporary data source has probably expired
+            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+            return None
 
 
 # Base class for classes that provide custom rendering for UCRs
@@ -688,7 +680,7 @@ class DownloadUCRStatusView(BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+            return get_report_config_or_not_found(self.domain, self.report_config_id)
 
     @property
     def is_static(self):

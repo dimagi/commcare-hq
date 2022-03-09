@@ -63,7 +63,6 @@ def create_tombstone(request):
             date_created=datetime.utcnow(),
             creating_user=request.couch_user.username,
             secure_submissions=True,
-            use_sql_backend=True,
             first_domain_for_user=False,
         )
         project.save()

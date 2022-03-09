@@ -85,6 +85,13 @@ class Command(BaseCommand):
             default=False,
             help="Set if you want to Move migrations on to side process",
         )
+        parser.add_argument(
+            '--exclude-ucrs',
+            dest='exclude_ucrs',
+            default="",
+            type=str,
+            help="comma-separated UCR tables IDs to exclude. Applicable for form/case/ucr pillows",
+        )
 
     def handle(self, **options):
         run_all = options['run_all']
@@ -96,6 +103,7 @@ class Command(BaseCommand):
         process_number = options['process_number']
         processor_chunk_size = options['processor_chunk_size']
         dedicated_migration_process = options['dedicated_migration_process']
+        exclude_ucrs = options['exclude_ucrs']
         assert 0 <= process_number < num_processes
         assert processor_chunk_size
         if list_all:
@@ -120,8 +128,12 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
+            other_options = {}
+            if exclude_ucrs:
+                other_options = {'exclude_ucrs': exclude_ucrs.split(",")}
             pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number,
-            processor_chunk_size=processor_chunk_size, dedicated_migration_process=dedicated_migration_process)
+            processor_chunk_size=processor_chunk_size, dedicated_migration_process=dedicated_migration_process,
+            **other_options)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:

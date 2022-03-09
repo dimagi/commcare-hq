@@ -10,8 +10,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.fhir.tests.utils import (
     add_case_property_with_resource_property_path,
     add_case_type_with_resource_type,
@@ -24,16 +23,16 @@ FHIR_VERSION = 'R4'
 BASE_URL = f'http://localhost:8000/a/{DOMAIN}/fhir/{FHIR_VERSION}/'
 USERNAME = f'admin@{DOMAIN}.commcarehq.org'
 PASSWORD = 'Passw0rd!'
-PERSON_CASE_ID = uuid4().hex
-DELETED_CASE_ID = uuid4().hex
-TEST_CASE_ID = uuid4().hex
+PERSON_CASE_ID = str(uuid4())
+DELETED_CASE_ID = str(uuid4())
+TEST_CASE_ID = str(uuid4())
 
 
 class BaseFHIRViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain(DOMAIN, use_sql_backend=True)
+        cls.domain_obj = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
         # ToDo: to be removed according to authentication updates by Smart-On-Fhir work
@@ -50,9 +49,15 @@ class BaseFHIRViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
-        cls.user.delete(deleted_by=None)
+        delete_username(cls.domain_obj.name, USERNAME)
         cls.domain_obj.delete()
         super().tearDownClass()
+
+
+def delete_username(domain, username):
+    user = WebUser.get_by_username(username)
+    if user:
+        user.delete(domain, deleted_by=None)
 
 
 class TestFHIRGetView(BaseFHIRViewTest):
@@ -190,20 +195,19 @@ def _setup_cases(owner_id):
         _get_caseblock(TEST_CASE_ID, 'test', owner_id).as_text(),
     ], DOMAIN)
 
-    case_accessor = CaseAccessors(DOMAIN)
-    case_accessor.soft_delete_cases(
-        [DELETED_CASE_ID], datetime.utcnow(), 'test-deletion-with-cases'
+    CommCareCase.objects.soft_delete_cases(
+        DOMAIN, [DELETED_CASE_ID], datetime.utcnow(), 'test-deletion-with-cases'
     )
 
-    test_case = case_accessor.get_case(TEST_CASE_ID)
-    test_case.track_create(CommCareCaseIndexSQL(
+    test_case = CommCareCase.objects.get_case(TEST_CASE_ID, DOMAIN)
+    test_case.track_create(CommCareCaseIndex(
         case=test_case,
         identifier='parent',
         referenced_type='person',
         referenced_id=PERSON_CASE_ID,
-        relationship_id=CommCareCaseIndexSQL.CHILD
+        relationship_id=CommCareCaseIndex.CHILD
     ))
-    case_accessor.db_accessor.save_case(test_case)
+    test_case.save(with_tracked_models=True)
 
 
 def _get_caseblock(case_id, case_type, owner_id, updates=None):

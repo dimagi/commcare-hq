@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -13,14 +13,11 @@ from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.stock.mock import Balance, Entry
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
+from corehq.apps.hqcase.tasks import explode_cases, topological_sort_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 
 
@@ -36,7 +33,6 @@ class ExplodeCasesDbTest(TestCase):
         cls.user_id = cls.user._id
 
     def setUp(self):
-        self.accessor = CaseAccessors(self.domain.name)
         delete_all_cases()
         delete_all_xforms()
 
@@ -46,11 +42,10 @@ class ExplodeCasesDbTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(ExplodeCasesDbTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_simple(self):
         caseblock = CaseBlock.deprecated_init(
             create=True,
@@ -60,16 +55,15 @@ class ExplodeCasesDbTest(TestCase):
             case_type='exploder-type',
         ).as_text()
         submit_case_blocks([caseblock], self.domain.name)
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)))
         explode_cases(self.domain.name, self.user_id, 10)
 
-        case_ids = self.accessor.get_case_ids_in_domain()
-        cases_back = list(self.accessor.iter_cases(case_ids))
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
         self.assertEqual(10, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
     def test_skip_usercase(self):
         caseblock = CaseBlock.deprecated_init(
             create=True,
@@ -79,16 +73,15 @@ class ExplodeCasesDbTest(TestCase):
             case_type='commcare-user',
         ).as_text()
         submit_case_blocks([caseblock], self.domain.name)
-        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(1, len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)))
         explode_cases(self.domain.name, self.user_id, 10)
 
-        case_ids = self.accessor.get_case_ids_in_domain()
-        cases_back = list(self.accessor.iter_cases(case_ids))
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
         self.assertEqual(1, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'
@@ -111,11 +104,11 @@ class ExplodeCasesDbTest(TestCase):
         ).as_text()
 
         submit_case_blocks([parent_block, child_block], self.domain.name)
-        self.assertEqual(2, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(2, len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)))
 
         explode_cases(self.domain.name, self.user_id, 5)
-        case_ids = self.accessor.get_case_ids_in_domain()
-        cases_back = list(self.accessor.iter_cases(case_ids))
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
         self.assertEqual(10, len(cases_back))
         parent_cases = {p.case_id: p for p in [case for case in cases_back if case.type == parent_type]}
         self.assertEqual(5, len(parent_cases))
@@ -133,7 +126,6 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
 
     def setUp(self):
         super(ExplodeExtensionsDBTest, self).setUp()
-        self.accessor = CaseAccessors(self.project.name)
         self._create_case_structure()
 
     def tearDown(self):
@@ -201,24 +193,22 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
     def test_case_graph(self):
         cases = self.device.restore().cases
         self.assertEqual(
-            ['host', 'parent_host', 'extension', 'child'],
-            topological_sort_cases(cases)
+            ['child', 'extension', 'parent_host', 'host'],
+            topological_sort_case_blocks(cases)
         )
 
     def test_child_extensions(self):
-        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
+        self.assertEqual(4, len(CommCareCase.objects.get_case_ids_in_domain(self.project.name)))
 
         explode_cases(self.project.name, self.user_id, 5)
-        case_ids = self.accessor.get_case_ids_in_domain()
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.project.name)
         self.assertEqual(20, len(case_ids))
 
 
 @flag_enabled('NON_COMMTRACK_LEDGERS')
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ExplodeLedgersTest(BaseSyncTest):
     def setUp(self):
         super(ExplodeLedgersTest, self).setUp()
-        self.case_accessor = CaseAccessors(self.project.name)
         self.ledger_accessor = LedgerAccessors(self.project.name)
         self._create_ledgers()
 
@@ -258,9 +248,11 @@ class ExplodeLedgersTest(BaseSyncTest):
 
     def test_explode_ledgers(self):
         explode_cases(self.project.name, self.user_id, 5)
-        cases = self.case_accessor.iter_cases(self.case_accessor.get_case_ids_in_domain())
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.project.name)
+        cases = CommCareCase.objects.iter_cases(case_ids, self.project.name)
         for case in cases:
-            ledger_values = {l.entry_id: l for l in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
+            ledger_values = {v.entry_id: v
+                for v in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
 
             if case.case_id == 'case2' or case.get_case_property('cc_exploded_from') == 'case2':
                 self.assertEqual(len(ledger_values), 0)

@@ -4,6 +4,7 @@ hqDefine('users/js/invite_web_user',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'hqwebapp/js/validators.ko',
+    'locations/js/widgets',
 ], function (
     $,
     ko,
@@ -40,12 +41,6 @@ hqDefine('users/js/invite_web_user',[
                     validator: function (val, params, callback) {
                         if (self.email.isValid()) {
                             self.showIdentityProviderMessage(false);
-
-                            // ignore sso email domain check in production for now
-                            if (!toggles.toggleEnabled('ENTERPRISE_SSO')) {
-                                callback({ isValid: true });
-                                return;
-                            }
 
                             $.post(initialPageData.reverse('check_sso_trust'), {
                                 username: self.email(),

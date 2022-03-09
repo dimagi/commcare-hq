@@ -13,11 +13,6 @@
     "config": {
         "title": "7.1 TB Monthly Report",
         "aggregation_columns": [
-            "region",
-            "zone",
-            "woreda",
-            "health_center",
-            "health_post",
             "report_month_date"
         ],
         "filters": [
@@ -75,44 +70,6 @@
                 "slug": "test_or_real"
             },
             {
-                "comment": null,
-                "datatype": "string",
-                "display": "region",
-                "field": "region",
-                "type": "dynamic_choice_list",
-                "slug": "region"
-            },
-            {
-                "comment": null,
-                "datatype": "string",
-                "display": "Zone",
-                "field": "zone",
-                "type": "dynamic_choice_list",
-                "slug": "zone"
-            },
-            {
-                "comment": null,
-                "datatype": "string",
-                "display": "Woreda",
-                "field": "woreda",
-                "type": "dynamic_choice_list",
-                "slug": "woreda"
-            },
-            {
-                "datatype": "string",
-                "field": "health_center",
-                "type": "dynamic_choice_list",
-                "display": "Health Center",
-                "slug": "health_center"
-            },
-            {
-                "datatype": "string",
-                "field": "health_post",
-                "type": "dynamic_choice_list",
-                "display": "Health Post",
-                "slug": "health_post"
-            },
-            {
                 "type": "pre",
                 "field": "report_month_date",
                 "slug": "report_month_date_pre",
@@ -123,81 +80,6 @@
             }
         ],
         "columns": [
-            {
-                "comment": null,
-                "field": "region",
-                "description": null,
-                "format": "default",
-                "css_class": null,
-                "width": null,
-                "aggregation": "simple",
-                "column_id": "region",
-                "visible": true,
-                "transform": {},
-                "calculate_total": false,
-                "type": "field",
-                "display": "Region"
-            },
-            {
-                "comment": null,
-                "field": "zone",
-                "description": null,
-                "format": "default",
-                "css_class": null,
-                "width": null,
-                "aggregation": "simple",
-                "column_id": "zone",
-                "visible": true,
-                "transform": {},
-                "calculate_total": false,
-                "type": "field",
-                "display": "Zone"
-            },
-            {
-                "comment": null,
-                "field": "woreda",
-                "description": null,
-                "format": "default",
-                "css_class": null,
-                "width": null,
-                "aggregation": "simple",
-                "column_id": "woreda",
-                "visible": true,
-                "transform": {},
-                "calculate_total": false,
-                "type": "field",
-                "display": "Woreda"
-            },
-            {
-                "comment": null,
-                "field": "health_center",
-                "description": null,
-                "format": "default",
-                "css_class": null,
-                "width": null,
-                "aggregation": "simple",
-                "column_id": "health_center",
-                "visible": true,
-                "transform": {},
-                "calculate_total": false,
-                "type": "field",
-                "display": "Health Center"
-            },
-            {
-                "comment": null,
-                "field": "health_post",
-                "description": null,
-                "format": "default",
-                "css_class": null,
-                "width": null,
-                "aggregation": "simple",
-                "column_id": "health_post",
-                "visible": true,
-                "transform": {},
-                "calculate_total": false,
-                "type": "field",
-                "display": "Health Post"
-            },
             {
                 "field": "report_month_date",
                 "sortable": false,

@@ -13,18 +13,23 @@ from corehq.apps.es import case_search as case_search_es
 from warnings import warn
 
 from django.utils.dateparse import parse_date
+from memoized import memoized
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
+    INDEXED_ON,
     INDICES_PATH,
+    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
+    SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
 
@@ -55,16 +60,7 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        if fuzzy:
-            positive_clause = clause != queries.MUST_NOT
-            return (
-                # fuzzy match
-                self.add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # non-fuzzy match. added to improve the score of exact matches
-                .add_query(case_property_text_query(case_property_name, value),
-                            queries.SHOULD if positive_clause else clause))
-        else:
-            return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
+        return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
@@ -86,13 +82,6 @@ class CaseSearchES(CaseES):
             case_property_range_query(case_property_name, gt, gte, lt, lte),
             clause
         )
-
-    def date_range_case_property_query(self, case_property_name, gt=None,
-                                       gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the date range criteria.
-        """
-        return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
@@ -150,6 +139,24 @@ def case_property_filter(case_property_name, value):
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
+
+
+def case_property_query(case_property_name, value, fuzzy=False):
+    """
+    Search for all cases where case property with name `case_property_name`` has text value `value`
+    """
+    if value is None:
+        raise TypeError("You cannot pass 'None' as a case property value")
+    if value == '':
+        return case_property_missing(case_property_name)
+    if fuzzy:
+        return filters.OR(
+            # fuzzy match
+            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
+            # non-fuzzy match. added to improve the score of exact matches
+            case_property_text_query(case_property_name, value),
+        )
+    return exact_case_property_text_query(case_property_name, value)
 
 
 def exact_case_property_text_query(case_property_name, value):
@@ -280,15 +287,32 @@ def external_id(external_id):
 
 
 def indexed_on(gt=None, gte=None, lt=None, lte=None):
-    return filters.date_range('@indexed_on', gt, gte, lt, lte)
+    return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
-def flatten_result(hit, include_score=False):
+def flatten_result(hit, include_score=False, is_related_case=False):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
+
+    Note that some dynamic case properties, if present, will overwrite
+    internal case properties:
+
+        domain
+        type
+        opened_on
+        opened_by
+        modified_on
+        server_modified_on
+        modified_by         -> also overwrites user_id
+        closed
+        closed_on
+        closed_by
+        deleted
+        deleted_on
+        deletion_id
     """
     try:
         result = hit['_source']
@@ -297,6 +321,8 @@ def flatten_result(hit, include_score=False):
 
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
+    if is_related_case:
+        result[IS_RELATED_CASE] = "true"
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])
     for case_property in case_properties:
         key = case_property.get('key')
@@ -307,3 +333,69 @@ def flatten_result(hit, include_score=False):
     for key in SYSTEM_PROPERTIES:
         result.pop(key, None)
     return result
+
+
+def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
+    """Convert case search index hit to CommCareCase
+
+    Nearly the opposite of
+    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+
+    The "case_properties" list of key/value pairs is converted to a dict
+    and assigned to `case_json`. 'Secial' case properties are excluded
+    from `case_json`, even if they were present in the original case's
+    dynamic properties.
+
+    All fields excluding "case_properties" and its contents are assigned
+    as attributes on the case object if `CommCareCase` has a field
+    with a matching name. Fields like "doc_type" and "@indexed_on" are
+    ignored.
+
+    Warning: `include_score=True` or `is_related_case=True` may cause
+    the relevant user-defined properties to be overwritten.
+
+    :returns: A `CommCareCase` instance.
+    """
+    from corehq.form_processor.models import CommCareCase
+    data = hit.get("_source", hit)
+    _SPECIAL_PROPERTIES = SPECIAL_CASE_PROPERTIES_MAP
+    _VALUE = VALUE
+    case = CommCareCase(
+        case_id=data.get("_id", None),
+        case_json={
+            prop["key"]: prop[_VALUE]
+            for prop in data.get(CASE_PROPERTIES_PATH, {})
+            if prop["key"] not in _SPECIAL_PROPERTIES
+        },
+        indices=data.get("indices", []),
+    )
+    _CONVERSIONS = CONVERSIONS
+    _setattr = setattr
+    case_fields = _case_fields()
+    for key, value in data.items():
+        if key in case_fields:
+            if value is not None and key in _CONVERSIONS:
+                value = _CONVERSIONS[key](value)
+            _setattr(case, key, value)
+    if include_score:
+        case.case_json[RELEVANCE_SCORE] = hit['_score']
+    if is_related_case:
+        case.case_json[IS_RELATED_CASE] = "true"
+    return case
+
+
+@memoized
+def _case_fields():
+    from corehq.form_processor.models import CommCareCase
+    fields = {f.attname for f in CommCareCase._meta.concrete_fields}
+    fields.add("user_id")  # synonym for "modified_by"
+    return fields
+
+
+CONVERSIONS = {
+    "closed_on": iso_string_to_datetime,
+    "modified_on": iso_string_to_datetime,
+    "opened_on": iso_string_to_datetime,
+    "server_modified_on": iso_string_to_datetime,
+    "closed_on": iso_string_to_datetime,
+}

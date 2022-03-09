@@ -10,27 +10,126 @@
   ],
   "config": {
    "configured_indicators":[
+       
       {
-         "comment":null,
-         "create_index":true,
-         "display_name":"health_post_id",
-         "datatype":"string",
-         "expression":{
-            "type":"root_doc",
-            "expression":{
-               "datatype":null,
-               "type":"property_name",
-               "property_name":"health_post_id"
-            }
+         "type": "expression",
+         "column_id": "health_post_id",
+         "datatype": "string",
+         "display_name": "health_post_id",
+         "expression": {
+           "test": {
+             "operator": "eq",
+             "expression": {
+               "type": "property_name",
+               "property_name": "owner_id",
+               "datatype": null
+             },
+             "type": "boolean_expression",
+             "comment": null,
+             "property_value": "-"
+           },
+           "type": "conditional",
+           "expression_if_true": {
+             "value_expression": {
+               "value_expression": {
+                 "type": "property_name",
+                 "property_name": "_id",
+                 "datatype": null
+               },
+               "type": "related_doc",
+               "related_doc_type": "Location",
+               "doc_id_expression": {
+                 "test": {
+                   "operator": "eq",
+                   "type": "boolean_expression",
+                   "expression": {
+                     "type": "location_parent_id",
+                     "location_id_expression": {
+                       "type": "property_name",
+                       "property_name": "owner_id",
+                       "datatype": null
+                     }
+                   },
+                   "comment": null,
+                   "property_value": ""
+                 },
+                 "expression_if_false": {
+                   "type": "property_name",
+                   "property_name": "owner_id",
+                   "datatype": null
+                 },
+                 "type": "conditional",
+                 "expression_if_true": {
+                   "constant": "-",
+                   "type": "constant"
+                 }
+               }
+             },
+             "type": "related_doc",
+             "related_doc_type": "CommCareCase",
+             "doc_id_expression": {
+               "value_expression": {
+                 "datatype": null,
+                 "type": "property_name",
+                 "property_name": "referenced_id"
+               },
+               "type": "nested",
+               "argument_expression": {
+                 "type": "array_index",
+                 "array_expression": {
+                   "type": "property_name",
+                   "property_name": "indices",
+                   "datatype": null
+                 },
+                 "index_expression": {
+                   "type": "constant",
+                   "constant": 0
+                 }
+               }
+             }
+           },
+           "expression_if_false": {
+             "value_expression": {
+               "type": "property_name",
+               "property_name": "_id",
+               "datatype": null
+             },
+             "type": "related_doc",
+             "related_doc_type": "Location",
+             "doc_id_expression": {
+               "test": {
+                 "operator": "eq",
+                 "type": "boolean_expression",
+                 "expression": {
+                   "type": "location_parent_id",
+                   "location_id_expression": {
+                     "type": "property_name",
+                     "property_name": "owner_id",
+                     "datatype": null
+                   }
+                 },
+                 "comment": null,
+                 "property_value": ""
+               },
+               "expression_if_false": {
+                 "type": "property_name",
+                 "property_name": "owner_id",
+                 "datatype": null
+               },
+               "type": "conditional",
+               "expression_if_true": {
+                 "constant": "-",
+                 "type": "constant"
+               }
+             }
+           }
          },
-         "transform":{
-
-         },
-         "is_primary_key":false,
-         "is_nullable":true,
-         "type":"expression",
-         "column_id":"health_post_id"
-      },
+         "is_nullable": true,
+         "is_primary_key": false,
+         "create_index": false,
+         "transform": {},
+         "comment": null
+       },
       {
          "comment":null,
          "create_index":false,
@@ -1175,10 +1274,19 @@
                         "operator":"not_eq",
                         "type":"boolean_expression",
                         "expression":{
-                           "datatype":null,
-                           "type":"property_name",
-                           "property_name":"is_member_moving_out_of_the_kebele"
-                        },
+                           "type": "coalesce",
+                           "expression": {
+                             "type": "property_name",
+                             "property_name": "is_member_moving_out_of_the_kebele",
+                             "datatype": null
+                           },
+                           "default_expression": {
+                             "type": "constant",
+                             "constant": ""
+                           }
+                         }
+                         
+                         ,
                         "comment":null,
                         "property_value":"yes"
                      }

@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
@@ -10,7 +10,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 from pillowtop.es_utils import initialize_index_and_mapping
-
+from corehq.apps.domain.models import Domain
 
 from ..analytics import users_have_locations
 from ..dbaccessors import (
@@ -26,7 +26,8 @@ from ..dbaccessors import (
     get_user_ids_from_assigned_location_ids,
     get_user_ids_from_primary_location_ids
 )
-from .util import make_loc
+from .util import make_loc, delete_all_locations
+from ..dbaccessors import get_filtered_locations_count
 
 
 class TestUsersByLocation(TestCase):
@@ -66,7 +67,7 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.george.delete(deleted_by=None)
+        cls.george.delete(cls.domain, deleted_by=None)
         cls.domain_obj.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUsersByLocation, cls).tearDownClass()
@@ -109,7 +110,7 @@ class TestUsersByLocation(TestCase):
             [u._id for u in users],
             [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
         )
-        other_user.delete(deleted_by=None)
+        other_user.delete(self.domain, deleted_by=None)
 
     def test_generate_user_ids_from_primary_location_ids_from_couch(self):
         self.assertItemsEqual(
@@ -148,3 +149,49 @@ class TestUsersByLocation(TestCase):
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
         )
+
+
+class TestFilteredLocationsCount(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.ccdomain = Domain(name='cc_user_domain')
+        cls.ccdomain.save()
+
+        bootstrap_location_types(cls.ccdomain.name)
+        cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type='state')
+        cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, parent=cls.loc1, type='district')
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_locations()
+        cls.ccdomain.delete()
+        super().tearDownClass()
+
+    def test_location_filter_location_id(self):
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_ids=[self.loc1._id],
+            **filters), 2)
+
+        filters = {}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_ids=[self.loc2._id],
+            **filters), 1)
+
+    def test_location_filter_active_status(self):
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 0)
+
+        self.loc2.archive()
+        filters = {'is_archived': False}
+        self.assertEqual(get_filtered_locations_count(
+            self.ccdomain.name,
+            root_location_ids=[self.loc1._id],
+            **filters), 1)
+
+        filters = {'is_archived': True}
+        self.assertEqual(get_filtered_locations_count(self.ccdomain.name, **filters), 1)

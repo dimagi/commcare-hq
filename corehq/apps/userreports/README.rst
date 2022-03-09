@@ -389,7 +389,7 @@ Dict expressions
 
 
 "Add Hours" expressions
-''''''''''''''''''''''
+'''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddHoursExpressionSpec
 
@@ -2049,7 +2049,7 @@ Please note that the columns used in distinct on clause should also be present
 in the sort expression as the first set of columns in the same order.
 
 Pick distinct by a single column
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sort expression should have column1 and then other columns if needed
 
 .. code:: json
@@ -2072,7 +2072,7 @@ and distinct on would be
    ["column1"]
 
 Pick distinct result based on two columns
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sort expression should have column1 and column2 in same order,
 More columns can be added after these if needed
@@ -2145,8 +2145,9 @@ Export
 
 A UCR data source can be exported, to back an excel dashboard, for
 instance. The URL for exporting data takes the form
-https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data
-source id]/ The export supports a "$format" parameter which can be any
+`https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/`
+
+The export supports a "$format" parameter which can be any
 of the following options: html, csv, xlsx, xls. The default format is
 csv.
 

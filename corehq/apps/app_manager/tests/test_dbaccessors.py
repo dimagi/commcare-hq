@@ -25,8 +25,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp, LinkedApplication
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from corehq.apps.domain.models import Domain
-from corehq.util.test_utils import DocTestMixin
+from corehq.util.test_utils import DocTestMixin, disable_quickcache
 
 
 class DBAccessorsTest(TestCase, DocTestMixin):
@@ -36,8 +38,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     @classmethod
     def setUpClass(cls):
         super(DBAccessorsTest, cls).setUpClass()
-        cls.project = Domain(name=cls.domain)
-        cls.project.save()
+        cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
         cls.first_saved_version = 2
 
         cls.normal_app = Application.wrap(
@@ -234,19 +235,16 @@ class TestAppGetters(TestCase):
     domain = 'test-app-getters'
 
     @classmethod
+    @patch_validate_xform()
     def setUpClass(cls):
         super(TestAppGetters, cls).setUpClass()
-        cls.project = Domain(name=cls.domain)
-        cls.project.save()
+        cls.project = Domain.get_or_create_with_name(cls.domain)
 
-        app_doc = Application(
-            domain=cls.domain,
-            name='foo',
-            langs=["en"],
-            version=1,
-            modules=[Module()]
-        ).to_json()
-        app = Application.wrap(app_doc)  # app is v1
+        factory = AppFactory(cls.domain, name='foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        app = factory.app
+        app.version = 1
 
         # Make builds v1 - v5. Builds v2 and v4 are released.
         app.save()  # app is v2
@@ -315,6 +313,7 @@ class TestAppGetters(TestCase):
         version = get_latest_released_app_version(self.domain, self.app_id)
         self.assertEqual(version, 4)
 
+    @disable_quickcache
     def test_get_latest_released_app_versions_by_app_id(self):
         versions = get_latest_released_app_versions_by_app_id(self.domain)
         self.assertEqual(versions, {

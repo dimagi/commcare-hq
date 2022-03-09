@@ -1,6 +1,6 @@
 import time
 
-import mock
+from unittest import mock
 from django.http import HttpResponse
 from django.test import override_settings, SimpleTestCase, TestCase
 from django.urls import path, include
@@ -157,7 +157,7 @@ class TestLogLongRequestMiddlewareReports(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super().tearDownClass()
 

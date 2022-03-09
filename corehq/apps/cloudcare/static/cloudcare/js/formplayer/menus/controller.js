@@ -16,6 +16,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
          a list of entities (cases) and their details
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
+            if (menuResponse.abort) {
+                return;
+            }
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
@@ -24,7 +27,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             // show any notifications from Formplayer
             if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
-                FormplayerFrontend.getChannel().request("handleNotification", menuResponse.notification);
+                FormplayerFrontend.trigger("handleNotification", menuResponse.notification);
             }
 
             // If redirect was set, clear and go home.
@@ -34,6 +37,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
 
             var urlObject = Util.currentUrlToObject();
+
+            if (urlObject.endpointId) {
+                urlObject.replaceEndpoint(menuResponse.selections);
+                Util.setUrlToObject(urlObject);
+            }
 
             // If we don't have an appId in the URL (usually due to form preview)
             // then parse the appId from the response.
@@ -67,7 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var selectDetail = function (caseId, detailIndex, isPersistent) {
         var urlObject = Util.currentUrlToObject();
         if (!isPersistent) {
-            urlObject.addStep(caseId);
+            urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {
@@ -172,7 +180,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
-        var templateForms = detailObject.get('templateForms') || [];
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -180,9 +187,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
-            obj.templateForm = templateForms[i];
             obj.id = i;
-            if (obj.templateForm === 'markdown') {
+            if (obj.style.displayFormat === 'Markdown') {
                 obj.html = DOMPurify.sanitize(md.render(details[i]));
             }
             detailModel.push(obj);

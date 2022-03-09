@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
@@ -34,8 +34,8 @@ class DigestOtaRestoreTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.commcare_user.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         delete_all_domains()
         super(DigestOtaRestoreTest, cls).tearDownClass()
 

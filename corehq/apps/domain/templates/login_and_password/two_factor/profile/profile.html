@@ -17,6 +17,7 @@
     </p>
   {% else %}
     {% if default_device %}
+      {% if allow_phone_2fa %}
       <fieldset>
         <legend>{% trans "Backup Phone Numbers" %}</legend>
         <p>{% blocktrans %}If your primary method is not available, we are able to
@@ -38,6 +39,7 @@
               class="btn btn-default">{% trans "Add Phone Number" %}</a></p>
         <br/>
       </fieldset>
+      {% endif %}
 
       <fieldset>
         <legend>{% trans "Backup Tokens" %}</legend>

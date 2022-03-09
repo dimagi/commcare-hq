@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, JsonResponse
@@ -31,9 +32,11 @@ from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user_via_reg_form
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.users.forms import DomainRequestForm
 from corehq.apps.users.models import CouchUser, DomainRequest, Invitation
+from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_INVITATION
 
 
@@ -111,6 +114,14 @@ class UserInvitationView(object):
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user, strict=True)
                 invitation.accept_invitation_and_join_domain(couch_user)
+                log_user_change(
+                    by_domain=invitation.domain,
+                    for_domain=invitation.domain,
+                    couch_user=couch_user,
+                    changed_by_user=CouchUser.get_by_user_id(invitation.invited_by),
+                    changed_via=USER_CHANGE_VIA_INVITATION,
+                    change_messages=UserChangeMessage.domain_addition(invitation.domain)
+                )
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
@@ -142,7 +153,8 @@ class UserInvitationView(object):
                         form,
                         created_by=invited_by_user,
                         created_via=USER_CHANGE_VIA_INVITATION,
-                        domain=invitation.domain
+                        domain=invitation.domain,
+                        is_domain_admin=False,
                     )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
@@ -152,7 +164,7 @@ class UserInvitationView(object):
                         _('You have been added to the "{}" project space.').format(self.domain)
                     )
                     authenticated = authenticate(username=form.cleaned_data["email"],
-                                                 password=form.cleaned_data["password"])
+                                                 password=form.cleaned_data["password"], request=request)
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
                     track_workflow(request.POST['email'],
@@ -161,7 +173,8 @@ class UserInvitationView(object):
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
-                if CouchUser.get_by_username(invitation.email):
+                if (CouchUser.get_by_username(invitation.email)
+                        or User.objects.filter(username__iexact=invitation.email).count() > 0):
                     login_url = reverse("login")
                     accept_invitation_url = reverse(
                         'domain_accept_invitation',

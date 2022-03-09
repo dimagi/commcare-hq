@@ -254,7 +254,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             node.xml.getparent().remove(node.xml)
         escaped_trans = self.escape_output_value(new_translation)
         value_node.xml.text = escaped_trans.text
-        for n in escaped_trans.getchildren():
+        for n in escaped_trans:
             value_node.xml.append(n)
 
     def _looks_like_markdown(self, str):

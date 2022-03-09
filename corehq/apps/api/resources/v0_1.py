@@ -15,7 +15,9 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
+from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, Permissions, WebUser
+from corehq.const import USER_CHANGE_VIA_API
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
@@ -38,6 +40,20 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
         except KeyError:
             user = None
         return user
+
+    @staticmethod
+    def _get_user_change_logger(bundle):
+        for_domain = bundle.obj.domain if bundle.obj.is_commcare_user() else None
+        return UserChangeLogger(
+            upload_domain=bundle.request.domain,
+            user_domain=for_domain,
+            user=bundle.obj,
+            is_new_user=False,  # only used for tracking updates, creation already tracked by model's create method
+            changed_by_user=bundle.request.couch_user,
+            changed_via=USER_CHANGE_VIA_API,
+            upload_record_id=None,
+            user_domain_required_for_log=bundle.obj.is_commcare_user()
+        )
 
     class Meta(CustomResourceMeta):
         list_allowed_methods = ['get']
@@ -134,6 +150,8 @@ class WebUserResource(UserResource):
         username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
+            if not (user and user.is_member_of(domain)):
+                user = None
             return [user] if user else []
         return list(WebUser.by_domain(domain))
 

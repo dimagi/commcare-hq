@@ -1,9 +1,12 @@
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
-from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.registry.schema import RegistrySchemaBuilder
+from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
     DATA_SOURCE_TYPE_FORM,
@@ -29,10 +32,12 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    DataSourceBuilder,
-    ReportBuilderDataSourceReference,
+    UnmanagedDataSourceHelper,
+    ApplicationFormDataSourceHelper,
+    ApplicationCaseDataSourceHelper,
+    RegistryCaseDataSourceHelper,
 )
-from corehq.apps.userreports.tests.utils import get_simple_xform
+from corehq.apps.userreports.tests.utils import get_simple_xform, get_sample_registry_data_source
 from corehq.util.test_utils import flag_enabled
 
 
@@ -67,10 +72,14 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     def test_builder_bad_type(self):
         with self.assertRaises(AssertionError):
-            DataSourceBuilder(self.domain, self.app, 'invalid-type', self.form.unique_id)
+            ApplicationFormDataSourceHelper(self.domain, self.app, 'case', self.form.unique_id)
+
+    def test_builder_bad_type_case(self):
+        with self.assertRaises(AssertionError):
+            ApplicationCaseDataSourceHelper(self.domain, self.app, 'form', self.form.unique_id)
 
     def test_builder_for_forms(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        builder = ApplicationFormDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
             "type": "and",
@@ -109,7 +118,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('First Name', name_prop.get_text())
 
     def test_builder_for_cases(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
         self.assertEqual('CommCareCase', builder.source_doc_type)
         expected_filter = {
             "operator": "eq",
@@ -135,7 +144,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
 
     @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
     def test_owner_as_location(self):
-        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
@@ -160,13 +169,36 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             owner_location_prop_archived_w_descendants.get_text()
         )
 
+    def test_builder_for_registry(self):
+        case_type_for_registry = CaseType(domain=self.domain, name='registry_prop', fully_generated=True)
+        case_type_for_registry.save()
+        CaseProperty(case_type=case_type_for_registry, name='registry_property',
+                     deprecated=False, data_type='plain', group='').save()
+        user = create_user("admin", "123")
+        registry = create_registry_for_test(user, self.domain, invitations=[
+            Invitation('foo', accepted=True), Invitation('user-reports', accepted=True),
+        ], name='registry')
+        registry_data_source = get_sample_registry_data_source(registry_slug=registry.slug)
+        registry_data_source.save()
+        registry.schema = RegistrySchemaBuilder(["registry_prop"]).build()
+        registry.save()
+
+        builder = RegistryCaseDataSourceHelper(self.domain, registry.slug, 'case', case_type_for_registry.name)
+
+        expected_property_names = ['closed', 'closed_on', 'registry_property', 'computed/owner_name',
+                                   'computed/user_name', 'commcare_project']
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
+        registry_prop = builder.data_source_properties['registry_property']
+        self.assertEqual('registry_property', registry_prop.get_id())
+        self.assertEqual('registry property', registry_prop.get_text())
+
 
 class DataSourceReferenceTest(ReportBuilderDBTest):
 
     def test_reference_for_forms(self):
         form_data_source = get_form_data_source(self.app, self.form)
         form_data_source.save()
-        reference = ReportBuilderDataSourceReference(
+        reference = UnmanagedDataSourceHelper(
             self.domain, self.app, DATA_SOURCE_TYPE_RAW, form_data_source._id,
         )
         # todo: we should filter out some of these columns
@@ -190,7 +222,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
     def test_reference_for_cases(self):
         case_data_source = get_case_data_source(self.app, self.case_type)
         case_data_source.save()
-        reference = ReportBuilderDataSourceReference(
+        reference = UnmanagedDataSourceHelper(
             self.domain, self.app, DATA_SOURCE_TYPE_RAW, case_data_source._id,
         )
         # todo: we should filter out some of these columns
@@ -447,7 +479,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
                 'columns':
                     '['
                     '   {"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"},'
-                    '   {"property": "/data/state", "display_text": "state", "calculation": "Count Per Choice"}'
+                    '   {"property": "/data/state", "display_text": "state", "calculation": "Count per Choice"}'
                     ']',
             }
         )

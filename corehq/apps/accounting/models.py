@@ -383,6 +383,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False, db_index=True)
+    is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
@@ -508,8 +509,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
     def get_domains(self):
-        subscriptions = Subscription.visible_objects.filter(account_id=self.id, is_active=True)
-        return [s.subscriber.domain for s in subscriptions]
+        return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
+                    'subscriber__domain', flat=True))
 
     def has_enterprise_admin(self, email):
         return self.is_customer_billing_account and email in self.enterprise_admin_emails
@@ -529,18 +530,17 @@ class BillingAccount(ValidateModelMixin, models.Model):
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
         from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
-        old_user = self.auto_pay_user
+        old_username = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        old_web_user = WebUser.get_by_username(old_user)
-        if old_web_user:
-            old_user_name = old_web_user.first_name
-        else:
-            old_user_name = old_user
+
+        old_web_user = WebUser.get_by_username(old_username)
+        old_user_first_name = old_web_user.first_name if old_web_user else old_username
+        email = old_web_user.get_email() if old_web_user else old_username
 
         context = {
             'new_user': new_user,
-            'old_user_name': old_user_name,
+            'old_user_name': old_user_first_name,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
                                                  args=[domain]),
@@ -549,7 +549,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         send_html_email_async(
             subject,
-            old_user,
+            email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
             text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
         )
@@ -561,6 +561,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
         new_user_name = web_user.first_name if web_user else self.auto_pay_user
+        email = web_user.get_email() if web_user else self.auto_pay_user
         try:
             last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
@@ -568,7 +569,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         context = {
             'name': new_user_name,
-            'email': self.auto_pay_user,
+            'username': web_user.username if web_user else self.auto_pay_user,
             'domain': domain,
             'last_4': last_4,
             'billing_account_name': self.name,
@@ -579,10 +580,15 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         send_html_email_async(
             subject,
-            self.auto_pay_user,
+            email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
+
+    @staticmethod
+    def should_show_sms_billable_report(domain):
+        account = BillingAccount.get_account_by_domain(domain)
+        return account.is_sms_billable_report_visible
 
 
 class BillingContactInfo(models.Model):
@@ -773,7 +779,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
-    is_customer_software_plan = models.BooleanField(default=False)
+    is_customer_software_plan = models.BooleanField(default=False)  # can plan be used in customer billing account
     max_domains = models.IntegerField(blank=True, null=True)
     is_annual_plan = models.BooleanField(default=False)
 
@@ -1742,7 +1748,7 @@ class Subscription(models.Model):
         return context
 
     def _reminder_email_contacts(self, domain_name):
-        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if not self.is_trial:
             billing_contact_emails = (
@@ -1770,6 +1776,16 @@ class Subscription(models.Model):
         if no_current_entry_point and self_serve and not self.is_trial:
             self.account.entry_point = EntryPoint.SELF_STARTED
             self.account.save()
+
+    @classmethod
+    def get_active_domains_for_account(cls, account_name):
+        try:
+            return cls.visible_objects.filter(
+                is_active=True,
+                account=account_name,
+            ).values_list('subscriber__domain', flat=True).distinct()
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):

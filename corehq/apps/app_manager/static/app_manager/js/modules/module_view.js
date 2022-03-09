@@ -9,7 +9,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
             var details = initial_page_data('details');
@@ -47,6 +47,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchAgainLabel: options.search_again_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
+                    dataRegistry: options.data_registry,
+                    dataRegistryWorkflow: options.data_registry_workflow,
+                    additionalRegistryCases: options.additional_registry_cases,
+                    customRelatedCaseProperty: options.custom_related_case_property,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -158,15 +162,25 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
                 });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
-                self.endOfRegistrationOptions = [
-                    {id: 'case_list', text: gettext('Go back to case list')},
-                    {id: 'default', text: gettext('Proceed with registered case')},
-                ];
+                self.endOfRegistrationOptions = ko.computed(function () {
+                    if (!self.caseListForm() || formOptions[self.caseListForm()].is_registration_form) {
+                        return [
+                            {id: 'case_list', text: gettext('Go back to case list')},
+                            {id: 'default', text: gettext('Proceed with registered case')},
+                        ];
+                    } else {
+                        return [{id: 'case_list', text: gettext('Go back to case list')}];
+                    }
+                });
 
                 self.formMissing = ko.computed(function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
                 });
-
+                self.caseListForm.subscribe(function () {
+                    if (self.caseListForm() && !formOptions[self.caseListForm()].is_registration_form) {
+                        self.postFormWorkflow('case_list');
+                    }
+                });
                 self.formHasEOFNav = ko.computed(function () {
                     if (!self.caseListForm()) {
                         return false;

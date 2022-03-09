@@ -2,7 +2,6 @@ from django.core.management import BaseCommand
 from django.db.models import Q
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
-from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, CaseSearchES
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
@@ -36,7 +35,7 @@ class Command(BaseCommand):
             dest='status',
             default=False,
             help='Show status of remaining domains. '
-                 'Values: migrated, remaining, couch.'
+                 'Values: migrated, remaining.'
         )
 
     @staticmethod
@@ -56,17 +55,14 @@ class Command(BaseCommand):
 
     def _get_domain_lists(self):
         migrated = self._migrated_domains()
-        couch_domains = []
         remaining = []
 
         for domain in self._domains_in_explore_case_data_beta():
             if domain in migrated:
                 pass
-            elif not Domain.get_by_name(domain).use_sql_backend:
-                couch_domains.append(domain)
             else:
                 remaining.append(domain)
-        return remaining, couch_domains, migrated
+        return remaining, migrated
 
     def handle(self, **options):
         bulk_num = options.pop('bulk_num')
@@ -75,10 +71,10 @@ class Command(BaseCommand):
 
         self.stdout.write('\n\n')
 
-        remaining, couch_domains, migrated = self._get_domain_lists()
+        remaining, migrated = self._get_domain_lists()
 
         if status:
-            self.show_status(remaining, couch_domains, migrated, status)
+            self.show_status(remaining, migrated, status)
             return
 
         if domain:
@@ -92,10 +88,6 @@ class Command(BaseCommand):
             self.migrate_domain(domain)
         elif not remaining:
             self.stdout.write('No sql domains needing migration\n\n\n')
-            if couch_domains:
-                self.stdout.write('Migrate these couch domains individually:\n')
-                self.stdout.write('\n'.join(couch_domains))
-                self.stdout.write('\n\n')
             return
         else:
             self.bulk_migrate(remaining, bulk_num)
@@ -125,15 +117,12 @@ class Command(BaseCommand):
         ECD_MIGRATED_DOMAINS.set(domain, True, NAMESPACE_DOMAIN)
         domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=domain).build().reindex()
-        self.stdout.write('Done...\n\n'.format(domain))
+        self.stdout.write('Done...\n\n')
 
-    def show_status(self, remaining, couch_domains, migrated, status):
+    def show_status(self, remaining, migrated, status):
         if remaining and 'remaining' in status:
             self.stdout.write('\n\nDomains Needing Migration:\n')
             self.stdout.write('\n'.join(remaining))
-        if couch_domains and 'couch' in status:
-            self.stdout.write('\n\nCouch Domains Needing Careful Migration:\n')
-            self.stdout.write('\n'.join(couch_domains))
         if migrated and 'migrated' in status:
             self.stdout.write('\n\nDomains Already Migrated:\n')
             self.print_totals(migrated)

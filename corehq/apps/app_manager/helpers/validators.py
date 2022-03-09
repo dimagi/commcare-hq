@@ -11,7 +11,7 @@ from django_prbac.exceptions import PermissionDenied
 from lxml import etree
 from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
@@ -26,7 +26,7 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
     FormNotFoundException,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
     ParentModuleReferenceError,
@@ -40,6 +40,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
@@ -327,6 +328,7 @@ class ModuleBaseValidator(object):
         This is the real validation logic, to be overridden/augmented by subclasses.
         '''
         errors = []
+        app = self.module.get_app()
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
@@ -336,14 +338,23 @@ class ModuleBaseValidator(object):
             ))
         if self.module.case_list_form.form_id:
             try:
-                form = self.module.get_app().get_form(self.module.case_list_form.form_id)
+                form = app.get_form(self.module.case_list_form.form_id)
             except FormNotFoundException:
                 errors.append({
                     'type': 'case list form missing',
                     'module': self.get_module_info()
                 })
             else:
-                if not form.is_registration_form(self.module.case_type):
+                if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                    if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
+                        errors.append({
+                            'type': 'invalid case list followup form',
+                            'module': self.get_module_info(),
+                            'form': form,
+                        })
+                elif not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'case list form not registration',
                         'module': self.get_module_info(),
@@ -355,6 +366,24 @@ class ModuleBaseValidator(object):
                 errors.append({
                     'type': 'module filter has xpath error',
                     'xpath_error': message,
+                    'module': self.get_module_info(),
+                })
+
+        if self.module.put_in_root and self.module.session_endpoint_id:
+            errors.append({
+                'type': 'endpoint to display only forms',
+                'module': self.get_module_info(),
+            })
+
+        if module_uses_smart_links(self.module):
+            if not self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'smart links missing endpoint',
+                    'module': self.get_module_info(),
+                })
+            if self.module.parent_select.active:
+                errors.append({
+                    'type': 'smart links select parent first',
                     'module': self.get_module_info(),
                 })
 
@@ -373,13 +402,13 @@ class ModuleBaseValidator(object):
                 try:
                     if not should_sync_hierarchical_fixture(domain_obj, self.module.get_app()):
                         # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
+                        raise LocationXPathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
+                except LocationXPathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': str(e),
@@ -746,10 +775,16 @@ class FormBaseValidator(object):
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
             for form_link in self.form.form_links:
-                try:
-                    self.form.get_app().get_form(form_link.form_id)
-                except FormNotFoundException:
-                    errors.append(dict(type='bad form link', **meta))
+                if form_link.form_id:
+                    try:
+                        self.form.get_app().get_form(form_link.form_id)
+                    except FormNotFoundException:
+                        errors.append(dict(type='bad form link', **meta))
+                else:
+                    try:
+                        self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
+                    except ModuleNotFoundException:
+                        errors.append(dict(type='bad form link', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
@@ -839,7 +874,7 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names.update(subcase_action.case_properties)
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
-                and not self.form.actions.open_case.name_path:
+                and not self.form.actions.open_case.name_update.question_path:
             errors.append({'type': 'case_name required'})
 
         errors.extend(self.check_case_properties(
@@ -907,7 +942,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
-                if not action.name_path:
+                if not action.name_update.question_path:
                     errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
                 for case_index in action.case_indices:

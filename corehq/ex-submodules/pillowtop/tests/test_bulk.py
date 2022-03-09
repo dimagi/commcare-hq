@@ -1,10 +1,8 @@
 import uuid
 
 from django.test import SimpleTestCase, TestCase
-from mock import Mock, patch
-from six.moves import range
+from unittest.mock import Mock, patch
 
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
@@ -13,10 +11,8 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    use_sql_backend,
+    sharded,
 )
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -55,8 +51,8 @@ class BulkTest(SimpleTestCase):
         self.assertEqual([(1, 'e1'), (2, 'e2')], errors)
 
 
-@use_sql_backend
-@es_test
+@sharded
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -65,7 +61,7 @@ class TestBulkDocOperations(TestCase):
         cls.case_ids = [
             uuid.uuid4().hex for i in range(4)
         ]
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             for case_id in cls.case_ids:
                 create_form_for_test(cls.domain, case_id)
 
@@ -145,7 +141,9 @@ class TestBulkDocOperations(TestCase):
         )
 
 
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkOperationsCaseToSQL(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -162,7 +160,7 @@ class TestBulkOperationsCaseToSQL(TestCase):
         cls.case_ids = [
             uuid.uuid4().hex for i in range(4)
         ]
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             for case_id in cls.case_ids:
                 create_and_save_a_case(cls.domain, case_id, case_id)
 
@@ -192,8 +190,6 @@ class TestBulkOperationsCaseToSQL(TestCase):
 
         changes = self._changes_from_ids(self.case_ids)
 
-        set_local_domain_sql_backend_override(self.domain)
-        self.addCleanup(clear_local_domain_sql_backend_override, self.domain)
         retry, errors = processor.process_changes_chunk(changes)
         self.assertEqual([], retry)
         self.assertEqual([], errors)

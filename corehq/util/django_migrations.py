@@ -121,7 +121,7 @@ def run_once_off_migration(command_name, *args, required_commit=None, **kwargs):
     manually if the command fails or has since been removed from the codebase"""
     @skip_on_fresh_install
     def _run_command(apps, schema_editor):
-        run_management_command_or_exit(command_name, required_commit, *args, **kwargs)
+        run_management_command_or_exit(command_name, required_commit=required_commit, *args, **kwargs)
 
     return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
 
@@ -145,7 +145,7 @@ def run_management_command_or_exit(command_name, *args, required_commit=None, cu
 
                 commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
 
-                commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
+                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
 
                 commcare-cloud <env> deploy commcare
             """)
@@ -166,7 +166,7 @@ def block_upgrade_for_removed_migration(commit_with_migration):
             version must be used.
         """)
         print("")
-        print("""
+        print(f"""
         Run the following commands to run the migration and get up to date:
 
             commcare-cloud <env> fab setup_limited_release --set code_branch={commit_with_migration}

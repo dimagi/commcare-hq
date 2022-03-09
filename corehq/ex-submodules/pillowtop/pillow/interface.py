@@ -112,7 +112,8 @@ class PillowBase(metaclass=ABCMeta):
                 processor.bootstrap_if_needed()
             time.sleep(10)
         else:
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+            while True:
+                self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -187,6 +188,9 @@ class PillowBase(metaclass=ABCMeta):
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
+        if forever:
+            if context.changes_seen and change:
+                self._update_checkpoint(change, context)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """

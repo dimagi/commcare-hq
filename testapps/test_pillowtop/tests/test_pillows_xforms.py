@@ -1,5 +1,5 @@
 import copy
-import mock
+from unittest import mock
 from django.test import SimpleTestCase
 from django.conf import settings
 from corehq.apps.api.es import report_term_filter

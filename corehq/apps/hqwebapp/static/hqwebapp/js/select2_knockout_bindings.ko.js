@@ -32,7 +32,6 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
         self.init = function (element) {
             var $el = $(element);
             $el.select2({
-                multiple: false,
                 width: "element",
             });
         };
@@ -78,7 +77,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
 
         self.update = function (element, valueAccessor, allBindings) {
             var $el = $(element),
-                newValue = ko.unwrap(allBindings().value) || $el.val();
+                newValue = ko.unwrap(allBindings().value);
 
             ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
 

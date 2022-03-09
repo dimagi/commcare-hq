@@ -1,4 +1,4 @@
-import cgi
+import html
 from collections import namedtuple
 
 from django.urls import reverse
@@ -74,7 +74,7 @@ def get_status_display(event, sms=None):
     # Sometimes the additional information from touchforms has < or >
     # characters, so we need to escape them for display
     if error_message:
-        return '%s - %s' % (_(status), cgi.escape(error_message))
+        return '%s - %s' % (_(status), html.escape(error_message))
     else:
         return _(status)
 
@@ -105,6 +105,8 @@ def get_sms_status_display_raw(sms):
     if sms.direction == OUTGOING:
         if sms.workflow == WORKFLOW_FORWARD:
             return SMS.STATUS_FORWARDED, detail
+        if sms.custom_metadata and sms.custom_metadata.get('gateway_delivered', False):
+            return SMS.STATUS_DELIVERED, detail
         return SMS.STATUS_SENT, detail
     return SMS.STATUS_UNKNOWN, detail
 

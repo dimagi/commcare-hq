@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -14,7 +14,7 @@ from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 
 
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
@@ -36,7 +36,7 @@ class TestStartSession(TestCase):
         cls.case_id = uuid.uuid4().hex
         cls.recipient = None
 
-        cls.case = CommCareCaseSQL(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
+        cls.case = CommCareCase(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
         cls.web_user = WebUser(username='web-user@example.com', _id=uuid.uuid4().hex, language='hin')
 
     @classmethod
@@ -114,7 +114,12 @@ class TestStartSession(TestCase):
         expected_session_data = {
             'device_id': 'commconnect', 'app_version': '2.0', 'domain': self.domain,
             'username': self.recipient.raw_username, 'user_id': self.recipient.get_id,
-            'user_data': {'commcare_first_name': None, 'commcare_last_name': None, 'commcare_phone_number': None},
+            'user_data': {
+                'commcare_first_name': None,
+                'commcare_last_name': None,
+                'commcare_phone_number': None,
+                'commcare_project': self.domain,
+            },
             'app_id': None
         }
         xform_config_mock.assert_called_once_with(

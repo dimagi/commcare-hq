@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 from corehq.blobs.models import BlobMeta, DeletedBlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB

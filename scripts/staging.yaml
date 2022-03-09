@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -50,43 +50,42 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
-    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
+    # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    #- fr/user-data-jit            # Farid September 2
-    - sr/case-reindex-staging # Sravan Oct 14
     - sr/es-alias # Sravan Nov 18
-    - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-    - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-    - dmr/add-metric-for-new-repeat-records  # Danny Apr 14
-    - dependabot/pip/requirements/certifi-2021.5.30 # SK / Joel May 31
-    - smh/embedded-tableau # Steph May 7
-    - bmb/sso-remove-toggle  # Biyeun 25th May, in pilot & QA please do not remove!
-    - cs/dhis-readable-response  # Charl 26 May
     - sr/cs-multiselect  # Sravan May 31
-    - fr/remote-linked-ucr      # Farid June 4
-    - bmb/sso-documentation-links  # Biyeun June 11, in pilot & QA please do not remove!
-    - sr/mixed-case-types  # Sravan June 15
-    - mjr/hidden-report-columns  # Matt June 15
-    - gh/improve-erm-ui # Graham June 16 [QA]
-    - rn_disallow_yui_cors # Rohit Negi
-    - mk/user-history/base # MK June 21 [QA]
-    - cs/SC-1390-put_turn_behind_ff+mk/user-history/report
-    - mk/user-history/bulk-upload # MK June 28 [QA]
-    - mk/user-history/remove-membership+sk/role-to-sql-auth
-    - mk/user-history/remove-membership # MK June 29 [QA]
-    - jm/repeater-domain-admins  # Joel June 21
-    - sk/role-to-sql-auth  # Simon June 23
-    #- jls/enterprise-user-overview  # Jenny June 24
-    - cs/SC-1580-improve-dhis2-complete-date-workflow  # Charl June 25
-    - sp/csrf # Amit + Shivam June 30
-    - bmb/sso-debug-user-data  # Biyeun June 30
-    - bmb/sso-force-username-lowercase  # Biyeun June 30 [QA]
-    - sr/fup-form  # Sravan July 1
-    - bmb/sso-force-username-lowercase  # Biyeun July 1 [QA]
-    - jls/merge-migrations # Jenny July 1
-    - gh/split-toggles-and-previews # Graham July 1 [QA]
-    - bmb/sso-fix-inactive-first-domain  # Biyeun July 2 [QA]
-    - gh/fix-keyword-bug # Graham July 2 [QA]
-    - bmb/sso-fix-attempt-session-timeout  # Biyeun July 2
+    - ce/bulk-case-search # Cal July 6
+    #- sr/memoized-toggle # Sravan July 26
+    - dmr/throttle-system-forms  # Danny Sept 24
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - es/mobile-auth # Simon Nov 23
+    - jm/elastic-modernize-mappings+sr/case-reindex-staging  # Joel Dec 3
+    - jm/elastic-modernize-mappings  # Joel Dec 3
+    - sr/case-reindex-staging # Sravan Oct 14
+    - sr/datums  # sravan Dec 21
+    - ml/remove-pickles-reports # Minha Jan 24
+    - jls/drop-case-search-limit # Jenny Jan 31
+    - do/compare-case-properties # Dominic Feb 2
+    - ml/remove-pickles-user-importer # Minha Feb 2
+    - mk/support-multibar-reports # MK Dec 14
+    - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
+    - ad/save-only-edited-fields-migration # Addison Feb 4
+    - cs/SC-1882-shared-saved-reports-m # Charl Feb 8
+    - smh/data-registry-reports-permissions # Steph Feb 8
+    - gh/mrm/base # Graham Feb 8
+    - smh/data-registry-reports-permissions-domain-choice-provider # Steph Feb 14
+    - mjr/export-metrics # Matt Feb 14
+    - gh/form-version-bug # Graham Feb 15
+    - ap/restrict-expressions-ui # Amit Feb 16
+    - gh/mrm/erm-includes-mrm # Graham Feb 17
+    - gh/mrm/superuser # Graham Feb 18
+    - gh/mrm/newly-linked-domain # Graham Feb 20
+    - gh/erm/consolidate-enterprise-roles # Graham Feb 20
+    - gh/pickles/motech # Graham Feb 22
+    - jls/force-manual-action-per-command # Jenny Feb 22
+    - cs/support-12674_check_permission_on_web_user # Charl Feb 23
 submodules: { }

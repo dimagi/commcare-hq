@@ -86,6 +86,13 @@ def store_full_name_in_saml_user_data(request, first_name, last_name):
 
 
 @unit_testing_only
+def store_display_name_in_saml_user_data(request, display_name):
+    request.session['samlUserdata'] = {
+        'http://schemas.microsoft.com/identity/claims/displayname': [display_name],
+    }
+
+
+@unit_testing_only
 def get_public_cert_file(expiration_in_seconds=certificates.DEFAULT_EXPIRATION):
     key_pair = certificates.create_key_pair()
     cert = certificates.create_self_signed_cert(

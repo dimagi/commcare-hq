@@ -14,11 +14,12 @@
       <div class="alert alert-warning" role="alert">{% trans "This account is disabled." %}</div>
     {% endif %}
     <dl>
-      <dt>{% trans "ID" %}</dt>
-      <dd>{{ web_user.get_id }}
+      <div><b>{% trans "ID" %}:</b>
+        {{ web_user.get_id }}
         <small><a href="{% url 'raw_doc' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
         <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
-      </dd>
+      </div>
+      <div><b>{% trans "Is Superuser" %}:</b> {{ web_user.is_superuser }}</div>
     </dl>
     <div class="btn-toolbar">
       <a class="btn btn-default" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>

@@ -2,7 +2,6 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.util.test_utils import create_test_case
 
@@ -46,15 +45,14 @@ class CustomRecipientTest(TestCase):
         self.user.set_location(self.child_location)
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.child_location.delete()
         self.parent_location.delete()
         self.child_location_type.delete()
         self.parent_location_type.delete()
         self.domain_obj.delete()
 
-    @run_with_all_backends
-    def test_recipient_case_owner_location_parent(self):
+    def test_recipient_mobile_worker_case_owner_location_parent(self):
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.user.get_id) as case:
             self.assertEqual(case.owner_id, self.user.get_id)
 
@@ -64,7 +62,7 @@ class CustomRecipientTest(TestCase):
                     domain=self.domain,
                     case_id=case_id or case.case_id,
                     recipient_type='CustomRecipient',
-                    recipient_id='CASE_OWNER_LOCATION_PARENT'
+                    recipient_id='MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT'
                 )
 
             # Test the recipient is returned correctly
@@ -78,6 +76,31 @@ class CustomRecipientTest(TestCase):
             # Remove child location
             self.user.unset_location()
             self.assertIsNone(instance().recipient)
+
+            # Remove case
+            self.assertIsNone(instance(case_id='does-not-exist').recipient)
+
+    def test_recipient_location_case_owner_parent_location(self):
+        with create_test_case(
+            self.domain,
+            'test-case',
+            'test-name',
+            owner_id=self.child_location.location_id
+        ) as case:
+            self.assertEqual(case.owner_id, self.child_location.location_id)
+
+            def instance(case_id=''):
+                # recipient is memoized
+                return CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=case_id or case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id='LOCATION_CASE_OWNER_PARENT_LOCATION'
+                )
+
+            # Test the recipient is returned correctly
+            self.assertTrue(isinstance(instance().recipient, SQLLocation))
+            self.assertEqual(instance().recipient.pk, self.parent_location.pk)
 
             # Remove case
             self.assertIsNone(instance(case_id='does-not-exist').recipient)

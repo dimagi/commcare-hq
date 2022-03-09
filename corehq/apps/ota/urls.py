@@ -9,6 +9,8 @@ from corehq.apps.ota.views import (
     recovery_measures,
     restore,
     search,
+    registry_case,
+    case_restore,
 )
 
 urlpatterns = [
@@ -22,4 +24,6 @@ urlpatterns = [
     url(r'^heartbeat/(?P<app_build_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
     url(r'^get_next_id/$', get_next_id, name='get_next_id'),
     url(r'^recovery_measures/(?P<build_id>[\w-]+)/$', recovery_measures, name='recovery_measures'),
+    url(r'^registry_case/(?P<app_id>[\w-]+)/$', registry_case, name='registry_case'),
+    url(r'^case_restore/(?P<case_id>[\w\-]+)/$', case_restore, name='case_restore'),
 ]

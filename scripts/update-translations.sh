@@ -10,6 +10,30 @@ function abort () {
     exit 1
 }
 
+function help () {
+    echo "Update Translations"
+    echo
+    echo "Syntax: scripts/updateTranslations [-h|--no-fuzzy|--no-obsolete]"
+    echo "options:"
+    echo " --no-fuzzy   Remove fuzzy translations"
+    echo " --no-obsolte Remove obsolete translations"
+    echo " -h|--help    Print this help"
+    echo
+}
+
+while getopts ":h-:" option; do
+    if [ "$option" = "-" ]; then
+        option="${OPTARG%%=*}"
+    fi
+
+    case $option in
+        h | help )
+            help
+            exit;;
+    esac
+done
+
+
 has_local_changes=`git diff-index HEAD` && true
 if [[ $has_local_changes ]]
 then
@@ -42,10 +66,10 @@ echo "Pulling translations from transifex"
 tx pull -f
 
 echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build'
+./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' $@
 
 echo "Gathering javascript translation strings.  This will also probably take a while"
-./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs'
+./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' $@
 
 set +e   # Temporarily disable strict mode so we can respond any failure
 echo "Compiling translation files."
@@ -57,7 +81,7 @@ if [[ $? -ne "0" ]]; then
     echo "The output above from compilemessages should have specifics about the locale/ file and line where the error(s) occurred."
     echo "1. Open those files, go to the appropriate lines and fix the errors."
     echo "2. Run './manage.py compilemessages' again to make sure it's fixed."
-    echo "3. Run 'tx push -st' to update them on transifex."
+    echo "3. Run 'tx push -s -t' to update them on transifex."
     echo "4. Now if you do 'git checkout -- locale' and run this script again, it should succeed."
     echo "5. You should probably also reach out to the translator to make sure they don't mess this up again."
     abort
@@ -65,7 +89,7 @@ fi
 set -e
 
 echo "Pushing updates to transifex."
-tx push -st
+tx push -s -t
 
 has_local_changes=`git diff-index HEAD` && true
 if [[ ! $has_local_changes ]]

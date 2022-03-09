@@ -1,11 +1,91 @@
 import datetime
+import inspect
+import logging
 
-from celery.signals import before_task_publish, task_prerun, task_postrun
 from django.core.cache import cache
+
+from celery.signals import before_task_publish, task_postrun, task_prerun
+
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
-from dimagi.utils.parsing import string_to_utc_datetime
+
+
+@before_task_publish.connect
+def celery_add_time_sent(headers=None, body=None, **kwargs):
+    info = headers if 'task' in headers else body
+    task_id = info['id']
+    eta = info['eta']
+    if eta:
+        eta = TimeToStartTimer.parse_iso8601(eta)
+    TimeToStartTimer(task_id).start_timing(eta)
+
+
+@task_prerun.connect
+def celery_record_time_to_start(task_id=None, task=None, **kwargs):
+    from corehq.util.metrics import metrics_counter, metrics_gauge
+    from corehq.util.metrics.const import MPM_MAX
+
+    tags = {
+        'celery_task_name': task.name,
+        'celery_queue': task.queue,
+    }
+
+    timer = TimeToStartTimer(task_id)
+    try:
+        time_to_start = timer.stop_and_pop_timing()
+    except TimingNotAvailable:
+        metrics_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
+    else:
+        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags,
+            multiprocess_mode=MPM_MAX)
+        get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
+
+    TimeToRunTimer(task_id).start_timing()
+
+
+@task_postrun.connect
+def celery_record_time_to_run(task_id=None, task=None, state=None, args=None, kwargs=None, **kw):
+    from corehq.util.metrics import (
+        DAY_SCALE_TIME_BUCKETS,
+        metrics_counter,
+        metrics_histogram,
+    )
+
+    try:
+        domain = get_domain_from_task(task, args, kwargs)
+    except Exception:
+        domain = None
+        logging.exception("Error while attempting to get the domain for a celery task")
+        metrics_counter('commcare.celery.task.time_to_run_domain_unavailable', tags={
+            'celery_task_name': task.name,
+        })
+
+    get_task_time_to_start.clear(task_id)
+
+    tags = {
+        'celery_task_name': task.name,
+        'celery_queue': task.queue,
+        'state': state,
+        'domain': domain or 'N/A',
+    }
+    timer = TimeToRunTimer(task_id)
+    try:
+        time_to_run = timer.stop_and_pop_timing()
+    except TimingNotAvailable:
+        metrics_counter('commcare.celery.task.time_to_run_unavailable', tags=tags)
+    else:
+        metrics_histogram(
+            'commcare.celery.task.time_to_run.seconds', time_to_run.total_seconds(),
+            bucket_tag='duration', buckets=DAY_SCALE_TIME_BUCKETS, bucket_unit='s',
+            tags=tags
+        )
+
+
+@task_postrun.connect
+def celery_push_metrics(**kwargs):
+    push_metrics()
 
 
 @quickcache(['task_id'])
@@ -61,63 +141,12 @@ class TimeToRunTimer(CeleryTimer):
         super(TimeToRunTimer, self).__init__(task_id, timing_type='time_started')
 
 
-@before_task_publish.connect
-def celery_add_time_sent(headers=None, body=None, **kwargs):
-    info = headers if 'task' in headers else body
-    task_id = info['id']
-    eta = info['eta']
-    if eta:
-        eta = TimeToStartTimer.parse_iso8601(eta)
-    TimeToStartTimer(task_id).start_timing(eta)
-
-
-@task_prerun.connect
-def celery_record_time_to_start(task_id=None, task=None, **kwargs):
-    from corehq.util.metrics import metrics_counter, metrics_gauge
-    from corehq.util.metrics.const import MPM_MAX
-
-    tags = {
-        'celery_task_name': task.name,
-        'celery_queue': task.queue,
-    }
-
-    timer = TimeToStartTimer(task_id)
-    try:
-        time_to_start = timer.stop_and_pop_timing()
-    except TimingNotAvailable:
-        metrics_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
+def get_domain_from_task(task, args, kwargs):
+    undecorated_task_function = inspect.unwrap(task)
+    call_args = inspect.getcallargs(undecorated_task_function, *args, **kwargs)
+    if 'domain' in call_args:
+        return call_args['domain']
+    elif 'domain_name' in call_args:
+        return call_args['domain_name']
     else:
-        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags,
-            multiprocess_mode=MPM_MAX)
-        get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
-
-    TimeToRunTimer(task_id).start_timing()
-
-
-@task_postrun.connect
-def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
-    from corehq.util.metrics import metrics_counter, metrics_histogram, DAY_SCALE_TIME_BUCKETS
-
-    get_task_time_to_start.clear(task_id)
-
-    tags = {
-        'celery_task_name': task.name,
-        'celery_queue': task.queue,
-        'state': state,
-    }
-    timer = TimeToRunTimer(task_id)
-    try:
-        time_to_run = timer.stop_and_pop_timing()
-    except TimingNotAvailable:
-        metrics_counter('commcare.celery.task.time_to_run_unavailable', tags=tags)
-    else:
-        metrics_histogram(
-            'commcare.celery.task.time_to_run.seconds', time_to_run.total_seconds(),
-            bucket_tag='duration', buckets=DAY_SCALE_TIME_BUCKETS, bucket_unit='s',
-            tags=tags
-        )
-
-
-@task_postrun.connect
-def celery_push_metrics(**kwargs):
-    push_metrics()
+        return None

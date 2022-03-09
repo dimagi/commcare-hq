@@ -7,7 +7,7 @@ from corehq.messaging.smsbackends.start_enterprise.models import (
 )
 from corehq.apps.sms.models import SMS
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 SUCCESSFUL_RESPONSE = "919999999999-200904066072538"
 RECOGNIZED_ERROR_MESSAGE = "Account Blocked"

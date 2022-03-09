@@ -10,7 +10,6 @@
   {% initial_page_data "couch_update" couch_update %}
   {% initial_page_data "is_bigcouch" is_bigcouch %}
   {% registerurl "pillow_operation_api" %}
-  {% registerurl "system_ajax" %}
   <div class="row" style="margin-top: 15px;">
     <div class="col-sm-12">
       {% with deploy_history|first as last_deploy %}
@@ -80,10 +79,6 @@
                   {% if cluster_health == "red" %}
                     <span class="label label-danger">Bad</span>
                   {% endif %}
-                </dd>
-                <dt>Index Status</dt>
-                <dd>
-                  <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
                 </dd>
                 <dt>Check ES doc</dt>
                 <dd>

@@ -13,7 +13,7 @@ from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.expressions.getters import (
     TransformedGetter,
     getter_from_property_reference,
-    transform_from_datatype,
+    transform_for_datatype,
 )
 from corehq.apps.userreports.operators import equal, in_multiselect
 from corehq.apps.userreports.specs import TypeProperty
@@ -86,7 +86,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
     @property
     def getter(self):
-        transform = transform_from_datatype(self.datatype)
+        transform = transform_for_datatype(self.datatype)
         getter = getter_from_property_reference(self)
         return TransformedGetter(getter, transform)
 
@@ -103,7 +103,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     def parsed_expression(self, context):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
         expression = ExpressionFactory.from_spec(self.expression, context)
-        datatype_transform = transform_from_datatype(self.datatype)
+        datatype_transform = transform_for_datatype(self.datatype)
         if self.transform:
             generic_transform = TransformFactory.get_transform(self.transform).get_transform_function()
             inner_getter = TransformedGetter(expression, generic_transform)

@@ -4,9 +4,9 @@ from operator import eq
 from jsonpath_ng import Child, Fields, Slice, Union, Where
 from jsonpath_ng import parse as parse_jsonpath
 
-from casexml.apps.case.models import (
-    INDEX_RELATIONSHIP_CHILD,
-    INDEX_RELATIONSHIP_EXTENSION,
+from casexml.apps.case.const import (
+    CASE_INDEX_EXTENSION,
+    DEFAULT_CASE_INDEX_IDENTIFIERS,
 )
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -17,16 +17,12 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 
 ALL_CONCEPTS = "all"
-INDEX_RELATIONSHIPS = (
-    INDEX_RELATIONSHIP_CHILD,
-    INDEX_RELATIONSHIP_EXTENSION,
-)
 
 
 class OpenmrsCaseConfig(DocumentSchema):
@@ -165,8 +161,9 @@ class OpenmrsCaseConfig(DocumentSchema):
 class IndexedCaseMapping(DocumentSchema):
     identifier = StringProperty(required=True, default=DEFAULT_PARENT_IDENTIFIER)
     case_type = StringProperty(required=True)
-    relationship = StringProperty(required=True, choices=INDEX_RELATIONSHIPS,
-                                  default=INDEX_RELATIONSHIP_EXTENSION)
+    relationship = StringProperty(required=True,
+                                  choices=list(DEFAULT_CASE_INDEX_IDENTIFIERS),
+                                  default=CASE_INDEX_EXTENSION)
 
     # Sets case property values of a new extension case or child case.
     case_properties = ListProperty(required=True)

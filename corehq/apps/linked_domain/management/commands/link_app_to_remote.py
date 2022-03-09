@@ -13,10 +13,10 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument('-m', '--master_id', required=True,
-                            help="ID of the master app on remote system")
         parser.add_argument('-l', '--linked_id', required=True,
                             help="ID of the local app to be linked")
+        parser.add_argument('-m', '--master_id', required=True,
+                            help="ID of the master app on remote system")
         parser.add_argument('-r', '--url_base', required=True,
                             help="Base URL of remote system e.g. https://www.commcarehq.org")
         parser.add_argument('-d', '--domain', required=True,

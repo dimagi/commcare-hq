@@ -36,7 +36,7 @@ hqDefine('toggle_ui/js/edit-flag', [
                 last_used = config.last_used || {},
                 service_type = config.service_type || {};
             self.items.removeAll();
-            _(items).each(function (item) {
+            _.each(_.sortBy(items), function (item) {
                 var fields = item.split(':'),
                     namespace = fields.length > 1 ? fields[0] : 'user',
                     value = fields.length > 1 ? fields[1] : fields[0];

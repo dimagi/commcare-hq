@@ -1,11 +1,12 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
+from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 
 from .views import (
     DefaultProjectUserSettingsView,
-    DomainPermissionsMirrorView,
     EditWebUserView,
+    EnterpriseUsersView,
     InviteWebUserView,
     UploadWebUsers,
     WebUserUploadStatusView,
@@ -19,6 +20,7 @@ from .views import (
     delete_user_role,
     domain_accounts,
     make_phone_number_default,
+    paginate_enterprise_users,
     paginate_web_users,
     post_user_role,
     register_fcm_device_token,
@@ -26,8 +28,6 @@ from .views import (
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
-    delete_domain_permission_mirror,
-    create_domain_permission_mirror,
     download_web_users,
     DownloadWebUsersStatusView,
     WebUserUploadJobPollView,
@@ -77,6 +77,12 @@ from .views.mobile.users import (
     CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
 
+
+user_management_urls = [
+    UserManagementReportDispatcher.url_pattern(),
+]
+
+
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
@@ -115,11 +121,8 @@ urlpatterns = [
         WebUserUploadStatusView.as_view(), name=WebUserUploadStatusView.urlname),
     url(r'^web/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', WebUserUploadJobPollView.as_view(),
         name=WebUserUploadJobPollView.urlname),
-    url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
-    url(r'^enterprise/delete_domain_permission_mirror/(?P<mirror>[ \w-]+)/$', delete_domain_permission_mirror,
-        name='delete_domain_permission_mirror'),
-    url(r'^enterprise/create_domain_permission_mirror/$', create_domain_permission_mirror,
-        name='create_domain_permission_mirror'),
+    url(r'^enterprise/$', EnterpriseUsersView.as_view(), name=EnterpriseUsersView.urlname),
+    url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
@@ -181,4 +184,7 @@ urlpatterns = [
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),
+] + [
+    url(r'^reports/', include(user_management_urls)),
+
 ]

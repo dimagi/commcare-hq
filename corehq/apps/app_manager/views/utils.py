@@ -1,5 +1,7 @@
 import json
+import time
 from collections import defaultdict
+from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
 
@@ -45,6 +47,7 @@ from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
+from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -352,12 +355,11 @@ def update_linked_app(app, master_app_id_or_build, user_id):
     ):
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
-        if not app.domain_link.is_remote:
-            report_map.update({
-                c.report_meta.master_id: c._id
-                for c in get_report_configs_for_domain(app.domain)
-                if c.report_meta.master_id
-            })
+        report_map.update({
+            c.report_meta.master_id: c._id
+            for c in get_report_configs_for_domain(app.domain)
+            if c.report_meta.master_id
+        })
 
         try:
             app = overwrite_app(app, master_build, report_map)
@@ -365,7 +367,8 @@ def update_linked_app(app, master_app_id_or_build, user_id):
             raise AppLinkError(
                 _(
                     'This application uses mobile UCRs '
-                    'which are not available in the linked domain: {ucr_id}'
+                    'which are not available in the linked domain: {ucr_id}. '
+                    'Try linking these reports first and try again.'
                 ).format(ucr_id=str(e))
             )
 
@@ -601,3 +604,27 @@ def _is_duplicate_endpoint_id(new_id, old_id, app):
             all_endpoint_ids.append(form.session_endpoint_id)
 
     return new_id in all_endpoint_ids
+
+
+@contextmanager
+def report_build_time(domain, app_id, build_type):
+    start = time.time()
+
+    # Histogram of all app builds
+    name = {
+        "new_release": 'commcare.app_build.new_release',
+        "live_preview": 'commcare.app_build.live_preview',
+    }[build_type]
+    buckets = (1, 10, 30, 60, 120, 240)
+    with metrics_histogram_timer(name, timing_buckets=buckets):
+        yield
+
+    # Detailed information for all apps that take longer than 30s to build
+    end = time.time()
+    duration = end - start
+    if duration > 30:
+        metrics_gauge('commcare.app_build.duration', duration, tags={
+            "domain": domain,
+            "app_id": app_id,
+            "build_type": build_type,
+        })

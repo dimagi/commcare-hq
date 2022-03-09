@@ -1,0 +1,14 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <stack>
+          <create if="(today() - dob) &lt; 7">
+            <command value="'m0'"/>
+          </create>
+        </stack>
+    </entry>
+</partial>

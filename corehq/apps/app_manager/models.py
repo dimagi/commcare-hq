@@ -74,11 +74,12 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_app_languages,
+    get_apps_in_domain,
     get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
@@ -97,6 +98,8 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    ModuleIdMissingException,
+    AppValidationError,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -118,7 +121,7 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -135,7 +138,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids,
+    update_report_module_ids, module_loads_registry_case,
+    wrap_transition_from_old_update_case_action,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -327,22 +331,32 @@ class FormAction(DocumentSchema):
             yield 'name', action.name_path
         if 'case_name' in action_properties:
             yield 'name', action.case_name
+        if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
+            yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, path in action.update.items():
-                yield name, path
+            for name, conditional_case_update in action.update.items():
+                yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
-            for name, path in action.case_properties.items():
-                yield name, path
+            for name, conditional_case_update in action.case_properties.items():
+                yield name, conditional_case_update.question_path
         if 'preload' in action_properties:
             for path, name in action.preload.items():
                 yield name, path
 
 
-class UpdateCaseAction(FormAction):
+class ConditionalCaseUpdate(DocumentSchema):
+    question_path = StringProperty()
+    update_mode = StringProperty(
+        choices=[UPDATE_MODE_ALWAYS, UPDATE_MODE_EDIT],
+        default=UPDATE_MODE_ALWAYS
+    )
 
-    update = DictProperty()
+
+class UpdateCaseAction(FormAction):
+    # TODO: migrate from dict(property_name: question_path) to dict(property_name: ConditionalCaseUpdate)
+    update = SchemaDictProperty(ConditionalCaseUpdate)
 
 
 class PreloadAction(FormAction):
@@ -372,16 +386,27 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    # This method transitions us during a change to the name_update field, which used to be
+    # called name_path and was just a StringProperty that held the name prop's question path.
+    @classmethod
+    def wrap(cls, data):
+        if 'name_path' in data:
+            path = data['name_path']
+            data['name_update'] = {
+                'question_path': path
+            }
+        return super(OpenCaseAction, cls).wrap(data)
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
-    case_name = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     reference_id = StringProperty()
-    case_properties = DictProperty()
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
@@ -392,6 +417,19 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     @property
     def form_element_name(self):
         return 'subcase_{}'.format(self.id)
+
+    # This method transitions us during a change to the name_update field, which used to be
+    # called case_name.
+    @classmethod
+    def wrap(cls, data):
+        if 'case_name' in data:
+            path = data['case_name']
+            data['name_update'] = {
+                'question_path': path
+            }
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
+        return super(OpenSubCaseAction, cls).wrap(data)
 
 
 class FormActions(DocumentSchema):
@@ -427,6 +465,18 @@ class FormActions(DocumentSchema):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
 
+    @classmethod
+    def wrap(cls, data):
+        if 'update_case' in data and 'update' in data['update_case']:
+            data['update_case']['update'] = wrap_transition_from_old_update_case_action(
+                data['update_case']['update']
+            )
+        if 'usercase_update' in data and 'update' in data['usercase_update']:
+            data['usercase_update']['update'] = wrap_transition_from_old_update_case_action(
+                data['usercase_update']['update']
+            )
+        return super(FormActions, cls).wrap(data)
+
 
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
@@ -440,7 +490,9 @@ class CaseIndex(DocumentSchema):
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
-    case_properties = DictProperty()
+
+    case_properties = SchemaDictProperty(ConditionalCaseUpdate)
+
     # case_indices = NotImplemented
 
     close_condition = SchemaProperty(FormActionCondition)
@@ -448,8 +500,8 @@ class AdvancedAction(IndexedSchema):
     __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
-        for path in self.case_properties.values():
-            yield path
+        for smart_case_update in self.case_properties.values():
+            yield smart_case_update.question_path
 
         if self.close_condition.type == 'if':
             yield self.close_condition.question
@@ -464,6 +516,12 @@ class AdvancedAction(IndexedSchema):
     @property
     def form_element_name(self):
         return "case_{}".format(self.case_tag)
+
+    @classmethod
+    def wrap(cls, data):
+        if 'case_properties' in data:
+            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
+        return super(AdvancedAction, cls).wrap(data)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -578,7 +636,7 @@ class LoadUpdateAction(AdvancedAction):
 
 
 class AdvancedOpenCaseAction(AdvancedAction):
-    name_path = StringProperty()
+    name_update = SchemaProperty(ConditionalCaseUpdate)
     repeat_context = StringProperty()
     case_indices = SchemaListProperty(CaseIndex)
 
@@ -588,7 +646,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
         for path in super(AdvancedOpenCaseAction, self).get_paths():
             yield path
 
-        yield self.name_path
+        yield self.name_update.question_path
 
         if self.open_condition.type == 'if':
             yield self.open_condition.question
@@ -613,7 +671,19 @@ class AdvancedOpenCaseAction(AdvancedAction):
             del data['parent_tag']
             data.pop('parent_reference_id', None)
             data.pop('relationship', None)
+        # This statement transitions us during a change to the name_update field, which used
+        # to be called name_path.
+        if 'name_path' in data:
+            path = data['name_path']
+            data['name_update'] = {
+                'question_path': path
+            }
         return super(AdvancedOpenCaseAction, cls).wrap(data)
+
+
+class ArbitraryDatum(DocumentSchema):
+    datum_id = StringProperty(default=None)
+    datum_function = StringProperty(default=None)
 
 
 class AdvancedFormActions(DocumentSchema):
@@ -786,11 +856,22 @@ class FormDatum(DocumentSchema):
 
 class FormLink(DocumentSchema):
     """
-    xpath:      xpath condition that must be true in order to open next form
-    form_id:    id of next form to open
+    FormLinks are advanced end of form navigation configuration, used when a module's
+    post_form_workflow is WORKFLOW_FORM.
+
+    They allow the user to specify one or more XPath expressions, each with either
+    a module id or form id. The user will be sent to the first module/form whose
+    expression evaluates to true. If none of the conditions is met, the workflow specified
+    in the module's post_form_workflow_fallback is executed.
+
+    xpath: XPath condition that must be true in order to execute link
+    form_id: ID of next form to open, mutually exclusive with module_unique_id
+    module_unique_id: ID of next module to open, mutually exclusive with form_id
+    datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
 
 
@@ -1000,13 +1081,16 @@ class FormBase(DocumentSchema):
     )
     auto_gps_capture = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
-    schedule_form_id = StringProperty()
+    schedule_form_id = StringProperty(exclude_if_none=True)
     custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
     enable_release_notes = BooleanProperty(default=False)
-    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
+
+    # computed datums IDs that are allowed in endpoints
+    function_datum_endpoints = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1086,7 +1170,7 @@ class FormBase(DocumentSchema):
         raise NotImplementedError()
 
     def wrapped_xform(self):
-        return XForm(self.source)
+        return XForm(self.source, domain=self.get_app().domain)
 
     def validate_form(self):
         vc = self.get_validation_cache()
@@ -1152,10 +1236,11 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app)
+        xform.add_missing_instances(self, app)
 
+    @memoized
     def render_xform(self, build_profile_id=None):
-        xform = XForm(self.source)
+        xform = XForm(self.source, domain=self.get_app().domain)
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
@@ -1168,12 +1253,13 @@ class FormBase(DocumentSchema):
         return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations',
+                 'include_fixtures'],
                 timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, include_fixtures=False):
         try:
-            return XForm(self.source).get_questions(
+            return XForm(self.source, domain=self.get_app().domain).get_questions(
                 langs=langs,
                 include_triggers=include_triggers,
                 include_groups=include_groups,
@@ -1213,7 +1299,7 @@ class FormBase(DocumentSchema):
             pass
 
     def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
+        source = XForm(self.source, domain=self.get_app().domain)
         if source.exists():
             source.rename_language(old_code, new_code)
             self.source = source.render().decode('utf-8')
@@ -1549,7 +1635,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
 class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
-    form_filter = StringProperty()
+    form_filter = StringProperty(exclude_if_none=True)
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
@@ -1767,17 +1853,17 @@ class GraphAnnotations(IndexedSchema):
 class GraphSeries(DocumentSchema):
     config = DictProperty()
     locale_specific_config = DictProperty()
-    data_path = StringProperty()
-    x_function = StringProperty()
-    y_function = StringProperty()
-    radius_function = StringProperty()
+    data_path = StringProperty(exclude_if_none=True)
+    x_function = StringProperty(exclude_if_none=True)
+    y_function = StringProperty(exclude_if_none=True)
+    radius_function = StringProperty(exclude_if_none=True)
 
 
 class GraphConfiguration(DocumentSchema):
     config = DictProperty()
     locale_specific_config = DictProperty()
     annotations = SchemaListProperty(GraphAnnotations)
-    graph_type = StringProperty()
+    graph_type = StringProperty(exclude_if_none=True)
     series = SchemaListProperty(GraphSeries)
 
 
@@ -1797,11 +1883,11 @@ class DetailTab(IndexedSchema):
     #   nodeset: An absolute xpath expression to iterate over
     #   nodeset_case_type: Iterate over all child cases of this type
     has_nodeset = BooleanProperty(default=False)
-    nodeset = StringProperty()
-    nodeset_case_type = StringProperty()
+    nodeset = StringProperty(exclude_if_none=True)
+    nodeset_case_type = StringProperty(exclude_if_none=True)
 
     # Display condition for the tab
-    relevant = StringProperty()
+    relevant = StringProperty(exclude_if_none=True)
 
 
 class DetailColumn(IndexedSchema):
@@ -1821,18 +1907,18 @@ class DetailColumn(IndexedSchema):
 
     """
     header = DictProperty()
-    model = StringProperty()
+    model = StringProperty(exclude_if_none=True)
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
-    format = StringProperty()
+    format = StringProperty(exclude_if_none=True)
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
-    case_tile_field = StringProperty()
+    case_tile_field = StringProperty(exclude_if_none=True)
 
     late_flag = IntegerProperty(default=30)
-    advanced = StringProperty(default="")
-    filter_xpath = StringProperty(default="")
+    advanced = StringProperty(default="", exclude_if_none=True)
+    filter_xpath = StringProperty(default="", exclude_if_none=True)
     time_ago_interval = FloatProperty(default=365.25)
     date_format = StringProperty(default="%d/%m/%y")
 
@@ -1945,8 +2031,8 @@ class CaseListLookupMixin(DocumentSchema):
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_autolaunch = BooleanProperty(default=False)
-    lookup_action = StringProperty()
-    lookup_name = StringProperty()
+    lookup_action = StringProperty(exclude_if_none=True)
+    lookup_name = StringProperty(exclude_if_none=True)
     lookup_image = JRResourceProperty(required=False)
 
     lookup_extras = SchemaListProperty()
@@ -1954,7 +2040,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
     lookup_field_header = DictProperty()
-    lookup_field_template = StringProperty()
+    lookup_field_template = StringProperty(exclude_if_none=True)
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -1971,7 +2057,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    filter = StringProperty()
+    filter = StringProperty(exclude_if_none=True)
 
     instance_name = StringProperty(default='casedb')
 
@@ -1980,20 +2066,26 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persistent_case_context_xml = StringProperty(default='case_name')
 
     # Custom variables to add into the <variables /> node
-    custom_variables = StringProperty()
+    custom_variables = StringProperty(exclude_if_none=True)
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
-    custom_xml = StringProperty()
+    custom_xml = StringProperty(exclude_if_none=True)
 
     persist_tile_on_forms = BooleanProperty()
     # use case tile context persisted over forms from another module
-    persistent_case_tile_from_module = StringProperty()
+    persistent_case_tile_from_module = StringProperty(exclude_if_none=True)
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     print_template = DictProperty()
+
+    def get_instance_name(self, module):
+        value_is_the_default = self.instance_name == 'casedb'
+        if value_is_the_default and module_loads_registry_case(module):
+            return RESULTS_INSTANCE
+        return self.instance_name
 
     def get_tab_spans(self):
         '''
@@ -2067,14 +2159,20 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class Itemset(DocumentSchema):
-    instance_id = StringProperty()
-    instance_uri = StringProperty()
+    instance_id = StringProperty(exclude_if_none=True)
+    instance_uri = StringProperty(exclude_if_none=True)
 
-    nodeset = StringProperty()
+    nodeset = StringProperty(exclude_if_none=True)
 
-    label = StringProperty()
-    value = StringProperty()
-    sort = StringProperty()
+    label = StringProperty(exclude_if_none=True)
+    value = StringProperty(exclude_if_none=True)
+    sort = StringProperty(exclude_if_none=True)
+
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
+        (data, dirty) = wrap_itemset(data)
+        return super().wrap(data)
 
 
 class CaseSearchProperty(DocumentSchema):
@@ -2083,21 +2181,22 @@ class CaseSearchProperty(DocumentSchema):
     """
     name = StringProperty()
     label = DictProperty()
-    appearance = StringProperty()
-    input_ = StringProperty()
-    default_value = StringProperty()
+    appearance = StringProperty(exclude_if_none=True)
+    input_ = StringProperty(exclude_if_none=True)
+    default_value = StringProperty(exclude_if_none=True)
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
+    allow_blank_value = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
-    receiver_expression = StringProperty()
+    receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
     property = StringProperty()
-    default_value = StringProperty()
+    default_value = StringProperty(exclude_if_none=True)
 
 
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
@@ -2125,11 +2224,18 @@ class CaseSearch(DocumentSchema):
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
     default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty()
-    search_filter = StringProperty()
-    search_button_display_condition = StringProperty()
+    additional_relevant = StringProperty(exclude_if_none=True)
+    search_filter = StringProperty(exclude_if_none=True)
+    search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
-    blacklisted_owner_ids_expression = StringProperty()
+    blacklisted_owner_ids_expression = StringProperty(exclude_if_none=True)
+    additional_case_types = StringListProperty()
+    data_registry = StringProperty(exclude_if_none=True)
+    data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
+    additional_registry_cases = StringListProperty()               # list of xpath expressions
+
+    # case property referencing another case's ID
+    custom_related_case_property = StringProperty(exclude_if_none=True)
 
     @property
     def case_session_var(self):
@@ -2176,11 +2282,11 @@ class FixtureSelect(DocumentSchema):
     xpath:              xpath expression to use as the case filter
     """
     active = BooleanProperty(default=False)
-    fixture_type = StringProperty()
-    display_column = StringProperty()
+    fixture_type = StringProperty(exclude_if_none=True)
+    display_column = StringProperty(exclude_if_none=True)
     localize = BooleanProperty(default=False)
-    variable_column = StringProperty()
-    xpath = StringProperty(default='')
+    variable_column = StringProperty(exclude_if_none=True)
+    xpath = StringProperty(default='', exclude_if_none=True)
 
 
 class DetailPair(DocumentSchema):
@@ -2202,6 +2308,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         default=WORKFLOW_DEFAULT,
         choices=REGISTRATION_FORM_WORFLOWS,
     )
+    relevancy_expression = StringProperty(exclude_if_none=True)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
@@ -2215,14 +2322,14 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
-    module_filter = StringProperty()
+    module_filter = StringProperty(exclude_if_none=True)
     put_in_root = BooleanProperty(default=False)
-    root_module_id = StringProperty()
+    root_module_id = StringProperty(exclude_if_none=True)
     fixture_select = SchemaProperty(FixtureSelect)
     report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
-    session_endpoint_id = StringProperty()  # See toggles.SESSION_ENDPOINTS
+    session_endpoint_id = StringProperty(exclude_if_none=True)  # See toggles.SESSION_ENDPOINTS
 
     def __init__(self, *args, **kwargs):
         super(ModuleBase, self).__init__(*args, **kwargs)
@@ -2448,6 +2555,7 @@ class ModuleDetailsMixin(object):
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
+    @memoized
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -2455,7 +2563,8 @@ class ModuleDetailsMixin(object):
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not custom_detail:
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -2594,6 +2703,7 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    arbitrary_datums = SchemaListProperty(ArbitraryDatum)
     schedule = SchemaProperty(FormSchedule, default=None)
 
     @classmethod
@@ -3079,7 +3189,7 @@ class AdvancedModule(ModuleBase):
                 base_action = AdvancedOpenCaseAction(
                     case_type=case_type,
                     case_tag='open_{0}_0'.format(case_type),
-                    name_path=open.name_path,
+                    name_update=open.name_update,
                     open_condition=open.condition,
                     case_properties=update.update if update else {},
                     )
@@ -3115,7 +3225,7 @@ class AdvancedModule(ModuleBase):
                     open_subcase_action = AdvancedOpenCaseAction(
                         case_type=subcase.case_type,
                         case_tag='open_{0}_{1}'.format(subcase.case_type, i+1),
-                        name_path=subcase.case_name,
+                        name_update=subcase.name_update,
                         open_condition=subcase.condition,
                         case_properties=subcase.case_properties,
                         repeat_context=subcase.repeat_context,
@@ -3154,6 +3264,7 @@ class AdvancedModule(ModuleBase):
         detail.instance_name = RESULTS_INSTANCE
         return detail
 
+    @memoized
     def get_details(self):
         details = [
             ('case_short', self.case_details.short, True),
@@ -3623,9 +3734,10 @@ class ReportModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
+    @memoized
     def get_details(self):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
-        return ReportModuleSuiteHelper(self).get_details()
+        return list(ReportModuleSuiteHelper(self).get_details())
 
     def get_custom_entries(self):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
@@ -4266,10 +4378,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
-    def form_record_url(self):
-        return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
-
-    @absolute_url_property
     def hq_profile_url(self):
         # RemoteApp already has a property called "profile_url",
         # Application.profile_url just points here to stop the conflict
@@ -4504,6 +4612,10 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
+        errors = copy.validate_app()
+        if errors:
+            raise AppValidationError(errors)
+
         if copy.create_build_files_on_build:
             copy.create_build_files()
 
@@ -4566,6 +4678,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4586,6 +4700,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
+        get_apps_in_domain.clear(self.domain, True)
+        get_apps_in_domain.clear(self.domain, False)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
@@ -4826,9 +4942,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
-        if not form:
-            form = self.get_module(module_id).get_form(form_id)
+    def fetch_xform(self, form, build_profile_id=None):
         return form.validate_form().render_xform(build_profile_id)
 
     @time_method()
@@ -4862,12 +4976,13 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                     # so that that's not treated as the diff
                     previous_form_version = previous_form.get_version()
                     form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form=form))
+                    my_hash = _hash(self.fetch_xform(form))
                     if previous_hash != my_hash:
                         form.version = None
             else:
                 form.version = None
 
+    @time_method()
     def set_media_versions(self):
         """
         Set the media version numbers for all media in the app to the current app version
@@ -5044,9 +5159,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
-            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized
@@ -5109,7 +5222,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
                 except XFormValidationFailed:
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
@@ -5477,7 +5590,13 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def validate_app(self):
-        return ApplicationValidator(self).validate_app()
+        validator = ApplicationValidator(self)
+        try:
+            return validator.validate_app()
+        except ModuleIdMissingException:
+            # For apps (mainly Exchange apps) that lost unique_id attributes on Module
+            self.ensure_module_unique_ids(should_save=True)
+            return validator.validate_app()
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)
@@ -5622,7 +5741,7 @@ class RemoteApp(ApplicationBase):
                 location, data = self.fetch_file(location)
                 if tag == 'xform' and langs_for_build:
                     try:
-                        xform = XForm(data)
+                        xform = XForm(data, domain=self.domain)
                     except XFormException as e:
                         raise XFormException('In file %s: %s' % (location, e))
                     xform.exclude_languages(whitelist=langs_for_build)
@@ -5645,7 +5764,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location).decode('utf-8'))
+                    xform = XForm(fetch(location).decode('utf-8'), domain=self.domain)
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions
@@ -5683,8 +5802,8 @@ class LinkedApplication(Application):
     @property
     @memoized
     def domain_link(self):
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        return get_domain_master_link(self.domain)
+        from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+        return get_upstream_domain_link(self.domain)
 
     @memoized
     def get_master_app_briefs(self):
@@ -5770,6 +5889,9 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
             messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                         "because your application contains a Mobile Report Module that references "
                                         "a UCR configured in this project space. Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Copying the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)
@@ -5884,6 +6006,8 @@ class ExchangeApplication(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
     changelog_link = models.CharField(max_length=255, null=True)
+    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
+                                                                 " strings from corehq.privileges"))
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

@@ -15,10 +15,17 @@ def use_daterangepicker(view_func):
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
+
     @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
+    def _wrapped(*args, **kwargs):
+        if hasattr(args[0], 'META'):
+            # function view
+            request = args[0]
+        else:
+            # class view
+            request = args[1]
         request.use_daterangepicker = True
-        return view_func(class_based_view, request, *args, **kwargs)
+        return view_func(*args, **kwargs)
     return _wrapped
 
 
@@ -52,9 +59,15 @@ def use_multiselect(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
+    def _wrapped(*args, **kwargs):
+        if hasattr(args[0], 'META'):
+            # function view
+            request = args[0]
+        else:
+            # class view
+            request = args[1]
         request.use_multiselect = True
-        return view_func(class_based_view, request, *args, **kwargs)
+        return view_func(*args, **kwargs)
     return _wrapped
 
 

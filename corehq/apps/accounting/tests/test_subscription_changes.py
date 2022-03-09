@@ -3,7 +3,9 @@ from datetime import date, time
 
 from django.test import SimpleTestCase, TransactionTestCase
 
-from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
+
+from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.models import (
@@ -76,7 +78,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
         self.other_domain.save()
         initialize_domain_with_default_roles(self.domain.name)
-        self.user_roles = UserRole.by_domain(self.domain.name)
+        self.user_roles = UserRole.objects.get_by_domain(self.domain.name)
         self.custom_role = UserRole.create(
             self.domain.name,
             "Custom Role",
@@ -120,7 +122,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._change_std_roles()
         subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
-        custom_role = UserRole.get(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
 
         self._assertInitialRoles()
@@ -133,10 +135,10 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         )
         self._change_std_roles()
         new_subscription = subscription.change_plan(DefaultProductPlan.get_default_plan_version())
-        custom_role = UserRole.get(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
         new_subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
-        custom_role = UserRole.get(self.custom_role.get_id)
+        custom_role = UserRole.objects.by_couch_id(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
         self._assertInitialRoles()
@@ -144,8 +146,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def _change_std_roles(self):
         for u in self.user_roles:
-            user_role = UserRole.get(u.get_id)
-            user_role.permissions = Permissions(
+            user_role = UserRole.objects.by_couch_id(u.get_id)
+            user_role.set_permissions(Permissions(
                 view_reports=True,
                 edit_commcare_users=True,
                 view_commcare_users=True,
@@ -157,12 +159,11 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 view_apps=True,
                 edit_data=True,
                 edit_reports=True
-            )
-            user_role.save()
+            ).to_list())
 
     def _assertInitialRoles(self):
         for u in self.user_roles:
-            user_role = UserRole.get(u.get_id)
+            user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
                 UserRolePresets.get_permissions(user_role.name)
@@ -390,7 +391,11 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p1.call_count, 2)
             p1.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients, start_date=broadcast.start_date)
+                    call(
+                        broadcast.schedule_id.hex,
+                        broadcast.recipients,
+                        start_date_iso_string=json_format_date(broadcast.start_date)
+                    )
                     for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
                 ],
                 any_order=True
@@ -399,7 +404,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p2.call_count, 2)
             p2.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients)
+                    call(broadcast.schedule_id.hex, broadcast.recipients)
                     for broadcast in (self.domain_1_sms_schedules[1], self.domain_1_survey_schedules[1])
                 ],
                 any_order=True
@@ -432,10 +437,14 @@ class DeactivateScheduleTest(TransactionTestCase):
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
             b = self.domain_1_survey_schedules[0]
-            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=b.start_date)
+            p1.assert_called_once_with(
+                b.schedule_id.hex,
+                b.recipients,
+                start_date_iso_string=json_format_date(b.start_date)
+            )
 
             b = self.domain_1_survey_schedules[1]
-            p2.assert_called_once_with(b.schedule_id, b.recipients)
+            p2.assert_called_once_with(b.schedule_id.hex, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
             p3.assert_called_once_with(rule)

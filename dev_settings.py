@@ -39,9 +39,7 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
-    ('casexml.apps.case.models', 'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
-    ('couchforms.models', 'XFormInstance'),
+    ('corehq.form_processor.models', ('CommCareCase', 'XFormInstance')),
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),
@@ -150,3 +148,7 @@ if settingshelper.is_testing():
 # to prevent AssertionError: 429 != 200  test failures
 CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
 CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
+
+### LOG FILES ###
+DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
+LOG_FILE = "/tmp/commcare-hq.log"

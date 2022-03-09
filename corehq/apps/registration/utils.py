@@ -52,7 +52,7 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -71,7 +71,7 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+    is_domain_admin=False, domain=None, ip=None, atypical_user=False
 ):
     now = datetime.utcnow()
 
@@ -81,7 +81,8 @@ def activate_new_user(
         password,
         created_by,
         created_via,
-        is_admin=is_domain_admin
+        is_admin=is_domain_admin,
+        by_domain_required_for_log=bool(domain),
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
@@ -105,7 +106,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -125,14 +126,13 @@ def request_new_domain(request, project_name, is_new_user=True):
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True,
             first_domain_for_user=is_new_user
         )
 
         # Avoid projects created by dimagi.com staff members as self started
         new_domain.internal.self_started = not current_user.is_dimagi
 
-        if not is_new_user:
+        if not is_new_user or is_new_sso_user:
             new_domain.is_active = True
 
         # ensure no duplicate domain documents get created on cloudant
@@ -163,7 +163,7 @@ def request_new_domain(request, project_name, is_new_user=True):
             f"{new_domain.name} during registration"
         )
 
-    if is_new_user:
+    if is_new_user and not is_new_sso_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
             #  Load template apps to the user's new domain in parallel
@@ -186,7 +186,13 @@ def request_new_domain(request, project_name, is_new_user=True):
                                            dom_req.activation_guid,
                                            request.user.get_full_name(),
                                            request.user.first_name)
-    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
+    send_new_request_update_email(
+        request.user,
+        get_ip(request),
+        new_domain.name,
+        is_new_user=is_new_user,
+        is_new_sso_user=is_new_sso_user
+    )
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
@@ -206,10 +212,13 @@ def _setup_subscription(domain_name, user):
     billing_contact.save()
 
 
-def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
+def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain",
+                                  is_new_user=False, is_confirming=False, is_new_sso_user=False):
     entity_texts = {"domain": ["project space", "Project"],
                    "org": ["organization", "Organization"]}[entity_type]
-    if is_confirming:
+    if is_new_sso_user:
+        message = f"A new SSO user just requested a {entity_texts[0]} called {entity_name}."
+    elif is_confirming:
         message = "A (basically) brand new user just confirmed his/her account. The %s requested was %s." % (entity_texts[0], entity_name)
     elif is_new_user:
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)

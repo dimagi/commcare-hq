@@ -91,7 +91,7 @@ class Command(BaseCommand):
         if kwargs.get('cc'):
             cc = kwargs.get('cc').split(",")
         send_html_email_async(
-            "Report on enterprise account {}".format(account.name), self.couch_user.username,
+            "Report on enterprise account {}".format(account.name), self.couch_user.get_email(),
             linebreaksbr(message), cc=cc, text_content=message, file_attachments=attachments,
         )
         print('Emailed {}{}{}'.format(self.couch_user.username, " and " if cc else "", ", ".join(cc)))

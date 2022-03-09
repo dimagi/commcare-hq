@@ -9,7 +9,8 @@
       <form method="GET">
         <span class="col-sm-2">
           <label for="filter_from_date">From date*</label>
-          <input class="form-control"
+          <input id="filter_from_date"
+                 class="form-control"
                  type="text"
                  name="filter_from_date"
                  value="{{ filter_from_date }}"
@@ -18,7 +19,8 @@
 
         <span class="col-sm-2">
           <label for="filter_to_date">To date</label>
-          <input class="form-control"
+          <input id="filter_to_date"
+                 class="form-control"
                  type="text"
                  name="filter_to_date"
                  value="{{ filter_to_date }}"
@@ -26,8 +28,9 @@
         </span>
 
         <span class="col-sm-2">
-          <label for="filter_to_date">Payload</label>
-          <input class="form-control"
+          <label for="filter_payload">Payload</label>
+          <input id="filter_payload"
+                 class="form-control"
                  type="text"
                  name="filter_payload"
                  value="{{ filter_payload }}" />
@@ -35,16 +38,18 @@
 
         <span class="col-sm-3">
           <label for="filter_url">URL starts with</label>
-          <input class="form-control"
+          <input id="filter_url"
+                 class="form-control"
                  type="text"
                  name="filter_url"
                  value="{{ filter_url }}"
                  placeholder="http..." />
         </span>
 
-        <span class="col-sm-2">
+        <span class="col-sm-1">
           <label for="filter_status">Status</label>
-          <input class="form-control"
+          <input id="filter_status"
+                 class="form-control"
                  type="text"
                  name="filter_status"
                  value="{{ filter_status }}"
@@ -52,11 +57,22 @@
         </span>
 
         <span class="col-sm-1">
-          <label for="submit">&nbsp;</label>
-          <input class="btn btn-default"
+          <label for="submit_button">&nbsp;</label>
+          <input id="submit_button"
+                 class="form-control btn btn-primary"
                  type="submit"
-                 name="submit"
+                 name="submit_button"
                  value="Filter"/>
+        </span>
+
+        <span class="col-sm-1">
+          <label for="export_button">&nbsp;</label>
+          <input id="export_button"
+                 class="form-control btn btn-default"
+                 type="submit"
+                 name="export_button"
+                 formaction="{% url 'motech_log_export_view' domain %}"
+                 value="Export"/>
         </span>
       </form>
     </div>

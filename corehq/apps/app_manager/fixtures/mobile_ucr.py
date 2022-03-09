@@ -72,11 +72,15 @@ class ReportFixturesProvider(FixtureProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports(restore_state):
+        if not self.should_sync(restore_state):
             return []
 
         restore_user = restore_state.restore_user
         apps = self._get_apps(restore_state, restore_user)
+        report_configs = self._get_report_configs(apps)
+        if not report_configs:
+            return []
+
         fixtures = []
 
         needed_versions = {
@@ -90,13 +94,12 @@ class ReportFixturesProvider(FixtureProvider):
             ReportFixturesProviderV2(report_data_cache)
         ]
 
-        report_configs = self._get_report_configs(apps)
         for provider in providers:
             fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
 
         return fixtures
 
-    def uses_reports(self, restore_state):
+    def should_sync(self, restore_state):
         restore_user = restore_state.restore_user
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return False
@@ -104,8 +107,7 @@ class ReportFixturesProvider(FixtureProvider):
         if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
             return False
 
-        apps = self._get_apps(restore_state, restore_user)
-        return bool(self._get_report_configs(apps))
+        return True
 
     def _get_apps(self, restore_state, restore_user):
         app_aware_sync_app = restore_state.params.app

@@ -246,6 +246,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
         raise Http404()
 
 
+@quickcache(['domain', 'include_remote'], timeout=24 * 60 * 60)
 def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class

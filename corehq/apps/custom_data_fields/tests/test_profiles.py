@@ -100,7 +100,7 @@ class TestCustomDataFieldsProfile(TestCase):
         user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
             PROFILE_SLUG: self.profile5.id,
         })
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)
 

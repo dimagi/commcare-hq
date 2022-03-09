@@ -2,7 +2,7 @@ import os
 
 from django.test.utils import override_settings
 
-import mock
+from unittest import mock
 import postgres_copy
 import sqlalchemy
 

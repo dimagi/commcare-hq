@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
@@ -44,33 +43,37 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
+from corehq.apps.reports.standard.cases.duplicate_cases import (
+    DuplicateCasesExplorer,
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
+from corehq.apps.reports.standard.users.reports import UserHistoryReport
+from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
+from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     ReportConfiguration,
-    StaticReportConfiguration,
+    StaticReportConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
-from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
-from custom.openclinica.reports import OdmExportReport
 
 from . import toggles
 
@@ -86,6 +89,7 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
+        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -96,10 +100,14 @@ def REPORTS(project):
         ProjectHealthDashboard,
     )
     inspect_reports = [
-        inspect.SubmitHistory, CaseListReport, OdmExportReport,
+        inspect.SubmitHistory, CaseListReport,
     ]
     if toggles.CASE_LIST_EXPLORER.enabled(project.name):
         inspect_reports.append(CaseListExplorer)
+
+    if toggles.CASE_DEDUPE.enabled(project.name):
+        inspect_reports.append(DuplicateCasesExplorer)
+
     deployments_reports = (
         deployments.ApplicationStatusReport,
         deployments.AggregateUserStatusReport,
@@ -118,10 +126,6 @@ def REPORTS(project):
         (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
-    if toggles.EMBEDDED_TABLEAU.enabled(project.name):
-        tableau_reports = tableau.get_reports(project.name)
-        reports.extend([(ugettext_lazy("Tableau Views"), tableau_reports)])
-
     if project.commtrack_enabled:
         supply_reports = (
             commtrack.SimplifiedInventoryReport,
@@ -129,11 +133,6 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        if not should_use_sql_backend(project):
-            supply_reports = supply_reports + (
-                commtrack.ReportingRatesReport,
-                commtrack.ReportingStatusMapReport,
-            )
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
@@ -178,8 +177,8 @@ def _filter_reports(report_set, reports):
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
-        yield (reportset.section_title,
-               [_f for _f in (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports) if _f])
+        reports = (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)
+        yield (reportset.section_title, [_f for _f in reports if _f])
 
 
 def _make_dynamic_report(report_config, keyprefix):
@@ -210,25 +209,34 @@ def _make_dynamic_report(report_config, keyprefix):
 
 
 def _safely_get_report_configs(project_name):
+    return (
+        _safely_get_report_configs_generic(project_name, ReportConfiguration) +  # noqa: W504
+        _safely_get_report_configs_generic(project_name, RegistryReportConfiguration) +  # noqa: W504
+        _safely_get_static_report_configs(project_name)
+    )
+
+
+def _safely_get_report_configs_generic(project_name, report_class):
     try:
-        configs = ReportConfiguration.by_domain(project_name)
+        configs = report_class.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
         configs = []
-        for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
+        for config_id in get_doc_ids_in_domain_by_class(project_name, report_class):
             try:
-                configs.append(ReportConfiguration.get(config_id))
+                configs.append(report_class.get(config_id))
             except (BadSpecError, BadValueError) as e:
                 logging.error("%s with report config %s" % (str(e), config_id))
+    return configs
 
+
+def _safely_get_static_report_configs(project_name):
     try:
-        configs.extend(StaticReportConfiguration.by_domain(project_name))
+        return StaticReportConfiguration.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
-
-    return configs
 
 
 def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
@@ -250,8 +258,8 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
         @classmethod
         def show_item(cls, domain=None, project=None, user=None):
             return additional_requirement and (
-                config.visible or
-                (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+                config.visible
+                or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
             )
         return show_item
 
@@ -351,6 +359,12 @@ SMS_ADMIN_INTERFACES = (
     )),
 )
 
+ENTERPRISE_INTERFACES = (
+    (_("Manage Billing Details"), (
+        EnterpriseSMSBillablesReport,
+    )),
+)
+
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
@@ -368,5 +382,12 @@ DOMAIN_REPORTS = (
         SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         IncrementalExportLogView,
+    )),
+)
+
+
+USER_MANAGEMENT_REPORTS = (
+    (_("User Management"), (
+        UserHistoryReport,
     )),
 )

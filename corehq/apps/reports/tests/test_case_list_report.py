@@ -2,7 +2,6 @@ from django.http.request import QueryDict
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from casexml.apps.case.models import CommCareCase
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -13,6 +12,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -37,7 +37,7 @@ class TestCaseListReport(TestCase):
         for user in dummy_user_list:
             user_obj = CouchUser.get_by_username(user['username'])
             if user_obj:
-                user_obj.delete('')
+                user_obj.delete(cls.domain, deleted_by=None)
         cls.user_list = []
         for user in dummy_user_list:
             user_obj = CommCareUser.create(**user) if user['doc_type'] == 'CommcareUser'\
@@ -69,7 +69,7 @@ class TestCaseListReport(TestCase):
         ensure_index_deleted(USER_INDEX)
         ensure_index_deleted(CASE_INDEX)
         for user in cls.user_list:
-            user.delete(deleted_by='')
+            user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     @classmethod

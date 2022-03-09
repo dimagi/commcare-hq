@@ -89,7 +89,7 @@ class TestLocationOwnership(LocationHierarchyTestCase):
 
     @staticmethod
     def _get_value(fixture_item, field_name):
-        return fixture_item.fields[field_name].field_list[0].field_value
+        return fixture_item['fields'][field_name]['field_list'][0]['field_value']
 
     def test_sees_fixture_at_own_location(self):
         fixture_items = FixtureDataItem.by_user(self.suffolk_user)

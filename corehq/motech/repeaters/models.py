@@ -70,16 +70,39 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 from requests.exceptions import ConnectionError, Timeout, RequestException
 
+from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
+from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    OAUTH1,
+    REQUEST_METHODS,
+    REQUEST_POST,
+)
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import simple_request
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
+from corehq.util.couch import stale_ok
+from corehq.util.metrics import metrics_counter
+from corehq.util.quickcache import quickcache
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -95,32 +118,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
-
-from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.motech.const import (
-    ALGO_AES,
-    BASIC_AUTH,
-    BEARER_AUTH,
-    DIGEST_AUTH,
-    OAUTH1,
-)
-from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import simple_post
-from corehq.motech.utils import b64_aes_decrypt
-from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.couch import stale_ok
-from corehq.util.metrics import metrics_counter
-from corehq.util.quickcache import quickcache
-
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
@@ -150,9 +147,11 @@ from .repeater_generators import (
     ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
+    DataRegistryCaseUpdatePayloadGenerator,
 )
 from ..repeater_helpers import RepeaterResponse
-from ...util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -175,11 +174,11 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
-class RepeaterStubManager(models.Manager):
+class RepeaterManager(models.Manager):
 
     def all_ready(self):
         """
-        Return all RepeaterStubs ready to be forwarded.
+        Return all SQLRepeaters ready to be forwarded.
         """
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
@@ -196,28 +195,34 @@ class RepeaterStubManager(models.Manager):
                 .filter(repeat_records_ready_to_send))
 
 
-class RepeaterStub(models.Model):
-    """
-    This model links the SQLRepeatRecords of a Repeater.
-    """
+class SQLRepeater(models.Model):
     domain = models.CharField(max_length=126)
     repeater_id = models.CharField(max_length=36)
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RepeaterStubManager()
+    objects = RepeaterManager()
+
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT
+    )
 
     class Meta:
         indexes = [
             models.Index(fields=['domain']),
             models.Index(fields=['repeater_id']),
         ]
+        db_table = 'repeaters_repeater'
 
     @property
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
+
+    def get_url(self, record):
+        return self.repeater.get_url(record)
 
     @property
     def repeat_records_ready(self):
@@ -256,6 +261,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     domain = StringProperty()
     connection_settings_id = IntegerProperty(required=False, default=None)
+    request_method = StringProperty(choices=REQUEST_METHODS, default=REQUEST_POST)
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
@@ -342,7 +348,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def get_attempt_info(self, repeat_record):
         return None
 
-    def register(self, payload):
+    def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
 
@@ -357,10 +363,17 @@ class Repeater(QuickCachedDocumentMixin, Document):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type
+            'doc_type': self.doc_type,
+            'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
-        repeat_record.attempt_forward_now()
+
+        if fire_synchronously:
+            # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
+            # to prevent serializing the repeater in the celery task payload
+            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+
+        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -502,13 +515,14 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def send_request(self, repeat_record, payload):
         url = self.get_url(repeat_record)
-        return simple_post(
+        return simple_request(
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
             verify=self.verify,
             notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
+            method=self.request_method,
         )
 
     def fire_for_record(self, repeat_record):
@@ -520,9 +534,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
             return self.handle_response(err, repeat_record)
-        except PossibleSSRFAttempt:
+        except (PossibleSSRFAttempt, CannotResolveHost):
             return self.handle_response(Exception("Invalid URL"), repeat_record)
-        except Exception as e:
+        except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
@@ -584,11 +598,12 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    user_blocklist = StringListProperty(default=[])
     friendly_name = _("Forward Forms")
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -599,8 +614,9 @@ class FormRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         return (
-            payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
+            payload.xmlns != DEVICE_LOG_XMLNS
+            and (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns
+            and payload.user_id not in self.user_blocklist)
         )
 
     def get_url(self, repeat_record):
@@ -654,7 +670,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -719,27 +735,70 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def send_request(self, repeat_record, payload):
         """Add custom response handling to allow more nuanced handling of form errors"""
-        response = super().send_request(repeat_record, payload)
-        return self.get_response(response)
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
 
-    @staticmethod
-    def get_response(response):
-        from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
-        openrosa_response = parse_openrosa_response(response.text)
-        if not openrosa_response:
-            # unable to parse response so just let normal handling take place
-            return response
 
-        if response.status_code == 422:
-            # openrosa v3
-            retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
-            return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
-
-        if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
-            # openrosa v2
-            return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
-
+def get_repeater_response_from_submission_response(response):
+    from couchforms.openrosa_response import ResponseNature, parse_openrosa_response
+    openrosa_response = parse_openrosa_response(response.text)
+    if not openrosa_response:
+        # unable to parse response so just let normal handling take place
         return response
+
+    if response.status_code == 422:
+        # openrosa v3
+        retry = openrosa_response.nature != ResponseNature.PROCESSING_FAILURE
+        return RepeaterResponse(422, openrosa_response.nature, openrosa_response.message, retry)
+
+    if response.status_code == 201 and openrosa_response.nature == ResponseNature.SUBMIT_ERROR:
+        # openrosa v2
+        return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
+
+    return response
+
+
+class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form to update cases in
+    another commcare project space.
+    """
+    friendly_name = _("Update Cases in another CommCare Project via a Data Registry")
+    payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
+
+    def form_class_name(self):
+        return 'DataRegistryCaseUpdateRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
+        return self.connection_settings.url.format(domain=new_domain)
+
+    def send_request(self, repeat_record, payload):
+        return get_repeater_response_from_submission_response(
+            super().send_request(repeat_record, payload)
+        )
+
+    def allowed_to_forward(self, payload):
+        if not super().allowed_to_forward(payload):
+            return False
+
+        # Exclude extension cases where the host is also a case type that this repeater
+        # would act on since they get forwarded along with their host
+        host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
+        if host_index and host_index.referenced_type in self.white_listed_case_types:
+            return False
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
+        if transaction:
+            # prevent chaining updates
+            return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
+
+        return True
 
 
 class ShortFormRepeater(Repeater):
@@ -755,7 +814,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
@@ -860,6 +919,10 @@ class RepeatRecord(Document):
     @property
     def record_id(self):
         return self._id
+
+    @property
+    def next_attempt_at(self):
+        return self.next_check
 
     @classmethod
     def wrap(cls, data):
@@ -1063,7 +1126,7 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def attempt_forward_now(self, is_retry=False):
+    def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
 
         def is_ready():
@@ -1090,10 +1153,12 @@ class RepeatRecord(Document):
             return
 
         # separated for improved datadog reporting
-        if is_retry:
-            retry_process_repeat_record.delay(self)
+        task = retry_process_repeat_record if is_retry else process_repeat_record
+
+        if fire_synchronously:
+            task(self)
         else:
-            process_repeat_record.delay(self)
+            task.delay(self)
 
     def requeue(self):
         self.cancelled = False
@@ -1107,9 +1172,9 @@ class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=36)
-    repeater_stub = models.ForeignKey(RepeaterStub,
-                                      on_delete=models.CASCADE,
-                                      related_name='repeat_records')
+    repeater = models.ForeignKey(SQLRepeater,
+                                 on_delete=models.CASCADE,
+                                 related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
                              default=RECORD_PENDING_STATE)
     registered_at = models.DateTimeField()
@@ -1139,7 +1204,7 @@ class SQLRepeatRecord(models.Model):
         ``response`` can be a Requests response instance, or True if the
         payload did not result in an API call.
         """
-        self.repeater_stub.reset_next_attempt()
+        self.repeater.reset_next_attempt()
         self.sqlrepeatrecordattempt_set.create(
             state=RECORD_SUCCESS_STATE,
             message=format_response(response) or '',
@@ -1153,7 +1218,7 @@ class SQLRepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater_stub.reset_next_attempt()
+        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1167,7 +1232,7 @@ class SQLRepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater_stub.set_next_attempt()
+        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1214,6 +1279,10 @@ class SQLRepeatRecord(models.Model):
     def last_checked(self):
         # Used by .../case/partials/repeat_records.html
         return self.repeater.last_attempt_at
+
+    @property
+    def next_attempt_at(self):
+        return self.repeater.next_attempt_at
 
     @property
     def url(self):
@@ -1267,14 +1336,14 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def attempt_forward_now(repeater_stub: RepeaterStub):
-    from corehq.motech.repeaters.tasks import process_repeater_stub
+def attempt_forward_now(repeater: SQLRepeater):
+    from corehq.motech.repeaters.tasks import process_repeater
 
-    if not domain_can_forward(repeater_stub.domain):
+    if not domain_can_forward(repeater.domain):
         return
-    if not repeater_stub.is_ready:
+    if not repeater.is_ready:
         return
-    process_repeater_stub.delay(repeater_stub)
+    process_repeater.delay(repeater)
 
 
 def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
@@ -1397,8 +1466,3 @@ def domain_can_forward(domain):
         domain_has_privilege(domain, ZAPIER_INTEGRATION)
         or domain_has_privilege(domain, DATA_FORWARDING)
     )
-
-
-# import signals
-# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

@@ -1,0 +1,173 @@
+{
+  "lastUpdated": "2018-02-22T09:05:13.160",
+  "id": "nEenWmSyUEp",
+  "href": "https://play.dhis2.org/2.36.2/api/trackedEntityTypes/nEenWmSyUEp",
+  "created": "2014-08-20T12:28:56.409",
+  "name": "Person",
+  "displayName": "Person",
+  "publicAccess": "rwrw----",
+  "description": "Person",
+  "externalAccess": false,
+  "allowAuditLog": false,
+  "featureType": "NONE",
+  "minAttributesRequiredToSearch": 1,
+  "displayDescription": "Person",
+  "sharing": {
+    "owner": "xE7jOejl9FI",
+    "external": false,
+    "users": {},
+    "userGroups": {},
+    "public": "rwrw----"
+  },
+  "displayFormName": "Person",
+  "maxTeiCountToReturn": 0,
+  "favorite": false,
+  "access": {
+    "read": true,
+    "update": true,
+    "externalize": false,
+    "delete": true,
+    "write": true,
+    "manage": true,
+    "data": {
+      "read": true,
+      "write": true
+    }
+  },
+  "lastUpdatedBy": {
+    "displayName": "John Traore",
+    "name": "John Traore",
+    "id": "xE7jOejl9FI",
+    "username": "admin"
+  },
+  "createdBy": {
+    "displayName": "John Traore",
+    "name": "John Traore",
+    "id": "xE7jOejl9FI",
+    "username": "admin"
+  },
+  "user": {
+    "displayName": "John Traore",
+    "name": "John Traore",
+    "id": "xE7jOejl9FI",
+    "username": "admin"
+  },
+  "favorites": [],
+  "trackedEntityTypeAttributes": [
+    {
+      "lastUpdated": "2018-02-21T13:54:18.693",
+      "id": "Jdd8hMStmvF",
+      "created": "2018-02-21T13:54:18.324",
+      "name": "Person Unique ID",
+      "displayName": "Person Unique ID",
+      "displayShortName": "null Unique identifier",
+      "externalAccess": false,
+      "valueType": "TEXT",
+      "sharing": {
+        "external": false,
+        "users": {},
+        "userGroups": {}
+      },
+      "searchable": false,
+      "displayInList": false,
+      "favorite": false,
+      "access": {
+        "read": true,
+        "update": true,
+        "externalize": false,
+        "delete": true,
+        "write": true,
+        "manage": true
+      },
+      "trackedEntityAttribute": {
+        "id": "lZGmxYbs97q"
+      },
+      "trackedEntityType": {
+        "id": "nEenWmSyUEp"
+      },
+      "favorites": [],
+      "translations": [],
+      "userGroupAccesses": [],
+      "attributeValues": [],
+      "userAccesses": []
+    },
+    {
+      "lastUpdated": "2018-02-21T13:54:18.694",
+      "id": "EGn5VqU7pHv",
+      "created": "2018-02-21T13:54:18.324",
+      "name": "Person First name",
+      "displayName": "Person First name",
+      "displayShortName": "null First name",
+      "externalAccess": false,
+      "valueType": "TEXT",
+      "sharing": {
+        "external": false,
+        "users": {},
+        "userGroups": {}
+      },
+      "searchable": true,
+      "displayInList": true,
+      "favorite": false,
+      "access": {
+        "read": true,
+        "update": true,
+        "externalize": false,
+        "delete": true,
+        "write": true,
+        "manage": true
+      },
+      "trackedEntityAttribute": {
+        "id": "w75KJ2mc4zz"
+      },
+      "trackedEntityType": {
+        "id": "nEenWmSyUEp"
+      },
+      "favorites": [],
+      "translations": [],
+      "userGroupAccesses": [],
+      "attributeValues": [],
+      "userAccesses": []
+    },
+    {
+      "lastUpdated": "2018-02-21T13:54:18.694",
+      "id": "JBJ3AWsrg9P",
+      "created": "2018-02-21T13:54:18.324",
+      "name": "Person Last name",
+      "displayName": "Person Last name",
+      "displayShortName": "null Last name",
+      "externalAccess": false,
+      "valueType": "TEXT",
+      "sharing": {
+        "external": false,
+        "users": {},
+        "userGroups": {}
+      },
+      "searchable": true,
+      "displayInList": true,
+      "favorite": false,
+      "access": {
+        "read": true,
+        "update": true,
+        "externalize": false,
+        "delete": true,
+        "write": true,
+        "manage": true
+      },
+      "trackedEntityAttribute": {
+        "id": "zDhUuAYrxNC"
+      },
+      "trackedEntityType": {
+        "id": "nEenWmSyUEp"
+      },
+      "favorites": [],
+      "translations": [],
+      "userGroupAccesses": [],
+      "attributeValues": [],
+      "userAccesses": []
+    }
+  ],
+  "translations": [],
+  "userGroupAccesses": [],
+  "attributeValues": [],
+  "userAccesses": []
+}

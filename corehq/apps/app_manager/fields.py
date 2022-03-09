@@ -15,6 +15,9 @@ from couchforms.analytics import get_exports_by_form
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.registry.models import DataRegistry
+from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -27,7 +30,7 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from corehq.util.soft_assert import soft_assert
 
-ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
+DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
@@ -60,7 +63,12 @@ class ApplicationDataSourceUIHelper(object):
             $("#FORM").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
-                sourcesMap: {{ sources_map|JSON }}
+                sourcesMap: {{ sources_map|JSON }},
+                labelMap: {
+                    'case': gettext('Case'),
+                    'form': gettext('Form'),
+                    'data_source': gettext('Data Source'),
+                },
             });
         });
 
@@ -70,30 +78,31 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False):
+    def __init__(self, enable_raw=False, enable_registry=False):
         self.all_sources = {}
-        self.enable_cases = enable_cases
-        self.enable_forms = enable_forms
         self.enable_raw = enable_raw
-        source_choices = []
-        if enable_cases:
-            source_choices.append((DATA_SOURCE_TYPE_CASE, _("Case")))
-        if enable_forms:
-            source_choices.append((DATA_SOURCE_TYPE_FORM, _("Form")))
+        self.enable_registry = enable_registry
+        self.app_and_registry_sources = {}
+        source_choices = [
+            (DATA_SOURCE_TYPE_CASE, _("Case")),
+            (DATA_SOURCE_TYPE_FORM, _("Form"))
+        ]
         if enable_raw:
             source_choices.append((DATA_SOURCE_TYPE_RAW, _("Data Source")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        if len(source_choices) > 1:
-            self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
-                                                       choices=source_choices,
-                                                       widget=forms.Select(choices=source_choices))
-        else:
-            self.source_type_field = forms.ChoiceField(choices=source_choices,
-                                                       widget=forms.HiddenInput(),
-                                                       initial=source_choices[0][0])
+        self.source_type_field = forms.ChoiceField(label=_('Forms or Cases'),
+                                                   choices=source_choices,
+                                                   widget=forms.Select(choices=source_choices))
 
         self.source_field = forms.ChoiceField(label=_('Data Source'), widget=forms.Select())
+        self.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
+
+        self.registry_slug_field = forms.ChoiceField(label=_('Data Registry'), widget=forms.HiddenInput,
+                                                     required=False)
+        if enable_registry:
+            self.registry_slug_field.widget = forms.Select()
+            self.application_field.required = False
 
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
@@ -101,6 +110,12 @@ class ApplicationDataSourceUIHelper(object):
             [(app_id, source['name']) for app_id, source in self.all_sources.items()],
             key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
         )
+        if self.enable_registry:
+            self.application_field.choices += [('', '--------')]
+            self.all_sources.update({'': {"name": '', "case": [], "form": []}})
+            self.app_and_registry_sources = get_dropdown_options(domain, self.all_sources)
+            self.all_sources.update(get_registry_case_sources(domain))
+
         self.source_field.choices = []
 
         def _add_choices(field, choices):
@@ -108,16 +123,14 @@ class ApplicationDataSourceUIHelper(object):
             # it's weird/annoying that you have to manually sync these
             field.widget.choices.extend(choices)
 
-        if self.enable_cases:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
-            )
-        if self.enable_forms:
-            _add_choices(
-                self.source_field,
-                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
-            )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
+        )
+        _add_choices(
+            self.source_field,
+            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
+        )
         if self.enable_raw:
             available_data_sources = get_datasources_for_domain(domain, include_static=True,
                                                                 include_aggregate=AGGREGATE_UCRS.enabled(domain))
@@ -131,26 +144,78 @@ class ApplicationDataSourceUIHelper(object):
             for app_data in self.all_sources.values():
                 app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
+        self.registry_slug_field.choices = sort_tuple_field_choices_by_name(
+            [(registry["slug"], registry["name"]) for registry in get_data_registry_dropdown_options(domain)],
+        ) + [('', '--------')]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
-        self.application_field.widget.attrs = {'data-bind': 'value: application'}
         self.source_type_field.widget.attrs = {'data-bind': 'value: sourceType'}
-        self.source_field.widget.attrs = {'data-bind': '''
-            options: sourcesMap[application()][sourceType()],
-            optionsText: function(item){return item.text},
-            optionsValue: function(item){return item.value}
-        '''}
+
+        if self.enable_registry:
+            self.application_field.widget.attrs = {'data-bind': '''
+                value: application,
+                disable: isDataFromOneProject() != 'true',
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                options: dropdownMap['app'][isDataFromOneProject()]
+            '''}
+            self.registry_slug_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: registrySlug,
+                disable: sourceType() != 'case' || isDataFromOneProject() != 'false',
+                options: dropdownMap['registry'][isDataFromOneProject()]
+                '''}
+            self.source_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: sourceId,
+                options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()])
+            '''}
+        else:
+            self.application_field.widget.attrs = {'data-bind': 'value: application'}
+            self.registry_slug_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: registrySlug
+                '''}
+            self.source_field.widget.attrs = {'data-bind': '''
+                optionsText: function(item){return item.text},
+                optionsValue: function(item){return item.value},
+                value: sourceId,
+                options: sourcesMap[application()][sourceType()]
+            '''}
 
     def get_fields(self):
         fields = collections.OrderedDict()
         fields['source_type'] = self.source_type_field
         fields['application'] = self.application_field
         fields['source'] = self.source_field
+        fields['registry_slug'] = self.registry_slug_field
         return fields
 
+    def get_crispy_filed_help_texts(self):
+        return {
+            "source_type": _(
+                "<strong>Form</strong>: Display data from form submissions.<br/>"
+                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
+                "option."),
+            "application": _("Which application should the data come from?"),
+            "registry_slug": _("Select the data registry containing the data you wish to access in the report"),
+            "source": _("Choose the case type or form from which to retrieve data for this report."),
+        }
+
+    def get_crispy_fields(self):
+        help_texts = self.get_crispy_filed_help_texts()
+        return [
+            hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
+            for name, help_text in help_texts.items()
+        ]
+
     def get_app_source(self, data_dict):
-        return ApplicationDataSource(data_dict['application'], data_dict['source_type'], data_dict['source'])
+        return DataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
+                          data_dict['registry_slug'])
 
 
 def get_app_sources(domain):
@@ -168,6 +233,37 @@ def get_app_sources(domain):
         }
         for app in apps
     }
+
+
+def get_registry_case_sources(domain):
+    return {
+        registry.slug: {
+            "name": registry.name,
+            "case": [{"text": t, "value": t} for t in registry.wrapped_schema.case_types],
+            "form": []
+        }
+        for registry in DataRegistry.objects.visible_to_domain(domain)
+    }
+
+
+def get_dropdown_options(domain, all_sources):
+    registry_options = get_data_registry_dropdown_options(domain) + [{'slug': '', 'name': ''}]
+    return{
+        "app": {
+            "true": [{"text": source['name'], "value": app_id} for app_id, source in all_sources.items()],
+            "false": [{"text": '--------', "value": ''}],
+            "": [{"text": '--------', "value": ''}]
+        },
+        "registry": {
+            "true": [{"text": '--------', "value": ''}],
+            "false": [{"text": r["name"], "value": r["slug"]} for r in registry_options],
+            "": [{"text": '--------', "value": ''}]
+        }
+    }
+
+
+def sort_tuple_field_choices_by_name(tuple_lists):
+    return sorted(tuple_lists, key=lambda id_name_tuple: (id_name_tuple[1] or '').lower())
 
 
 class ApplicationDataRMIHelper(object):

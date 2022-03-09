@@ -3,9 +3,16 @@ from collections import namedtuple
 
 from django.utils.translation import ugettext as _
 
-from corehq.apps.linked_domain.applications import get_downstream_app_id, get_upstream_app_ids
-from corehq.apps.linked_domain.exceptions import DomainLinkError, MultipleDownstreamAppsError
-from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
+from corehq.apps.linked_domain.applications import (
+    get_downstream_app_id,
+    get_upstream_app_ids,
+)
+from corehq.apps.linked_domain.exceptions import (
+    DomainLinkError,
+    MultipleDownstreamAppsError,
+)
+from corehq.apps.linked_domain.remote_accessors import \
+    get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_report_configs_for_domain,
@@ -29,10 +36,22 @@ def create_linked_ucr(domain_link, report_config_id):
         datasource = DataSourceConfiguration.get(report_config.config_id)
 
     # grab the linked app this linked report references
-    downstream_app_id = get_downstream_app_id(domain_link.linked_domain, report_config.config.meta.build.app_id)
+    try:
+        downstream_app_id = get_downstream_app_id(domain_link.linked_domain, datasource.meta.build.app_id)
+    except MultipleDownstreamAppsError:
+        raise DomainLinkError(_("This report cannot be linked because it references an app that has multiple "
+                                "downstream apps."))
+
     new_datasource = _get_or_create_datasource_link(domain_link, datasource, downstream_app_id)
     new_report = _get_or_create_report_link(domain_link, report_config, new_datasource)
     return LinkedUCRInfo(datasource=new_datasource, report=new_report)
+
+
+def get_downstream_report(downstream_domain, upstream_report_id):
+    for linked_report in get_report_configs_for_domain(downstream_domain):
+        if linked_report.report_meta.master_id == upstream_report_id:
+            return linked_report
+    return None
 
 
 def _get_or_create_datasource_link(domain_link, datasource, app_id):
@@ -57,7 +76,11 @@ def _get_or_create_datasource_link(domain_link, datasource, app_id):
     new_datasource = DataSourceConfiguration.wrap(datasource_json)
     new_datasource.save()
 
-    rebuild_indicators.delay(new_datasource.get_id, source=f"Datasource link: {new_datasource.get_id}")
+    rebuild_indicators.delay(
+        new_datasource.get_id,
+        source=f"Datasource link: {new_datasource.get_id}",
+        domain=new_datasource.domain
+    )
 
     return new_datasource
 
@@ -112,7 +135,7 @@ def update_linked_ucr(domain_link, report_id):
     linked_datasource = linked_report.config
 
     if domain_link.is_remote:
-        remote_configs = remote_get_ucr_config(domain_link, report_id)
+        remote_configs = remote_get_ucr_config(domain_link, linked_report.report_meta.master_id)
         master_report = remote_configs["report"]
         master_datasource = remote_configs["datasource"]
     else:
@@ -137,7 +160,11 @@ def _update_linked_datasource(master_datasource, linked_datasource):
     linked_datasource_json.update(master_datasource_json)
     DataSourceConfiguration.wrap(linked_datasource_json).save()
 
-    rebuild_indicators.delay(linked_datasource.get_id, source=f"Datasource link: {linked_datasource.get_id}")
+    rebuild_indicators.delay(
+        linked_datasource.get_id,
+        source=f"Datasource link: {linked_datasource.get_id}",
+        domain=linked_datasource.domain
+    )
 
 
 def _update_linked_report(master_report, linked_report):

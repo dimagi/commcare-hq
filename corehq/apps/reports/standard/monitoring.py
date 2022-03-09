@@ -1384,7 +1384,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
-    fix_left_col = True
+    fix_left_col = False
     emailable = True
     exportable_all = True
 

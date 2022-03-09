@@ -19,11 +19,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xpath import ScheduleFormXPath
+from corehq.util.timer import time_method
 
 
 class SchedulerFixtureContributor(SectionContributor):
     section_name = 'fixtures'
 
+    @time_method()
     def get_section_elements(self):
         schedule_modules = (module for module in self.modules
                             if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case)

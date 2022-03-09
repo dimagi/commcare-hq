@@ -168,7 +168,7 @@ class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def _handle_open_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
         type_meta.add_opener(self.form.unique_id, action.condition)
-        self._add_property_save(self.case_type, 'name', action.name_path)
+        self._add_property_save(self.case_type, 'name', action.name_update.question_path)
 
     def _handle_close_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
@@ -228,7 +228,12 @@ class _AdvancedFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
 
     def _add_open_actions(self):
         for action in self.form.actions.open_cases:
-            self._add_property_save(action.case_type, 'name', action.name_path, action.open_condition)
+            self._add_property_save(
+                action.case_type,
+                'name',
+                action.name_update.question_path,
+                action.open_condition
+            )
             for name, question_path in action.case_properties.items():
                 self._add_property_save(action.case_type, name, question_path, action.open_condition)
             meta = self.meta.get_type(action.case_type)
@@ -260,6 +265,7 @@ class FormQuestion(JsonObject):
     required = BooleanProperty()
     comment = StringProperty()
     setvalue = StringProperty()
+    data_source = DictProperty(exclude_if_none=True)
 
     @property
     def icon(self):

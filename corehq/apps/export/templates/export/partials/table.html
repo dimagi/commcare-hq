@@ -4,9 +4,26 @@
 {% load humanize %}
 
 <table class="table table-striped"
-       data-bind="visible: exports().length">
+       data-bind="visible: exports().length && !isBulkDeleting()">
   <thead>
     <tr>
+      {% if has_edit_permissions or allow_bulk_export %}
+        <th class="col-sm-1">
+          {% blocktrans %}Select{% endblocktrans %}
+          <br>
+          <button type="button"
+                  class="btn btn-xs btn-default"
+                  data-bind="click: selectAll">
+            {% trans 'All' %}
+          </button>
+          {%trans 'or'%}
+          <button type="button"
+                  class="btn btn-xs btn-default"
+                  data-bind="click: selectNone">
+            {% trans 'None' %}
+          </button>
+        </th>
+      {% endif %}
       <th class="col-sm-4">
         {% trans 'Name' %}
       </th>
@@ -26,24 +43,6 @@
         {{ export_type_caps }}
       {% endif %}
     </th>
-
-    {%  if allow_bulk_export %} {# form exports only #}
-      <th class="col-sm-1">
-        {% blocktrans %}Bulk {{ export_type_caps }}{% endblocktrans %}
-        <br>
-        <button type="button"
-                class="btn btn-xs btn-default"
-                data-bind="click: $root.selectAll">
-          {% trans 'All' %}
-        </button>
-        {% trans 'or' %}
-        <button type="button"
-                class="btn btn-xs btn-default"
-                data-bind="click: $root.selectNone">
-          {% trans 'None' %}
-        </button>
-      </th>
-    {% endif %}
 
     {% if is_daily_saved_export %}
       <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
@@ -81,6 +80,16 @@
   </thead>
   <tbody data-bind="foreach: exports()">
     <tr>
+    {% if has_edit_permissions or allow_bulk_export %}
+      <td>
+        <div class="checkbox checkbox-table-cell">
+          <label>
+            <input type="checkbox"
+                   data-bind="checked: addedToBulk" />
+          </label>
+        </div>
+      </td>
+    {% endif %}
       <td>
         <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
           <inline-edit params="value: name,
@@ -526,17 +535,6 @@
       </a>
     </td>
 
-    {% if allow_bulk_export %}
-      <td>
-        <div class="checkbox checkbox-table-cell">
-          <label>
-            <input type="checkbox"
-                   data-bind="checked: addedToBulk" />
-          </label>
-        </div>
-      </td>
-    {% endif %}
-
     {% if is_daily_saved_export %}
       <td>
         <!-- ko if: isLocationSafeForUser() -->
@@ -700,6 +698,7 @@
         </div>
       </td>
     {% endif %}
+
     </tr>
   </tbody>
 </table>

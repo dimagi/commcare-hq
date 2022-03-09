@@ -1,4 +1,4 @@
-from mock import mock, Mock
+from unittest.mock import Mock, patch
 
 from testil import eq
 
@@ -6,7 +6,7 @@ from corehq.project_limits.rate_limiter import RateLimiter, RateDefinition, \
     PerUserRateDefinition
 
 
-@mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
 def test_rate_limit_interface():
     """
     Just test that very basic usage doesn't error
@@ -20,7 +20,7 @@ def test_rate_limit_interface():
         my_feature_rate_limiter.report_usage('my_domain')
 
 
-@mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
 def test_get_window_of_first_exceeded_limit():
     per_user_rate_def = RateDefinition(per_second=10)
     min_rate_def = RateDefinition(per_second=100)
@@ -32,7 +32,7 @@ def test_get_window_of_first_exceeded_limit():
     eq(actual_window, expected_window)
 
 
-@mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
 def test_get_window_of_first_exceeded_limit_none():
     per_user_rate_def = RateDefinition(per_second=10)
     min_rate_def = RateDefinition(per_second=100)
@@ -44,7 +44,7 @@ def test_get_window_of_first_exceeded_limit_none():
     eq(actual_window, expected_window)
 
 
-@mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
 def test_get_window_of_first_exceeded_limit_priority():
     per_user_rate_def = RateDefinition(per_second=10, per_week=10)
     min_rate_def = RateDefinition(per_second=100)

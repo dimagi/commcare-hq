@@ -41,6 +41,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
     send_hubspot_form,
@@ -68,11 +69,14 @@ from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.models import DataRegistry
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
+    DATA_SOURCE_TYPE_CASE,
 )
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -84,6 +88,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
+    TEMP_REPORT_PREFIX,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -101,12 +106,11 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static,
+    report_config_id_is_static, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -123,7 +127,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -144,15 +148,14 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-
-TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -197,7 +200,7 @@ class BaseUserConfigReportsView(BaseDomainView):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
+            'reports': ReportConfiguration.by_domain(self.domain) + RegistryReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': get_datasources_for_domain(self.domain, include_static=True)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
@@ -212,6 +215,17 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
+
+    def dispatch(self, *args, **kwargs):
+        allow_access_to_ucrs = (
+            self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_ucrs)
+            )
+        )
+        if allow_access_to_ucrs:
+            return super().dispatch(*args, **kwargs)
+        raise Http404()
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
@@ -246,6 +260,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     @property
@@ -389,7 +404,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
-        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -405,6 +420,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
+            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
@@ -438,6 +454,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            if app_source.registry_slug != '':
+                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
@@ -449,7 +467,8 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id,
+                                     additional_doc_types=["RegistryReportConfiguration"])
         if report.report_meta.created_by_builder:
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
@@ -477,20 +496,28 @@ class ConfigureReport(ReportBuilderView):
                 self.source_id = self.existing_report.config.meta.build.source_id
                 self.app_id = self.existing_report.config.meta.build.app_id
                 self.app = Application.get(self.app_id) if self.app_id else None
+                self.registry_slug = self.existing_report.config.meta.build.registry_slug
             else:
                 self.source_id = self.existing_report.config_id
-                self.app_id = self.app = None
+                self.app_id = self.app = self.registry_slug = None
         else:
-            self.app_id = self.request.GET['application']
-            self.app = Application.get(self.app_id)
-            self.source_type = self.request.GET['source_type']
+            self.registry_slug = self.request.GET.get('registry_slug', None)
+            self.app_id = self.request.GET.get('application', None)
             self.source_id = self.request.GET['source']
+            if self.registry_slug:
+                helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+                helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
+                self.source_type = DATA_SOURCE_TYPE_CASE
+                self.app = None
+            else:
+                self.app = Application.get(self.app_id)
+                self.source_type = self.request.GET['source_type']
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
-                self.domain, self.app, self.source_type, self.source_id
+                self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
             self.template_name = 'userreports/report_error.html'
@@ -583,7 +610,7 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -603,6 +630,7 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
+            'registry_slug': self.registry_slug,
             'report_preview_url': reverse(ReportPreview.urlname,
                                           args=[self.domain, temp_ds_id]),
             'preview_datasource_id': temp_ds_id,
@@ -611,7 +639,8 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
+            ) if self.existing_report else {},
+            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
         }
 
     def _get_bound_form(self, report_data):
@@ -619,10 +648,11 @@ class ConfigureReport(ReportBuilderView):
         return form_class(
             self.domain,
             self._get_report_name(),
-            self.app._id,
+            self.app._id if self.app else None,
             self.source_type,
             self.source_id,
             self.existing_report,
+            self.registry_slug,
             report_data
         )
 
@@ -686,7 +716,8 @@ class ConfigureReport(ReportBuilderView):
 
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
-    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
     report.description = new_description
     report.save()
     return json_response({})
@@ -697,7 +728,7 @@ def _get_form_type(report_type):
     if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
-            return ConfigureTableReportForm
+        return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
 
@@ -731,12 +762,14 @@ class ReportPreview(BaseDomainView):
             report_data['source_type'],
             report_data['source_id'],
             None,
+            report_data['registry_slug'],
             report_data
         )
         if bound_form.is_valid():
             try:
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                with delete_report_config(temp_report) as report_config:
+                    response_data = ConfigurableReportView.report_preview_data(self.domain, report_config)
                 if response_data:
                     return json_response(response_data)
             except BadBuilderConfigError as e:
@@ -762,7 +795,8 @@ def _assert_report_delete_privileges(request):
 @require_permission(Permissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
 
     # Delete the data source too if it's not being used by any other reports.
     try:
@@ -1034,11 +1068,24 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        is_rebuilding = (
+            self.config.meta.build.initiated
+            and (
+                not self.config.meta.build.finished
+                and not self.config.meta.build.rebuilt_asynchronously
+            )
+        )
+        is_rebuilding_inplace = (
+            self.config.meta.build.initiated_in_place
+            and not self.config.meta.build.finished_in_place
+        )
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'is_rebuilding': is_rebuilding,
+            'is_rebuilding_inplace': is_rebuilding_inplace,
         }
 
     @property
@@ -1139,7 +1186,8 @@ def delete_data_source(request, domain, config_id):
 
 
 def delete_data_source_shared(domain, config_id, request=None):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id,
+                                 additional_doc_types=["RegistryDataSourceConfiguration"])
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables
@@ -1190,7 +1238,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1240,8 +1288,9 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
-    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
+    rebuild_indicators_in_place.delay(config_id, request.user.username,
+                                      source='edit_data_source_build_in_place',
+                                      domain=config.domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1349,6 +1398,7 @@ def process_url_params(params, columns):
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
+    """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
@@ -1442,16 +1492,6 @@ def choice_list_api(request, domain, report_id, filter_id):
     else:
         # mobile UCR hits this API for invalid filters. Just return no choices.
         return json_response([])
-
-
-def _shared_context(domain):
-    static_reports = list(StaticReportConfiguration.by_domain(domain))
-    static_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
-    return {
-        'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain) + static_reports,
-        'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
-    }
 
 
 class DataSourceSummaryView(BaseUserConfigReportsView):

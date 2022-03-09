@@ -13,5 +13,5 @@ def get_account_or_404(domain):
 
 
 def request_has_permissions_for_enterprise_admin(request, account):
-    return(account.has_enterprise_admin(request.couch_user.username)
-           or has_privilege(request, privileges.ACCOUNTING_ADMIN))
+    return (account.has_enterprise_admin(request.couch_user.username)
+            or has_privilege(request, privileges.ACCOUNTING_ADMIN))

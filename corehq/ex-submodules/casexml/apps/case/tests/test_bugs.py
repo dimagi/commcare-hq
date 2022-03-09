@@ -1,49 +1,23 @@
 import uuid
-from couchdbkit.exceptions import BulkSaveError
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 import os
-from django.test.utils import override_settings
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.view_helpers import get_case_hierarchy, case_hierarchy_context
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    use_sql_backend,
+    sharded,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
-class SimpleCaseBugTests(SimpleTestCase):
-
-    def test_generate_xml_with_no_date_modified(self):
-        # before this test was added both of these calls failed
-        for version in (V1, V2):
-            CommCareCase(_id='test').to_xml(version)
-
-
-class CaseBugTestCouchOnly(TestCase):
-
-    def test_conflicting_ids(self):
-        """
-        If a form and a case share an ID it's a conflict
-        """
-        conflict_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
-            case_id=conflict_id,
-            create=True,
-        ).as_text()
-        with self.assertRaises(BulkSaveError):
-            submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
-
-
+@sharded
 class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing
@@ -164,10 +138,9 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock.deprecated_init(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ], domain="test-domain")
-        cases = CaseAccessors("test-domain")
-        cases.soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases("test-domain", [case_id])
 
-        case = cases.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, "test-domain")
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
@@ -194,11 +167,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
-@use_sql_backend
-class CaseBugTestSQL(CaseBugTest):
-    pass
-
-
+@sharded
 class TestCaseHierarchy(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -246,7 +215,7 @@ class TestCaseHierarchy(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        parent = CaseAccessors(parent.domain).get_case(parent.case_id)
+        parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
         hierarchy = get_case_hierarchy(parent, {})
         self.assertEqual(1, len(hierarchy['case_list']))
         self.assertEqual(0, len(hierarchy['child_cases']))
@@ -283,7 +252,8 @@ class TestCaseHierarchy(TestCase):
         [case] = factory.create_or_update_case(CaseStructure(
             case_id='infinite-recursion',
             attrs={'case_type': 'bug', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
+            indices=[CaseIndex(CaseStructure(
+                case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
             walk_related=False
         ))
 
@@ -346,7 +316,7 @@ class TestCaseHierarchy(TestCase):
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors().get_case(case_id2)
+            CommCareCase.objects.get_case(case_id2, 'domain_name')
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock.deprecated_init(
@@ -355,20 +325,16 @@ class TestCaseHierarchy(TestCase):
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors().get_case(case_id2)
+        case2 = CommCareCase.objects.get_case(case_id2, 'test-transactions')
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
-
-
-@use_sql_backend
-class TestCaseHierarchySQL(TestCaseHierarchy):
-    pass
 
 
 def _get_case_url_blank(case_id):
     return ""
 
 
+@sharded
 class TestCaseHierarchyContext(TestCase):
     def setUp(self):
         self.factory = CaseFactory()
@@ -419,11 +385,5 @@ class TestCaseHierarchyContext(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        accessors = CaseAccessors(self.parent.domain)
-        self.parent = accessors.get_case(self.parent.case_id)
-        self.child = accessors.get_case(self.child.case_id)
-
-
-@use_sql_backend
-class TestCaseHierarchyContextSQL(TestCaseHierarchyContext):
-    pass
+        self.parent = CommCareCase.objects.get_case(self.parent.case_id, self.parent.domain)
+        self.child = CommCareCase.objects.get_case(self.child.case_id, self.parent.domain)

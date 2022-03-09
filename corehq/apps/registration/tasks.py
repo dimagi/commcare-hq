@@ -47,8 +47,9 @@ def activation_24hr_reminder_email():
             'registration/email/confirm_account.html', email_context)
         subject = ugettext('Reminder to Activate your CommCare project')
 
+        recipient = user.get_email() if user else request.new_user_username
         send_html_email_async.delay(
-            subject, request.new_user_username, message_html,
+            subject, recipient, message_html,
             text_content=message_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL
         )
@@ -59,7 +60,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-@task(serializer='pickle', queue="email_queue")
+@task(queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {

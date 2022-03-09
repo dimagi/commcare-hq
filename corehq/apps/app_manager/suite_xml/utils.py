@@ -96,3 +96,14 @@ def get_module_locale_id(module):
 
 def get_form_locale_id(form):
     return id_strings.form_locale(form)
+
+
+def get_ordered_case_types_for_module(module):
+    return get_ordered_case_types(module.case_type, module.search_config.additional_case_types)
+
+
+def get_ordered_case_types(case_type, additional_case_types=None):
+    """Utility to provide consistent order of case types in suite files."""
+    additional_case_types = additional_case_types or []
+    additional_types = set(additional_case_types) - {case_type}
+    return [case_type] + sorted(additional_types)

@@ -3,19 +3,15 @@ from datetime import datetime
 
 from django.test import TestCase, override_settings
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import case_post_save
 
 from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
     AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
-    CaseRuleAction,
     CaseRuleActionResult,
-    CaseRuleCriteria,
     CaseRuleSubmission,
     CaseRuleUndoer,
     ClosedParentDefinition,
@@ -28,17 +24,8 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.form_processor.tests.utils import (
-    run_with_all_backends,
-    set_case_property_directly,
-)
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
 from corehq.util.context_managers import drop_connected_signals
@@ -47,32 +34,23 @@ from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 @contextmanager
 def _with_case(domain, case_type, last_modified, **kwargs):
-    with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+    with drop_connected_signals(sql_case_post_save):
         case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
 
     _update_case(domain, case.case_id, last_modified)
-    accessors = CaseAccessors(domain)
-    case = accessors.get_case(case.case_id)
+    case = CommCareCase.objects.get_case(case.case_id, domain)
     try:
         yield case
     finally:
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 def _save_case(domain, case):
-    if should_use_sql_backend(domain):
-        CaseAccessorSQL.save_case(case)
-    else:
-        # can't call case.save() since it overrides the server_modified_on property
-        CommCareCase.get_db().save_doc(case.to_json())
+    case.save(with_tracked_models=True)
 
 
 def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
-    accessors = CaseAccessors(domain)
-    case = accessors.get_case(case_id)
+    case = CommCareCase.objects.get_case(case_id, domain)
     case.server_modified_on = server_modified_on
     if last_visit_date:
         set_case_property_directly(case, 'last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
@@ -83,10 +61,10 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
     server_modified_on = child_case.server_modified_on
     set_actual_parent_case(domain, child_case, parent_case, relationship=relationship, identifier=identifier)
 
-    child_case = CaseAccessors(domain).get_case(child_case.case_id)
+    child_case = CommCareCase.objects.get_case(child_case.case_id, domain)
     child_case.server_modified_on = server_modified_on
     _save_case(domain, child_case)
-    return CaseAccessors(domain).get_case(child_case.case_id)
+    return CommCareCase.objects.get_case(child_case.case_id, domain)
 
 
 def dummy_custom_match_function(case, now):
@@ -122,7 +100,6 @@ class BaseCaseRuleTest(TestCase):
 
 class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
-    @run_with_all_backends
     def test_match_case_type(self):
         rule = _create_empty_rule(self.domain)
 
@@ -132,7 +109,6 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_server_modified(self):
         rule = _create_empty_rule(self.domain)
         rule.filter_on_server_modified = True
@@ -145,7 +121,6 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         with _with_case(self.domain, 'person', datetime(2017, 4, 15)) as case:
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 26)))
 
-    @run_with_all_backends
     def test_case_property_equal(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -159,14 +134,13 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'x'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'negative'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_case_property_not_equal(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -180,14 +154,13 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'x'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'negative'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_case_property_regex_match(self):
         rule1 = _create_empty_rule(self.domain)
         rule1.add_criteria(
@@ -209,21 +182,20 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule1.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'a'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule1.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'b'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule1.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'c'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule1.criteria_match(case, datetime.utcnow()))
 
             # Running an invalid regex just causes it to return False
             self.assertFalse(rule2.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_dates_case_properties_for_equality_inequality(self):
         """
         Date case properties are automatically converted from string to date
@@ -251,16 +223,15 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule2.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'last_visit': '2017-03-01'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule1.criteria_match(case, datetime.utcnow()))
             self.assertFalse(rule2.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'last_visit': '2017-03-02'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule1.criteria_match(case, datetime.utcnow()))
             self.assertTrue(rule2.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_case_property_has_value(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -273,14 +244,13 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'x'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': ''})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_case_property_has_no_value(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -293,14 +263,13 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'x'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': ''})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_date_case_property_before(self):
         rule1 = _create_empty_rule(self.domain)
         rule1.add_criteria(
@@ -332,7 +301,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule3.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'last_visit_date': '2017-01-15'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
             self.assertTrue(rule1.criteria_match(case, datetime(2017, 1, 5)))
             self.assertFalse(rule1.criteria_match(case, datetime(2017, 1, 10)))
@@ -346,7 +315,6 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule3.criteria_match(case, datetime(2017, 1, 20)))
             self.assertFalse(rule3.criteria_match(case, datetime(2017, 1, 25)))
 
-    @run_with_all_backends
     def test_date_case_property_after(self):
         rule1 = _create_empty_rule(self.domain)
         rule1.add_criteria(
@@ -378,7 +346,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule3.criteria_match(case, datetime.utcnow()))
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'last_visit_date': '2017-01-15'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
             self.assertFalse(rule1.criteria_match(case, datetime(2017, 1, 5)))
             self.assertTrue(rule1.criteria_match(case, datetime(2017, 1, 10)))
@@ -392,7 +360,6 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule3.criteria_match(case, datetime(2017, 1, 20)))
             self.assertTrue(rule3.criteria_match(case, datetime(2017, 1, 25)))
 
-    @run_with_all_backends
     def test_parent_case_reference(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -413,10 +380,9 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
             hqcase.utils.update_case(self.domain, parent.case_id, case_properties={'result': 'x'})
             # reset memoized cache
-            child = CaseAccessors(self.domain).get_case(child.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
             self.assertFalse(rule.criteria_match(child, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_host_case_reference(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -437,10 +403,9 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
             hqcase.utils.update_case(self.domain, host.case_id, case_properties={'result': 'x'})
             # reset memoized cache
-            child = CaseAccessors(self.domain).get_case(child.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
             self.assertFalse(rule.criteria_match(child, datetime.utcnow()))
 
-    @run_with_all_backends
     def test_parent_case_closed(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(ClosedParentDefinition)
@@ -453,10 +418,9 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
             hqcase.utils.update_case(self.domain, parent.case_id, close=True)
             # reset memoized cache
-            child = CaseAccessors(self.domain).get_case(child.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
             self.assertTrue(rule.criteria_match(child, datetime.utcnow()))
 
-    @run_with_all_backends
     @override_settings(
         AVAILABLE_CUSTOM_RULE_CRITERIA={
             'CUSTOM_CRITERIA_TEST':
@@ -485,7 +449,6 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, now))
             p.assert_called_once_with(case, now)
 
-    @run_with_all_backends
     def test_multiple_criteria(self):
         rule = _create_empty_rule(self.domain)
 
@@ -512,36 +475,40 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             set_case_property_directly(case, 'abc', '123')
             set_case_property_directly(case, 'def', '456')
             _save_case(self.domain, case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
 
             case.server_modified_on = datetime(2017, 4, 10)
             set_case_property_directly(case, 'abc', '123')
             set_case_property_directly(case, 'def', '456')
             _save_case(self.domain, case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime(2017, 4, 15)))
 
             case.server_modified_on = datetime(2017, 4, 1)
             set_case_property_directly(case, 'abc', '123x')
             set_case_property_directly(case, 'def', '456')
             _save_case(self.domain, case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime(2017, 4, 15)))
 
             case.server_modified_on = datetime(2017, 4, 1)
             set_case_property_directly(case, 'abc', '123')
             set_case_property_directly(case, 'def', '456x')
             _save_case(self.domain, case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime(2017, 4, 15)))
 
             case.server_modified_on = datetime(2017, 4, 1)
             set_case_property_directly(case, 'abc', '123')
             set_case_property_directly(case, 'def', '456')
             _save_case(self.domain, case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
+
+
+def set_case_property_directly(case, property_name, value):
+    case.case_json[property_name] = value
 
 
 class CaseRuleActionsTest(BaseCaseRuleTest):
@@ -556,7 +523,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
         if result and expected_result:
             self.assertEqual(result, expected_result)
 
-    @run_with_all_backends
     def test_update_only(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -578,7 +544,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             result = rule.run_actions_when_case_matches(case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
@@ -586,7 +552,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(case.get_case_property('result2'), 'def')
             self.assertFalse(case.closed)
 
-    @run_with_all_backends
     def test_close_only(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=True)
@@ -596,7 +561,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             dynamic_properties_before = case.dynamic_case_properties()
             result = rule.run_actions_when_case_matches(case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             dynamic_properties_after = case.dynamic_case_properties()
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
@@ -604,7 +569,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertTrue(case.closed)
             self.assertEqual(dynamic_properties_before, dynamic_properties_after)
 
-    @run_with_all_backends
     def test_update_parent(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -625,8 +589,8 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             self.assertActionResult(rule, 0)
             result = rule.run_actions_when_case_matches(child)
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_related_updates=1))
@@ -636,7 +600,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertFalse(child.closed)
             self.assertFalse(parent.closed)
 
-    @run_with_all_backends
     def test_update_host(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -657,8 +620,8 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             self.assertActionResult(rule, 0)
             result = rule.run_actions_when_case_matches(child)
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            host = CaseAccessors(self.domain).get_case(host.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            host = CommCareCase.objects.get_case(host.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_related_updates=1))
@@ -668,7 +631,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertFalse(child.closed)
             self.assertFalse(host.closed)
 
-    @run_with_all_backends
     def test_update_from_other_case_property(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -685,11 +647,11 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'other_result': 'xyz'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertNotIn('result', case.dynamic_case_properties())
 
             result = rule.run_actions_when_case_matches(case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
@@ -697,7 +659,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(case.get_case_property('other_result'), 'xyz')
             self.assertFalse(case.closed)
 
-    @run_with_all_backends
     def test_update_from_parent_case_property(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -716,13 +677,13 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             child = set_parent_case(self.domain, child, parent)
             hqcase.utils.update_case(self.domain, parent.case_id, case_properties={'result': 'xyz'})
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
             self.assertNotIn('result', child.dynamic_case_properties())
             parent_case_properties_before = parent.dynamic_case_properties()
 
             result = rule.run_actions_when_case_matches(child)
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
@@ -731,7 +692,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertFalse(child.closed)
             self.assertFalse(parent.closed)
 
-    @run_with_all_backends
     def test_no_update(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
@@ -748,19 +708,18 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'xyz'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             server_modified_before = case.server_modified_on
             self.assertEqual(case.get_case_property('result'), 'xyz')
 
             result = rule.run_actions_when_case_matches(case)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertEqual(case.server_modified_on, server_modified_before)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 0, result, CaseRuleActionResult())
             self.assertFalse(case.closed)
 
-    @run_with_all_backends
     def test_update_and_close(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=True)
@@ -786,8 +745,8 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             child = set_parent_case(self.domain, child, parent)
             result = rule.run_actions_when_case_matches(child)
 
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 2, result,
@@ -799,7 +758,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertTrue(child.closed)
             self.assertFalse(parent.closed)
 
-    @run_with_all_backends
     def test_undo(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=True)
@@ -825,8 +783,8 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             child = set_parent_case(self.domain, child, parent)
             result = rule.run_actions_when_case_matches(child)
 
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 2, result,
@@ -846,8 +804,8 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
                 'archived': 2,
             })
 
-            child = CaseAccessors(self.domain).get_case(child.case_id)
-            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+            child = CommCareCase.objects.get_case(child.case_id, self.domain)
+            parent = CommCareCase.objects.get_case(parent.case_id, self.domain)
 
             self.assertNotIn('result', child.dynamic_case_properties())
             self.assertNotIn('result', parent.dynamic_case_properties())
@@ -859,10 +817,9 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(CaseRuleSubmission.objects.filter(domain=self.domain, archived=True).count(), 2)
 
             form_ids = CaseRuleSubmission.objects.filter(domain=self.domain).values_list('form_id', flat=True)
-            for form in FormAccessors(self.domain).iter_forms(form_ids):
+            for form in XFormInstance.objects.iter_forms(form_ids, self.domain):
                 self.assertTrue(form.is_archived)
 
-    @run_with_all_backends
     @override_settings(
         AVAILABLE_CUSTOM_RULE_ACTIONS={
             'CUSTOM_ACTION_TEST':
@@ -881,7 +838,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             p.return_value = CaseRuleActionResult(num_related_updates=1)
             result = rule.run_actions_when_case_matches(case)
             p.assert_called_once_with(case, rule)
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
             self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_closes=1, num_related_updates=1))
@@ -900,7 +857,6 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
         super(CaseRuleOnSaveTests, self).tearDown()
         self.disable_updates_on_save()
 
-    @run_with_all_backends
     @reentrant_redis_locks()
     def test_run_on_save(self):
         self.enable_updates_on_save()
@@ -925,14 +881,13 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'N'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertNotIn('result', case.dynamic_case_properties())
 
             hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertEqual(case.get_case_property('result'), 'abc')
 
-    @run_with_all_backends
     def test_do_not_run_on_save_in_response_to_auto_update(self):
         self.enable_updates_on_save()
 
@@ -962,7 +917,6 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
                     xmlns=AUTO_UPDATE_XMLNS)
                 run_rule_patch.assert_not_called()
 
-    @run_with_all_backends
     def test_do_not_run_on_save_when_flag_is_disabled(self):
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             with patch('corehq.apps.data_interfaces.tasks.run_case_update_rules_on_save') as task_patch:
@@ -987,8 +941,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')
         rule2 = _create_empty_rule(self.domain, case_type='person-1')
         rule3 = _create_empty_rule(self.domain, case_type='person-2')
-        rule4 = _create_empty_rule(self.domain, case_type='person-2', active=False)
-        rule5 = _create_empty_rule(self.domain, case_type='person-3', deleted=True)
+        _create_empty_rule(self.domain, case_type='person-2', active=False)
+        _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -1021,7 +975,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule3.server_modified_boundary = 30
         rule3.save()
 
-        rule4 = _create_empty_rule(self.domain, case_type='person-2')
+        _create_empty_rule(self.domain, case_type='person-2')
 
         rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -1038,17 +992,18 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(DomainCaseRuleRun.objects.count(), count)
 
     def assertLastRuleRun(self, cases_checked, num_updates=0, num_closes=0, num_related_updates=0,
-            num_related_closes=0, num_creates=0):
+            num_related_closes=0, num_creates=0, num_errors=0):
         last_run = DomainCaseRuleRun.objects.filter(domain=self.domain).order_by('-finished_on')[0]
-        self.assertEqual(last_run.status, DomainCaseRuleRun.STATUS_FINISHED)
+        expected_status = DomainCaseRuleRun.STATUS_HAD_ERRORS if num_errors else DomainCaseRuleRun.STATUS_FINISHED
+        self.assertEqual(last_run.status, expected_status)
         self.assertEqual(last_run.cases_checked, cases_checked)
         self.assertEqual(last_run.num_updates, num_updates)
         self.assertEqual(last_run.num_closes, num_closes)
         self.assertEqual(last_run.num_related_updates, num_related_updates)
         self.assertEqual(last_run.num_related_closes, num_related_closes)
         self.assertEqual(last_run.num_creates, num_creates)
+        self.assertEqual(last_run.num_errors, num_errors)
 
-    @run_with_all_backends
     def test_scheduled_task_run(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
@@ -1080,14 +1035,14 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
                 # Case matches, perform one update
                 hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'})
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
                 self.assertNotIn('result', case.dynamic_case_properties())
 
                 iter_cases_patch.return_value = [case]
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(2)
                 self.assertLastRuleRun(1, num_updates=1)
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
                 self.assertEqual(case.get_case_property('result'), 'abc')
 
                 # Case matches but is already in the desired state, no update made
@@ -1095,6 +1050,28 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)
+
+    def test_single_failure_is_isolated(self):
+
+        def fail_on_person2(case, now):
+            if case.type == 'person2':
+                raise AssertionError()
+            return CaseRuleActionResult(num_updates=1)
+
+        _create_empty_rule(self.domain)
+        with _with_case(self.domain, 'person1', datetime.utcnow()) as case1, \
+                _with_case(self.domain, 'person2', datetime.utcnow()) as case2, \
+                _with_case(self.domain, 'person3', datetime.utcnow()) as case3, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch, \
+                patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule:
+            iter_cases_patch.return_value = [case1, case2, case3]
+            run_rule.side_effect = fail_on_person2
+
+            self.assertRuleRunCount(0)
+            run_case_update_rules_for_domain(self.domain)
+            self.assertRuleRunCount(1)
+            # Three cases were checked, two were updated, one failed hard
+            self.assertLastRuleRun(cases_checked=3, num_updates=2, num_errors=1)
 
 
 class TestParentCaseReferences(BaseCaseRuleTest):

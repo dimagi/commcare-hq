@@ -1,10 +1,12 @@
 import os
 import uuid
+from unittest import mock
 
+from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from couchforms import openrosa_response
 
@@ -12,11 +14,16 @@ import django_digest.test
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.receiverwrapper.views import secure_post
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.receiverwrapper.views import post_api, secure_post
+from corehq.apps.users.models import (
+    CommCareUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.util import normalize_username
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.tests.utils import sharded
 
 
 class FakeFile(object):
@@ -114,7 +121,7 @@ class AuthTestMixin(object):
 
         if expected_auth_context is not None:
             xform_id = response['X-CommCareHQ-FormID']
-            xform = FormAccessors(self.domain).get_form(xform_id)
+            xform = XFormInstance.objects.get_form(xform_id, self.domain)
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 
@@ -265,7 +272,7 @@ class AuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(AuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(AuthCouchOnlyTest, self).tearDown()
 
 
@@ -283,10 +290,11 @@ class InsecureAuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(InsecureAuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthCouchOnlyTest, self).tearDown()
 
 
+@sharded
 class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-domain'
@@ -301,10 +309,11 @@ class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(AuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(AuthTest, self).tearDown()
 
 
+@sharded
 class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-insecure-domain'
@@ -319,15 +328,55 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(InsecureAuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         super(InsecureAuthTest, self).tearDown()
 
 
-@use_sql_backend
-class AuthTestSQL(AuthTest):
-    pass
+def return_200(*args, **kwargs):
+    return HttpResponse("success!", status=200)
 
 
-@use_sql_backend
-class InsecureAuthTestSQL(InsecureAuthTest):
-    pass
+@mock.patch('corehq.apps.receiverwrapper.views._process_form', new=return_200)
+class TestAPIEndpoint(TestCase):
+    domain = "submission-api-test"
+    username = 'samiam'
+    password = 'p@$$w0rd'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
+        cls.url = reverse(post_api, args=[cls.domain])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+
+    def _create_user(self, edit_data=False, access_api=False):
+        role = UserRole.create(
+            self.domain, 'api-user', permissions=Permissions(
+                edit_data=edit_data, access_api=access_api
+            )
+        )
+        web_user = WebUser.create(self.domain, self.username, self.password,
+                                  None, None, role_id=role.get_id)
+        self.addCleanup(web_user.delete, None, None)
+        return web_user
+
+    def test_no_auth_fails_with_401(self):
+        self.assertEqual(self.client.post(self.url).status_code, 401)
+
+    def assert_api_response(self, status):
+        self.client.login(username=self.username, password=self.password)
+        self.assertEqual(self.client.post(self.url).status_code, status)
+
+    def test_successful_response(self):
+        self._create_user(edit_data=True, access_api=True)
+        self.assert_api_response(200)
+
+    def test_edit_data_required(self):
+        self._create_user(edit_data=False, access_api=True)
+        self.assert_api_response(403)
+
+    def test_access_api_required(self):
+        self._create_user(edit_data=True, access_api=False)
+        self.assert_api_response(403)

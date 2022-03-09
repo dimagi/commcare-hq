@@ -1,12 +1,13 @@
-from typing import Generator, List, Optional, Type, Union
+from typing import Generator, List, Type, Union
 
 import attr
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
-from corehq.motech.requests import Requests, json_or_http_error
+from corehq.motech.requests import Requests
 from corehq.motech.utils import simplify_list
 
 from .const import SYSTEM_URI_CASE_ID
+from .bundle import get_bundle, get_next_url, iter_bundle
 
 
 class ResourceSearcher:
@@ -56,12 +57,12 @@ class Search:
             # patient by each of their given names is done with a series
             # of requests.
             endpoint = f"{self.resource['resourceType']}/"
-            searchset_bundle = self._get_bundle(endpoint, params=params)
+            searchset_bundle = get_bundle(self.requests, endpoint, params=params)
             while True:
-                yield from self._iter_bundle(searchset_bundle)
+                yield from iter_bundle(searchset_bundle)
                 url = get_next_url(searchset_bundle)
                 if url:
-                    searchset_bundle = self._get_bundle(url=url)
+                    searchset_bundle = get_bundle(self.requests, url=url)
                 else:
                     break
 
@@ -76,20 +77,6 @@ class Search:
             else:
                 update_all(request_params, sp.param_name, value)
         return request_params
-
-    def _get_bundle(self, endpoint=None, *, url=None, **kwargs) -> dict:
-        assert endpoint or url, 'No API endpoint or url given'
-        if endpoint:
-            response = self.requests.get(endpoint, **kwargs)
-            return json_or_http_error(response)
-        response = self.requests.send_request('GET', url, **kwargs)
-        return json_or_http_error(response)
-
-    @staticmethod
-    def _iter_bundle(bundle: dict) -> Generator:
-        for entry in bundle.get('entry', {}):
-            if 'resource' in entry:
-                yield entry['resource']
 
 
 class ParamHelper:
@@ -244,32 +231,3 @@ def multiply(dicts: List[dict], key, values: list) -> List[dict]:
         for dict_ in dicts
         for value in values
     ]
-
-
-def get_next_url(bundle: dict) -> Optional[str]:
-    """
-    Returns the URL for the next page of a paginated ``bundle``.
-
-    >>> bundle = {
-    ...     "link": [
-    ...         {"relation": "self", "url": "https://example.com/page/2"},
-    ...         {"relation": "next", "url": "https://example.com/page/3"},
-    ...         {"relation": "previous", "url": "https://example.com/page/1"},
-    ...     ]
-    ... }
-    >>> get_next_url(bundle)
-    "https://example.com/page/3"
-
-    >>> bundle = {
-    ...     "link": [
-    ...         {"relation": "self", "url": "https://example.com/page/1"},
-    ...     ]
-    ... }
-    >>> get_next_url(bundle)
-    None
-
-    """
-    if 'link' in bundle:
-        for link in bundle['link']:
-            if link['relation'] == 'next':
-                return link['url']

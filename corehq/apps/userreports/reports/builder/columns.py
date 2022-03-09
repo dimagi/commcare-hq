@@ -86,7 +86,7 @@ class ColumnOption(object):
         """
         raise NotImplementedError
 
-    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation):
         """
         Return the indicators corresponding to this column option.
         """
@@ -230,7 +230,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
-    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation):
         """
         Return the report config snippets that specify the data source indicator that will be used for
         aggregating this question, and the data source indicator for the multi-select question's choices.
@@ -377,11 +377,18 @@ class RawPropertyColumnOption(ColumnOption):
     Column option for raw properties (properties that just reference an existing data source)
     """
 
+    def __init__(self, property, data_types, default_display, source):
+        super().__init__(property, data_types, default_display)
+        self._source = source
+
     def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         return {
             "type": "expression",
             "column_id": self._property,
             "datatype": self._data_types[0],
-            "display_name": self.get_property(),
-            # "expression": expression,
+            "display_name": self.get_default_display(),
+            "expression": {
+                "type": "property_name",
+                "property_name": self._source
+            },
         }
