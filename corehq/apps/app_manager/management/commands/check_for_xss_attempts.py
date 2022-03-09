@@ -6,14 +6,12 @@ from django.urls import reverse
 from lxml.html.clean import Cleaner
 
 from .form_iterator import FormIteratorCommandBase, get_current_apps, get_forms
-# Considering changing the naming convention since this doesn't specifically look for XSS
-# It catches any sort of JS being used in the tags
 
 
 class Command(FormIteratorCommandBase):
 
     def __init__(self):
-        self.xss_attempt_found = 0
+        self.js_usage_found = 0
         self.total_forms = 0
         self.start_time = None
         self.iteration_key = __name__
@@ -23,17 +21,17 @@ class Command(FormIteratorCommandBase):
 
         for app in get_apps(reset, batchsize):
             for form in get_forms(app):
-                xss_attempt, xss_value = form_contains_xss_attempt(form)
-                if xss_attempt:
-                    handle_entity_form(form, app, xss_value, self.log_file)
-                    self.xss_attempt_found += 1
+                js_usage, value = form_contains_xss_attempt(form)
+                if js_usage:
+                    handle_entity_form(form, app, value, self.log_file)
+                    self.js_usage_found += 1
                 self.total_forms += 1
                 if limit > 0 and self.total_forms >= limit:
                     return
 
     def report_results(self):
         elapsed = datetime.now() - self.start_time
-        self.broadcast(f'Found {self.xss_attempt_found} XSS attempts in {self.total_forms} forms')
+        self.broadcast(f'Found {self.js_usage_found} JS usages in {self.total_forms} forms')
         self.broadcast(f'Completed search in {elapsed}')
 
 
@@ -48,7 +46,7 @@ def form_contains_xss_attempt(form):
     try:
         source = form.source
     except ResourceNotFound:
-        return False
+        return False, ''
 
     for value in re.findall(regex, form.source):
         if '&lt;' and '&gt;' in value:
@@ -66,7 +64,7 @@ def form_contains_xss_attempt(form):
 
 #this should be further abstracted
 def handle_entity_form(form, app, value, log_file):
-    print('Found XSS attempt', file=log_file)
+    print('Found JS usage', file=log_file)
     print(f'\tForm: {form.unique_id}, app {app._id}', file=log_file)
     print(f'\tValue: {value}', file=log_file)
     if app.copy_of:
