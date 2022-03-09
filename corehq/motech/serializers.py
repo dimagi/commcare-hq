@@ -15,7 +15,7 @@ value in `to_data_type`.
 """
 import datetime
 import re
-from typing import Any
+from typing import Any, Callable, Optional
 
 from dateutil import parser as dateutil_parser
 
@@ -101,7 +101,7 @@ def to_datetime_str(value):
         return value.isoformat(timespec='milliseconds')
 
 
-serializers = {
+serializers: dict[tuple[Optional[str], Optional[str]], Callable] = {
     # (from_data_type, to_data_type): function
     (None, COMMCARE_DATA_TYPE_BOOLEAN): to_boolean,
     (None, COMMCARE_DATA_TYPE_DECIMAL): to_decimal,

@@ -1,4 +1,7 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import attr
 from jsonobject.containers import JsonDict
@@ -27,20 +30,22 @@ from .exceptions import ConfigurationError, JsonpathError
 from .serializers import serializers
 from .utils import simplify_list
 
+T = TypeVar('T')
 
-@attr.s
+
+@dataclass
 class CaseTriggerInfo:
-    domain = attr.ib()
-    case_id = attr.ib()
-    type = attr.ib(default=None)
-    name = attr.ib(default=None)
-    owner_id = attr.ib(default=None)
-    modified_by = attr.ib(default=None)
-    updates = attr.ib(factory=dict)
-    created = attr.ib(default=None)
-    closed = attr.ib(default=None)
-    extra_fields = attr.ib(factory=dict)
-    form_question_values = attr.ib(factory=dict)
+    domain: str
+    case_id: str
+    type: Optional[str] = None
+    name: Optional[str] = None
+    owner_id: Optional[str] = None
+    modified_by: Optional[str] = None
+    updates: dict[str, Any] = field(default_factory=dict)
+    created: Optional[bool] = None
+    closed: Optional[bool] = None
+    extra_fields: dict[str, Any] = field(default_factory=dict)
+    form_question_values: dict[str, Any] = field(default_factory=dict)
 
     def __str__(self):
         if self.name:
@@ -48,11 +53,11 @@ class CaseTriggerInfo:
         return f"<CaseTriggerInfo {self.case_id}>"
 
 
-def recurse_subclasses(cls):
-    return (
-        cls.__subclasses__()
-        + [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
-    )
+def recurse_subclasses(cls: Type[T]) -> list[Type[T]]:
+    return cls.__subclasses__() + [
+        subsub for sub in cls.__subclasses__()
+        for subsub in recurse_subclasses(sub)
+    ]
 
 
 @attr.s(auto_attribs=True, kw_only=True)
@@ -86,7 +91,7 @@ class ValueSource:
     jsonpath: Optional[str] = None
 
     @classmethod
-    def wrap(cls, data: dict):
+    def wrap(cls, data: dict) -> ValueSource:
         """
         Allows us to duck-type JsonObject, and useful for doing
         pre-instantiation transforms / dropping unwanted attributes.
