@@ -6,7 +6,6 @@ from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.apps.es.queries import match
 
 DOMAIN = 'mighty-search'
 
@@ -251,7 +250,3 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             expected,
             validate_query=False
         )
-
-    def test_match_raises_with_invalid_operator(self):
-        with self.assertRaises(ValueError):
-            match("cyrus", "pet_name", operator="And")
