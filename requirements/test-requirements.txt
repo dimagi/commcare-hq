@@ -284,6 +284,10 @@ markupsafe==1.1.1
     # via
     #   jinja2
     #   mako
+mypy==0.931
+    # via -r test-requirements.in
+mypy-extensions==0.4.3
+    # via mypy
 nose==1.3.7
     # via
     #   -r test-requirements.in
@@ -512,6 +516,8 @@ tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
     # via pep517
+tomli==2.0.1
+    # via mypy
 toposort==1.7
     # via -r base-requirements.in
 tropo-webapi-python==0.1.3
@@ -520,6 +526,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==4.1.1
+    # via mypy
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
