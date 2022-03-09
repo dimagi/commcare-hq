@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import (
     XFORM_HQ_INDEX_NAME,
@@ -16,6 +17,7 @@ from pillowtop.es_utils import (
 )
 
 
+@es_test
 class ProdIndexManagementTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
