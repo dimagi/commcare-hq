@@ -1,4 +1,3 @@
-from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -104,9 +103,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted))
-                 .filter(self._get_users_filter(mobile_user_and_group_slugs)
-                         if not EMWF.no_filters_selected(mobile_user_and_group_slugs)
-                         else match_all()))  # If no filters are selected, return all results
+                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
@@ -164,7 +161,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         def _get_form_name(request=None, **context):
             if 'instance' in context:
                 try:
-                    return mark_safe(context['instance'].form_data['@name'])
+                    return context['instance'].form_data['@name']
                 except KeyError:
                     pass
             return _('View Form')

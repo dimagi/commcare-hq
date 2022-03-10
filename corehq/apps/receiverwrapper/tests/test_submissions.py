@@ -2,25 +2,20 @@ import json
 import os
 from io import BytesIO
 
-from django.conf import settings
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    use_sql_backend,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
-
 
 from couchforms.exceptions import InvalidSubmissionFileExtensionError
 
@@ -34,12 +29,10 @@ class BaseSubmissionTest(TestCase):
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
 
-        self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
-        self.couch_user.delete(deleted_by=None)
+        self.couch_user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
         super(BaseSubmissionTest, self).tearDown()
 
@@ -54,13 +47,12 @@ class BaseSubmissionTest(TestCase):
             return self.client.post(url, data, **extra)
 
 
+@sharded
 class SubmissionTest(BaseSubmissionTest):
     maxDiff = None
 
     def _get_expected_json(self, form_id, xmlns):
-        filename = 'expected_form_{}.json'.format(
-            'sql' if self.use_sql else 'couch'
-        )
+        filename = 'expected_form_sql.json'
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             expected = json.load(f)
@@ -73,7 +65,7 @@ class SubmissionTest(BaseSubmissionTest):
     def _test(self, form, xmlns):
         response = self._submit(form, HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
-        foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
+        foo = XFormInstance.objects.get_form(xform_id, self.domain.name).to_json()
         self.assertTrue(foo['received_on'])
 
         for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id', 'server_modified_on']:
@@ -121,7 +113,7 @@ class SubmissionTest(BaseSubmissionTest):
             xmlns='http://commcarehq.org/test/submit',
         )
         case_id = 'ad38211be256653bceac8e2156475667'
-        case = CaseAccessors(self.domain.name).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, self.domain.name)
         self.assertEqual(case.name, "👕 👖 👔 👗 👙")
 
     @softer_assert()
@@ -129,7 +121,7 @@ class SubmissionTest(BaseSubmissionTest):
         self._submit('simple_form.xml')  # submit a form to try again as duplicate
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
         xform_id = response['X-CommCareHQ-FormID']
-        form = FormAccessors(self.domain.name).get_form(xform_id)
+        form = XFormInstance.objects.get_form(xform_id, self.domain.name)
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
 
@@ -143,6 +135,36 @@ class SubmissionTest(BaseSubmissionTest):
             f'{expected_error.message}'
             f'</message></OpenRosaResponse>'
         )
+
+    @softer_assert()
+    def test_submit_deprecated_form_with_attachments(self):
+        def list_attachments(form):
+            return sorted(
+                (att.name, att.open().read())
+                for att in form.get_attachments()
+                if att.name != "form.xml"
+            )
+
+        # submit a form to try again as duplicate with one attachment modified
+        self._submit('simple_form.xml', attachments={
+            "image": BytesIO(b"fake image"),
+            "file": BytesIO(b"text file"),
+        })
+        response = self._submit(
+            'simple_form_edited.xml',
+            attachments={"image": BytesIO(b"other fake image")},
+            url=reverse("receiver_secure_post", args=[self.domain]),
+        )
+        new_form = XFormInstance.objects.get_form(response['X-CommCareHQ-FormID'])
+        old_form = XFormInstance.objects.get_form(new_form.deprecated_form_id)
+        self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
+        self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
+        self.assertEqual(
+            list_attachments(old_form),
+            [("file", b"text file"), ("image", b"fake image")])
+        self.assertEqual(
+            list_attachments(new_form),
+            [("file", b"text file"), ("image", b"other fake image")])
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -258,42 +280,6 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertTrue(notification.called)
 
 
-@use_sql_backend
-class SubmissionTestSQL(SubmissionTest):
-
-    @softer_assert()
-    def test_submit_deprecated_form_with_attachments(self):
-        def list_attachments(form):
-            return sorted(
-                (att.name, att.open().read())
-                for att in form.get_attachments()
-                if att.name != "form.xml"
-            )
-
-        # submit a form to try again as duplicate with one attachment modified
-        self._submit('simple_form.xml', attachments={
-            "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
-        })
-        response = self._submit(
-            'simple_form_edited.xml',
-            attachments={"image": BytesIO(b"other fake image")},
-            url=reverse("receiver_secure_post", args=[self.domain]),
-        )
-        acc = FormAccessors(self.domain.name)
-        new_form = acc.get_form(response['X-CommCareHQ-FormID'])
-        old_form = acc.get_form(new_form.deprecated_form_id)
-        self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
-        self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(
-            list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
-        self.assertEqual(
-            list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
-
-
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
     file_path = ('data',)
@@ -322,3 +308,21 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
         transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
+
+
+@patch('corehq.apps.receiverwrapper.rate_limiter.SHOULD_RATE_LIMIT_SUBMISSIONS', True)
+@patch('corehq.apps.receiverwrapper.rate_limiter.global_submission_rate_limiter.allow_usage', return_value=True)
+class SubmitFormLocallyRateLimitTest(TestCase, TestFileMixin):
+    root = os.path.dirname(__file__)
+    file_path = ('data',)
+    domain = 'test-domain'
+
+    def test_rate_limiting(self, allow_usage):
+        form_xml = self.get_xml('simple_form')
+        submit_form_locally(form_xml, domain=self.domain)
+        allow_usage.assert_called()
+
+    def test_no_rate_limiting(self, allow_usage):
+        form_xml = self.get_xml('simple_form')
+        submit_form_locally(form_xml, domain=self.domain, max_wait=None)
+        allow_usage.assert_not_called()

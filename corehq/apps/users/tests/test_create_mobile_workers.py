@@ -30,7 +30,7 @@ class TestCreateMobileWorkers(TestCase):
             first_name='Mobile',
             last_name='Worker',
         )
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         self.assertEqual(self.domain, user.domain)
         self.assertEqual('mw1', user.username)
         self.assertEqual('mw1@example.com', user.email)
@@ -56,7 +56,7 @@ class TestCreateMobileWorkers(TestCase):
             email='mw1@example.com',
             is_account_confirmed=False,
         )
-        self.addCleanup(user.delete, deleted_by=None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_account_confirmed)
         # confirm user can't login

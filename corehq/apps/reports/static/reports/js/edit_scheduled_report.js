@@ -27,10 +27,10 @@ hqDefine("reports/js/edit_scheduled_report", [
         return $select;
     };
 
-    var update_day_input = function (weekly_options, monthly_options, day_value) {
+    var update_interval_aux_input = function (weekly_options, monthly_options, day_value) {
         var $interval = $interval || $('[name="interval"]');
         $('#div_id_day').remove();
-        if ($interval.val() !== 'daily') {
+        if ($interval.val() !== 'hourly' && $interval.val() !== 'daily') {
             var opts = $interval.val() === 'weekly' ? weekly_options : monthly_options;
             var $day_select = $('<select id="id_day" class="select form-control" name="day" />');
             $day_select = add_options_to_select($day_select, opts, day_value);
@@ -38,6 +38,11 @@ hqDefine("reports/js/edit_scheduled_report", [
                 .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
                 .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
             $interval.closest('.form-group').after($day_control_group);
+        }
+
+        $('#div_id_hour').hide();
+        if ($interval.val() !== 'hourly') {
+            $('#div_id_hour').show();
         }
     };
 
@@ -51,10 +56,10 @@ hqDefine("reports/js/edit_scheduled_report", [
             $(function () {
                 _.delay(function () {
                     // Delay initialization so that widget is created by the time this code is called
-                    update_day_input(self.weekly_options, self.monthly_options, self.day_value);
+                    update_interval_aux_input(self.weekly_options, self.monthly_options, self.day_value);
                 });
                 $(document).on('change', '[name="interval"]', function () {
-                    update_day_input(self.weekly_options, self.monthly_options);
+                    update_interval_aux_input(self.weekly_options, self.monthly_options);
                 });
                 $("#id_start_date").datepicker({
                     dateFormat: "yy-mm-dd",
@@ -130,12 +135,11 @@ hqDefine("reports/js/edit_scheduled_report", [
         );
     }
     else {
-        multiselectUtils.createFullMultiselectWidget(
-            'id_config_ids',
-            gettext("Available Reports"),
-            gettext("Included Reports"),
-            gettext("Search Reports...")
-        );
+        multiselectUtils.createFullMultiselectWidget('id_config_ids', {
+            selectableHeaderTitle: gettext("Available Reports"),
+            selectedHeaderTitle: gettext("Included Reports"),
+            searchItemTitle: gettext("Search Reports..."),
+        });
     }
     updateUcrElements($("#id_config_ids").val());
 

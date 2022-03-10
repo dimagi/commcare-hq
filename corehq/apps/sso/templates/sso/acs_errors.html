@@ -1,0 +1,78 @@
+{% extends login_template %}
+{% load i18n %}
+
+{% block title %}{% trans "Single Sign-On Request Failed" %}{% endblock title %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            <h2>
+              {% blocktrans %}
+                Single Sign-On
+              {% endblocktrans %}
+            </h2>
+            <p class="lead">
+              {% blocktrans %}
+                Sorry, but we're having trouble signing you in.
+              {% endblocktrans %}
+            </p>
+
+            {% if saml_error_reason %}
+              <p>
+                {% blocktrans %}
+                  The issue looks like it might be related to the configuration
+                  with your Identity Provider and CommCare HQ.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  This is the error message we are seeing:
+                {% endblocktrans %}
+              </p>
+              <div class="alert alert-danger">
+                <p>
+                  {{ saml_error_reason }}
+                </p>
+              </div>
+              <p>
+                {% blocktrans %}
+                  Please <a href="{{ docs_link }}">review our documentation</a>
+                  for setting up SSO with {{ idp_type }}.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans %}
+                  If the error message and documentation are not helping, please
+                  reach out to your support contact.
+                {% endblocktrans %}
+              </p>
+            {% endif %}
+
+            {% if login_error %}
+              <p>
+                {% blocktrans %}
+                  This issue might be due to the following reason:
+                {% endblocktrans %}
+              </p>
+              <div class="alert alert-danger">
+                <p>
+                  {{ login_error }}
+                </p>
+              </div>
+              <p>
+                {% blocktrans %}
+                  If this error persists, please contact your project's
+                  administrator for assistance.
+                {% endblocktrans %}
+              </p>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -120,7 +120,10 @@ hqDefine('notifications/js/notifications_service', [
         }
         module.serviceModel = new NotificationsServiceModel();
         module.serviceModel.init();
-        $(notificationsKoSelector).koApplyBindings(module.serviceModel);
+        if (!ko.dataFor($(notificationsKoSelector)[0])) {
+            // avoid multiple inits
+            $(notificationsKoSelector).koApplyBindings(module.serviceModel);
+        }
     };
 
     module.relativelyPositionUINotify = function (uiNotifySelector) {
@@ -137,14 +140,23 @@ hqDefine('notifications/js/notifications_service', [
         });
     };
 
+    // Store dismissed slugs client-side so that alerts that are generated client-side
+    // don't get re-created after user has dismissed them.
+    var dismissedSlugs = [];
     module.initUINotify = function (uiNotifySelector) {
         var uiNotifyAlerts = $(uiNotifySelector);
         if (uiNotifyAlerts.length > 0) {
             uiNotifyAlerts.on('closed.bs.alert', function () {
                 var notifySlug = $(this).data('slug');
+                dismissedSlugs.push(notifySlug);
                 _private.RMI("dismiss_ui_notify", {
                     "slug": notifySlug,
                 });
+            });
+            uiNotifyAlerts.each(function () {
+                if (_.contains(dismissedSlugs, $(this).data('slug'))) {
+                    $(this).addClass("hide");
+                }
             });
         }
     };

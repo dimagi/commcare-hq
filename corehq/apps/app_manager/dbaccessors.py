@@ -71,6 +71,7 @@ def get_latest_released_app_versions_by_app_id(domain):
     return {r['key'][2]: r['key'][3] for r in results}
 
 
+@quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)
@@ -246,6 +247,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
         raise Http404()
 
 
+@quickcache(['domain', 'include_remote'], timeout=24 * 60 * 60)
 def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class

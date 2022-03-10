@@ -9,11 +9,11 @@ from django.test import TestCase
 
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
+    FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
 )
-from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sql_backend
+from corehq.form_processor.models import LedgerValue, CommCareCase
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 
 
 class BaseReindexAccessorTest(object):
@@ -30,7 +30,7 @@ class BaseReindexAccessorTest(object):
         cls.other_domain = uuid.uuid4().hex
         # since this test depends on the global form list just wipe everything
         FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_v2_ledgers()
+        FormProcessorTestUtils.delete_all_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
 
     @classmethod
@@ -60,7 +60,7 @@ class BaseReindexAccessorTest(object):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_v2_ledgers()
+        FormProcessorTestUtils.delete_all_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
         super(BaseReindexAccessorTest, cls).tearDownClass()
 
@@ -124,7 +124,7 @@ class BaseReindexAccessorTest(object):
         self.assertSetEqual(set(self.all_doc_ids_domain), set(doc_store.iter_document_ids()))
 
 
-@use_sql_backend
+@sharded
 class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = CaseReindexAccessor
     doc_type = 'CommCareCase'
@@ -138,14 +138,14 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     def _create_docs(cls, domain, count):
         case_ids = [uuid.uuid4().hex for i in range(count)]
         [create_form_for_test(domain, case_id=case_id) for case_id in case_ids]
-        return CaseAccessorSQL.get_cases(case_ids, ordered=True)
+        return CommCareCase.objects.get_cases(case_ids, ordered=True)
 
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.case_id for doc in docs]
 
 
-@use_sql_backend
+@sharded
 class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = FormReindexAccessor
     doc_type = 'XFormInstance'
@@ -164,7 +164,7 @@ class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
         return [doc.form_id for doc in docs]
 
 
-@use_sql_backend
+@sharded
 class UnshardedLedgerReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = LedgerReindexAccessor
     doc_type = 'ledger'
@@ -188,7 +188,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
     utcnow = datetime.utcnow()
 
     case_id = case_id or uuid.uuid4().hex
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=domain,
         type='',
@@ -199,7 +199,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
         server_modified_on=utcnow,
     )
 
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
 
     ledger = LedgerValue(
         domain=domain,

@@ -38,6 +38,7 @@ The diagram below shows this synchronous processing:
 2. The form is received by CommCare and once the request has been authenticated and authorized it is fully processed
    before responding with a success or error response.
 3. The data is persisted to the various backend data sources.
+
   1. This SQL database is used for authentication and authorization.
   2. A set of partitioned SQL databases form the primary data store for form and case data.
   3. Once processing is complete a metadata record is published to the change log for each data model
@@ -46,6 +47,7 @@ The diagram below shows this synchronous processing:
      database in (b).
   5. If this submission is from a mobile device the sync record for the device is updated to allow efficient
      synchronization when the mobile device next makes a sync request.
+
 4. A successful response is sent to the sender.
 
 Asynchronous data pipeline
@@ -62,17 +64,22 @@ CommCare offers.
    request processing as described above.
 2. A pool of ETL workers (a.k.a. pillows) subscribe to Kafka and receive the metadata records from the partitions
    they are subscribed to.
+
   a. Each ETL worker subscribes to a unique set of partitions.
   b. Since each worker is independent of the others the rate of processing can vary between workers or can get
      delayed due to errors or other external factors.
   c. The impact of this is that data liveness in the secondary database may vary based on the specific components
      in the pipeline. I.e. two cases which got updated in the same form may be updated in Elasticsearch at different
      times due to variations in the processing delay between pillow workers.
+
 3. The ETL workers fetch the data record from the primary database.
+
   a. For forms and cases this data comes from PostgreSQL
   b. For users and applications this data comes from CouchDB
+
 4. If the data model is a form then the form XML is also retrieved from object storage. This data together with the
    record from the primary database are used to produce the final output which is written to the secondary databases.
+
   a. In the case of UCRs there may be other data that is fetched during the processing stage e.g. locations, users.
 
 Change Processors (Pillows)

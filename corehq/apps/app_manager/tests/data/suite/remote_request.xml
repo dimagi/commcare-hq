@@ -20,7 +20,7 @@
     <instance id="locations" src="jr://fixture/locations"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
     <session>
-      <query url="https://www.example.com/a/test_domain/phone/search/"
+      <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
              storage-instance="results"
              template="case">
@@ -43,9 +43,9 @@
         </prompt>
       </query>
       <datum id="search_case_id"
-             nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name]"
+             nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name][not(commcare_is_related_case=true())]"
              value="./@case_id"
-             detail-confirm="{module_id}_case_long"
+             detail-confirm="{module_id}_search_long"
              detail-select="{module_id}_search_short"/>
     </session>
     <stack>

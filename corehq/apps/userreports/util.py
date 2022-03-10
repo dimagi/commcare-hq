@@ -1,19 +1,23 @@
 import collections
 import hashlib
 
+from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
+from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
+    DataSourceConfigurationNotFoundError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
+from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -135,19 +139,23 @@ def allowed_report_builder_reports(request):
     return 0
 
 
-def _get_existing_reports(domain):
+def get_configurable_and_static_reports(domain):
+    from corehq.apps.userreports.models import StaticReportConfiguration
+    return get_existing_reports(domain) + StaticReportConfiguration.by_domain(domain)
+
+
+def get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
-    from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
     return [
         report for report in existing_reports
-        if not report.title.startswith(TEMP_REPORT_PREFIX)
+        if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
     ]
 
 
 def number_of_report_builder_reports(domain):
     builder_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if report.report_meta.created_by_builder
     ]
     return len(builder_reports)
@@ -155,7 +163,7 @@ def number_of_report_builder_reports(domain):
 
 def number_of_ucr_reports(domain):
     ucr_reports = [
-        report for report in _get_existing_reports(domain)
+        report for report in get_existing_reports(domain)
         if not report.report_meta.created_by_builder
     ]
     return len(ucr_reports)
@@ -198,10 +206,6 @@ def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
         max_length=max_length,
         from_left=False
     )
-
-
-def is_ucr_table(table_name):
-    return table_name.startswith(UCR_TABLE_PREFIX)
 
 
 def truncate_value(value, max_length=63, from_left=True):
@@ -272,3 +276,59 @@ def get_static_report_mapping(from_domain, to_domain):
 
 def add_tabbed_text(text):
     return '\t' + '\n\t'.join(text.splitlines(False))
+
+
+def get_report_config_or_not_found(domain, config_id):
+    from corehq.apps.userreports.models import ReportConfiguration
+    try:
+        doc = ReportConfiguration.get_db().get(config_id)
+        config = wrap_report_config_by_type(doc)
+    except (ResourceNotFound, KeyError):
+        raise DocumentNotFound()
+
+    if config.domain != domain:
+        raise DocumentNotFound()
+
+    return config
+
+
+def get_ucr_datasource_config_by_id(indicator_config_id, allow_deleted=False):
+    from corehq.apps.userreports.models import (
+        id_is_static,
+        StaticDataSourceConfiguration,
+        DataSourceConfiguration,
+    )
+    if id_is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
+        return _wrap_data_source_by_doc_type(doc, allow_deleted)
+
+
+def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
+    from corehq.apps.userreports.models import (
+        DataSourceConfiguration,
+        RegistryDataSourceConfiguration,
+    )
+    if is_deleted(doc) and not allow_deleted:
+        raise DataSourceConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(doc["doc_type"])
+    return {
+        "DataSourceConfiguration": DataSourceConfiguration,
+        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
+    }[doc_type].wrap(doc)
+
+
+def wrap_report_config_by_type(config):
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    try:
+        return {
+            "ReportConfiguration": ReportConfiguration,
+            "RegistryReportConfiguration": RegistryReportConfiguration,
+        }[config["doc_type"]].wrap(config)
+    except KeyError:
+        raise ReportConfigurationNotFoundError()

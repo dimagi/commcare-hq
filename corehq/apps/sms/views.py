@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import base64
 import io
 import json
 import re
@@ -49,7 +48,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.commtrack.models import SQLAlertConfig
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -122,8 +121,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -171,7 +169,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
@@ -262,11 +260,11 @@ def send_to_recipients(request, domain):
             elif (not send_to_all_checked) and recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
-            elif re.match(r'^\+\d+$', recipient): # here we expect it to have a plus sign
+            elif re.match(r'^\+\d+$', recipient):  # here we expect it to have a plus sign
                 def wrap_user_by_type(u):
                     return getattr(user_models, u['doc']['doc_type']).wrap(u['doc'])
 
-                phone_users = CouchUser.view("users/by_default_phone", # search both with and w/o the plus
+                phone_users = CouchUser.view("users/by_default_phone",  # search both with and w/o the plus
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
@@ -342,11 +340,14 @@ def send_to_recipients(request, domain):
                 messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
                 comma_reminder()
             if no_numbers:
-                messages.error(request, _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
+                messages.error(request,
+                    _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
             if failed_numbers:
-                messages.error(request, _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
+                messages.error(request,
+                    _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
             if unknown_usernames:
-                messages.error(request, _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
+                messages.error(request,
+                    _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
                 comma_reminder()
             if sent:
                 messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
@@ -356,8 +357,8 @@ def send_to_recipients(request, domain):
             messages.success(request, _("Message sent"))
 
     return HttpResponseRedirect(
-        request.META.get('HTTP_REFERER') or
-        reverse(ComposeMessageView.urlname, args=[domain])
+        request.META.get('HTTP_REFERER')
+        or reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 
@@ -410,7 +411,7 @@ class TestSMSMessageView(BaseDomainView):
 
 
 @csrf_exempt
-@require_permission(Permissions.edit_data, login_decorator=login_or_digest_ex(allow_cc_users=True))
+@require_permission(Permissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -587,7 +588,7 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
+    for case in CommCareCase.objects.iter_cases(case_ids, domain_obj.name):
         if domain_obj.custom_case_username:
             name = case.get_case_property(domain_obj.custom_case_username)
         else:
@@ -659,7 +660,7 @@ def get_contact_info(domain):
         try:
             client.set(cache_key, json.dumps(data))
             client.expire(cache_key, cache_expiration)
-        except:
+        except Exception:
             pass
 
     return data
@@ -680,7 +681,7 @@ def format_contact_data(domain, data):
         row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
@@ -723,7 +724,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -742,6 +743,7 @@ def chat(request, domain, contact_id, vn_id=None):
 
     def _fmt(d):
         return json_format_datetime(floored_utc_timestamp - timedelta(days=d))
+
     history_choices = [(_(x), _fmt(y)) for (x, y) in SMS_CHAT_HISTORY_CHOICES]
     history_choices.append(
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
@@ -766,7 +768,7 @@ def chat(request, domain, contact_id, vn_id=None):
 class ChatMessageHistory(View, DomainViewMixin):
     urlname = 'api_history'
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
@@ -800,7 +802,7 @@ class ChatMessageHistory(View, DomainViewMixin):
         try:
             user = CouchUser.get_by_user_id(user_id)
             return user.first_name or user.raw_username
-        except:
+        except Exception:
             return _("Unknown")
 
     @property
@@ -839,8 +841,8 @@ class ChatMessageHistory(View, DomainViewMixin):
 
         if self.domain_object.show_invalid_survey_responses_in_chat:
             return queryset.exclude(
-                Q(xforms_session_couch_id__isnull=False) &
-                ~Q(direction=INCOMING, invalid_survey_response=True)
+                Q(xforms_session_couch_id__isnull=False)
+                & ~Q(direction=INCOMING, invalid_survey_response=True)
             )
         else:
             return queryset.exclude(
@@ -900,7 +902,7 @@ class ChatMessageHistory(View, DomainViewMixin):
         if last_sms:
             try:
                 self.update_last_read_message(request.couch_user.get_id, last_sms)
-            except:
+            except Exception:
                 notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
 
         return HttpResponse(json.dumps(data))
@@ -909,7 +911,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 class ChatLastReadMessage(View, DomainViewMixin):
     urlname = 'api_last_read_message'
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
@@ -976,8 +978,12 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         }
 
         context = self.pagination_context
+
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user,
+                domain=self.domain
+            ),
             'extra_backend_mappings': extra_backend_mappings,
             'is_system_admin': self.is_system_admin,
         })
@@ -1259,10 +1265,10 @@ class EditDomainGatewayView(AddDomainGatewayView):
         except ResourceNotFound:
             raise Http404()
         if (
-            backend.is_global or
-            backend.domain != self.domain or
-            backend.hq_api_id != self.backend_class.get_api_id() or
-            backend.deleted
+            backend.is_global
+            or backend.domain != self.domain
+            or backend.hq_api_id != self.backend_class.get_api_id()
+            or backend.deleted
         ):
             raise Http404()
         return backend
@@ -1348,7 +1354,9 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
+            'initiate_new_form': InitiateAddSMSBackendForm(
+                user=self.request.couch_user
+            ),
         })
         return context
 
@@ -1488,9 +1496,9 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
         except ResourceNotFound:
             raise Http404()
         if (
-            not backend.is_global or
-            backend.deleted or
-            backend.hq_api_id != self.backend_class.get_api_id()
+            not backend.is_global
+            or backend.deleted
+            or backend.hq_api_id != self.backend_class.get_api_id()
         ):
             raise Http404()
         return backend
@@ -1555,10 +1563,10 @@ class SubscribeSMSView(BaseMessagingSectionView):
         if self.request.method == 'POST':
             return SubscribeSMSForm(self.request.POST)
 
-        if self.commtrack_settings and hasattr(self.commtrack_settings, 'sqlalertconfig'):
-            alert_config = self.commtrack_settings.sqlalertconfig
+        if self.commtrack_settings and hasattr(self.commtrack_settings, 'alertconfig'):
+            alert_config = self.commtrack_settings.alertconfig
         else:
-            alert_config = SQLAlertConfig()
+            alert_config = AlertConfig()
         initial = {
             'stock_out_facilities': alert_config.stock_out_facilities,
             'stock_out_commodities': alert_config.stock_out_commodities,
@@ -1722,8 +1730,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     def get_welcome_message_recipient(self, domain_obj):
         if (
-            domain_obj.enable_registration_welcome_sms_for_case and
-            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+            domain_obj.enable_registration_welcome_sms_for_case
+            and domain_obj.enable_registration_welcome_sms_for_mobile_worker
         ):
             return WELCOME_RECIPIENT_ALL
         elif domain_obj.enable_registration_welcome_sms_for_case:
@@ -1744,8 +1752,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
-            enabled_disabled = lambda b: (ENABLED if b else DISABLED)
-            default_custom = lambda b: (CUSTOM if b else DEFAULT)
+            enabled_disabled = lambda b: (ENABLED if b else DISABLED)  # noqa: E731
+            default_custom = lambda b: (CUSTOM if b else DEFAULT)  # noqa: E731
             initial = {
                 "use_default_sms_response":
                     enabled_disabled(domain_obj.use_default_sms_response),
@@ -1794,6 +1802,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "sms_worker_registration_alert_emails": domain_obj.sms_worker_registration_alert_emails,
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
                 "language_fallback":
@@ -1848,6 +1857,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_conversation_times_json"),
                 ("sms_mobile_worker_registration_enabled",
                  "sms_mobile_worker_registration_enabled"),
+                ("sms_worker_registration_alert_emails", "sms_worker_registration_alert_emails"),
             ]
             if self.previewer:
                 field_map.extend([
@@ -1949,6 +1959,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             domain=self.domain,
             hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
         )
+
         infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
             hq_api_id=InfobipBackend.get_api_id()
@@ -1969,6 +1980,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
             templates = wa_active_backend.get_all_templates()
+
             if templates is not None:
                 for template in templates:
                     template['template_string'] = wa_active_backend.generate_template_string(template)

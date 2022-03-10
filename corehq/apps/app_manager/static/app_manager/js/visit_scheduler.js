@@ -54,8 +54,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());
             });
-            var CC_DETAIL_SCREEN = hqImport('app_manager/js/details/screen_config').CC_DETAIL_SCREEN;
-            CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
+            hqImport('app_manager/js/details/utils').setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
             self.form_abbreviations = ko.computed(function () {
                 return _.map(self.forms(), function (form) {

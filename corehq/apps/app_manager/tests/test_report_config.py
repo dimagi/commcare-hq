@@ -4,7 +4,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
@@ -53,7 +53,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_report_config,
     mock_datasource_config,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.toggles import (
     ADD_ROW_INDEX_TO_MOBILE_UCRS,
     MOBILE_UCR,
@@ -93,6 +93,13 @@ def MAKE_REPORT_CONFIG(domain, report_id, columns=None):
             column_id="color_94ec39e6",
             display="color",
             field="color_94ec39e6"
+        ).to_json(),
+        FieldColumn(
+            type='field',
+            aggregation="sum",
+            column_id="count",
+            display="count",
+            field="count"
         ).to_json(),
     ]
     return ReportConfiguration(
@@ -150,6 +157,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         return report_configuration
 
     @classmethod
+    @flag_enabled('MOBILE_UCR')
+    @flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
     def setUpClass(cls):
         super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
@@ -161,9 +170,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             domain=cls.domain,
             username='ralph',
         )
-        MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
-        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
-
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
         # also make a report with a hidden column
@@ -187,6 +193,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     display="color",
                     field="color_94ec39e6",
                     visible=False,
+                ).to_json(),
+                FieldColumn(
+                    type='field',
+                    aggregation="sum",
+                    column_id="count",
+                    display="count",
+                    field="count"
                 ).to_json(),
             ]
         )
@@ -355,6 +368,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 </text>
               </template>
             </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.headers.count"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='count']"/>
+                </text>
+              </template>
+            </field>
           </detail>
         </partial>
         """, self.suite, "detail/detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data']")
@@ -452,6 +477,18 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <template>
                 <text>
                   <xpath function="column[@id='color_94ec39e6']"/>
+                </text>
+              </template>
+            </field>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.headers.count"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='count']"/>
                 </text>
               </template>
             </field>

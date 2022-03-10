@@ -4,7 +4,7 @@ from datetime import timedelta
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface, TouchformsError
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number, send_sms
-from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.sms.models import PhoneNumber, MessagingEvent
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
@@ -59,7 +59,9 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
         metadata = MessageMetadata(
             workflow=workflow,
             xforms_session_couch_id=session.couch_id,
+            messaging_subevent_id=logged_subevent.pk
         )
+
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(
                 phone_entry_or_number,
@@ -111,16 +113,18 @@ def handle_due_survey_action(domain, contact_id, session_id):
             # Resend the current question in the open survey to the contact
             p = PhoneNumber.get_phone_number_for_owner(session.connection_id, session.phone_number)
             if p:
+                subevent = session.related_subevent
                 metadata = MessageMetadata(
                     workflow=session.workflow,
                     xforms_session_couch_id=session._id,
+                    messaging_subevent_id=subevent.pk if subevent else None
                 )
                 resp = FormplayerInterface(session.session_id, domain).current_question()
                 send_sms_to_verified_number(
                     p,
                     resp.event.text_prompt,
                     metadata,
-                    logged_subevent=session.related_subevent
+                    logged_subevent=subevent
                 )
 
             session.move_to_next_action()

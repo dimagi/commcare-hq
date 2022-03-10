@@ -1,7 +1,6 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load tzmigration %}
 
 {% requirejs_main 'domain/js/toggles' %}
 
@@ -18,15 +17,6 @@
         Features can be enabled or disabled based on feature flags or privileges. This page
         is intended to provide a list of what features a domain has access to.
       </p>
-      {% if use_sql_backend %}
-        <div class="alert alert-warning" role="alert">
-          NOTE: This domain is using the SCALE backend which implies the following feature flags:
-          <ul>
-            <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
-            <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
-          </ul>
-        </div>
-      {% endif %}
     </div>
   </div>
 
@@ -147,30 +137,6 @@
             <div data-bind="visible: !hasDomainNamespace">---</div>
           </td>
 
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-sm-10">
-      <h1>Misc Flags</h1>
-    </div>
-    <div class="col-sm-10">
-      <table class="table table-striped">
-        <thead>
-        <th>Feature</th>
-        <th class="text-center text-nowrap">Enabled for domain?</th>
-        </thead>
-        <tbody>
-        <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
-          <td>Using new SQL/scale backend</td>
-          <td class="text-center">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
-        </tr>
-        <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
-          <td>Using new correct timezone behavior</td>
-          <td class="text-center">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
         </tr>
         </tbody>
       </table>

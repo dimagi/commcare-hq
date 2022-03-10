@@ -18,7 +18,7 @@ from corehq.apps.commtrack.exceptions import (
     NotAUserClassError,
     RequisitionsHaveBeenRemoved,
 )
-from corehq.apps.commtrack.models import SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.domain.models import Domain
@@ -359,7 +359,7 @@ def truncate(text, maxlen, ellipsis='...'):
 
 
 def send_confirmation(v, data):
-    C = SQLCommtrackConfig.for_domain(v.domain)
+    C = CommtrackConfig.for_domain(v.domain)
 
     static_loc = data['location']
     location_name = static_loc.name

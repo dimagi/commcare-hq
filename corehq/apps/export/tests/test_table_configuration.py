@@ -4,12 +4,31 @@ from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import (
     DocRow,
     ExportColumn,
+    ExportItem,
     ExportRow,
     PathNode,
     RowNumberColumn,
     ScalarItem,
     TableConfiguration,
 )
+
+
+class TableConfigurationDuplicateTests(SimpleTestCase):
+    def test_table_containing_duplicate_paths_with_differing_doc_types_can_find_either(self):
+        path = [PathNode(name='closed')]
+        prop1 = ScalarItem(path=path)
+        prop2 = ExportItem(path=path)
+        table_config = TableConfiguration(
+            columns=[
+                ExportColumn(item=prop1), ExportColumn(item=prop2)
+            ]
+        )
+
+        scalarIndex, _ = table_config.get_column(path, 'ScalarItem', None)
+        exportIndex, _ = table_config.get_column(path, 'ExportItem', None)
+
+        self.assertEqual(scalarIndex, 0)
+        self.assertEqual(exportIndex, 1)
 
 
 class TableConfigurationTest(SimpleTestCase):

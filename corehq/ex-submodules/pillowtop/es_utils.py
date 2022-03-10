@@ -3,7 +3,6 @@ from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
-from corehq.pillows.mappings.utils import transform_for_es7
 from corehq.util.es.elasticsearch import TransportError
 from pillowtop.logger import pillow_logging
 
@@ -24,16 +23,6 @@ ANALYZERS = {
         "type": "pattern",
         "pattern": r"\s*,\s*"
     }
-}
-
-REMOVE_SETTING = None
-
-ES_ENV_SETTINGS = {
-    'icds': {
-        'hqusers': {
-            "number_of_replicas": 1,
-        },
-    },
 }
 
 XFORM_HQ_INDEX_NAME = "xforms"
@@ -81,6 +70,10 @@ ES_INDEX_SETTINGS = {
     },
 }
 
+# Allow removing settings from defaults by setting
+# the value to None in settings.ES_SETTINGS
+REMOVE_SETTING = None
+
 
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
@@ -102,16 +95,13 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
             ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
         )
 
-        overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
-            overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
-
-        for hq_index_name in ['default', self.hq_index_name]:
-            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(hq_index_name, {}).items():
-                if value is REMOVE_SETTING:
-                    del meta_settings['settings'][key]
-                else:
-                    meta_settings['settings'][key] = value
+            for hq_index_name in ['default', self.hq_index_name]:
+                for key, value in settings.ES_SETTINGS.get(hq_index_name, {}).items():
+                    if value is REMOVE_SETTING:
+                        del meta_settings['settings'][key]
+                    else:
+                        meta_settings['settings'][key] = value
 
         return meta_settings
 
@@ -149,11 +139,7 @@ def initialize_index(es, index_info):
     mapping = index_info.mapping
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
     meta = copy(index_info.meta)
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        mapping = transform_for_es7(mapping)
-        meta.update({'mappings': mapping})
-    else:
-        meta.update({'mappings': {index_info.type: mapping}})
+    meta.update({'mappings': {index_info.type: mapping}})
 
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     es.indices.create(index=index, body=meta)
@@ -162,10 +148,7 @@ def initialize_index(es, index_info):
 
 def mapping_exists(es, index_info):
     try:
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return es.indices.get_mapping(index_info.index).get(index_info.index, {}).get('mappings', None)
-        else:
-            return es.indices.get_mapping(index_info.index, index_info.type)
+        return es.indices.get_mapping(index_info.index, index_info.type)
     except TransportError:
         return {}
 

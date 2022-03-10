@@ -17,6 +17,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     CASE_ID,
+    UPDATE_MODE_EDIT,
     SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_LAST_VISIT,
@@ -26,9 +27,9 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_UNSCHEDULED_VISIT,
     USERCASE_ID,
 )
-from corehq.apps.app_manager.xpath import XPath
+from corehq.apps.app_manager.xpath import XPath, UsercaseXPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
-from corehq.toggles import DONT_INDEX_SAME_CASETYPE
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE, NAMESPACE_DOMAIN, SAVE_ONLY_EDITED_FORM_FIELDS
 from corehq.util.view_utils import get_request
 
 from .exceptions import (
@@ -37,7 +38,9 @@ from .exceptions import (
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
+    DangerousXmlException,
 )
+from .suite_xml.xml_models import Instance
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
@@ -48,10 +51,24 @@ def parse_xml(string):
     # declaration are not supported.
     if isinstance(string, str):
         string = string.encode("utf-8")
+
+    parser = ET.XMLParser(encoding="utf-8", remove_comments=True, resolve_entities=False)
     try:
-        return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
+        parsed = ET.fromstring(string, parser=parser)
     except ET.ParseError as e:
         raise XFormException(_("Error parsing XML: {}").format(e))
+
+    if _contains_entities(parsed):
+        raise DangerousXmlException(_("Error parsing XML: Entities are not allowed"))
+
+    return parsed
+
+
+def _contains_entities(xml_element):
+    tree = xml_element.getroottree()
+    entities = tree.iter(ET.Entity)
+    has_entities = any(True for _ in entities)  # Some entities evaluate to false, so changing them to True here
+    return has_entities
 
 
 namespaces = dict(
@@ -254,6 +271,7 @@ class WrappedNode(object):
         return self.xml is not None
 
     def render(self):
+        ET.indent(self.xml, level=0)
         return ET.tostring(self.xml, encoding='utf-8')
 
 
@@ -372,17 +390,19 @@ class XFormCaseBlock(object):
     def make_parent_case_block(cls, xform, node_path, parent_path, case_id_xpath=None):
         case_block = XFormCaseBlock(xform, node_path)
         id_xpath = get_case_parent_id_xpath(parent_path, case_id_xpath=case_id_xpath)
-        xform.add_bind(
-            nodeset='%scase/@case_id' % node_path,
-            calculate=id_xpath,
-        )
+        case_block.bind_case_id(id_xpath, node_path)
         return case_block
 
     def __init__(self, xform, path=''):
         self.xform = xform
         self.path = path
+        self.is_empty = True
 
-        self.elem = ET.Element('{cx2}case'.format(**namespaces), {
+    @property
+    @memoized
+    def elem(self):
+        self.is_empty = False
+        elem = ET.Element('{cx2}case'.format(**namespaces), {
             'case_id': '',
             'date_modified': '',
             'user_id': '',
@@ -391,13 +411,21 @@ class XFormCaseBlock(object):
         })
 
         self.xform.add_bind(
-            nodeset="%scase/@date_modified" % path,
+            nodeset="%scase/@date_modified" % self.path,
             type="xsd:dateTime",
             calculate=self.xform.resolve_path("meta/timeEnd")
         )
         self.xform.add_bind(
-            nodeset="%scase/@user_id" % path,
+            nodeset="%scase/@user_id" % self.path,
             calculate=self.xform.resolve_path("meta/userID"),
+        )
+        return elem
+
+    def bind_case_id(self, xpath, nodset_path=""):
+        self.elem  # create case block
+        self.xform.add_bind(
+            nodeset=f"{nodset_path}case/@case_id",
+            calculate=xpath,
         )
 
     def add_create_block(self, relevance, case_name, case_type,
@@ -468,7 +496,8 @@ class XFormCaseBlock(object):
         self.elem.append(update_block)
         return update_block
 
-    def add_update_block(self, updates, make_relative=False):
+    def add_case_updates(self, updates, make_relative=False, save_only_if_edited=False):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         update_block = self.update_block
         if not updates:
             return
@@ -476,24 +505,32 @@ class XFormCaseBlock(object):
         update_mapping = {}
         attachments = {}
         for key, value in updates.items():
+            value_str = getattr(value, "question_path", value)
             if key == 'name':
                 key = 'case_name'
-            if self.is_attachment(value):
-                attachments[key] = value
+            if self.is_attachment(value_str):
+                attachments[key] = value_str
             else:
                 update_mapping[key] = value
 
         for key, q_path in sorted(update_mapping.items()):
+            resolved_path = self.xform.resolve_path(q_path)
+            edit_mode_expression = ''
+            if (save_only_if_edited and isinstance(q_path, ConditionalCaseUpdate)
+            and q_path.update_mode == UPDATE_MODE_EDIT):
+                case_id_xpath = self.xform.resolve_path(f"{self.path}case/@case_id")
+                case_value = CaseIDXPath(case_id_xpath).case().slash(key)
+                self.xform.add_casedb()
+                edit_mode_expression = f' and {case_value} != {resolved_path}'
             update_block.append(make_case_elem(key))
             nodeset = self.xform.resolve_path("%scase/update/%s" % (self.path, key))
-            resolved_path = self.xform.resolve_path(q_path)
             if make_relative:
                 resolved_path = relative_path(nodeset, resolved_path)
 
             self.xform.add_bind(
                 nodeset=nodeset,
                 calculate=resolved_path,
-                relevant=("count(%s) > 0" % resolved_path)
+                relevant=(f"count({resolved_path}) > 0" + edit_mode_expression)
             )
 
         if attachments:
@@ -622,7 +659,7 @@ class XForm(WrappedNode):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, domain=None, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
         if self.exists():
             xmlns = self.data_node.tag_xmlns
@@ -632,6 +669,11 @@ class XForm(WrappedNode):
         # updated by the form
         self._scheduler_case_updates = defaultdict(set)
         self._scheduler_case_updates_populated = False
+        self.domain = domain
+        if domain:
+            self.save_only_if_edited = SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, NAMESPACE_DOMAIN)
+        else:
+            self.save_only_if_edited = False
 
     def __str__(self):
         return ET.tostring(self.xml, encoding='utf-8').decode('utf-8') if self.xml is not None else ''
@@ -816,12 +858,13 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
-    def add_missing_instances(self, app):
+    def add_missing_instances(self, form, app):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self._get_instance_ids()
         missing_unknown_instances = set()
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
             app, [self.render().decode('utf-8')])
+
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
@@ -948,18 +991,25 @@ class XForm(WrappedNode):
         return None
 
     def resolve_path(self, path, path_context=""):
-        if path == "":
-            return path_context
-        elif path is None:
+        '''
+            input: path with type ConditionalCaseUpdate
+            output: type str
+        '''
+        path_str = getattr(path, "question_path", path)
+        path_context_str = getattr(path_context, "question_path", path_context)
+        if path_str == "":
+            return path_context_str
+        elif path_str is None:
             raise CaseError("Every case must have a name")
-        elif path[0] == "/":
-            return path
+        elif path_str[0] == "/":
+            return path_str
         elif not path_context:
-            return "/%s/%s" % (self.data_node.tag_name, path)
+            return "/%s/%s" % (self.data_node.tag_name, path_str)
         else:
-            return "%s/%s" % (path_context, path)
+            return "%s/%s" % (path_context_str, path_str)
 
     def hashtag_path(self, path):
+        path = getattr(path, "question_path", path)
         for hashtag, replaces in hashtag_replacements:
             path = re.sub(replaces, hashtag, path)
         return path
@@ -1005,6 +1055,7 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
         def _get_select_question_option(item):
@@ -1039,6 +1090,8 @@ class XForm(WrappedNode):
             node = cnode.node
             path = cnode.path
 
+            path = getattr(path, "question_path", path)
+
             is_group = not cnode.is_leaf
             if is_group and not include_groups:
                 continue
@@ -1049,7 +1102,6 @@ class XForm(WrappedNode):
             if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
                     and cnode.node.find('{f}itemset').exists()):
                 continue
-
             question = {
                 "label": self._get_label_text(node, langs),
                 "label_ref": self._get_label_ref(node),
@@ -1119,6 +1171,8 @@ class XForm(WrappedNode):
 
         save_to_case_nodes = {}
         for path, data_node in leaf_data_nodes.items():
+            if isinstance(path, ConditionalCaseUpdate):
+                path = path.question_path
             if path not in excluded_paths:
                 bind = self.get_bind(path)
 
@@ -1328,6 +1382,7 @@ class XForm(WrappedNode):
     def _get_leaf_data_nodes(self):
         return self._get_flattened_data_nodes(leaves_only=True)
 
+    @memoized
     def _get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
             return {}
@@ -1395,7 +1450,8 @@ class XForm(WrappedNode):
             self._add_usercase_bind(usercase_path)
             usercase_block = _make_elem('{x}commcare_usercase')
             case_block = XFormCaseBlock(self, usercase_path)
-            case_block.add_update_block(actions['usercase_update'].update)
+            case_block.add_case_updates(actions['usercase_update'].update,
+                save_only_if_edited=self.save_only_if_edited)
             usercase_block.append(case_block.elem)
             self.data_node.append(usercase_block)
 
@@ -1496,9 +1552,12 @@ class XForm(WrappedNode):
         return self.model_node.find('{f}bind[@nodeset="%s"]' % path)
 
     def add_bind(self, **d):
+        from corehq.apps.app_manager.models import ConditionalCaseUpdate
         if d.get('relevant') == 'true()':
             del d['relevant']
         d['nodeset'] = self.resolve_path(d['nodeset'])
+        if 'calculate' in d and isinstance(d['calculate'], ConditionalCaseUpdate):
+            d['calculate'] = d['calculate'].question_path
         if len(d) > 1:
             bind = _make_elem('bind', d)
             conflicting = self.get_bind(bind.attrib['nodeset'])
@@ -1562,16 +1621,17 @@ class XForm(WrappedNode):
     def _create_casexml_2(self, form):
         actions = form.active_actions()
 
-        if form.requires == 'none' and 'open_case' not in actions and 'update_case' in actions:
+        form_opens_case = 'open_case' in actions
+        if form.requires == 'none' and not form_opens_case and 'update_case' in actions:
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
+        module = form.get_module()
+        is_registry_case = _module_loads_registry_case(module) and not form_opens_case
         delegation_case_block = None
-        if not actions or (form.requires == 'none' and 'open_case' not in actions):
+        if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
         else:
-            extra_updates = {}
             case_block = XFormCaseBlock(self)
-            module = form.get_module()
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
@@ -1600,35 +1660,34 @@ class XForm(WrappedNode):
                     delegation_case_block = make_delegation_stub_case_block()
 
             case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
-            if 'open_case' in actions:
+            if form_opens_case:
                 open_case_action = actions['open_case']
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
-                    case_name=open_case_action.name_path,
+                    case_name=open_case_action.name_update.question_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
                     case_id=case_id_xpath
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
-                    extra_updates['external_id'] = actions['open_case'].external_id
-            else:
-                self.add_bind(
-                    nodeset="case/@case_id",
-                    calculate=case_id_xpath,
-                )
+                    case_block.add_case_updates(
+                        {'external_id': actions['open_case'].external_id},
+                        save_only_if_edited=self.save_only_if_edited
+                    )
+            elif not is_registry_case:
+                case_block.bind_case_id(case_id_xpath)
 
-            if 'update_case' in actions or extra_updates:
+            if 'update_case' in actions and not is_registry_case:
                 self._add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
-                    extra_updates=extra_updates,
                     # case_id_xpath is set based on an assumption about the way suite_xml.py determines the
                     # case_id. If suite_xml changes the way it sets case_id for case updates, this will break.
                     case_id_xpath=case_id_xpath
                 )
 
-            if 'close_case' in actions:
+            if 'close_case' in actions and not is_registry_case:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
@@ -1639,7 +1698,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-        if 'subcases' in actions:
+        if 'subcases' in actions and not is_registry_case:
             subcases = actions['subcases']
 
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
@@ -1673,7 +1732,7 @@ class XForm(WrappedNode):
                 subcase_node.insert(0, subcase_block.elem)
                 subcase_block.add_create_block(
                     relevance=self.action_relevance(subcase.condition),
-                    case_name=subcase.case_name,
+                    case_name=subcase.name_update.question_path,
                     case_type=subcase.case_type,
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
@@ -1681,12 +1740,13 @@ class XForm(WrappedNode):
                     case_id=case_id
                 )
 
-                subcase_block.add_update_block(subcase.case_properties)
+                subcase_block.add_case_updates(subcase.case_properties,
+                    save_only_if_edited=self.save_only_if_edited)
 
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(form.get_app().domain)
+                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(self.domain)
                 if case_block is not None and (index_same_casetype or subcase.case_type != form.get_case_type()):
                     reference_id = subcase.reference_id or 'parent'
 
@@ -1699,7 +1759,7 @@ class XForm(WrappedNode):
         case = self.case_node
         case_parent = self.data_node
 
-        if case_block is not None:
+        if case_block is not None and not case_block.is_empty:
             if case.exists():
                 raise XFormException(_("You cannot use the Case Management UI "
                                        "if you already have a case block in your form."))
@@ -1824,12 +1884,8 @@ class XForm(WrappedNode):
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
             case_block = XFormCaseBlock(self, path=path)
-
             if bind_case_id_xpath:
-                self.add_bind(
-                    nodeset="%scase/@case_id" % path,
-                    calculate=bind_case_id_xpath,
-                )
+                case_block.bind_case_id(bind_case_id_xpath, path)
 
             base_node.append(case_block.elem)
             return case_block, path
@@ -1937,7 +1993,7 @@ class XForm(WrappedNode):
             subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
-                case_name=action.name_path,
+                case_name=action.name_update.question_path,
                 case_type=action.case_type,
                 delay_case_id=bool(action.repeat_context),
                 autoset_owner_id=autoset_owner_id_for_advanced_action(action),
@@ -1946,7 +2002,8 @@ class XForm(WrappedNode):
             )
 
             if action.case_properties:
-                open_case_block.add_update_block(action.case_properties)
+                open_case_block.add_case_updates(action.case_properties,
+                    save_only_if_edited=self.save_only_if_edited)
 
             for case_index in action.case_indices:
                 parent_meta = form.actions.actions_meta_by_tag.get(case_index.tag)
@@ -1984,7 +2041,7 @@ class XForm(WrappedNode):
             self.add_instance('casedb', src='jr://instance/casedb')
             self.has_casedb = True
 
-    def _add_case_updates(self, case_block, updates, extra_updates=None, base_node_path=None, case_id_xpath=None):
+    def _add_case_updates(self, case_block, updates, base_node_path=None, case_id_xpath=None):
         from corehq.apps.app_manager.util import split_path
 
         def group_updates_by_case(updates):
@@ -1998,15 +2055,12 @@ class XForm(WrappedNode):
                 path, name = split_path(key)
                 updates_by_case[path][name] = value
             return updates_by_case
-
         updates_by_case = group_updates_by_case(updates)
-        if extra_updates:
-            updates_by_case[''].update(extra_updates)
         if '' in updates_by_case:
             # 90% use-case
             basic_updates = updates_by_case.pop('')
             if basic_updates:
-                case_block.add_update_block(basic_updates)
+                case_block.add_case_updates(basic_updates, save_only_if_edited=self.save_only_if_edited)
         if updates_by_case:
             self.add_casedb()
 
@@ -2037,7 +2091,7 @@ class XForm(WrappedNode):
                     node_path,
                     parent_path,
                     case_id_xpath=case_id_xpath)
-                parent_case_block.add_update_block(updates)
+                parent_case_block.add_case_updates(updates, save_only_if_edited=self.save_only_if_edited)
                 node.append(parent_case_block.elem)
 
     def get_scheduler_case_updates(self):
@@ -2241,3 +2295,9 @@ def _infer_vellum_type(control, bind):
         })
         return None
     return result['name']
+
+
+def _module_loads_registry_case(module):
+    """Local function to allow mocking in tests"""
+    from .util import module_loads_registry_case
+    return module_loads_registry_case(module)

@@ -10,13 +10,47 @@ from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
+from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
 
-def get_toggles_previews(domain):
+def get_tableau_server_and_visualizations(domain):
+    server, created = TableauServer.objects.get_or_create(domain=domain)
+    visualizations = TableauVisualization.objects.all().filter(domain=domain)
+    vis_list = []
+    for vis in visualizations:
+        vis_list.append({
+            'domain': domain,
+            'server': server,
+            'view_url': vis.view_url,
+            'id': vis.id,
+        })
     return {
-        'toggles': list(toggles.toggles_dict(domain=domain)),
-        'previews': list(feature_previews.previews_dict(domain=domain))
+        'server': {
+            'domain': domain,
+            'server_type': server.server_type,
+            'server_name': server.server_name,
+            'validate_hostname': server.validate_hostname,
+            'target_site': server.target_site,
+            'domain_username': server.domain_username,
+        },
+        'visualizations': vis_list,
     }
+
+
+def get_enabled_toggles_and_previews(domain):
+    return {
+        'toggles': get_enabled_toggles(domain),
+        'previews': get_enabled_previews(domain)
+    }
+
+
+def get_enabled_toggles(domain):
+    return list(toggles.toggles_dict(domain=domain))
+
+
+def get_enabled_previews(domain):
+    return list(feature_previews.previews_dict(domain=domain))
 
 
 def get_custom_data_models(domain, limit_types=None):
@@ -56,7 +90,7 @@ def get_user_roles(domain):
     def _to_json(role):
         return _clean_json(role.to_json())
 
-    return [_to_json(role) for role in UserRole.by_domain(domain)]
+    return [_to_json(role) for role in UserRole.objects.get_by_domain(domain)]
 
 
 def get_data_dictionary(domain):
@@ -111,3 +145,55 @@ def get_hmac_callout_settings(domain):
         'api_key': settings.api_key,
         'api_secret': settings.api_secret,
     }
+
+
+def get_auto_update_rules(domain):
+    rules = AutomaticUpdateRule.by_domain(
+        domain,
+        # For now only grab those rules that update cases, not conditional alerts for messaging
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    data = []
+    for rule in rules:
+        criterias = rule.caserulecriteria_set.all()
+        actions = rule.caseruleaction_set.all()
+
+        rule_data = {
+            "rule": rule.to_json(),
+
+            "criteria": [
+                {
+                    "match_property_definition": {
+                        "property_name": case_rule_criter.match_property_definition.property_name,
+                        "property_value": case_rule_criter.match_property_definition.property_value,
+                        "match_type": case_rule_criter.match_property_definition.match_type
+                    } if case_rule_criter.match_property_definition is not None else None,
+                    "custom_match_definition": {
+                        "name": case_rule_criter.custom_match_definition.name,
+                    } if case_rule_criter.custom_match_definition is not None else None,
+                    "closed_parent_definition": case_rule_criter.closed_parent_definition is not None
+                } for case_rule_criter in criterias
+            ],
+
+            "actions": [
+                {
+                    "update_case_definition": {
+                        "properties_to_update": case_rule_action.update_case_definition.properties_to_update,
+                        "close_case": case_rule_action.update_case_definition.close_case
+                    } if case_rule_action.update_case_definition is not None else None,
+                    "custom_action_definition": {
+                        "name": case_rule_action.custom_action_definition.name
+                    } if case_rule_action.custom_action_definition is not None else None,
+                } for case_rule_action in actions
+            ]
+        }
+
+        # Delete unnecessary data for running rules
+        del rule_data['rule']['last_run']
+        del rule_data['rule']['locked_for_editing']
+
+        data.append(rule_data)
+
+    return data

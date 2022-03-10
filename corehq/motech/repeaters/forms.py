@@ -12,6 +12,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
+from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
@@ -51,6 +52,12 @@ class GenericRepeaterForm(forms.Form):
             required=True,
             help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
         )
+        self.fields['request_method'] = forms.ChoiceField(
+            label=_("HTTP Request Method"),
+            choices=[(rm, rm) for rm in REQUEST_METHODS],
+            initial=REQUEST_POST,
+            required=True,
+        )
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
                 required=True,
@@ -83,7 +90,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to change the order of the crispy form fields and add extra crispy fields
         """
-        form_fields = ["connection_settings_id"]
+        form_fields = ["connection_settings_id", "request_method"]
         if self.formats and len(self.formats) > 1:
             form_fields.append('format')
         return form_fields
@@ -102,11 +109,27 @@ class FormRepeaterForm(GenericRepeaterForm):
         label="Include 'app_id' URL query parameter.",
         initial=True
     )
+    user_blocklist = forms.MultipleChoiceField(
+        required=False,
+        label=_('Users to exclude'),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
+        help_text=_('Forms submitted by these users will not be forwarded')
+    )
+
+    @property
+    @memoized
+    def user_choices(self):
+        users = UserES().domain(self.domain).fields(['_id', 'username']).run().hits
+        return [(user['_id'], raw_username(user['username'])) for user in users]
+
+    def set_extra_django_form_fields(self):
+        super(FormRepeaterForm, self).set_extra_django_form_fields()
+        self.fields['user_blocklist'].choices = self.user_choices
 
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
         fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
-        return fields
+        return fields + ['user_blocklist']
 
 
 class CaseRepeaterForm(GenericRepeaterForm):

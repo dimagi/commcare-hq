@@ -51,7 +51,8 @@ class ElasticProcessor(PillowProcessor):
       - ES
     """
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None, change_filter_fn=None):
+        self.change_filter_fn = change_filter_fn or noop_filter
         self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
         self.es_interface = ElasticsearchInterface(self.elasticsearch)
@@ -62,8 +63,19 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, change):
+        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+
+        if self.change_filter_fn and self.change_filter_fn(change):
+            return
+
         if change.deleted and change.id:
-            self._delete_doc_if_exists(change.id)
+            doc = change.get_document()
+            if doc and doc.get('doc_type'):
+                current_meta = get_doc_meta_object_from_document(doc)
+                if current_meta.is_deletion:
+                    self._delete_doc_if_exists(change.id)
+            else:
+                self._delete_doc_if_exists(change.id)
             return
 
         with self._datadog_timing('extract'):
@@ -128,6 +140,11 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        if self.change_filter_fn:
+            changes_chunk = [
+                change for change in changes_chunk
+                if not self.change_filter_fn(change)
+            ]
         with self._datadog_timing('bulk_extract'):
             bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
 
@@ -180,12 +197,16 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
             if delete:
                 es_interface.delete_doc(alias, doc_type, doc_id)
             else:
-                params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
+                    # The `retry_on_conflict` param is only valid on `update`
+                    # requests. ES <5.x was lenient of its presence on `index`
+                    # requests, ES >=5.x is not.
+                    params = {'retry_on_conflict': 2}
+                    es_interface.update_doc_fields(alias, doc_type, doc_id,
+                                                   fields=data, params=params)
                 else:
                     # use the same index API to create or update doc
-                    es_interface.index_doc(alias, doc_type, doc_id, doc=data, params=params)
+                    es_interface.index_doc(alias, doc_type, doc_id, doc=data)
             break
         except ConnectionError:
             current_tries += 1

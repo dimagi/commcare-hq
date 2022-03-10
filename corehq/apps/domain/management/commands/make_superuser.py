@@ -1,6 +1,7 @@
 import getpass
 import logging
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from email_validator import EmailSyntaxError, validate_email
@@ -27,6 +28,10 @@ class Command(BaseCommand):
 
     @signalcommand
     def handle(self, username, **options):
+        if not settings.ALLOW_MAKE_SUPERUSER_COMMAND:
+            from dimagi.utils.web import get_site_domain
+            raise CommandError(f"""You cannot run this command in SaaS Enviornments.
+            Use https://{get_site_domain()}/hq/admin/superuser_management/ for granting superuser permissions""")
         from corehq.apps.users.models import WebUser
         try:
             validate_email(username)
@@ -39,7 +44,8 @@ class Command(BaseCommand):
             logger.info("✓ User {} exists".format(couch_user.username))
         else:
             password = self.get_password_from_user()
-            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__)
+            couch_user = WebUser.create(None, username, password, created_by=None, created_via=__name__,
+                                        by_domain_required_for_log=False)
             logger.info("→ User {} created".format(couch_user.username))
 
         is_superuser_changed = not couch_user.is_superuser

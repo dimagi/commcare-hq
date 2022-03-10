@@ -1,6 +1,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<script src="{% static 'bootpag/lib/jquery.bootpag.min.js' %}"></script>
+
 <script type="text/template" id="session-view-list-preview-template">
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
@@ -12,6 +14,9 @@
       <tbody>
       </tbody>
     </table>
+  </div>
+  <div class="pull-right">
+      <ul id="sessions-paginator" class="pagination-sm"></ul>
   </div>
 </script>
 
@@ -33,6 +38,9 @@
       </tbody>
     </table>
   </div>
+  <div class="pull-right">
+      <ul id="sessions-paginator" class="pagination-lg"></ul>
+  </div>
 </script>
 
 <script type="text/template" id="session-view-item-template">
@@ -42,12 +50,12 @@
     </div>
   </td>
   <td class="module-column module-column-name module-column-name-session">
-    <h3>
+    <h3 class="module-heading" role="link" tabindex="0">
       <b><%- title %></b>
       <% if (caseName) { %>(<%- caseName %>)<% } %>
       opened <%- humanDateOpened %>
     </h3>
-    <div class="module-delete-control">
+    <div class="module-delete-control" role="button" tabindex="0" aria-label="{% trans_html_attr 'Delete form' %}">
       <i class="fa fa-trash module-icon module-delete-icon"></i>
     </div>
   </td>

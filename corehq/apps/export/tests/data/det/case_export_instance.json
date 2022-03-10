@@ -306,6 +306,42 @@
                 },
                 {
                     "deid_transform": null,
+                    "doc_type": "CaseIndexExportColumn",
+                    "help_text": "The ID of the associated foo case type",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "CaseIndexItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "sibling.foo",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "foo"
+                            }
+                        ],
+                        "tag": "case",
+                        "transform": null
+                    },
+                    "label": "indices.foo",
+                    "selected": true,
+                    "tags": [
+                        "case"
+                    ]
+                },
+                {
+                    "deid_transform": null,
                     "doc_type": "ExportColumn",
                     "help_text": "True if the case is closed, otherwise False",
                     "is_advanced": false,

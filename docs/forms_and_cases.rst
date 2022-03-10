@@ -8,34 +8,22 @@ This document provides a basic guide for how to do that.
 
 Models
 ------
-In the codebase there are now two models for form and case data.
 
-+------------------------+----------------------+
-| Couch                  | SQL                  |
-+========================+======================+
-| CommCareCase           | CommCareCaseSQL      |
-+------------------------+----------------------+
-| CommCareCaseAction     | CaseTransaction      |
-+------------------------+----------------------+
-| CommCareCaseAttachment | CaseAttachmentSQL    |
-+------------------------+----------------------+
-| CommCareCaseIndex      | CommCareCaseIndexSQL |
-+------------------------+----------------------+
-| XFormInstance          | XFormInstanceSQL     |
-+------------------------+----------------------+
-| XFormOperation         | XFormOperationSQL    |
-+------------------------+----------------------+
-| StockReport            |                      |
-+------------------------+----------------------+
-| StockTransaction       | LedgerTransaction    |
-+------------------------+----------------------+
-| StockState             | LedgerValue          |
-+------------------------+----------------------+
++===================+
+| CommCareCase      |
++-------------------+
+| CaseTransaction   |
++-------------------+
+| CaseAttachment    |
++-------------------+
+| CommCareCaseIndex |
++-------------------+
+| XFormInstance     |
++-------------------+
+| XFormOperation    |
++-------------------+
 
-Some of these models define a common interface that allows you to perform the same operations
-irrespective of the type. Some examples are shown below:
-
-**Form Instance**
+**Form Instance API**
 
 +------------------------------------+--------------------------------------------------+
 | Property / method                  | Description                                      |
@@ -70,7 +58,7 @@ irrespective of the type. Some examples are shown below:
 +------------------------------------+--------------------------------------------------+
 
 
-**Case**
+**Case API**
 
 +--------------------------------+---------------------------------------+
 | Property / method              | Description                           |
@@ -98,23 +86,23 @@ name in order to know which DB needs to be queried.
 
 **Forms**
 
-- FormAccessors(domain).get_form(form_id)
-- FormAccessors(domain).get_forms(form_ids)
-- FormAccessors(domain).iter_forms(form_ids)
-- FormAccessors(domain).save_new_form(form)
+- XFormInstance.objects.get_form(form_id, domain)
+- XFormInstance.objects.get_forms(form_ids, domain)
+- XFormInstance.objects.iter_forms(form_ids, domain)
+- XFormInstance.objects.save_new_form(form)
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 
 **Cases**
 
-- CaseAccessors(domain).get_case(case_id)
-- CaseAccessors(domain).get_cases(case_ids)
-- CaseAccessors(domain).iter_cases(case_ids)
-- CaseAccessors(domain).get_case_ids_in_domain(type='dog')
+- CommCareCase.objects.get_case(case_id, domain)
+- CommCareCase.objects.get_cases(case_ids, domain)
+- CommCareCase.objects.iter_cases(case_ids, domain)
+- CommCareCase.objects.get_case_ids_in_domain(domain, type='dog')
 
 **Ledgers**
 
@@ -122,42 +110,15 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.FormAccessors`
-* :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
-
-
-Branching
----------
-In special cases code may need to be branched into SQL and Couch versions.
- This can be accomplished using the :code:`should_use_sql_backend(domain)` function.::
-
-    if should_use_sql_backend(domain_name):
-        # do SQL specifc stuff here
-    else:
-        # do couch stuff here
 
 
 Unit Tests
 ----------
-In most cases tests that use form / cases/ ledgers should be run on both backends as follows::
-
-    @run_with_all_backends
-    def test_my_function(self):
-        ...
-
-If you really need to run a test on only one of the backends you can do the following::
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_my_test(self):
-        ...
-
 To create a form in unit tests use the following pattern::
 
-    from corehq.form_processor.tests.utils import run_with_all_backends
     from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 
-    @run_with_all_backends
     def test_my_form_function(self):
         # This TestFormMetadata specifies properties about the form to be created
         metadata = TestFormMetadata(
@@ -171,13 +132,11 @@ To create a form in unit tests use the following pattern::
 
 Creating cases can be done with the :code:`CaseFactory`::
 
-    from corehq.form_processor.tests.utils import run_with_all_backends
     from casexml.apps.case.mock import CaseFactory
 
-    @run_with_all_backends
     def test_my_case_function(self):
         factory = CaseFactory(domain='foo')
-        factory.create_case(
+        case = factory.create_case(
             case_type='my_case_type',
             owner_id='owner1',
             case_name='bar',
@@ -194,15 +153,11 @@ Cleaning up in tests can be done using the :code:`FormProcessorTestUtils1` class
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         # OR
-        FormProcessorTestUtils.delete_all_cases(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_cases(domain=domain)
 
         FormProcessorTestUtils.delete_all_xforms()
         # OR
-        FormProcessorTestUtils.delete_all_xforms(
-            domain=domain
-        )
+        FormProcessorTestUtils.delete_all_xforms(domain=domain)
 
 
 

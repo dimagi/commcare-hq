@@ -21,7 +21,7 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureTypeField,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 
@@ -113,7 +113,7 @@ class FixtureDataTest(TestCase):
     def tearDown(self):
         self.data_type.delete()
         self.data_item.delete()
-        self.user.delete(deleted_by=None)
+        self.user.delete(self.domain, deleted_by=None)
         self.fixture_ownership.delete()
         delete_all_users()
         delete_all_fixture_data_types()
@@ -122,6 +122,8 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
+        item_dict = self.data_item.to_json()
+        item_dict['_data_type'] = self.data_item.data_type
         check_xml_line_by_line(self, """
         <district>
             <state_name>Delhi_state</state_name>
@@ -129,10 +131,10 @@ class FixtureDataTest(TestCase):
             <district_name lang="eng">Delhi_in_ENG</district_name>
             <district_id>Delhi_id</district_id>
         </district>
-        """, ElementTree.tostring(self.data_item.to_xml(), encoding='utf-8'))
+        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(item_dict), encoding='utf-8'))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
+        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, include_docs=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
         fixture, = call_fixture_generator(self.user.to_ota_restore_user())
@@ -399,13 +401,12 @@ class TestFixtureOrdering(TestCase):
         for data_item in cls.data_items:
             data_item.delete()
         cls.data_type.delete()
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain, deleted_by=None)
         super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):
         (fixture,) = call_fixture_generator(self.user.to_ota_restore_user())
-        rows = fixture.getchildren()[0].getchildren()
-        actual_names = [row.getchildren()[0].text for row in rows]
+        actual_names = [row[0].text for row in fixture[0]]
         self.assertEqual(
             ["Targaryen", "Stark", "Lannister", "Tyrell", "Tully", "Martell", "Baratheon"],
             actual_names

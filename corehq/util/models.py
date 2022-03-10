@@ -10,6 +10,7 @@ from jsonfield import JSONField as jsonfield_JSONField
 
 from dimagi.utils.logging import notify_exception
 from corehq.toggles import BLOCKED_EMAIL_DOMAIN_RECIPIENTS
+from corehq.util.metrics import metrics_counter
 
 AwsMeta = namedtuple('AwsMeta', 'notification_type main_type sub_type '
                                 'email reason headers timestamp '
@@ -283,10 +284,11 @@ class ForeignValue:
 
     An LRU cache is used to keep recently fetched related objects in
     memory rather than fetching from the database each time a new value
-    is set. Pass `cache_size=0` disable the LRU-cache. Note that the
-    cache is used by `__set__`, but not by `__get__` (unless `__set__`
-    was called first); this is optimize for current/known use cases,
-    optimizing `__get__` may make sense for future use cases.
+    is set or fetched. Pass `cache_size=0` disable the LRU-cache. Note that the
+    `__set__` and `__get__` use different caches (each of the same size).
+
+    Note: corehq.util.test_utils.patch_foreign_value_caches for how the caches
+    are cleared in tests.
     """
 
     def __init__(self, foreign_key: models.ForeignKey, truncate=False, cache_size=1000):
@@ -301,8 +303,27 @@ class ForeignValue:
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        fobj = getattr(obj, self.fk.name)
-        return fobj.value if fobj is not None else None
+        fobj_id = getattr(obj, f"{self.fk.name}_id")
+        if fobj_id is None:
+            fobj = getattr(obj, self.fk.name)
+            return fobj.value if fobj is not None else None
+        return self.get_value(fobj_id)
+
+    @cached_property
+    def get_value(self):
+        def get_value(fk_id):
+            try:
+                metrics_counter(
+                    "commcare.foreignvalue.get_value.cachemiss",
+                    tags={"key": self.fk_path},
+                )
+                return manager.filter(pk=fk_id).values_list('value', flat=True)[0]
+            except IndexError:
+                return None
+        manager = self.fk.related_model.objects
+        if self.cache_size:
+            get_value = lru_cache(self.cache_size)(get_value)
+        return get_value
 
     def __set__(self, obj, value):
         if value is None:
@@ -322,6 +343,10 @@ class ForeignValue:
     def get_related(self):
         def get_related(value):
             try:
+                metrics_counter(
+                    "commcare.foreignvalue.get_related.cachemiss",
+                    tags={"key": self.fk_path},
+                )
                 return manager.get_or_create(value=value)[0]
             except model.MultipleObjectsReturned:
                 notify_exception(None, f"{model} multiple objects returned. "
@@ -332,6 +357,11 @@ class ForeignValue:
         if self.cache_size:
             get_related = lru_cache(self.cache_size)(get_related)
         return get_related
+
+    @cached_property
+    def fk_path(self):
+        meta = self.fk.model._meta
+        return f"{meta.app_label}.{meta.object_name}.{self.fk.name}"
 
     @staticmethod
     def get_names(cls):

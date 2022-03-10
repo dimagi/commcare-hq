@@ -125,14 +125,9 @@
       {% endif %}
       {% if show_report_modules %}
         <div class="pull-left">
-          <button type="button" class="popover-additem-option new-module" data-type="report" {% if disable_report_modules %} disabled {% endif %}>
-            <i class="fa {% if disable_report_modules %}fa-ban{% else %}fa-bar-chart{% endif %}"></i>
-            {% trans "Report Menu" %}
-            {% if disable_report_modules %}
-              <p>{% blocktrans %}Mobile reports are disabled because this is a linked domain.{% endblocktrans %}</p>
-            {% else %}
-              <p>{% blocktrans %}Worker performance.{% endblocktrans %}</p>
-            {% endif %}
+          <button type="button" class="popover-additem-option new-module" data-type="report">
+            <i class="fa fa-bar-chart"></i> {% trans "Report Menu" %}
+            <p>{% blocktrans %}Worker performance.{% endblocktrans %}</p>
           </button>
         </div>
       {% endif %}
@@ -164,7 +159,7 @@
   </script>
 
   <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
-    <div data-module-unique-id="<%= moduleUniqueId %>">
+    <div data-module-unique-id="<%- moduleUniqueId %>">
       <% if (showSurvey) { %>
       <div class="pull-left">
         <button type="button" class="popover-additem-option js-new-form appnav-responsive"
@@ -211,7 +206,7 @@
         </button>
       </div>
       <% } %>
-      <form method="post" class="hide" action="<%= newFormUrl %>">
+      <form method="post" class="hide" action="<%- newFormUrl %>">
         {% csrf_token %}
         <input type="hidden" name="case_action" />
         <input type="hidden" name="form_type" />

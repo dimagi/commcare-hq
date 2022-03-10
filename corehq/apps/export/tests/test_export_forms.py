@@ -3,7 +3,7 @@ import datetime
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.filters import (

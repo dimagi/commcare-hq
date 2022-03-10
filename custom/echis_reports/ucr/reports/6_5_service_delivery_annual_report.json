@@ -1,0 +1,230 @@
+{
+    "domains": [
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+    ],
+    "server_environment": [
+      "production",
+      "echis"
+    ],
+    "report_id": "6_5_service_delivery_annual_report",
+    "data_source_table": "static_annual_service_delivery_dS_v1",
+    "config": {
+      "title": "6.5 Service Delivery Annual Report",
+      "aggregation_columns":[ 
+        "annual_report_date"
+      ] ,
+      "filters":   [
+        {
+          "datatype": "string",
+          "choice_provider": {
+            "include_descendants": true,
+            "type": "location",
+            "show_full_path": true
+          },
+          "show_all": true,
+          "slug": "health_post_id",
+          "field": "health_post_id",
+          "ancestor_expression": {},
+          "type": "dynamic_choice_list",
+          "display": "Location"
+        },
+        {
+          "compare_as_string": false,
+          "show_all": true,
+          "datatype": "string",
+          "type": "dynamic_choice_list",
+          "required": false,
+          "slug": "annual_report_date_for_filter_gregorian",
+          "field": "annual_report_date_for_filter_gregorian",
+          "ancestor_expression": {},
+          "choice_provider": {},
+          "display": "Annual Report Date"
+        },
+        {
+          "compare_as_string": false,
+          "datatype": "date",
+          "required": false,
+          "slug": "annual_date",
+          "field": "annual_date",
+          "type": "date",
+          "display": "Annual Date(for mobile)"
+        },
+        {
+          "display": "Test or Real",
+          "datatype": "string",
+          "show_all": true,
+          "choices": [
+            {
+              "display": "Test",
+              "value": "Test"
+            },
+            {
+              "display": "Real",
+              "value": "Real"
+            }
+          ],
+          "field": "test_or_real",
+          "type": "choice_list",
+          "slug": "test_or_real"
+        } ,
+        {
+          "type": "pre",
+          "field": "is_closed",
+          "slug": "is_closed",
+          "datatype": "string",
+          "pre_value": "False",
+          "display": null
+        },
+        {
+          "type": "pre",
+          "field": "health_post",
+          "slug": "health_post_pre",
+          "datatype": "string",
+          "pre_value": "",
+          "pre_operator": "!=",
+          "display": null
+        }
+      ],
+      "columns":  [
+        
+        {
+          "comment": null,
+          "field": "annual_report_date",
+          "description": null,
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "simple",
+          "column_id": "annual_report_date",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "Annual Report Date"
+        },
+        {
+          "comment": "FP_CYP.1:Male Condom (number of condoms distributed)",
+          "field": "FP_CYP_1",
+          "description": "FP_CYP.1:Male Condom (number of condoms distributed)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_1",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.1:Male Condom (number of condoms distributed)"
+        },
+        {
+          "comment": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)",
+          "field": "FP_CYP_3",
+          "description": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_3",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.3:Oral contraceptives (number of monthly cycles distributed)"
+        },
+        {
+          "comment": "FP_CYP.5:Injectable (Depo provera) (number of injections)",
+          "field": "FP_CYP_5",
+          "description": "FP_CYP.5:Injectable (Depo provera) (number of injections)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_5",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.5:Injectable (Depo provera) (number of injections)"
+        },
+        {
+          "comment": "FP_CYP.8:Implanon (number of Implanon insertions)",
+          "field": "FP_CYP_8",
+          "description": "FP_CYP.8:Implanon (number of Implanon insertions)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_8",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.8:Implanon (number of Implanon insertions)"
+        },
+        {
+          "comment": "FP_CYP.9:Jadelle (number of Jadelle insertions)",
+          "field": "FP_CYP_9",
+          "description": "FP_CYP.9:Jadelle (number of Jadelle insertions)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_9",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.9:Jadelle (number of Jadelle insertions)"
+        },
+        {
+          "comment": "FP_CYP.10:IUCD (number of IUCDs inserted)",
+          "field": "FP_CYP_10",
+          "description": "FP_CYP.10:IUCD (number of IUCDs inserted)",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "FP_CYP_10",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "FP_CYP.10:IUCD (number of IUCDs inserted)"
+        },
+        {
+          "comment": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month",
+          "field": "Mal_LLITN_1",
+          "description": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "Mal_LLITN_1",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "Mal_LLITN.1:Number of targeted HH received at least one LLITN in the last 12 month"
+        },
+        {
+          "comment": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month",
+          "field": "Mal_ELLITN_1",
+          "description": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month",
+          "format": "default",
+          "css_class": null,
+          "width": null,
+          "aggregation": "sum",
+          "column_id": "Mal_ELLITN_1",
+          "visible": true,
+          "transform": {},
+          "calculate_total": false,
+          "type": "field",
+          "display": "Mal_ELLITN.1:Number of HHs that need LLITN in the last 12 month"
+        }
+      ]
+    }
+  }
+  

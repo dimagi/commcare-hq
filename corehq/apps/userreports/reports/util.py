@@ -60,15 +60,25 @@ class ReportExport(object):
         """
         return export_from_tables(self.get_table(), file_path, format_)
 
-    @memoized
-    def get_table(self):
-        """Generate a table of all rows of this report
-        """
-        headers = [
+    @property
+    def header_rows(self):
+        return [[
             column.header
             for column in self.data_source.inner_columns if column.data_tables_column.visible
-        ]
+        ]]
 
+    @memoized
+    def get_data(self):
+        return list(self.data_source.get_data())
+
+    @property
+    @memoized
+    def total_rows(self):
+        return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
+
+    @property
+    @memoized
+    def data_rows(self):
         column_id_to_expanded_column_ids = get_expanded_columns(
             self.data_source.top_level_columns,
             self.data_source.config
@@ -78,13 +88,19 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
-        total_rows = [self.data_source.get_total_row()] if self.data_source.has_total_row else []
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data()]
 
+    def get_table_data(self):
+        return self.header_rows + self.data_rows + self.total_rows
+
+    @memoized
+    def get_table(self):
+        """Generate a table of all rows of this report
+        """
         export_table = [
             [
                 self.title,
-                [headers] + rows + total_rows
+                self.get_table_data()
             ]
         ]
 

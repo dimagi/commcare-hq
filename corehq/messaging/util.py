@@ -110,8 +110,8 @@ class MessagingRuleProgressHelper(object):
             return 0
 
     def get_progress_pct(self):
-        current = self._int_or_zero(self.client.get(self.current_key))
-        total = self._int_or_zero(self.client.get(self.total_key))
+        current = self.get_cases_processed()
+        total = self.get_total_cases_to_process()
 
         if not current or not total:
             return 0
@@ -120,3 +120,9 @@ class MessagingRuleProgressHelper(object):
             return 100
 
         return int(round(100.0 * current / total, 0))
+
+    def get_cases_processed(self):
+        return self._int_or_zero(self.client.get(self.current_key))
+
+    def get_total_cases_to_process(self):
+        return self._int_or_zero(self.client.get(self.total_key))

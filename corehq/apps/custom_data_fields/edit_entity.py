@@ -7,6 +7,7 @@ from django.core.validators import RegexValidator
 from django.forms.widgets import Select
 from django.urls import reverse
 from django.utils.translation import ugettext as _
+from django.utils.html import escape
 from corehq.apps.accounting.utils import domain_has_privilege
 
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
@@ -101,9 +102,10 @@ class CustomDataEditor(object):
         return dict(system_data, **cleaned_data)    # cleaned_data may overwrite existing system data
 
     def _make_field(self, field):
+        safe_label = escape(field.label)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)
-            return forms.CharField(label=field.label, required=field.is_required,
+            return forms.CharField(label=safe_label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
@@ -120,13 +122,13 @@ class CustomDataEditor(object):
                 placeholder_choices = [('', _('Select one'))]
 
             return forms.ChoiceField(
-                label=field.label,
+                label=safe_label,
                 required=field.is_required,
                 choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
-            return forms.CharField(label=field.label, required=field.is_required)
+            return forms.CharField(label=safe_label, required=field.is_required)
 
     @property
     @memoized

@@ -215,7 +215,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Validate Multimedia'),
     ugettext_noop('Version 1 translations (old)'),
     ugettext_noop('Version 2 translations (recommended)'),
-    ugettext_noop('Version of mobile UCRs to use. Read more on the  <a target="_blank" href="https://help.commcarehq.org/display/ccinternal/Moving+to+Mobile+UCR+V2">Help Site</a>'),
+    ugettext_noop('Version of mobile UCRs to use. Read more on the  <a target="_blank" href="https://help.commcarehq.org/display/saas/Moving+to+Mobile+UCR+V2">Help Site</a>'),
     ugettext_noop('We frequently release new versions of CommCare Mobile. Use the latest version to take advantage of new features and bug fixes. Note that if you are using CommCare for Android you must also update your version of CommCare from the Google Play Store.'),
     ugettext_noop('We suggest moving to CommCare 2.0 and above, unless your project is using referrals'),
     ugettext_noop('Web App'),
@@ -253,4 +253,6 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('disabled'),
     ugettext_noop('Enable Text To Speech'),
     ugettext_noop('Adds a text to speech button for all questions to read out the question text aloud.'),
+    ugettext_noop('Enable asterisk on required question'),
+    ugettext_noop('Adds a red asterisk to denote mandatory questions in a form. This setting only works in mobile.'),
 ]

@@ -1,0 +1,143 @@
+<partial>
+    <detail id="m0_case_long">
+        <title>
+          <text>
+            <locale id="cchq.case"/>
+          </text>
+        </title>
+        <detail>
+          <title>
+            <text>
+              <locale id="m0.case_long.tab.1.title"/>
+            </text>
+          </title>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_name_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="case_name"/>
+              </text>
+            </template>
+          </field>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_artist_2.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="artist"/>
+              </text>
+            </template>
+          </field>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_plays_3.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="plays"/>
+              </text>
+            </template>
+          </field>
+        </detail>
+        <detail nodeset="instance('casedb')/casedb/case[@case_type='show'][index/parent=current()/@case_id][@status='open']">
+          <title>
+            <text>
+              <locale id="m0.case_long.tab.2.title"/>
+            </text>
+          </title>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </template>
+            <sort type="string" order="1" direction="ascending">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </sort>
+          </field>
+        </detail>
+        <detail nodeset="instance('commtrack:products')/some/data">
+          <title>
+            <text>
+              <locale id="m0.case_long.tab.3.title"/>
+            </text>
+          </title>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_calculated_property_5.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="column"/>
+                  </variable>
+                </xpath>
+              </text>
+            </template>
+          </field>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_calculated_property_6.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="column"/>
+                  </variable>
+                </xpath>
+              </text>
+            </template>
+          </field>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_long.case_gender_7.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </template>
+          </field>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </template>
+            <sort type="string" order="1" direction="ascending">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </sort>
+          </field>
+        </detail>
+        <variables>
+          <case_id function="./@case_id"/>
+        </variables>
+      </detail>
+</partial>

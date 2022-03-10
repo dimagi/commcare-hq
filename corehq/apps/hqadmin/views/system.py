@@ -2,6 +2,8 @@ import json
 import socket
 from collections import defaultdict, namedtuple
 
+from couchdbkit import Server
+
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
@@ -12,7 +14,6 @@ from django.views.decorators.http import require_POST
 import requests
 from requests.exceptions import HTTPError
 
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import is_bigcouch
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
@@ -87,10 +88,10 @@ def system_ajax(request):
     type = request.GET.get('api', None)
     task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    db = XFormInstance.get_db()
     if type == "_active_tasks":
+        server = Server(settings.COUCH_DATABASE)
         try:
-            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
+            tasks = [x for x in server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
                 return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
@@ -124,14 +125,6 @@ def system_ajax(request):
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
         return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()), safe=False)
-    elif type == 'stale_pillows':
-        es_index_status = [
-            escheck.check_case_es_index(interval=3),
-            escheck.check_xform_es_index(interval=3),
-            escheck.check_reportcase_es_index(interval=3),
-            escheck.check_reportxform_es_index(interval=3)
-        ]
-        return JsonResponse(es_index_status, safe=False)
 
     if celery_monitoring:
         if type == "flower_poll":

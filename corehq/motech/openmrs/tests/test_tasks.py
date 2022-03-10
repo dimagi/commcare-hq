@@ -2,30 +2,28 @@ import datetime
 import json
 import logging
 from contextlib import contextmanager
-from unittest import skip
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 import pytz
-from mock import patch
+from unittest.mock import patch
 from nose.tools import assert_raises_regexp
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.motech.const import BASIC_AUTH
+from corehq.motech.auth import AuthManager
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
+    get_openmrs_patients,
     import_patients_with_importer,
-    poll_openmrs_atom_feeds,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.views import ConnectionSettingsListView
 from corehq.util.view_utils import absolute_reverse
 
@@ -235,6 +233,79 @@ def test_get_importer_timezone(get_timezone_for_domain_mock):
         assert timezone == cat
 
 
+class TestTimeout(SimpleTestCase):
+
+    def setUp(self):
+        self.no_auth = AuthManager()
+
+    def test_timeout(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = ReadTimeout
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            with self.assertRaises(ReadTimeout):
+                get_openmrs_patients(requests, importer)
+            self.assertEqual(request_get.call_count, 4)
+
+    def test_connection(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = ConnectTimeout
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            with self.assertRaises(ConnectTimeout):
+                get_openmrs_patients(requests, importer)
+            self.assertEqual(request_get.call_count, 1)
+
+    def test_success(self):
+        with patch.object(Requests, 'get') as request_get:
+            request_get.side_effect = [
+                ReadTimeout,
+                ReadTimeout,
+                ReadTimeout,
+                Response(),
+            ]
+            requests = Requests(
+                TEST_DOMAIN,
+                'https://example.com/',
+                auth_manager=self.no_auth,
+                logger=lambda level, entry: None,
+            )
+            importer = Importer()
+
+            rows = get_openmrs_patients(requests, importer)
+            self.assertEqual(rows, [
+                {u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
+                {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3},
+            ])
+
+
+class Importer:
+    report_uuid = 'abc123'
+    report_params = {'foo': 'bar'}
+
+
+class Response:
+    data = {'dataSets': [{'rows': [
+        {u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
+        {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3},
+    ]}]}
+
+    def json(self):
+        return self.data
+
+
 class OwnerTests(LocationHierarchyTestCase):
 
     domain = TEST_DOMAIN
@@ -279,8 +350,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete(deleted_by=None)
-        cls.web_user.delete(deleted_by=None)
+        cls.mobile_worker.delete(cls.domain, deleted_by=None)
+        cls.web_user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):
@@ -389,51 +460,3 @@ class OwnerTests(LocationHierarchyTestCase):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
-
-
-@skip("Skip tests that use live third-party APIs")
-class OpenmrsAtomFeedsTests(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = create_domain(TEST_DOMAIN)
-        cls.location_type = LocationType.objects.create(
-            domain=TEST_DOMAIN,
-            name='test_location_type',
-        )
-        cls.location = SQLLocation.objects.create(
-            domain=TEST_DOMAIN,
-            name='test location',
-            location_id='test_location',
-            location_type=cls.location_type,
-        )
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', None, None, location=cls.location)
-        cls.repeater = OpenmrsRepeater.wrap({
-            "domain": TEST_DOMAIN,
-            "url": "https://demo.mybahmni.org/openmrs/",
-            "auth_type": BASIC_AUTH,
-            "username": "superman",
-            "password": "Admin123",
-            "white_listed_case_types": ["case"],
-            "location_id": cls.location.location_id,
-            "atom_feed_enabled": True,
-            "openmrs_config": {
-                "openmrs_provider": "",
-                "case_config": {},
-                "form_configs": []
-            }
-        })
-        cls.repeater.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.user.delete(deleted_by=None)
-        cls.location.delete()
-        cls.location_type.delete()
-        cls.domain.delete()
-        super().tearDownClass()
-
-    def atom_feed_sanity_test(self):
-        poll_openmrs_atom_feeds(TEST_DOMAIN)

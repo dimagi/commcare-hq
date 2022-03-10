@@ -1,12 +1,6 @@
-from django.core.management import call_command
 from django.db import migrations
 
-from corehq.util.django_migrations import skip_on_fresh_install
-
-
-@skip_on_fresh_install
-def _migrate_roles_permissions(apps, schema_editor):
-    call_command('migrate_roles_permissions_feb2019', noinput=True)
+from corehq.util.django_migrations import run_once_off_migration
 
 
 class Migration(migrations.Migration):
@@ -16,5 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_migrate_roles_permissions)
+        run_once_off_migration(
+            'migrate_roles_permissions_feb2019', required_commit='8e8243bc80964e6981fcb89a712776e9faf97397'
+        )
     ]

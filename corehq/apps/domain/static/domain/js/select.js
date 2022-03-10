@@ -1,11 +1,13 @@
 hqDefine("domain/js/select", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',    // search box
 ], function (
     $,
+    _,
     ko,
     assertProperties,
     initialPageData

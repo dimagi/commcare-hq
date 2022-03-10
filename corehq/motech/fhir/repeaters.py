@@ -6,21 +6,16 @@ from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.const import TAG_FORM, TAG_META
-from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import StringProperty
+from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )
-from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -48,10 +43,12 @@ class FHIRRepeater(CaseRepeater):
     _has_config = False
 
     fhir_version = StringProperty(default=FHIR_VERSION_4_0_1)
+    patient_registration_enabled = BooleanProperty(default=True)
+    patient_search_enabled = BooleanProperty(default=False)
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -85,8 +82,19 @@ class FHIRRepeater(CaseRepeater):
         )
         try:
             resources = get_info_resource_list(infos, resource_types)
-            resources = register_patients(requests, resources, self._id)
-            response = send_resources(requests, resources, self.fhir_version, self._id)
+            resources = register_patients(
+                requests,
+                resources,
+                self.patient_registration_enabled,
+                self.patient_search_enabled,
+                self._id,
+            )
+            response = send_resources(
+                requests,
+                resources,
+                self.fhir_version,
+                self._id,
+            )
         except Exception as err:
             requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
@@ -135,7 +143,7 @@ class FHIRRepeater(CaseRepeater):
 
 def _get_cases_by_id(domain, case_blocks):
     case_ids = [case_block['@case_id'] for case_block in case_blocks]
-    cases = CaseAccessors(domain).get_cases(case_ids, ordered=True)
+    cases = CommCareCase.objects.get_cases(case_ids, domain, ordered=True)
     return {c.case_id: c for c in cases}
 
 
@@ -152,10 +160,3 @@ def _get_resource_types_by_case_type(domain, fhir_version, cases):
         )
     )
     return {rt.case_type.name: rt for rt in fhir_resource_types}
-
-
-def create_fhir_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(FHIRRepeater, xform)
-
-
-successful_form_received.connect(create_fhir_repeat_records)

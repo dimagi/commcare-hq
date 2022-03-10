@@ -17,17 +17,36 @@
     .dataTables_filter input.search-query {
       width: 30%;
     }
+
+    .label-release {
+      background-color: #c22eff !important;
+    }
+
+    .taskProgress {
+      margin-bottom: 10px;
+    }
   </style>
 {% endblock %}
 
 {% block page_content %}
+  <div id="feature_flags">
+    <div class="taskProgress" data-bind="visible: !!downloadContent()" style="display: none">
+      <p>{% blocktrans trimmed with email=request.couch_user.get_email %}
+        Export generation in progress. You will receive an email to {{ email }} once complete.
+      {% endblocktrans %}</p>
+      <div data-bind="html: downloadContent"></div>
+    </div>
   {% if not show_usage %}
     <a href="{{ page_url }}?show_usage=true" class="btn btn-default btn-xs pull-right">
       <i class="fa fa-info-circle"></i>
       {% trans "Show usage metrics" %}
     </a>
   {% endif %}
-  <div id="table-filters" class="ko-template">
+  <button data-bind="click: downloadFile" class="btn btn-default btn-xs pull-right">
+    <i class="fa fa-cloud-download"></i>
+    {% trans "Export to Excel" %}
+  </button>
+  <div>
     <select-toggle data-apply-bindings="false"
                    params="options: [
                                    {
@@ -90,5 +109,6 @@
       {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 {% endblock %}

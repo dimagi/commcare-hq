@@ -74,7 +74,6 @@ domain_specific = [
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
-    url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
@@ -83,13 +82,14 @@ domain_specific = [
     url(r'^', include('corehq.motech.fhir.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
+        lambda request, domain: render(request, 'hqwebapp/base_navigation.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^registries/', include('corehq.apps.registry.urls')),
 ]
 
 for url_module in extension_points.domain_specific_urls():
@@ -141,7 +141,6 @@ urlpatterns = [
     url(r'^500/$', TemplateView.as_view(template_name='500.html')),
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
-    url(r'^captcha/', include('captcha.urls')),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
@@ -158,6 +157,7 @@ urlpatterns = [
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
     url(r'^hq/consumer_user/', include('corehq.apps.consumer_user.urls', namespace='consumer_user')),
+    url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

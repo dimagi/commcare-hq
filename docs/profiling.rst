@@ -49,7 +49,9 @@ details.
 Getting a profile dump
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To get a profile dump, simply add the following decoration to the function.::
+To get a profile dump, simply add the following decoration to the function.
+
+.. code-block:: python
 
     from dimagi.utils.decorators.profile import profile_dump
     @login_and_domain_required
@@ -108,14 +110,22 @@ Creating a more useful output from the dump file
 The raw profile files are not human readable, and you need to use something
 like `cProfile <https://docs.python.org/2/library/profile.html#module-cProfile>`_ to make them
 useful.
-A script that will generate what is typically sufficient information to analyze
-these can be found in the `commcarehq-scripts`_ repository.
+
+`SnakeViz`_ is a great option for viewing .prof files::
+
+    $ pip install snakeviz
+    $ snakeviz /path/to/profile_dump.prof
+
+Alternately you can use a script that will output a readable version of the profile data to the console.
+You can find such a script in the `commcarehq-scripts`_ repository.
 You can read the source of that script to generate your own analysis, or just
 use it directly as follows::
 
-   $ ./reusable/convert_profile.py /path/to/profile_dump.prof
+    $ ./reusable/convert_profile.py /path/to/profile_dump.prof
 
+.. _snakeviz: https://jiffyclub.github.io/snakeviz/
 .. _commcarehq-scripts: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/convert_profile.py
+
 
 
 Reading the output of the analysis file

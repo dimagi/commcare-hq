@@ -41,13 +41,16 @@ hqDefine('users/js/edit_commcare_user', [
             type: 'POST',
             dataType: 'json',
             success: function (response, status, xhr, form) {
-                $('#reset-password-form-container').html(response.formHTML);
                 if (response.status === "OK") {
-                    alertUser.alert_user(gettext("Password changed successfully"), 'success');
+                    alertUser.alert_user(gettext("Password changed successfully."), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
+                } else if (response.status === "weak") {
+                    alertUser.alert_user(gettext("Password is not strong enough. " +
+                                                 "Try making your password more complex."), 'danger');
+                } else if (response.status === "different") {
+                    alertUser.alert_user(gettext("The two password fields didn't match."), 'danger');
                 } else {
-                    var message = gettext('Password was not changed ');
-                    alertUser.alert_user(message, 'danger');
+                    alertUser.alert_user(gettext("Password was not changed. "), 'danger');
                 }
             },
         });
@@ -59,9 +62,6 @@ hqDefine('users/js/edit_commcare_user', [
             self.signOff = ko.observable('');
             self.formDeleteUserSent = ko.observable(false);
             self.disabled = function () {
-                if (!initialPageData.get('is_delete_allowed')) {
-                    return true;
-                }
                 var understand = self.signOff().toLowerCase() === initialPageData.get('couch_user_username');
                 return self.formDeleteUserSent() || !understand;
             };
@@ -89,12 +89,11 @@ hqDefine('users/js/edit_commcare_user', [
     }
 
     // Groups form
-    multiselectUtils.createFullMultiselectWidget(
-        'id_selected_ids',
-        gettext("Available Groups"),
-        gettext("Groups with this User"),
-        gettext("Search Group...")
-    );
+    multiselectUtils.createFullMultiselectWidget('id_selected_ids', {
+        selectableHeaderTitle: gettext("Available Groups"),
+        selectedHeaderTitle: gettext("Groups with this User"),
+        searchItemTitle: gettext("Search Group..."),
+    });
 
     // "are you sure?" stuff
     var unsavedChanges = false;

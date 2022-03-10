@@ -4,11 +4,10 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from mock import patch
+from unittest.mock import patch
 from nose.tools import assert_equal, assert_false, assert_true
 
 from corehq.sql_db.config import PlProxyConfig, _get_standby_plproxy_config
-from corehq.sql_db.connections import override_engine
 from corehq.sql_db.routers import (
     READ_FROM_PLPROXY_STANDBYS,
     SYNCLOGS_APP,
@@ -57,20 +56,6 @@ class AllowMigrateTest(SimpleTestCase):
     def test_synclogs_db(self):
         self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, SYNCLOGS_APP))
         self.assertIs(True, allow_migrate('synclogs', SYNCLOGS_APP))
-
-    def test_icds_db_citus(self):
-        with override_settings(CUSTOM_DB_ROUTING={}):
-            self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'icds_reports'))
-
-        # map to reporting DB alias
-        with override_settings(CUSTOM_DB_ROUTING={'custom_app': 'icds-ucr-citus'}), \
-             override_engine('icds-ucr-citus', '', db_alias='icds-ucr'):
-                self.assertIs(False, allow_migrate(DEFAULT_DB_ALIAS, 'custom_app'))
-                self.assertIs(True, allow_migrate('icds-ucr', 'custom_app'))
-
-        # map to DB alias
-        with override_settings(CUSTOM_DB_ROUTING={'custom_app': 'icds-ucr'}):
-            self.assertIs(True, allow_migrate('icds-ucr', 'custom_app'))
 
     @override_settings(DATABASES={'default': {}, 'synclogs': {}})
     def test_synclogs_non_partitioned(self):

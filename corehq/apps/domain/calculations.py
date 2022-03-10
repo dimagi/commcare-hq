@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -36,7 +37,7 @@ from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import (
+from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
@@ -148,7 +149,13 @@ def j2me_forms_in_last_bool(domain, days):
     return j2me_forms_in_last(domain, days) > 0
 
 
-def _sms_helper(domain, direction=None, days=None):
+def get_sms_count(domain, direction=None, days=None):
+    """
+    :param domain: domain name
+    :param direction: can specify INCOMING or OUTGOING, or None to retrieve both
+    :param days: only return count of sms docs from the past N days
+    :return: number of sms docs fetched based on query parameters specified
+    """
     assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
@@ -158,17 +165,18 @@ def _sms_helper(domain, direction=None, days=None):
         query = query.outgoing_messages()
 
     if days:
+        days = int(days) if isinstance(days, str) else days
         query = query.received(date.today() - relativedelta(days=days))
 
     return query.run().total
 
 
 def sms(domain, direction):
-    return _sms_helper(domain, direction=direction)
+    return get_sms_count(domain, direction=direction)
 
 
 def sms_in_last(domain, days=None):
-    return _sms_helper(domain, days=days)
+    return get_sms_count(domain, days=days)
 
 
 def sms_in_last_bool(domain, days=None):
@@ -176,11 +184,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction=INCOMING, days=days)
+    return get_sms_count(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction=OUTGOING, days=days)
+    return get_sms_count(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):
@@ -328,7 +336,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-@quickcache([], timeout=60 * 60)
+@quickcache([], timeout=23 * 60 * 60)
 def all_domain_stats():
     webuser_counts = defaultdict(int)
     commcare_counts = defaultdict(int)
@@ -441,12 +449,11 @@ def use_domain_security_settings(domain_obj):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain) if not r.is_archived]
-    return len(custom_roles)
+    return len(get_custom_roles_for_domain(domain))
 
 
 def num_location_restricted_roles(domain):
-    roles = [r for r in UserRole.by_domain(domain)
+    roles = [r for r in UserRole.objects.get_by_domain(domain)
              if not r.permissions.access_all_locations]
     return len(roles)
 

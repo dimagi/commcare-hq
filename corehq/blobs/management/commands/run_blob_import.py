@@ -1,3 +1,4 @@
+import subprocess
 import tarfile
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -5,6 +6,7 @@ from functools import partial
 from django.core.management import BaseCommand
 
 from corehq.blobs import get_blob_db
+from corehq.util.log import with_progress_bar
 
 USAGE = "Usage: ./manage.py run_blob_import <filename>"
 NUM_WORKERS = 5
@@ -21,13 +23,17 @@ class Command(BaseCommand):
 
 
 def import_blobs_from_tgz(filename):
+    print(f"Inspecting the size of {filename}.")
+    print("This can take ~8 minutes for a 30G file.")
+    total = int(subprocess.getoutput(f"tar --list -f {filename} | wc -l"))
+
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
-        func = partial(worker, filename)
+        func = partial(worker, filename, total // NUM_WORKERS)
         futures = executor.map(func, range(NUM_WORKERS))
-        list(futures)  # Resolves results and exceptions from workers
+        return list(futures)  # Resolves results and exceptions from workers
 
 
-def worker(filename, worker_number):
+def worker(filename, length, worker_number):
     """
     Each worker claims the ``worker_number``th file in the ``filename``
     tar.gz file, and copies it to blob_db.
@@ -44,8 +50,10 @@ def worker(filename, worker_number):
     # ^^^ Yeah, not great. Maybe filesystem caching helps.
     blob_db = get_blob_db()
     with tarfile.open(filename, 'r:gz') as tgzfile:
-        for i, tarinfo in enumerate(tgzfile):
-            if i % NUM_WORKERS == worker_number:
-                key = tarinfo.name
-                fileobj = tgzfile.extractfile(tarinfo)
-                blob_db.copy_blob(fileobj, key)
+        iterable = (tarinfo for i, tarinfo in enumerate(tgzfile)
+                    if i % NUM_WORKERS == worker_number)
+        prefix = f"Worker {worker_number}"
+        for tarinfo in with_progress_bar(iterable, length, prefix=prefix, oneline=False):
+            key = tarinfo.name
+            fileobj = tgzfile.extractfile(tarinfo)
+            blob_db.copy_blob(fileobj, key)

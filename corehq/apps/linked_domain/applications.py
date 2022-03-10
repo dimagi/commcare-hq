@@ -3,16 +3,21 @@ from collections import defaultdict
 from django.conf import settings
 
 from corehq.apps.app_manager.dbaccessors import (
-    get_brief_apps_in_domain,
+    get_apps_in_domain,
     get_brief_app_docs_in_domain,
+    get_brief_apps_in_domain,
     get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import AppLinkError
+from corehq.apps.app_manager.util import is_linked_app
+from corehq.apps.linked_domain.exceptions import (
+    MultipleDownstreamAppsError,
+    RemoteRequestError,
+)
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.exceptions import MultipleDownstreamAppsError, RemoteRequestError
 from corehq.apps.linked_domain.remote_accessors import (
     get_app_by_version,
     get_brief_apps,
@@ -43,8 +48,17 @@ def get_master_app_by_version(domain_link, upstream_app_id, upstream_version):
         return wrap_app(app)
 
 
-def get_downstream_app_id(downstream_domain, upstream_app_id):
-    downstream_ids = _get_downstream_app_id_map(downstream_domain)[upstream_app_id]
+def get_downstream_app_id(downstream_domain, upstream_app_id, use_upstream_app_id=True):
+    """
+    :param downstream_domain: name of the downstream domain
+    :param upstream_app_id: app._id of application in upstream domain
+    :param use_upstream_app_id: whether to search for downstream app based on upstream_app_id or family_id
+    DEPRECATED: family_id is deprecated and will be removed. If calling this method, try to use upstream_app_id
+    """
+    downstream_ids = get_downstream_app_id_map(
+        downstream_domain,
+        use_upstream_app_id=use_upstream_app_id
+    )[upstream_app_id]
     if not downstream_ids:
         return None
     if len(downstream_ids) > 1:
@@ -53,15 +67,25 @@ def get_downstream_app_id(downstream_domain, upstream_app_id):
 
 
 def get_upstream_app_ids(downstream_domain):
-    return list(_get_downstream_app_id_map(downstream_domain))
+    return list(get_downstream_app_id_map(downstream_domain, use_upstream_app_id=False))
 
 
-@quickcache(vary_on=['downstream_domain'], skip_arg=lambda _: settings.UNIT_TESTING, timeout=5 * 60)
-def _get_downstream_app_id_map(downstream_domain):
+@quickcache(
+    vary_on=['downstream_domain', 'use_upstream_app_id'],
+    skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING,
+    timeout=5 * 60
+)
+def get_downstream_app_id_map(downstream_domain, use_upstream_app_id=True):
+    """
+    :param downstream_domain: domain name
+    :param use_upstream_app_id: whether to search for downstream app based on upstream_app_id or family_id
+    DEPRECATED: family_id is deprecated and will be removed. If calling this method, try to use upstream_app_id
+    """
+    attr_to_search_on = "upstream_app_id" if use_upstream_app_id else "family_id"
     downstream_app_ids = defaultdict(list)
     for doc in get_brief_app_docs_in_domain(downstream_domain):
-        if doc.get("family_id"):
-            downstream_app_ids[doc["family_id"]].append(doc["_id"])
+        if doc.get(attr_to_search_on):
+            downstream_app_ids[doc[attr_to_search_on]].append(doc["_id"])
     return downstream_app_ids
 
 
@@ -90,6 +114,16 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
     return link_app(linked_app, master_domain, master_id, remote_details)
 
 
+def get_linked_apps_for_domain(domain):
+    linked_apps = []
+    apps = get_apps_in_domain(domain, include_remote=False)
+    for app in apps:
+        if is_linked_app(app):
+            linked_apps.append(app)
+
+    return linked_apps
+
+
 def link_app(linked_app, master_domain, master_id, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
 
@@ -103,5 +137,27 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
         except RemoteRequestError:
             raise AppLinkError('Error fetching multimedia from remote server. Please try again later.')
 
-    _get_downstream_app_id_map.clear(linked_app.domain)
+    get_downstream_app_id_map.clear(linked_app.domain)
     return linked_app
+
+
+def unlink_apps_in_domain(domain):
+    linked_apps = get_linked_apps_for_domain(domain)
+    unlinked_apps = []
+    for app in linked_apps:
+        unlinked_app = unlink_app(app)
+        unlinked_apps.append(unlinked_app)
+
+    return unlinked_apps
+
+
+def unlink_app(linked_app):
+    if not is_linked_app(linked_app):
+        return None
+
+    converted_app = linked_app.convert_to_application()
+    # reset family_id since the link is being removed
+    converted_app.family_id = None
+    converted_app.save()
+
+    return converted_app

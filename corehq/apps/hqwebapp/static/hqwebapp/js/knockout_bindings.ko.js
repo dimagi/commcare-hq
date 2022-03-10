@@ -1,9 +1,11 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
+    'underscore',
     'knockout',
     'jquery-ui/ui/widgets/sortable',
 ], function (
     $,
+    _,
     ko
 ) {
     // Need this due to https://github.com/knockout/knockout/pull/2324
@@ -360,11 +362,33 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.openModal = {
+        /**
+         * Create modal content in script element with ID:
+         *  <script type="text/html" id="id-of-template">
+         *      <!-- modal content -->
+         *  </script>
+         *
+         * Use binding to open the modal on click:
+         *  <a data-bind="openModal: 'id-of-template'">...</a>
+         *
+         * Alternately provide a condition to use to determine if the modal should open:
+         *  <a data-bind="openModal: {templateId: 'id-of-template', if: isAllowed}">...</a>
+         *
+         */
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var templateID = valueAccessor(),
-                modal = $('<div></div>').addClass('modal fade').appendTo('body'),
+            let value = valueAccessor(),
+                templateID = value,
+                ifValue = true;
+            if (typeof value === 'object') {
+                templateID = value.templateId;
+                ifValue = _.has(value, 'if') ? value.if : true;
+            }
+            var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
                 newValueAccessor = function () {
                     var clickAction = function () {
+                        if (!ifValue) {
+                            return;
+                        }
                         ko.bindingHandlers.template.init(modal.get(0), function () {
                             return templateID;
                         }, allBindingsAccessor, viewModel, bindingContext);
@@ -678,6 +702,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             if (itemSelector) {
                 $(element).sortable("option", "items", itemSelector);
             }
+        },
+    };
+
+    ko.bindingHandlers.onEnterKey = {
+        // calls a function when the enter key is pressed on an input
+        init: function (element, valueAccessor, allBindings, viewModel) {
+            $(element).keypress(function (event) {
+                if (event.key === "Enter" || event.keyCode === 13) {
+                    valueAccessor()();
+                    return false;
+                }
+                return true;
+            });
         },
     };
 

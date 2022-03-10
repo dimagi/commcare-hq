@@ -16,6 +16,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -49,7 +54,19 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false" redo_last="false">
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_parent/whatever_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('casedb')/casedb/case[@case_id=current()/index/parent]/whatever"/>
+         </text>
+       </template>
+     </field>
+    <action auto_launch="false()" redo_last="false">
       <display>
         <text>
           <locale id="case_search.m0"/>
@@ -115,6 +132,11 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
     <field>
       <header>
@@ -148,7 +170,19 @@
         </text>
       </template>
     </field>
-    <action auto_launch="false" redo_last="true">
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_short.case_parent/whatever_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('results')/results/case[@case_id=current()/index/parent]/whatever"/>
+        </text>
+      </template>
+    </field>
+    <action auto_launch="false()" redo_last="true">
       <display>
         <text>
           <locale id="case_search.m0.again"/>
@@ -161,6 +195,41 @@
         </push>
       </stack>
     </action>
+  </detail>
+  <detail id="m0_search_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.search_long.case_calculated_property_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('ledgerdb')/ledgers/name/name"/>
+            </variable>
+          </xpath>
+        </text>
+      </template>
+    </field>
   </detail>
   <detail id="m1_case_short">
     <title>
@@ -179,8 +248,13 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
-    <action auto_launch="false" redo_last="false">
+    <action auto_launch="false()" redo_last="false">
       <display>
         <text>
           <locale id="case_search.m1"/>
@@ -230,8 +304,13 @@
           <xpath function="case_name"/>
         </text>
       </template>
+      <sort direction="ascending" order="1" type="string">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
     </field>
-    <action auto_launch="false" redo_last="true">
+    <action auto_launch="false()" redo_last="true">
       <display>
         <text>
           <locale id="case_search.m1.again"/>
@@ -244,6 +323,25 @@
         </push>
       </stack>
     </action>
+  </detail>
+  <detail id="m1_search_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.search_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
   </detail>
   <detail id="m2_case_short"/>
   <detail id="m2_case_long">

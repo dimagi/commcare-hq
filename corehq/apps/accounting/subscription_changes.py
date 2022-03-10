@@ -8,6 +8,8 @@ from django.utils.translation import ungettext
 
 from couchdbkit import ResourceConflict
 
+from dimagi.utils.parsing import json_format_date
+
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -18,7 +20,13 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
-from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.role_utils import (
+    archive_custom_roles_for_domain,
+    get_custom_roles_for_domain,
+    reset_initial_roles_for_domain,
+    unarchive_roles_for_domain,
+)
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -112,7 +120,7 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 def get_refresh_alert_schedule_instances_call(broadcast):
     def refresh():
         refresh_alert_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
         )
 
@@ -122,9 +130,9 @@ def get_refresh_alert_schedule_instances_call(broadcast):
 def get_refresh_timed_schedule_instances_call(broadcast):
     def refresh():
         refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date_iso_string=json_format_date(broadcast.start_date)
         )
 
     return refresh
@@ -237,24 +245,12 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Set user roles using custom roles to Read Only.
         - Reset initial roles to standard permissions.
         """
-        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = get_custom_roles_for_domain(domain.name)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
-        # temporarily disable this part of the downgrade until we
-        # have a better user experience for notifying the downgraded user
-        # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
-        # web_users = WebUser.by_domain(self.domain.name)
-        # for web_user in web_users:
-        #     if web_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-        #         web_user.set_role(self.domain.name, read_only_role.get_qualified_id())
-        #         web_user.save()
-        # for cc_user in CommCareUser.by_domain(self.domain.name):
-        #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
-        #         cc_user.set_role(self.domain.name, 'none')
-        #         cc_user.save()
-        UserRole.archive_custom_roles_for_domain(domain.name)
-        UserRole.reset_initial_roles_for_domain(domain.name)
+        archive_custom_roles_for_domain(domain.name)
+        reset_initial_roles_for_domain(domain.name)
         return True
 
     @staticmethod
@@ -313,14 +309,19 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            unset_practice_mode_configured_apps,
+        )
         unset_practice_mode_configured_apps(project.name)
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
         """ Deactivates users if there are too many for a community plan """
         from corehq.apps.accounting.models import (
-            DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
+            UNLIMITED_FEATURE_USAGE,
+            DefaultProductPlan,
+            FeatureType,
+        )
 
         # checks for community plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
@@ -369,7 +370,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
-        UserRole.unarchive_roles_for_domain(domain.name)
+        unarchive_roles_for_domain(domain.name)
         return True
 
     @staticmethod
@@ -393,7 +394,11 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
-                    rebuild_indicators.delay(report.config._id, source='subscription_change')
+                    rebuild_indicators.delay(
+                        report.config._id,
+                        source='subscription_change',
+                        domain=project.name
+                    )
             except DataSourceConfigurationNotFoundError:
                 pass
         return True
@@ -586,7 +591,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Get the allowed number of mobile workers based on plan version.
         """
-        from corehq.apps.accounting.models import FeatureType, FeatureRate, UNLIMITED_FEATURE_USAGE
+        from corehq.apps.accounting.models import (
+            UNLIMITED_FEATURE_USAGE,
+            FeatureRate,
+            FeatureType,
+        )
         num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
@@ -658,7 +667,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
+        custom_roles = [role.name for role in get_custom_roles_for_domain(domain.name)]
         num_roles = len(custom_roles)
         from corehq.apps.accounting.models import SoftwarePlanEdition
         if new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
@@ -686,8 +695,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         in the future.
         """
         from corehq.apps.accounting.models import (
-            Subscription,
             SoftwarePlanEdition,
+            Subscription,
         )
         later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
@@ -773,7 +782,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+        )
         apps = get_practice_mode_configured_apps(project.name)
         if not apps:
             return None

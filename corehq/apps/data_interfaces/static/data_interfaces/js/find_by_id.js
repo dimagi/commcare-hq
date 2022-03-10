@@ -1,11 +1,13 @@
 hqDefine("data_interfaces/js/find_by_id", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
 ], function (
     $,
+    _,
     ko,
     assertProperties,
     initialPageData,
@@ -22,7 +24,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         self.linkMessage = ko.computed(function () {
             if (self.link()) {
-                var redirectTemplate = _.template(gettext("<a href='<%= link %>' target='_blank'>View <i class='fa fa-external-link'></i></a>"));
+                var redirectTemplate = _.template(gettext("<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></i></a>"));
                 return self.successMessage + " " + redirectTemplate({link: self.link()});
             }
             return '';
@@ -63,7 +65,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         $("#find-case").koApplyBindings(findModel({
             header: gettext('Find Case'),
-            help: _.template(gettext('IDs can be found in a <a href="<%= url %>">case data export</a>'))({
+            help: _.template(gettext('IDs can be found in a <a href="<%- url %>">case data export</a>'))({
                 url: initialPageData.reverse('list_case_exports'),
             }),
             placeholder: gettext('Case ID'),
@@ -74,7 +76,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         $("#find-form").koApplyBindings(findModel({
             header: gettext('Find Form Submission'),
-            help: _.template(gettext('IDs can be found in a <a href="<%= url %>">form data export</a>'))({
+            help: _.template(gettext('IDs can be found in a <a href="<%- url %>">form data export</a>'))({
                 url: initialPageData.reverse('list_form_exports'),
             }),
             errorMessage: gettext('Could not find form submission'),

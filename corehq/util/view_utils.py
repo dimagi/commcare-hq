@@ -132,9 +132,9 @@ def absolute_reverse(*args, **kwargs):
 
 def get_case_or_404(domain, case_id):
     from corehq.form_processor.exceptions import CaseNotFound
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    from corehq.form_processor.models import CommCareCase
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         if case.domain != domain or case.is_deleted:
             raise Http404()
         return case
@@ -144,10 +144,10 @@ def get_case_or_404(domain, case_id):
 
 def get_form_or_404(domain, id):
     from corehq.form_processor.exceptions import XFormNotFound
-    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    from corehq.form_processor.models import XFormInstance
     try:
-        form = FormAccessors(domain).get_form(id)
-        if form.domain != domain or form.is_deleted:
+        form = XFormInstance.objects.get_form(id, domain)
+        if form.is_deleted:
             raise Http404()
         return form
     except XFormNotFound:
@@ -164,6 +164,9 @@ def request_as_dict(request):
             Dict containing the request data
     """
 
+    # This is a parameter that is provided by middleware that may or may not exist
+    can_access_all_locations = getattr(request, 'can_access_all_locations', False)
+
     request_data = dict(
         GET=request.GET if request.method == 'GET' else request.POST,
         META=dict(
@@ -172,7 +175,7 @@ def request_as_dict(request):
         ),
         datespan=request.datespan,
         couch_user=None,
-        can_access_all_locations=request.can_access_all_locations
+        can_access_all_locations=can_access_all_locations
     )
 
     try:

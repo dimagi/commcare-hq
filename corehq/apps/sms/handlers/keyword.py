@@ -2,7 +2,6 @@ from functools import cmp_to_key
 
 from dimagi.utils.logging import notify_exception
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.smsforms.api import (
     FormplayerInterface,
@@ -32,7 +31,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -306,7 +305,7 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
         return (None, None, None, True, MSG_FORM_NOT_FOUND)
 
 
-def start_session_for_structured_sms(domain, contact, phone_number, app, module, form,
+def start_session_for_structured_sms(domain, contact, phone_number, app, form,
         case_id, keyword, logged_subevent=None):
     """
     Returns (session, responses, error, error_code)
@@ -324,7 +323,6 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, module,
             domain,
             contact,
             app,
-            module,
             form,
             case_id=case_id,
             yield_responses=True
@@ -380,7 +378,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         return False
 
     session, responses, error_occurred, error_code = start_session_for_structured_sms(
-        domain, contact, verified_number, app, module, form, case_id, keyword, logged_subevent)
+        domain, contact, verified_number, app, form, case_id, keyword, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
         clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
@@ -497,7 +495,11 @@ def keyword_uses_form_that_requires_case(survey_keyword):
 
 
 def get_case_by_external_id(domain, external_id, user):
-    cases = CaseAccessors(domain).get_cases_by_external_id(external_id)
+    try:
+        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, raise_multiple=True)
+        cases = [case] if case is not None else []
+    except CommCareCase.MultipleObjectsReturned as err:
+        cases = err.cases
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)

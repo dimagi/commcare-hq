@@ -390,13 +390,13 @@ class Content(models.Model):
         return r
 
     @classmethod
-    def get_two_way_entry_or_phone_number(cls, recipient, try_user_case=True, domain_for_toggles=None):
+    def get_two_way_entry_or_phone_number(cls, recipient, try_usercase=True, domain_for_toggles=None):
         """
         If recipient has a two-way number, returns it as a PhoneNumber entry.
         If recipient does not have a two-way number but has a phone number configured,
         returns the one-way phone number as a string.
 
-        If try_user_case is True and recipient is a CommCareUser who doesn't have a
+        If try_usercase is True and recipient is a CommCareUser who doesn't have a
         two-way or one-way phone number, then it will try to get the two-way or
         one-way number from the user's user case if one exists.
         """
@@ -418,7 +418,7 @@ class Content(models.Model):
         if phone_number and len(phone_number) > 3:
             return phone_number
 
-        if try_user_case and isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
+        if try_usercase and isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
             return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase,
                                                          domain_for_toggles=domain_for_toggles)
 

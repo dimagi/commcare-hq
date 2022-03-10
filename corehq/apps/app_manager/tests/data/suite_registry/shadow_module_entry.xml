@@ -1,0 +1,43 @@
+<partial>
+  <entry>
+    <form>xmlns1.0</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="item-list:textures" src="jr://fixture/item-list:textures"/>
+    <session>
+      <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/456/">
+        <data key="case_type" ref="'case'"/>
+        <data key="x_commcare_data_registry" ref="'myregistry'"/>
+        <prompt key="name">
+          <display>
+            <text>
+              <locale id="search_property.m1.name"/>
+            </text>
+          </display>
+        </prompt>
+        <prompt key="favorite_color">
+          <display>
+            <text>
+              <locale id="search_property.m1.favorite_color"/>
+            </text>
+          </display>
+          <itemset nodeset="instance('item-list:textures')/textures_list/textures">
+            <label ref="name"/>
+            <value ref="value"/>
+            <sort ref="name"/>
+          </itemset>
+        </prompt>
+      </query>
+      <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]" value="./@case_id"/>
+      <query default_search="true" storage-instance="registry" template="case" url="https://www.example.com/a/test_domain/phone/registry_case/456/">
+        <data key="x_commcare_data_registry" ref="'myregistry'"/>
+        <data key="case_type" ref="'case'"/>
+        <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+      </query>
+    </session>
+  </entry>
+</partial>

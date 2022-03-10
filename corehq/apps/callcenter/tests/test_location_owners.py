@@ -2,13 +2,13 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_cases
 
-from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
+from corehq.apps.callcenter.sync_usercase import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 TEST_DOMAIN = "cc-location-owner-test-domain"
 CASE_TYPE = "cc-case-type"
@@ -53,7 +53,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
 
     def tearDown(self):
@@ -62,7 +62,7 @@ class CallCenterLocationOwnerTest(TestCase):
     def test_no_location_sync(self):
         self.user.unset_location()
         self.user.save()
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         self.assertCallCenterCaseOwner("")
 
     def test_location_sync(self):
@@ -109,5 +109,5 @@ class CallCenterLocationOwnerTest(TestCase):
         self.domain.save()
 
     def assertCallCenterCaseOwner(self, owner_id):
-        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, CASE_TYPE)
+        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
         self.assertEqual(case.owner_id, owner_id)

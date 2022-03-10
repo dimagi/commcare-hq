@@ -6,17 +6,17 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
-from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
+@sharded
 class TestHardDelete(TestCase):
 
     def setUp(self):
-        self.casedb = CaseAccessors(TEST_DOMAIN_NAME)
-        self.formdb = FormAccessors(TEST_DOMAIN_NAME)
+        self.casedb = CommCareCase.objects
+        self.formdb = XFormInstance.objects
 
     def test_simple_delete(self):
         factory = CaseFactory()
@@ -24,7 +24,7 @@ class TestHardDelete(TestCase):
         [case] = factory.create_or_update_case(
             CaseStructure(case_id=case.case_id, attrs={'update': {'foo': 'bar'}})
         )
-        self.assertIsNotNone(self.casedb.get_case(case.case_id))
+        self.assertIsNotNone(self.casedb.get_case(case.case_id, TEST_DOMAIN_NAME))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
             self.assertIsNotNone(self.formdb.get_form(form_id))
@@ -32,15 +32,14 @@ class TestHardDelete(TestCase):
         with capture_kafka_changes_context(topics.FORM_SQL, topics.CASE_SQL) as change_context:
             safe_hard_delete(case)
 
-        if should_use_sql_backend(case.domain):
-            self.assertEqual(3, len(change_context.changes))
-            expected_ids = {case.case_id} | set(case.xform_ids)
-            self.assertEqual(expected_ids, {change.id for change in change_context.changes})
-            for change in change_context.changes:
-                self.assertTrue(change.deleted)
+        self.assertEqual(3, len(change_context.changes))
+        expected_ids = {case.case_id} | set(case.xform_ids)
+        self.assertEqual(expected_ids, {change.id for change in change_context.changes})
+        for change in change_context.changes:
+            self.assertTrue(change.deleted)
 
         with self.assertRaises(CaseNotFound):
-            self.casedb.get_case(case.case_id)
+            self.casedb.get_case(case.case_id, TEST_DOMAIN_NAME)
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
@@ -60,9 +59,9 @@ class TestHardDelete(TestCase):
 
         # deleting the child is ok
         safe_hard_delete(child)
-        self.assertIsNotNone(self.casedb.get_case(parent.case_id))
+        self.assertIsNotNone(self.casedb.get_case(parent.case_id, TEST_DOMAIN_NAME))
         with self.assertRaises(CaseNotFound):
-            self.casedb.get_case(child.case_id)
+            self.casedb.get_case(child.case_id, TEST_DOMAIN_NAME)
 
     def test_delete_sharing_form(self):
         factory = CaseFactory()
@@ -76,10 +75,5 @@ class TestHardDelete(TestCase):
         with self.assertRaises(CommCareCaseError):
             safe_hard_delete(c2)
 
-        self.assertIsNotNone(self.casedb.get_case(c1.case_id))
-        self.assertIsNotNone(self.casedb.get_case(c2.case_id))
-
-
-@use_sql_backend
-class TestHardDeleteSQL(TestHardDelete):
-    pass
+        self.assertIsNotNone(self.casedb.get_case(c1.case_id, TEST_DOMAIN_NAME))
+        self.assertIsNotNone(self.casedb.get_case(c2.case_id, TEST_DOMAIN_NAME))

@@ -1,9 +1,8 @@
-from .general import (
-    should_use_sql_backend,
+from .general import (  # noqa: F401
     is_commcarecase,
 )
 
-from .xform import (
+from .xform import (  # noqa: F401
     extract_meta_instance_id,
     extract_meta_user_id,
     convert_xform_to_json,
@@ -13,6 +12,6 @@ from .xform import (
     TestFormMetadata,
 )
 
-from .metadata import (
+from .metadata import (  # noqa: F401
     clean_metadata,
 )

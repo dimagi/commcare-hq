@@ -1,0 +1,28 @@
+{% extends login_template %}
+{% load i18n %}
+
+{% block title %}{% trans "Single Sign-On Request Denied" %}{% endblock title %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            <h2>
+              {% blocktrans %}
+                Single Sign-On Not Allowed
+              {% endblocktrans %}
+            </h2>
+            <p class="lead">
+              {% blocktrans %}
+                You do not have permission to sign in with Single Sign-On.
+                If this is in error, please contact your project's administrator.
+              {% endblocktrans %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

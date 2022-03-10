@@ -38,9 +38,6 @@
     "latest": true
   },
   "short_odk_media_url": null,
-  "linked_whitelist": [
-    
-  ],
   "multimedia_map": {
     
   },
@@ -270,8 +267,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "sample_number_question": "\/data\/sample_number_question",
-                "sample_choice_question": "\/data\/sample_choice_question"
+                  "sample_number_question": {
+                    "question_path": "\/data\/sample_number_question",
+                    "update_mode": "always"
+                  },
+                  "sample_choice_question": {
+                    "question_path": "\/data\/sample_choice_question",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -421,8 +424,10 @@
         "default_properties": [
           
         ],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": [
@@ -772,8 +777,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "sample_number_question": "\/data\/sample_number_question",
-                "sample_choice_question": "\/data\/sample_choice_question"
+                "sample_number_question": {
+                  "question_path": "\/data\/sample_number_question",
+                  "update_mode": "always"
+                },
+                "sample_choice_question": {
+                  "question_path": "\/data\/sample_choice_question",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -951,8 +962,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "close_confirmation": "\/data\/close_confirmation",
-                "close_reason": "\/data\/close_reason"
+                "close_confirmation": {
+                  "question_path": "\/data\/close_confirmation",
+                  "update_mode": "always"
+                },
+                "close_reason": {
+                  "question_path": "\/data\/close_reason",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1102,8 +1119,10 @@
         "default_properties": [
           
         ],
-        "command_label": {
-          "en": "Search All Cases"
+        "search_label": {
+          "label": {
+            "en": "Search All Cases"
+          }
         },
         "search_button_display_condition": null,
         "properties": [

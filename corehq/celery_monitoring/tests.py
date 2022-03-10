@@ -1,3 +1,4 @@
+from celery.task import task
 from django.conf import settings
 
 import datetime
@@ -8,7 +9,7 @@ from corehq.celery_monitoring.heartbeat import Heartbeat, HeartbeatNeverRecorded
     HEARTBEAT_FREQUENCY
 from testil import assert_raises, eq
 
-from corehq.celery_monitoring.signals import TimeToStartTimer, TimingNotAvailable
+from corehq.celery_monitoring.signals import TimeToStartTimer, TimingNotAvailable, get_domain_from_task
 
 
 def test_heartbeat():
@@ -89,3 +90,39 @@ def test_import_tasks():
     for queue in settings.CELERY_HEARTBEAT_THRESHOLDS:
         # assert each heartbeat task is there
         getattr(tasks, Heartbeat(queue).periodic_task_name)
+
+
+def test_get_domain_from_task():
+    @task()
+    def example_task_1(domain, var1, var2):
+        pass
+
+    @task()
+    def example_task_2(var1, domain, var2):
+        pass
+
+    @task()
+    def example_task_3(var1, var2, domain=None):
+        pass
+
+    @task()
+    def example_task_4(domain_name):
+        pass
+
+    @task()
+    def example_task_5(var1, var2):
+        pass
+
+    eq('example', get_domain_from_task(example_task_1, (), {'domain': 'example', 'var1': 1, 'var2': 2}))
+    eq('example', get_domain_from_task(example_task_1, ('example', 1, 2), {}))
+
+    eq('example', get_domain_from_task(example_task_2, (), {'domain': 'example', 'var1': 1, 'var2': 2}))
+    eq('example', get_domain_from_task(example_task_2, (1,), {'domain': 'example', 'var2': 2}))
+    eq('example', get_domain_from_task(example_task_2, (1, 'example', 2), {}))
+
+    eq('example', get_domain_from_task(example_task_3, (), {'domain': 'example', 'var1': 1, 'var2': 2}))
+    eq('example', get_domain_from_task(example_task_3, (1, 2), {'domain': 'example'}))
+    eq('example', get_domain_from_task(example_task_3, (1, 2, 'example'), {}))
+
+    eq('example', get_domain_from_task(example_task_4, ('example',), {}))
+    eq(None, get_domain_from_task(example_task_5, (1, 2), {}))

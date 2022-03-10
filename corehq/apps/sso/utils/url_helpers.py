@@ -11,8 +11,13 @@ def get_saml_acs_url(identity_provider):
     return _get_full_sso_url("sso_saml_acs", identity_provider)
 
 
-def get_saml_sls_url(identity_provider):
-    return _get_full_sso_url("sso_saml_sls", identity_provider)
+def get_saml_login_url(identity_provider):
+    return _get_full_sso_url("sso_saml_login", identity_provider)
+
+
+def get_documentation_url(identity_provider):
+    # todo we are only supporting docs for Azure AD here. OneLogin, etc to come later
+    return 'https://confluence.dimagi.com/display/commcarepublic/Set+up+SSO+for+CommCare+HQ'
 
 
 def get_dashboard_link(identity_provider):

@@ -5,7 +5,7 @@ from corehq.apps.formplayer_api.utils import check_user_access
 
 def clear_user_data(domain, username, restore_as=None):
     """Call Formplayer API to clear user data."""
-    user = check_user_access(domain, username, allow_mirroring=True)
+    user = check_user_access(domain, username, allow_enterprise=True)
     if restore_as:
         check_user_access(domain, restore_as)
 

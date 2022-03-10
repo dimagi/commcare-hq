@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.postgres.forms import SimpleArrayField
 from django.utils.html import format_html
@@ -51,15 +50,16 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _('Change Password'),
+                        css_class='btn-primary',
+                        type='submit',
+                        data_bind="enable: passwordSufficient(), click: submitCheck"
+                    )
+                ),
                 css_class='check-password',
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _('Change Password'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
-            ),
+            )
         )
 
     def save(self, commit=True):
@@ -140,9 +140,9 @@ class HQDeviceValidationForm(DeviceValidationForm):
 
 class HQTwoFactorMethodForm(MethodForm):
 
-    def __init__(self, **kwargs):
-        super(HQTwoFactorMethodForm, self).__init__(**kwargs)
-        if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
+    def __init__(self, *, allow_phone_2fa, **kwargs):
+        super().__init__(**kwargs)
+        if not allow_phone_2fa:
             # Block people from setting up the phone method as their default
             phone_methods = [method for method, _ in get_available_phone_methods()]
             self.fields['method'].choices = [

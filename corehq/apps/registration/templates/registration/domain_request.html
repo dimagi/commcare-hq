@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base.html" %}
+{% extends "hqwebapp/base_navigation.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -7,47 +7,121 @@
 
 {% block content %}
   <div class="container">
-    <h1>
+    <div class="page-header">
       {% if is_new_user %}
-        {% blocktrans %}
-          Welcome to CommCare HQ!
-        {% endblocktrans %}
+        <h1>
+          {% blocktrans with request.couch_user.first_name as first_name %}
+            Welcome to CommCare HQ, {{ first_name }}!
+          {% endblocktrans %}
+        </h1>
+        <p class="lead">
+          {% if invitation_links %}
+            {% blocktrans %}
+              Please accept an invitation or create your own project space to start using CommCare.
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              Before you can view any of your own data from CommCare, you will need
+              to create a project space.
+            {% endblocktrans %}
+          {% endif %}
+        </p>
       {% else %}
-        {% blocktrans %}
-          Create a New Project Space
-        {% endblocktrans %}
+        <h1>
+          {% blocktrans with request.couch_user.first_name as first_name %}
+            Let's add a new project, {{ first_name }}.
+          {% endblocktrans %}
+        </h1>
+        <p class="lead">
+          {% if invitation_links %}
+            {% blocktrans %}
+              Please accept an invitation or create your own project space.
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              Create a project space below as a separate sandbox for new
+              applications, users, and form submissions.
+            {% endblocktrans %}
+          {% endif %}
+        </p>
       {% endif %}
-    </h1>
-    <div class="help-block">
-      Please create a name for your project.
-      This will be used to create a project URL, and you will not be able to change it in the future.
     </div>
 
-    {% block registration-content %}
-      <div>
-        {% if is_new_user %}
-          <p>
-            {% blocktrans with request.couch_user.first_name as first_name %}
-              Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
-            {% endblocktrans %}
-          </p>
-          <p>
-            {% blocktrans %}
-              Your CommCare HQ project will contain all form submissions from your CommCare
-              mobile applications, as well as tools that help you easily create, deploy, and monitor
-              your applications and workers.
-            {% endblocktrans %}
-          </p>
-          <p>
-            {% blocktrans %}
-              Before you can view any of your own data from CommCare, you will need to create a
-              project space.
-            {% endblocktrans %}
-          </p>
+    {% if invitation_links %}
+      <div class="panel panel-modern-gray">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">
+            {% trans "My Invitations" %}
+          </h4>
+        </div>
+        <div class="panel-body">
+          {% if show_multiple_invites %}
+            <p>
+              <a class="btn btn-primary"
+                 href="{% url "accept_all_invitations" %}">
+                <i class="fa fa-envelope"></i>
+                {% trans 'Accept All Invitations' %}
+              </a>
+            </p>
+            <div class="spacer"></div>
+            <p>
+              {% blocktrans %}
+                You have been invited to the following project spaces:
+              {% endblocktrans %}
+            </p>
+          {% endif %}
+          <ul class="list-invitations">
+            {% for invitation in invitation_links %}
+              <li>
+                <a href="{{ invitation.url }}"
+                   class="btn btn-default btn-xs">
+                  <i class='fa fa-envelope'>
+                  </i>
+                  {% trans "Accept" %}
+                </a>
+                {{ invitation.domain }}
+              </li>
+            {% endfor %}
+          </ul>
+
+        </div>
+      </div>
+    {% endif %}
+    <div class="panel panel-modern-gray">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% trans "Create a New Project Space" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <p>
+          {% blocktrans %}
+            Your project space contains all form submissions from your CommCare
+            mobile applications and tools to help you easily create, deploy, and monitor
+            your applications and workers.
+          {% endblocktrans %}
+        </p>
+
+        {% if not is_new_user %}
+          <div class="alert alert-info">
+            <p>
+              {% blocktrans %}
+                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans %}
+                <a href="https://dimagi.com/commcare/enterprise/" target="_blank">Learn more about CommCare Enterprise</a>
+                if you would like to link project spaces together under one account.
+              {% endblocktrans %}
+            </p>
+          </div>
+        {% else %}
+          <div class="spacer"></div>
         {% endif %}
+
         {% crispy form %}
       </div>
-    {% endblock %}
+    </div>
   </div>
-
 {% endblock %}

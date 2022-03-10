@@ -8,9 +8,8 @@ from decimal import Decimal
 import six
 import sqlalchemy
 from django.db import DEFAULT_DB_ALIAS
-from mock import patch
+from unittest.mock import patch
 
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
@@ -18,7 +17,7 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    ReportConfiguration,
+    ReportConfiguration, RegistryDataSourceConfiguration,
 )
 from corehq.sql_db.connections import connection_manager
 
@@ -31,6 +30,10 @@ def get_sample_data_source():
     return _get_sample_doc('sample_data_source.json', DataSourceConfiguration)
 
 
+def get_sample_registry_data_source(**kwargs):
+    return _get_sample_doc('sample_registry_data_source.json', RegistryDataSourceConfiguration, **kwargs)
+
+
 def get_data_source_with_related_doc_type():
     return _get_sample_doc('parent_child_data_source.json', DataSourceConfiguration)
 
@@ -39,11 +42,12 @@ def get_data_source_with_repeat():
     return _get_sample_doc('data_source_with_repeat.json', DataSourceConfiguration)
 
 
-def _get_sample_doc(filename, doc_class):
+def _get_sample_doc(filename, doc_class, **kwargs):
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, filename)
     with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
+        structure.update(kwargs)
         return doc_class.wrap(structure)
 
 
@@ -89,7 +93,7 @@ def doc_to_change(doc):
         metadata=ChangeMeta(
             document_id=doc['_id'],
             data_source_type=data_sources.SOURCE_COUCH,
-            data_source_name=CommCareCase.get_db().dbname,
+            data_source_name=data_sources.CASE_SQL,
             document_type=doc['doc_type'],
             document_subtype=doc.get('type'),
             domain=doc['domain'],
@@ -101,15 +105,6 @@ def doc_to_change(doc):
 def domain_lite(name):
     from corehq.apps.callcenter.utils import DomainLite
     return DomainLite(name, None, None, True)
-
-
-def post_run_with_sql_backend(fn, *args, **kwargs):
-    fn.doCleanups()
-    fn.tearDown()
-
-
-def pre_run_with_es_backend(fn, *args, **kwargs):
-    fn.setUp()
 
 
 def mock_datasource_config():

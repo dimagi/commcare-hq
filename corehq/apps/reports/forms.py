@@ -3,20 +3,25 @@ from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from crispy_forms.bootstrap import InlineField, StrictButton
 
 import langcodes
-from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions
+from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.saved_reports.models import (
     DEFAULT_REPORT_NOTIF_SUBJECT,
     ReportConfig,
     ReportNotification,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.toggles import HOURLY_SCHEDULED_REPORT, NAMESPACE_DOMAIN
 
 
 class SavedReportConfigForm(forms.Form):
@@ -99,7 +104,11 @@ class SavedReportConfigForm(forms.Form):
 
 
 class ScheduledReportForm(forms.Form):
-    INTERVAL_CHOICES = [("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")]
+    INTERVAL_CHOICES = [
+        ("daily", ugettext("Daily")),
+        ("weekly", ugettext("Weekly")),
+        ("monthly", ugettext("Monthly"))
+    ]
 
     config_ids = forms.MultipleChoiceField(
         label=_("Saved report(s)"),
@@ -157,11 +166,19 @@ class ScheduledReportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        super(ScheduledReportForm, self).__init__(*args, **kwargs)
+
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        domain = kwargs.get('initial', {}).get('domain', None)
+        if domain is not None and HOURLY_SCHEDULED_REPORT.enabled(domain, NAMESPACE_DOMAIN):
+            self.fields['interval'].choices.insert(0, ("hourly", ugettext("Hourly")))
+            self.fields['interval'].widget.choices.insert(0, ("hourly", ugettext("Hourly")))
+
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
@@ -193,12 +210,13 @@ class ScheduledReportForm(forms.Form):
             )
         )
 
-        super(ScheduledReportForm, self).__init__(*args, **kwargs)
-
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
-        if cleaned_data["interval"] == "daily":
+        if cleaned_data.get("interval") == "daily":
             del cleaned_data["day"]
+        if cleaned_data.get("interval") == "hourly":
+            del cleaned_data["day"]
+            del cleaned_data["hour"]
         _verify_email(cleaned_data)
         return cleaned_data
 
@@ -222,3 +240,144 @@ def _verify_email(cleaned_data):
                      cleaned_data['send_to_owner'])):
         raise forms.ValidationError("You must specify at least one "
                                     "valid recipient")
+
+
+class TableauServerForm(forms.Form):
+
+    server_type = forms.CharField(
+        label=_('Server Type'),
+        widget=forms.Select(choices=[
+            ("", _("Select server type")),
+            ('server', _('Tableau Server')),
+            ('online', _('Tableau Online')),
+        ]),
+    )
+
+    server_name = forms.CharField(
+        label=_('Server Name')
+    )
+
+    validate_hostname = forms.CharField(
+        label=_('Validate Hostname'),
+        required=False,
+    )
+
+    target_site = forms.CharField(
+        label=_('Target Site'),
+    )
+
+    domain_username = forms.CharField(
+        label=_('Domain Username'),
+    )
+
+    class Meta:
+        model = TableauServer
+        fields = [
+            'server_type',
+            'server_name',
+            'validate_hostname',
+            'target_site',
+            'domain_username',
+        ]
+
+    def __init__(self, data, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        kwargs['initial'] = self.initial_data
+        super(TableauServerForm, self).__init__(data, *args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('server_type'),
+            ),
+            crispy.Div(
+                crispy.Field('server_name'),
+            ),
+            crispy.Div(
+                crispy.Field('validate_hostname'),
+            ),
+            crispy.Div(
+                crispy.Field('target_site'),
+            ),
+            crispy.Div(
+                crispy.Field('domain_username'),
+            ),
+            FormActions(
+                crispy.Submit('submit_btn', 'Submit')
+            )
+        )
+
+    @property
+    @memoized
+    def _existing_config(self):
+        existing, _created = TableauServer.objects.get_or_create(
+            domain=self.domain
+        )
+        return existing
+
+    @property
+    def initial_data(self):
+        return {
+            'server_type': self._existing_config.server_type,
+            'server_name': self._existing_config.server_name,
+            'validate_hostname': self._existing_config.validate_hostname,
+            'target_site': self._existing_config.target_site,
+            'domain_username': self._existing_config.domain_username,
+        }
+
+    def save(self):
+        self._existing_config.server_type = self.cleaned_data['server_type']
+        self._existing_config.server_name = self.cleaned_data['server_name']
+        self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
+        self._existing_config.target_site = self.cleaned_data['target_site']
+        self._existing_config.domain_username = self.cleaned_data['domain_username']
+        self._existing_config.save()
+
+
+class TableauVisualizationForm(forms.ModelForm):
+    view_url = forms.CharField(
+        label=_('View URL'),
+    )
+
+    class Meta:
+        model = TableauVisualization
+        fields = [
+            'server',
+            'view_url',
+        ]
+
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+        self.fields['server'].queryset = TableauServer.objects.filter(domain=domain)
+
+    @property
+    def helper(self):
+        helper = HQFormHelper()
+        from corehq.apps.reports.views import TableauVisualizationListView
+        helper.layout = crispy.Layout(
+            crispy.Field('server'),
+            crispy.Field('view_url'),
+
+            FormActions(
+                StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                LinkButton(
+                    _("Cancel"),
+                    reverse(
+                        TableauVisualizationListView.urlname,
+                        kwargs={'domain': self.domain},
+                    ),
+                    css_class="btn btn-default",
+                ),
+            ),
+        )
+        return helper
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)

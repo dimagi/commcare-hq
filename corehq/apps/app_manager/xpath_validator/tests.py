@@ -6,7 +6,7 @@ from corehq.apps.app_manager.xpath_validator.wrapper import (
 )
 
 
-class XpathValidatorTest(SimpleTestCase):
+class XPathValidatorTest(SimpleTestCase):
 
     def test_simple_valid(self):
         self.assertEqual(

@@ -11,7 +11,7 @@
         <input
           type="text"
           class="js-user-query form-control"
-          value="<%= query %>"
+          value="<%- query %>"
           placeholder="Filter workers" />
         <div class="input-group-btn">
           <button class="btn btn-default" type="submit">
@@ -40,9 +40,9 @@
   </td>
   <td class="module-column module-column-name">
     <h3>
-      <b><%= username %></b>
+      <b><%- username %></b>
       <span><%- first_name + ' ' + last_name %></span>
-      <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
+      <i><small><%- location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
     </h3>
   </td>
 </script>
@@ -57,22 +57,22 @@
     <% if (user.location) { %>
     <tr>
       <th>{% trans "Organization" %}</th>
-      <td><%= user.location.name %></td>
+      <td><%- user.location.name %></td>
     </tr>
     <tr>
       <th>{% trans "Organization Type" %}</th>
-      <td><%= user.location.location_type %></td>
+      <td><%- user.location.location_type %></td>
     </tr>
     <% } %>
     <tr>
       <th>{% trans "Date Registered" %}</th>
-      <td><%= user.dateRegistered %></td>
+      <td><%- user.dateRegistered %></td>
     </tr>
     <% _.each(user.customFields, function(value, key) { %>
     <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
     <tr>
-      <th><%= key %></th>
-      <td><%= value %></td>
+      <th><%- key %></th>
+      <td><%- value %></td>
     </tr>
     <% } %>
     <% }) %>
@@ -84,12 +84,7 @@
   {% if request|can_use_restore_as %}
     <% if (restoreAs) { %>
     <div class="restore-as-banner module-banner">
-      {% blocktrans %}
-        <span>
-                Working as <b><%= restoreAs %></b>.
-                <a class="js-clear-user">Use <%= username %>.</a>
-            </span>
-      {% endblocktrans %}
+      <%= message %>
     </div>
     <% } %>
   {% endif %}

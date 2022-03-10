@@ -32,10 +32,6 @@ def _migrate_report_filters(apps, schema_editor):
     print("Updated {} configs".format(count))
 
 
-def _reverse_noop(app, schema_editor):
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [

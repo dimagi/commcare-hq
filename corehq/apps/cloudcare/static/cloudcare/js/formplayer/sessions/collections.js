@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
         model: hqImport("cloudcare/js/formplayer/sessions/models"),
 
         parse: function (response) {
+            this.totalSessions = response.total_records;
             return response.sessions;
         },
 

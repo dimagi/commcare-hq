@@ -19,12 +19,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('pillow_name')
-        parser.add_argument('by_partition', default=False)
+        parser.add_argument('--by-partition', action='store_true')
 
-    def handle(self, pillow_name, by_partition, **options):
+    def handle(self, pillow_name, **options):
         confirm("Are you sure you want to reset the checkpoint for the '{}' pillow?".format(pillow_name))
         confirm("Have you stopped the pillow?")
 
+        by_partition = options['by_partition']
         pillow = get_pillow_by_name(pillow_name)
         if not pillow:
             raise CommandError("No pillow found with name: {}".format(pillow_name))

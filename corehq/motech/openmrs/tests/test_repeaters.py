@@ -4,22 +4,20 @@ import json
 import os
 import re
 import uuid
+from datetime import datetime
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
+from unittest import mock
 from requests import RequestException
 from testil import eq
-
-from casexml.apps.case.models import CommCareCase
 
 import corehq.motech.openmrs.repeater_helpers
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
@@ -142,13 +140,12 @@ CASE_CONFIG = {
 }
 
 
-@mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
+@mock.patch.object(CommCareCase.objects, 'get_cases', lambda case_ids, domain=None, ordered=False: [{
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
         case_id='65e55473-e83b-4d78-9dde-eaf949758997',
         type='paciente',
         name='Elsa',
-        estado_tarv='1',
-        tb='0',
+        case_json={'estado_tarv': '1', 'tb': '0'},
     )
 }[case_id] for case_id in case_ids])
 class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
@@ -173,8 +170,8 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
                     type='paciente',
                     name='Elsa',
-                    owner_id=None,
-                    modified_by=None,
+                    owner_id='',
+                    modified_by='',
                     updates={
                         'case_name': 'Elsa',
                         'case_type': 'paciente',
@@ -208,8 +205,8 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
                     type='paciente',
                     name='Elsa',
-                    owner_id=None,
-                    modified_by=None,
+                    owner_id='',
+                    modified_by='',
                     updates={
                         'estado_tarv': '1',
                         'tb': '1'
@@ -301,14 +298,14 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.owner.delete(deleted_by=None)
+        cls.owner.delete(DOMAIN, deleted_by=None)
         super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
         """
         payloads from OpenMRS should not be forwarded back to OpenMRS
         """
-        payload = XFormInstanceSQL(
+        payload = XFormInstance(
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )
@@ -545,12 +542,11 @@ class FindPatientTest(SimpleTestCase):
             'form_configs': [],
         })
 
-        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+        with mock.patch.object(CommCareCase.objects, 'get_case'), \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
-                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids') as save_match_ids_patch:
+                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids'):
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
-            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
             create_patient_patch.return_value = None
 
             find_or_create_patient(requests, DOMAIN, info, openmrs_config)
@@ -666,17 +662,16 @@ class VoidedPatientTests(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.case = CommCareCase.wrap({
-            "domain": DOMAIN,
-            "case_id": "123456",
-            "type": "person",
-            "name": "Eric Idle",
-            "external_id": "94d60c79-59b5-4a2c-90a5-325d6e32b3db",
-        })
+        self.case = CommCareCase(
+            domain=DOMAIN,
+            case_id="123456",
+            type="person",
+            name="Eric Idle",
+            external_id="94d60c79-59b5-4a2c-90a5-325d6e32b3db",
+            modified_on=datetime.utcnow(),
+            server_modified_on=datetime.utcnow(),
+        )
         self.case.save()
-
-    def tearDown(self):
-        self.case.delete()
 
     @mock.patch("corehq.motech.openmrs.repeater_helpers.submit_case_blocks")
     @mock.patch("corehq.motech.openmrs.repeater_helpers.get_patient_by_uuid")

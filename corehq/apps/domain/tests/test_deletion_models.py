@@ -9,6 +9,7 @@ from corehq.apps.dump_reload.util import get_model_label
 IGNORE_APPS = {
     'aaa',
     'accounting',
+    'analytics',
     'admin',
     'auditcare',
     'captcha',
@@ -16,6 +17,7 @@ IGNORE_APPS = {
     'django_celery_results',
     'django_digest',
     'django_prbac',
+    'enterprise',
     'form_processor',
     'hqadmin',
     'hqwebapp',
@@ -36,6 +38,7 @@ IGNORE_APPS = {
     'telerivet',
     'toggle_ui',
     'sso',
+    'oauth_integrations',
 }
 
 IGNORE_MODELS = {
@@ -48,15 +51,18 @@ IGNORE_MODELS = {
     'blobs.DeletedBlobMeta',
     'consumer_user.ConsumerUser',
     'domain.DomainAuditRecordEntry',
+    'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
-    'fixtures.UserFixtureStatus',
+    'fixtures.UserLookupTableStatus',
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
+    'registration.AsyncSignupRequest',
+    'users.UserHistory',
 }
 
 

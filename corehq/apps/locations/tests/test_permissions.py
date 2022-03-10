@@ -2,27 +2,24 @@ import json
 import random
 import string
 import uuid
-from io import BytesIO
+from unittest import mock
 
 from django.http import HttpResponse
 from django.urls import reverse
 
-import mock
-
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import create_and_save_a_case
 
+from ..forms import LocationFilterForm
 from ..permissions import can_edit_form_location, user_can_access_case
 from ..views import EditLocationView, LocationsListView
 from .util import LocationHierarchyTestCase
@@ -58,20 +55,16 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         cls.extra_teardown()
         super(TestNewFormEditRestrictions, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_can_edit_form_in_county(self):
         self.assertCanEdit(self.middlesex_web_user, self.cambridge_form)
 
-    @run_with_all_backends
     def test_cant_edit_out_of_county(self):
         self.assertCannotEdit(self.middlesex_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_can_edit_any_form(self):
         self.assertCanEdit(self.massachusetts_web_user, self.cambridge_form)
         self.assertCanEdit(self.massachusetts_web_user, self.boston_form)
 
-    @run_with_all_backends
     def test_project_admin_can_edit_anything(self):
         self.project_admin.get_domain_membership(self.domain).is_admin = True
         self.project_admin.save()
@@ -79,7 +72,6 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
         self.assertCanEdit(self.project_admin, self.cambridge_form)
         self.assertCanEdit(self.project_admin, self.boston_form)
 
-    @run_with_all_backends
     def test_unassigned_web_user_cant_edit_anything(self):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
@@ -171,7 +163,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.suffolk_user.delete(deleted_by=None)
+        cls.suffolk_user.delete(cls.domain, deleted_by=None)
         delete_all_users()
         super(TestAccessRestrictions, cls).tearDownClass()
 
@@ -249,3 +241,84 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
                                            owner_id=self.locations['Cambridge'].location_id)
         self.assertTrue(user_can_access_case(self.domain, self.cambridge_worker, self.case))
         self.assertFalse(user_can_access_case(self.domain, self.suffolk_user, self.case))
+
+
+class TestLocationExport(LocationHierarchyTestCase):
+    domain = 'test-location-export'
+    location_type_names = ['state', 'county', 'city']
+    stock_tracking_types = ['state', 'county', 'city']
+    location_structure = [
+        ('England', [
+            ('Cambridgeshire', [
+                ('Cambridge', []),  # The other Cambridge ;)
+                ('Peterborough', []),
+            ]),
+            ('Lincolnshire', [
+                ('Boston', []),  # The other Boston ;)
+            ])
+        ]),
+        ('California', [
+            ('Los Angeles', []),
+        ])
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.user = WebUser.create(
+            self.domain,
+            'jbloggs',
+            'Passw0rd!',
+            None,
+            None,
+        )
+        self.user.set_location(self.domain, self.locations['Cambridgeshire'])
+
+    def tearDown(self):
+        self.user.delete(self.domain, deleted_by=None)
+        super().tearDown()
+
+    def test_location_filter_form_restricted(self):
+        """
+        LocationFilterForm.is_valid() returns False when a
+        location-restricted user is in a separate location hierarchy
+        from location_id.
+        """
+        self.restrict_user_to_assigned_locations(self.user)
+        request_params = {
+            'location_id': self.locations['California'].location_id,
+            'selected_location_only': False,
+            'location_status_active': LocationFilterForm.SHOW_ALL,
+        }
+        form = LocationFilterForm(
+            request_params,
+            domain=self.domain,
+            user=self.user,
+        )
+        self.assertFalse(form.is_valid())
+        location_filters = form.get_filters()
+        self.assertEqual(location_filters, {
+            'location_ids': [],
+            'selected_location_only': False,
+        })
+
+    def test_location_filter_form_unrestricted(self):
+        """
+        LocationFilterForm.is_valid() returns True when an unrestricted
+        user is in a separate location hierarchy from location_id.
+        """
+        request_params = {
+            'location_id': self.locations['California'].location_id,
+            'selected_location_only': False,
+            'location_status_active': LocationFilterForm.SHOW_ALL,
+        }
+        form = LocationFilterForm(
+            request_params,
+            domain=self.domain,
+            user=self.user,
+        )
+        self.assertTrue(form.is_valid())
+        location_filters = form.get_filters()
+        self.assertEqual(location_filters, {
+            'location_ids': [self.locations['California'].location_id],
+            'selected_location_only': False,
+        })

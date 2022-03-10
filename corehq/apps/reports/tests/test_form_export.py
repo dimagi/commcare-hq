@@ -2,9 +2,7 @@ import datetime
 
 from django.test import SimpleTestCase
 
-import mock
-
-from couchforms.models import XFormInstance
+from unittest import mock
 
 from corehq.apps.export.models import (
     ExportColumn,
@@ -18,7 +16,7 @@ from corehq.apps.reports.tasks import (
     _get_export_properties,
 )
 from corehq.blobs.models import BlobMeta
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 
 class FormMultimediaExportTest(SimpleTestCase):
@@ -91,23 +89,14 @@ class FormMultimediaExportTest(SimpleTestCase):
                 "content_length": 2048,
             }
         }
-        with mock.patch.object(XFormInstanceSQL, 'form_data') as form_data_mock:
+        with mock.patch.object(XFormInstance, 'form_data') as form_data_mock:
             form_data_mock.__get__ = mock.MagicMock(return_value=form)
-            couch_xform = XFormInstance(
-                received_on=datetime.datetime.now(),
-                form=form,
-            )
-            for name, meta in attachments.items():
-                couch_xform.deferred_put_attachment("content", name, **meta)
-            sql_xform = XFormInstanceSQL(received_on=datetime.datetime.now())
-            sql_xform.attachments_list = [BlobMeta(name=name, **meta)
+            xform = XFormInstance(received_on=datetime.datetime.now())
+            xform.attachments_list = [BlobMeta(name=name, **meta)
                 for name, meta in attachments.items()]
-
-            for xform in (couch_xform, sql_xform):
-                print(type(xform).__name__)
-                form_info = _extract_form_attachment_info(xform, {"my_group-image_2", "image_1"})
-                attachments = {a['name']: a for a in form_info['attachments']}
-                self.assertTrue(image_1_name in attachments)
-                self.assertTrue(image_2_name in attachments)
-                self.assertEqual(attachments[image_1_name]['question_id'], "image_1")
-                self.assertEqual(attachments[image_2_name]['question_id'], "my_group-image_2")
+            form_info = _extract_form_attachment_info(xform, {"my_group-image_2", "image_1"})
+            attachments = {a['name']: a for a in form_info['attachments']}
+            self.assertTrue(image_1_name in attachments)
+            self.assertTrue(image_2_name in attachments)
+            self.assertEqual(attachments[image_1_name]['question_id'], "image_1")
+            self.assertEqual(attachments[image_2_name]['question_id'], "my_group-image_2")

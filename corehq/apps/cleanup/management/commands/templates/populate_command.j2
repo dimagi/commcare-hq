@@ -1,0 +1,49 @@
+{{dates_import}}
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+
+
+class Command(PopulateSQLCommand):
+    @classmethod
+    def couch_db_slug(cls):
+        return "{{db_slug}}"
+
+    @classmethod
+    def couch_doc_type(self):
+        return '{{class_name}}'
+
+    @classmethod
+    def sql_class(self):
+        from {{models_path}} import SQL{{class_name}}
+        return SQL{{class_name}}
+
+    @classmethod
+    def commit_adding_migration(cls):
+        return "TODO: add once the PR adding this file is merged"
+
+    @classmethod
+    def diff_couch_and_sql(cls, couch, sql):
+        """
+        This should compare each attribute of the given couch document and sql object.
+        Return a list of human-reaedable strings describing their differences, or None if the
+        two are equivalent. The list may contain `None` or empty strings which will be filtered
+        out before display.
+
+        Note: `diff_value`, `diff_attr` and `diff_lists` methods of `PopulateSQLCommand` are useful
+        helpers.
+        """
+        return None
+
+    def update_or_create_sql_object(self, doc):
+        model, created = self.sql_class().objects.update_or_create(
+            couch_id=doc['_id'],
+            defaults={
+                {%- for update in suggested_updates %}
+                {{ update }}
+                {%- endfor %}
+            })
+        {%- if submodels %}
+        {%- for model in submodels %}
+        # add code to migrate {{ class_name }}.{{ model }}
+        {%- endfor %}
+        {%- endif %}
+        return model, created

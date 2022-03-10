@@ -46,7 +46,7 @@ class TestTrumpiaBackend(SimpleTestCase):
         self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
         self.assertTrue(msg.is_status_pending())
         self.assertEqual(get_sms_status_display(msg),
-            "Sent message ID: 1234561234567asdf123")
+            "Sent - message ID: 1234561234567asdf123")
 
     def test_fail_missing_requestID(self):
         msg = self.mock_send(response={"boo": "hoo"})

@@ -1,8 +1,7 @@
 import sqlalchemy
 from sqlagg import SumWhen
 
-from fluff import TYPE_STRING
-from fluff.util import get_column_type
+from sqlalchemy.dialects import postgresql
 
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.sql.util import decode_column_name
@@ -12,7 +11,7 @@ def column_to_sql(column):
     column_name = decode_column_name(column)
     return sqlalchemy.Column(
         column_name,
-        _get_column_type(column.datatype),
+        get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
         index=column.create_index,
@@ -42,7 +41,29 @@ def expand_column(report_column, distinct_values, lang):
     return columns
 
 
-def _get_column_type(data_type):
+def get_column_type(data_type):
+    if data_type == TYPE_DATE:
+        return sqlalchemy.Date
+    if data_type == TYPE_DATETIME:
+        return sqlalchemy.DateTime
+    if data_type == TYPE_INTEGER:
+        return sqlalchemy.Integer
+    if data_type == TYPE_SMALL_INTEGER:
+        return sqlalchemy.SmallInteger
+    if data_type == TYPE_DECIMAL:
+        return sqlalchemy.Numeric(precision=64, scale=16)
     if data_type == TYPE_STRING:
         return sqlalchemy.UnicodeText
-    return get_column_type(data_type)
+    if data_type == TYPE_ARRAY:
+        return postgresql.ARRAY(sqlalchemy.UnicodeText)
+
+    raise Exception('Unexpected type: {0}'.format(data_type))
+
+
+TYPE_INTEGER = 'integer'
+TYPE_SMALL_INTEGER = 'small_integer'
+TYPE_DECIMAL = 'decimal'
+TYPE_STRING = 'string'
+TYPE_DATE = 'date'
+TYPE_DATETIME = 'datetime'
+TYPE_ARRAY = 'array'

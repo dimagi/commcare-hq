@@ -3,12 +3,11 @@ from xml.etree import cElementTree as ElementTree
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.backends.sql.supply import SupplyPointSQL
 
 
 def needs_update(case):
@@ -17,7 +16,7 @@ def needs_update(case):
 
 
 def case_block(case):
-    return ElementTree.tostring(CaseBlock.deprecated_init(
+    return ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case['_id'],
         owner_id=case['location_id'],
@@ -25,14 +24,8 @@ def case_block(case):
 
 
 def get_cases(domain):
-    supply_point_ids = (case['id'] for case in CommCareCase.get_db().view(
-        'supply_point_by_loc/view',
-        startkey=[domain],
-        endkey=[domain, {}],
-        reduce=False,
-        include_docs=False,
-    ).all())
-    return iter_docs(CommCareCase.get_db(), supply_point_ids)
+    ids = SupplyPointSQL.get_supply_point_ids_by_location(domain).values()
+    return SupplyPointSQL.get_supply_points(ids)
 
 
 def update_supply_points(domain):

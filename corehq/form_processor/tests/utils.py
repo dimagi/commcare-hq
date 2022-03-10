@@ -1,33 +1,33 @@
-import functools
 import logging
 from datetime import datetime
-from unittest.mock import patch
 from uuid import uuid4
+from unittest.mock import patch
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.test.utils import override_settings
 from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
-from unittest2 import skipIf, skipUnless
+from unittest import skipIf, skipUnless
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
-    iter_all_rows, FormAccessorSQL)
+    LedgerAccessorSQL, LedgerReindexAccessor, iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.models import (
+    Attachment,
+    CaseTransaction,
+    CommCareCase,
+    CommCareCaseIndex,
+    XFormInstance,
+)
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from dimagi.utils.couch.database import safe_delete
+from corehq.util.test_utils import unit_testing_only
+
+from .json2xml import convert_form_to_xml
 
 logger = logging.getLogger(__name__)
 
@@ -44,36 +44,15 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
-        logger.debug("Deleting all Couch cases for domain %s", domain)
-        assert CommCareCase.get_db().dbname.startswith('test_')
-        cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
-        FormProcessorTestUtils.delete_all_sql_cases(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
+        cls._delete_all_sql_sharded_models(CommCareCase, domain)
+
+    delete_all_sql_cases = delete_all_cases
 
     @staticmethod
+    @unit_testing_only
     def delete_all_ledgers(domain=None):
-        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
-        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v1_ledgers(domain=None):
-        logger.debug("Deleting all V1 ledgers for domain %s", domain)
-        from casexml.apps.stock.models import StockReport
-        from casexml.apps.stock.models import StockTransaction
-        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
-        StockReport.objects.filter(domain=domain).delete()
-        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_v2_ledgers(domain=None):
-        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+        logger.debug("Deleting all ledgers for domain %s", domain)
 
         def _delete_ledgers_for_case(case_id):
             transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
@@ -86,19 +65,12 @@ class FormProcessorTestUtils(object):
             for ledger in iter_all_rows(LedgerReindexAccessor()):
                 _delete_ledgers_for_case(ledger.case_id)
         else:
-            for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
+            for case_id in CommCareCase.objects.get_case_ids_in_domain(domain):
                 _delete_ledgers_for_case(case_id)
 
     @classmethod
     @unit_testing_only
     def delete_all_xforms(cls, domain=None):
-        logger.debug("Deleting all Couch xforms for domain %s", domain)
-        cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
-        FormProcessorTestUtils.delete_all_sql_forms(domain)
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sql_forms(cls, domain=None):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         logger.debug("Deleting all SQL xforms for domain %s", domain)
         params = {"type_code__in": [CODES.form_xml, CODES.form_attachment]}
@@ -106,7 +78,9 @@ class FormProcessorTestUtils(object):
             params["domain"] = domain
         for db in get_db_aliases_for_partitioned_query():
             BlobMeta.objects.using(db).filter(**params).delete()
-        cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
+        cls._delete_all_sql_sharded_models(XFormInstance, domain)
+
+    delete_all_sql_forms = delete_all_xforms
 
     @classmethod
     @unit_testing_only
@@ -125,66 +99,18 @@ class FormProcessorTestUtils(object):
                 query = query.filter(domain=domain)
             query.delete()
 
-    @staticmethod
-    @unit_testing_only
-    def _delete_all(db, doc_types, domain=None):
-        for doc_type in doc_types:
-            if domain:
-                view = 'by_domain_doc_type_date/view'
-                view_kwargs = {
-                    'startkey': [domain, doc_type],
-                    'endkey': [domain, doc_type, {}],
-                }
-            else:
-                view = 'all_docs/by_doc_type'
-                view_kwargs = {
-                    'startkey': [doc_type],
-                    'endkey': [doc_type, {}],
-                }
-            FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
 
-    @staticmethod
-    def _delete_all_from_view(db, view, view_kwargs=None):
-        view_kwargs = view_kwargs or {}
-        deleted = set()
-        for row in db.view(view, reduce=False, **view_kwargs):
-            doc_id = row['id']
-            if doc_id not in deleted:
-                try:
-                    safe_delete(db, doc_id)
-                    deleted.add(doc_id)
-                except ResourceNotFound:
-                    pass
+def sharded(cls):
+    """Tag tests to run with the sharded SQL backend
 
+    This adds a "sharded" attribute to decorated tests indicating that
+    the tests should be run with a sharded database setup. Note that the
+    presence of that attribute does not prevent tests from  also running
+    in the default not-sharded database setup.
 
-run_with_all_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        # run with default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-        ),
-    ],
-    nose_tags={'all_backends': True}
-)
-
-
-def partitioned(cls):
+    Was previously named @use_sql_backend
     """
-    Marks a test to be run with the partitioned database settings in
-    addition to the non-partitioned database settings.
-    """
-    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
+    return patch_shard_db_transactions(attr(sharded=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
@@ -204,11 +130,7 @@ def only_run_with_partitioned_database(cls):
     skip_unless = skipUnless(
         settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
     )
-    return skip_unless(partitioned(cls))
-
-
-def use_sql_backend(cls):
-    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return skip_unless(sharded(cls))
 
 
 def patch_testcase_databases():
@@ -307,8 +229,19 @@ def patch_shard_db_transactions(cls):
 
 @nottest
 def create_form_for_test(
-        domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
-        received_on=None, user_id='user1', edited_on=None):
+    domain,
+    case_id=None,
+    attachments=None,
+    save=True,
+    state=XFormInstance.NORMAL,
+    received_on=None,
+    user_id=None,
+    edited_on=None,
+    *,
+    form_id=None,
+    form_data=None,
+    **kwargs,
+):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -319,30 +252,41 @@ def create_form_for_test(
     """
     from corehq.form_processor.utils import get_simple_form_xml
 
-    form_id = uuid4().hex
+    form_id = form_id or uuid4().hex
     utcnow = received_on or datetime.utcnow()
+    kwargs.setdefault('xmlns', 'http://openrosa.org/formdesigner/form-processor')
 
-    form_xml = get_simple_form_xml(form_id, case_id)
+    if form_data is not None:
+        form_xml = convert_form_to_xml(form_data)
+        if user_id is None and form_data.get('meta'):
+            user_id = form_data['meta'].get('userID', user_id)
+    else:
+        form_xml = get_simple_form_xml(form_id, case_id)
+    if user_id is None:
+        user_id = 'user1'
 
-    form = XFormInstanceSQL(
+    form = XFormInstance(
         form_id=form_id,
-        xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
         domain=domain,
         state=state,
         edited_on=edited_on,
+        **kwargs,
     )
 
     attachments = attachments or {}
-    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachment_tuples = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
 
     cases = []
     if case_id:
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=case_id,
             domain=domain,
             type='',
@@ -357,46 +301,80 @@ def create_form_for_test(
 
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
-        form = FormAccessorSQL.get_form(form.form_id)
+        form = XFormInstance.objects.get_form(form.form_id)
 
     return form
 
 
-@unit_testing_only
-def set_case_property_directly(case, property_name, value):
-    if should_use_sql_backend(case.domain):
-        case.case_json[property_name] = value
-    else:
-        setattr(case, property_name, value)
+def create_case(
+    domain,
+    *,
+    form_id=None,
+    case_id=None,
+    case_type='',
+    user_id='user1',
+    save=False,
+    **case_args,
+):
+    """Create case and related models directly (not via form processor)
 
-
-def create_case(case) -> CommCareCaseSQL:
-    form = XFormInstanceSQL(
-        form_id=uuid4().hex,
-        xmlns='http://commcarehq.org/formdesigner/form-processor',
-        received_on=case.server_modified_on,
-        user_id=case.owner_id,
-        domain=case.domain,
+    :param save: Save case if true. The default is false.
+    :return: CommCareCase
+    """
+    form_id = form_id or uuid4().hex
+    case_id = case_id or uuid4().hex
+    utcnow = datetime.utcnow()
+    case_args.setdefault("owner_id", user_id)
+    case_args.setdefault("opened_on", utcnow)
+    case_args.setdefault("modified_on", utcnow)
+    case_args.setdefault("modified_by", user_id)
+    received_on = case_args.setdefault("server_modified_on", utcnow)
+    form = XFormInstance(
+        form_id=form_id,
+        xmlns='http://openrosa.org/formdesigner/form-processor',
+        received_on=received_on,
+        user_id=user_id,
+        domain=domain
     )
-    transaction = CaseTransaction(
-        type=CaseTransaction.TYPE_FORM,
-        form_id=form.form_id,
-        case=case,
-        server_date=case.server_modified_on,
+    case = CommCareCase(
+        case_id=case_id,
+        domain=domain,
+        type=case_type,
+        **case_args
     )
-    with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
-        case.track_create(transaction)
-        processed_forms = ProcessedForms(form, [])
-        FormProcessorSQL.save_processed_models(processed_forms, [case])
-    return CaseAccessorSQL.get_case(case.case_id)
-
-
-def create_case_with_index(case, index) -> CommCareCaseSQL:
-    case = create_case(case)
-    index.case = case
-    case.track_create(index)
-    CaseAccessorSQL.save_case(case)
+    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
+    if save:
+        # disable publish to Kafka to avoid intermittent errors caused by
+        # the nexus of kafka's consumer thread and freeze_time
+        with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+            FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
+
+
+def create_case_with_index(
+    domain,
+    referenced_case_id,
+    identifier='parent',
+    referenced_type='mother',
+    relationship_id=CommCareCaseIndex.CHILD,
+    case_is_deleted=False,
+    case_type='child',
+    *,
+    save=False,
+):
+    case = create_case(domain, case_type=case_type)
+    case.deleted = case_is_deleted
+    index = CommCareCaseIndex(
+        case=case,
+        identifier=identifier,
+        referenced_type=referenced_type,
+        referenced_id=referenced_case_id,
+        relationship_id=relationship_id
+    )
+    case.track_create(index)
+    if save:
+        case.save(with_tracked_models=True)
+    return case, index
 
 
 def delete_all_xforms_and_cases(domain):

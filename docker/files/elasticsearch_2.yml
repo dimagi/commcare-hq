@@ -4,7 +4,7 @@
 
 cluster.name: travis_hq_2
 network.host: 0.0.0.0
-http.port: 6200
+http.port: 9200
 
 # dev-only setting to allow client-side ES front-ends
 http.cors.allow-origin: "*"

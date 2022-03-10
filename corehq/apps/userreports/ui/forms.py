@@ -10,6 +10,7 @@ from crispy_forms.layout import Submit
 
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.userreports.models import guess_data_source_type
@@ -171,6 +172,13 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             inline_label="Asynchronous processing"
         )
     )
+    is_available_in_analytics = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=forms.HiddenInput(),
+        help_text=help_text.ANALYTICS
+    )
 
     def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
@@ -182,6 +190,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ('Location', _('locations'))
             )
             self.fields['referenced_doc_type'].choices = choices
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain):
+            self.fields['is_available_in_analytics'].widget = BootstrapCheckboxInput(
+                inline_label="Availabe in Analytics"
+            )
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
@@ -196,13 +209,19 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'referenced_doc_type',
             'display_name',
             'description',
-            'base_item_expression',
+        ]
+        if 'base_item_expression' in AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain):
+            fields.append('base_item_expression')
+
+        fields += [
             'configured_filter',
             'configured_indicators',
             'named_expressions',
             'named_filters',
             'asynchronous',
+            'is_available_in_analytics',
         ]
+
         if data_source_config.get_id:
             fields.append('_id')
 
@@ -260,8 +279,7 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         super(ConfigurableDataSourceFromAppForm, self).__init__(*args, **kwargs)
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.bootstrap(domain)
-        report_source_fields = self.app_source_helper.get_fields()
-        self.fields.update(report_source_fields)
+        self.fields.update(self.app_source_helper.get_fields())
         self.helper = FormHelper()
         self.helper.form_id = "data-source-config"
 
@@ -275,7 +293,7 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Create Data Source from Application"),
-                *list(report_source_fields)
+                *self.app_source_helper.get_crispy_fields()
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

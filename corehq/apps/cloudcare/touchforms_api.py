@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -21,7 +21,7 @@ class BaseSessionDataHelper(object):
             'app_version': '2.0',
             'domain': self.domain,
         }
-        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
+        session_data.update(get_user_contributions_to_touchforms_session(self.domain, self.couch_user))
         return session_data
 
     def get_full_context(self, root_extras=None, session_extras=None):
@@ -31,8 +31,6 @@ class BaseSessionDataHelper(object):
         root_extras = root_extras or {}
         session_extras = session_extras or {}
         session_data = self.get_session_data()
-        # always tell touchforms to include footprinted cases in its case db
-        session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
         xform_url = root_extras.get('formplayer_url')
         ret = {
@@ -60,7 +58,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CaseAccessors(self.domain).get_case(self.case_id)
+            self._case = CommCareCase.objects.get_case(self.case_id, self.domain)
         return self._case
 
     @property
@@ -103,12 +101,12 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         return session_var
 
 
-def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
+def get_user_contributions_to_touchforms_session(domain, couch_user_or_commconnect_case):
     return {
         'username': couch_user_or_commconnect_case.raw_username,
         'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
         # a case, in which case there is no user_data.
-        'user_data': (couch_user_or_commconnect_case.user_session_data
+        'user_data': (couch_user_or_commconnect_case.get_user_session_data(domain)
             if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

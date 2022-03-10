@@ -3,38 +3,31 @@ import uuid
 from calendar import monthrange
 from collections import namedtuple
 from datetime import date, timedelta
-from xml.etree import cElementTree as ElementTree
 
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from text_unidecode import unidecode
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
-
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
-    SQLActionConfig,
-    SQLAlertConfig,
-    SQLCommtrackConfig,
-    SQLConsumptionConfig,
-    SQLStockLevelsConfig,
-    SQLStockRestoreConfig,
-    SupplyPointCase,
+    ActionConfig,
+    AlertConfig,
+    CommtrackConfig,
+    ConsumptionConfig,
+    StockLevelsConfig,
+    StockRestoreConfig,
 )
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
 
 def all_sms_codes(domain):
-    config = SQLCommtrackConfig.for_domain(domain)
+    config = CommtrackConfig.for_domain(domain)
 
     actions = {action.keyword: action for action in config.all_actions}
     products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
@@ -83,39 +76,39 @@ def get_or_create_default_program(domain):
 
 
 def _create_commtrack_config_if_needed(domain):
-    if SQLCommtrackConfig.for_domain(domain):
+    if CommtrackConfig.for_domain(domain):
         return
 
-    config = SQLCommtrackConfig(domain=domain)
-    config.save(sync_to_couch=False)   # must be saved before submodels can be saved
+    config = CommtrackConfig(domain=domain)
+    config.save()   # must be saved before submodels can be saved
 
-    SQLAlertConfig(commtrack_config=config).save()
-    SQLConsumptionConfig(commtrack_config=config).save()
-    SQLStockLevelsConfig(commtrack_config=config).save()
-    SQLStockRestoreConfig(commtrack_config=config).save()
+    AlertConfig(commtrack_config=config).save()
+    ConsumptionConfig(commtrack_config=config).save()
+    StockLevelsConfig(commtrack_config=config).save()
+    StockRestoreConfig(commtrack_config=config).save()
     config.set_actions([
-        SQLActionConfig(
+        ActionConfig(
             action='receipts',
             keyword='r',
             caption='Received',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='consumption',
             keyword='c',
             caption='Consumed',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='consumption',
             subaction='loss',
             keyword='l',
             caption='Losses',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='stockonhand',
             keyword='soh',
             caption='Stock on hand',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='stockout',
             keyword='so',
             caption='Stock-out',
@@ -174,11 +167,9 @@ def due_date_monthly(day, from_end=False, past_period=0):
 
 
 def location_map_case_id(user):
-    if should_use_sql_backend(user.domain):
-        user_id = user.user_id
-        case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
-        return case_id
-    return 'user-owner-mapping-' + user.user_id
+    user_id = user.user_id
+    case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
+    return case_id
 
 
 def get_commtrack_location_id(user, domain):
@@ -191,12 +182,6 @@ def get_commtrack_location_id(user, domain):
         return user.get_domain_membership(domain.name).location_id
     else:
         return None
-
-
-def get_case_wrapper(data):
-    return {
-        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
-    }.get(data.get('type'), CommCareCase)
 
 
 def unicode_slug(text):

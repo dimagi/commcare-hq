@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from collections import namedtuple
 import os
@@ -26,7 +25,6 @@ class SharedDriveConfiguration(object):
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
         self.blob_dir = self._init_dir(blob_dir)
-        self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
         if not self.shared_drive_path or not os.path.isdir(self.shared_drive_path) or not name:
@@ -269,9 +267,12 @@ def configure_sentry(base_dir, server_env, dsn):
 
 
 def get_release_name(base_dir, server_env):
+    """Return the release name. This should match the name of the release
+    created by commcare-cloud
+    """
     release_dir = base_dir.split('/')[-1]
     if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
-        return "{}-{}-deploy".format(release_dir, server_env)
+        return "{}-{}".format(release_dir, server_env)
     else:
         return get_git_commit(base_dir) or 'unknown'
 

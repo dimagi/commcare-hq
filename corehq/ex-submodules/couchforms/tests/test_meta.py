@@ -2,15 +2,15 @@ from decimal import Decimal
 import os
 from datetime import date, datetime
 from django.test import TestCase
-from django.conf import settings
 
 from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 
 
+@sharded
 class TestMeta(TestCase, TestFileMixin):
     file_path = ('data', 'posts')
     root = os.path.dirname(__file__)
@@ -20,9 +20,8 @@ class TestMeta(TestCase, TestFileMixin):
         delete_all_xforms()
 
     def _check_metadata(self, xform, expected):
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del expected['doc_type']
-            del expected['deprecatedID']
+        del expected['doc_type']
+        del expected['deprecatedID']
         self.assertEqual(xform.metadata.to_json(), expected)
 
     def testClosed(self):
@@ -166,8 +165,3 @@ class TestMeta(TestCase, TestFileMixin):
         xform = submit_form_locally(xml_data, 'test-domain').xform
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertIsNone(xform.metadata.timeEnd)
-
-
-@use_sql_backend
-class TestMetaSQL(TestMeta):
-    pass

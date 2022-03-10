@@ -138,115 +138,91 @@ In user configurable reports the following expression types are
 currently supported (note that this can and likely will be extended in
 the future):
 
-+-------------------------------+-------------------------+------------+
-| Expression Type               | Description             | Example    |
-+===============================+=========================+============+
-| identity                      | Just returns whatever   | ``doc``    |
-|                               | is passed in            |            |
-+-------------------------------+-------------------------+------------+
-| constant                      | A constant              | ``"hello"` |
-|                               |                         | `,         |
-|                               |                         | ``4``,     |
-|                               |                         | ``2014-12- |
-|                               |                         | 20``       |
-+-------------------------------+-------------------------+------------+
-| property_name                 | A reference to the      | ``doc["nam |
-|                               | property in a document  | e"]``      |
-+-------------------------------+-------------------------+------------+
-| property_path                 | A nested reference to a | ``doc["chi |
-|                               | property in a document  | ld"]["age" |
-|                               |                         | ]``        |
-+-------------------------------+-------------------------+------------+
-| conditional                   | An if/else expression   | ``"legal"  |
-|                               |                         | if doc["ag |
-|                               |                         | e"] > 21 e |
-|                               |                         | lse "under |
-|                               |                         | age"``     |
-+-------------------------------+-------------------------+------------+
-| switch                        | A switch statement      | ``if doc[" |
-|                               |                         | age"] == 2 |
-|                               |                         | 1: "legal" |
-|                               |                         | ``         |
-|                               |                         | ``elif doc |
-|                               |                         | ["age"] == |
-|                               |                         |  60: ...`` |
-|                               |                         | ``else: .. |
-|                               |                         | .``        |
-+-------------------------------+-------------------------+------------+
-| array_index                   | An index into an array  | ``doc[1]`` |
-+-------------------------------+-------------------------+------------+
-| split_string                  | Splitting a string and  | ``doc["foo |
-|                               | grabbing a specific     |  bar"].spl |
-|                               | element from it by      | it(' ')[0] |
-|                               | index                   | ``         |
-+-------------------------------+-------------------------+------------+
-| iterator                      | Combine multiple        | ``[doc.nam |
-|                               | expressions into a list | e, doc.age |
-|                               |                         | , doc.gend |
-|                               |                         | er]``      |
-+-------------------------------+-------------------------+------------+
-| related_doc                   | A way to reference      | ``form.cas |
-|                               | something in another    | e.owner_id |
-|                               | document                | ``         |
-+-------------------------------+-------------------------+------------+
-| root_doc                      | A way to reference the  | ``repeat.p |
-|                               | root document           | arent.name |
-|                               | explicitly (only needed | ``         |
-|                               | when making a data      |            |
-|                               | source from             |            |
-|                               | repeat/child data)      |            |
-+-------------------------------+-------------------------+------------+
-| ancestor_location             | A way to retrieve the   |            |
-|                               | ancestor of a           |            |
-|                               | particular type from a  |            |
-|                               | location                |            |
-+-------------------------------+-------------------------+------------+
-| nested                        | A way to chain any two  | ``f1(f2(do |
-|                               | expressions together    | c))``      |
-+-------------------------------+-------------------------+------------+
-| dict                          | A way to emit a         | ``{"name": |
-|                               | dictionary of key/value |  "test", " |
-|                               | pairs                   | value": f( |
-|                               |                         | doc)}``    |
-+-------------------------------+-------------------------+------------+
-| add_days                      | A way to add days to a  | ``my_date  |
-|                               | date                    | + timedelt |
-|                               |                         | a(days=15) |
-|                               |                         | ``         |
-+-------------------------------+-------------------------+------------+
-| add_months                    | A way to add months to  | ``my_date  |
-|                               | a date                  | + relative |
-|                               |                         | delta(mont |
-|                               |                         | hs=15)``   |
-+-------------------------------+-------------------------+------------+
-| month_start_date              | First day in the month  | ``2015-01- |
-|                               | of a date               | 20``       |
-|                               |                         | ->         |
-|                               |                         | ``2015-01- |
-|                               |                         | 01``       |
-+-------------------------------+-------------------------+------------+
-| month_end_date                | Last day in the month   | ``2015-01- |
-|                               | of a date               | 20``       |
-|                               |                         | ->         |
-|                               |                         | ``2015-01- |
-|                               |                         | 31``       |
-+-------------------------------+-------------------------+------------+
-| diff_days                     | A way to get duration   | ``(to_date |
-|                               | in days between two     |  - from-da |
-|                               | dates                   | te).days`` |
-+-------------------------------+-------------------------+------------+
-| evaluator                     | A way to do arithmetic  | ``a + b*c  |
-|                               | operations              | / d``      |
-+-------------------------------+-------------------------+------------+
-| base_iteration_number         | Used with               | ``loop.ind |
-|                               | ```base_item_expression | ex``       |
-|                               | `` <#saving-multiple-ro |            |
-|                               | ws-per-caseform>`__     |            |
-|                               | - a way to get the      |            |
-|                               | current iteration       |            |
-|                               | number (starting from   |            |
-|                               | 0).                     |            |
-+-------------------------------+-------------------------+------------+
++-------------------------------+-------------------------+----------------------------------------------+
+| Expression Type               | Description             | Example                                      |
++===============================+=========================+==============================================+
+| identity                      | Just returns whatever   | ``doc``                                      |
+|                               | is passed in            |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| constant                      | A constant              | ``"hello"``,                                 |
+|                               |                         | ``4``,                                       |
+|                               |                         | ``2014-12-20``                               |
++-------------------------------+-------------------------+----------------------------------------------+
+| property_name                 | A reference to the      | ``doc["name"]``                              |
+|                               | property in a document  |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| property_path                 | A nested reference to a | ``doc["child"]["age"]``                      |
+|                               | property in a document  |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| conditional                   | An if/else expression   | ``"legal"  if doc["age"] > 21 else "minor"`` |
++-------------------------------+-------------------------+----------------------------------------------+
+| switch                        | A switch statement      | ``if doc["age"] == 21: "legal"``             |
+|                               |                         | ``elif doc["age"] == 60: "senior"``          |
+|                               |                         | ``else: ... ``                               |
++-------------------------------+-------------------------+----------------------------------------------+
+| array_index                   | An index into an array  | ``doc[1]``                                   |
++-------------------------------+-------------------------+----------------------------------------------+
+| split_string                  | Splitting a string and  | ``doc["foobar"].split(' ')[0]``              |
+|                               | grabbing a specific     |                                              |
+|                               | element from it by      |                                              |
+|                               | index                   |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| iterator                      | Combine multiple        | ``[doc.name, doc.age, doc.gender]``          |
+|                               | expressions into a list |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| related_doc                   | A way to reference      | ``form.case.owner_id``                       |
+|                               | something in another    |                                              |
+|                               | document                |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| root_doc                      | A way to reference the  | ``repeat.parent.name``                       |
+|                               | root document           |                                              |
+|                               | explicitly (only needed |                                              |
+|                               | when making a data      |                                              |
+|                               | source from             |                                              |
+|                               | repeat/child data)      |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| ancestor_location             | A way to retrieve the   |                                              |
+|                               | ancestor of a           |                                              |
+|                               | particular type from a  |                                              |
+|                               | location                |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| nested                        | A way to chain any two  | ``f1(f2(doc))``                              |
+|                               | expressions together    |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| dict                          | A way to emit a         | ``{"name": "test", "value": f(doc)}``        |
+|                               | dictionary of key/value |                                              |
+|                               | pairs                   |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| add_days                      | A way to add days to a  | ``my_date + timedelta(days=15)``             |
+|                               | date                    |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| add_months                    | A way to add months to  | ``my_date + relative delta(months=15)``      |
+|                               | a date                  |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| month_start_date              | First day in the month  | ``2015-01-20``                               |
+|                               | of a date               | ->                                           |
+|                               |                         | ``2015-01-01``                               |
++-------------------------------+-------------------------+----------------------------------------------+
+| month_end_date                | Last day in the month   | ``2015-01-20``                               |
+|                               | of a date               | ->                                           |
+|                               |                         | ``2015-01-31``                               |
++-------------------------------+-------------------------+----------------------------------------------+
+| diff_days                     | A way to get duration   | ``(to_date - from-date).days``               |
+|                               | in days between two     |                                              |
+|                               | dates                   |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| evaluator                     | A way to do arithmetic  | ``a + b*c / d``                              |
+|                               | operations              |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
+| base_iteration_number         | Used with               | ``loop.index``                               |
+|                               | ```base_item_expression |                                              |
+|                               | `` <#saving-multiple-ro |                                              |
+|                               | ws-per-caseform>`__     |                                              |
+|                               | - a way to get the      |                                              |
+|                               | current iteration       |                                              |
+|                               | number (starting from   |                                              |
+|                               | 0).                     |                                              |
++-------------------------------+-------------------------+----------------------------------------------+
 
 Following expressions act on a list of objects or a list of lists (for
 e.g. on a repeat list) and return another list or value. These
@@ -389,7 +365,7 @@ Dict expressions
 
 
 "Add Hours" expressions
-''''''''''''''''''''''
+'''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddHoursExpressionSpec
 
@@ -490,7 +466,7 @@ Here is a sample JSON format for simple ``boolean_expression`` filter:
 This is equivalent to the python statement: ``doc["age"] > 21``
 
 Operators
-^^^^^^^^^
+'''''''''
 
 The following operators are currently supported:
 
@@ -542,7 +518,7 @@ complicated boolean logic on data. There are three types of filters,
 below. Hopefully these are self explanatory.
 
 "And" Filters
-^^^^^^^^^^^^^
+'''''''''''''
 
 The following filter represents the statement:
 ``doc["age"] < 21 and doc["nationality"] == "american"``:
@@ -575,7 +551,7 @@ The following filter represents the statement:
    }
 
 "Or" Filters
-^^^^^^^^^^^^
+''''''''''''
 
 The following filter represents the statement:
 ``doc["age"] > 21 or doc["nationality"] == "european"``:
@@ -608,7 +584,7 @@ The following filter represents the statement:
    }
 
 "Not" Filters
-^^^^^^^^^^^^^
+'''''''''''''
 
 The following filter represents the statement:
 ``!(doc["nationality"] == "european")``:
@@ -714,7 +690,7 @@ shortcuts around the functionality of these ones they are left out of
 the current docs.*
 
 Boolean indicators
-^^^^^^^^^^^^^^^^^^
+''''''''''''''''''
 
 Now we see again the power of our filter framework defined above!
 Boolean indicators take any arbitrarily complicated filter expression
@@ -739,7 +715,7 @@ form has a question with ID ``is_pregnant`` with a value of ``"yes"``:
    }
 
 Expression indicators
-^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''
 
 Similar to the boolean indicators - expression indicators leverage the
 expression structure defined above to create arbitrarily complex
@@ -796,7 +772,7 @@ to an integer column in the database:
    }
 
 Choice list indicators
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 Choice list indicators take a single choice column (select or
 multiselect) and expand it into multiple columns where each column
@@ -822,7 +798,7 @@ A sample spec is below:
    }
 
 Ledger Balance Indicators
-^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''
 
 Ledger Balance indicators take a list of product codes and a ledger
 section, and produce a column for each product code, saving the value
@@ -885,7 +861,7 @@ These are some practical notes for how to choose what indicators to
 create.
 
 Fractions
-^^^^^^^^^
+'''''''''
 
 All indicators output single values. Though fractional indicators are
 common, these should be modeled as two separate indicators (for
@@ -996,8 +972,8 @@ If an expression is deemed invalid, then the relevant error is stored in the ``I
                 "property_value": ["yes", "no"]
             }
        }],
-       "configured_filter": {...},
-       "configured_indicators": [...]
+       "configured_filter": { },
+       "configured_indicators": [ ]
    }
 
 Report Configurations
@@ -1186,7 +1162,7 @@ Simple example assuming "village" is a name:
    }
 
 Choice providers
-^^^^^^^^^^^^^^^^
+''''''''''''''''
 
 Currently the supported ``choice_provider``\ s are supported:
 
@@ -1282,7 +1258,6 @@ the `translations transform <#translations-and-arbitrary-mappings>`__.
        "type": "choice_list",
        "slug": "state",
        "display": {"en": "State", "fr": "État"},
-       ...
    }
 
 Report Columns
@@ -1352,7 +1327,7 @@ had danger signs.
    }
 
 Formats
-^^^^^^^
+'''''''
 
 The following percentage formats are supported.
 
@@ -1411,18 +1386,14 @@ Keep in mind that the only variables available for formatting are
 | "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
-IntegerBucketsColumn and AgeInMonthsBucketsColumn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+IntegerBucketsColumn
+~~~~~~~~~~~~~~~~~~~~
 
 Bucket columns allow you to define a series of ranges with corresponding names,
 then group together rows where a specific field's value falls within those ranges.
 These ranges are inclusive, since they are implemented using the ``between`` operator.
 It is the user's responsibility to make sure the ranges do not overlap; if a value
 falls into multiple ranges, it is undefined behavior which bucket it will be assigned to.
-
-There are two types: ``integer_buckets`` for integer values, and
-``age_in_months_buckets``, where the given field must be a date
-and the buckets are based on the number of months since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
@@ -1444,24 +1415,6 @@ registration:
 
 The ``"ranges"`` attribute maps conditional expressions to labels. If the field's value
 does not fall into any of these ranges, the row will receive the ``"else_"`` value, if provided.
-
-Here's an example using ``age_in_months_buckets``:
-
-.. code:: json
-
-   {
-       "display": "Age Group",
-       "column_id": "age_group",
-       "type": "age_in_months_buckets",
-       "field": "dob",
-       "ranges": {
-            "0_to_5": [0, 5],
-            "6_to_11": [6, 11],
-            "12_to_35": [12, 35],
-            "36_to_59": [36, 59],
-            "60_to_71": [60, 71],
-       }
-   }
 
 SumWhenColumn and SumWhenTemplateColumn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1602,6 +1555,9 @@ column.
        }
    }
 
+**Expression columns cannot be used in aggregations or filters.**
+If you need to group by a derived value, then you must add that directly to your data source.
+
 The "aggregation" column property
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1633,7 +1589,7 @@ be used in aggregate reports.
 +--------------+------------------------------------------+
 
 Column IDs
-^^^^^^^^^^
+''''''''''
 
 Column IDs in percentage fields *must be unique for the whole report*.
 If you use a field in a normal column and in a percent column you must
@@ -1871,7 +1827,7 @@ If the format string is not valid or the input is not a number then the
 original input will be returned.
 
 Round to the nearest whole number
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. code:: json
 
@@ -1881,7 +1837,7 @@ Round to the nearest whole number
    }
 
 Always round to 3 decimal places
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''
 
 .. code:: json
 
@@ -2068,7 +2024,7 @@ Please note that the columns used in distinct on clause should also be present
 in the sort expression as the first set of columns in the same order.
 
 Pick distinct by a single column
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sort expression should have column1 and then other columns if needed
 
 .. code:: json
@@ -2091,7 +2047,7 @@ and distinct on would be
    ["column1"]
 
 Pick distinct result based on two columns
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sort expression should have column1 and column2 in same order,
 More columns can be added after these if needed
@@ -2164,8 +2120,9 @@ Export
 
 A UCR data source can be exported, to back an excel dashboard, for
 instance. The URL for exporting data takes the form
-https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data
-source id]/ The export supports a "$format" parameter which can be any
+`https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/`
+
+The export supports a "$format" parameter which can be any
 of the following options: html, csv, xlsx, xls. The default format is
 csv.
 
@@ -2187,7 +2144,7 @@ This is configured in ``export_data_source`` and tested in
 additional filter types.
 
 Export example
-~~~~~~~~~~~~~~
+--------------
 
 Let's say you want to restrict the results to only cases owned by a
 particular user, opened in the last 90 days, and with a child between 12

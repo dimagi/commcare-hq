@@ -1,7 +1,7 @@
 {% load i18n %}
 
-{% if detail.type == 'case' %}
-  <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
+{% if detail.type == 'case' and not module_brief.requires_case_details %}
+  <div class="alert alert-warning">
     {% if module.module_type == 'shadow' %}
       {% blocktrans %}
         This menu either doesn't have a source menu or has a source menu that doesn't require a case list.

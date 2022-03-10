@@ -20,7 +20,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
 )
 from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
@@ -42,6 +42,7 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     is_linked_app,
     is_usercase_in_use,
+    module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
@@ -190,6 +191,8 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
+        if form.requires_case() and module_loads_registry_case(form.get_module()):
+            data.append(get_registry_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest(
@@ -236,7 +239,6 @@ def _get_base_vellum_options(request, domain, form, displayLang):
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
             'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
-            'sessionid': request.COOKIES.get('sessionid'),
         },
     }
 
@@ -273,7 +275,6 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
             "meta/location",
         ] + _get_core_context_scheduler_data_nodes(module, form),
         'activityUrl': reverse('ping'),
-        'sessionid': request.COOKIES.get('sessionid'),
         'externalLinks': {
             'changeSubscription': reverse("domain_subscription_view",
                                           kwargs={'domain': domain}),

@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V1
@@ -8,10 +7,11 @@ from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.tests.utils import sharded
 
 
+@sharded
 class StateHashTest(TestCase):
 
     @classmethod
@@ -61,8 +61,8 @@ class StateHashTest(TestCase):
         sync = self.device.last_sync
         self.assertEqual(CaseStateHash(EMPTY_HASH), sync.log.get_state_hash())
 
-        c1 = CaseBlock.deprecated_init(case_id="abc123", create=True, owner_id=self.user.user_id)
-        c2 = CaseBlock.deprecated_init(case_id="123abc", create=True, owner_id=self.user.user_id)
+        c1 = CaseBlock(case_id="abc123", create=True, owner_id=self.user.user_id)
+        c2 = CaseBlock(case_id="123abc", create=True, owner_id=self.user.user_id)
         self.device.post_changes([c1, c2])
 
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
@@ -79,8 +79,3 @@ class StateHashTest(TestCase):
             self.assertEqual(set(e.case_ids), {"abc123", "123abc"})
         else:
             self.fail("Call to generate a payload with a bad hash should fail!")
-
-
-@use_sql_backend
-class StateHashTestSQL(StateHashTest):
-    pass

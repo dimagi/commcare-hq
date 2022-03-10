@@ -25,8 +25,8 @@ hqDefine("enterprise/js/enterprise_settings", [
         self.restrictSignupHelp = _.template(gettext("Do not allow new users to sign up on commcarehq.org. " +
             "This may take up to an hour to take effect. " +
             "<br>This will affect users with email addresses from the following domains: " +
-            "<strong><%= domains %></strong>" +
-            "<br>Contact <a href='mailto:<%= email %>'><%= email %></a> to change the list of domains."))(context);
+            "<strong><%- domains %></strong>" +
+            "<br>Contact <a href='mailto:<%- email %>'><%- email %></a> to change the list of domains."))(context);
 
         return self;
     };

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -20,7 +20,7 @@ class DropboxUploadHelperTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by=None)
+        cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         super(DropboxUploadHelperTest, cls).tearDownClass()
 

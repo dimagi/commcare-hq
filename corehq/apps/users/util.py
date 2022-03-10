@@ -1,9 +1,11 @@
+import datetime
 import numbers
 import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -16,17 +18,18 @@ from casexml.apps.case.const import (
     UNOWNED_EXTENSION_OWNER_ID,
 )
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.util.model_log import log_model_change
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
-from django.core.exceptions import ValidationError
-
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.parsing import json_format_datetime
+
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
-JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
@@ -35,6 +38,10 @@ WEIRD_USER_IDS = [
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
     CALLCENTER_USER
+]
+USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
+    '_id', '_rev', 'reporting_metadata', 'password',
+    'devices', 'last_device', 'device_ids'
 ]
 
 
@@ -311,19 +318,136 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-def log_user_role_update(domain, user, by_user, updated_via):
+def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_via=None,
+                    change_messages=None, fields_changed=None, action=None,
+                    by_domain_required_for_log=True, for_domain_required_for_log=True,
+                    bulk_upload_record_id=None):
     """
-    :param domain: domain name
-    :param user: couch user that got updated
-    :param by_user: django/couch user that made the update
-    :param updated_via: web/bulk_importer
+    Log changes done to a user.
+    For a new user or a deleted user, log only specific fields.
+
+    :param by_domain: domain where the update was initiated
+    :param for_domain: domain for which the update was initiated or the domain whose operations will get
+        effected by this change.
+        From user's perspective,
+        A commcare user is completely owned by the domain
+        A web user's membership that let's it perform operations on a domain is owned by the domain.
+    :param couch_user: user being changed
+    :param changed_by_user: user making the change or SYSTEM_USER_ID
+    :param changed_via: changed via medium i.e API/Web
+    :param change_messages: Optional dict of change messages
+    :param fields_changed: dict of user fields that have changed with their current value
+    :param action: action on the user
+    :param by_domain_required_for_log: set to False to allow domain less log for specific changes
+    :param for_domain_required_for_log: set to False to allow domain less log for specific changes
+    :param bulk_upload_record_id: ID of bulk upload record if changed via bulk upload
     """
-    user_role = user.get_role(domain)
-    message = "role: None"
-    if user_role:
-        if user_role.get_qualified_id() == 'admin':
-            message = f"role: {user_role.name}"
-        else:
-            message = f"role: {user_role.name}[{user_role.get_id}]"
-    message += f", updated_via: {updated_via}"
-    log_model_change(by_user, user.get_django_user(), message=message)
+    from corehq.apps.users.models import UserHistory
+    from corehq.apps.users.model_log import UserModelAction
+
+    action = action or UserModelAction.UPDATE
+    fields_changed = fields_changed or {}
+    change_messages = change_messages or {}
+
+    # domains are essential to filter changes done in and by a domain
+    if by_domain_required_for_log and changed_by_user != SYSTEM_USER_ID and not by_domain:
+        raise ValueError("missing 'by_domain' argument'")
+    if for_domain_required_for_log and not for_domain:
+        raise ValueError("missing 'for_domain' argument'")
+
+    # for an update, there should always be fields that have changed or change messages
+    if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
+        raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
+
+    if changed_by_user == SYSTEM_USER_ID:
+        changed_by_id = SYSTEM_USER_ID
+        changed_by_repr = SYSTEM_USER_ID
+    else:
+        changed_by_id = changed_by_user.get_id
+        changed_by_repr = changed_by_user.raw_username
+    return UserHistory.objects.create(
+        by_domain=by_domain,
+        for_domain=for_domain,
+        user_type=couch_user.doc_type,
+        user_repr=couch_user.raw_username,
+        changed_by_repr=changed_by_repr,
+        user_id=couch_user.get_id,
+        changed_by=changed_by_id,
+        changes=_get_changed_details(couch_user, action, fields_changed),
+        changed_via=changed_via,
+        change_messages=change_messages,
+        action=action.value,
+        user_upload_record_id=bulk_upload_record_id,
+    )
+
+
+def _get_changed_details(couch_user, action, fields_changed):
+    from corehq.apps.users.model_log import UserModelAction
+
+    if action in [UserModelAction.CREATE, UserModelAction.DELETE]:
+        changed_details = couch_user.to_json()
+    else:
+        changed_details = fields_changed.copy()
+
+    for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
+        changed_details.pop(prop, None)
+    return changed_details
+
+
+def bulk_auto_deactivate_commcare_users(user_ids, domain):
+    """
+    Deactivates CommCareUsers in bulk.
+
+    Please pre-chunk ids to a reasonable size. Also please reference the
+    save() method in CommCareUser when making changes.
+
+    :param user_ids: list of user IDs
+    :param domain: name of domain user IDs belong to
+    """
+    from corehq.apps.users.models import UserHistory, CommCareUser
+    from corehq.apps.users.model_log import UserModelAction
+
+    last_modified = json_format_datetime(datetime.datetime.utcnow())
+    user_docs_to_bulk_save = []
+    for user_doc in get_docs(CommCareUser.get_db(), keys=user_ids):
+        if user_doc['is_active']:
+            user_doc['is_active'] = False
+            user_doc['last_modified'] = last_modified
+            user_docs_to_bulk_save.append(user_doc)
+
+    # bulk save django Users
+    user_query = User.objects.filter(
+        username__in=[u["username"] for u in user_docs_to_bulk_save]
+    )
+    user_query.update(is_active=False)
+
+    # bulk save in couch
+    CommCareUser.get_db().bulk_save(user_docs_to_bulk_save)
+
+    # bulk create all the UserHistory logs
+    UserHistory.objects.bulk_create([
+        UserHistory(
+            by_domain=domain,
+            for_domain=domain,
+            user_type=CommCareUser.doc_type,
+            user_repr=u['username'].split('@')[0],
+            changed_by_repr=SYSTEM_USER_ID,
+            user_id=u['_id'],
+            changed_by=SYSTEM_USER_ID,
+            changes={'is_active': False},
+            changed_via=USER_CHANGE_VIA_AUTO_DEACTIVATE,
+            change_messages={},
+            action=UserModelAction.UPDATE.value,
+            user_upload_record_id=None
+        )
+        for u in user_docs_to_bulk_save
+    ])
+
+    # clear caches and fire signals
+    for user_doc in user_docs_to_bulk_save:
+        commcare_user = CommCareUser.wrap(user_doc)
+        commcare_user.clear_quickcache_for_user()
+        commcare_user.fire_signals()
+        # FYI we don't call the save() method individually because
+        # it is ridiculously inefficient! Unfortunately, it's harder to get
+        # around caches and signals in a bulk way.

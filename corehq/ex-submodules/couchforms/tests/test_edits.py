@@ -2,22 +2,22 @@ from datetime import datetime
 import os
 import uuid
 
-from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 from requests.exceptions import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
+@sharded
 @softer_assert()
 class EditFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
@@ -29,8 +29,8 @@ class EditFormTest(TestCase, TestFileMixin):
     def setUp(self):
         super(EditFormTest, self).setUp()
         self.interface = FormProcessorInterface(self.domain)
-        self.casedb = CaseAccessors(self.domain)
-        self.formdb = FormAccessors(self.domain)
+        self.casedb = CommCareCase.objects
+        self.formdb = XFormInstance.objects
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
@@ -98,7 +98,6 @@ class EditFormTest(TestCase, TestFileMixin):
                    </n1:meta>
                </data>""".format(
                 date=date,
-                attachment_source=attachment_source,
                 form_id=form_id
             )
         form_id = uuid.uuid4().hex
@@ -126,7 +125,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id='',  # this should cause the submission to error
             case_type='person',
@@ -177,7 +176,7 @@ class EditFormTest(TestCase, TestFileMixin):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -189,18 +188,13 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.type, 'person')
         self.assertEqual(case.dynamic_case_properties()['property'], 'original value')
         self.assertEqual([form_id], case.xform_ids)
 
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertEqual(2, len(case.actions))
-            for a in case.actions:
-                self.assertEqual(form_id, a.xform_id)
-
         # submit a new form with a different case update
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -211,21 +205,16 @@ class EditFormTest(TestCase, TestFileMixin):
         ).as_text()
         xform, _ = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.type, 'newtype')
         self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
         self.assertEqual(case.server_modified_on, xform.edited_on)
 
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertEqual(2, len(case.actions))
-            for a in case.actions:
-                self.assertEqual(form_id, a.xform_id)
-
     def test_second_edit_fails(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -233,7 +222,7 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # submit an edit form with a bad case update (for example a bad ID)
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id='',
             case_type='person',
@@ -251,7 +240,7 @@ class EditFormTest(TestCase, TestFileMixin):
         owner_id = uuid.uuid4().hex
 
         # create a case
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -260,17 +249,12 @@ class EditFormTest(TestCase, TestFileMixin):
         create_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual([create_form_id], case.xform_ids)
-
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertTrue(create_form_id in [a.xform_id for a in case.actions])
-            for a in case.actions:
-                self.assertEqual(create_form_id, a.xform_id)
 
         edit_date = datetime.utcnow()
         # set some property value
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             date_modified=edit_date,
@@ -281,18 +265,12 @@ class EditFormTest(TestCase, TestFileMixin):
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertTrue(all(
-                form_id in [a.xform_id for a in case.actions]
-                for form_id in [create_form_id, edit_form_id]
-            ))
-
         # submit a second (new) form updating the value
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             update={
@@ -302,18 +280,12 @@ class EditFormTest(TestCase, TestFileMixin):
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertTrue(all(
-                form_id in [a.xform_id for a in case.actions]
-                for form_id in [create_form_id, edit_form_id, second_edit_form_id]
-            ))
-
         # deprecate the middle edit
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             date_modified=edit_date,  # need to use the previous edit date for action sort comparisons
@@ -326,16 +298,10 @@ class EditFormTest(TestCase, TestFileMixin):
 
         # ensure that the middle edit stays in the right place and is applied
         # before the final one
-        case = self.casedb.get_case(case_id)
+        case = self.casedb.get_case(case_id, self.domain)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual(case.dynamic_case_properties()['added_property'], 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
-
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertEqual(
-                [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
-                [a.xform_id for a in case.actions]
-            )
 
     def test_edit_different_xmlns(self):
         form_id = uuid.uuid4().hex
@@ -344,7 +310,7 @@ class EditFormTest(TestCase, TestFileMixin):
         xmlns1 = 'http://commcarehq.org/xmlns1'
         xmlns2 = 'http://commcarehq.org/xmlns2'
 
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case1_id,
             case_type='person',
@@ -355,7 +321,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(form_id, xform.form_id)
 
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case2_id,
             case_type='goat',
@@ -380,8 +346,3 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual('archive', xform.history[0].operation)
         self.assertEqual('unarchive', xform.history[1].operation)
         self.assertEqual('edit', xform.history[2].operation)
-
-
-@use_sql_backend
-class EditFormTestSQL(EditFormTest):
-    pass

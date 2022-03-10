@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
@@ -22,7 +22,10 @@ from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
 
-LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
+LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
+    'Sorry - you have attempted to login with an incorrect password too many times. '
+    'Please <a href="/accounts/password_reset_email/">click here</a> to reset your password '
+    'or contact the domain administrator.'))
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -30,7 +33,20 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
+        captcha = ReCaptchaField(label="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.ENFORCE_SSO_LOGIN:
+            self.fields['username'].widget = forms.TextInput(attrs={
+                'class': 'form-control',
+                'data-bind': 'textInput: authUsername, onEnterKey: continueOnEnter',
+                'placeholder': _("Enter email address"),
+            })
+            self.fields['password'].widget = forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': _("Enter password"),
+            })
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()

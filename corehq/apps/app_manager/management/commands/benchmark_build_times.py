@@ -40,8 +40,6 @@ class Command(BaseCommand):
 
 def _code_to_benchmark(domain, app_id, comment, user_id):
     app = get_app(domain, app_id)
-    errors = app.validate_app()
-    assert not errors, errors
     copy = app.make_build(
         comment=comment,
         user_id=user_id,
@@ -52,7 +50,7 @@ def _code_to_benchmark(domain, app_id, comment, user_id):
 
 @profile_dump('direct_ccz.prof')
 def _profile_and_benchmark(domain, app_id, comment, user_id):
-    _code_to_benchmark(domain, app_id, comment, user_id)
+    return _code_to_benchmark(domain, app_id, comment, user_id)
 
 
 class Timer(object):

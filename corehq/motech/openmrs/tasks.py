@@ -11,10 +11,9 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.conf import settings
 from jinja2 import Template
-from requests import RequestException
+from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -44,10 +43,9 @@ from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
-REPORT_REQUEST_TIMEOUT = 60 * 60
 # The location metadata key that maps to its corresponding OpenMRS location UUID
 LOCATION_OPENMRS = 'openmrs_uuid'
 
@@ -78,8 +76,21 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
-    response = requests.get(endpoint, params=params, raise_for_status=True,
-                            timeout=REPORT_REQUEST_TIMEOUT)
+
+    for minutes in (5, 10, 20, 40):
+        try:
+            response = requests.get(
+                endpoint,
+                params=params,
+                raise_for_status=True,
+                timeout=(5, minutes * 60),  # connection timeout, read timeout
+            )
+            break
+        except ReadTimeout:
+            if minutes < 40:
+                continue
+            else:
+                raise
     data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
@@ -223,7 +234,7 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_with_importer.delay(importer.to_json())
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
@@ -322,6 +333,7 @@ def poll_openmrs_atom_feeds(domain_name):
                     import_encounter(repeater, encounter_uuid)
                 except (ConfigurationError, OpenmrsException) as err:
                     errors.append(str(err))
+
         if errors:
             repeater.requests.notify_error(
                 'Errors importing from Atom feed:\n' + '\n'.join(errors)

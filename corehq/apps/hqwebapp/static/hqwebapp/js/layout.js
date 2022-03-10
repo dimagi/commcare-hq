@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/layout", ['jquery'], function ($) {
+hqDefine("hqwebapp/js/layout", ['jquery', 'underscore'], function ($, _) {
     var self = {};
 
     self.selector = {

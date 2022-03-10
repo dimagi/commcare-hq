@@ -1,4 +1,5 @@
 import uuid
+import logging
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -8,7 +9,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
+from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message, process_message_status
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
@@ -17,11 +18,12 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.web import json_response
 from django.db import transaction
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
 
+logger = logging.getLogger()
 
 # Tuple of (hq field name, telerivet field name) tuples
 TELERIVET_INBOUND_FIELD_MAP = (
@@ -49,6 +51,34 @@ def incoming_message(request):
     kwargs = {a: request.POST.get(b) for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
     process_incoming_message.delay(**kwargs)
     return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def message_status(request, message_id):
+    status = request.POST.get('status')
+    logger.info(f'Updating Telerivet message status: message_id={message_id}, status={status}')
+
+    request_secret = request.POST.get('secret', '')
+    backend = None
+    if request_secret:
+        backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
+
+    if backend is None:
+        return HttpResponseForbidden('Invalid secret')
+
+    try:
+        sms = SMS.objects.get(couch_id=message_id)
+    except SMS.DoesNotExist:
+        raise Http404()
+    else:
+        process_message_status(
+            sms,
+            status,
+            error_message=request.POST.get('error_message', ''),
+        )
+        return HttpResponse()
 
 
 class TelerivetSetupView(BaseMessagingSectionView):
@@ -130,7 +160,7 @@ class TelerivetSetupView(BaseMessagingSectionView):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_GET
 def get_last_inbound_sms(request, domain):
@@ -156,7 +186,7 @@ def get_last_inbound_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def send_sample_sms(request, domain):
@@ -206,7 +236,7 @@ def send_sample_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_data)
+@require_permission(Permissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def create_backend(request, domain):

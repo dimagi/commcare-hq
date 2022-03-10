@@ -36,7 +36,7 @@ hqDefine('app_manager/js/supported_languages',[
                 return '';
             }
 
-            return "(" + _.template("originally <%= originalLanguage %>")({
+            return "(" + _.template("originally <%- originalLanguage %>")({
                 originalLanguage: self.originalLangcode(),
             }) + ")";
         });

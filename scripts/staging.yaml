@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging deploy
+#     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -50,51 +50,32 @@ trunk: master
 name: autostaging
 deploy_env: staging
 branches:
-    # see https://confluence.dimagi.com/display/commcarehq/Deploy+Process#DeployProcess-DeployingVellumtoStaging
-  - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  # - jls/sync-mixins-hard-fail # Jenny May 24
-  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-  # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-  - fr/user-data-jit            # Farid September 2
-  - sr/case-reindex-staging # Sravan Oct 14
-  # - gh/improve-queueing-repeaters # Graham Oct 22
-  - sr/es-alias # Sravan Nov 18
-  - dmr/count-email-sends-bounces-by-domain  # Danny Dec 18
-  - nh/dhis2/sqldataset_maps  # Norman Dec 18
-  - nh/reminders  # Norman Jan 26
-  - smh/bulk-upload-web-users # Steph Feb 22
-  - nh/fhir/repeater  # Norman Mar 1
-  - smh/modify_admin_role_display_web_invite_download # Steph Mar 2
-  - fr/consumer-user             # Farid March 17
-  - solleks:cdg/accessible_links2 # Charlie/Steph Mar 25
-  - solleks:cdg/upgrade_select2 # Charlie/Staph/Jenny April 7
-  - sk/get_display_data # Simon March 30
-  - sk/consolidate-doc-lookup # Simon March 30
-  - sr/ucr-cs  # Sravan March 31
-  - bmb/sso-token-encryption  # Biyeun Apr 1
-  - sr/pagedSessions  # Sravan April 2
-  - nh/wfp/api_manager  # Norman Apr 2
-  - ap/escape-html-in-app-manager # Amit Apr 2
-  - ap/escape-html-in-cloudcare # Amit Apr 2
-  - ap/escape-html-in-hqwebapp # Amit Apr 2
-  - ap/escape-html-in-multimedia # Amit Apr 2
-  - ap/escape-html-in-reports # Amit Apr 2
-  - ap/escape-html-in-users # Amit Apr 2
-  - ap/escape-templates-in-datainterfaces # Amit Apr 2
-  - ap/escape-html-in-remaining-apps # Amit Apr 5
-  - smh/missing-queryData # Steph Apr 2
-  - revert-29446-revert-29218-mjr/xss_app_manager # Matt April 5
-  - mjr/xss_reports  # Matt April 7
-  - sr/jumptoErrors # Sravan April 6
-  - fr/smart-oauth-prep         # Farid April 7
-  - mk/form-mm-exports-filters # MK April 8
-  - fr/smart-oauth-views        # Farid April 7
-  - mjr/xss_custom_fields  # Matt April 7
-  - dmr/remove-vestigial-reference-to-session-cookie  # Danny Apr 7
-  - rp/fix-2fa-hyperlink # Rynhard April 8
-  - rp/fix-broken-link-2.0 # Rynhard April 8
-  - kev/markdown-help-modal # Kevin Apr 9
-  - ce/multidropdown-webapps
-  - gh/remove-filters-from-saved-ucrs # Graham Apr 9
-
-submodules: {}
+    # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
+    - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
+    # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
+    - sr/es-alias # Sravan Nov 18
+    - ce/bulk-case-search # Cal July 6
+    #- sr/memoized-toggle # Sravan July 26
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    - ml/remove-pickles-phonelog # Minha Oct 7
+    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
+    # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - es/mobile-auth # Simon Nov 23
+    - ml/remove-pickles-reports # Minha Jan 24
+    - do/compare-case-properties # Dominic Feb 2
+    - ml/remove-pickles-user-importer # Minha Feb 2
+    # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
+    - gh/mrm/base # Graham Feb 8
+    - gh/form-version-bug # Graham Feb 15
+    - gh/erm/consolidate-enterprise-roles # Graham Feb 20
+    - sk/remove-legacy-perm-check+bmb/whh-003+nh/loadtest_users_ga+others  # Simon Mar 7
+    - sk/remove-legacy-perm-check  # Simon Mar 7
+    - bmb/whh-003 # Biyeun Mar 1
+    - nh/loadtest_users_ga+others  # Norman Mar 2
+    - ad/multivalued-search-functions # Addison Mar 2
+    - do/multi-select-id-mapping # Dominic Mar 2
+    - ml/check-for-historical-xss # Minha Mar 3
+    - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
+    - dm/django3.0-part1 # Daniel 3/9
+    - jm/elastic-client-adapter  # Joel Mar 1
+submodules: { }

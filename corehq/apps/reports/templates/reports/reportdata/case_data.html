@@ -15,7 +15,6 @@
 
   {% initial_page_data 'context_case_id' case.case_id %}
   {% initial_page_data 'dynamic_properties' dynamic_properties %}
-  {% initial_page_data 'timezone_offset' timezone_offset %}
   {% initial_page_data 'xform_api_url' xform_api_url %}
   {% initial_page_data 'xform_ids' case.xform_ids %}
   {% registerurl "case_form_data" case.domain case.case_id '---' %}
@@ -217,13 +216,15 @@
               {% trans 'Clean Case Data' %}
             </button>
           {% endif %}
-          {% if show_case_rebuild and not is_usercase %}
+          {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
               <button type="submit" class="btn btn-default disable-on-submit" >
                 <i class="fa fa-save"></i>
                 {% trans 'Resave Case' %}
               </button>
             </form>
+          {% endif %}
+          {% if show_case_rebuild and not is_usercase %}
             <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
               <button type="submit" class="btn btn-default disable-on-submit" >
                 <i class="fa fa-cubes"></i>

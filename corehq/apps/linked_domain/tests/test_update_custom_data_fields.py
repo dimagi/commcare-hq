@@ -3,12 +3,12 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_custom_data_models
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
-class TestUpdateCustomDataFields(BaseLinkedAppsTest):
+class TestUpdateCustomDataFields(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

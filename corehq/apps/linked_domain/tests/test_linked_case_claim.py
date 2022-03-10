@@ -1,21 +1,20 @@
 import json
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
 )
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
+from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_case_search_config
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 
 
-class BaseLinkedCaseClaimTest(BaseLinkedAppsTest):
+class BaseLinkedCaseClaimTest(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super(BaseLinkedCaseClaimTest, cls).setUpClass()
@@ -69,7 +68,7 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete(deleted_by=None)
+        cls.couch_user.delete(cls.domain, deleted_by=None)
         cls.api_key.delete()
         super(TestRemoteLinkedCaseClaim, cls).tearDownClass()
 

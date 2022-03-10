@@ -37,7 +37,7 @@ from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -62,6 +62,7 @@ from corehq.messaging.scheduling.models import (
     SMSCallbackContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
 
@@ -1761,6 +1762,24 @@ class ScheduleForm(Form):
                 style="width: 100%;"
             ),
             crispy.Div(
+                crispy.HTML(
+                    """
+                        <p id="parent-case-type-warning" class="help-block alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                            %s
+                        </p>
+                    """
+                    % _(
+                        """
+                            The "Case's Parent Case" Recipient setting only works for Parent / Child relationships,
+                            not Parent / Extension or Host / Extension relationships.
+                        """
+                    )),
+                data_bind="visible: (recipientTypeSelected('{parentCase}') && {extensionFlagEnabled})".format(
+                    parentCase=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+                    extensionFlagEnabled="true" if EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain) else "false")
+            ),
+            crispy.Div(
                 crispy.Field(
                     'user_recipients',
                     data_bind='value: user_recipients.value',
@@ -3305,7 +3324,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
-        if value in set([field.name for field in CommCareCaseSQL._meta.fields]):
+        if value in set([field.name for field in CommCareCase._meta.fields]):
             raise ValidationError(_("Only dynamic case properties are allowed"))
 
         return value

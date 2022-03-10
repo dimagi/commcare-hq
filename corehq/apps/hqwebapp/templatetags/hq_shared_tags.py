@@ -15,7 +15,7 @@ from django.template.base import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import escape, format_html
+from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
@@ -40,7 +40,7 @@ def JSON(obj):
     if isinstance(obj, QueryDict):
         obj = dict(obj)
     try:
-        return mark_safe(escape_script_tags(json.dumps(obj, default=json_handler)))
+        return escape_script_tags(json.dumps(obj, default=json_handler))
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
@@ -120,11 +120,11 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_mirror_domain_links_for_dropdown
+    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
-    # Mirrored projects aren't in the dropdown, but show a hint they exist
-    show_all_projects_link = bool(get_mirror_domain_links_for_dropdown(request.couch_user))
+    # Enterprise permissions projects aren't in the dropdown, but show a hint they exist
+    show_all_projects_link = bool(get_enterprise_links_for_dropdown(request.couch_user))
 
     # Too many domains and they won't all fit in the dropdown
     dropdown_limit = 20
@@ -135,9 +135,10 @@ def domains_for_user(context, request, selected_domain=None):
     context = {
         'domain_links': domain_links,
         'show_all_projects_link': show_all_projects_link,
-        'current_domain': selected_domain,
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
+    return mark_safe(  # nosec: render_to_string should have already handled escaping
+        render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request)
+    )
 
 
 @register.simple_tag
@@ -400,10 +401,10 @@ def maintenance_alert(request, dismissable=True):
             '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
             ' hide' if dismissable else '',
             alert.id,
-            mark_safe('''
-                <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
-            ''') if dismissable else '',
-            mark_safe(alert.html),
+            mark_safe(  # nosec: no user input
+                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
+            ) if dismissable else '',
+            alert.html
         )
     else:
         return ''
@@ -576,7 +577,7 @@ def trans_html_attr(value):
         value = value.decode('utf-8')
     if not isinstance(value, str):
         value = JSON(value)
-    return escape(_(value))
+    return conditional_escape(_(value))
 
 
 @register.simple_tag
@@ -585,7 +586,7 @@ def html_attr(value):
         value = value.decode('utf-8')
     if not isinstance(value, str):
         value = JSON(value)
-    return escape(value)
+    return conditional_escape(value)
 
 
 def _create_page_data(parser, token, node_slug):
@@ -703,8 +704,8 @@ def breadcrumbs(page, section, parents=None):
     :return:
     """
 
-    return mark_safe(render_to_string('hqwebapp/partials/breadcrumbs.html', {
+    return render_to_string('hqwebapp/partials/breadcrumbs.html', {
         'page': page,
         'section': section,
         'parents': parents or [],
-    }))
+    })

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import F
+from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -48,7 +49,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -77,6 +79,18 @@ BUSINESS_UNITS = [
     "DWA",
     "INC",
 ]
+
+# These are the UCR Expressions (Data Transformation Engine expressions) that are not currently
+# supported by SaaS. If any domain wants to use them them it can be
+# enabled from  Project Settings > Project Information Internal
+RESTRICTED_UCR_EXPRESSIONS = [
+    ('base_item_expression', 'Base Item Expressions'),
+    ('related_doc', 'Related Document Expressions')
+]
+
+
+def all_restricted_ucr_expressions():
+    return [exp[0] for exp in RESTRICTED_UCR_EXPRESSIONS]
 
 
 for lang in all_langs:
@@ -247,22 +261,6 @@ class CaseDisplaySettings(DocumentSchema):
         verbose_name="Mapping of form xmlns to definitions of properties "
                      "to display for individual forms")
 
-    # todo: case list
-
-
-class DynamicReportConfig(DocumentSchema):
-    """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty()  # fully-qualified path to template report class
-    name = StringProperty()  # report display name in sidebar
-    kwargs = DictProperty()  # arbitrary settings to configure report
-    previewers_only = BooleanProperty()
-
-
-class DynamicReportSet(DocumentSchema):
-    """a set of dynamic reports grouped under a section header in the sidebar"""
-    section_title = StringProperty()
-    reports = SchemaListProperty(DynamicReportConfig)
-
 
 LOGO_ATTACHMENT = 'logo.png'
 
@@ -287,7 +285,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         see data, reports, charts, etc.
 
         Exceptions: accounting has some models that combine multiple domains,
-        which make "enterprise" multi-domain features like the enterprise dashboard possible.
+        which make "enterprise" multi-domain features like the enterprise console possible.
 
         Naming conventions:
         Most often, variables representing domain names are named `domain`, and
@@ -316,7 +314,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
-    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -328,10 +325,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
-    use_sql_backend = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
-
-    case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
@@ -379,6 +373,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_worker_registration_alert_emails = StringListProperty()
     sms_survey_date_format = StringProperty()
 
     granted_messaging_access = BooleanProperty(default=False)
@@ -426,13 +421,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     internal = SchemaProperty(InternalProperties)
 
-    dynamic_reports = SchemaListProperty(DynamicReportSet)
-
     # extra user specified properties
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
-    launch_date = DateTimeProperty
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
@@ -442,15 +434,16 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
+    disable_mobile_login_lockout = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
-
-    report_whitelist = StringListProperty()
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+
+    restrict_mobile_access = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -639,7 +632,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
@@ -649,7 +642,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
-                use_sql_backend=use_sql_backend,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
@@ -724,8 +716,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if not self._rev:
             if domain_or_deleted_domain_exists(self.name):
                 raise NameUnavailableException(self.name)
-            # mark any new domain as timezone migration complete
-            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
@@ -804,9 +794,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @memoized
     def commtrack_settings(self):
         # this import causes some dependency issues so lives in here
-        from corehq.apps.commtrack.models import SQLCommtrackConfig
+        from corehq.apps.commtrack.models import CommtrackConfig
         if self.commtrack_enabled:
-            return SQLCommtrackConfig.for_domain(self.name)
+            return CommtrackConfig.for_domain(self.name)
         else:
             return None
 
@@ -825,14 +815,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
-
-    def get_case_display(self, case):
-        """Get the properties display definition for a given case"""
-        return self.case_display.case_details.get(case.type)
-
-    def get_form_display(self, form):
-        """Get the properties display definition for a given XFormInstance"""
-        return self.case_display.form_details.get(form.xmlns)
 
     @property
     def location_types(self):
@@ -968,7 +950,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.to_user.email,
+            self.to_user.get_email(),
             html_content,
             text_content=text_content)
 
@@ -985,12 +967,12 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.from_user.email,
+            self.from_user.get_email(),
             html_content,
             text_content=text_content)
 
     @requires_active_transfer
-    def transfer_domain(self, *args, **kwargs):
+    def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):
 
         self.confirm_time = datetime.utcnow()
         if 'ip' in kwargs:
@@ -998,6 +980,13 @@ class TransferDomainRequest(models.Model):
 
         self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
         self.from_user.save()
+        if by_user:
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_removal(self.domain))
+            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.to_user,
+                            changed_by_user=by_user, changed_via=transfer_via,
+                            change_messages=UserChangeMessage.domain_addition(self.domain))
         self.to_user.save()
         self.active = False
         self.save()
@@ -1046,3 +1035,59 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class AllowedUCRExpressionSettings(models.Model):
+    """
+    Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.
+    The expressions defined in RESTRICTED_UCR_EXPRESSIONS are not generally available yet.
+    But these expressions are enabled by default on every domain so that current flow does not change.
+    If any expression's usage is to be restricted on any domain
+    then the  Expressions should be explicitly removed from
+    Domain settings page on HQ.
+    """
+
+    domain = models.CharField(unique=True, max_length=256)
+    allowed_ucr_expressions = ArrayField(
+        models.CharField(max_length=32, choices=RESTRICTED_UCR_EXPRESSIONS),
+        default=all_restricted_ucr_expressions
+    )
+
+    @classmethod
+    @quickcache(['domain_name'])
+    def get_allowed_ucr_expressions(cls, domain_name):
+        try:
+            ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+            allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
+        except AllowedUCRExpressionSettings.DoesNotExist:
+            allowed_ucr_expressions = all_restricted_ucr_expressions()
+        return allowed_ucr_expressions
+
+    @classmethod
+    def save_allowed_ucr_expressions(cls, domain_name, expressions):
+        AllowedUCRExpressionSettings.objects.update_or_create(
+            domain=domain_name,
+            defaults={
+                'allowed_ucr_expressions': expressions
+            }
+        )
+
+    @classmethod
+    def disallowed_ucr_expressions(cls, domain_name):
+        allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        return restricted_expressions - allowed_expressions_for_domain
+
+
+class ProjectLimitType():
+    LIVE_GOOGLE_SHEETS = 'lgs'
+
+    CHOICES = (
+        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
+    )
+
+
+class ProjectLimit(models.Model):
+    domain = models.CharField(max_length=256, db_index=True)
+    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
+    limit_value = models.IntegerField(default=20)

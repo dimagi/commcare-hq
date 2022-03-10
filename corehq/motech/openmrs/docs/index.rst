@@ -948,7 +948,7 @@ The observation mapping sets four case properties:
 
 The configuration for each case property has a "jsonpath" setting to
 specify where to get the value from the JSON data of the observation
-given by the OpenMRS API. See :ref:`_how_to_inspect-label` below.
+given by the OpenMRS API. See :ref:`openmrs-how_to_inspect` below.
 
 Inspecting the observation also helps us with a subtle and confusing
 setting:
@@ -1042,7 +1042,7 @@ JSON path "codedAnswer.name" was determined from the sample JSON data
 of a Bahmni diagnosis given by the OpenMRS API.
 
 
-.. _how_to_inspect-label:
+.. _openmrs-how_to_inspect:
 
 How to Inspect an Observation or a Diagnosis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1104,6 +1104,3 @@ diagnosis is, you can use the official `Bahmni demo server`_.
 .. _Wget: https://www.gnu.org/software/wget/
 .. _Atom: https://atom.io/
 .. _pretty-json: https://atom.io/packages/pretty-json
-
-
-.. include:: ../corehq/motech/docs/value_source.rst

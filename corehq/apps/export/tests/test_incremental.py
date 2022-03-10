@@ -20,7 +20,7 @@ from corehq.apps.export.models.incremental import (
     _generate_incremental_export,
     _send_incremental_export,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
@@ -52,9 +52,11 @@ class TestIncrementalExport(TestCase):
         create_domain(cls.domain)
         cls.now = datetime.utcnow()
         cases = [
-            new_case(domain=cls.domain, foo="apple", bar="banana",
+            new_case(domain=cls.domain,
+                     case_json={"foo": "apple", "bar": "banana"},
                      server_modified_on=cls.now - timedelta(hours=3)),
-            new_case(domain=cls.domain, foo="orange", bar="pear",
+            new_case(domain=cls.domain,
+                     case_json={"foo": "orange", "bar": "pear"},
                      server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
@@ -103,7 +105,7 @@ class TestIncrementalExport(TestCase):
             name='test_export',
             export_instance_id=self.export_instance.get_id,
             connection_settings=ConnectionSettings.objects.create(
-                domain=self.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
+                domain=self.domain, name='test conn', url='http://commcarehq.org', auth_type=BASIC_AUTH,
             )
         )
 
@@ -139,7 +141,11 @@ class TestIncrementalExport(TestCase):
         checkpoint.status = IncrementalExportStatus.SUCCESS
         checkpoint.save()
 
-        case = new_case(domain=self.domain, foo="peach", bar="plumb", server_modified_on=datetime.utcnow())
+        case = new_case(
+            domain=self.domain,
+            case_json={"foo": "peach", "bar": "plumb"},
+            server_modified_on=datetime.utcnow(),
+        )
         send_to_elasticsearch('cases', case.to_json())
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         self.addCleanup(self._cleanup_case(case.case_id))
@@ -169,7 +175,7 @@ class TestIncrementalExport(TestCase):
     def _test_sending(self, status_code, expected_status):
         checkpoint = self.test_initial()
         with requests_mock.Mocker() as m:
-            m.post('http://somewhere/', status_code=status_code)
+            m.post('http://commcarehq.org/', status_code=status_code)
             _send_incremental_export(self.incremental_export, checkpoint)
 
             checkpoint.refresh_from_db()
@@ -205,22 +211,19 @@ class TestIncrementalExport(TestCase):
         cases = [
             new_case(
                 domain=self.domain,
-                foo="peach",
-                bar="plumb",
+                case_json={"foo": "peach", "bar": "plumb"},
                 server_modified_on=datetime.utcnow() + timedelta(hours=-1),
                 owner_id='123',
             ),
             new_case(
                 domain=self.domain,
-                foo="orange",
-                bar="melon",
+                case_json={"foo": "orange", "bar": "melon"},
                 server_modified_on=datetime.utcnow(),
                 owner_id=user.user_id,  # this user is part of the team1 location.
             ),
             new_case(
                 domain=self.domain,
-                foo="grape",
-                bar="pineapple",
+                case_json={"foo": "grape", "bar": "pineapple"},
                 server_modified_on=datetime.utcnow(),
             ),
         ]

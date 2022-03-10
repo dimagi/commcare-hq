@@ -3,7 +3,6 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
 from django.http import (
     Http404,
     HttpRequest,
@@ -21,16 +20,8 @@ from django.views import View
 from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
-
 from tastypie.http import HttpUnauthorized
 
-from corehq.apps.sso.utils.request_helpers import (
-    is_request_blocked_from_viewing_domain_due_to_sso,
-    is_request_using_sso,
-)
-from corehq.apps.sso.utils.view_helpers import (
-    render_untrusted_identity_provider_for_domain_view,
-)
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -41,23 +32,29 @@ from corehq.apps.domain.auth import (
     DIGEST,
     FORMPLAYER,
     OAUTH2,
+    HQApiKeyAuthentication,
     basic_or_api_key,
     basicauth,
     determine_authtype_from_request,
     formplayer_as_user_auth,
     get_username_and_password_from_request,
-    HQApiKeyAuthentication,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.sso.utils.request_helpers import (
+    is_request_blocked_from_viewing_domain_due_to_sso,
+    is_request_using_sso,
+)
+from corehq.apps.sso.utils.view_helpers import (
+    render_untrusted_identity_provider_for_domain_view,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
-    ENTERPRISE_SSO,
 )
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
@@ -105,13 +102,12 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj, allow_mirroring=True):
+        if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
-            elif (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
-                  and is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj)):
+            elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
                 return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
@@ -124,15 +120,14 @@ def login_and_domain_required(view_func):
                 return no_permissions(req, message=msg)
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
-            if (ENTERPRISE_SSO.enabled_for_request(req)  # safety check. next line was not formally QA'd yet
-                    and is_request_using_sso(req)):
+            if is_request_using_sso(req):
                 # We will not support SSO for superusers at this time
                 return HttpResponseForbidden(
                     "SSO support is not currently available for superusers."
                 )
             return call_view()
         elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
-            from corehq.apps.users.views import DomainRequestView
+            from corehq.apps.users.views.web import DomainRequestView
             return DomainRequestView.as_view()(req, *args, **kwargs)
         else:
             raise Http404
@@ -212,11 +207,11 @@ def api_key():
     return real_decorator
 
 
-def _oauth2_check():
+def _oauth2_check(scopes):
     def auth_check(request):
         oauthlib_core = get_oauthlib_core()
         # as of now, this is only used in our APIs, so explictly check that particular scope
-        valid, r = oauthlib_core.verify_request(request, scopes=['access_apis'])
+        valid, r = oauthlib_core.verify_request(request, scopes=scopes)
         if valid:
             request.user = r.user
             return True
@@ -266,7 +261,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                         if (
                             couch_user
                             and (allow_cc_users or couch_user.is_web_user())
-                            and couch_user.is_member_of(domain, allow_mirroring=True)
+                            and couch_user.is_member_of(domain, allow_enterprise=True)
                         ):
                             clear_login_attempts(couch_user)
                             return fn(request, domain, *args, **kwargs)
@@ -346,9 +341,10 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domai
     )
 
 
-def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=None):
+    oauth_scopes = oauth_scopes or ['access_apis']
     return _login_or_challenge(
-        _oauth2_check(),
+        _oauth2_check(oauth_scopes),
         allow_cc_users=allow_cc_users,
         api_key=True,
         allow_sessions=allow_sessions,
@@ -356,7 +352,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def _get_multi_auth_decorator(default, allow_formplayer=False):
+def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -366,6 +362,8 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
              endpoints we validate each formplayer request using a shared key. See the auth
              function for more details.
     """
+    oauth_scopes = oauth_scopes or ['access_apis']
+
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -377,7 +375,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                 )
                 return HttpResponseForbidden()
             request.auth_type = authtype  # store auth type on request for access in views
-            function_wrapper = get_auth_decorator_map(allow_cc_users=True)[authtype]
+            function_wrapper = get_auth_decorator_map(allow_cc_users=True, oauth_scopes=oauth_scopes)[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -396,22 +394,14 @@ def two_factor_exempt(view_func):
     return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
 
-# This decorator should be used for any endpoints used by CommCare mobile
-# It supports basic, session, and apikey auth, but not digest
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth(view_func):
-    return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
+# Use api_auth or api_auth_with_scope decorators to allow -
+# any auth type basic, digest, session, apikey, or oauth
+api_auth = get_multi_auth_decorator(default=DIGEST)
 
 
-# This decorator is used only for anonymous web apps and SMS forms
-# Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_formplayer(view_func):
-    return _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(two_factor_exempt(view_func))
+def api_auth_with_scope(oauth_scopes):
+    return get_multi_auth_decorator(default=DIGEST, oauth_scopes=oauth_scopes)
 
-
-# Use this decorator to allow any auth type -
-# basic, digest, session, or apikey
-api_auth = _get_multi_auth_decorator(default=DIGEST)
 
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
@@ -423,8 +413,9 @@ api_key_auth = login_or_api_key_ex(allow_sessions=False)
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
-def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True):
+def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sessions=True, oauth_scopes=None):
     # get a mapped set of decorators for different auth types with the specified parameters
+    oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
         'allow_cc_users': allow_cc_users,
         'require_domain': require_domain,
@@ -434,7 +425,7 @@ def get_auth_decorator_map(allow_cc_users=False, require_domain=True, allow_sess
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
         BASIC: login_or_basic_ex(**decorator_function_kwargs),
         API_KEY: login_or_api_key_ex(**decorator_function_kwargs),
-        OAUTH2: login_or_oauth2_ex(**decorator_function_kwargs),
+        OAUTH2: login_or_oauth2_ex(oauth_scopes=oauth_scopes, **decorator_function_kwargs),
         FORMPLAYER: login_or_formplayer_ex(**decorator_function_kwargs),
     }
 
@@ -487,8 +478,7 @@ def _two_factor_required(view_func, domain_obj, request):
         return False
     if not request.couch_user:
         return False
-    if (ENTERPRISE_SSO.enabled_for_request(request)
-            and is_request_using_sso(request)):
+    if is_request_using_sso(request):
         # SSO authenticated users manage two-factor auth on the Identity Provider
         # level, so CommCare HQ does not attempt 2FA with them. This is one of
         # the reasons we require that domains establish TrustedIdentityProvider
@@ -624,7 +614,20 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if ((IS_CONTRACTOR.enabled(user.username) or user.is_superuser)
+                and not is_request_using_sso(request)):
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+    return _inner
+
+
+def require_superuser(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        user = request.user
+        if user.is_superuser and not is_request_using_sso(request):
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -637,10 +640,7 @@ domain_admin_required = domain_admin_required_ex()
 cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 ########################################################################################################
-# couldn't figure how to call reverse, so login_url is the actual url
-require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
-
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 

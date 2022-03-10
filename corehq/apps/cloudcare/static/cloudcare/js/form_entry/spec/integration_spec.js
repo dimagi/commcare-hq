@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 describe('Integration', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/fullform-ui"),
+        UI = hqImport("cloudcare/js/form_entry/form_ui"),
         formJSON,
         questionJSONMulti,
         questionJSONString;
@@ -127,7 +127,7 @@ describe('Integration', function () {
         assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
-        multiQ.entry.rawAnswer(["1"]);
+        multiQ.entry.rawAnswer(["Yes"]);
         this.clock.tick(Const.KO_ENTRY_TIMEOUT);
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
 

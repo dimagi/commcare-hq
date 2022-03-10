@@ -7,6 +7,7 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -44,10 +45,11 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
 )
 from corehq.apps.linked_domain.dbaccessors import (
-    get_domain_master_link,
-    is_linked_domain,
+    get_accessible_downstream_domains,
+    get_upstream_domain_link,
+    is_active_downstream_domain,
 )
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.soft_assert import soft_assert
 
 
@@ -193,6 +195,22 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 'default_file_name': _make_name('case_list_menu_item'),
                 'qualifier': 'case_list-menu_item_',
             })
+            if (module and hasattr(module, 'search_config') and module.uses_media()
+                    and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)):
+                specific_media.extend([
+                    {
+                        'menu_refs': app.get_case_search_label_media(
+                            module, module.search_config.search_label, to_language=lang),
+                        'default_file_name': _make_name('case_search_label_item'),
+                        'qualifier': 'case_search-search_label_media_'
+                    },
+                    {
+                        'menu_refs': app.get_case_search_label_media(
+                            module, module.search_config.search_again_label, to_language=lang),
+                        'default_file_name': _make_name('case_search_again_label_item'),
+                        'qualifier': 'case_search-search_again_label_media_'
+                    }
+                ])
             if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
                     toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
                     toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):
@@ -247,26 +265,35 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     if copy_app_form is None:
         copy_app_form = CopyApplicationForm(domain, app)
+
     domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
-        if not (is_linked_domain(request.domain)
-                and get_domain_master_link(request.domain).master_domain == d.name)
+        if not (is_active_downstream_domain(request.domain)
+                and get_upstream_domain_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
+    if domain_has_privilege(request.domain, RELEASE_MANAGEMENT):
+        linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
+    else:
+        # keep behavior the same as before for LINKED_DOMAINS toggle
+        linkable_domains = domain_names
     context.update({
         'domain_names': sorted(domain_names),
+        'linkable_domains': sorted(linkable_domains),
+        'limit_to_linked_domains': (domain_has_privilege(request.domain, RELEASE_MANAGEMENT)
+                                    and not request.couch_user.is_superuser)
     })
-    linked_domains_enabled = toggles.LINKED_DOMAINS.enabled(domain)
     context.update({
         'copy_app_form': copy_app_form,
-        'linked_domains_enabled': linked_domains_enabled,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
     if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
-        from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
+        from corehq.apps.hqmedia.controller import (
+            MultimediaLogoUploadController,
+        )
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         uploaders = [
             MultimediaLogoUploadController(
@@ -279,7 +306,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             for slug in uploader_slugs
         ]
         context.update({
-            "sessionid": request.COOKIES.get('sessionid'),
             "uploaders": uploaders,
             "uploaders_js": [u.js_options for u in uploaders],
             "refs": {

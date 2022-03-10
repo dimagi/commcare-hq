@@ -1,8 +1,9 @@
 hqDefine("data_interfaces/js/case_rule_criteria", [
     'jquery',
+    'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-], function ($, ko, initialPageData) {
+], function ($, _, ko, initialPageData) {
 
     var caseRuleCriteria = function (initial, constants) {
         'use strict';

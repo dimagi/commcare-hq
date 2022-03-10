@@ -129,6 +129,7 @@ class HandleShadowChildModulesTest(TestCase):
             "forms",
             "excluded_form_ids",
             "shadow_module_version",
+            "session_endpoint_id",
         ]
         required_properties = {
             prop
@@ -142,7 +143,7 @@ class HandleShadowChildModulesTest(TestCase):
             required_properties - copied_properties,
             [],
             (f"Please handle the new property you just added '{required_properties - copied_properties}' "
-             "to ShadowModule in app_manager.views.utils.handle_child_shadow_modules, or add it "
+             "to ShadowModule in app_manager.views.utils.handle_shadow_child_modules, or add it "
              "to the ignored_propertieslist in this test."),
         )
 
@@ -152,7 +153,8 @@ class HandleShadowChildModulesTest(TestCase):
             "root_module_id",
             "name",
             "case_type",
-            "unique_id"
+            "unique_id",
+            "session_endpoint_id",
         ]
         required_properties = {
             prop
@@ -166,13 +168,13 @@ class HandleShadowChildModulesTest(TestCase):
             if isinstance(vars(NavMenuItemMediaMixin)[prop], jsonobject.base_properties.JsonProperty)
             and prop not in ignored_properties
         }
-        
+
         copied_properties = {prop for prop, _ in MODULE_BASE_PROPERTIES_TO_COPY}
 
         self.assertItemsEqual(
             required_properties - copied_properties,
             [],
             (f"Please handle the new property you just added '{required_properties - copied_properties}' "
-             "to ShadowModule in app_manager.views.utils.handle_child_shadow_modules, or add it "
-             "to the ignored_propertieslist in this test."),
+             "to ShadowModule in app_manager.views.utils.handle_shadow_child_modules, or add it "
+             "to the ignored_properties list in this test."),
         )

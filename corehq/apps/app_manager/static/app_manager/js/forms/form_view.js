@@ -45,14 +45,32 @@ hqDefine("app_manager/js/forms/form_view", function () {
             return false;
         });
 
-        self.userCaseReferenceNotAllowed = ko.computed(function () {
-            return !initialPageData('is_usercase_in_use') && formFilterMatches(
+        self.isUsercaseInUse = ko.observable(initialPageData('is_usercase_in_use'));
+        self.usercaseReferenceNotAllowed = ko.computed(function () {
+            return !self.isUsercaseInUse() && formFilterMatches(
                 self.formFilter(), patterns.usercase_substring
             );
         });
 
+        self.enableUsercaseInProgress = ko.observable(false);
+        self.enableUsercaseError = ko.observable();
+        self.enableUsercase = function () {
+            self.enableUsercaseInProgress(true);
+            const url = hqImport("hqwebapp/js/initial_page_data").reverse("enable_usercase");
+            $.ajax(url, {
+                method: "POST",
+                success: function () {
+                    self.isUsercaseInUse(true);
+                },
+                error: function () {
+                    self.enableUsercaseInProgress(false);
+                    self.enableUsercaseError(gettext("Could not enable user properties, please try again later."));
+                },
+            });
+        };
+
         self.allowed = ko.computed(function () {
-            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
+            return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
         });
 
         return self;
@@ -93,7 +111,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         };
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-            labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+            labels[FormWorkflow.Values.FORM] = gettext("Link to other form or menu");
             options.forms = initialPageData('linkable_forms');
             options.formLinks = initialPageData('form_links');
             options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');

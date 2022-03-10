@@ -15,14 +15,15 @@ hqDefine("userreports/js/configurable_reports_home", [
     });
 
     $select.select2({
-        placeholder: gettext("Edit a report or data source"),
+        placeholder: gettext("Edit a custom web report or custom web report source"),
         templateResult: function (item) {
             var text = item.text.trim();
             if (!item.element) {
                 return text;
             }
             var options = $(item.element).data();
-            return _.template("<%= static_label %> <%= deactivated_label %> <i class='<%= icon %>'></i> <%= text %> <script>alert('stuff')</script>")({
+            // static_label and deactivated_label are sanitized from backend
+            return _.template("<%= static_label %> <%= deactivated_label %> <i class='<%- icon %>'></i> <%- text %>")({
                 icon: options.label === "report" ? "fcc fcc-reports" : "fa fa-database",
                 static_label: options.isStatic ? "<span class='label label-default'>" + gettext("static") + "</span>" : "",
                 deactivated_label: options.isDeactivated ? "<span class='label label-default'>" + gettext("deactivated") + "</span>" : "",

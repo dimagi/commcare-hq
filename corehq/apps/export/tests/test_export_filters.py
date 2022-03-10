@@ -77,16 +77,18 @@ class ExportFilterResultTest(SimpleTestCase):
         cls.group_id = group._id
         send_to_elasticsearch('groups', group.to_json())
 
-        form = new_form(form={"meta": {"userID": None}})
+        form_json = new_form({"meta": "", "#type": "data"}).to_json()
+        # fabricate null userID because convert_form_to_xml will not accept it
+        form_json["form"] = {"meta": {"userID": None}}
+        send_to_elasticsearch('forms', form_json)
+
+        form = new_form({"meta": {"userID": ""}, "#type": "data"})
         send_to_elasticsearch('forms', form.to_json())
 
-        form = new_form(form={"meta": {"userID": ""}})
+        form = new_form({"meta": {"deviceID": "abc"}, "#type": "data"})
         send_to_elasticsearch('forms', form.to_json())
 
-        form = new_form(form={"meta": {"deviceID": "abc"}})
-        send_to_elasticsearch('forms', form.to_json())
-
-        form = new_form(form={"meta": {"userID": uuid.uuid4().hex}})
+        form = new_form({"meta": {"userID": uuid.uuid4().hex}, "#type": "data"})
         send_to_elasticsearch('forms', form.to_json())
 
         es.indices.refresh(CASE_INDEX_INFO.index)

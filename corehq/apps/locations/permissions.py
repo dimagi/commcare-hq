@@ -130,7 +130,7 @@ LOCATION_ACCESS_DENIED = format_html(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
     'More information is available <a href="{}">here</a>.'),
-    "https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions")
+    "https://wiki.commcarehq.org/display/commcarepublic/Location-Based+Data+Access+and+User+Editing+Restrictions")
 
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
@@ -206,6 +206,12 @@ def location_safe(view):
         LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
 
     return view
+
+
+# Use this decorator for views that need to be marked location safe but do not actually
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
+# whose client is expected to be the application engine (mobile / web apps).
+location_safe_bypass = location_safe
 
 
 def conditionally_location_safe(conditional_function):

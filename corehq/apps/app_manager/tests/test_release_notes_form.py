@@ -3,11 +3,11 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceNotFound
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.models import Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, TestXmlMixin
+from corehq.apps.app_manager.tests.util import patch_get_xform_resource_overrides, TestXmlMixin, get_simple_form
 
 
 class ReleaseFormsSetupMixin(object):
@@ -182,8 +182,8 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
     def setUp(self):
         self.set_up_app()
-        self.releases_form.source = self.get_xml('very_simple_form').decode('utf-8')
-        self.basic_form.source = self.get_xml('very_simple_form').decode('utf-8')
+        self.releases_form.source = get_simple_form(xmlns=self.releases_form.xmlns)
+        self.basic_form.source = get_simple_form(xmlns=self.basic_form.xmlns)
         self.factory.app.save()
 
         super(ReleaseNotesResourceFileTest, self).setUp()

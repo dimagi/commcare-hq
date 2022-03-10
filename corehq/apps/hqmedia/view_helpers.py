@@ -87,7 +87,7 @@ def update_multimedia_paths(app, paths):
                 if update_count:
                     success_counts[form.unique_id] += update_count
 
-    # Update app's master map of multimedia
+    # Update app's upstream map of multimedia
     for old_path, new_path in paths.items():
         if old_path in app.multimedia_map:  # path will not be present if file is missing from app
             app.multimedia_map.update({

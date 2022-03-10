@@ -2,12 +2,11 @@ import collections
 import json
 
 from django import forms
-from django.forms.fields import CharField, MultiValueField
 from django.forms.utils import flatatt
-from django.forms.widgets import CheckboxInput, Input, MultiWidget, TextInput
-from django.template.loader import render_to_string
+from django.forms.widgets import CheckboxInput, Input
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html, conditional_escape
 from django.utils.translation import ugettext_noop
 
 from dimagi.utils.dates import DateSpan
@@ -22,7 +21,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         self.inline_label = inline_label
 
     def render(self, name, value, attrs=None, renderer=None):
-        extra_attrs = {'type': 'checkbox', 'name': name}
+        extra_attrs = {'type': 'checkbox', 'name': conditional_escape(name)}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
@@ -34,8 +33,10 @@ class BootstrapCheckboxInput(CheckboxInput):
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_text(value)
-        return mark_safe('<label class="checkbox"><input%s /> %s</label>' %
-                         (flatatt(final_attrs), self.inline_label))
+        return format_html(
+            '<label class="checkbox"><input{} /> {}</label>',
+            mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
+            self.inline_label)
 
 
 class _Select2AjaxMixin():
@@ -78,8 +79,7 @@ class Select2Ajax(_Select2AjaxMixin, forms.Select):
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2Ajax, self).render(name, value, attrs, renderer=renderer)
-        return mark_safe(output)
+        return super(Select2Ajax, self).render(name, value, attrs, renderer=renderer)
 
 
 class DateRangePickerWidget(Input):
@@ -126,15 +126,15 @@ class DateRangePickerWidget(Input):
             'data-start-date': startdate,
             'data-end-date': enddate,
         })
-        final_attrs = self.build_attrs(attrs)
 
         output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
-        return mark_safe("""
-            <div class="input-group hqwebapp-datespan">
-                <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                {}
-            </div>
-        """.format(output))
+        return format_html(
+            '<div class="input-group hqwebapp-datespan">'
+            '   <span class="input-group-addon"><i class="fa fa-calendar"></i></span>'
+            '   {}'
+            '</div>',
+            output
+        )
 
 
 class SelectToggle(forms.Select):
@@ -170,6 +170,4 @@ class GeoCoderInput(Input):
         if isinstance(value, dict):
             value = json.dumps(value)
         output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
-        return mark_safe("""
-            <div class="geocoder-proximity">{}</div>
-        """.format(output))
+        return format_html('<div class="geocoder-proximity">{}</div>', output)

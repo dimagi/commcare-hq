@@ -77,6 +77,12 @@
           {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
             {% include "app_manager/partials/forms/custom_assertions.html" %}
           {% endif %}
+
+          {% if session_endpoints_enabled %}
+            {% include "app_manager/partials/session_endpoints.html" with module_or_form=form %}
+            {% include "app_manager/partials/function_datum_endpoints.html" with module_or_form=form %}
+          {% endif %}
+
         </div>
       </div>
     </div>

@@ -33,11 +33,11 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout, Submit
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
@@ -95,12 +95,15 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
+    RESTRICTED_UCR_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
+    all_restricted_ucr_expressions,
+    AllowedUCRExpressionSettings
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -109,9 +112,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT
+    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -586,7 +588,7 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("Secure submissions"),
         required=False,
         help_text=mark_safe_lazy(ugettext_lazy(  # nosec: no user input
-            "Secure Submissions prevents others from impersonating your mobile workers."
+            "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
@@ -628,64 +630,89 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("Disable Google Analytics"),
         required=False,
     )
+    # Enabled by a specific feature flag:
+    # https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints
+    restrict_mobile_access = BooleanField(
+        label=ugettext_lazy("Restrict Mobile Endpoint Access"),
+        required=False,
+        help_text=mark_safe_lazy(ugettext_lazy(
+            "When this setting is turned on, the Roles and Permissions page will display a new "
+            "\"Mobile App Access\" option under \"Other Settings.\" With this permission disabled, "
+            "the user account will be unable to login or sync from a mobile application, and will only "
+            "be able to use apps via the Web Apps interface."
+            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'> "
+            "Read more about restricting mobile endpoint access here.</a>")),
+    )
+    disable_mobile_login_lockout = BooleanField(
+        label=ugettext_lazy("Disable Mobile Worker Lockout"),
+        required=False,
+        help_text=ugettext_lazy("Mobile Workers will never be locked out of their account, regardless"
+            "of the number of failed attempts")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
         domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
-        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
-        self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
-        self.helper[3] = crispy.Field('secure_sessions_timeout')
-        self.helper[4] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
-        self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
-        self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
-        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
 
+        excluded_fields = []
+        if not RESTRICT_MOBILE_ACCESS.enabled(domain):
+            excluded_fields.append('restrict_mobile_access')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(8)
-            self.helper.layout.pop(7)
-            self.helper.layout.pop(6)
+            excluded_fields.append('ga_opt_out')
+            excluded_fields.append('strong_mobile_passwords')
+            excluded_fields.append('two_factor_auth')
+            excluded_fields.append('secure_sessions')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(5)
+            excluded_fields.append('hipaa_compliant')
         if not SECURE_SESSION_TIMEOUT.enabled(domain):
-            self.helper.layout.pop(3)
-        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(2)
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
-        self.helper.layout.append(
+            excluded_fields.append('secure_sessions_timeout')
+
+        # PrependedText ensures the label is to the left of the checkbox, and the help text beneath.
+        # Feels like there should be a better way to apply these styles, as we aren't pre-pending anything
+        fields = [twbscrispy.PrependedText(field_name, '')
+            for field_name in self.fields.keys() if field_name not in excluded_fields]
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                _('Edit Privacy Settings'),
+                *fields
+            ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Privacy Settings"),
-                    type="submit",
-                    css_class='btn-primary',
+                    _('Update Privacy Settings'),
+                    type='submit',
+                    css_class='btn-primary'
                 )
             )
         )
 
-    def save(self, domain):
-        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-        domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
-        domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
-        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
-        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+    def save(self, domain_obj):
+        domain_obj.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        domain_obj.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
+        domain_obj.secure_sessions = self.cleaned_data.get('secure_sessions', False)
+        domain_obj.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
+        domain_obj.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
 
-        domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
+        domain_obj.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
-        if secure_submissions != domain.secure_submissions:
-            for app in get_apps_in_domain(domain.name):
+        if secure_submissions != domain_obj.secure_submissions:
+            for app in get_apps_in_domain(domain_obj.name):
                 if app.secure_submissions != secure_submissions:
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
-        domain.secure_submissions = secure_submissions
-        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
-        domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
+        domain_obj.secure_submissions = secure_submissions
+        domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+        domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
+        if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
+            domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
 
-        domain.save()
+        domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
+
+        domain_obj.save()
 
         if apps_to_save:
             apps = [app for app in apps_to_save if isinstance(app, Application)]
@@ -937,6 +964,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Check this box to enable messaging.",  # TODO through non-test gateways
     )
+    active_ucr_expressions = forms.MultipleChoiceField(
+        label="Expressions for SaaS to Manage",
+        choices=RESTRICTED_UCR_EXPRESSIONS,
+        required=False,
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1021,6 +1053,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
                 ),
                 'granted_messaging_access',
+                'active_ucr_expressions',
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -1056,6 +1089,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_active_ucr_expressions(self):
+        value = self.cleaned_data.get('active_ucr_expressions')
+        all_expressions = all_restricted_ucr_expressions()
+        for expr in value:
+            if expr not in all_expressions:
+                raise forms.ValidationError(_(f"Unknown expression {expr}"))
+        return value
 
     def clean_auto_case_update_hour(self):
         if self.cleaned_data.get('use_custom_auto_case_update_hour') != 'Y':
@@ -1116,6 +1157,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
         )
+        ucr_expressions = self.cleaned_data['active_ucr_expressions']
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions(domain.name, ucr_expressions)
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
@@ -1176,8 +1219,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
-    if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
+    if settings.RECAPTCHA_PRIVATE_KEY:
+        captcha = ReCaptchaField(label="")
     error_messages = {
         'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
                                  "registered?"),
@@ -1239,12 +1282,12 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 site_name = domain = domain_override
 
             couch_user = CouchUser.from_django_user(user)
+            if couch_user:
+                user_email = couch_user.get_email()
             # If there is no CouchUser then this could be a ConsumerUser
-            if couch_user and couch_user.is_web_user():
-                user_email = user.username
-            elif user.email:
-                user_email = user.email
             else:
+                user_email = user.email
+            if not user_email:
                 continue
 
             c = {
@@ -2452,11 +2495,6 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
-        app_id = self.cleaned_data.get('app_id')
-        if app_id:
-            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
-                self.add_error('app_id',
-                               _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
         return self.data.getlist('build_profile_id')

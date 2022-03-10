@@ -155,7 +155,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # test restore with different user
         user2 = create_restore_user(self.domain, username='user2')
-        self.addCleanup(user2._couch_user.delete, deleted_by=None)
+        self.addCleanup(user2._couch_user.delete, self.domain, deleted_by=None)
         fixture_xml = self.generate_product_fixture_xml(user2)
         index_schema, fixture = call_fixture_generator(product_fixture_generator, user2)
 
@@ -259,7 +259,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # test restore with different user
         user2 = create_restore_user(self.domain, username='user2')
-        self.addCleanup(user2._couch_user.delete, deleted_by=None)
+        self.addCleanup(user2._couch_user.delete, self.domain, deleted_by=None)
         program_xml = self.generate_program_xml(program_list, user2)
         fixture = call_fixture_generator(program_fixture_generator, user2)
 

@@ -16,6 +16,7 @@ from django.views.generic import View
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
@@ -34,7 +35,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -45,6 +46,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
+from corehq.const import USER_CHANGE_VIA_WEB
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -138,6 +140,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
+        initial['active_ucr_expressions'] = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(
+            domain_name=self.domain_object.name
+        )
         return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
@@ -168,7 +173,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
             old_attrs = copy.copy(self.domain_object.internal)
+            old_ucr_permissions = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain)
             self.internal_settings_form.save(self.domain_object)
+            log_domain_changes(
+                self.request.couch_user.username,
+                self.domain,
+                self.internal_settings_form.cleaned_data['active_ucr_expressions'],
+                old_ucr_permissions,
+            )
             eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
                                   bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
 
@@ -264,7 +276,6 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'toggles': self._get_toggles(),
-            'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }
 
@@ -396,7 +407,8 @@ class ActivateTransferDomainView(BasePageView):
         if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        self.active_transfer.transfer_domain(ip=get_ip(request))
+        self.active_transfer.transfer_domain(by_user=request.couch_user, transfer_via=USER_CHANGE_VIA_WEB,
+                                             ip=get_ip(request))
         messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                          .format(domain=self.active_transfer.domain))
 

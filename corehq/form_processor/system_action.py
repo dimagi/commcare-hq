@@ -1,9 +1,4 @@
-import json
 import logging
-from xml.sax.saxutils import escape
-
-from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import XFormInstanceSQL
 
 log = logging.getLogger(__name__)
 
@@ -48,22 +43,8 @@ def submit_system_action(name, args, args_json, domain):
     information to reconstruct `args` given the action name.
     :param domain: The domain in which to perform the action.
     """
-    from corehq.apps.hqcase.utils import submit_case_blocks
-
     if name not in _actions:
         raise ValueError("unknown system action: {}".format(name))
-    if couch_sql_migration_in_progress(domain):
-        # record system action if migration in progress
-        log.debug("submit %s %s in %s", name, args_json, domain)
-        xml_name = escape(name)
-        xml_args = escape(json.dumps(args_json))
-        submit_case_blocks(
-            f"<name>{xml_name}</name><args>{xml_args}</args>",
-            domain,
-            xmlns=SYSTEM_ACTION_XMLNS,
-            device_id=name,
-            form_extras={"auth_context": SystemActionContext},
-        )
     do_system_action(name, args)
 
 
@@ -72,14 +53,13 @@ SYSTEM_ACTION_XMLNS = "http://commcarehq.org/system/action"
 
 
 def handle_system_action(form, auth_context):
+    from .models import XFormInstance
     if auth_context is not SystemActionContext:
         raise UnauthorizedSystemAction(repr(form))
     # put form in archived state so it does not appear in exports
     assert form.xmlns == SYSTEM_ACTION_XMLNS, repr(form)
-    if isinstance(form, XFormInstanceSQL):
-        form.state = XFormInstanceSQL.ARCHIVED
-    else:
-        form.doc_type = "XFormArchived"
+    assert isinstance(form, XFormInstance), form
+    form.state = XFormInstance.ARCHIVED
 
 
 def do_system_action(name, args):

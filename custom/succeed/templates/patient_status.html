@@ -1,7 +1,0 @@
-{% extends "base_patient.html" %}
-{% load i18n %}
-{% block patient-tab-container %}
-    <a target="_blank" href="{{ disenroll_patient_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Disenroll Patient" %}</a>
-    </br/>
-    <a target="_blank" href="{{ change_patient_data_url }}" class="btn btn-large btn-success" style="margin: 2%">{% trans "Change Care Site/Time/MRN" %}</a>
-{% endblock %}

@@ -13,7 +13,6 @@ from corehq.apps.formplayer_api.smsforms.api import (
     XFormsConfig,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 
@@ -22,8 +21,7 @@ from .models import SQLXFormsSession
 COMMCONNECT_DEVICE_ID = "commconnect"
 
 
-def start_session(session, domain, contact, app, module, form, case_id=None, yield_responses=False,
-                  case_for_case_submission=False):
+def start_session(session, domain, contact, app, form, case_id=None, yield_responses=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -32,26 +30,11 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     
     Special params:
     yield_responses - If True, the list of xforms responses is returned, otherwise the text prompt for each is returned
-    session_type - XFORMS_SESSION_SMS or XFORMS_SESSION_IVR
-    case_for_case_submission - True if this is a submission that a case is making to alter another related case. For example, if a parent case is filling out
-        an SMS survey which will update its child case, this should be True.
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
-    session_data = CaseSessionDataHelper(domain, contact, case_id, app, form).get_session_data(COMMCONNECT_DEVICE_ID)
-
-    # since the API user is a superuser, force touchforms to query only
-    # the contact's cases by specifying it as an additional filter
-    if is_commcarecase(contact) and form.requires_case():
-        session_data["additional_filters"] = {
-            "case_id": case_id,
-            "footprint": "true" if form.uses_parent_case() else "false",
-        }
-    elif isinstance(contact, CouchUser):
-        session_data["additional_filters"] = {
-            "user_id": contact.get_id,
-            "footprint": "true"
-        }
+    session_data = CaseSessionDataHelper(domain, contact, case_id, app, form).get_session_data(
+        COMMCONNECT_DEVICE_ID)
 
     kwargs = {}
     if is_commcarecase(contact):

@@ -2,7 +2,7 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
@@ -31,38 +31,38 @@ from ..models import CommCareUser, WebUser
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
-    @patch('corehq.apps.callcenter.tasks.sync_user_cases')
+    @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
     def test_commcareuser_save(self, _, send_to_es, invalidate,
-                               sync_user_cases, update_hubspot_properties):
+                               sync_usercases, update_hubspot_properties):
         CommCareUser(username='test').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
-        self.assertTrue(sync_user_cases.called)
+        self.assertTrue(sync_usercases.called)
         self.assertFalse(update_hubspot_properties.called)
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
-    @patch('corehq.apps.callcenter.tasks.sync_user_cases')
+    @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
     def test_webuser_save(self, _, send_to_es, invalidate,
-                          sync_user_cases, update_hubspot_properties):
+                          sync_usercases, update_hubspot_properties):
         WebUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
-        self.assertFalse(sync_user_cases.called)
+        self.assertFalse(sync_usercases.called)
         self.assertTrue(update_hubspot_properties.called)
 
 
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
-@patch('corehq.apps.callcenter.tasks.sync_user_cases')
+@patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
 @es_test

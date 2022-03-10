@@ -3,15 +3,6 @@
 
 from django.db import migrations
 
-from corehq.apps.cloudcare.management.commands.populate_application_access import Command
-
-
-def _migrate_from_migration(apps, schema_editor):
-    sql_class = Command.sql_class()
-    sql_class.objects.model._meta.db_table = "cloudcare_sqlapplicationaccess"
-    Command.migrate_from_migration(apps, schema_editor)
-    sql_class.objects.model._meta.db_table = "cloudcare_applicationaccess"
-
 
 class Migration(migrations.Migration):
 
@@ -19,8 +10,4 @@ class Migration(migrations.Migration):
         ('cloudcare', '0001_initial'),
     ]
 
-    operations = [
-        migrations.RunPython(_migrate_from_migration,
-                             reverse_code=migrations.RunPython.noop,
-                             elidable=True),
-    ]
+    operations = []

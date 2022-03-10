@@ -13,9 +13,9 @@ import architect
 import six
 from django.db.models import Q
 from memoized import memoized
+from toposort import toposort_flatten
 
 from casexml.apps.case import const
-from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.change_publishers import publish_synclog_saved
 from casexml.apps.phone.checksum import CaseStateHash, Checksum
 from casexml.apps.phone.exceptions import (
@@ -38,7 +38,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
@@ -83,6 +82,10 @@ class OTARestoreUser(object):
         return 1
 
     @property
+    def full_username(self):
+        return self._couch_user.username
+
+    @property
     def username(self):
         return self._couch_user.raw_username
 
@@ -92,7 +95,7 @@ class OTARestoreUser(object):
 
     @property
     def user_session_data(self):
-        return self._couch_user.user_session_data
+        return self._couch_user.get_user_session_data(self.domain)
 
     @property
     def date_joined(self):
@@ -181,9 +184,9 @@ class OTARestoreWebUser(OTARestoreUser):
         return []
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureStatus
+        from corehq.apps.fixtures.models import UserLookupTableStatus
 
-        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
@@ -226,37 +229,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.get_case_sharing_groups()
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
 
-        return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-
-class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
-    """
-    Represents the state of a case on a phone.
-    """
-
-    case_id = StringProperty()
-    type = StringProperty()
-    indices = SchemaListProperty(CommCareCaseIndex)
-
-    @classmethod
-    def from_case(cls, case):
-        if isinstance(case, dict):
-            return cls.wrap({
-                'case_id': case['_id'],
-                'type': case['type'],
-                'indices': case['indices'],
-            })
-
-        return cls(
-            case_id=case.case_id,
-            type=case.type,
-            indices=case.indices,
-        )
-
-    def __repr__(self):
-        return "case state: %s (%s)" % (self.case_id, self.indices)
+        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
 
 class SyncLogAssertionError(AssertionError):
@@ -358,16 +333,6 @@ class AbstractSyncLog(SafeSaveDocument):
         raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
             type(other_sync_log), cls,
         ))
-
-    # anything prefixed with 'tests_only' is only used in tests
-    def tests_only_get_cases_on_phone(self):
-        raise NotImplementedError()
-
-    def test_only_clear_cases_on_phone(self):
-        raise NotImplementedError()
-
-    def test_only_get_dependent_cases_on_phone(self):
-        raise NotImplementedError()
 
 
 def save_synclog_to_sql(synclog_json_object):
@@ -517,7 +482,7 @@ class IndexTree(DocumentSchema):
 
     @staticmethod
     def get_all_dependencies(case_id, child_index_tree, extension_index_tree):
-        """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+        """Takes a child and extension index tree and returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
@@ -687,7 +652,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
-        - it is the exension of a live case.
+        - it is the extension of a live case.
 
         Algorithm:
         ----------
@@ -856,10 +821,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         assert index.relationship == const.CASE_INDEX_EXTENSION
         self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
 
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
-
         case_child_indices = [idx for idx in case_update.indices_to_add
                               if idx.relationship == const.CASE_INDEX_CHILD
                               and idx.referenced_id == index.referenced_id]
@@ -870,9 +831,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def _add_child_index(self, index):
         assert index.relationship == const.CASE_INDEX_CHILD
         self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
-        if index.referenced_id not in self.case_ids_on_phone:
-            self.case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.referenced_id)
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
@@ -983,13 +941,43 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if case_update.is_closed:
                     self.closed_cases.add(case_update.case_id)
 
+        # generate list of case IDs ordered topologically by case indices
+        tree = defaultdict(set)
         for update in non_live_updates:
-            _get_logger().debug('case {} is NOT live.'.format(update.case_id))
-            if update.has_extension_indices_to_add():
-                # non-live cases with extension indices should be added and processed
-                self.case_ids_on_phone.add(update.case_id)
-                for index in update.indices_to_add:
-                    self._add_index(index, update)
+            tree[update.case_id]  # prime for case
+            for index in update.indices_to_add:
+                tree[index.referenced_id].add(update.case_id)
+        ordered_case_ids = toposort_flatten(tree)
+
+        non_live_updates_by_case_id = defaultdict(list)
+        for update in non_live_updates:
+            non_live_updates_by_case_id[update.case_id].append(update)
+
+        for case_id in ordered_case_ids:
+            if case_id not in non_live_updates_by_case_id:
+                continue
+            _get_logger().debug('case {} is NOT live.'.format(case_id))
+            is_dependent = (
+                self.index_tree.get_cases_that_directly_depend_on_case(case_id)
+                or self.extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
+            )
+            if is_dependent:
+                _get_logger().debug('adding dependent case %s', case_id)
+                self.case_ids_on_phone.add(case_id)
+                self.dependent_case_ids_on_phone.add(case_id)
+
+                for update in non_live_updates_by_case_id[case_id]:
+                    for index in update.indices_to_add:
+                        self._add_index(index, update)
+
+                made_changes = True
+
+            for update in non_live_updates_by_case_id[case_id]:
+                if update.has_extension_indices_to_add():
+                    # non-live cases with extension indices should be added and processed
+                    self.case_ids_on_phone.add(update.case_id)
+                    for index in update.indices_to_add:
+                        self._add_index(index, update)
                     made_changes = True
 
         _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))
@@ -1034,17 +1022,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
 
-    def tests_only_get_cases_on_phone(self):
-        # hack - just for tests
-        return [CaseState(case_id=id) for id in self.case_ids_on_phone]
-
-    def test_only_clear_cases_on_phone(self):
-        self.case_ids_on_phone = set()
-
-    def test_only_get_dependent_cases_on_phone(self):
-        # hack - just for tests
-        return [CaseState(case_id=id) for id in self.dependent_case_ids_on_phone]
-
 
 def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
@@ -1076,30 +1053,3 @@ def properly_wrap_sync_log(doc, synclog_sql=None):
     if synclog_sql:
         synclog._synclog_sql = synclog_sql
     return synclog
-
-
-class OwnershipCleanlinessFlag(models.Model):
-    """
-    Stores whether an owner_id is "clean" aka has a case universe only belonging
-    to that ID.
-
-    We use this field to optimize restores.
-    """
-    domain = models.CharField(max_length=100, db_index=True)
-    owner_id = models.CharField(max_length=100, db_index=True)
-    is_clean = models.BooleanField(default=False)
-    last_checked = models.DateTimeField()
-    hint = models.CharField(max_length=100, null=True, blank=True)
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        self.last_checked = datetime.utcnow()
-        super(OwnershipCleanlinessFlag, self).save(force_insert, force_update, using, update_fields)
-
-    @classmethod
-    def get_for_owner(cls, domain, owner_id):
-        return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]
-
-    class Meta(object):
-        app_label = 'phone'
-        unique_together = [('domain', 'owner_id')]

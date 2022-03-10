@@ -15,7 +15,7 @@ hqDefine("groups/js/group_members", [
 ) {
     $(function () {
         // custom data
-        var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Group Information"));
+        var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));
         customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));
@@ -69,11 +69,11 @@ hqDefine("groups/js/group_members", [
                 var alertClass, message;
                 if (isSuccess) {
                     alertClass = 'alert-success';
-                    message = django.gettext('Successfully saved ') + name.toLowerCase() + '.';
+                    message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
                     alertClass = 'alert-danger';
-                    message = django.gettext('Failed to save ') + name.toLowerCase() + '.';
+                    message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
                 $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);

@@ -1,8 +1,6 @@
-import six
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
-from django.test.utils import override_settings
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.tests.util import (
     delete_all_cases,
@@ -32,7 +30,7 @@ class OtaV3RestoreTest(TestCase):
         restore_user = create_restore_user(domain=self.domain)
         case_id = 'my-case-id'
         device = MockDevice(self.project, restore_user)
-        device.change_cases(CaseBlock.deprecated_init(
+        device.change_cases(CaseBlock(
             create=True,
             case_id=case_id,
             user_id=restore_user.user_id,

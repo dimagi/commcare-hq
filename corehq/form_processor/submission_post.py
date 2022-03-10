@@ -18,7 +18,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
-from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
+from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
@@ -27,9 +27,9 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
@@ -87,7 +87,6 @@ class SubmissionPost(object):
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
         self.interface = FormProcessorInterface(domain)
-        self.formdb = FormAccessors(domain)
         self.partial_submission = partial_submission
         # always None except in the case where a system form is being processed as part of another submission
         # e.g. for closing extension cases
@@ -229,7 +228,7 @@ class SubmissionPost(object):
 
             if submitted_form.is_submission_error_log:
                 logging.info('Processing form %s as a submission error', submitted_form.form_id)
-                self.formdb.save_new_form(submitted_form)
+                XFormInstance.objects.save_new_form(submitted_form)
 
                 response = None
                 try:
@@ -329,7 +328,7 @@ class SubmissionPost(object):
                             openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
-
+                        report_case_usage(self.domain, len(cases))
                         openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'
@@ -428,7 +427,6 @@ class SubmissionPost(object):
         instance = xforms[0]
         case_db.clear_changed()
         try:
-            case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
@@ -481,14 +479,14 @@ class SubmissionPost(object):
 
     @staticmethod
     def _fire_post_save_signals(instance, cases):
-        from casexml.apps.case.signals import case_post_save
+        from corehq.form_processor.signals import sql_case_post_save
         error_message = "Error occurred during form submission post save (%s)"
         error_details = {'domain': instance.domain, 'form_id': instance.form_id}
         results = successful_form_received.send_robust(None, xform=instance)
         has_errors = log_signal_errors(results, error_message, error_details)
 
         for case in cases:
-            results = case_post_save.send_robust(case.__class__, case=case)
+            results = sql_case_post_save.send_robust(case.__class__, case=case)
             has_errors |= log_signal_errors(results, error_message, error_details)
         if has_errors:
             raise PostSaveError
@@ -587,11 +585,11 @@ def handle_unexpected_error(interface, instance, exception):
     notify_submission_error(instance, instance.problem, sys.exc_info())
 
     try:
-        FormAccessors(interface.domain).save_new_form(instance)
+        XFormInstance.objects.save_new_form(instance)
     except IntegrityError:
         # handle edge case where saving duplicate form fails
         instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
-        FormAccessors(interface.domain).save_new_form(instance)
+        XFormInstance.objects.save_new_form(instance)
     except XFormSaveError:
         # try a simple save
         instance.save()
@@ -606,9 +604,5 @@ def notify_submission_error(instance, message, exec_info=None):
         'domain': domain,
         'error form ID': instance.form_id,
     }
-    should_email = not isinstance(exec_info[1], CouchSaveAborted)  # intentionally don't double-email these
-    if should_email:
-        request = get_request()
-        notify_exception(request, message, details=details, exec_info=exec_info)
-    else:
-        logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
+    request = get_request()
+    notify_exception(request, message, details=details, exec_info=exec_info)

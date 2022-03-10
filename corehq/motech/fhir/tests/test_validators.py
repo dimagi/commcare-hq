@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 
+from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
 from corehq.motech.fhir.models import FHIRResourceType
 
 
@@ -21,6 +22,6 @@ class TestValidateSupportedFHIRTypes(SimpleTestCase):
         except ValidationError as e:
             self.assertEqual(
                 e.message_dict['name'],
-                ['Unsupported FHIR Resource type Random. '
-                 'Please choose from Patient, DiagnosticReport, Observation']
+                ['Unsupported FHIR Resource type Random. Please choose from '
+                 + ', '.join(SUPPORTED_FHIR_RESOURCE_TYPES)]
             )

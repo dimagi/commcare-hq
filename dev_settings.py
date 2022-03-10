@@ -6,6 +6,7 @@ Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
 import os
+import settingshelper
 
 LOCAL_APPS = (
     'django_extensions',
@@ -38,9 +39,7 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
-    ('casexml.apps.case.models', 'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
-    ('couchforms.models', 'XFormInstance'),
+    ('corehq.form_processor.models', ('CommCareCase', 'XFormInstance')),
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),
@@ -72,7 +71,10 @@ DATABASES = {
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
     }
 }
 
@@ -80,13 +82,21 @@ COUCH_DATABASES = {
     'default': {
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'localhost:5984',
-        'COUCH_USERNAME': 'commcarehq',
-        'COUCH_PASSWORD': 'commcarehq',
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
         'COUCH_DATABASE_NAME': 'commcarehq'
     },
 }
 
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+redis_cache = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
+}
+
+CACHES = {
+    'default': redis_cache,
+    'redis': redis_cache,
+}
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
@@ -121,3 +131,24 @@ FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 
 # use console email by default
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+if settingshelper.is_testing():
+    S3_BLOB_DB_SETTINGS = {
+        "url": "http://localhost:9980",
+        "access_key": "admin-key",
+        "secret_key": "admin-secret",
+        "config": {
+            "connect_timeout": 3,
+            "read_timeout": 5,
+            "signature_version": "s3"
+        },
+    }
+
+# substantially increase the API request limits in dev, in part
+# to prevent AssertionError: 429 != 200  test failures
+CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
+CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
+
+### LOG FILES ###
+DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
+LOG_FILE = "/tmp/commcare-hq.log"

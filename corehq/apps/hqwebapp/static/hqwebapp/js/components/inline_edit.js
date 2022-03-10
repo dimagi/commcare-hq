@@ -16,6 +16,8 @@
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
  *  - saveParams: Any additional data to pass along. May contain observables.
  *  - errorMessage: Message to display if server returns an error.
+ *  - containerClass: CSS class to use for the field container
+ *  - iconClass: If specified add an icon in front of the container e.g. 'fa fa-envelope
  */
 
 hqDefine('hqwebapp/js/components/inline_edit', [
@@ -62,7 +64,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
 
             // Save to server
             self.url = params.url;
-            self.errorMessage = params.errorMessage || gettext("Error saving, please try again.");
+            self.errorMessage = ko.observable(params.errorMessage || gettext("Error saving, please try again."));
             self.saveParams = ko.utils.unwrapObservable(params.saveParams) || {};
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
@@ -118,7 +120,10 @@ hqDefine('hqwebapp/js/components/inline_edit', [
                             }
                             $(window).off("beforeunload", self.beforeUnload);
                         },
-                        error: function () {
+                        error: function (response) {
+                            if (response.responseJSON && response.responseJSON.error) {
+                                self.errorMessage(response.responseJSON.error);
+                            }
                             self.isEditing(true);
                             self.isSaving(false);
                             self.hasError(true);

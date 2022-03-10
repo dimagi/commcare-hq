@@ -57,12 +57,12 @@
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "no form links" %}
               {% blocktrans %}
-                Link to other form is selected, but no form links have been provided.
+                Link to other form or menu is selected, but no links have been provided.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "bad form link" %}
               {% blocktrans %}
-                Link to other form is selected, but we don't recognize the form you provided.
+                Link to other form or menu is selected, but we don't recognize the form or menu you provided.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "form link to missing root" %}
@@ -77,6 +77,12 @@
                 to a menu using "Display only forms," which makes that menu an invalid choice.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "endpoint to display only forms" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses "Display only forms" and also has a Session Endpoint ID.
+                Session endpoints cannot be used with "Display only forms."
+              {% endblocktrans %}
             {% case "no ref detail" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
@@ -144,6 +150,17 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 has no reports.
               {% endblocktrans %}
+            {% case "smart links missing endpoint" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses smart links but does not have a session endpoint id.
+              {% endblocktrans %}
+            {% case "smart links select parent first" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses both smart links and Parent Child Selection. These two
+                features are not compatible.
+              {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
@@ -159,6 +176,12 @@
                 as the case registration form for <a href="{{ module_url }}">{{ module_name }}</a>.
                 This form is not a registration form. You need to select a form which opens a case and
                 does not update an existing case. Please select a different form.
+              {% endblocktrans %}
+            {% case "invalid case list followup form" %}
+              {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
+                as the case list form for <a href="{{ module_url }}">{{ module_name }}</a>.
+                To select a followup form as case list form, the module must use the Select Parent First workflow and the form must follow up on the parent case type.
               {% endblocktrans %}
             {% case "case list form missing" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}

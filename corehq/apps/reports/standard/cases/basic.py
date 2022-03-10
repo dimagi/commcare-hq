@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -154,7 +153,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
             if 'case' in context and context['case'].name:
-                return mark_safe(context['case'].name)
+                return context['case'].name
             else:
                 return _('View Case')
 
@@ -181,7 +180,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
                 extra_tags='html',
             )
         return super(CaseListReport, self).view_response

@@ -12,9 +12,8 @@ from corehq.apps.case_search.xpath_functions import (
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_property_missing,
+    case_property_query,
     case_property_range_query,
-    exact_case_property_text_query,
     reverse_index_case_query,
 )
 
@@ -73,8 +72,10 @@ NEQ = "!="
 ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
 
 
-def build_filter_from_ast(domain, node):
+def build_filter_from_ast(domain, node, fuzzy=False):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
+
+    If fuzzy is true, all equality operations will be treated as fuzzy.
     """
 
     def _walk_related_cases(node):
@@ -122,7 +123,7 @@ def build_filter_from_ast(domain, node):
             _raise_step_RHS(node)
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
 
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query, fuzzy=fuzzy)
         if es_query.count() > MAX_RELATED_CASES:
             raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
@@ -181,11 +182,7 @@ def build_filter_from_ast(domain, node):
             # This is a leaf node
             case_property_name = serialize(node.left)
             value = _unwrap_function(node.right)
-
-            if value == '':
-                q = case_property_missing(case_property_name)
-            else:
-                q = exact_case_property_text_query(case_property_name, value)
+            q = case_property_query(case_property_name, value, fuzzy=fuzzy)
 
             if node.op == '!=':
                 return filters.NOT(q)
@@ -248,14 +245,14 @@ def build_filter_from_ast(domain, node):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath):
+def build_filter_from_xpath(domain, xpath, fuzzy=False):
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
     try:
-        return build_filter_from_ast(domain, parse_xpath(xpath))
+        return build_filter_from_ast(domain, parse_xpath(xpath), fuzzy=fuzzy)
     except TypeError as e:
         text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:

@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 from collections import defaultdict
+from pathlib import Path
 from uuid import uuid4
 from shutil import copyfile
 from subprocess import call
@@ -11,10 +12,12 @@ from subprocess import call
 from django.conf import settings
 
 import yaml
+from django.core.management import CommandError
 
 from corehq.apps.hqwebapp.exceptions import ResourceVersionsNotFoundException
 from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
@@ -25,10 +28,8 @@ BUILD_TXT_FILENAME = "staticfiles/build.txt"
 class Command(ResourceStaticCommand):
     help = '''
         Runs RequireJS optimizer to concatenate, minify, and bundle JavaScript files
-        and set them up with the CDN.
+        and set them up with the CDN. Use `--verbosity=2` for full output.
     '''
-
-
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -42,7 +43,8 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
-        no_optimize = options['no_optimize']
+        verbose = options['verbosity'] > 1
+        optimize = not options['no_optimize']
 
         if local:
             _confirm_or_exit()
@@ -53,7 +55,9 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
+        config, local_js_dirs = _r_js(local=local, verbose=verbose)
+        if optimize:
+            _minify(config, verbose=verbose)
 
         if local:
             _copy_modules_back_into_corehq(config, local_js_dirs)
@@ -74,15 +78,16 @@ class Command(ResourceStaticCommand):
             # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
 
-            # Overwrite source map reference. Source maps are accessed on the CDN,
-            # so they need to have the version hash appended.
-            with open(filename, 'r') as fin:
-                lines = fin.readlines()
-            with open(filename, 'w') as fout:
-                for line in lines:
-                    if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                        line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                    fout.write(line)
+            if optimize:
+                # Overwrite source map reference. Source maps are accessed on the CDN,
+                # so they need to have the version hash appended.
+                with open(filename, 'r') as fin:
+                    lines = fin.readlines()
+                with open(filename, 'w') as fout:
+                    for line in lines:
+                        if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                            line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                        fout.write(line)
             resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
@@ -117,7 +122,7 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, no_optimize=False):
+def _r_js(local=False, verbose=False):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
@@ -125,8 +130,9 @@ def _r_js(local=False, no_optimize=False):
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
         config = yaml.safe_load(f)
 
-    if no_optimize:
-        config['optimize'] = 'none'
+    config['logLevel'] = 0 if verbose else 2  # TRACE or WARN
+    if not verbose:
+        print("Compiling Javascript bundles")
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
@@ -146,9 +152,26 @@ def _r_js(local=False, no_optimize=False):
 
     ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
-        exit(1)
+        raise CommandError("Failed to build JS bundles")
 
     return config, local_js_dirs
+
+
+def _minify(config, verbose=False):
+    modules = config['modules']
+    if verbose:
+        modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
+    else:
+        print("Minifying Javascript bundles (estimated wait time: 5min)")
+    for module in modules:
+        rel_path = Path(module['name'] + ".js")
+        path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
+        ret = call([
+            "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
+            "--source-map", f"url={rel_path.name}.map"
+        ])
+        if ret:
+            raise CommandError(f"Failed to minify {rel_path}")
 
 
 def _get_html_files_and_local_js_dirs(local):

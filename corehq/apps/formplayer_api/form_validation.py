@@ -10,6 +10,8 @@ from corehq.apps.formplayer_api.exceptions import (
     FormplayerRequestException,
 )
 from corehq.apps.formplayer_api.utils import get_formplayer_url
+from corehq.util.hmac_request import get_hmac_digest
+from django.conf import settings
 
 
 class ValidationAPIProblem(jsonobject.JsonObject):
@@ -45,7 +47,10 @@ def validate_form(form_xml):
         response = requests.post(
             get_formplayer_url() + const.ENDPOINT_VALIDATE_FORM,
             data=form_xml,
-            headers={'Content-Type': 'application/xml'}
+            headers={
+                'Content-Type': 'application/xml',
+                'X-MAC-DIGEST': get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, form_xml),
+            }
         )
     except RequestException as e:
         notify_exception(None, "Error calling Formplayer form validation endpoint")

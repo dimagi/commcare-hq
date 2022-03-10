@@ -15,7 +15,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ScheduleError,
 )
 
@@ -85,7 +85,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         # If that changes, amend the error message accordingly.
         raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
-        '#user': UserCaseXPath().case(),
+        '#user': UsercaseXPath().case(),
         '#session/': session_var('', path=''),
     }
     if fixture_xpath:
@@ -183,7 +183,7 @@ class XPath(str):
 
     @staticmethod
     def not_(a):
-        return XPath.expr("not {}", [a])
+        return XPath.expr("not({})", [a])
 
     @staticmethod
     def date(a):
@@ -218,8 +218,18 @@ class CaseTypeXpath(CaseSelectionXPath):
         quoted = CaseTypeXpath("'{}'".format(self))
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
+    def cases(self, additional_types, instance_name='casedb', case_name='case'):
+        quoted = CaseTypeXpath("'{}'".format(self))
+        selector = "{sel}={quoted}".format(sel=self.selector, quoted=quoted)
+        for type in additional_types:
+            quoted = CaseTypeXpath("'{}'".format(type))
+            selector = "{selector} or {sel}={quoted}".format(selector=selector, sel=self.selector, quoted=quoted)
+        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}]".format(
+            inst=instance_name, case=case_name, sel=selector
+        ))
 
-class UserCaseXPath(XPath):
+
+class UsercaseXPath(XPath):
 
     def case(self):
         user_id = session_var(var='userid', path='context')
@@ -277,7 +287,7 @@ class LocationXpath(XPath):
         types = self._ordered_types(hierarchy)
         for type in [my_type, ref_type]:
             if type not in types:
-                raise LocationXpathValidationError(
+                raise LocationXPathValidationError(
                     _('Type {type} must be in list of domain types: {list}').format(
                         type=type,
                         list=', '.join(types)
@@ -285,7 +295,7 @@ class LocationXpath(XPath):
                 )
 
         if types.index(ref_type) > types.index(my_type):
-            raise LocationXpathValidationError(
+            raise LocationXPathValidationError(
                 _('Reference type {ref} cannot be a child of primary type {main}.'.format(
                     ref=ref_type,
                     main=my_type,
@@ -298,7 +308,7 @@ class LocationXpath(XPath):
             ref_type, property = ref.split('/')
             return my_type, ref_type, property
         except ValueError:
-            raise LocationXpathValidationError(_(
+            raise LocationXPathValidationError(_(
                 'Property not correctly formatted. '
                 'Must be formatted like: loacation:mytype:referencetype/property. '
                 'For example: location:outlet:state/name'

@@ -2,8 +2,6 @@ from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from django.conf import settings
 
-from django.conf import settings
-
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
@@ -424,10 +422,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
-    else:
-        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -555,26 +550,6 @@ def get_case_and_action_counts_for_domains(domains):
     }
 
 
-def get_form_ids_missing_from_elasticsearch(all_form_ids):
-    missing_from_elasticsearch = set()
-    for form_ids in chunked(all_form_ids, 500):
-        form_ids = set(form_ids)
-        not_missing = set(FormES().doc_id(form_ids).get_ids())
-        missing_from_elasticsearch.update(form_ids - not_missing)
-        assert not_missing - form_ids == set()
-    return list(missing_from_elasticsearch)
-
-
-def get_case_ids_missing_from_elasticsearch(all_case_ids):
-    missing_from_elasticsearch = set()
-    for case_ids in chunked(all_case_ids, 500):
-        case_ids = set(case_ids)
-        not_missing = set(CaseES().doc_id(case_ids).get_ids())
-        missing_from_elasticsearch.update(case_ids - not_missing)
-        assert not_missing - case_ids == set()
-    return list(missing_from_elasticsearch)
-
-
 def get_all_user_ids_submitted(domain, app_ids=None):
     query = (
         FormES()
@@ -591,18 +566,14 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     return list(query.run().aggregations.user_id.buckets_dict)
 
 
-def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
-    enddate = datespan.enddate + timedelta(days=1)
-    query = (FormES()
-             .domain(domain)
-             .app(app_id)
-             .xmlns(xmlns)
-             .submitted(gte=datespan.startdate, lte=enddate)
-             .remove_default_filter("has_user")
-             .source(['_id', 'external_blobs']))
+def get_form_ids_with_multimedia(es_query):
+    return {
+        form['_id'] for form in _forms_with_attachments(es_query)
+    }
 
-    if user_types:
-        query = query.user_type(user_types)
+
+def _forms_with_attachments(es_query):
+    query = es_query.source(['_id', 'external_blobs'])
 
     for form in query.scroll():
         try:
@@ -614,15 +585,27 @@ def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
             pass
 
 
+# ToDo: Remove post build_form_multimedia_zipfile rollout. Deprecated by get_form_ids_with_multimedia
 def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=datespan.startdate, lte=enddate)
+             .remove_default_filter("has_user")
+             )
+
+    if user_types:
+        query = query.user_type(user_types)
     return {
-        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+        form['_id'] for form in _forms_with_attachments(query)
     }
 
 
-def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+def media_export_is_too_big(es_query):
     size = 0
-    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
             size += attachment.get('content_length', 0)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:

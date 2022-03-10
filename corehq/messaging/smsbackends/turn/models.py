@@ -1,3 +1,5 @@
+from simplejson.errors import JSONDecodeError
+
 from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
 from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
@@ -10,6 +12,7 @@ from corehq.messaging.whatsapputil import (
     get_template_hsm_parts, WA_TEMPLATE_STRING,
     extract_error_message_from_template_string
 )
+
 
 class SQLTurnWhatsAppBackend(SQLSMSBackend):
     class Meta(object):
@@ -100,7 +103,11 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
     def get_all_templates(self):
         config = self.config
         client = TurnBusinessManagementClient(config.business_id, config.business_auth_token)
-        return client.message_templates.get_message_templates()
+        try:
+            # For bad config values, this can throw an exception
+            return client.message_templates.get_message_templates()
+        except JSONDecodeError:
+            return None
 
     @classmethod
     def generate_template_string(cls, template):

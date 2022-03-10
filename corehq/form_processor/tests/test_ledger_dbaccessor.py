@@ -1,25 +1,23 @@
 import uuid
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.exceptions import LedgerSaveError
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
-@use_sql_backend
+@sharded
 class LedgerDBAccessorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(LedgerDBAccessorTest, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         cls.product_a = make_product(cls.domain, 'A Product', 'prodcode_a')
         cls.product_b = make_product(cls.domain, 'B Product', 'prodcode_b')
         cls.product_c = make_product(cls.domain, 'C Product', 'prodcode_c')
@@ -30,8 +28,7 @@ class LedgerDBAccessorTest(TestCase):
         cls.product_b.delete()
         cls.product_c.delete()
 
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(LedgerDBAccessorTest, cls).tearDownClass()
 
     def setUp(self):
@@ -143,7 +140,7 @@ class LedgerDBAccessorTest(TestCase):
         self.assertEqual(0, len(ledger_values))
 
 
-@use_sql_backend
+@sharded
 class LedgerAccessorErrorTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -168,8 +165,7 @@ class LedgerAccessorErrorTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
-            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         cls.product.delete()
         super(LedgerAccessorErrorTests, cls).tearDownClass()
 

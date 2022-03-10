@@ -2,8 +2,7 @@ import unittest
 
 from django.test import TestCase
 
-from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
-from corehq.apps.commtrack.models import CommtrackConfig, SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.util import generate_code, make_domain_commtrack, unicode_slug
 from corehq.apps.domain.shortcuts import create_domain
 
@@ -26,7 +25,7 @@ class CommtrackUtilsTest(TestCase):
         make_domain_commtrack(domain_obj)
         self.assertTrue(domain_obj.commtrack_enabled)
         self.assertTrue(domain_obj.locations_enabled)
-        config = SQLCommtrackConfig.for_domain(domain_obj.name)
+        config = CommtrackConfig.for_domain(domain_obj.name)
         self.assertEqual(config.to_json(), {
             'domain': 'test-make-domain-commtrack',
             'actions': [{
@@ -83,8 +82,6 @@ class CommtrackUtilsTest(TestCase):
                 'overstock_threshold': 3,
             }
         })
-        doc = CommtrackConfig.get_db().get(config.couch_id)
-        self.assertIsNone(Command.diff_couch_and_sql(doc, config))
         config.delete()
         domain_obj.delete()
 

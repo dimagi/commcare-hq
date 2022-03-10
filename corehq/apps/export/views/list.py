@@ -8,6 +8,8 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
+from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -18,7 +20,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.views.download import DownloadDETSchemaView
-from couchexport.models import Format
+from couchexport.models import Format, IntegrationFormat
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -76,6 +78,8 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
+
+mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -219,7 +223,10 @@ class ExportListHelper(object):
             'formname': formname,
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
+            'domain': self.domain,
+            'type': export.type,
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
+            'showDetDownload': export.show_det_config_download,
             'detSchemaUrl': reverse(DownloadDETSchemaView.urlname,
                                     args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
@@ -344,7 +351,8 @@ class DailySavedExportListHelper(ExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and not export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -383,7 +391,9 @@ class FormExportListHelper(ExportListHelper):
         return _("Select a Form to Export")
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -399,7 +409,9 @@ class CaseExportListHelper(ExportListHelper):
     allow_bulk_export = False
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -430,7 +442,8 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -478,10 +491,11 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = ugettext_lazy('''
+    lead_text = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
-    ''')
+    '''))
     is_odata = False
 
     @method_decorator(login_and_domain_required)
@@ -510,7 +524,7 @@ class BaseExportListView(BaseProjectDataView):
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
-            'lead_text': mark_safe(self.lead_text),
+            'lead_text': self.lead_text,
             "export_filter_form": (
                 DashboardFeedFilterForm(
                     self.domain_object,
@@ -1007,7 +1021,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
 
     @property
     def lead_text(self):
-        return _("""
+        return format_html(_("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=63013347"
            id="js-odata-track-learn-more"
@@ -1016,10 +1030,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         </a><br />
         This feature allows {odata_feed_limit} feed configurations. Need more?
         Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
-        """).format(
+        """),
             odata_feed_limit=self.odata_feed_limit,
-            sales_email=settings.SALES_EMAIL,
-        )
+            sales_email=settings.SALES_EMAIL,)
 
     @property
     def page_context(self):

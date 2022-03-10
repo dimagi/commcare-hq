@@ -24,7 +24,6 @@ from corehq.apps.hqadmin.views.system import (
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
     AppBuildTimingsView,
-    AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
     SuperuserManagement,
@@ -45,10 +44,6 @@ urlpatterns = [
     url(r'^mass_email/$', mass_email, name="mass_email"),
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
-    url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
-    url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
-    url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
-        AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
