@@ -21,15 +21,22 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq import toggles
+from casexml.apps.phone.models import loadtest_users_enabled
+
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.models import (
+    EnterpriseMobileWorkerSettings,
+    EnterprisePermissions,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -41,17 +48,14 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.util import (
-    cc_user_domain,
-    format_username,
-    log_user_change,
-)
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+
+from .audit.change_messages import UserChangeMessage
+from .dbaccessors import user_exists
+from .models import DeactivateMobileWorkerTrigger, UserRole
+from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -92,6 +96,18 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
             _('This Mobile Worker already exists.'))
 
     return username
+
+
+def clean_deactivate_after_date(deactivate_after_date):
+    if not deactivate_after_date:
+        return None
+    try:
+        parts = deactivate_after_date.split('-')
+        return datetime.date(int(parts[1]), int(parts[0]), 1)
+    except (IndexError, ValueError):
+        raise forms.ValidationError(
+            _("Invalid Deactivation Date format (expects MM-YYYY).")
+        )
 
 
 def wrapped_language_validation(value):
@@ -391,13 +407,22 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+
+    # The value for this field is managed by CommCareUserActionForm. Defining
+    # the field here allows us to use CommCareUserFormSet.update_user() to set
+    # this property on the user.
     loadtest_factor = forms.IntegerField(
-        required=False, min_value=1, max_value=50000,
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    deactivate_after_date = forms.CharField(
+        label=gettext_lazy("Deactivate After"),
+        required=False,
         help_text=gettext_lazy(
-            "Multiply this user's case load by a number for load testing on phones. "
-            "Leave blank for normal users."
-        ),
-        widget=forms.HiddenInput())
+            "When specified, the mobile worker is automatically deactivated "
+            "on the first day of the month and year selected."
+        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -407,13 +432,81 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
         )
-        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
+
+        self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domain
+        )
+
+        if self.show_deactivate_after_date:
+            initial_deactivate_after_date = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+                self.domain, self.existing_user.user_id
+            )
+            if initial_deactivate_after_date is not None:
+                self.initial['deactivate_after_date'] = initial_deactivate_after_date.strftime('%m-%Y')
+        else:
+            del self.fields['deactivate_after_date']
+
+    def clean_deactivate_after_date(self):
+        return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
 
     @property
     def direct_properties(self):
-        indirect_props = ['role']
+        indirect_props = ['role', 'deactivate_after_date']
         return [k for k in self.fields if k not in indirect_props]
+
+    def update_user(self, **kwargs):
+        if self.show_deactivate_after_date:
+            DeactivateMobileWorkerTrigger.update_trigger(
+                self.domain,
+                self.existing_user.user_id,
+                self.cleaned_data['deactivate_after_date']
+            )
+        return super().update_user(**kwargs)
+
+
+class CommCareUserActionForm(BaseUpdateUserForm):
+
+    loadtest_factor = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=LOADTEST_HARD_LIMIT,
+        help_text=ugettext_lazy(
+            "Multiply this user's case load by a number for load testing on "
+            "phones."
+        ),
+        widget=forms.TextInput()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initial['loadtest_factor'] = self.existing_user.loadtest_factor or 1
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Load testing"),
+                crispy.Field(
+                    'loadtest_factor',
+                    # This field is being added to the "user_information" form.
+                    # This allows us to reuse CommCareUserFormSet.update_user()
+                    # to set this property on the user. The "user_information"
+                    # form is defined in
+                    # corehq/apps/users/templates/users/partials/basic_info_form.html
+                    form='user_information',
+                ),
+                hqcrispy.FormActions(
+                    crispy.ButtonHolder(
+                        StrictButton(
+                            _('Update user'),
+                            type='submit',
+                            css_class='btn-primary',
+                            # This button submits the "user_information" form.
+                            form='user_information',
+                        )
+                    )
+                )
+            )
+        )
 
 
 class RoleForm(forms.Form):
@@ -621,6 +714,14 @@ class NewMobileWorkerForm(forms.Form):
         min_length=1,
         label=gettext_noop("Password"),
     )
+    deactivate_after_date = forms.CharField(
+        label=ugettext_lazy("Deactivate After"),
+        required=False,
+        help_text=ugettext_lazy(
+            "When specified, the mobile worker is automatically deactivated "
+            "on the first day of the month and year selected."
+        ),
+    )
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -630,6 +731,14 @@ class NewMobileWorkerForm(forms.Form):
         self.domain = self.project.name
         self.request_user = request_user
         self.can_access_all_locations = request_user.has_permission(self.domain, 'access_all_locations')
+
+        self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domain
+        )
+
+        if not self.show_deactivate_after_date:
+            del self.fields['deactivate_after_date']
+
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -780,6 +889,17 @@ class NewMobileWorkerForm(forms.Form):
             )
         )
 
+        if self.show_deactivate_after_date:
+            self.helper.layout.append(
+                Fieldset(
+                    _("Auto-Deactivation Settings"),
+                    crispy.Field(
+                        'deactivate_after_date',
+                        data_bind="value: deactivate_after_date",
+                    ),
+                )
+            )
+
     def clean_email(self):
         clean_email = self.cleaned_data['email'].strip().lower()
         if clean_email:
@@ -803,6 +923,9 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             return clean_password(cleaned_password)
         return cleaned_password
+
+    def clean_deactivate_after_date(self):
+        return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
 
 
 class GroupMembershipForm(forms.Form):
@@ -1292,12 +1415,23 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
+        self.loadtest_users_enabled = loadtest_users_enabled(domain)
 
     @property
     @memoized
     def user_form(self):
         return UpdateCommCareUserInfoForm(
             data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+
+    @property
+    @memoized
+    def action_form(self):
+        return CommCareUserActionForm(
+            data=self.data,
+            domain=self.domain,
+            existing_user=self.editable_user,
+            request=self.request,
+        )
 
     @property
     @memoized

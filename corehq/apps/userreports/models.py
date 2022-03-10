@@ -22,6 +22,7 @@ from jsonpath_ng.ext import parser
 from memoized import memoized
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -48,7 +49,6 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
