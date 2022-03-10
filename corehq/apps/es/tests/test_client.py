@@ -556,6 +556,7 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
 
 @es_test
 class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
+    """Document adapter tests that require an existing index."""
 
     adapter_class = TestDocumentAdapterWithExtras
     index = TestDocumentAdapterWithExtras.index_name
@@ -566,21 +567,6 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.assertFalse(self.adapter.index_exists(),
                          f"index exists: {self.adapter.index_name}")
         self.adapter.create_index({"mappings": {self.adapter.type: self.adapter.mapping}})
-
-    def test_from_python(self):
-        doc = TestDoc("1", "test")
-        from_python = (doc.id, {"value": doc.value, "entropy": doc.entropy})
-        self.assertEqual(from_python, self.adapter.from_python(doc))
-
-    def test_to_json(self):
-        doc = TestDoc("1", "test")
-        as_json = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
-        self.assertEqual(as_json, self.adapter.to_json(doc))
-
-    def test_to_json_id_null(self):
-        doc = TestDoc(None, "test")
-        as_json = {"value": doc.value, "entropy": doc.entropy}
-        self.assertEqual(as_json, self.adapter.to_json(doc))
 
     def test_exists(self):
         doc = self._index_new_doc()
@@ -600,11 +586,6 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.assertEqual(docs_to_dict(docs), self._search_hits_dict({}))
         query = {"query": {"term": {"value": docs[0]["value"]}}}
         self.assertEqual(1, self.adapter.count(query))
-
-    def test__prepare_count_query(self):
-        query = {k: "remove" for k in ["size", "sort", "from", "to", "_source"]}
-        query["key"] = "keep"
-        self.assertEqual({"key": "keep"}, self.adapter._prepare_count_query(query))
 
     def test_fetch_many(self):
         query_docs = self._index_many_new_docs(2)
@@ -988,66 +969,6 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.adapter.bulk(actions, refresh=True)
         self.assertEqual(tform_to_dict(docs), self._search_hits_dict({}))
 
-    def test__render_bulk_action_index(self):
-        doc = self._make_doc()
-        action = BulkActionItem.index(doc)
-        doc_id, source = self.adapter.from_python(doc)
-        expected = {
-            "_index": self.adapter.index_name,
-            "_type": self.adapter.type,
-            "_op_type": "index",
-            "_id": doc_id,
-            "_source": source,
-        }
-        self.assertEqual(expected, self.adapter._render_bulk_action(action))
-
-    def test__render_bulk_action_delete(self):
-        doc = self._make_doc()
-        action = BulkActionItem.delete(doc)
-        expected = {
-            "_index": self.adapter.index_name,
-            "_type": self.adapter.type,
-            "_op_type": "delete",
-            "_id": doc.id,
-        }
-        self.assertEqual(expected, self.adapter._render_bulk_action(action))
-
-    def test__render_bulk_action_delete_id(self):
-        doc = self._make_doc()
-        action = BulkActionItem.delete_id(doc.id)
-        expected = {
-            "_index": self.adapter.index_name,
-            "_type": self.adapter.type,
-            "_op_type": "delete",
-            "_id": doc.id,
-        }
-        self.assertEqual(expected, self.adapter._render_bulk_action(action))
-
-    def test__render_bulk_action_fails_unsupported_action(self):
-        from enum import Enum
-
-        class SpecialBulkActionItem(BulkActionItem):
-
-            OpType = Enum("OpType", "index delete create")
-
-            @classmethod
-            def create(cls, doc):
-                return cls(cls.OpType.create, doc=doc)
-
-        action = SpecialBulkActionItem.create(self._make_doc())
-        with self.assertRaises(ValueError) as test:
-            self.adapter._render_bulk_action(action)
-        self.assertIn("unsupported action type", str(test.exception))
-
-    def test__render_bulk_action_fails_invalid_ids(self):
-        bad = TestDoc(id="")
-        with self.assertRaises(ValueError):
-            self.adapter._render_bulk_action(BulkActionItem.delete(bad))
-        with self.assertRaises(ValueError):
-            self.adapter._render_bulk_action(BulkActionItem.delete_id(bad.id))
-        with self.assertRaises(ValueError):
-            self.adapter._render_bulk_action(BulkActionItem.index(bad))
-
     def test_bulk_index(self):
         docs = []
         serialized = []
@@ -1085,50 +1006,6 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         with self.assertRaises(ValueError):
             self.adapter.bulk_delete(["1", ""], refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
-
-    def test__verify_doc_id(self):
-        self.adapter._verify_doc_id("abc")  # should not raise
-
-    def test__verify_doc_id_fails_empty_string(self):
-        with self.assertRaises(ValueError):
-            self.adapter._verify_doc_id("")
-
-    def test__verify_doc_id_fails_non_strings(self):
-        for invalid in [None, True, False, 123, 1.23]:
-            with self.assertRaises(ValueError):
-                self.adapter._verify_doc_id(invalid)
-
-    def test__verify_doc_source(self):
-        # does not raise
-        self.adapter._verify_doc_source({"value": "test", "entropy": 3})
-
-    def test__verify_doc_source_fails_if_not_dict(self):
-        with self.assertRaises(ValueError):
-            self.adapter._verify_doc_source(["1"])
-
-    def test__verify_doc_source_fails_if_id_present(self):
-        with self.assertRaises(ValueError):
-            self.adapter._verify_doc_source({"_id": "1", "value": "test"})
-
-    def test__fix_hit(self):
-        doc_id = "abc"
-        hit = {"_id": doc_id, "_source": {"test": True}}
-        expected = deepcopy(hit)
-        expected["_source"]["_id"] = doc_id
-        self.adapter._fix_hit(hit)
-        self.assertEqual(expected, hit)
-
-    def test__fix_hits_in_result(self):
-        ids = ["abc", "def"]
-        result = {"hits": {"hits": [
-            {"_id": ids[0], "_source": {"test": True}},
-            {"_id": ids[1], "_source": {"test": True}},
-        ]}}
-        expected = deepcopy(result)
-        expected["hits"]["hits"][0]["_source"]["_id"] = ids[0]
-        expected["hits"]["hits"][1]["_source"]["_id"] = ids[1]
-        self.adapter._fix_hits_in_result(result)
-        self.assertEqual(expected, result)
 
     def test__report_and_fail_on_shard_failures(self):
         result = self.adapter._search({})
@@ -1192,6 +1069,137 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
             return result
         exc_args = (f"_shards: {json.dumps(shards_obj)}",)
         return exc_args, wrapper
+
+
+@es_test
+class TestElasticDocumentAdapterWithoutRequests(AdapterTestCase):
+    """Document adapter tests that don't need to hit the Elastic backend."""
+
+    adapter_class = TestDocumentAdapterWithExtras
+
+    def test_from_python(self):
+        doc = TestDoc("1", "test")
+        from_python = (doc.id, {"value": doc.value, "entropy": doc.entropy})
+        self.assertEqual(from_python, self.adapter.from_python(doc))
+
+    def test_to_json(self):
+        doc = TestDoc("1", "test")
+        as_json = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
+        self.assertEqual(as_json, self.adapter.to_json(doc))
+
+    def test_to_json_id_null(self):
+        doc = TestDoc(None, "test")
+        as_json = {"value": doc.value, "entropy": doc.entropy}
+        self.assertEqual(as_json, self.adapter.to_json(doc))
+
+    def test__prepare_count_query(self):
+        query = {k: "remove" for k in ["size", "sort", "from", "to", "_source"]}
+        query["key"] = "keep"
+        self.assertEqual({"key": "keep"}, self.adapter._prepare_count_query(query))
+
+    def test__render_bulk_action_index(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.index(doc)
+        doc_id, source = self.adapter.from_python(doc)
+        expected = {
+            "_index": self.adapter.index_name,
+            "_type": self.adapter.type,
+            "_op_type": "index",
+            "_id": doc_id,
+            "_source": source,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_delete(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.delete(doc)
+        expected = {
+            "_index": self.adapter.index_name,
+            "_type": self.adapter.type,
+            "_op_type": "delete",
+            "_id": doc.id,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_delete_id(self):
+        doc = TestDoc("1", "test")
+        action = BulkActionItem.delete_id(doc.id)
+        expected = {
+            "_index": self.adapter.index_name,
+            "_type": self.adapter.type,
+            "_op_type": "delete",
+            "_id": doc.id,
+        }
+        self.assertEqual(expected, self.adapter._render_bulk_action(action))
+
+    def test__render_bulk_action_fails_unsupported_action(self):
+        from enum import Enum
+
+        class SpecialBulkActionItem(BulkActionItem):
+
+            OpType = Enum("OpType", "index delete create")
+
+            @classmethod
+            def create(cls, doc):
+                return cls(cls.OpType.create, doc=doc)
+
+        action = SpecialBulkActionItem.create(TestDoc("1", "test"))
+        with self.assertRaises(ValueError) as test:
+            self.adapter._render_bulk_action(action)
+        self.assertIn("unsupported action type", str(test.exception))
+
+    def test__render_bulk_action_fails_invalid_ids(self):
+        bad = TestDoc(id="")
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.delete(bad))
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.delete_id(bad.id))
+        with self.assertRaises(ValueError):
+            self.adapter._render_bulk_action(BulkActionItem.index(bad))
+
+    def test__verify_doc_id(self):
+        self.adapter._verify_doc_id("abc")  # should not raise
+
+    def test__verify_doc_id_fails_empty_string(self):
+        with self.assertRaises(ValueError):
+            self.adapter._verify_doc_id("")
+
+    def test__verify_doc_id_fails_non_strings(self):
+        for invalid in [None, True, False, 123, 1.23]:
+            with self.assertRaises(ValueError):
+                self.adapter._verify_doc_id(invalid)
+
+    def test__verify_doc_source(self):
+        # does not raise
+        self.adapter._verify_doc_source({"value": "test", "entropy": 3})
+
+    def test__verify_doc_source_fails_if_not_dict(self):
+        with self.assertRaises(ValueError):
+            self.adapter._verify_doc_source(["1"])
+
+    def test__verify_doc_source_fails_if_id_present(self):
+        with self.assertRaises(ValueError):
+            self.adapter._verify_doc_source({"_id": "1", "value": "test"})
+
+    def test__fix_hit(self):
+        doc_id = "abc"
+        hit = {"_id": doc_id, "_source": {"test": True}}
+        expected = deepcopy(hit)
+        expected["_source"]["_id"] = doc_id
+        self.adapter._fix_hit(hit)
+        self.assertEqual(expected, hit)
+
+    def test__fix_hits_in_result(self):
+        ids = ["abc", "def"]
+        result = {"hits": {"hits": [
+            {"_id": ids[0], "_source": {"test": True}},
+            {"_id": ids[1], "_source": {"test": True}},
+        ]}}
+        expected = deepcopy(result)
+        expected["hits"]["hits"][0]["_source"]["_id"] = ids[0]
+        expected["hits"]["hits"][1]["_source"]["_id"] = ids[1]
+        self.adapter._fix_hits_in_result(result)
+        self.assertEqual(expected, result)
 
 
 @es_test
