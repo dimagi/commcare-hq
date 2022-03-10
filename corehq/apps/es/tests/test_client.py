@@ -25,6 +25,7 @@ from ..client import (
     get_client,
     _elastic_hosts,
     _client_default,
+    _client_for_export,
 )
 from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD
 from ..exceptions import ESShardFailure, TaskError, TaskMissing
@@ -34,6 +35,12 @@ from ..exceptions import ESShardFailure, TaskError, TaskMissing
                    ELASTICSEARCH_PORT=9200)
 @es_test
 class TestClient(SimpleTestCase):
+
+    def tearDown(self):
+        # discard the memoized clients so other tests don't get the ones with
+        # overridden settings from this test class.
+        _client_default.reset_cache()
+        _client_for_export.reset_cache()
 
     def test_elastic_host(self):
         expected = [{"host": "localhost", "port": 9200}]
