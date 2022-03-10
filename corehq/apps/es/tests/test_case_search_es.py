@@ -165,6 +165,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "AUTO"
                                                                     }
                                                                 }
@@ -189,6 +190,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "0"
                                                                     }
                                                                 }
