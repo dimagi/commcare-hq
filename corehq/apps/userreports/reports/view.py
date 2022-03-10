@@ -84,7 +84,7 @@ from corehq.util.couch import (
     get_document_or_404,
     get_document_or_not_found,
 )
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
 
 
@@ -290,7 +290,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return self.excel_response
             elif request.GET.get('format', None) == "export":
                 return self.export_response
-            elif request.is_ajax() or request.GET.get('format', None) == 'json':
+            elif is_ajax(request) or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request.GET)
             self.content_type = None
             try:
@@ -322,7 +322,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def post(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
             self.get_spec_or_404()
-            if request.is_ajax():
+            if is_ajax(request):
                 return self.get_ajax(self.request.POST)
             else:
                 return HttpResponseBadRequest()
