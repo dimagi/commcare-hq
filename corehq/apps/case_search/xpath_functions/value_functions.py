@@ -12,7 +12,10 @@ from corehq.apps.es.case_search import case_property_query
 def date(node):
     assert node.name == 'date'
     if len(node.args) != 1:
-        raise XPathFunctionException(_("The \"date\" function only accepts a single argument"))
+        raise XPathFunctionException(
+            _("The \"date\" function only accepts a single argument"),
+            serialize(node)
+        )
     arg = node.args[0]
 
     if isinstance(arg, int):
@@ -22,17 +25,19 @@ def date(node):
         try:
             parsed_date = parse_date(arg)
         except ValueError:
-            raise XPathFunctionException(_("{} is not a valid date").format(arg))
+            raise XPathFunctionException(_("{} is not a valid date").format(arg), serialize(node))
 
         if parsed_date is None:
             raise XPathFunctionException(
-                _("The \"date\" function only accepts strings of the format \"YYYY-mm-dd\"")
+                _("The \"date\" function only accepts strings of the format \"YYYY-mm-dd\""),
+                serialize(node)
             )
 
         return arg
 
     raise XPathFunctionException(
-        "The \"date\" function only accepts integers or strings of the format \"YYYY-mm-dd\""
+        "The \"date\" function only accepts integers or strings of the format \"YYYY-mm-dd\"",
+        serialize(node)
     )
 
 
@@ -46,7 +51,10 @@ def selected_all(domain, node, fuzzy):
 
 def _selected_query(node, fuzzy, operator):
     if len(node.args) != 2:
-        raise XPathFunctionException(_(f"The {node.name} function accepts exactly two arguments."))
+        raise XPathFunctionException(
+            _("The {name} function accepts exactly two arguments.").format(name=node.name),
+            serialize(node)
+        )
     property_name = serialize(node.args[0])
     search_values = node.args[1]
     return case_property_query(property_name, search_values, fuzzy=fuzzy, multivalue_mode=operator)

@@ -225,7 +225,10 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             if node.name in XPATH_QUERY_FUNCTIONS:
                 return XPATH_QUERY_FUNCTIONS[node.name](domain, node, fuzzy)
             else:
-                raise XPathFunctionException(_(f" '{node.name}' is not a valid standalone function "))
+                raise XPathFunctionException(
+                    _("'{name}' is not a valid standalone function").format(name=node.name),
+                    serialize(node)
+                )
 
         if not hasattr(node, 'op'):
             raise CaseFilterError(
