@@ -470,7 +470,7 @@ class CommCareUserActionForm(BaseUpdateUserForm):
         required=False,
         min_value=1,
         max_value=LOADTEST_HARD_LIMIT,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "Multiply this user's case load by a number for load testing on "
             "phones."
         ),
@@ -715,9 +715,9 @@ class NewMobileWorkerForm(forms.Form):
         label=gettext_noop("Password"),
     )
     deactivate_after_date = forms.CharField(
-        label=ugettext_lazy("Deactivate After"),
+        label=gettext_lazy("Deactivate After"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "When specified, the mobile worker is automatically deactivated "
             "on the first day of the month and year selected."
         ),
