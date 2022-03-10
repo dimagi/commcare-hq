@@ -251,8 +251,6 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-    if isinstance(xpath, list):
-        xpath = ' and '.join(xpath)
     try:
         return build_filter_from_ast(domain, parse_xpath(xpath), fuzzy=fuzzy)
     except TypeError as e:

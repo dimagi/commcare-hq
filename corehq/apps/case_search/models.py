@@ -93,7 +93,6 @@ class SearchCriteria:
         disallowed_parameters = [
             CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
             'owner_id',
-            # CASE_SEARCH_XPATH_QUERY_KEY,
         ]
 
         if self.key in disallowed_parameters or self.is_daterange:
@@ -121,6 +120,7 @@ class SearchCriteria:
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
+    print(criteria_dict)
     criteria = [SearchCriteria(k, v) for k, v in criteria_dict.items()]
     for search_criteria in criteria:
         search_criteria.validate()
