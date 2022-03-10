@@ -1,6 +1,6 @@
-from .query_functions import not_
+from .query_functions import not_, selected_all, selected_any
 from .subcase_functions import subcase
-from .value_functions import date, selected_all, selected_any
+from .value_functions import date
 
 # functions that transform a value
 XPATH_VALUE_FUNCTIONS = {
