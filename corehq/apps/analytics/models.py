@@ -17,6 +17,14 @@ class PartnerAnalyticsDataPoint(models.Model):
     month = models.IntegerField()
     value = models.IntegerField(default=0)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['slug', 'domain', 'year', 'month'],
+                name='unique_per_month'
+            )
+        ]
+
 
 class PartnerAnalyticsReport(models.Model):
     contact = models.ForeignKey(PartnerAnalyticsContact, on_delete=models.CASCADE)

@@ -22,7 +22,7 @@ class CaseDbCacheTest(TestCase):
     def testDomainCheck(self):
         id = uuid.uuid4().hex
         post_case_blocks([
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=True, case_id=id,
                 user_id='some-user'
             ).as_xml()
@@ -92,7 +92,7 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 def _make_some_cases(howmany, domain='dbcache-test'):
     ids = [uuid.uuid4().hex for i in range(howmany)]
     post_case_blocks([
-        CaseBlock.deprecated_init(
+        CaseBlock(
             create=True,
             case_id=ids[i],
             user_id='some-user',
