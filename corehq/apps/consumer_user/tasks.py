@@ -13,7 +13,7 @@ from corehq.apps.consumer_user.models import (
 )
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.view_utils import absolute_reverse
 
 from .const import (
@@ -27,7 +27,7 @@ from .const import (
 
 @task
 def handle_consumer_user_invitations(domain, invitation_case_id, demographic_case_id):
-    invitation_case = CaseAccessors(domain).get_case(invitation_case_id)
+    invitation_case = CommCareCase.objects.get_case(invitation_case_id, domain=domain)
 
     unaccepted_invitation = ConsumerUserInvitation.objects.filter(
         demographic_case_id=demographic_case_id, active=True, accepted=False
