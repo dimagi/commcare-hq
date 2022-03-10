@@ -493,7 +493,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         profile = row.get('user_profile', None)
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+
         deactivate_after = row.get('deactivate_after', None) if update_deactivate_after_date else None
+        if isinstance(deactivate_after, datetime):
+            deactivate_after = deactivate_after.strftime("%m-%Y")
+            row['deactivate_after'] = deactivate_after
 
         try:
             password = str(password) if password else None
