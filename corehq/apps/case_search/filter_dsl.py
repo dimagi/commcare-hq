@@ -3,12 +3,22 @@ import re
 from django.utils.translation import ugettext as _
 
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
+from eulxml.xpath.ast import (
+    BinaryExpression,
+    FunctionCall,
+    Step,
+    UnaryExpression,
+    serialize,
+)
 
-from corehq.apps.case_search.xpath_functions import (
-    XPATH_VALUE_FUNCTIONS,
-    XPATH_QUERY_FUNCTIONS,
+from corehq.apps.case_search.exceptions import (
+    CaseFilterError,
+    TooManyRelatedCasesError,
     XPathFunctionException,
+)
+from corehq.apps.case_search.xpath_functions import (
+    XPATH_QUERY_FUNCTIONS,
+    XPATH_VALUE_FUNCTIONS,
 )
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
@@ -17,17 +27,6 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     reverse_index_case_query,
 )
-
-
-class CaseFilterError(Exception):
-
-    def __init__(self, message, filter_part):
-        self.filter_part = filter_part
-        super(CaseFilterError, self).__init__(message)
-
-
-class TooManyRelatedCasesError(CaseFilterError):
-    pass
 
 
 def print_ast(node):
@@ -57,7 +56,6 @@ MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 c
 
 OPERATOR_MAPPING = {
     'and': filters.AND,
-    'not': filters.NOT,
     'or': filters.OR,
 }
 COMPARISON_MAPPING = {
@@ -79,7 +77,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     If fuzzy is true, all equality operations will be treated as fuzzy.
     """
 
-    def _walk_related_cases(node):
+    def _walk_ancestor_cases(node):
         """Return a query that will fulfill the filter on the related case.
 
         :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
@@ -97,7 +95,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         # get the related case path we need to walk, i.e. `parent/grandparent/property`
         n = node.left
-        while _is_related_case_lookup(n):
+        while _is_ancestor_case_lookup(n):
             # This walks down the tree and finds case ids that match each identifier
             # This is basically performing multiple "joins" to find related cases since ES
             # doesn't have a way to relate models together
@@ -138,12 +136,20 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         return CaseSearchES().domain(domain).get_child_cases(case_ids, identifier).scroll_ids()
 
-    def _is_related_case_lookup(node):
-        """Returns whether a particular AST node is a related case lookup
+    def _is_ancestor_case_lookup(node):
+        """Returns whether a particular AST node is an ancestory case lookup
 
         e.g. `parent/host/thing = 'foo'`
         """
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
+
+    def _is_subcase_count(node):
+        """Returns whether a particular AST node is a subcase lookup.
+        This is needed for subcase-count since we need the full expression, not just the function."""
+        if not isinstance(node, BinaryExpression):
+            return False
+
+        return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
     def _raise_step_RHS(node):
         raise CaseFilterError(
@@ -229,9 +235,12 @@ def build_filter_from_ast(domain, node, fuzzy=False):
                 serialize(node)
             )
 
-        if _is_related_case_lookup(node):
+        if _is_ancestor_case_lookup(node):
             # this node represents a filter on a property for a related case
-            return _walk_related_cases(node)
+            return _walk_ancestor_cases(node)
+
+        if _is_subcase_count(node):
+            return XPATH_QUERY_FUNCTIONS['subcase-count'](domain, node, fuzzy)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf
@@ -254,6 +263,8 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
 
 def build_filter_from_xpath(domain, xpath, fuzzy=False):
+    """Given an xpath expression this function will generate an Elasticsearch
+    filter"""
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "

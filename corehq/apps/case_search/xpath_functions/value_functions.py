@@ -3,12 +3,10 @@ import datetime
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
 
-from corehq.apps.es.case_search import case_property_query
 from eulxml.xpath.ast import serialize
 
-
-class XPathFunctionException(Exception):
-    pass
+from corehq.apps.case_search.exceptions import XPathFunctionException
+from corehq.apps.es.case_search import case_property_query
 
 
 def date(node):
@@ -52,14 +50,3 @@ def _selected_query(node, fuzzy, operator):
     property_name = serialize(node.args[0])
     search_values = node.args[1]
     return case_property_query(property_name, search_values, fuzzy=fuzzy, multivalue_mode=operator)
-
-
-XPATH_VALUE_FUNCTIONS = {
-    'date': date,
-}
-
-XPATH_QUERY_FUNCTIONS = {
-    'selected': selected_any,  # selected and selected_any function identically.
-    'selected-any': selected_any,
-    'selected-all': selected_all,
-}
