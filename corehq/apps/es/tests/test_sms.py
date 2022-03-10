@@ -1,8 +1,8 @@
 from django.test.testcases import SimpleTestCase
 
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT
 
 
 @es_test
