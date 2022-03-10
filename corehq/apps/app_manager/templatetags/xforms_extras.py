@@ -2,13 +2,13 @@ from django import template
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.translation import (
-    ugettext as _,
-    ugettext_lazy
+    gettext as _,
+    gettext_lazy
 )
 
 register = template.Library()
 
-EMPTY_LABEL = format_html('<span class="label label-info">{}</span>', ugettext_lazy('Empty'))
+EMPTY_LABEL = format_html('<span class="label label-info">{}</span>', gettext_lazy('Empty'))
 
 
 @register.simple_tag

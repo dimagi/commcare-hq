@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dimagi.utils.logging import notify_exception
 
