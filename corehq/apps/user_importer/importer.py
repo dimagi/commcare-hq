@@ -81,10 +81,10 @@ def check_headers(user_specs, domain, is_web_upload=False):
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         allowed_headers.add('domain')
 
-    illegal_headers = headers - allowed_headers
-
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         allowed_headers.add('deactivate_after')
+
+    illegal_headers = headers - allowed_headers
 
     if is_web_upload:
         missing_headers = web_required_headers - headers
