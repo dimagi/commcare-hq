@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 from itertools import chain
 
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound

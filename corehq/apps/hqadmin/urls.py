@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.utils import new_domain_re
