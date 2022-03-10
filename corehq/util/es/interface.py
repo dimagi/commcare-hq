@@ -82,12 +82,11 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         return doc_adapter.bulk(actions, **kwargs)
 
-    def search(self, index_alias, doc_type, body=None, params=None, **kwargs):
+    def search(self, index_alias, doc_type, body=None, **kwargs):
         self._verify_is_alias(index_alias)
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         query = {} if body is None else body
-        params = {} if params is not None else params
-        return doc_adapter.search(query, params=params, **kwargs)
+        return doc_adapter.search(query, **kwargs)
 
     def iter_scroll(self, index_alias, doc_type, body=None,
                     scroll=SCROLL_KEEPALIVE, **kwargs):
