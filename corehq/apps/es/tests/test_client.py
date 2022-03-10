@@ -370,7 +370,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
         with temporary_index(doc_adapter.index_name, doc_adapter.type, doc_adapter.mapping):
             # Disable auto-refresh to ensure the index doesn't refresh between our
-            # upsert and search (which would cause this test to fail).
+            # index and search (which would cause this test to fail).
             self.adapter._index_put_settings(
                 doc_adapter.index_name,
                 {"index.refresh_interval": "-1"}
@@ -854,14 +854,14 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
 
-    def test_upsert_fails_with_invalid_id(self):
+    def test_index_fails_with_invalid_id(self):
         doc = self._make_doc()
         doc.id = None
         with self.assertRaises(ValueError):
             self.adapter.index(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
-    def test_upsert_fails_with_invalid_source(self):
+    def test_index_fails_with_invalid_source(self):
         doc = self._make_doc()
         bad_source = self.adapter.to_json(doc)
         invalid = (doc.id, bad_source)
@@ -870,14 +870,14 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
                 self.adapter.index(doc, refresh=True)
         self.assertEqual({}, self._search_hits_dict({}))
 
-    def test_upsert_succeeds_if_exists(self):
+    def test_index_succeeds_if_exists(self):
         doc = self._make_doc()
         self.adapter.index(doc, refresh=True)
         self.assertEqual([self.adapter.to_json(doc)],
                          docs_from_result(self.adapter.search({})))
         self.adapter.index(doc, refresh=True)  # does not raise
 
-    def test_upsert_with_change_succeeds_if_exists(self):
+    def test_index_with_change_succeeds_if_exists(self):
         doc = self._make_doc()
         doc_id = doc.id
         self.adapter.index(doc, refresh=True)
