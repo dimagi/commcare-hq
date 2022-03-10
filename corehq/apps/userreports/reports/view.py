@@ -6,7 +6,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
-    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -42,7 +41,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -76,13 +75,13 @@ from corehq.apps.userreports.util import (
     get_referring_apps,
     get_ucr_class_name,
     has_report_builder_access,
-    has_report_builder_trial, wrap_report_config_by_type, get_report_config_or_not_found,
+    has_report_builder_trial,
+    get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from corehq.util.couch import (
     DocumentNotFound,
     get_document_or_404,
-    get_document_or_not_found,
 )
 from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
