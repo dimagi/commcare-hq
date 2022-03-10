@@ -36,11 +36,11 @@ def date(node):
     )
 
 
-def selected_any(node, fuzzy):
+def selected_any(domain, node, fuzzy):
     return _selected_query(node, fuzzy=fuzzy, operator='or')
 
 
-def selected_all(node, fuzzy):
+def selected_all(domain, node, fuzzy):
     return _selected_query(node, fuzzy=fuzzy, operator='and')
 
 

@@ -223,7 +223,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         if isinstance(node, FunctionCall):
             if node.name in XPATH_QUERY_FUNCTIONS:
-                return XPATH_QUERY_FUNCTIONS[node.name](node, fuzzy)
+                return XPATH_QUERY_FUNCTIONS[node.name](domain, node, fuzzy)
             else:
                 raise XPathFunctionException(_(f" '{node.name}' is not a valid standalone function "))
 
