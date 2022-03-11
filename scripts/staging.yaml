@@ -79,4 +79,5 @@ branches:
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
     - dm/django3.0-part1 # Daniel 3/9
     - jm/elastic-client-adapter  # Joel Mar 1
+    - ml/sumologic-on-staging-check # Minha Mar 10
 submodules: { }
