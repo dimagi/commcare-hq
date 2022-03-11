@@ -587,25 +587,25 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         query = {"query": {"term": {"value": docs[0]["value"]}}}
         self.assertEqual(1, self.adapter.count(query))
 
-    def test_fetch_many(self):
+    def test_get_docs(self):
         query_docs = self._index_many_new_docs(2)
         query_ids = [doc["_id"] for doc in query_docs]
         no_fetch = self._index_new_doc()
-        fetched = docs_to_dict(self.adapter.fetch_many(query_ids))
+        fetched = docs_to_dict(self.adapter.get_docs(query_ids))
         self.assertNotIn(no_fetch["_id"], fetched)
         self.assertEqual(docs_to_dict(query_docs), fetched)
 
     # TODO: activate this test -- legacy Elastic code does not check for shard
-    # failures on '.fetch_many()' calls.
-    #def test_fetch_many_raises_on_shards_failure(self):
+    # failures on '.get_docs()' calls.
+    #def test_get_docs_raises_on_shards_failure(self):
     #    doc = self._index_new_doc()
     #    doc_ids = [doc["_id"]]
-    #    self.assertEqual([doc], self.adapter.fetch_many(doc_ids))
+    #    self.assertEqual([doc], self.adapter.get_docs(doc_ids))
     #    exc_args, wrapper = self._make_shards_fail({"failed": 1, "test": "val"},
     #                                               self.adapter._mget)
     #    with patch.object(self.adapter, "_mget", wrapper):
     #        with self.assertRaises(ESShardFailure) as test:
-    #            self.adapter.fetch_many(doc_ids)
+    #            self.adapter.get_docs(doc_ids)
     #        self.assertEqual(test.exception.args, exc_args)
 
     def test_iter_fetch(self):
@@ -621,15 +621,15 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         query_ids = [doc["_id"] for doc in indexed]
         chunk_size = 2
         chunk_calls = math.ceil(len(indexed) / chunk_size)
-        with patch.object(self.adapter, "fetch_many", side_effect=self.adapter.fetch_many) as patched:
+        with patch.object(self.adapter, "get_docs", side_effect=self.adapter.get_docs) as patched:
             list(self.adapter.iter_fetch(query_ids, chunk_size=chunk_size))
             self.assertEqual(patched.call_count, chunk_calls)
 
-    def test_iter_fetch_yields_same_as_fetch_many(self):
+    def test_iter_fetch_yields_same_as_get_docs(self):
         query_docs = self._index_many_new_docs(3)
         no_fetch = query_docs.pop()
         query_ids = [doc["_id"] for doc in query_docs]
-        fetched = docs_to_dict(self.adapter.fetch_many(query_ids))
+        fetched = docs_to_dict(self.adapter.get_docs(query_ids))
         chunked = docs_to_dict(self.adapter.iter_fetch(query_ids))
         self.assertNotIn(no_fetch["_id"], fetched)
         self.assertEqual(docs_to_dict(query_docs), fetched)

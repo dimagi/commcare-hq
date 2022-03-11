@@ -395,7 +395,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             query.pop(extra, None)
         return query
 
-    def fetch_many(self, doc_ids):
+    def get_docs(self, doc_ids):
         """Return multiple docs for the provided ``doc_ids``
 
         Equivalent to the legacy ``ElasticsearchInterface.get_bulk_docs(...)``
@@ -425,7 +425,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         # TODO: standardize all result collections returned by this class.
         for ids_chunk in chunked(doc_ids, chunk_size):
-            yield from self.fetch_many(ids_chunk)
+            yield from self.get_docs(ids_chunk)
 
     def _mget(self, query):
         """Perform an ``mget`` request and return the result.

@@ -50,7 +50,7 @@ class ElasticsearchInterface:
     def get_bulk_docs(self, index_alias, doc_type, doc_ids):
         self._verify_is_alias(index_alias)
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
-        return doc_adapter.fetch_many(doc_ids)
+        return doc_adapter.get_docs(doc_ids)
 
     def index_doc(self, index_alias, doc_type, doc_id, doc, params=None):
         self._verify_is_alias(index_alias)
