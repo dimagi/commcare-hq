@@ -416,7 +416,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                 docs.append(doc_result["_source"])
         return docs
 
-    def iter_fetch(self, doc_ids, chunk_size=100):
+    def iter_docs(self, doc_ids, chunk_size=100):
         """Return a generator which fetches documents in chunks.
 
         :param doc_ids: iterable of document IDs (``str``s)

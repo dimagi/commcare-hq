@@ -608,29 +608,29 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
     #            self.adapter.get_docs(doc_ids)
     #        self.assertEqual(test.exception.args, exc_args)
 
-    def test_iter_fetch(self):
+    def test_iter_docs(self):
         query_docs = self._index_many_new_docs(4)
         no_fetch = query_docs.pop()
         query_ids = [doc["_id"] for doc in query_docs]
-        fetched = self.adapter.iter_fetch(query_ids, chunk_size=1)
+        fetched = self.adapter.iter_docs(query_ids, chunk_size=1)
         self.assertEqual(docs_to_dict(query_docs), docs_to_dict(fetched))
         self.assertNotIn(no_fetch["_id"], fetched)
 
-    def test_iter_fetch_chunks_requests(self):
+    def test_iter_docs_chunks_requests(self):
         indexed = self._index_many_new_docs(7)
         query_ids = [doc["_id"] for doc in indexed]
         chunk_size = 2
         chunk_calls = math.ceil(len(indexed) / chunk_size)
         with patch.object(self.adapter, "get_docs", side_effect=self.adapter.get_docs) as patched:
-            list(self.adapter.iter_fetch(query_ids, chunk_size=chunk_size))
+            list(self.adapter.iter_docs(query_ids, chunk_size=chunk_size))
             self.assertEqual(patched.call_count, chunk_calls)
 
-    def test_iter_fetch_yields_same_as_get_docs(self):
+    def test_iter_docs_yields_same_as_get_docs(self):
         query_docs = self._index_many_new_docs(3)
         no_fetch = query_docs.pop()
         query_ids = [doc["_id"] for doc in query_docs]
         fetched = docs_to_dict(self.adapter.get_docs(query_ids))
-        chunked = docs_to_dict(self.adapter.iter_fetch(query_ids))
+        chunked = docs_to_dict(self.adapter.iter_docs(query_ids))
         self.assertNotIn(no_fetch["_id"], fetched)
         self.assertEqual(docs_to_dict(query_docs), fetched)
         self.assertEqual(fetched, chunked)

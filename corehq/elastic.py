@@ -69,7 +69,7 @@ def _iter_es_docs(index_cname, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     index_info = registry_entry(index_cname)
     adapter = doc_adapter_from_info(index_info)
-    yield from adapter.iter_fetch(ids)
+    yield from adapter.iter_docs(ids)
 
 
 def iter_es_docs_from_query(query):
