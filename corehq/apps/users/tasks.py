@@ -34,8 +34,11 @@ from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic
 logger = get_task_logger(__name__)
 
 
+
+
 @task(serializer='pickle')
 def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
+    undefined
     from corehq.apps.users.bulk_download import dump_usernames
     dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async, owner_id)
 
