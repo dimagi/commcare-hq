@@ -120,7 +120,6 @@ class SearchCriteria:
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
-    print(criteria_dict)
     criteria = [SearchCriteria(k, v) for k, v in criteria_dict.items()]
     for search_criteria in criteria:
         search_criteria.validate()
