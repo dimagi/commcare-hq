@@ -209,14 +209,16 @@ def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_te
 
 @contextmanager
 def temporary_index(index, type_=None, mapping=None, *, purge=True):
+    if (type_ is None and mapping is not None) or \
+       (type_ is not None and mapping is None):
+        raise ValueError(f"type_ and mapping args are mutually inclusive "
+                         f"(index={index!r}, type_={type_!r}, "
+                         f"mapping={mapping!r})")
     manager = ElasticManageAdapter()
     if purge and manager.index_exists(index):
         manager.index_delete(index)
     manager.index_create(index)
     if type_ is not None:
-        if mapping is None:
-            raise ValueError(f"type_ and mapping args are mutually inclusive "
-                             f"(index={index!r}, type_={type_!r})")
         manager.index_put_mapping(index, type_, mapping)
     try:
         yield
