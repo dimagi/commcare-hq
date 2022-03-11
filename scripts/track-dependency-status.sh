@@ -37,7 +37,7 @@ total_js_deps="$(python -c "$COUNT_DEP_CODE")"
 
 # Publish metrics to Datadog
 
-echo total_js_deps outdated_js_deps total_python_deps outdated_python_deps #for debugging
+echo $total_js_deps $outdated_js_deps $total_python_deps $outdated_python_deps #for debugging
 source scripts/datadog-utils.sh
 
 send_metric_to_datadog "commcarehq.dependency.python.total" $total_python_deps "count"
