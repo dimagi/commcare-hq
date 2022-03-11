@@ -71,14 +71,22 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: "You have unsaved changes",
             save: function () {
+                console.log("Saving randomness")
+                console.log(self.items())
                 var items = _.map(_.filter(self.items(), function (item) {
                     return item.value();
                 }), function (item) {
-                    var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
-                        namespace = ns_raw === 'user' ? null : ns_raw,
+                    if (item.namespace() === null){
+                        var ns_raw = 'user'
+                    }
+                    else {
+                        var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), '')
+                    }
+                    var namespace = ns_raw === 'user' ? null : ns_raw,
                         value = namespace === null ? item.value() : namespace + ':' + item.value();
                     return value;
                 });
+                console.log("Maybe that wasn't the problem?")
                 self.saveButton.ajax({
                     type: 'post',
                     url: initialPageData.reverse('edit_toggle') + location.search,
