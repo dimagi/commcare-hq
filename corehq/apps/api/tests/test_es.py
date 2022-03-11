@@ -57,7 +57,7 @@ class TestESView(SimpleTestCase):
         doc_id = "1"
         doc_ny = mk_doc(doc_id, "NYC")
         self.cases.index(doc_ny, refresh=True)
-        self.assertEqual(doc_ny, self.cases.fetch(doc_id))
+        self.assertEqual(doc_ny, self.cases.get(doc_id))
         view = CaseESView(doc_ny["domain"])
         # test that the view fetches the doc by its ID as we'd expect
         self.assertEqual(doc_ny, to_dict(view.get_document(doc_id)))

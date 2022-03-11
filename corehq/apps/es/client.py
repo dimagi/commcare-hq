@@ -361,7 +361,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         return self._es.exists(self.index_name, self.type, doc_id)
 
-    def fetch(self, doc_id, source_includes=[]):
+    def get(self, doc_id, source_includes=[]):
         """Return the document for the provided ``doc_id``
 
         Equivalent to the legacy ``ElasticsearchInterface.get_doc(...)`` method.

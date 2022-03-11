@@ -572,14 +572,14 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         doc = self._index_new_doc()
         self.assertTrue(self.adapter.exists(doc["_id"]))
 
-    def test_fetch(self):
+    def test_get(self):
         doc = self._index_new_doc()
-        self.assertEqual(doc, self.adapter.fetch(doc["_id"]))
+        self.assertEqual(doc, self.adapter.get(doc["_id"]))
 
-    def test_fetch_limit_fields(self):
+    def test_get_limit_fields(self):
         doc = self._index_new_doc()
         doc.pop("entropy")
-        self.assertEqual(doc, self.adapter.fetch(doc["_id"], ["value"]))
+        self.assertEqual(doc, self.adapter.get(doc["_id"], ["value"]))
 
     def test_count(self):
         docs = self._index_many_new_docs(2)

@@ -45,7 +45,7 @@ class ElasticsearchInterface:
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)
         if source_includes is None:
             source_includes = []
-        return doc_adapter.fetch(doc_id, source_includes=source_includes)
+        return doc_adapter.get(doc_id, source_includes=source_includes)
 
     def get_bulk_docs(self, index_alias, doc_type, doc_ids):
         self._verify_is_alias(index_alias)
