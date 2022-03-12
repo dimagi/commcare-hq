@@ -119,11 +119,8 @@ class TestEmailReport(TestCase):
         if params is None:
             params = {'send_to_owner': True}
 
-        params = urlencode(params)
-
-        base_url = f'/a/{self.domain}/emailReport'
-        url = f'{base_url}?{params}'
-        request = RequestFactory().get(url)
+        url = f'/a/{self.domain}/emailReport'
+        request = RequestFactory().post(url, params)
         request.user = self.user
         return request
 
