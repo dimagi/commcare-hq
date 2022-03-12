@@ -246,7 +246,9 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
 
         if _is_deleted(change):
             action.update({"_op_type": "delete"})
-        elif not change.deleted:
+        else:
+            # NOTE: changed from 'elif not change.deleted' to 'else'
+            # see: https://github.com/dimagi/commcare-hq/pull/31125#discussion_r825195137
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
