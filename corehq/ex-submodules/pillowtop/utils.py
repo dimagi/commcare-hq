@@ -6,7 +6,6 @@ from operator import methodcaller
 
 from django.conf import settings
 
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from pillowtop.dao.exceptions import (
     DocumentMismatchError,
@@ -16,6 +15,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 
 from corehq.apps.change_feed.connection import get_kafka_consumer
+from corehq.apps.es.client import BulkActionItem
 
 
 def _get_pillow_instance(full_class_str):
@@ -220,13 +220,25 @@ class ErrorCollector(object):
         self.errors.append(error)
 
 
-def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+def build_bulk_payload(changes, doc_transform=None, error_collector=None):
+    """Process a set of changes, returning a list of BulkActionItem objects.
+
+    :param changes: iterable of changes to process in Elasticsearch
+    :param doc_transform: optional function used to serialize documents into the
+                          correct format for indexing into Elasticsearch
+                          (documents are indexed as-is if not specified)
+    :param error_collector: optional ``ErrorCollector`` instance used to store
+                            any any document fetch or transform exceptions
+                            (exceptions raised if not provided)
+    :returns: ``list`` of BulkActionItem instances
     """
-    Builds bulk payload json to be called via Elasticsearch Bulk API
-    """
+    # TODO: do not transform the docs to be indexed (DocumentAdapter will
+    #       perform this task in the future)
     from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
 
-    doc_transform = doc_transform or (lambda x: x)
+    if doc_transform is None:
+        def doc_transform(doc):
+            return doc
     payload = []
 
     def _is_deleted(change):
@@ -237,30 +249,33 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
             return bool(change.id)
 
     for change in changes:
-        action = {
-            "_index": index_info.alias,
-            "_id": change.id
-        }
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
-            action.update({"_type": index_info.type})
-
         if _is_deleted(change):
-            action.update({"_op_type": "delete"})
+            payload.append(BulkActionItem.delete_id(change.id))
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
-                action.update({
-                    "_op_type": "index",
-                    "_id": doc['_id'],
-                    "_source": doc
-                })
+                payload.append(BulkActionItem.index(doc))
             except Exception as e:
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
-                continue
-        payload.append(action)
+        else:
+            # NOTE: Uncertain: this scenario seems possible because the 'if' and
+            # 'elif' clauses are checking different things (albeit, seemingly
+            # related).
+            #
+            # The previous implementation didn't have an 'else' clause here,
+            # meaning if this did happen, then an action lacking an '_op_type'
+            # key was added to the payload . I assume Elastic would return an
+            # error in that case, but I'm not sure.
+            #
+            # If this 'else' block gets hit in the new 'BulkActionItem'
+            # implementation, no action is added to the payload. I would prefer
+            # to raise an exception here, but in the spirit of not
+            # catastrophically breaking what is perhaps not a catastrophic
+            # situation, I'll just log an error instead.
+            pillow_logging.error("skipping bulk processing for change: %s", change)
 
     return payload
 
