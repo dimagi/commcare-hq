@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='blobmeta',
-            index=models.Index(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', condition=models.Q(expires_on__isnull=False)),  # noqa: E501
+            index=models.Index(fields=['expires_on'], name='blobs_blobmeta_expires_64b92d', condition=models.Q(expires_on__isnull=False)),  # noqa: E501
         ),
         migrations.AlterIndexTogether(
             name='blobmeta',

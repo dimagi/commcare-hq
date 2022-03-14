@@ -76,12 +76,12 @@ class BlobMeta(PartitionedModel, Model):
         indexes = [
             Index(
                 fields=['expires_on'],
-                name="blobs_blobm_expires_64b92d_partial",
+                name="blobs_blobmeta_expires_ed7e3d",
                 condition=Q(expires_on__isnull=False),
             ),
             Index(
                 fields=['type_code', 'created_on'],
-                name="blobs_blobm_type_co_23e226_partial",
+                name="blobs_blobmeta_type_co_23e226",
                 condition=Q(domain='icds-cas'),
             ),
         ]
