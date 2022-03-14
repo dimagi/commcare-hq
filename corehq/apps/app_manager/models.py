@@ -2337,7 +2337,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
     @property
     def is_surveys(self):
-        return self.case_type == ""
+        return not self.case_type
 
     def assign_references(self):
         if hasattr(self, 'case_list'):
