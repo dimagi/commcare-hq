@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 from functools import wraps
 from datetime import datetime
 from inspect import isclass
@@ -16,6 +17,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
+from ..client import ElasticDocumentAdapter, ElasticManageAdapter
 from ..registry import (
     register,
     deregister,
@@ -63,7 +65,11 @@ class ElasticTestMixin(object):
             return
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
-        validation = self._es_instance.indices.validate_query(body=query, index=TEST_INDEX_INFO.index, params={'explain': 'true'})
+        validation = self._es_instance.indices.validate_query(
+            body=query,
+            index=TEST_INDEX_INFO.index,
+            params={'explain': 'true'},
+        )
         self.assertTrue(validation['valid'])
 
     def checkQuery(self, query, json_output, is_raw_query=False, validate_query=True):
@@ -201,6 +207,25 @@ def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_te
     return test_class
 
 
+@contextmanager
+def temporary_index(index, type_=None, mapping=None, *, purge=True):
+    if (type_ is None and mapping is not None) or \
+       (type_ is not None and mapping is None):
+        raise ValueError(f"type_ and mapping args are mutually inclusive "
+                         f"(index={index!r}, type_={type_!r}, "
+                         f"mapping={mapping!r})")
+    manager = ElasticManageAdapter()
+    if purge and manager.index_exists(index):
+        manager.index_delete(index)
+    manager.index_create(index)
+    if type_ is not None:
+        manager.index_put_mapping(index, type_, mapping)
+    try:
+        yield
+    finally:
+        manager.index_delete(index)
+
+
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
     index_info = registry_entry(index_cname)
     es = get_es_new()
@@ -233,3 +258,77 @@ def case_search_es_setup(domain, case_blocks):
 def case_search_es_teardown():
     FormProcessorTestUtils.delete_all_cases()
     ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+
+
+def docs_from_result(result):
+    """Convenience function for extracting the documents (without the search
+    metadata) from an Elastic results object.
+
+    :param result: ``dict`` search results object
+    :returns: ``[<doc>, ...]`` list
+    """
+    return [h["_source"] for h in result["hits"]["hits"]]
+
+
+def docs_to_dict(docs):
+    """Convenience function for getting a ``dict`` of documents keyed by their
+    ID for testing unordered equality (or other reasons it might be desireable).
+
+    :param docs: iterable of documents in the "json" (``dict``) format
+    :returns: ``{<doc_id>: <doc_sans_id>, ...}`` dict
+    """
+    docs_dict = {}
+    for full_doc in docs:
+        doc = full_doc.copy()
+        doc_id = doc.pop("_id")
+        # Ensure we never get multiple docs with the same ID (important
+        # because putting them in a dict like we're doing here would destroy
+        # information about the original collection of documents in such a case).
+        # Don't use 'assert' here (makes test failures VERY confusing).
+        if doc_id in docs_dict:
+            raise ValueError(f"doc ID {doc_id!r} already exists: {docs_dict}")
+        docs_dict[doc_id] = doc
+    return docs_dict
+
+
+@nottest
+class TestDoc:
+    """A test "model" class for performing generic document and index tests."""
+
+    def __init__(self, id=None, value=None):
+        self.id = id
+        self.value = value
+
+    @property
+    def entropy(self):
+        if self.value is None:
+            return None
+        return len(set(str(self.value)))
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} id={self.id}, value={self.value!r}>"
+
+
+@nottest
+class TestDocumentAdapter(ElasticDocumentAdapter):
+    """An ``ElasticDocumentAdapter`` implementation for Elasticsearch actions
+    involving ``TestDoc`` model objects.
+    """
+
+    _index_name = "doc-adapter"
+    type = "test_doc"
+    mapping = {
+        "properties": {
+            "value": {
+                "index": "not_analyzed",
+                "type": "string"
+            },
+            "entropy": {
+                "type": "integer"
+            },
+        }
+    }
+
+    @classmethod
+    def from_python(cls, doc):
+        return doc.id, {"value": doc.value, "entropy": doc.entropy}
