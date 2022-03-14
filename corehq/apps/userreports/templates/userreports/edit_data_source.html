@@ -7,8 +7,8 @@
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Custom Web Report Data' %}</a>
-          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Custom Web Report Source Summary' %}</a>
+          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
+          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
         </div>
         <div class="btn-group">
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
@@ -22,19 +22,19 @@
                 data-content="{% trans_html_attr "Rebuilding data sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
                 data-trigger="hover"
                 {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
-                {% trans 'Rebuild Custom Web Report Source'%}
+                {% trans 'Rebuild Data Source'%}
               </button>
               {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
               {% if data_source.disable_destructive_rebuild %}
                 <span class="hq-help-template"
                   data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-                  data-content="{% trans_html_attr "Fully rebuilding has been disabled for this custom web report source. Please use the in place rebuild if necessary." %}"
+                  data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
                   data-placement="left"></span>
               {% endif %}
               {% if is_rebuilding %}
                 <span class="hq-help-template"
-                  data-title="{% trans_html_attr "Rebuilding Custom Web Report Source" %}"
-                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this custom web report source. The next rebuild will start when the previous rebuild(s) finishes." %}"
+                  data-title="{% trans_html_attr "Rebuilding Data Source" %}"
+                  data-content="{% trans_html_attr "Currently a rebuild is already in progress for this data source. The next rebuild will start when the previous rebuild(s) finishes." %}"
                   data-placement="left"></span>
               {% endif %}
             </div>
@@ -50,7 +50,7 @@
                class="track-usage-link"
                data-category="UCR"
                data-action="View Source"
-               data-label="Data Source">{% trans "Custom Web Report Source JSON" %}</a>
+               data-label="Data Source">{% trans "Data Source JSON" %}</a>
           </li>
           {% if not data_source.is_deactivated %}
             <li>
@@ -85,11 +85,11 @@
           {% if not used_by_reports %}
             <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
               {% csrf_token %}
-              <input type="submit" value="{% trans 'Delete Custom Web Report Source'%}" class="btn btn-danger disable-on-submit">
+              <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit">
             </form>
           {% else %}
             <a href="#confirm_delete" class="btn btn-danger" data-toggle="modal">
-              {% trans 'Delete Custom Web Report Source'%}
+              {% trans 'Delete Data Source'%}
             </a>
           {% endif %}
         {% endif %}

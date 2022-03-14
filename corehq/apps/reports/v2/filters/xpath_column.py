@@ -1,7 +1,7 @@
 import datetime
 from collections import namedtuple
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import dateutil
 from memoized import memoized
@@ -75,12 +75,12 @@ class BaseXpathColumnFilter(BaseFilter):
 
 
 class TextXpathColumnFilter(BaseXpathColumnFilter):
-    title = ugettext_lazy("Text")
+    title = gettext_lazy("Text")
     name = 'xpath_column_text'
     data_type = DataType.TEXT
     choices = [
-        ChoiceMeta(ugettext_lazy("Text equals"), 'text_equals', '='),
-        ChoiceMeta(ugettext_lazy("Text does not equal"), 'text_not_equals', '!='),
+        ChoiceMeta(gettext_lazy("Text equals"), 'text_equals', '='),
+        ChoiceMeta(gettext_lazy("Text does not equal"), 'text_not_equals', '!='),
     ]
 
     def format_value(self, value):
@@ -88,14 +88,14 @@ class TextXpathColumnFilter(BaseXpathColumnFilter):
 
 
 class NumericXpathColumnFilter(BaseXpathColumnFilter):
-    title = ugettext_lazy("a Number")
+    title = gettext_lazy("a Number")
     name = 'xpath_column_number'
     data_type = DataType.NUMERIC
     choices = [
-        ChoiceMeta(ugettext_lazy("Number is equal to"), 'num_equals', '='),
-        ChoiceMeta(ugettext_lazy("Number is less than"), 'num_less_than', '<'),
-        ChoiceMeta(ugettext_lazy("Number is greater than"), 'num_greater_than', '>'),
-        ChoiceMeta(ugettext_lazy("Number is not equal to"), 'num_not_equals', '!='),
+        ChoiceMeta(gettext_lazy("Number is equal to"), 'num_equals', '='),
+        ChoiceMeta(gettext_lazy("Number is less than"), 'num_less_than', '<'),
+        ChoiceMeta(gettext_lazy("Number is greater than"), 'num_greater_than', '>'),
+        ChoiceMeta(gettext_lazy("Number is not equal to"), 'num_not_equals', '!='),
     ]
 
     @staticmethod
@@ -115,13 +115,13 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
 
 
 class DateXpathColumnFilter(BaseXpathColumnFilter):
-    title = ugettext_lazy("a Date")
+    title = gettext_lazy("a Date")
     name = 'xpath_column_date'
     data_type = DataType.DATE
     choices = [
-        ChoiceMeta(ugettext_lazy("Date is"), 'date_is', '='),
-        ChoiceMeta(ugettext_lazy("Date is before"), 'date_before', '<'),
-        ChoiceMeta(ugettext_lazy("Date is after"), "date_after", '>'),
+        ChoiceMeta(gettext_lazy("Date is"), 'date_is', '='),
+        ChoiceMeta(gettext_lazy("Date is before"), 'date_before', '<'),
+        ChoiceMeta(gettext_lazy("Date is after"), "date_after", '>'),
     ]
 
     def __init__(self, request, domain):

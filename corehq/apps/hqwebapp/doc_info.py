@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.users.util import raw_username

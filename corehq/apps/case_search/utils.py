@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dimagi.utils.logging import notify_exception
 
@@ -167,7 +167,12 @@ class CaseSearchQueryBuilder:
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
             if not criteria.is_empty:
-                return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
+                if criteria.has_multiple_terms:
+                    for value in criteria.value:
+                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value))
+                    return search_es
+                else:
+                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))

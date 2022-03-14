@@ -359,10 +359,10 @@ hqDefine('users/js/roles',[
                     }];
                 self.ucrs = [{
                     visibilityRestraint: self.permissions.access_all_locations,
-                    text: gettext("Create and Edit Custom Web Reports"),
+                    text: gettext("Create and Edit Configurable Reports"),
                     checkboxLabel: "create-and-edit-configurable-reports-checkbox",
                     checkboxPermission: self.permissions.edit_ucrs,
-                    checkboxText: gettext("Allow role to create and edit custom web reports."),
+                    checkboxText: gettext("Allow role to create and edit configurable reports."),
                 }];
 
                 self.registryPermissions = [

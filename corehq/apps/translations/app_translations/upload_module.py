@@ -1,18 +1,15 @@
 import itertools
 import re
-from collections import Counter
 
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_module_from_sheet_name,
     get_unicode_dicts,
 )
-from corehq.util.itertools import zip_with_gaps
 
 
 class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
@@ -52,8 +49,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         detail_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'detail']
 
         if (
-            len(short_details) == len(list_rows) and
-            len(long_details) == len(detail_rows)
+            len(short_details) == len(list_rows)
+            and len(long_details) == len(detail_rows)
         ):
             self._update_details_based_on_position(list_rows, short_details,
                                                    detail_rows, long_details)
@@ -270,7 +267,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
     @classmethod
     def _remove_description_from_case_property(cls, row):
-        return re.match('.*(?= \()', row['case_property']).group()
+        return re.match(r'.*(?= \()', row['case_property']).group()
 
     def _has_at_least_one_translation(self, row, prefix):
         """
@@ -282,7 +279,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         >>> _has_at_least_one_translation({'case_property': 'name'}, 'default')
         False
         """
-        return any(row.get(prefix + '_' + l) for l in self.langs)
+        return any(row.get(prefix + '_' + l) for l in self.langs)  # noqa: E741
 
     def _update_translation(self, row, language_dict, require_translation=True):
         if not require_translation or self._has_at_least_one_translation(row, 'default'):
@@ -290,7 +287,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         else:
             self.msgs.append((
                 messages.error,
-                _("You must provide at least one translation" +
+                _("You must provide at least one translation"
                   " of the case property '%s'") % row['case_property']
             ))
 

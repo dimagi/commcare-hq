@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.models import Program

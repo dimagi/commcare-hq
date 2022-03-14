@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 from jsonobject.base import DefaultProperty
 
@@ -218,8 +218,8 @@ class _AdvancedFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
 
     def _add_load_update_actions(self):
         for action in self.form.actions.load_update_cases:
-            for name, question_path in action.case_properties.items():
-                self._add_property_save(action.case_type, name, question_path)
+            for name, conditional_update in action.case_properties.items():
+                self._add_property_save(action.case_type, name, conditional_update.question_path)
             for question_path, name in action.preload.items():
                 self._add_property_load(action.case_type, name, question_path)
             if action.close_condition.is_active():
@@ -489,7 +489,7 @@ class AppCaseMetadata(JsonObject):
                     return parent_props
             else:
                 params = {'case_type': root_case_type, 'relationship': parent_rel}
-                raise CaseMetaException(ugettext_lazy(
+                raise CaseMetaException(gettext_lazy(
                     "Case type '%(case_type)s' has no '%(relationship)s' "
                     "relationship to any other case type.") % params)
 

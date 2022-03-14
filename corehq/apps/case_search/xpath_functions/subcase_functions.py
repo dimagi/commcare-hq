@@ -1,12 +1,16 @@
-from collections import Counter
 from dataclasses import dataclass
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
-from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize, UnaryExpression
+from eulxml.xpath.ast import (
+    BinaryExpression,
+    FunctionCall,
+    UnaryExpression,
+    serialize,
+)
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.es import CaseSearchES, filters, queries, aggregations
+from corehq.apps.es import CaseSearchES, aggregations, filters, queries
 
 
 @dataclass

@@ -5,7 +5,7 @@ import re
 from collections import OrderedDict, defaultdict
 from functools import wraps
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from lxml import etree as ET
 from memoized import memoized

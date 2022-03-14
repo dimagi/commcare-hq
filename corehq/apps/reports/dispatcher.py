@@ -1,7 +1,7 @@
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.views.generic.base import View
 
 from django_prbac.exceptions import PermissionDenied
@@ -32,7 +32,9 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-_ = lambda message: ugettext(message) if message is not None else None  # noqa: E731
+
+def _(message):
+    return gettext(message) if message is not None else None
 
 
 class ReportDispatcher(View):
@@ -348,7 +350,5 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_access_linked_domains
-        # will eventually only be accessible via the release_management privilege, but shared with linked domains
-        # feature flag for now
-        return can_access_linked_domains(request.couch_user, domain)
+        from corehq.apps.linked_domain.util import can_user_access_release_management
+        return can_user_access_release_management(request.couch_user, domain, include_toggle=True)
