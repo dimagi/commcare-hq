@@ -1,18 +1,14 @@
-import copy
-import json
 import re
 from datetime import time
 
-from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import Field, Widget
-from django.forms.fields import *
+from django.forms.fields import BooleanField, CharField, ChoiceField
 from django.forms.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -40,14 +36,14 @@ from .models import (
 NO_RESPONSE = "none"
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, ugettext_lazy("SMS")),
-    (METHOD_SMS_SURVEY, ugettext_lazy("SMS Survey")),
-    (NO_RESPONSE, ugettext_lazy("No Response")),
+    (METHOD_SMS, gettext_lazy("SMS")),
+    (METHOD_SMS_SURVEY, gettext_lazy("SMS Survey")),
+    (NO_RESPONSE, gettext_lazy("No Response")),
 )
 
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, ugettext_lazy("Mobile Worker Group")),
-    (RECIPIENT_OWNER, ugettext_lazy("The case's owner")),
+    (RECIPIENT_USER_GROUP, gettext_lazy("Mobile Worker Group")),
+    (RECIPIENT_OWNER, gettext_lazy("The case's owner")),
 )
 
 
@@ -79,16 +75,18 @@ def validate_app_and_form_unique_id(app_and_form_unique_id, domain):
 
 
 class RecordListWidget(Widget):
-    
-    # When initialized, expects to be passed attrs={"input_name" : < first dot-separated name of all related records in the html form >}
-    
+
+    # When initialized, expects to be passed attrs={
+    #   "input_name" : < first dot-separated name of all related records in the html form >
+    # }
+
     def value_from_datadict(self, data, files, name, *args, **kwargs):
         input_name = self.attrs["input_name"]
         raw = {}
         for key in data:
             if key.startswith(input_name + "."):
                 raw[key] = data[key]
-        
+
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
@@ -111,11 +109,12 @@ class RecordListField(Field):
     widget = None
     help_text = None
 
-    # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
+    # When initialized, expects to be passed kwarg input_name, which is the
+    # first dot-separated name of all related records in the html form
 
     def __init__(self, *args, **kwargs):
         input_name = kwargs.pop('input_name')
-        kwargs['widget'] = RecordListWidget(attrs={"input_name" : input_name})
+        kwargs['widget'] = RecordListWidget(attrs={"input_name": input_name})
         super(RecordListField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -125,84 +124,84 @@ class RecordListField(Field):
 class KeywordForm(Form):
     domain = None
     keyword_id = None
-    keyword = CharField(label=ugettext_noop("Keyword"))
-    description = TrimmedCharField(label=ugettext_noop("Description"))
+    keyword = CharField(label=gettext_noop("Keyword"))
+    description = TrimmedCharField(label=gettext_noop("Description"))
     override_open_sessions = BooleanField(
         required=False,
         initial=False,
-        label=ugettext_noop("Override open SMS Surveys"),
+        label=gettext_noop("Override open SMS Surveys"),
     )
     allow_keyword_use_by = ChoiceField(
         required=False,
-        label=ugettext_noop("Allow Keyword Use By"),
+        label=gettext_noop("Allow Keyword Use By"),
         initial='any',
         choices=(
-            ('any', ugettext_noop("Both Mobile Workers and Cases")),
-            ('users', ugettext_noop("Mobile Workers Only")),
-            ('cases', ugettext_noop("Cases Only")),
+            ('any', gettext_noop("Both Mobile Workers and Cases")),
+            ('users', gettext_noop("Mobile Workers Only")),
+            ('cases', gettext_noop("Cases Only")),
         )
     )
     sender_content_type = ChoiceField(
-        label=ugettext_noop("Send to Sender"),
+        label=gettext_noop("Send to Sender"),
     )
     sender_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
     )
     sender_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     other_recipient_content_type = ChoiceField(
         required=False,
-        label=ugettext_noop("Notify Another Person"),
+        label=gettext_noop("Notify Another Person"),
         initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
-        label=ugettext_noop("Recipient"),
+        label=gettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
     )
     other_recipient_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Group Name"),
+        label=gettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
     )
     other_recipient_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     process_structured_sms = BooleanField(
         required=False,
-        label=ugettext_noop("Process incoming keywords as a Structured Message"),
+        label=gettext_noop("Process incoming keywords as a Structured Message"),
     )
     structured_sms_app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey"),
+        label=gettext_noop("Survey"),
     )
     use_custom_delimiter = BooleanField(
         required=False,
-        label=ugettext_noop("Use Custom Delimiter"),
+        label=gettext_noop("Use Custom Delimiter"),
     )
     delimiter = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Delimiter"),
+        label=gettext_noop("Please Specify Delimiter"),
     )
     use_named_args_separator = BooleanField(
         required=False,
-        label=ugettext_noop("Use Joining Character"),
+        label=gettext_noop("Use Joining Character"),
     )
     use_named_args = BooleanField(
         required=False,
-        label=ugettext_noop("Use Named Answers"),
+        label=gettext_noop("Use Named Answers"),
     )
     named_args_separator = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Please Specify Joining Characcter"),
+        label=gettext_noop("Please Specify Joining Characcter"),
     )
     named_args = RecordListField(
         input_name="named_args",
@@ -546,9 +545,7 @@ class KeywordForm(Form):
                         "Name and xpath are both required fields."
                     ))
                 for k, v in data_dict.items():
-                    if (not use_named_args_separator
-                        and (k.startswith(name) or name.startswith(k))
-                    ):
+                    if (not use_named_args_separator and (k.startswith(name) or name.startswith(k))):
                         raise ValidationError(
                             _("Cannot have two names overlap: ") + "(%s, %s)"
                             % (k, name)
@@ -568,7 +565,8 @@ class KeywordForm(Form):
 
     def clean_named_args_separator(self):
         value = self.cleaned_data["named_args_separator"]
-        if (self.process_structured_sms
+        if (
+            self.process_structured_sms
             and self.cleaned_data["use_named_args"]
             and self.cleaned_data["use_named_args_separator"]
         ):

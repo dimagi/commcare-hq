@@ -2,8 +2,8 @@ import calendar
 import datetime
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -27,8 +27,8 @@ from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 
 class GroupFilterMixin(object):
     slug = "group"
-    label = ugettext_lazy("Group")
-    default_text = ugettext_lazy("Everybody")
+    label = gettext_lazy("Group")
+    default_text = gettext_lazy("Everybody")
 
     @property
     def options(self):
@@ -36,16 +36,16 @@ class GroupFilterMixin(object):
 
 
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
-    placeholder = ugettext_lazy('Click to select a group')
+    placeholder = gettext_lazy('Click to select a group')
 
 
 class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = ugettext_lazy('Click to select groups')
+    placeholder = gettext_lazy('Click to select groups')
 
 
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
-    label = ugettext_lazy("Year")
+    label = gettext_lazy("Year")
     default_text = None
 
     @property
@@ -58,7 +58,7 @@ class YearFilter(BaseSingleOptionFilter):
 
 class MonthFilter(BaseSingleOptionFilter):
     slug = "month"
-    label = ugettext_lazy("Month")
+    label = gettext_lazy("Month")
     default_text = None
 
     @property
@@ -68,8 +68,8 @@ class MonthFilter(BaseSingleOptionFilter):
 
 class CaseTypeMixin(object):
     slug = "case_type"
-    label = ugettext_lazy("Case Type")
-    default_text = ugettext_lazy("All Case Types")
+    label = gettext_lazy("Case Type")
+    default_text = gettext_lazy("All Case Types")
 
     @property
     def options(self):
@@ -79,17 +79,17 @@ class CaseTypeMixin(object):
 
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):
-    placeholder = ugettext_lazy('Click to select a case type')
+    placeholder = gettext_lazy('Click to select a case type')
 
 
 class MultiCaseTypeFilter(CaseTypeMixin, BaseMultipleOptionFilter):
-    placeholder = ugettext_lazy('Click to select case types')
+    placeholder = gettext_lazy('Click to select case types')
 
 
 class SelectOpenCloseFilter(BaseSingleOptionFilter):
     slug = "is_open"
-    label = ugettext_lazy("Open / Closed")
-    default_text = ugettext_lazy("Show All")
+    label = gettext_lazy("Open / Closed")
+    default_text = gettext_lazy("Show All")
 
     @property
     def options(self):
@@ -101,12 +101,12 @@ class SelectOpenCloseFilter(BaseSingleOptionFilter):
 
 class SelectApplicationFilter(BaseSingleOptionFilter):
     slug = "app"
-    label = ugettext_lazy("Application")
+    label = gettext_lazy("Application")
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-        default_text = ugettext_lazy("Select Application")
+        default_text = gettext_lazy("Select Application")
     else:
-        default_text = ugettext_lazy("Select Application [Latest Build Version]")
+        default_text = gettext_lazy("Select Application [Latest Build Version]")
 
     @property
     def options(self):
@@ -124,9 +124,9 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
 
 class RepeaterFilter(BaseSingleOptionFilter):
     slug = 'repeater'
-    label = ugettext_lazy('Repeater')
-    default_text = ugettext_lazy("All Repeaters")
-    placeholder = ugettext_lazy('Click to select repeaters')
+    label = gettext_lazy('Repeater')
+    default_text = gettext_lazy("All Repeaters")
+    placeholder = gettext_lazy('Click to select repeaters')
 
     @property
     def options(self):
@@ -138,8 +138,8 @@ class RepeaterFilter(BaseSingleOptionFilter):
 
 class RepeatRecordStateFilter(BaseSingleOptionFilter):
     slug = "record_state"
-    label = ugettext_lazy("Record Status")
-    default_text = ugettext_lazy("Show All")
+    label = gettext_lazy("Record Status")
+    default_text = gettext_lazy("Show All")
 
     @property
     def options(self):
@@ -153,8 +153,8 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
 
 class IncrementalExportFilter(BaseSingleOptionFilter):
     slug = 'incremental_export_id'
-    label = ugettext_lazy('Incremental Export')
-    default_text = ugettext_lazy("All Incremental Exports")
+    label = gettext_lazy('Incremental Export')
+    default_text = gettext_lazy("All Incremental Exports")
 
     @property
     def options(self):

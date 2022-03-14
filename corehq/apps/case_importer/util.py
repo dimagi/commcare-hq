@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from celery import states
 from celery.exceptions import Ignore
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors

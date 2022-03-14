@@ -1,14 +1,23 @@
 from unittest.mock import Mock, patch
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.linked_domain.exceptions import (
+    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
+    DomainLinkNotFound,
+    NoDownstreamDomainsProvided,
 )
-from corehq.apps.linked_domain.views import link_domains
+from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.views import (
+    link_domains,
+    validate_push,
+    validate_push_for_user,
+)
+from corehq.apps.users.models import WebUser
 
 
 class LinkDomainsTests(SimpleTestCase):
@@ -60,3 +69,155 @@ class LinkDomainsTests(SimpleTestCase):
             domain_link = link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
         self.assertIsNotNone(domain_link)
+
+
+class ValidatePushTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = WebUser()
+        cls.user.username = 'superuser'
+        cls.user.save()
+        cls.addClassCleanup(cls.user.delete, 'test-domain', deleted_by=None)
+
+        validate_patcher = patch('corehq.apps.linked_domain.views.validate_push_for_user')
+        cls.mock_validate_push_for_user = validate_patcher.start()
+        cls.addClassCleanup(validate_patcher.stop)
+
+    def test_raises_exception_if_no_downstream_domains_selected(self):
+        with self.assertRaises(NoDownstreamDomainsProvided):
+            validate_push(self.user, 'upstream', [])
+
+    def test_raises_exception_if_link_not_found(self):
+        with self.assertRaises(DomainLinkNotFound):
+            validate_push(self.user, 'upstream', ['downstream'])
+
+    def test_raises_exception_if_user_attempts_invalid_push(self):
+        DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_validate_push_for_user.side_effect = AttemptedPushViolatesConstraints
+
+        with self.assertRaises(AttemptedPushViolatesConstraints):
+            validate_push(self.user, 'upstream', ['downstream'])
+
+    def test_successful_validation(self):
+        DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_validate_push_for_user.side_effect = None
+
+        validate_push(self.user, 'upstream', ['downstream'])
+
+
+class ValidatePushForUserTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.superuser = WebUser()
+        cls.superuser.username = 'superuser'
+        cls.superuser.is_superuser = True
+        cls.superuser.save()
+        cls.addClassCleanup(cls.superuser.delete, 'test-domain', deleted_by=None)
+
+        cls.non_superuser = WebUser()
+        cls.non_superuser.username = 'nonsuperuser'
+        cls.non_superuser.is_superuser = False
+        cls.non_superuser.save()
+        cls.addClassCleanup(cls.non_superuser.delete, 'test-domain', deleted_by=None)
+
+    def test_superuser_can_push_multiple_full_access_links(self):
+        full_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='full1')
+        full_access_link2 = DomainLink.objects.create(master_domain='upstream', linked_domain='full2')
+
+        link1_patcher = patch.object(full_access_link1, 'has_full_access', return_value=True)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(full_access_link2, 'has_full_access', return_value=True)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        try:
+            validate_push_for_user(self.superuser, [full_access_link1, full_access_link2])
+        except Exception as e:
+            self.fail(f"Unexpected exception raised {e}")
+
+    def test_non_superuser_can_push_to_multiple_full_access_links(self):
+        full_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='full1')
+        full_access_link2 = DomainLink.objects.create(master_domain='upstream', linked_domain='full2')
+
+        link1_patcher = patch.object(full_access_link1, 'has_full_access', return_value=True)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(full_access_link2, 'has_full_access', return_value=True)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        try:
+            validate_push_for_user(self.non_superuser, [full_access_link1, full_access_link2])
+        except Exception as e:
+            self.fail(f"Unexpected exception raised {e}")
+
+    def test_superuser_can_push_multiple_mixed_access_links(self):
+        full_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='full')
+        limited_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='limited')
+
+        link1_patcher = patch.object(full_access_link, 'has_full_access', return_value=True)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(limited_access_link, 'has_full_access', return_value=False)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        try:
+            validate_push_for_user(self.superuser, [full_access_link, limited_access_link])
+        except Exception as e:
+            self.fail(f"Unexpected exception raised {e}")
+
+    def test_raises_exception_if_non_superuser_pushes_to_multiple_mixed_access_links(self):
+        full_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='full')
+        limited_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='limited')
+
+        link1_patcher = patch.object(full_access_link, 'has_full_access', return_value=True)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(limited_access_link, 'has_full_access', return_value=False)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        with self.assertRaises(AttemptedPushViolatesConstraints):
+            validate_push_for_user(self.non_superuser, [full_access_link, limited_access_link])
+
+    def test_superuser_can_push_multiple_limited_access_links(self):
+        limited_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited1')
+        limited_access_link2 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited2')
+
+        link1_patcher = patch.object(limited_access_link1, 'has_full_access', return_value=False)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(limited_access_link2, 'has_full_access', return_value=False)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        try:
+            validate_push_for_user(self.superuser, [limited_access_link1, limited_access_link2])
+        except Exception as e:
+            self.fail(f"Unexpected exception raised {e}")
+
+    def test_raises_exception_if_non_superuser_pushes_to_multiple_limited_access_links(self):
+        limited_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited1')
+        limited_access_link2 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited2')
+
+        link1_patcher = patch.object(limited_access_link1, 'has_full_access', return_value=False)
+        link1_patcher.start()
+        self.addCleanup(link1_patcher.stop)
+
+        link2_patcher = patch.object(limited_access_link2, 'has_full_access', return_value=False)
+        link2_patcher.start()
+        self.addCleanup(link2_patcher.stop)
+
+        with self.assertRaises(AttemptedPushViolatesConstraints):
+            validate_push_for_user(self.non_superuser, [limited_access_link1, limited_access_link2])

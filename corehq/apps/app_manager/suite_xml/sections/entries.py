@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE

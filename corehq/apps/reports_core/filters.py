@@ -3,8 +3,8 @@ from datetime import datetime, time
 
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -405,7 +405,7 @@ class DynamicChoiceListFilter(BaseFilter):
             if choice_provider_default is not None:
                 return choice_provider_default
 
-        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
 
 
 class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):

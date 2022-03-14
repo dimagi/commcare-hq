@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from psycopg2 import DatabaseError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 

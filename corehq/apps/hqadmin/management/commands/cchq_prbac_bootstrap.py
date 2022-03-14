@@ -3,7 +3,7 @@ import logging
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-from django_prbac.models import Grant, Role
+from django_prbac.models import Role
 
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
@@ -176,6 +176,9 @@ class Command(BaseCommand):
         Role(slug=privileges.LITE_RELEASE_MANAGEMENT,
              name='Lite Release Management',
              description='A limited version of Release Management'),
+        Role(slug=privileges.LOADTEST_USERS,
+             name='Loadtest Users',
+             description='Allows creating loadtest users'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -189,7 +192,6 @@ class Command(BaseCommand):
         Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
-        Role(slug='enterprise_plan_v1', name='Enterprise Plan', description=''),
     ] + [
         Role(slug='standard_plan_report_builder_v0', name='Standard Plan - 5 Reports', description=''),
         Role(slug='pro_plan_report_builder_v0', name='Pro Plan - 5 Reports', description=''),
@@ -212,5 +214,4 @@ class Command(BaseCommand):
         'pro_plan_v1': features.pro_v1,
         'advanced_plan_v0': features.advanced_v0,
         'enterprise_plan_v0': features.enterprise_v0,
-        'enterprise_plan_v1': features.enterprise_v1,
     }

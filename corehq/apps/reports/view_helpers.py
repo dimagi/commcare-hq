@@ -3,7 +3,7 @@ import numbers
 from functools import partial
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import pytz
 from couchdbkit import ResourceNotFound
