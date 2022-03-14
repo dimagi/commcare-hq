@@ -79,11 +79,6 @@ class BlobMeta(PartitionedModel, Model):
                 name="blobs_blobmeta_expires_ed7e3d",
                 condition=Q(expires_on__isnull=False),
             ),
-            Index(
-                fields=['type_code', 'created_on'],
-                name="blobs_blobmeta_type_co_23e226",
-                condition=Q(domain='icds-cas'),
-            ),
         ]
 
     def __repr__(self):
