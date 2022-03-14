@@ -843,7 +843,7 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Allows user to select multiple cases and load the all into the form.
+    Allows user to select multiple cases and load them all into the form.
     """
 )
 
