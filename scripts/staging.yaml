@@ -61,7 +61,7 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
-    - dm/django3.0-part1+others
+    - dm/django3-branches+others
     - ml/remove-pickles-reports # Minha Jan 24
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
@@ -80,4 +80,5 @@ branches:
     - jm/elastic-client-adapter  # Joel Mar 1
     - ml/sumologic-on-staging-check # Minha Mar 10
     - mp/reports_email_post-only # Marco Mar 11
+    - dm/django3.1-deprecations
 submodules: { }
