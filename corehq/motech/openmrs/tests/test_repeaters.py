@@ -140,14 +140,18 @@ CASE_CONFIG = {
 }
 
 
-@mock.patch.object(CommCareCase.objects, 'get_cases', lambda case_ids, domain=None, ordered=False: [{
-    '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
-        case_id='65e55473-e83b-4d78-9dde-eaf949758997',
-        type='paciente',
-        name='Elsa',
-        case_json={'estado_tarv': '1', 'tb': '0'},
-    )
-}[case_id] for case_id in case_ids])
+def mock_get_cases(self, case_ids, domain=None, ordered=False):
+    return [{
+        '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
+            case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+            type='paciente',
+            name='Elsa',
+            case_json={'estado_tarv': '1', 'tb': '0'},
+        )
+    }[case_id] for case_id in case_ids]
+
+
+@mock.patch.object(type(CommCareCase.objects), 'get_cases', mock_get_cases)
 class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
