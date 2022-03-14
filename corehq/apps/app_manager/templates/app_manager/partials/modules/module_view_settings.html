@@ -49,15 +49,16 @@
           <div class="panel-body">
             {% if not module.is_surveys and module.module_type != 'shadow' %}
               {% include "app_manager/partials/modules/module_view_case_type.html" %}
-
-              {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+            {% endif %}
+            {% if not module.is_surveys and request|toggle_enabled:'USH_CASE_CLAIM_UPDATES'%}
               <div class="form-group">
                 <label class="{% css_label_class %} control-label">
                   {% trans "Additional Case List and Case Search Types" %}
                   <span class="hq-help-template"
                         data-title="{% trans "Additional Case List and Case Search Types" %}"
                         data-content="{% blocktrans %}
-                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.
+                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above
+                             or in the Source Menu.
                              <a target='_blank'
                              href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>
                               {% endblocktrans %}">
@@ -71,7 +72,6 @@
                   </select>
                 </div>
               </div>
-              {% endif %}
             {% endif %}
 
             {% if child_module_enabled and not module.is_training_module%}
