@@ -2,7 +2,7 @@ import calendar
 import datetime
 
 from django.urls import reverse
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import gettext_noop as _
 
 from dateutil.relativedelta import relativedelta
 
@@ -237,7 +237,10 @@ class DateRangeFilter(BaseReportFilter):
 
     @classmethod
     def get_date_str(cls, request, date_type):
-        return request.GET.get('%s_%s' % (cls.slug, date_type))
+        date_str = request.GET.get('%s_%s' % (cls.slug, date_type))
+        if date_str is None:
+            date_str = request.POST.get('%s_%s' % (cls.slug, date_type))
+        return date_str
 
     @classmethod
     def get_date(cls, request, date_type):

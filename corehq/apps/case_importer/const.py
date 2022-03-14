@@ -1,5 +1,3 @@
-from django.utils.translation import ugettext_noop
-
 # Each column results in 3 form fields so this must be true:
 #   num_columns * 3 < DATA_UPLOAD_MAX_NUMBER_FIELDS
 #

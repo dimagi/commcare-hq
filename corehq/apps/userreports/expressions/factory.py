@@ -2,7 +2,7 @@ import datetime
 import functools
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 

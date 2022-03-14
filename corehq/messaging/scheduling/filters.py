@@ -1,6 +1,5 @@
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reports.filters.base import BaseReportFilter
-from django.utils.translation import ugettext_lazy
 
 
 class ScheduleInstanceFilter(BaseReportFilter):

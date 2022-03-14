@@ -17,7 +17,7 @@
           {% trans "Content" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control"
+          <select multiple class="form-control" id="model-multiselect"
                   data-bind="selectedOptions: modelsToPush,
                              multiselect: {
                                  properties: {
@@ -39,9 +39,22 @@
           {% trans "Project Spaces" %}
         </label>
         <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control"
+          <select multiple class="form-control" id="domain-multiselect"
                   data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
+          <div class="spacer"></div>
+          <p data-bind="visible: shouldShowSelectedMRMDomain">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            {% blocktrans %}
+              The selected project can only be pushed individually. See <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Linked Project Spaces</a> documentation for more information.
+            {% endblocktrans %}
+          </p>
+          <p data-bind="visible: shouldShowSelectedERMDomain">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            {% blocktrans %}
+              Disabled project spaces can only be pushed individually. See <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Linked Project Spaces</a> documentation for more information.
+            {% endblocktrans %}
+          </p>
         </div>
       </div>
       <div class="form-group">
