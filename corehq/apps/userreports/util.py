@@ -283,7 +283,7 @@ def get_report_config_or_not_found(domain, config_id):
     try:
         doc = ReportConfiguration.get_db().get(config_id)
         config = wrap_report_config_by_type(doc)
-    except (ResourceNotFound, KeyError):
+    except (ResourceNotFound, KeyError, ReportConfigurationNotFoundError):
         raise DocumentNotFound()
 
     if config.domain != domain:
