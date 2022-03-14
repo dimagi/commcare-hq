@@ -125,6 +125,35 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app.version = 2
         self._assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
 
+    def test_case_properties_advanced(self):
+        app = Application.new_app('domain', 'New App')
+        app._id = uuid.uuid4().hex
+        app.version = 1
+        m0 = app.add_module(AdvancedModule.new_module('Module0', lang='en'))
+        m0.case_type = 'child'
+        m0f0 = m0.new_form('other form', 'en')
+        m0f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='parent',
+            case_tag='parent',
+            case_properties={
+                'case_name': ConditionalCaseUpdate(question_path='/data/name'),
+                'other': ConditionalCaseUpdate(question_path='/data/other')
+            }
+        ))
+        m0f0.actions.open_cases.append(AdvancedOpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path='/data/question1'),
+            case_type='child',
+            case_indices=[CaseIndex(tag='parent', reference_id='father')],
+            case_properties={
+                'child_other': ConditionalCaseUpdate(question_path='/data/child/other')
+            }
+        ))
+        m0f0.actions.open_cases[0].open_condition.type = 'always'
+        meta = app.get_case_metadata()
+        self.assertEqual(2, len(meta.case_types))
+        self.assertEqual({'name', 'child_other'}, {p.name for p in meta.get_type('child').properties})
+        self.assertEqual({'case_name', 'other'}, {p.name for p in meta.get_type('parent').properties})
+
     def test_case_references(self):
         app = Application.new_app('domain', 'New App')
         app._id = uuid.uuid4().hex

@@ -197,6 +197,7 @@ class CaseClaimEndpointTests(TestCase):
             {'name': 'Jamie Hand'},
             {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened > "2015-03-25"'},
             {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" or name = "Jamie Hand"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: ['name = "Jamie Hand"', 'date_opened > "2015-03-25"']},
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
@@ -207,6 +208,7 @@ class CaseClaimEndpointTests(TestCase):
             {'name': 'Jamie Face'},
             {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened < "2015-03-25"'},
             {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" and name = "Jamie Hand"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: ['name = "Jamie Face"', 'date_opened < "2015-03-25"']},
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})

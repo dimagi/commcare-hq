@@ -61,22 +61,23 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
+    # - dm/django3.0-part1+others
     - ml/remove-pickles-reports # Minha Jan 24
     - do/compare-case-properties # Dominic Feb 2
-    - ml/remove-pickles-user-importer # Minha Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - ap/link-permissions-to-expressions # Amit Feb 28
-    - jm/elastic-client-adapter  # Joel Mar 1
     - sk/remove-legacy-perm-check+bmb/whh-003+nh/loadtest_users_ga+others  # Simon Mar 7
     - sk/remove-legacy-perm-check  # Simon Mar 7
     - bmb/whh-003 # Biyeun Mar 1
     - nh/loadtest_users_ga+others  # Norman Mar 2
-    - ad/multivalued-search-functions # Addison Mar 2
+    # - ad/multivalued-search-functions # Addison Mar 2
     - do/multi-select-id-mapping # Dominic Mar 2
     - ml/check-for-historical-xss # Minha Mar 3
-    - dependabot/npm_and_yarn/markdown-it-12.3.2 # Amit Mar 7
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
+    # - dm/django3.0-part1 # Daniel 3/9
+    - jm/elastic-client-adapter  # Joel Mar 1
+    - ml/sumologic-on-staging-check # Minha Mar 10
+    - mp/reports_email_post-only # Marco Mar 11
 submodules: { }

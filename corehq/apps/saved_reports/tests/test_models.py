@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from smtplib import SMTPSenderRefused
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
@@ -160,7 +161,7 @@ class TestSendEmails(SimpleTestCase):
         self.mock_send_email.assert_called_with('Test Report',
             ['test1@dimagi.com', 'test2@dimagi.com'],
             'Unable to generate email report. Excel files are attached.',
-            email_from='commcarehq-noreply@example.com',
+            email_from=settings.DEFAULT_FROM_EMAIL,
             file_attachments=['abba'])
 
     def test_failing_emails_are_logged(self):
