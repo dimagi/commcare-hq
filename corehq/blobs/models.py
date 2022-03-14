@@ -5,12 +5,13 @@ from django.db.models import (
     BigIntegerField,
     CharField,
     DateTimeField,
+    Index,
     IntegerField,
     Model,
     PositiveSmallIntegerField,
+    Q,
 )
 from memoized import memoized
-from partial_index import PartialIndex, PQ
 
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.models import NullJsonField
@@ -73,15 +74,15 @@ class BlobMeta(PartitionedModel, Model):
         ]
         index_together = [("parent_id", "type_code", "name")]
         indexes = [
-            PartialIndex(
+            Index(
                 fields=['expires_on'],
-                unique=False,
-                where=PQ(expires_on__isnull=False),
+                name="blobs_blobm_expires_64b92d_partial",
+                condition=Q(expires_on__isnull=False),
             ),
-            PartialIndex(
+            Index(
                 fields=['type_code', 'created_on'],
-                unique=False,
-                where=PQ(domain='icds-cas'),
+                name="blobs_blobm_type_co_23e226_partial",
+                condition=Q(domain='icds-cas'),
             ),
         ]
 

@@ -1,5 +1,5 @@
 from django.db import migrations
-import partial_index
+from django.db.models import Index, Q
 
 from corehq.sql_db.migrations import partitioned
 CREATE_INDEX_SQL = """
@@ -26,7 +26,11 @@ class Migration(migrations.Migration):
             ),
             migrations.AddIndex(
                 model_name='blobmeta',
-                index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_ed7e3d_partial', unique=False, where=partial_index.PQ(expires_on__isnull=False)),
+                index=Index(
+                    fields=['expires_on'],
+                    name='blobs_blobm_expires_ed7e3d_partial',
+                    condition=Q(expires_on__isnull=False),
+                ),
             )
         ]),
         migrations.RunSQL(
@@ -35,9 +39,11 @@ class Migration(migrations.Migration):
             state_operations=[
                 migrations.AddIndex(
                     model_name='blobmeta',
-                    index=partial_index.PartialIndex(fields=['type_code', 'created_on'],
-                                                     name='blobs_blobm_type_co_23e226_partial', unique=False,
-                                                     where=partial_index.PQ(domain='icds-cas')),
+                    index=Index(
+                        fields=['type_code', 'created_on'],
+                        name='blobs_blobm_type_co_23e226_partial', unique=False,
+                        condition=Q(domain='icds-cas'),
+                    ),
                 ),
             ]
         ),
