@@ -73,19 +73,24 @@ hqDefine('toggle_ui/js/edit-flag', [
             save: function () {
                 console.log("Saving randomness")
                 console.log(self.items())
-                var items = _.map(_.filter(self.items(), function (item) {
+                filteredList = _.filter(self.items(), function (item) {
                     return item.value();
-                }), function (item) {
-                    if (item.namespace() === null){
-                        var ns_raw = 'user'
-                    }
-                    else {
+                })
+                console.log(filteredList)
+                var items = _.map(filteredList, function (item) {
+                    try {
                         var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), '')
+                    }
+                    catch (e) {
+                        console.log("TypeError?")
+                        console.log(e instanceof TypeError)
+                        var ns_raw = 'user'
                     }
                     var namespace = ns_raw === 'user' ? null : ns_raw,
                         value = namespace === null ? item.value() : namespace + ':' + item.value();
                     return value;
                 });
+                console.log(items)
                 console.log("Maybe that wasn't the problem?")
                 self.saveButton.ajax({
                     type: 'post',
