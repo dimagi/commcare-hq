@@ -853,7 +853,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             if cls_:
                 return cls_.wrap(data)
             elif data['doc_type'] == 'Repeater' and settings.UNIT_TESTING:
-                super(Repeater, cls).wrap(data)
+                return super(Repeater, cls).wrap(data)
             else:
                 raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
