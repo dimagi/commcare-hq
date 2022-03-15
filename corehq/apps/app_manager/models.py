@@ -2067,6 +2067,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
 
+    # Allow selection of mutiple cases
+    multi_select = BooleanProperty(default=False)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
