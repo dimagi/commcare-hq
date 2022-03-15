@@ -132,13 +132,13 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app.version = 1
         m0 = app.add_module(AdvancedModule.new_module('Module0', lang='en'))
         m0.case_type = 'child'
-        m0f0 = m0.new_form('other form', 'en')
+        m0f0 = m0.new_form('other form', 'en', attachment=self.get_xml('standard_questions').decode('utf-8'))
         m0f0.actions.load_update_cases.append(LoadUpdateAction(
             case_type='parent',
             case_tag='parent',
             case_properties={
-                'case_name': ConditionalCaseUpdate(question_path='/data/name'),
-                'other': ConditionalCaseUpdate(question_path='/data/other')
+                'case_name': ConditionalCaseUpdate(question_path='/data/question1'),
+                'other': ConditionalCaseUpdate(question_path='/data/question2')
             }
         ))
         m0f0.actions.open_cases.append(AdvancedOpenCaseAction(
@@ -146,7 +146,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
             case_type='child',
             case_indices=[CaseIndex(tag='parent', reference_id='father')],
             case_properties={
-                'child_other': ConditionalCaseUpdate(question_path='/data/child/other')
+                'child_other': ConditionalCaseUpdate(question_path='/data/question2')
             }
         ))
         m0f0.actions.open_cases[0].open_condition.type = 'always'
