@@ -5,35 +5,35 @@ outdated_python_deps="$(pip list --outdated| wc -l)"
 
 # Get outdated JS dependency count
 
-COUNT_OUTDATED_DEP_CODE=$(cat <<-END
+function outdated_count {
+    python - <(cat -) <<-END
 import json
 import sys
-
-dep_arr = json.load(sys.stdin)
+with open(sys.argv[1], "r") as json_file:
+    dep_arr = json.load(json_file)
 print(len(dep_arr["data"]["body"]))
-
 END
-)
+}
 
-outdated_js_deps="$(yarn outdated --json | sed -n 2p | python -c "$COUNT_OUTDATED_DEP_CODE")"
+outdated_js_deps="$(yarn outdated --json | sed -n 2p | outdated_count)"
 
 
 # Get total JS dependencies from package.json
-COUNT_DEP_CODE=$(cat <<-END
+
+function dependency_count {
+    local json_path="$1"
+    python - "$json_path" <<-END
 import json
 import sys
 
-file = open('package.json', 'r')
-file_obj=json.load(file)
+with open(sys.argv[1], "r") as json_file:
+    packages = json.load(json_file)
 
-deps= len(file_obj["dependencies"].keys())
-dev_deps = len(file_obj["devDependencies"].keys())
-print(deps+dev_deps)
-
-file.close()
+print(sum(len(packages[k]) for k in ["dependencies", "devDependencies"]))
 END
-)
-total_js_deps="$(python -c "$COUNT_DEP_CODE")"
+}
+
+total_js_deps=$(dependency_count package.json)
 
 # Publish metrics to Datadog
 
