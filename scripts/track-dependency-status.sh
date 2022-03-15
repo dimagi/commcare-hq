@@ -41,7 +41,7 @@ echo $total_js_deps $outdated_js_deps $total_python_deps $outdated_python_deps #
 source scripts/datadog-utils.sh
 
 send_metric_to_datadog "commcarehq.dependency.python.total" $total_python_deps "count"
-send_metric_to_datadog "commcarehq.dependency.js.outdated" $outdated_python_deps "count"
+send_metric_to_datadog "commcarehq.dependency.python.outdated" $outdated_python_deps "count"
 
 
 send_metric_to_datadog "commcarehq.dependency.js.total" $total_js_deps "count"
