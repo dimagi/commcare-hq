@@ -10,21 +10,34 @@ guidelines described in this document.
 Table of contents
 -----------------
 
--  `Static Files Organization <./code-organization.rst>`__
--  `Managing Dependencies <./dependencies.rst>`__
+.. toctree::
+    :caption: Overview
+    :maxdepth: 1
 
-   -  `Historical Background on Module Patterns <./module-history.rst>`__
-   -  `RequireJS Migration Guide <./migrating.rst>`__
-   -  `Third Party Libraries <./libraries.rst>`__: usage and conventions
-      of framework-level dependencies (jQuery, knockout, etc.)
-   -  `Installing external packages with
-      yarn <./external-packages.rst>`__
+    code-organization
 
--  `Server Integration Patterns <./integration-patterns.rst>`__ (toggles,
-   i18n, etc.)
--  `Security <./security.rst>`__
--  `Production Static Files <./static-files.rst>`__ (collectstatic,
-   compression, map files, CDN)
--  `Testing <./testing.rst>`__
--  `Linting <./linting.rst>`__
--  `Inheritance <./inheritance.rst>`__
+.. toctree::
+    :caption: Dependencies
+    :maxdepth: 1
+
+    dependencies
+    module-history
+    migrating
+    libraries
+    external-packages
+
+.. toctree::
+    :caption: Best practices
+    :maxdepth: 1
+
+    integration-patterns
+    security
+    static-files
+    inheritance
+
+.. toctree::
+    :caption: Development Process
+    :maxdepth: 1
+
+    testing
+    linting
