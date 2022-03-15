@@ -33,28 +33,19 @@ class JSONResponseException(Exception):
         super(JSONResponseException, self).__init__(message, *args, **kwargs)
 
 
-class JSONBaseMixin(object):
+class JSONResponseMixin:
     """
-    Basic mixin for encoding HTTP responses in JSON format.
+    A mixin for View classes that dispatches requests containing the private
+    HTTP header ``HTTP_DJNG_REMOTE_METHOD`` onto a method of an instance of this
+    class, with the given method name. This named method must be decorated with
+    ``@allow_remote_invocation`` and shall return a value that is serializable
+    to JSON.
+
+    The returned HTTP responses are of kind ``application/json;charset=UTF-8``.
     """
     json_encoder = DjangoJSONEncoder
     json_content_type = 'application/json;charset=UTF-8'
 
-    def json_response(self, response_data, status=200, **kwargs):
-        out_data = json.dumps(response_data, cls=self.json_encoder, **kwargs)
-        response = HttpResponse(out_data, self.json_content_type, status=status)
-        response['Cache-Control'] = 'no-cache'
-        return response
-
-
-class JSONResponseMixin(JSONBaseMixin):
-    """
-    A mixin for View classes that dispatches requests containing the private HTTP header
-    ``DjNg-Remote-Method`` onto a method of an instance of this class, with the given method name.
-    This named method must be decorated with ``@allow_remote_invocation`` and shall return a
-    list or dictionary which is serializable to JSON.
-    The returned HTTP responses are of kind ``application/json;charset=UTF-8``.
-    """
     def get(self, request, *args, **kwargs):
         return self._invoke_remote_method(request, args, kwargs)
 
@@ -89,3 +80,9 @@ class JSONResponseMixin(JSONBaseMixin):
         if callable(handler):
             return handler(request, *args, **kwargs)
         return HttpResponseBadRequest('This view can not handle method {0}'.format(request.method), status=405)
+
+    def json_response(self, response_data, status=200, **kwargs):
+        out_data = json.dumps(response_data, cls=self.json_encoder, **kwargs)
+        response = HttpResponse(out_data, self.json_content_type, status=status)
+        response['Cache-Control'] = 'no-cache'
+        return response
