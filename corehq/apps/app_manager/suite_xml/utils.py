@@ -99,7 +99,7 @@ def get_form_locale_id(form):
 
 
 def get_ordered_case_types_for_module(module):
-    return get_ordered_case_types(module.case_type, module.search_config.additional_case_types)
+    return get_ordered_case_types(module.case_type, module.additional_case_types)
 
 
 def get_ordered_case_types(case_type, additional_case_types=None):
