@@ -123,8 +123,6 @@ django-otp==0.9.4
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-partial-index==0.6.0
-    # via -r base-requirements.in
 django-phonenumber-field==5.2.0
     # via
     #   -r base-requirements.in
