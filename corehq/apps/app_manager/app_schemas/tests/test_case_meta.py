@@ -48,6 +48,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
     def _assert_properties(self, meta, property_set):
         self.assertEqual(1, len(meta.case_types))
+        self.assertFalse(meta.case_types[0].has_errors)
         self.assertEqual(set(p.name for p in meta.case_types[0].properties), property_set)
 
     @nottest
@@ -151,8 +152,12 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         m0f0.actions.open_cases[0].open_condition.type = 'always'
         meta = app.get_case_metadata()
         self.assertEqual(2, len(meta.case_types))
-        self.assertEqual({'name', 'child_other'}, {p.name for p in meta.get_type('child').properties})
-        self.assertEqual({'case_name', 'other'}, {p.name for p in meta.get_type('parent').properties})
+        child_type = meta.get_type('child')
+        parent_type = meta.get_type('parent')
+        self.assertFalse(child_type.has_errors)
+        self.assertFalse(parent_type.has_errors)
+        self.assertEqual({'name', 'child_other'}, {p.name for p in child_type.properties})
+        self.assertEqual({'case_name', 'other'}, {p.name for p in parent_type.properties})
 
     def test_case_references(self):
         app = Application.new_app('domain', 'New App')
