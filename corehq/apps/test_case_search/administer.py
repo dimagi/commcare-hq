@@ -8,7 +8,7 @@ from pillowtop.es_utils import (
 )
 
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import \
     transform_case_for_elasticsearch as old_transform
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
@@ -40,12 +40,11 @@ def _get_mapping():
 def load_domain(domain):
     """Load all cases from a domain into the test index"""
     es = get_es_new()
-    accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain()
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain)
     print(f"Loading {len(case_ids)} cases from {domain}")
 
     with _bulk_indexing_settings(es):
-        for case in accessor.iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids):
             transform_and_send(es, case.to_json())
 
 
