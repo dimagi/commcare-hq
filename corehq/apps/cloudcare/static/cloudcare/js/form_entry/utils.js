@@ -102,8 +102,8 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     module.getBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
-            longitude: mapboxResult.geometry.coordinates[0],
-            latitude: mapboxResult.geometry.coordinates[1],
+            longitude: String(mapboxResult.geometry.coordinates[0]),
+            latitude: String(mapboxResult.geometry.coordinates[1]),
         };
         mapboxResult.context.forEach(function (contextValue) {
             try {
