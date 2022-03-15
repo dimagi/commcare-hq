@@ -1,4 +1,5 @@
 from django.utils.functional import cached_property
+from django.template.base import Lexer, TokenType
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
@@ -234,24 +235,33 @@ class RemoteRequestFactory(object):
             )
         return datums
 
-    # Enables app builders to use a special {} bracket syntax (mimicing python) to insert
-    # variables for interpretation by formplayer.
+    # Enables app builders to use a special {{variable}} brace syntax to insert
+    # variables and functions for interpretation by formplayer.
     @staticmethod
-    def _convert_curly_braces_to_concat(xpath_query):
+    def _convert_curly_braces_to_concat(xpath_query_inputted):
+        vars = []
+        texts = []
+        for token in Lexer(xpath_query_inputted).tokenize():
+            if token.token_type == TokenType.VAR:
+                vars.append(token.contents)
+            else:
+                # Can be TokenType.TEXT or TokenType.BLOCK (any blocks will just be treated like text)
+                texts.append(token.contents)
 
-        if '{' in xpath_query:
-            # If string uses double quotes remove them because we are going to add a concat.
-            if xpath_query[0:1] == '\"':
-                xpath_query = xpath_query[1:]
-            if xpath_query[len(xpath_query) - 1: len(xpath_query)] == '\"':
-                xpath_query = xpath_query[0: len(xpath_query[1:])]
-
-            xpath_query = 'concat("' + xpath_query
-            xpath_query = xpath_query.replace('{', '\", ')
-            xpath_query = xpath_query.replace('}', ', \"')
-            xpath_query = xpath_query + '")'
-
-        return xpath_query
+        xpath_query_outputted = ""
+        # If we found any variables then we know to perform a conversion
+        if vars:
+            # The app builder will be required to use single quotes to denote a variable/function when using
+            # this syntax
+            xpath_query_outputted = 'concat('
+            # We assume there is one more text token than variable token and that they alternate
+            for i in range(0, len(texts) - 1):
+                xpath_query_outputted += '"' + texts[i] + '", '
+                xpath_query_outputted += vars[i] + ', '
+            xpath_query_outputted += '"' + texts[len(texts) - 1] + '")'
+            return xpath_query_outputted
+        else:
+            return xpath_query_inputted
 
     def build_query_prompts(self):
         prompts = []
