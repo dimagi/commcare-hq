@@ -81,4 +81,5 @@ branches:
     - ml/sumologic-on-staging-check # Minha Mar 10
     - dm/django3.1-deprecations # Daniel 3/14
     - jls/multiple-referrals-app-manager-ui # Jenny March 14
+    - sk/set-inputs-null  # Simon March 15
 submodules: { }
