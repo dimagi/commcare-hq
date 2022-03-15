@@ -366,7 +366,7 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==9.0.0
+pillow==9.0.1
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -645,9 +645,7 @@ turn-python==0.0.1
 twilio==6.5.1
     # via -r base-requirements.in
 typing-extensions==4.1.1
-    # via
-    #   black
-    #   django-countries
+    # via django-countries
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
