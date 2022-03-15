@@ -70,12 +70,12 @@ class IndexTest(TestCase):
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
             post_case_blocks(
-                [CaseBlock.deprecated_init(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
+                [CaseBlock(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
                 domain=self.project.name
             )
 
         # Step 1. Create a case with index <mom>
-        create_index = CaseBlock.deprecated_init(
+        create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -89,7 +89,7 @@ class IndexTest(TestCase):
         # Step 2. Update the case to delete <mom> and create <dad>
 
         now = datetime.datetime.utcnow()
-        update_index = CaseBlock.deprecated_init(
+        update_index = CaseBlock(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
@@ -97,7 +97,7 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        update_index_expected = CaseBlock.deprecated_init(
+        update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
@@ -113,7 +113,7 @@ class IndexTest(TestCase):
 
         # Step 3. Put <mom> back
 
-        update_index = CaseBlock.deprecated_init(
+        update_index = CaseBlock(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
@@ -121,7 +121,7 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        update_index_expected = CaseBlock.deprecated_init(
+        update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
@@ -139,10 +139,10 @@ class IndexTest(TestCase):
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(
-            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
             domain=self.project.name
         )
-        create_index = CaseBlock.deprecated_init(
+        create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -155,10 +155,10 @@ class IndexTest(TestCase):
     def test_default_relationship(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(
-            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
             domain=self.project.name
         )
-        create_index = CaseBlock.deprecated_init(
+        create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
@@ -178,7 +178,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index should allow the relationship to be set
         """
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             case_id='abcdef',
             case_type='at_risk',
             date_modified='2015-07-24',
@@ -207,7 +207,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index relationship omit relationship attribute if set to "child"
         """
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
@@ -236,7 +236,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         CaseBlock index relationship should default to "child"
         """
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
@@ -267,7 +267,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
         """
         with self.assertRaisesRegex(CaseBlockError,
                                     'Valid values for an index relationship are "child" and "extension"'):
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id='abcdef',
                 case_type='at_risk',
                 date_modified='2015-07-24',
