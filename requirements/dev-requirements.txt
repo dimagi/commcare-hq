@@ -40,7 +40,7 @@ celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-p
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2020.6.20
+certifi==2021.10.8
     # via
     #   requests
     #   sentry-sdk
@@ -645,9 +645,7 @@ turn-python==0.0.1
 twilio==6.5.1
     # via -r base-requirements.in
 typing-extensions==4.1.1
-    # via
-    #   black
-    #   django-countries
+    # via django-countries
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
