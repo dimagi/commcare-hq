@@ -733,7 +733,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
     def test_convert_curly_braces_to_concat(self, *args):
-        inputted_query_1 = "name = '{$name}' and owner_id = '{instance('commcaresession')/user/data/user_id}'"
+
+        # Core conversion test case
+        inputted_query_1 = "name = '{{$name}}' and owner_id = '{{instance('commcaresession')/user/data/user_id}}'"
         expected_output_1 = """
         concat("name = '", $name, "' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
         """.strip()
@@ -742,6 +744,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             expected_output_1
         )
 
+        # Test that regular query without curly braces or concatenation isn't modified
         inputted_query_2 = """
         "name = 'john' and owner_id = '12345'"
         """.strip()
@@ -753,8 +756,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_2)
         )
 
+        # Test conversion again
         inputted_query_3 = """
-        name = 'john' and owner_id = '{instance('commcaresession')/user/data/user_id}'"
+        name = 'john' and owner_id = '{{instance('commcaresession')/user/data/user_id}}'
         """.strip()
         expected_output_3 = """
         concat("name = 'john' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
@@ -762,4 +766,29 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(
             expected_output_3,
             RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_3)
+        )
+
+        # Test that concat statements we're using now will still work
+        inputted_query_4 = """
+        concat("name = 'john' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
+        """.strip()
+        expected_output_4 = """
+        concat("name = 'john' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
+        """.strip()
+        self.assertEqual(
+            expected_output_4,
+            RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_4)
+        )
+
+        # Weird phone number with double braces that is intended to be interpreted as a string literal will not be
+        # (and notice double quotes are interpreted literally)
+        inputted_query_4 = """
+        "phone_number = '{{99999999999}}'"
+        """.strip()
+        expected_output_4 = """
+        concat(""phone_number = '", 99999999999, "'"")
+        """.strip()
+        self.assertEqual(
+            expected_output_4,
+            RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_4)
         )
