@@ -239,8 +239,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
+            if (e.target.id === 'select-row-checkbox') {
+                //don't show detail and just select/deselect checkbox
+            } else {
+                e.preventDefault();
+                FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
+            }
         },
 
         rowKeyAction: function (e) {
@@ -254,6 +258,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                isMultiSelect: true, // TODO: add logic
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -289,6 +294,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
 
+
         childViewContainer: ".js-case-container",
         childView: CaseView,
         childViewOptions: function () {
@@ -313,6 +319,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
+            selectAllCheckbox: "#select-all-checkbox",
+            selectRow: "#select-row-checkbox",
         },
 
         events: {
@@ -325,6 +333,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.selectRow': 'selectRowAction',
         },
 
         caseListAction: function (e) {
@@ -389,6 +399,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
+        selectAllAction: function (e) {
+            if (e.target.checked) {
+                // add all rows to selected cases
+            } else {
+                // remove all rows from selected cases
+            }
+            //do something
+        },
+        selectRowAction: function (e) {
+            if (e.target.checked) {
+                // add to list of selected cases
+            } else {
+                // remove from list of selected cases
+            }
+        },
+
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -410,6 +436,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
+                isMultiSelect: true, // TODO: create logic
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
