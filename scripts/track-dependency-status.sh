@@ -40,9 +40,9 @@ total_js_deps=$(dependency_count package.json)
 echo $total_js_deps $outdated_js_deps $total_python_deps $outdated_python_deps #for debugging
 source scripts/datadog-utils.sh
 
-send_metric_to_datadog "commcarehq.dependency.python.total" $total_python_deps "count"
-send_metric_to_datadog "commcarehq.dependency.python.outdated" $outdated_python_deps "count"
+send_metric_to_datadog "commcare.static_analysis.dependency.python.total" $total_python_deps "count"
+send_metric_to_datadog "commcare.static_analysis.dependency.python.outdated" $outdated_python_deps "count"
 
 
-send_metric_to_datadog "commcarehq.dependency.js.total" $total_js_deps "count"
-send_metric_to_datadog "commcarehq.dependency.js.outdated" $outdated_js_deps "count"
+send_metric_to_datadog "commcare.static_analysis.dependency.js.total" $total_js_deps "count"
+send_metric_to_datadog "commcare.static_analysis.dependency.js.outdated" $outdated_js_deps "count"
