@@ -119,7 +119,7 @@ django-celery-results==1.0.4
     # via -r base-requirements.in
 django-compressor==2.4
     # via -r base-requirements.in
-django-countries==4.6
+django-countries==7.3.2
     # via -r base-requirements.in
 django-crispy-forms==1.10.0
     # via -r base-requirements.in
