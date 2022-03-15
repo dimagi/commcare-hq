@@ -86,7 +86,6 @@ class Id(XmlObject):
 class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, format, type, template, get_template_context, get_value):
-        print(format)
         variables = []
         for item in enum:
             v_key = item.key_as_variable
@@ -99,7 +98,7 @@ class XPathEnum(TextXPath):
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2] # removes extra comma from last string
-            parts.append("), '\s+$', '')")
+            parts.append("), '\s+', ' ')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))

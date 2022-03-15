@@ -122,7 +122,7 @@
       <template>
         <text>
           &lt;b&gt; &lt;/b&gt;
-          <xpath function="replace(join(' ', if(selected(sex, 'male'), $kmale, ''), if(selected(sex, 'female'), $kfemale, '')), '\s+$', '')">
+          <xpath function="replace(join(' ', if(selected(sex, 'male'), $kmale, ''), if(selected(sex, 'female'), $kfemale, '')), '\s+', ' ')">
             <variable name="kmale">
               <locale id="m0.case_short.case_sex_4.enum.kmale"/>
             </variable>
@@ -251,7 +251,7 @@
       </header>
       <template>
         <text>
-          <xpath function="replace(join(' ', if(selected(sex, 'male'), $kmale, ''), if(selected(sex, 'female'), $kfemale, '')), '\s+$', '')">
+          <xpath function="replace(join(' ', if(selected(sex, 'male'), $kmale, ''), if(selected(sex, 'female'), $kfemale, '')), '\s+', ' ')">
             <variable name="kfemale">
               <locale id="m1.case_short.case_sex_4.enum.kfemale"/>
             </variable>
