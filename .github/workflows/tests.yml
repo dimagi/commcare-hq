@@ -37,6 +37,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Dependency Tracking Info To Datadog
+      if: ${{ matrix.TEST == 'python-sharded-and-javascript' }}
       run: scripts/track-dependency-status.sh
     - name: Run tests
       env:
