@@ -68,8 +68,6 @@ branches:
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - sk/remove-legacy-perm-check+bmb/whh-003+nh/loadtest_users_ga+others  # Simon Mar 7
-    - sk/remove-legacy-perm-check  # Simon Mar 7
     - bmb/whh-003 # Biyeun Mar 1
     - nh/loadtest_users_ga+others  # Norman Mar 2
     # - ad/multivalued-search-functions # Addison Mar 2
@@ -81,5 +79,4 @@ branches:
     - ml/sumologic-on-staging-check # Minha Mar 10
     - dm/django3.1-deprecations # Daniel 3/14
     - jls/multiple-referrals-app-manager-ui # Jenny March 14
-    - sk/set-inputs-null  # Simon March 15
 submodules: { }
