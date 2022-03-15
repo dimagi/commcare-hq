@@ -13,8 +13,8 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from six.moves.urllib.parse import quote_plus
 
@@ -96,7 +96,7 @@ def get_conditional_alert_edit_critical_section(rule_id):
 
 class MessagingDashboardView(BaseMessagingSectionView):
     urlname = 'messaging_dashboard'
-    page_title = ugettext_lazy("Dashboard")
+    page_title = gettext_lazy("Dashboard")
     template_name = 'scheduling/dashboard.html'
 
     @use_nvd3
@@ -300,7 +300,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
 class BroadcastListView(BaseMessagingSectionView):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
-    page_title = ugettext_lazy('Broadcasts')
+    page_title = gettext_lazy('Broadcasts')
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
@@ -434,7 +434,7 @@ class BroadcastListView(BaseMessagingSectionView):
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_schedule'
-    page_title = ugettext_lazy('New Broadcast')
+    page_title = gettext_lazy('New Broadcast')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
@@ -510,7 +510,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditScheduleView(CreateScheduleView):
     urlname = 'edit_schedule'
-    page_title = ugettext_lazy('Edit Broadcast')
+    page_title = gettext_lazy('Edit Broadcast')
 
     IMMEDIATE_BROADCAST = 'immediate'
     SCHEDULED_BROADCAST = 'scheduled'
@@ -604,7 +604,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
-    page_title = ugettext_lazy('Conditional Alerts')
+    page_title = gettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
     ACTION_ACTIVATE = 'activate'
@@ -764,7 +764,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
-    page_title = ugettext_lazy('New Conditional Alert')
+    page_title = gettext_lazy('New Conditional Alert')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
@@ -914,7 +914,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
-    page_title = ugettext_lazy('Edit Conditional Alert')
+    page_title = gettext_lazy('Edit Conditional Alert')
 
     @property
     def page_url(self):
@@ -1040,7 +1040,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
-    page_title = ugettext_lazy("Upload SMS Alert Content")
+    page_title = gettext_lazy("Upload SMS Alert Content")
     template_name = 'hqwebapp/bulk_upload.html'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))

@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 

@@ -3,7 +3,7 @@ from typing import List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task

@@ -4,7 +4,7 @@ import io
 import uuid
 
 from django.db.models import Q
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.task import task
 
