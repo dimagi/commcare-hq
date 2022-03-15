@@ -27,7 +27,6 @@ django-formtools
 django-logentry-admin
 django-oauth-toolkit
 django-otp
-django-partial-index
 django-phonenumber-field
 django-prbac
 django-redis-sessions
