@@ -731,3 +731,35 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_convert_curly_braces_to_concat(self, *args):
+        inputted_query_1 = "name = '{$name}' and owner_id = '{instance('commcaresession')/user/data/user_id}'"
+        expected_output_1 = """
+        concat("name = '", $name, "' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
+        """.strip()
+        self.assertEqual(
+            RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_1),
+            expected_output_1
+        )
+
+        inputted_query_2 = """
+        "name = 'john' and owner_id = '12345'"
+        """.strip()
+        expected_output_2 = """
+        "name = 'john' and owner_id = '12345'"
+        """.strip()
+        self.assertEqual(
+            expected_output_2,
+            RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_2)
+        )
+
+        inputted_query_3 = """
+        name = 'john' and owner_id = '{instance('commcaresession')/user/data/user_id}'"
+        """.strip()
+        expected_output_3 = """
+        concat("name = 'john' and owner_id = '", instance('commcaresession')/user/data/user_id, "'")
+        """.strip()
+        self.assertEqual(
+            expected_output_3,
+            RemoteRequestFactory._convert_curly_braces_to_concat(inputted_query_3)
+        )
