@@ -431,7 +431,7 @@ hqDefine("users/js/mobile_workers",[
 
             if (options.show_deactivate_after_date) {
                 $('#id_deactivate_after_date').datetimepicker({
-                    format: 'M-y',
+                    format: 'MM-y',
                 });
             }
 

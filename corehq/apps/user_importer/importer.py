@@ -81,10 +81,10 @@ def check_headers(user_specs, domain, is_web_upload=False):
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         allowed_headers.add('domain')
 
-    illegal_headers = headers - allowed_headers
-
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         allowed_headers.add('deactivate_after')
+
+    illegal_headers = headers - allowed_headers
 
     if is_web_upload:
         missing_headers = web_required_headers - headers
@@ -493,7 +493,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         profile = row.get('user_profile', None)
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+
         deactivate_after = row.get('deactivate_after', None) if update_deactivate_after_date else None
+        if isinstance(deactivate_after, datetime):
+            deactivate_after = deactivate_after.strftime("%m-%Y")
+            row['deactivate_after'] = deactivate_after
 
         try:
             password = str(password) if password else None
