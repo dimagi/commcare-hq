@@ -113,7 +113,7 @@ django-celery-results==1.0.4
     # via -r base-requirements.in
 django-compressor==2.4
     # via -r base-requirements.in
-django-countries==4.6
+django-countries==7.3.2
     # via -r base-requirements.in
 django-crispy-forms==1.10.0
     # via -r base-requirements.in
@@ -518,6 +518,8 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
+typing-extensions==4.1.1
+    # via django-countries
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
