@@ -55,8 +55,8 @@ class Patient:
 
 
 CASES_FIXTURE = [
-    Patient("P. Sherman", "42 Wallaby Way"),
-    Patient("P. Sherman", "Wallaby Way 42"),
-    Patient("Peter Sherman", "42 Wallaby Way, Sydney AU"),
-    Patient("Paul Sherman", "#42 Wallaby Way, Sydney AU"),
+    Patient("P. Sherman", "42.373611 -71.110558 0 0"),
+    Patient("P. Sherman", "42.373611 -71.110558"),  # invalid format
+    Patient("Peter Sherman", "-33.856159 151.215256 0 0"),
+    Patient("Paul Sherman", "-33.856 151.215 0 100"),
 ]

@@ -47,6 +47,9 @@
                             "ignore_malformed": true
                         }
                     }
+                },
+                "geo_point": {
+                    "type": "geo_point"
                 }
             }
         },

@@ -2,6 +2,9 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
+from jsonobject.exceptions import BadValueError
+
+from couchforms.jsonobject_extensions import GeoPointProperty
 from pillowtop.es_utils import (
     set_index_normal_settings,
     set_index_reindex_settings,
@@ -59,13 +62,36 @@ def _bulk_indexing_settings(es):
 def transform_and_send(es, doc_dict):
     doc = transform_case_for_elasticsearch(doc_dict)
     doc_id = doc.pop('_id')  # You can't send _id directly
+    # try:
     es.index(TEST_INDEX_NAME, CASE_ES_TYPE, doc, id=doc_id)
+    # except Exception as myx:
+    #     print(myx)
+    #     print(myx.info)
+
+
+def _to_geopoint(value):
+    try:
+        return GeoPointProperty().wrap(value).lat_lon
+    except BadValueError:
+        return None
+
+
+def _enrich(key, value):
+    return {
+        'key': key,
+        'value': value,
+        'geo_point': _to_geopoint(value),
+    }
 
 
 def transform_case_for_elasticsearch(doc_dict):
     # This is where we'd make any just-in-time modifications in python before
     # sending cases to ES
-    return old_transform(doc_dict)
+    doc = old_transform(doc_dict)
+    doc['case_properties'] = [
+        _enrich(**prop) for prop in doc['case_properties']
+    ]
+    return doc
 
 
 def load_case_fixtures(es):
