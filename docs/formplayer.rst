@@ -1,7 +1,7 @@
 Formplayer in HQ
 ================
 
-This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`_ fits into the larger
+This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`__ fits into the larger
 CommCare system, especially how it relates to CommCare HQ development. For details on building, running, and
 contributing to formplayer, see the formplayer repository.
 
@@ -23,7 +23,7 @@ Repository Overview
 
 * `commcare-android <https://github.com/dimagi/commcare-android>`_: The UI layer of CommCare mobile.
 * `commcare-core <https://github.com/dimagi/commcare-core>`_: The CommCare engine, this powers both CommCare mobile and formplayer. Mobile uses the ``master`` branch, while formplayer uses the ``formplayer`` branch. The two branches have a fairly small diff.
-* `formplayer <https://github.com/dimagi/formplayer>`_
+* `formplayer <https://github.com/dimagi/formplayer>`__
 * `commcare-hq <https://github.com/dimagi/commcare-hq>`_: HQ hosts web apps and the processes that run SMS forms.
 
 
