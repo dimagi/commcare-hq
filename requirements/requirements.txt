@@ -111,7 +111,7 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.1.4
     # via -r base-requirements.in
-django-formtools==2.1
+django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
