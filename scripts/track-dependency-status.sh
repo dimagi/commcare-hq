@@ -37,7 +37,6 @@ total_js_deps=$(dependency_count package.json)
 
 # Publish metrics to Datadog
 
-echo $total_js_deps $outdated_js_deps $total_python_deps $outdated_python_deps #for debugging
 source scripts/datadog-utils.sh
 
 send_metric_to_datadog "commcare.static_analysis.dependency.python.total" $total_python_deps "count"
