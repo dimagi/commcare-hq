@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('date_end', models.DateTimeField(blank=True, null=True)),
                 ('refresh_error_reason', models.CharField(choices=[(None, 'No Error'), ('token', 'Invalid Token'), ('timeout', 'Data Timeout'), ('other', 'Other...')], default=None, max_length=7, null=True)),
                 ('refresh_error_note', models.TextField(blank=True, null=True)),
-                ('schedule', models.ForeignKey(on_delete='cascade', to='oauth_integrations.LiveGoogleSheetSchedule')),
+                ('schedule', models.ForeignKey(on_delete=models.CASCADE, to='oauth_integrations.LiveGoogleSheetSchedule')),
             ],
         ),
     ]
