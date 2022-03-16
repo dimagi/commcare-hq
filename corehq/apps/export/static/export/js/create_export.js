@@ -31,13 +31,13 @@ hqDefine("export/js/create_export", [
         var self = {};
 
         self.isOData = initialPageData.get('is_odata', true);
-        self.isGSheet = initialPageData.get('isGSheet', true);
+        self.isGSheet = initialPageData.get('is_gsheet', true);
 
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
         // is static on the basic form/case export pages but is a user option on the daily saved & feed pages.
         assertProperties.assert(options.page, [
-            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata',
+            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata', 'is_gsheet',
         ]);
         self.pageOptions = options.page;
 
@@ -268,14 +268,6 @@ hqDefine("export/js/create_export", [
                     }
                 );
                 setTimeout(self.submitNewExportForm, 250);
-            } else if (self.isGSheet) {
-                kissmetricsAnalytics.track.event(
-                    "[BI Integration] Clicked Add Google Sheet button",
-                    {
-                        "Feed Type": self.modelType(),
-                    }
-                );
-                setTimeout(self.submitNewExportForm, 250);
             } else {
                 self.submitNewExportForm();
             }
@@ -291,6 +283,7 @@ hqDefine("export/js/create_export", [
                     is_feed: self.pageOptions.is_feed,
                     is_deid: self.pageOptions.is_deid,
                     is_odata: self.pageOptions.is_odata,
+                    is_gsheet: self.pageOptions.is_gsheet,
                     model_type: self.pageOptions.model_type,
                     form_data: JSON.stringify({
                         model_type: self.modelType(),
@@ -323,6 +316,7 @@ hqDefine("export/js/create_export", [
             data: {
                 is_deid: self.pageOptions.is_deid,
                 is_odata: self.pageOptions.is_odata,
+                is_gsheet: self.pageOptions.is_gsheet,
                 model_type: self.pageOptions.model_type,
             },
             success: function (data) {
