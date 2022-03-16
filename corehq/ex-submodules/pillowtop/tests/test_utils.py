@@ -65,8 +65,18 @@ class TestBuildBulkPayload(SimpleTestCase):
         alias = "test_alias"
         type = "test_doc"
 
+    def test_build_bulk_payload_performs_delete_for__is_deleted_change(self):
+        change = DummyChange("1", None, True)
+        expected = [{
+            "_index": self.TEST_INFO.alias,
+            "_type": self.TEST_INFO.type,
+            "_op_type": "delete",
+            "_id": change.id,
+        }]
+        self.assertEqual(expected, build_bulk_payload(self.TEST_INFO, [change]))
+
     def test_build_bulk_payload_performs_index_for_not__is_deleted_change(self):
-        change = DummyChange("1", "foo", True)
+        change = DummyChange("1", "foo", False)
         expected = [{
             "_index": self.TEST_INFO.alias,
             "_type": self.TEST_INFO.type,
@@ -75,6 +85,10 @@ class TestBuildBulkPayload(SimpleTestCase):
             "_source": change.get_document()
         }]
         self.assertEqual(expected, build_bulk_payload(self.TEST_INFO, [change]))
+
+    def test_build_bulk_payload_discards_delete_change_for_not__is_deleted(self):
+        change = DummyChange("1", "foo", True)
+        self.assertEqual([], build_bulk_payload(self.TEST_INFO, [change]))
 
 
 class DummyChange:
