@@ -39,9 +39,9 @@ from corehq.apps.users.models import (
     UserRole,
     UserHistory,
     WebUser,
-    Permissions,
     DeactivateMobileWorkerTrigger,
     DeactivateMobileWorkerTriggerUpdateMessage,
+    Permissions,
 )
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView

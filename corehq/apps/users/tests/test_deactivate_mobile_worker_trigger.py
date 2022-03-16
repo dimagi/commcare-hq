@@ -202,7 +202,7 @@ class UpdateDeactivateMobileWorkerTriggerTest(TestCase):
             DeactivateMobileWorkerTrigger.objects.filter(
                 domain='test-trigger',
                 user_id='user-trigger-004'
-            )
+            ).exists()
         )
 
     def test_string_value(self):
@@ -226,6 +226,25 @@ class UpdateDeactivateMobileWorkerTriggerTest(TestCase):
             DeactivateMobileWorkerTrigger.update_trigger(
                 'test-trigger', 'user-trigger-006', 'foobar'
             )
+
+    def test_bad_value_date(self):
+        with self.assertRaises(ValueError):
+            DeactivateMobileWorkerTrigger.update_trigger(
+                'test-trigger', 'user-trigger-006', '01-02-2023'
+            )
+
+    def test_noop_blank_string(self):
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-007', ''
+        )
+
+        self.assertIsNone(status)
+        self.assertFalse(
+            DeactivateMobileWorkerTrigger.objects.filter(
+                domain='test-trigger',
+                user_id='user-trigger-007'
+            ).exists()
+        )
 
 
 class GetDeactivateAfterDateTest(TestCase):
