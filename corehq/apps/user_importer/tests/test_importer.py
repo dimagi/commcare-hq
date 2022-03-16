@@ -30,6 +30,7 @@ from corehq.apps.users.models import (
     UserRole,
     UserHistory,
     WebUser,
+    Permissions,
 )
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -37,6 +38,7 @@ from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
 
 from corehq.apps.groups.models import Group
+
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
@@ -47,8 +49,12 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
+
+        cls.role_with_upload_permission = UserRole.create(
+            cls.domain, 'edit-web-users', permissions=Permissions(edit_web_users=True)
+        )
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
-                                            is_superuser=True)
+                                            role_id=cls.role_with_upload_permission.get_id)
 
         cls.role = UserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = UserRole.create(cls.domain.name, 'admin')
@@ -89,7 +95,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         if WebUser.get_by_user_id(self.uploading_user.get_id) is None:
             self.uploading_user = WebUser.create(self.domain_name, "admin@xyz.com", 'password', None, None,
-                                                is_superuser=True)
+                                                role_id=self.role_with_upload_permission.get_id)
 
     @classmethod
     def tearDownClass(cls):
