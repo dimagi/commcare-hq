@@ -544,10 +544,11 @@ class AddSavedReportConfigView(View):
 
 @login_and_domain_required
 @datespan_default
+@require_POST
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.GET)
+    form = EmailReportForm(request.POST)
     if not form.is_valid():
         return HttpResponseBadRequest()
 

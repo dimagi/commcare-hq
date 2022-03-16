@@ -169,7 +169,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
-        this.forceManualAction = options.forceManualAction;
 
         this.setSelections = function (selections) {
             this.selections = selections;
@@ -221,10 +220,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
         };
 
-        this.setForceManualAction = function (force) {
-            this.forceManualAction = force;
-        };
-
         this.replaceEndpoint = function (selections) {
             delete this.endpointId;
             delete this.endpointArgs;
@@ -238,7 +233,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
-            this.forceManualAction = null;
         };
 
         this.onSubmit = function () {
@@ -246,7 +240,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
-            this.forceManualAction = null;
         };
 
         this.spliceSelections = function (index) {
@@ -268,7 +261,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.sortIndex = null;
             this.queryData = null;
-            this.forceManualAction = null;
         };
     };
 
@@ -287,7 +279,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
-            forceManualAction: self.forceManualAction,
         };
         return JSON.stringify(dict);
     };
@@ -307,7 +298,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
-            'forceManualAction': data.forceManualAction,
         };
         return new Util.CloudcareUrl(options);
     };

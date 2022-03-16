@@ -2697,6 +2697,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
 
 class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -3289,6 +3293,10 @@ class AdvancedModule(ModuleBase):
         return self._uses_case_type(USERCASE_TYPE)
 
     @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
+    @property
     def phase_anchors(self):
         return [phase.anchor for phase in self.schedule_phases]
 
@@ -3835,6 +3843,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return None
         return self.source_module.case_type
+
+    @property
+    def additional_case_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.additional_case_types
 
     @property
     def requires(self):

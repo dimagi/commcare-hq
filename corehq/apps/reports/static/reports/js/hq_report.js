@@ -233,7 +233,7 @@ hqDefine("reports/js/hq_report", [
                 var $sendButton = $(hqReport.emailReportModal).find('.send-button');
                 $sendButton.button('loading');
 
-                $.get(self.getReportRenderUrl("email_onceoff", $.param(self.unwrap())))
+                $.post(getReportBaseUrl("email_onceoff"), $.param(self.unwrap()))
                     .done(function () {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
