@@ -44,6 +44,7 @@ from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    LIVE_GOOGLE_SHEET_PERMISSION,
     ODATA_FEED_PERMISSION,
     can_download_data_files,
     can_upload_data_files,
@@ -74,6 +75,12 @@ def user_can_view_odata_feed(domain, couch_user):
     domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
     return (domain_can_view_odata
             and has_permission_to_view_report(couch_user, domain, ODATA_FEED_PERMISSION))
+
+
+def user_can_view_google_sheet(domain, couch_user):
+    domain_can_view_gsheet = domain_has_privilege(domain, privileges.LIVE_GOOGLE_SHEET)
+    return (domain_can_view_gsheet
+            and has_permission_to_view_report(couch_user, domain, LIVE_GOOGLE_SHEET_PERMISSION))
 
 
 class ExportsPermissionsManager(object):
@@ -128,10 +135,15 @@ class ExportsPermissionsManager(object):
     def has_odata_permissions(self):
         return user_can_view_odata_feed(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
+    @property
+    def has_gsheet_permissions(self):
+        return user_can_view_google_sheet(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False, is_live_google_sheet=False):
         if not (self.has_view_permissions
                 or (is_deid and self.has_deid_view_permissions)
-                or (is_odata and self.has_odata_permissions)):
+                or (is_odata and self.has_odata_permissions)
+                or (is_live_google_sheet and self.has_gsheet_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):

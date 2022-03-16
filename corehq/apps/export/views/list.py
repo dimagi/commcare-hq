@@ -75,7 +75,8 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
+from corehq.apps.oauth_integrations.models import LiveGoogleSheetSchedule
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, LIVE_GOOGLE_SHEET, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.test_utils import flag_enabled
@@ -102,6 +103,9 @@ class ExportListHelper(object):
 
         if param_is_true('is_odata'):
             return ODataFeedListHelper(request)
+
+        if param_is_true('is_live_google_sheet'):
+            return LiveGoogleSheetListHelper(request)
 
         if param_is_true('is_feed'):
             if is_deid:
@@ -238,7 +242,14 @@ class ExportListHelper(object):
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
             'additionalODataUrls': self._get_additional_odata_urls(export),
+            'gsheetUrl': self._get_google_sheet_url(export),
         }
+
+    def _get_google_sheet_url(self, export):
+        live_google_sheet_schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export)
+        google_sheet_id = live_google_sheet_schedule.google_sheet_id
+        google_sheet_url = "https://spreadsheets.google.com/feeds/worksheets/{}".format(google_sheet_id)
+        return google_sheet_url
 
     def _get_additional_odata_urls(self, export):
         urls = []
@@ -503,7 +514,11 @@ class BaseExportListView(BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
-        self.permissions.access_list_exports_or_404(is_deid=self.is_deid, is_odata=self.is_odata)
+        self.permissions.access_list_exports_or_404(
+            is_deid=self.is_deid,
+            is_odata=self.is_odata,
+            is_live_google_sheet=self.is_live_google_sheet
+        )
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -556,7 +571,8 @@ def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(
         is_deid=json.loads(request.GET.get('is_deid')),
-        is_odata=json.loads(request.GET.get('is_odata'))
+        is_odata=json.loads(request.GET.get('is_odata')),
+        is_live_google_sheet=json.loads(request.GET.get('is_live_google_sheet')),
     )
 
     helper = ExportListHelper.from_request(request)
@@ -838,8 +854,13 @@ def get_app_data_drilldown_values(request, domain):
 
     model_type = request.GET.get('model_type')
     is_odata = json.loads(request.GET.get('is_odata'))
+    is_live_google_sheet = json.loads(request.GET.get('is_live_google_sheet'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
+    permissions.access_list_exports_or_404(
+        is_deid=False,
+        is_odata=is_odata,
+        is_live_google_sheet=is_live_google_sheet
+    )
 
     rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
     if model_type == 'form':
@@ -861,17 +882,23 @@ def submit_app_data_drilldown_form(request, domain):
 
     model_type = request.POST.get('model_type')
     is_odata = json.loads(request.POST.get('is_odata'))
+    is_live_google_sheet = json.loads(request.POST.get('is_live_google_sheet'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
+    permissions.access_list_exports_or_404(
+        is_deid=False,
+        is_odata=is_odata,
+        is_live_google_sheet=is_live_google_sheet
+    )
 
     form_data = json.loads(request.POST.get('form_data'))
     is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
     is_feed = json.loads(request.POST.get('is_feed'))
     is_odata = json.loads(request.POST.get('is_odata'))
+    is_live_google_sheet = json.loads(request.POST.get('is_live_google_sheet'))
 
     create_form = CreateExportTagForm(
-        is_odata or permissions.has_form_export_permissions,
-        is_odata or permissions.has_case_export_permissions,
+        is_odata or is_live_google_sheet or permissions.has_form_export_permissions,
+        is_odata or is_live_google_sheet or permissions.has_case_export_permissions,
         form_data
     )
     if not create_form.is_valid():
@@ -1051,7 +1078,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
         })
         if len(self.get_saved_exports()) >= self.odata_feed_limit:
             context['create_url'] = '#odataFeedLimitReachedModal'
-            context['odata_feeds_over_limit'] = True
+            context['feeds_over_limit'] = True
         return context
 
 
@@ -1135,6 +1162,8 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         return data
 
 
+@location_safe
+@method_decorator(requires_privilege_with_fallback(LIVE_GOOGLE_SHEET), name='dispatch')
 class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
     is_live_google_sheet = True
     url = 'list_live_google_sheets'
@@ -1170,5 +1199,5 @@ class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
         })
         if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
             context['create_url'] = '#LiveGoogleSheetLimitReachedModal'
-            context['google_sheets_over_limit'] = True
+            context['feeds_over_limit'] = True
         return context
