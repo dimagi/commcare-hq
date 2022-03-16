@@ -14,7 +14,6 @@ decorator==4.0.11  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
-django-angular
 django-autoslug
 django-braces
 django-bulk-update
@@ -27,7 +26,6 @@ django-formtools
 django-logentry-admin
 django-oauth-toolkit
 django-otp
-django-partial-index
 django-phonenumber-field
 django-prbac
 django-redis-sessions
