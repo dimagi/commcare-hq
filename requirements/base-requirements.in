@@ -14,7 +14,6 @@ decorator==4.0.11  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
-django-angular
 django-autoslug
 django-braces
 django-bulk-update

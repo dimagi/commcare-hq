@@ -71,12 +71,10 @@ branches:
     - bmb/whh-003 # Biyeun Mar 1
     - nh/loadtest_users_ga+others  # Norman Mar 2
     # - ad/multivalued-search-functions # Addison Mar 2
-    - do/multi-select-id-mapping # Dominic Mar 2
     - ml/check-for-historical-xss # Minha Mar 3
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
     - dm/django3.0-part1 # Daniel 3/9
     - jm/elastic-client-adapter  # Joel Mar 1
     - ml/sumologic-on-staging-check # Minha Mar 10
     - dm/django3.1-deprecations # Daniel 3/14
-    - jls/multiple-referrals-app-manager-ui # Jenny March 14
 submodules: { }
