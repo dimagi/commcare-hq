@@ -17,9 +17,10 @@ from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -190,7 +191,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     indexes_referencing_deleted_cases = \
         CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, list(case_ids))
     case_updates = [
-        CaseBlock.deprecated_init(
+        CaseBlock(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
@@ -311,22 +312,34 @@ def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
         CouchUser, UserReportingMetadataStaging
     )
+    lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
+    process_reporting_metadata_lock = get_redis_lock(
+        lock_key,
+        timeout=60 * 60, # one hour
+        name=lock_key,
+    )
+    if not process_reporting_metadata_lock.acquire(blocking=False):
+        metrics_counter("commcare.process_reporting_metadata.locked_out")
+        return
 
-    start = datetime.utcnow()
+    try:
+        start = datetime.utcnow()
 
-    with transaction.atomic():
-        records = (
-            UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-        )[:100]
-        for record in records:
-            user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            try:
-                record.process_record(user)
-            except ResourceConflict:
-                # https://sentry.io/organizations/dimagi/issues/1479516073/
+        with transaction.atomic():
+            records = (
+                UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+            )[:100]
+            for record in records:
                 user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                record.process_record(user)
-            record.delete()
+                try:
+                    record.process_record(user)
+                except ResourceConflict:
+                    # https://sentry.io/organizations/dimagi/issues/1479516073/
+                    user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                    record.process_record(user)
+                record.delete()
+    finally:
+        process_reporting_metadata_lock.release()
 
     duration = datetime.utcnow() - start
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)

@@ -57,7 +57,7 @@ class CaseClaimEndpointTests(TestCase):
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
-        _, [self.case] = post_case_blocks([CaseBlock.deprecated_init(
+        _, [self.case] = post_case_blocks([CaseBlock(
             create=True,
             case_id=self.case_id,
             case_type=CASE_TYPE,
@@ -197,6 +197,7 @@ class CaseClaimEndpointTests(TestCase):
             {'name': 'Jamie Hand'},
             {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened > "2015-03-25"'},
             {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" or name = "Jamie Hand"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: ['name = "Jamie Hand"', 'date_opened > "2015-03-25"']},
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
@@ -207,6 +208,7 @@ class CaseClaimEndpointTests(TestCase):
             {'name': 'Jamie Face'},
             {'name': 'Jamie Hand', CASE_SEARCH_XPATH_QUERY_KEY: 'date_opened < "2015-03-25"'},
             {CASE_SEARCH_XPATH_QUERY_KEY: 'name = "not Jamie" and name = "Jamie Hand"'},
+            {CASE_SEARCH_XPATH_QUERY_KEY: ['name = "Jamie Face"', 'date_opened < "2015-03-25"']},
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})

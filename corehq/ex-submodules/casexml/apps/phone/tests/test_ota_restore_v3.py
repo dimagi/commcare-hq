@@ -30,7 +30,7 @@ class OtaV3RestoreTest(TestCase):
         restore_user = create_restore_user(domain=self.domain)
         case_id = 'my-case-id'
         device = MockDevice(self.project, restore_user)
-        device.change_cases(CaseBlock.deprecated_init(
+        device.change_cases(CaseBlock(
             create=True,
             case_id=case_id,
             user_id=restore_user.user_id,

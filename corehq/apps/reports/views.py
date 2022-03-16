@@ -544,10 +544,11 @@ class AddSavedReportConfigView(View):
 
 @login_and_domain_required
 @datespan_default
+@require_POST
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.GET)
+    form = EmailReportForm(request.POST)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
@@ -1462,7 +1463,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, **case_block_kwargs).as_text()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1904,9 +1905,9 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@login_and_domain_required
 @require_form_view_permission
 @location_safe
-@login_and_domain_required
 def view_form_attachment(request, domain, instance_id, attachment_id):
     # Open form attachment in browser
     return get_form_attachment_response(request, domain, instance_id, attachment_id)

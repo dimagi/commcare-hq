@@ -6,8 +6,6 @@ The following actions can be used in messaging in projects using the ``covid`` c
 """
 from datetime import datetime
 
-from dimagi.utils.parsing import ISO_DATE_FORMAT
-
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
@@ -21,6 +19,7 @@ def set_all_activity_complete_date_to_today(case, rule):
     For any case matching the criteria, set the all_activity_complete_date property
     to today's date, in YYYY-MM-DD format, based on the domain's default time zone.
     """
+    from dimagi.utils.parsing import ISO_DATE_FORMAT
     domain_obj = Domain.get_by_name(case.domain)
     today = datetime.now(domain_obj.get_default_timezone()).strftime(ISO_DATE_FORMAT)
     (submission, cases) = update_case(

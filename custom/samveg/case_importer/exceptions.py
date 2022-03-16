@@ -33,3 +33,7 @@ class CallNotInLastMonthError(CaseRowError):
 
 class UploadLimitReachedError(CaseRowError):
     title = ugettext_noop('Upload limit reached for owner and call type')
+
+
+class UnexpectedSkipCallValidatorValueError(CaseRowError):
+    title = ugettext_noop('Unexpected value for skipping call validator column')

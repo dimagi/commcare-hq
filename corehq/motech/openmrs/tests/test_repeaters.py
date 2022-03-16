@@ -566,7 +566,7 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
-    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock.deprecated_init')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
     def test_save_openmrs_uuid(self, case_block_mock, _):
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'openmrs_uuid'
         save_match_ids(self.case, self.case_config, self.patient)
@@ -577,7 +577,7 @@ class SaveMatchIdsTests(SimpleTestCase):
         )
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
-    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock.deprecated_init')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
     def test_save_external_id(self, importer_util_mock, case_block_mock, _):
         importer_util_mock.lookup_case.return_value = (None, LookupErrors.NotFound)

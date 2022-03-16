@@ -20,7 +20,7 @@ logger = get_task_logger(__name__)
 
 
 @periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='2'),
-               ignore_result=True)
+               acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()

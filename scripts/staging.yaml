@@ -61,22 +61,22 @@ branches:
     - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
+    - dm/django3-branches+others
     - ml/remove-pickles-reports # Minha Jan 24
-    - jls/drop-case-search-limit # Jenny Jan 31
     - do/compare-case-properties # Dominic Feb 2
-    - ml/remove-pickles-user-importer # Minha Feb 2
-    - ap/link-permissions-to-expressions+mk/support-multibar-reports+gh/mrm/erm-includes-mrm+gh/mrm/newly-linked-domain+gh/mrm/base
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
-    - gh/mrm/erm-includes-mrm # Graham Feb 17
-    - gh/mrm/newly-linked-domain # Graham Feb 20
     - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - jls/force-manual-action-per-command # Jenny Feb 22
-    - ap/link-permissions-to-expressions # Amit Feb 28
-    - jm/elastic-client-adapter  # Joel Mar 1
     - bmb/whh-003 # Biyeun Mar 1
     - nh/loadtest_users_ga+others  # Norman Mar 2
-    - ad/multivalued-search-functions # Addison Mar 2
+    # - ad/multivalued-search-functions # Addison Mar 2
     - do/multi-select-id-mapping # Dominic Mar 2
+    - ml/check-for-historical-xss # Minha Mar 3
+    - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
+    - dm/django3.0-part1 # Daniel 3/9
+    - jm/elastic-client-adapter  # Joel Mar 1
+    - ml/sumologic-on-staging-check # Minha Mar 10
+    - dm/django3.1-deprecations # Daniel 3/14
+    - jls/multiple-referrals-app-manager-ui # Jenny March 14
 submodules: { }
