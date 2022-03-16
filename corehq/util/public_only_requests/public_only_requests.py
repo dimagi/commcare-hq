@@ -1,4 +1,11 @@
+import requests
 from requests.adapters import HTTPAdapter
+
+
+def get_public_only_session(domain_name, src):
+    session = requests.Session()
+    make_session_public_only(session, domain_name, src)
+    return session
 
 
 def make_session_public_only(session, domain_name, src):

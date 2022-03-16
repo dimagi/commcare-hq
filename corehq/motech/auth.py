@@ -13,7 +13,7 @@ from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
 
 from corehq.motech.exceptions import ConfigurationError
-from corehq.util.public_only_requests.public_only_requests import make_session_public_only
+from corehq.util.public_only_requests.public_only_requests import make_session_public_only, get_public_only_session
 
 if TYPE_CHECKING:
     from corehq.motech.models import ConnectionSettings
@@ -97,8 +97,7 @@ class AuthManager:
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
-        session = Session()
-        make_session_public_only(session, domain_name, src='sent_attempt')
+        session = get_public_only_session(domain_name, src='sent_attempt')
         session.auth = self.get_auth()
         return session
 
