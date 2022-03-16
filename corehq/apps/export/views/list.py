@@ -1025,7 +1025,7 @@ class ODataFeedListHelper(ExportListHelper):
             'isOData': True,
         })
         if len(self.get_saved_exports()) >= self.odata_feed_limit:
-            data['editUrl'] = '#odataFeedLimitReachedModal'
+            data['editUrl'] = '#IntegratedExportLimitReachedModal'
         return data
 
     def _edit_view(self, export):
@@ -1077,7 +1077,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             'odata_feed_limit': self.odata_feed_limit,
         })
         if len(self.get_saved_exports()) >= self.odata_feed_limit:
-            context['create_url'] = '#odataFeedLimitReachedModal'
+            context['create_url'] = '#IntegratedExportLimitReachedModal'
             context['feeds_over_limit'] = True
         return context
 
@@ -1158,7 +1158,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
             'isGoogleSheet': True,
         })
         if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
-            data['editUrl'] = '#LiveGoogleSheetLimitReachedModal'
+            data['editUrl'] = '#IntegratedExportLimitReachedModal'
         return data
 
 
@@ -1198,6 +1198,6 @@ class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
             'google_sheet_limit': self.live_google_sheets_limit,
         })
         if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
-            context['create_url'] = '#LiveGoogleSheetLimitReachedModal'
+            context['create_url'] = '#IntegratedExportLimitReachedModal'
             context['feeds_over_limit'] = True
         return context

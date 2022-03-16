@@ -17,7 +17,7 @@ hqDefine("export/js/export_list_main", [
     $(function () {
         var $createExport = $("#create-export"),
             isOData = initialPageData.get('is_odata', true),
-            isGSheet = initialPageData.get('is_data', true);
+            isGSheet = initialPageData.get('is_gsheet', true);
 
         if ($createExport.length) {
             $createExport.koApplyBindings(createModels.createExportModel({
@@ -40,10 +40,6 @@ hqDefine("export/js/export_list_main", [
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
                 }
 
-                if (isGSheet) {
-                    kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Google Sheet button");
-                }
-
                 const exportAction = getExportAction();
                 const metricsMessage = `${exportAction} Export - Clicked Add Export Button`;
                 kissmetricsAnalytics.track.event(metricsMessage, {
@@ -60,18 +56,6 @@ hqDefine("export/js/export_list_main", [
             );
             kissmetricsAnalytics.track.outboundLink(
                 '#js-odata-track-learn-more-preview',
-                "[BI Integration] Clicked Learn More-Feature Preview"
-            );
-        }
-
-        if (isGSheet) {
-            kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
-            kissmetricsAnalytics.track.outboundLink(
-                '#js-gsheet-track-learn-more',
-                "[BI Integration] Clicked Learn More-Wiki"
-            );
-            kissmetricsAnalytics.track.outboundLink(
-                '#js-gsheet-track-learn-more-preview',
                 "[BI Integration] Clicked Learn More-Feature Preview"
             );
         }
@@ -127,6 +111,8 @@ hqDefine("export/js/export_list_main", [
             return (isExcelExport ? 'Excel Dashboard' : 'Daily Saved');
         } else if (isOData) {
             return 'PowerBI';
+        } else if (isGSheet) {
+            return 'Live Google Sheet';
         }
     }
 });
