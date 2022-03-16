@@ -366,7 +366,7 @@ class SQLFormRepeater(SQLRepeater):
         )
 
     def get_url(self, repeat_record):
-        url = super(FormRepeater, self).get_url(repeat_record)
+        url = super().get_url(repeat_record)
         if not self.include_app_id_param:
             return url
         else:
