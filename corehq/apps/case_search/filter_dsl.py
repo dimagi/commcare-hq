@@ -220,12 +220,13 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             )
 
     def visit(node):
+
         if isinstance(node, FunctionCall):
-            try:
+            if node.name in XPATH_QUERY_FUNCTIONS:
                 return XPATH_QUERY_FUNCTIONS[node.name](domain, node, fuzzy)
-            except KeyError:
-                raise CaseFilterError(
-                    _("Unsupported function '{name}')").format(name=node.name),
+            else:
+                raise XPathFunctionException(
+                    _("'{name}' is not a valid standalone function").format(name=node.name),
                     serialize(node)
                 )
 
