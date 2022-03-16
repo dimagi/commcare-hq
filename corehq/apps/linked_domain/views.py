@@ -8,7 +8,6 @@ from django.utils.translation import gettext, gettext_lazy
 from django.views import View
 
 from couchdbkit import ResourceNotFound
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
@@ -116,6 +115,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, WebUser
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
