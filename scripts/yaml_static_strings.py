@@ -27,7 +27,7 @@ parser.add_argument(
     '--prefix',
     nargs='+',
     required=False,
-    default='ugettext_noop',
+    default='gettext_noop',
     help='Fields to extract',
 )
 

@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ngettext
+from django.utils.translation import gettext as _, ngettext
 from django.views.decorators.http import require_POST, require_GET
 
 from corehq import toggles

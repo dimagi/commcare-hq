@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -19,7 +19,7 @@ from corehq.apps.smsbillables.forms import (
 
 class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     urlname = 'public_sms_rates_view'
-    page_title = ugettext_lazy("SMS Rate Calculator")
+    page_title = gettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
@@ -42,7 +42,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     urlname = 'domain_sms_rates_view'
-    page_title = ugettext_lazy("SMS Rate Calculator")
+    page_title = gettext_lazy("SMS Rate Calculator")
     template_name = 'domain/admin/sms_rates.html'
     async_handlers = [
         SMSRatesAsyncHandler,

@@ -4,8 +4,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.exceptions import PermissionDenied
 from lxml import etree
@@ -49,7 +48,6 @@ from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.domain.models import Domain
-from corehq.util import view_utils
 from corehq.util.timer import time_method
 
 
@@ -569,10 +567,11 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     })
                 elif len(non_auto_select_actions) != 1:
                     for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        check_tag = non_auto_select_actions[index - 1].case_tag
                         if (
-                            index > 0 and
-                            non_auto_select_actions[index - 1].case_tag and
-                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                            index > 0
+                            and check_tag
+                            and check_tag not in (p.tag for p in action.case_indices)
                         ):
                             errors.append({
                                 'type': 'case list module form can only load parent cases',
@@ -949,8 +948,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)
                     if meta and meta['type'] == 'open' and meta['action'].repeat_context:
                         if (
-                            not action.repeat_context or
-                            not action.repeat_context.startswith(meta['action'].repeat_context)
+                            not action.repeat_context
+                            or not action.repeat_context.startswith(meta['action'].repeat_context)
                         ):
                             errors.append({'type': 'subcase repeat context',
                                            'case_tag': action.case_tag,
@@ -1001,8 +1000,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     module=self.form.get_module(), form=self.form)
 
             form_filter_references_case = (
-                xpath_references_case(interpolated_form_filter) or
-                xpath_references_usercase(interpolated_form_filter)
+                xpath_references_case(interpolated_form_filter)
+                or xpath_references_usercase(interpolated_form_filter)
             )
 
             if form_filter_references_case:

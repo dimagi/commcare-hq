@@ -1,3 +1,4 @@
+import datetime
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
@@ -5,9 +6,17 @@ from django.test import SimpleTestCase, TestCase
 
 from unittest.mock import patch
 
+from corehq import toggles
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.enterprise.tests.utils import (
+    create_enterprise_permissions,
+    cleanup_accounting,
+    get_enterprise_software_plan,
+    get_enterprise_account,
+    add_domains_to_enterprise_account,
+)
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
     CustomDataFieldsDefinition,
@@ -30,6 +39,8 @@ from corehq.apps.users.models import (
     UserRole,
     UserHistory,
     WebUser,
+    DeactivateMobileWorkerTrigger,
+    DeactivateMobileWorkerTriggerUpdateMessage,
     Permissions,
 )
 from corehq.apps.users.model_log import UserModelAction
@@ -38,6 +49,8 @@ from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.extensions.interface import disable_extensions
 
 from corehq.apps.groups.models import Group
+from dimagi.utils.dates import add_months_to_date
+
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -55,6 +68,26 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             role_id=cls.role_with_upload_permission.get_id)
+
+        cls.emw_domain = Domain.get_or_create_with_name(name='emw-domain')
+        cls.uploading_user.add_as_web_user(cls.emw_domain.name, 'admin')
+        one_year_ago = add_months_to_date(datetime.datetime.utcnow(), -12)
+        enterprise_plan = get_enterprise_software_plan()
+        cls.enterprise_account = get_enterprise_account()
+        cls.addClassCleanup(cleanup_accounting)
+        add_domains_to_enterprise_account(
+            cls.enterprise_account,
+            [cls.emw_domain],
+            enterprise_plan,
+            one_year_ago
+        )
+        toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.set(
+            cls.emw_domain.name, True, namespace=toggles.NAMESPACE_DOMAIN
+        )
+        cls.emw_settings = EnterpriseMobileWorkerSettings.objects.create(
+            account=cls.enterprise_account,
+            allow_custom_deactivation=True,
+        )
 
         cls.role = UserRole.create(cls.domain.name, 'edit-apps')
         cls.other_role = UserRole.create(cls.domain.name, 'admin')
@@ -99,9 +132,11 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        EnterpriseMobileWorkerSettings.objects.all().delete()
         cls.upload_record.delete()
         cls.domain.delete()
         cls.other_domain.delete()
+        cls.emw_domain.delete()
         cls.patcher.stop()
         cls.definition.delete()
         super().tearDownClass()
@@ -372,6 +407,88 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.changes['location_id'], self.loc2._id)
         self.assertEqual(user_history.changes['assigned_location_ids'], [self.loc2.get_id])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
+
+    def get_emw_user(self):
+        return CommCareUser.get_by_username(
+            f'hello@{self.emw_domain.name}.commcarehq.org'
+        )
+
+    def test_deactivate_after_updates(self):
+        create_or_update_commcare_users_and_groups(
+            self.emw_domain.name,
+            [self._get_spec(deactivate_after='02-2022')],
+            self.uploading_user,
+            self.upload_record.pk,
+        )
+        created_user = self.get_emw_user()
+        trigger = DeactivateMobileWorkerTrigger.objects.filter(
+            domain=self.emw_domain.name,
+            user_id=created_user.user_id
+        ).first()
+        self.assertEqual(
+            trigger.deactivate_after,
+            datetime.date(2022, 2, 1)
+        )
+        user_history = UserHistory.objects.get(
+            action=UserModelAction.CREATE.value,
+            user_id=created_user.user_id,
+            changed_by=self.uploading_user.get_id
+        )
+        change_messages = {}
+        change_messages.update(UserChangeMessage.updated_deactivate_after(
+            '02-2022', DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+        ))
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        create_or_update_commcare_users_and_groups(
+            self.emw_domain.name,
+            [self._get_spec(user_id=created_user.user_id, deactivate_after='03-2022')],
+            self.uploading_user,
+            self.upload_record.pk,
+        )
+        created_user = self.get_emw_user()
+        trigger = DeactivateMobileWorkerTrigger.objects.filter(
+            domain=self.emw_domain.name,
+            user_id=created_user.user_id
+        ).first()
+        self.assertEqual(
+            trigger.deactivate_after,
+            datetime.date(2022, 3, 1)
+        )
+        user_history = UserHistory.objects.get(
+            action=UserModelAction.UPDATE.value,
+            user_id=created_user.user_id,
+            changed_by=self.uploading_user.get_id
+        )
+        change_messages = {}
+        change_messages.update(UserChangeMessage.updated_deactivate_after(
+            '03-2022', DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+        ))
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
+
+        create_or_update_commcare_users_and_groups(
+            self.emw_domain.name,
+            [self._get_spec(user_id=created_user.user_id, deactivate_after='')],
+            self.uploading_user,
+            self.upload_record.pk,
+        )
+        created_user = self.get_emw_user()
+        user_history = UserHistory.objects.filter(
+            action=UserModelAction.UPDATE.value,
+            user_id=created_user.user_id,
+            changed_by=self.uploading_user.get_id
+        ).last()
+        self.assertFalse(DeactivateMobileWorkerTrigger.objects.filter(
+            domain=self.emw_domain.name,
+            user_id=created_user.user_id
+        ).exists())
+        change_messages = {}
+        change_messages.update(UserChangeMessage.updated_deactivate_after(
+            None, DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+        ))
+        change_messages.update(UserChangeMessage.password_reset())
+        self.assertDictEqual(user_history.change_messages, change_messages)
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)

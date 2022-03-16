@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from corehq.apps.locations.util import (
     load_locs_json,
@@ -10,7 +10,7 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 
 class AsyncLocationFilter(BaseReportFilter):
     # todo: cleanup template
-    label = ugettext_noop("Location")
+    label = gettext_noop("Location")
     slug = "location_async"
     template = "reports/filters/location_async.html"
     make_optional = False

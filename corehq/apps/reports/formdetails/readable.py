@@ -4,7 +4,7 @@ from pydoc import html
 
 from django.http import Http404
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,

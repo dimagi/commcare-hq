@@ -14,14 +14,14 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.utils.html import conditional_escape
 
-from celery.utils.log import get_task_logger
 from memoized import memoized
 
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_request, json_response
@@ -42,6 +42,7 @@ from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+from corehq.util.dates import iso_string_to_datetime
 
 from corehq import toggles
 
@@ -155,8 +156,8 @@ class GenericReportView(object):
     parent_report_class = None
 
     is_deprecated = False
-    deprecation_email_message = ugettext("This report has been deprecated.")
-    deprecation_message = ugettext("This report has been deprecated.")
+    deprecation_email_message = gettext("This report has been deprecated.")
+    deprecation_message = gettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -191,26 +192,29 @@ class GenericReportView(object):
             fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
 
-    def __getstate__(self):
+    def get_json_report_parameters(self):
         """
-            For pickling the report when passing it to Celery.
+            Returns a JSON serializable dict of report parameters for rebuilding the report in Celery.
         """
         request = request_as_dict(self.request)
-
-        return dict(
+        report_state = dict(
             request=request,
             request_params=self.request_params,
             domain=self.domain,
             context={}
         )
+        datespan = report_state['request'].pop('datespan')
+        report_state['request_params']['startdate'] = datespan.startdate.isoformat()
+        report_state['request_params']['enddate'] = datespan.enddate.isoformat()
+
+        return report_state
 
     _caching = False
 
-    def __setstate__(self, state):
+    def set_report_parameters(self, state):
         """
-            For unpickling a pickled report.
+            Restoring a report from report parameters returned by get_json_report_parameters.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -223,6 +227,15 @@ class GenericReportView(object):
             datespan = None
             can_access_all_locations = None
 
+        if 'startdate' and 'enddate' in state['request_params']:
+            date_holder = state['request_params']
+        elif 'startdate' and 'enddate' in state['request']:
+            date_holder = state['request']
+        if date_holder:
+            start_date = iso_string_to_datetime(date_holder['startdate'])
+            end_date = iso_string_to_datetime(date_holder['enddate'])
+            state['request']['datespan'] = DateSpan(start_date, end_date)
+
         request_data = state.get('request')
         request = FakeHttpRequest()
         request.domain = self.domain
@@ -230,13 +243,8 @@ class GenericReportView(object):
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
         request.can_access_all_locations = request_data.get('can_access_all_locations')
-
-        try:
-            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
-            request.couch_user = couch_user
-        except Exception as e:
-            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+        couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
+        request.couch_user = couch_user
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')
@@ -305,7 +313,7 @@ class GenericReportView(object):
     @property
     @memoized
     def rendered_report_title(self):
-        return ugettext(self.name)
+        return gettext(self.name)
 
     @property
     @memoized
@@ -670,7 +678,7 @@ class GenericReportView(object):
         """
         self.is_rendered_as_export = True
         if self.exportable_all:
-            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            export_all_rows_task.delay(self.__class__.slug, self.get_json_report_parameters())
             return HttpResponse()
         else:
             # We only want to cache the responses which serve files directly
