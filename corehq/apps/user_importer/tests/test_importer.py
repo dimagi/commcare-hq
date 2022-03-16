@@ -92,11 +92,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         cls.profile.save()
 
-    def setUp(self):
-        if WebUser.get_by_user_id(self.uploading_user.get_id) is None:
-            self.uploading_user = WebUser.create(self.domain_name, "admin@xyz.com", 'password', None, None,
-                                                is_superuser=True)
-
     @classmethod
     def tearDownClass(cls):
         cls.upload_record.delete()
@@ -137,7 +132,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id='missing')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -153,7 +148,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -195,7 +190,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -227,7 +222,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -249,7 +244,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id, delete_keys=['password'])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -385,7 +380,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=1234)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -400,7 +395,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=None)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -412,7 +407,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'key': 'F#'})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -423,7 +418,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -434,7 +429,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'key': ''}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -445,7 +440,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -457,7 +452,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(uncategorized_data={'tempo': 'presto'})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -468,7 +463,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(uncategorized_data={'tempo': 'andante'}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -479,7 +474,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -490,7 +485,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'tempo': 'andante'})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -500,7 +495,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -513,7 +508,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -529,7 +524,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -546,7 +541,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -569,7 +564,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 password="skyfall",
                 user_id=self.user.get_id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -588,7 +583,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 password="******",
                 user_id=self.user.get_id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -605,7 +600,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -625,7 +620,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -640,7 +635,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )['messages']['rows']
@@ -652,7 +647,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(data={PROFILE_SLUG: bad_id})],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )['messages']['rows']
@@ -667,7 +662,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(email=email)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -678,7 +673,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -694,7 +689,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -732,7 +727,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 user_id=self.user._id,
             )],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -761,7 +756,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(is_active='')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -772,7 +767,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec()],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -782,7 +777,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id=self.user._id, username='')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -792,7 +787,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -805,7 +800,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -838,7 +833,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 ),
             ],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -858,7 +853,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 )
             ],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -881,7 +876,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name,
                             location_code=[self.loc1.site_code])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -908,7 +903,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(web_user='a@a.com', role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -930,7 +925,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(web_user='a@a.com', remove_web_user='True')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -950,7 +945,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -977,7 +972,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 )
             ],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1003,7 +998,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 )
             ],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1026,7 +1021,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [{'data': {'key': 'F#'}, 'user_id': user._id}],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1049,7 +1044,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1073,7 +1068,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1116,7 +1111,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1152,7 +1147,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1186,7 +1181,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1204,7 +1199,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1232,7 +1227,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1263,7 +1258,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [{'id': group._id, 'name': 'test_group', 'case-sharing': False, 'reporting': True}],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1289,7 +1284,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [user_specs],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )
@@ -1355,7 +1350,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(user_spec + self.user_specs),
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )['messages']['rows']
@@ -1370,7 +1365,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             False
         )['messages']['rows']
@@ -1414,7 +1409,7 @@ class TestUserUploadRecord(TestCase):
             self.domain.name,
             [self.spec],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             upload_record.pk,
             False
         ).apply()
@@ -1506,7 +1501,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec(role='')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1524,7 +1519,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
               'email': 'existing@user.com',
               'role': self.role.name}],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1545,7 +1540,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(first_name='', last_name='')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1564,7 +1559,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(email=email)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1580,7 +1575,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1599,7 +1594,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1608,7 +1603,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.other_role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1620,7 +1615,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec(role=self.role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1630,7 +1625,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec(role=self.other_role.name)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1644,7 +1639,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username='a@a.com', remove='True')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1665,7 +1660,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec()],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1674,7 +1669,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec(remove='True')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1686,7 +1681,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=self.uploading_user.username, remove='True')],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1700,7 +1695,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec()],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1716,7 +1711,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
                             email='123@email.com'
                             )],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1731,7 +1726,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1756,7 +1751,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1772,7 +1767,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
@@ -1793,7 +1788,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
             [],
-            self.uploading_user.get_id,
+            self.uploading_user,
             self.upload_record.pk,
             True
         )
