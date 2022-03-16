@@ -120,7 +120,7 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 def get_refresh_alert_schedule_instances_call(broadcast):
     def refresh():
         refresh_alert_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
         )
 
@@ -130,7 +130,7 @@ def get_refresh_alert_schedule_instances_call(broadcast):
 def get_refresh_timed_schedule_instances_call(broadcast):
     def refresh():
         refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
             start_date_iso_string=json_format_date(broadcast.start_date)
         )

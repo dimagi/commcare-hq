@@ -25,7 +25,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
     def uid():
         return uuid.uuid4().hex
     case_id = case_id or uid()
-    block = CaseBlock.deprecated_init(create=create,
+    block = CaseBlock(create=create,
                       case_id=case_id,
                       user_id=user_id or uid(),
                       owner_id=owner_id or uid(),
@@ -209,11 +209,11 @@ class CaseRebuildTest(TestCase):
         earlier = now - timedelta(hours=1)
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
-        create_block = CaseBlock.deprecated_init(case_id, create=True, date_modified=way_earlier)
+        create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
         post_case_blocks(
             [create_block.as_xml()], form_extras={'received_on': way_earlier}
         )
-        update_block = CaseBlock.deprecated_init(case_id, update={'foo': 'bar'}, date_modified=earlier)
+        update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
         post_case_blocks(
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
@@ -247,14 +247,14 @@ class CaseRebuildTest(TestCase):
     def test_archive_removes_index(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks([
-            CaseBlock.deprecated_init(parent_case_id, create=True).as_xml()
+            CaseBlock(parent_case_id, create=True).as_xml()
         ])
         child_case_id = uuid.uuid4().hex
         post_case_blocks([
-            CaseBlock.deprecated_init(child_case_id, create=True).as_xml()
+            CaseBlock(child_case_id, create=True).as_xml()
         ])
         xform, _ = post_case_blocks([
-            CaseBlock.deprecated_init(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
+            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
         ])
 
         case = CommCareCase.objects.get_case(child_case_id, 'test-domain')

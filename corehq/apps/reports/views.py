@@ -312,6 +312,26 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
 
+    @property
+    def shared_saved_reports(self):
+        user = self.request.couch_user
+        config_reports = []
+
+        if user.is_domain_admin(self.domain):
+            # Admin user should see ALL shared saved reports
+            config_reports = ReportConfig.shared_on_domain(self.domain)
+        else:
+            # The non-admin user should ONLY see their saved reports (ie ReportConfigs) which have been used
+            # in a ReportNotification (not other users' ReportConfigs).
+            [config_reports.extend(r.configs) for r in self.scheduled_reports]
+
+        good_configs = [
+            config.to_complete_json(lang=self.language)
+            for config in config_reports
+            if not (config.is_configurable_report and not config.configurable_report)
+        ]
+        return good_configs
+
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
 
@@ -355,6 +375,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'configs': self.good_configs,
             'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
+            'shared_saved_reports': self.shared_saved_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -465,6 +486,8 @@ class AddSavedReportConfigView(View):
 
         self.config.save()
         ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user)
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -477,8 +500,12 @@ class AddSavedReportConfigView(View):
             _id = None  # make sure we pass None not a blank string
         config = ReportConfig.get_or_create(_id)
         if config.owner_id:
-            # in case a user maliciously tries to edit another user's config
-            assert config.owner_id == self.user_id
+            # in case a non-admin user maliciously tries to edit another user's config
+            # or an admin edits a non-shared report in some way
+            assert config.owner_id == self.user_id or (
+                self.user.is_domain_admin(self.domain) and
+                config.is_shared_on_domain()
+            )
         else:
             config.domain = self.domain
             config.owner_id = self.user_id
@@ -507,15 +534,21 @@ class AddSavedReportConfigView(View):
 
     @property
     def user_id(self):
-        return self.request.couch_user._id
+        return self.user._id
+
+    @property
+    def user(self):
+        return self.request.couch_user
+
 
 
 @login_and_domain_required
 @datespan_default
+@require_POST
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.GET)
+    form = EmailReportForm(request.POST)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
@@ -548,6 +581,8 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
+    ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
     try:
         saved_report = ReportConfig.get(config_id)
     except ResourceNotFound:
@@ -564,7 +599,10 @@ def delete_config(request, domain, config_id):
 
 
 def _can_delete_saved_report(report, user, domain):
-    return domain == report.domain and user._id == report.owner_id
+    return domain == report.domain and user._id == report.owner_id or (
+        user.is_domain_admin(domain) and
+        report.is_shared_on_domain()
+    )
 
 
 def normalize_hour(hour):
@@ -681,11 +719,18 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def configs(self):
         user = self.request.couch_user
-        if (self.scheduled_report_id and user.is_domain_admin(self.domain)
-                and user._id != self.owner_id):
+
+        if self.scheduled_report_id and user.is_domain_admin(self.domain):
             return self.report_notification.configs
+
+        report_configurations = ReportConfig.by_domain_and_owner(
+            self.domain,
+            user._id,
+            include_shared=user.is_domain_admin(self.domain)
+        )
+
         return [
-            c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
+            c for c in report_configurations
             if c.report and c.report.emailable
         ]
 
@@ -792,6 +837,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
+            ReportConfig.shared_on_domain.clear(ReportConfig, self.domain)
             if self.is_new:
                 DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_saved_scheduled_reports')
                 messages.success(request, _("Scheduled report added."))
@@ -878,6 +924,8 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
         # was probably already deleted by a fast-clicker.
         pass
     else:
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
         if delete_count:
             for report in scheduled_reports:
                 if not _can_delete_scheduled_report(report, user, domain):
@@ -1415,7 +1463,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, **case_block_kwargs).as_text()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))

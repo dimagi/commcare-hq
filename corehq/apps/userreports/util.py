@@ -6,6 +6,7 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
@@ -282,7 +283,7 @@ def get_report_config_or_not_found(domain, config_id):
     try:
         doc = ReportConfiguration.get_db().get(config_id)
         config = wrap_report_config_by_type(doc)
-    except (ResourceNotFound, KeyError):
+    except (ResourceNotFound, KeyError, ReportConfigurationNotFoundError):
         raise DocumentNotFound()
 
     if config.domain != domain:

@@ -6,6 +6,8 @@ SNCU_BENEFICIARY_IDENTIFIER = 'admission_id'
 NEWBORN_WEIGHT_COLUMN = 'newborn_weight'
 OWNER_NAME = 'owner_name'
 MOBILE_NUMBER = 'MobileNo'
+SKIP_CALL_VALIDATOR = 'skip_last_month_call_check'
+SKIP_CALL_VALIDATOR_YES = 'yes'
 
 REQUIRED_COLUMNS = [
     'name',

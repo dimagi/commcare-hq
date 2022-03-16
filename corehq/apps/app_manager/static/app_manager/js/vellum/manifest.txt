@@ -979,7 +979,7 @@
 ├─ path-root-regex@0.1.2
 ├─ path-root@0.1.1
 │  └─ path-root-regex@^0.1.0
-├─ pathval@1.1.0
+├─ pathval@1.1.1
 ├─ pend@1.2.0
 ├─ performance-now@2.1.0
 ├─ picomatch@2.2.2
@@ -1379,4 +1379,4 @@
 └─ yauzl@2.10.0
    ├─ buffer-crc32@~0.2.3
    └─ fd-slicer@~1.1.0
-Done in 0.40s.
+Done in 0.27s.

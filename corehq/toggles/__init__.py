@@ -837,6 +837,16 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+USH_CASE_LIST_MULTI_SELECT = StaticToggle(
+    'ush_case_list_multi_select',
+    'USH: Allow selecting multiple cases from the case list',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows user to select multiple cases and load them all into the form.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -2080,7 +2090,7 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry.',
+    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2158,6 +2168,13 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
+    'support_expanded_column_in_reports',
+    'Support count per choice column to show up in multibar graph in reports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     'save-only-edited-form-fields',
     'Save a form field only if the answer has been edited',
@@ -2168,4 +2185,22 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     Enable a checkbox for the ability to save a form question's answer in Case Management in App
     Manager only if the question's inputted answer is different from the current value in the case.
     """
+)
+
+GOOGLE_SHEETS_INTEGRATION = StaticToggle(
+    'google-sheet-integration',
+    'Unlock the Google Sheets view in Exports',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_USER],
+    description="""
+    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
+    on the Exports page.
+    """
+)
+
+SUPERSET_ANALYTICS = StaticToggle(
+    'superset-analytics',
+    'Activates Analytics features to create Superset based reports and dashboards using UCR data',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )

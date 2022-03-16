@@ -60,7 +60,7 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
                 'date_of_peer_review': '',
                 'feedback_num': '1',
                 'share_score_check': 'yes',
-                'total_session_rating': '0',
+                'total_session_rating': '0.0',
                 NEEDS_AGGREGATION_CASE_PROP: NEEDS_AGGREGATION_NO_VALUE,
             }
         )
@@ -71,23 +71,29 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
         )
         self._set_up_cases([
             {
-                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 1,
-                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 2,
-                SESSION_RATING_CASE_PROP: 3,
+                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 1.5,
+                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 2.3,
+                SESSION_RATING_CASE_PROP: 3.7,
                 DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 1, 1)
             },
             {
                 MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 2,
-                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 3,
-                SESSION_RATING_CASE_PROP: 5,
+                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 3.3,
+                SESSION_RATING_CASE_PROP: 5.2,
                 DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 8, 10)
             },
             {
-                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 1,
+                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 1.8,
                 MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 2,
                 SESSION_RATING_CASE_PROP: 4,
                 DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 3, 10)
-            }
+            },
+            {
+                MEAN_GENERAL_SKILLS_SCORE_CASE_PROP: 1.9,
+                MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP: 2.9,
+                SESSION_RATING_CASE_PROP: 4,
+                DATE_OF_PEER_REVIEW_CASE_PROP: date(2020, 3, 10)
+            },
         ])
 
         result = sanitize_session_peer_rating(self.session_case, rule)
@@ -97,13 +103,13 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
         self.assertDictEqual(
             session_case.case_json,
             {
-                'agg_mean_general_skills_score': '1.3',
-                'agg_mean_treatment_specific_score': '2.3',
-                'agg_rating': '4.0',
+                'agg_mean_general_skills_score': '1.8',
+                'agg_mean_treatment_specific_score': '2.6',
+                'agg_rating': '4.2',
                 'date_of_peer_review': '2020-08-10',
-                'feedback_num': '3',
+                'feedback_num': '4',
                 'share_score_check': 'yes',
-                'total_session_rating': '12',
+                'total_session_rating': '16.9',
                 NEEDS_AGGREGATION_CASE_PROP: NEEDS_AGGREGATION_NO_VALUE,
             }
         )

@@ -31,23 +31,25 @@ def get_session_schema(form):
 
     unrelated_parents = set()
     for datum in datums:
-        if datum.module_id:
-            module = app.get_module_by_unique_id(datum.module_id)
-            parent_select_active = hasattr(module, 'parent_select') and module.parent_select.active
-            if parent_select_active and module.parent_select.relationship is None:
-                # for child modules that use parent select where the parent is not a 'related' case
-                # See toggles.NON_PARENT_MENU_SELECTION
-                unrelated_parents.add(module.parent_select.module_id)
+        if not datum.module_id:
+            continue
+        module = app.get_module_by_unique_id(datum.module_id)
+        parent_select_active = hasattr(module, 'parent_select') and module.parent_select.active
+        if parent_select_active and module.parent_select.relationship is None:
+            # for child modules that use parent select where the parent is not a 'related' case
+            # See toggles.NON_PARENT_MENU_SELECTION
+            unrelated_parents.add(module.parent_select.module_id)
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
-        module = app.get_module_by_unique_id(datum.module_id)
-        data_registry = module.search_config.data_registry
+        module_id = datum.module_id
+        module = app.get_module_by_unique_id(module_id) if module_id else None
+        data_registry = module.search_config.data_registry if module else None
         if i == 0:
             # always add the datum for this module
             data_structure[datum.datum.id] = _get_structure(datum, data_registry)
         else:
-            if datum.module_id and datum.module_id in unrelated_parents:
+            if module and module_id in unrelated_parents:
                 source = clean_trans(module.name, app.langs)  # ensure that this structure reference is unique
                 data_structure[datum.datum.id] = _get_structure(datum, data_registry, source)
 
