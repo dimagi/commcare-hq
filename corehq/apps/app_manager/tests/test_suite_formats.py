@@ -146,7 +146,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template>
             <text>
-              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
+              <xpath function="replace(join(' ', if(selected(if(gender = 'male', 'boy', 'girl'), 'boy'), $kboy, ''), if(selected(if(gender = 'male', 'boy', 'girl'), 'girl'), $kgirl, '')), '\s+', ' ')">
                 <variable name="kboy">
                   <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
                 </variable>

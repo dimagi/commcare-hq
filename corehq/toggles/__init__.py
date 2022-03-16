@@ -837,6 +837,16 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+USH_CASE_LIST_MULTI_SELECT = StaticToggle(
+    'ush_case_list_multi_select',
+    'USH: Allow selecting multiple cases from the case list',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows user to select multiple cases and load them all into the form.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",

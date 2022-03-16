@@ -60,13 +60,15 @@ class Command(BaseCommand):
             domain_obj.delete(leave_tombstone=True)
         print("Operation completed")
 
-    def hard_delete_cases(self, domain_name):
+    @staticmethod
+    def hard_delete_cases(domain_name):
         print("Hard-deleting cases...")
         case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
         for chunk in chunked(case_ids, 1000, list):
             CommCareCase.objects.hard_delete_cases(domain_name, chunk)
 
-    def hard_delete_forms(self, domain_name):
+    @staticmethod
+    def hard_delete_forms(domain_name):
         print("Hard-deleting forms...")
         form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
         for chunk in chunked(form_ids, 1000, list):
