@@ -14,7 +14,7 @@
   {% initial_page_data 'is_deid' is_deid %}
   {% initial_page_data 'is_feed' is_feed|default:False %}
   {% initial_page_data 'is_odata' is_odata|default:False %}
-  {% initial_page_data 'is_gsheet' is_gsheet|default:False %}
+  {% initial_page_data 'is_live_google_sheet' is_live_google_sheet|default:False %}
   {% initial_page_data 'model_type' model_type %}
   {% initial_page_data 'my_export_type' my_export_type %}
   {% initial_page_data 'shared_export_type' shared_export_type %}
@@ -36,7 +36,7 @@
     </div>
   {% endif %}
 
-  {% is is_gsheet %}
+  {% if is_live_google_sheet %}
     <div class="pull-right">
       <feedback params="featureName: '{% trans_html_attr 'Google Sheet Integration' %}'"></feedback>
     </div>

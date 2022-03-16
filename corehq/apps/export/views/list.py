@@ -76,7 +76,7 @@ from corehq.apps.users.permissions import (
     has_permission_to_view_report,
 )
 from corehq.apps.oauth_integrations.models import LiveGoogleSheetSchedule
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, LIVE_GOOGLE_SHEET, ODATA_FEED
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.test_utils import flag_enabled
@@ -246,10 +246,13 @@ class ExportListHelper(object):
         }
 
     def _get_google_sheet_url(self, export):
-        live_google_sheet_schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export)
-        google_sheet_id = live_google_sheet_schedule.google_sheet_id
-        google_sheet_url = "https://spreadsheets.google.com/feeds/worksheets/{}".format(google_sheet_id)
-        return google_sheet_url
+        try:
+            live_google_sheet_schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export)
+            google_sheet_id = live_google_sheet_schedule.google_sheet_id
+            google_sheet_url = "https://spreadsheets.google.com/feeds/worksheets/{}".format(google_sheet_id)
+            return google_sheet_url
+        except LiveGoogleSheetSchedule.DoesNotExist:
+            return None
 
     def _get_additional_odata_urls(self, export):
         urls = []
@@ -1163,7 +1166,6 @@ class LiveGoogleSheetListHelper(ExportListHelper):
 
 
 @location_safe
-@method_decorator(requires_privilege_with_fallback(LIVE_GOOGLE_SHEET), name='dispatch')
 class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
     is_live_google_sheet = True
     url = 'list_live_google_sheets'

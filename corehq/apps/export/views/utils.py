@@ -55,6 +55,8 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
 
+from corehq import toggles
+
 
 def get_timezone(domain, couch_user):
     if not domain:
@@ -78,7 +80,7 @@ def user_can_view_odata_feed(domain, couch_user):
 
 
 def user_can_view_google_sheet(domain, couch_user):
-    domain_can_view_gsheet = domain_has_privilege(domain, privileges.LIVE_GOOGLE_SHEET)
+    domain_can_view_gsheet = toggles.GOOGLE_SHEETS_INTEGRATION.enabled(domain)
     return (domain_can_view_gsheet
             and has_permission_to_view_report(couch_user, domain, LIVE_GOOGLE_SHEET_PERMISSION))
 

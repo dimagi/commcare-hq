@@ -12,7 +12,7 @@
             {% blocktrans %}
               Maximum number of OData feeds reached.
             {% endblocktrans %}
-          {% elif isGSheet %}
+          {% elif isLiveGoogleSheet %}
             {% blocktrans %}
               Maximum number of Google Sheets reached.
             {% endblocktrans %}
@@ -25,7 +25,7 @@
             At this time we allow a maximum of {{ odata_feed_limit }} OData feeds per project space.
             Please consider deleting the feeds that you don't need anymore.
           {% endblocktrans %}
-        {% elif isGSheet %}
+        {% elif isLiveGoogleSheet %}
           {% blocktrans %}
             At this time we allow a maximum of {{ google_sheet_limit }} Google Sheets per project space.
             Please consider deleting the sheets that you don't need anymore.
