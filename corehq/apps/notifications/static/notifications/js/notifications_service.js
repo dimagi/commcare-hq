@@ -48,6 +48,9 @@ hqDefine('notifications/js/notifications_service', [
         self.isInfo = ko.computed(function () {
             return self.type() === 'info';
         });
+        self.isFeature = ko.computed(function () {
+            return self.type() === 'feat_basic' || self.type() === 'feat_pro';
+        });
         self.markAsRead = function () {
             _private.RMI("mark_as_read", {id: self.id()});
             self.isRead(true);

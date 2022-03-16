@@ -9,6 +9,8 @@ NOTIFICATION_TYPES = (
     ('billing', 'Billing Notification'),
     ('info', 'Product Notification'),
     ('alert', 'Maintenance Notification'),
+    ('feat_basic', 'Feature Discovery (Basic)'),
+    ('feat_pro', 'Feature Discovery (Advanced)')
 )
 
 
@@ -34,7 +36,7 @@ class Notification(models.Model):
         ordering = ["-activated"]
 
     @classmethod
-    def get_by_user(cls, django_user, couch_user, limit=10):
+    def get_by_user(cls, django_user, couch_user, limit=10, plan='Community'):
         """Returns notifications for a particular user
 
         After five notifications all notifications should be marked as read.
@@ -58,7 +60,12 @@ class Notification(models.Model):
             }
             return note_dict
 
-        return list(map(_fmt_note, enumerate(notes)))
+        notifications = list(map(_fmt_note, enumerate(notes)))
+        if any(p in str(plan) for p in ['Pro', 'Advanced', 'Enterprise']):
+            remove = 'feat_basic'
+        else:
+            remove = 'feat_pro'
+        return [notif for notif in notifications if notif['type'] != remove]
 
     def mark_as_read(self, user):
         self.users_read.add(user)
