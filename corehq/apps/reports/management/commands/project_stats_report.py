@@ -24,7 +24,6 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.util import get_table_name
 from corehq.blobs.models import BlobMeta
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.models import (
     CommCareCaseIndex,
     CommCareCase,
@@ -78,7 +77,7 @@ class Command(BaseCommand):
         self.date_end = None if options['include_current'] else datetime.utcnow().date().replace(day=1)
 
         self.active_not_deleted_users = (
-            UserES(es_instance_alias=ES_EXPORT_INSTANCE)
+            UserES(for_export=True)
             .domain(domain).values_list("_id", flat=True)
         )
 
@@ -140,7 +139,7 @@ class Command(BaseCommand):
 
     def _cases_created_per_user_per_month(self, case_type=None):
         query = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE).domain(self.domain)
+            CaseES(for_export=True).domain(self.domain)
             .opened_range(gte=self.date_start, lt=self.date_end)
             .aggregation(
                 TermsAggregation('cases_per_user', 'owner_id', size=100)
@@ -186,7 +185,7 @@ class Command(BaseCommand):
 
     def _cases_updated_per_user_per_month(self):
         results = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE).domain(self.domain)
+            CaseES(for_export=True).domain(self.domain)
             .active_in_range(gte=self.date_start, lt=self.date_end)
             .aggregation(TermsAggregation('cases_per_user', 'owner_id', size=100).aggregation(
                 NestedAggregation('actions', 'actions').aggregation(
@@ -230,7 +229,7 @@ class Command(BaseCommand):
             return
 
         avg_ledgers_per_case = ledger_count / len(case_ids)
-        case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
+        case_types_result = CaseES(for_export=True)\
             .domain(self.domain).case_ids(case_ids)\
             .aggregation(TermsAggregation('types', 'type.exact'))\
             .size(0).run()
