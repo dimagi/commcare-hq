@@ -96,7 +96,7 @@ class Heartbeat(object):
         if self.threshold:
             metrics_gauge(
                 'commcare.celery.heartbeat.time_to_start_ok',
-                1 if time_to_start.total_seconds() <= self.threshold else 0,
+                1 if time_to_start is not None and time_to_start.total_seconds() <= self.threshold else 0,
                 tags={'celery_queue': self.queue},
                 multiprocess_mode=MPM_MAX
             )

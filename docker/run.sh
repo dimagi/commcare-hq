@@ -136,6 +136,7 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
