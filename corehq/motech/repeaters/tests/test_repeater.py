@@ -87,14 +87,14 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.case_block = CaseBlock.deprecated_init(
+        cls.case_block = CaseBlock(
             case_id=CASE_ID,
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
         ).as_text()
 
-        cls.update_case_block = CaseBlock.deprecated_init(
+        cls.update_case_block = CaseBlock(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
@@ -581,7 +581,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.white_listed_case_types = ['planet']
         self.repeater.save()
 
-        white_listed_case = CaseBlock.deprecated_init(
+        white_listed_case = CaseBlock(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -589,7 +589,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         CaseFactory(self.domain).post_case_blocks([white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
-        non_white_listed_case = CaseBlock.deprecated_init(
+        non_white_listed_case = CaseBlock(
             case_id="b_case_id",
             create=True,
             case_type="cat",
@@ -603,7 +603,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         black_list_user_id = 'black_listed_user'
 
         # case-creations by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock.deprecated_init(
+        black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             create=True,
             case_type="planet",
@@ -621,7 +621,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
-        normal_user_case = CaseBlock.deprecated_init(
+        normal_user_case = CaseBlock(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -639,7 +639,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock.deprecated_init(
+        black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             case_type="planet",
             owner_id="owner",
@@ -655,7 +655,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
-        normal_user_case = CaseBlock.deprecated_init(
+        normal_user_case = CaseBlock(
             case_id="a_case_id",
             case_type="planet",
             owner_id="owner",

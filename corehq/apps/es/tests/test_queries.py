@@ -2,6 +2,7 @@ import json
 from unittest import TestCase
 
 from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.es.queries import match
 
 
 class TestQueries(TestCase):
@@ -57,3 +58,7 @@ class TestQueries(TestCase):
                 "fields": None,
             }
         })
+
+    def test_match_raises_with_invalid_operator(self):
+        with self.assertRaises(ValueError):
+            match("cyrus", "pet_name", operator="And")
