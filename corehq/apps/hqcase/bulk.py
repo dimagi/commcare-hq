@@ -1,4 +1,3 @@
-import time
 from dataclasses import dataclass
 from xml.etree import cElementTree as ElementTree
 
@@ -37,14 +36,11 @@ class SystemFormMeta:
 class CaseBulkDB:
     """
     Context manager to facilitate making case changes in chunks.
-
-    Can optionally wait between each chunk to throttle the form submission rate.
     """
 
-    def __init__(self, domain, form_meta: SystemFormMeta = None, throttle_secs=None):
+    def __init__(self, domain, form_meta: SystemFormMeta = None):
         self.domain = domain
         self.form_meta = form_meta or SystemFormMeta()
-        self.throttle_secs = throttle_secs or 0
 
     def __enter__(self):
         self.to_save = []
@@ -57,8 +53,6 @@ class CaseBulkDB:
         self.to_save.append(case_block)
         if len(self.to_save) >= CASEBLOCK_CHUNKSIZE:
             self.commit()
-            if self.throttle_secs:
-                time.sleep(self.throttle_secs)
 
     def commit(self):
         if self.to_save:
@@ -77,15 +71,21 @@ class CaseBulkDB:
             self.to_save = []
 
 
-def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None, throttle_secs=None):
+def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
     """
     Perform a large number of case updates in chunks
 
-    update_fn should be a function which accepts a case and returns a CaseBlock
+    update_fn should be a function which accepts a case and returns a list of CaseBlock objects
     if an update is to be performed, or None to skip the case.
+
+    Returns counts of number of updates made (not necessarily number of cases update).
     """
-    with CaseBulkDB(domain, form_meta, throttle_secs) as bulk_db:
+    update_count = 0
+    with CaseBulkDB(domain, form_meta) as bulk_db:
         for case in CommCareCase.objects.iter_cases(case_ids):
-            case_block = update_fn(case)
-            if case_block:
-                bulk_db.save(case_block)
+            case_blocks = update_fn(case)
+            if case_blocks:
+                for case_block in case_blocks:
+                    bulk_db.save(case_block)
+                    update_count += 1
+    return update_count

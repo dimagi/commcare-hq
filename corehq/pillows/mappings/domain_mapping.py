@@ -1,7 +1,7 @@
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
+DOMAIN_INDEX = prefix_for_tests("hqdomains_2021-03-08")
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
@@ -104,7 +104,6 @@ DOMAIN_MAPPING = {
                 'cp_300th_form_submission': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                              'type': 'date'},
                 'creating_user': {'type': 'string'},
-                'customer_type': {'type': 'string'},
                 'date_created': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                  'type': 'date'},
                 'default_timezone': {'type': 'string'},
@@ -137,19 +136,6 @@ DOMAIN_MAPPING = {
                 'description': {'type': 'string'},
                 'doc_type': {'index': 'not_analyzed', 'type': 'string'},
                 'downloads': {'type': 'long'},
-                'dynamic_reports': {'dynamic': False,
-                                    'properties': {'doc_type': {'index': 'not_analyzed',
-                                                                'type': 'string'},
-                                                   'reports': {'dynamic': False,
-                                                               'properties': {'doc_type': {'index': 'not_analyzed',
-                                                                                           'type': 'string'},
-                                                                              'kwargs': {'dynamic': False,
-                                                                                         'type': 'object'},
-                                                                              'name': {'type': 'string'},
-                                                                              'report': {'type': 'string'}},
-                                                               'type': 'object'},
-                                                   'section_title': {'type': 'string'}},
-                                    'type': 'object'},
                 'full_downloads': {'type': 'long'},
                 'hipaa_compliant': {'type': 'boolean'},
                 'hr_name': {'type': 'string'},

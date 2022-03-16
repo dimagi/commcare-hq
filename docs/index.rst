@@ -65,10 +65,17 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     reporting
     maps
     exports
-    ucr
     change_feeds
     pillows
     email_monitoring_SES
+
+.. toctree::
+    :caption: User-Configurable Reporting
+    :maxdepth: 1
+
+    ucr
+    ucr/examples
+    ucr/faq
 
 .. toctree::
     :caption: Messaging

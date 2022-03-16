@@ -4,6 +4,7 @@ import os
 import re
 from collections import namedtuple
 from copy import copy, deepcopy
+from corehq import toggles
 from datetime import datetime
 from uuid import UUID
 
@@ -17,10 +18,10 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
+from jsonpath_ng.ext import parser
 from memoized import memoized
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
-from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -47,9 +48,11 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -58,12 +61,13 @@ from corehq.apps.userreports.const import (
     VALID_REFERENCED_DOC_TYPES,
 )
 from corehq.apps.userreports.dbaccessors import (
-    get_datasources_for_domain,
-    get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
+    get_number_of_report_configs_by_data_source,
+    get_registry_data_sources_by_domain,
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -75,6 +79,10 @@ from corehq.apps.userreports.exceptions import (
     ValidationError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.extension_points import (
+    static_ucr_data_source_paths,
+    static_ucr_report_paths,
+)
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -89,7 +97,8 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, wrap_report_config_by_type,
+    get_indicator_adapter,
+    wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -244,6 +253,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    is_available_in_analytics = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
@@ -526,6 +536,19 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def data_domains(self):
         return [self.domain]
 
+    def _verify_contains_allowed_expressions(self):
+        """
+        Raise BadSpecError if any disallowed expression is present in datasource
+        """
+        disallowed_expressions = AllowedUCRExpressionSettings.disallowed_ucr_expressions(self.domain)
+        if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
+            raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
+        doubtful_keys = dict(indicators=self.configured_indicators, expressions=self.named_expressions)
+        for expr in disallowed_expressions:
+            results = parser.parse(f"$..[*][?type={expr}]").find(doubtful_keys)
+            if results:
+                raise BadSpecError(_(f'{expr} is not allowed for domain {self.domain}'))
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -543,7 +566,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
-
+        self._verify_contains_allowed_expressions()
         self.parsed_expression
         self.pk_columns
 
@@ -772,13 +795,62 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     @property
     @memoized
+    def report_columns_by_column_id(self):
+        return {c.column_id: c for c in self.report_columns}
+
+    @property
+    @memoized
     def ui_filters(self):
         return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+        if (
+            self.config_id and self.configured_charts
+            and toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(self.domain)
+        ):
+            configured_charts = deepcopy(self.configured_charts)
+            for chart in configured_charts:
+                if chart['type'] == 'multibar':
+                    chart['y_axis_columns'] = self._get_expanded_y_axis_cols_for_multibar(chart['y_axis_columns'])
+            return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+        else:
+            return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+
+    def _get_expanded_y_axis_cols_for_multibar(self, original_y_axis_columns):
+        y_axis_columns = []
+        try:
+            for y_axis_column in original_y_axis_columns:
+                column_id = y_axis_column['column_id']
+                column_config = self.report_columns_by_column_id[column_id]
+                if column_config.type == 'expanded':
+                    expanded_columns = self.get_expanded_columns(column_config)
+                    for column in expanded_columns:
+                        y_axis_columns.append({
+                            'column_id': column.slug,
+                            'display': column.header
+                        })
+                else:
+                    y_axis_columns.append(y_axis_column)
+        # catch edge cases where data source table is yet to be created
+        except DataSourceConfigurationNotFoundError:
+            return original_y_axis_columns
+        else:
+            return y_axis_columns
+
+    def get_expanded_columns(self, column_config):
+        return get_expanded_column_config(
+            self.cached_data_source.config,
+            column_config,
+            self.cached_data_source.lang
+        ).columns
+
+    @property
+    @memoized
+    def cached_data_source(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
     @memoized

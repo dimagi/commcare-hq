@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     Itemset,
-    Module, DetailColumn,
+    Module, DetailColumn, ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -323,6 +323,47 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """,
             suite_xml,
             "./remote-request[1]/session/query/data[@key='case_type']"
+        )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types__shadow_module(self, *args):
+        shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
+        shadow_module.source_module_id = self.module.get_or_create_unique_id()
+        shadow_module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search from Shadow Module'
+                }
+            ),
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        app = Application.wrap(self.app.to_json())
+        suite_xml = app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        ref_path = './remote-request[2]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}']{}".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                EXCLUDE_RELATED_CASES_FILTER
+            ),
+            suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[2]/session/query/data[@key='case_type']"
         )
 
     def test_case_search_action_relevant_condition(self, *args):

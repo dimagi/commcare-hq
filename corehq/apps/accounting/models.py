@@ -839,7 +839,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run migrations?"
+                f"No default {edition!r} product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod

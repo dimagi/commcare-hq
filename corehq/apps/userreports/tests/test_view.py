@@ -23,6 +23,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import flag_enabled
 
 
 class ConfigurableReportTestMixin(object):
@@ -32,7 +33,7 @@ class ConfigurableReportTestMixin(object):
     @classmethod
     def _new_case(cls, properties):
         id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=id,
             case_type=cls.case_type,
@@ -135,7 +136,30 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                         "column_id": "report_column_col_id_percent_num2"
                     }
                 },
+                {
+                    "type": "expanded",
+                    "display": "report_column_display_expanded_num1",
+                    "field": 'indicator_col_id_num1',
+                    'column_id': 'report_column_col_id_expanded_num1',
+                }
             ],
+            configured_charts=[
+                {
+                    "type": 'pie',
+                    "value_column": 'count',
+                    "aggregation_column": 'fruit',
+                    "title": 'Fruits'
+                },
+                {
+                    "type": 'multibar',
+                    "title": 'Fruit Properties',
+                    "x_axis_column": 'fruit',
+                    "y_axis_columns": [
+                        {"column_id": "report_column_col_id_expanded_num1", "display": "Num1 values"}
+                    ]
+                },
+
+            ]
         )
         report_config.save()
         self.addCleanup(report_config.delete)
@@ -149,7 +173,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.case.delete()
+        for case in cls.cases:
+            case.delete()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
@@ -158,21 +183,30 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(ConfigurableReportViewTest, cls).setUpClass()
-        cls.case = cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6})
-        cls.case.save()
+        cls.cases = []
+        cls.cases.append(cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}))
+        cls.cases.append(cls._new_case({'fruit': 'mango', 'num1': 7, 'num2': 4}))
+        cls.cases.append(cls._new_case({'fruit': 'unknown', 'num1': 1, 'num2': 0}))
 
     def test_export_table(self):
         """
         Test the output of ConfigurableReportView.export_table()
         """
         report, view = self._build_report_and_view()
-
         expected = [
             [
                 'foo',
                 [
-                    ['report_column_display_fruit', 'report_column_display_percent'],
-                    ['apple', '150%']
+                    [
+                        'report_column_display_fruit',
+                        'report_column_display_percent',
+                        'report_column_display_expanded_num1-1',
+                        'report_column_display_expanded_num1-4',
+                        'report_column_display_expanded_num1-7',
+                    ],
+                    ['apple', '150%', 0, 1, 0],
+                    ['mango', '57%', 0, 0, 1],
+                    ['unknown', '0%', 1, 0, 0]
                 ]
             ]
         ]
@@ -187,17 +221,132 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         actual = ConfigurableReportView.report_preview_data(report.domain, report)
         expected = {
             "table": [
-                ['report_column_display_fruit', 'report_column_display_percent'],
-                ['apple', '150%']
+                [
+                    'report_column_display_fruit',
+                    'report_column_display_percent',
+                    'report_column_display_expanded_num1-1',
+                    'report_column_display_expanded_num1-4',
+                    'report_column_display_expanded_num1-7',
+                ],
+                ['apple', '150%', 0, 1, 0],
+                ['mango', '57%', 0, 0, 1],
+                ['unknown', '0%', 1, 0, 0]
             ],
             "map_config": report.map_config,
             "chart_configs": report.charts,
-            "aaData": [{
-                "report_column_col_id_fruit": "apple",
-                "report_column_col_id_percent": "150%"
-            }]
+            "aaData": [
+                {
+                    "report_column_col_id_fruit": "apple",
+                    "report_column_col_id_percent": "150%",
+                    'report_column_col_id_expanded_num1-0': 0,
+                    'report_column_col_id_expanded_num1-1': 1,
+                    'report_column_col_id_expanded_num1-2': 0,
+                },
+                {
+                    'report_column_col_id_fruit': 'mango',
+                    'report_column_col_id_percent': '57%',
+                    'report_column_col_id_expanded_num1-0': 0,
+                    'report_column_col_id_expanded_num1-1': 0,
+                    'report_column_col_id_expanded_num1-2': 1,
+                },
+                {
+                    'report_column_col_id_fruit': 'unknown',
+                    'report_column_col_id_percent': '0%',
+                    'report_column_col_id_expanded_num1-0': 1,
+                    'report_column_col_id_expanded_num1-1': 0,
+                    'report_column_col_id_expanded_num1-2': 0,
+                }
+            ]
         }
         self.assertEqual(actual, expected)
+
+    def test_report_preview_data_with_expanded_columns(self):
+        report, view = self._build_report_and_view()
+        multibar_chart = report.charts[1].to_json()
+        self.assertEqual(multibar_chart['type'], 'multibar')
+        self.assertEqual(
+            multibar_chart['y_axis_columns'],
+            [
+                {
+                    'column_id': 'report_column_col_id_expanded_num1',
+                    'display': 'Num1 values'
+                }
+            ]
+        )
+
+        with flag_enabled('SUPPORT_EXPANDED_COLUMN_IN_REPORTS'):
+            report, view = self._build_report_and_view()
+            multibar_chart = report.charts[1].to_json()
+            self.assertEqual(multibar_chart['type'], 'multibar')
+            self.assertEqual(
+                multibar_chart['y_axis_columns'],
+                [
+                    {
+                        'column_id': 'report_column_col_id_expanded_num1-0',
+                        'display': 'report_column_display_expanded_num1-1'
+                    },
+                    {
+                        'column_id': 'report_column_col_id_expanded_num1-1',
+                        'display': 'report_column_display_expanded_num1-4'
+                    },
+                    {
+                        'column_id': 'report_column_col_id_expanded_num1-2',
+                        'display': 'report_column_display_expanded_num1-7'
+                    },
+                ]
+            )
+
+            # just test that preview works
+            self.test_report_preview_data()
+
+    def test_report_charts(self):
+        report, view = self._build_report_and_view()
+
+        preview_data = ConfigurableReportView.report_preview_data(report.domain, report)
+        preview_data_pie_chart = preview_data['chart_configs'][0]
+        self.assertEqual(preview_data_pie_chart.type, 'pie')
+        self.assertEqual(preview_data_pie_chart.title, 'Fruits')
+        self.assertEqual(preview_data_pie_chart.value_column, 'count')
+        self.assertEqual(preview_data_pie_chart.aggregation_column, 'fruit')
+
+        preview_data_multibar_chart = preview_data['chart_configs'][1]
+        self.assertEqual(preview_data_multibar_chart.type, 'multibar')
+        self.assertEqual(preview_data_multibar_chart.title, 'Fruit Properties')
+        self.assertEqual(preview_data_multibar_chart.title, 'Fruit Properties')
+        self.assertEqual(preview_data_multibar_chart.x_axis_column, 'fruit')
+        self.assertEqual(
+            preview_data_multibar_chart.y_axis_columns[0].column_id,
+            'report_column_col_id_expanded_num1'
+        )
+        self.assertEqual(
+            preview_data_multibar_chart.y_axis_columns[0].display,
+            'Num1 values'
+        )
+
+    @flag_enabled('SUPPORT_EXPANDED_COLUMN_IN_REPORTS')
+    def test_report_charts_with_expanded_columns(self):
+        report, view = self._build_report_and_view()
+
+        preview_data = ConfigurableReportView.report_preview_data(report.domain, report)
+        multibar_chart = preview_data['chart_configs'][1].to_json()
+        self.assertEqual(multibar_chart['type'], 'multibar')
+        self.assertEqual(
+            multibar_chart['y_axis_columns'],
+            [
+                {
+                    'column_id': 'report_column_col_id_expanded_num1-0',
+                    'display': 'report_column_display_expanded_num1-1'
+                },
+                {
+                    'column_id': 'report_column_col_id_expanded_num1-1',
+                    'display': 'report_column_display_expanded_num1-4'
+                },
+                {
+                    'column_id': 'report_column_col_id_expanded_num1-2',
+                    'display': 'report_column_display_expanded_num1-7'
+                },
+            ]
+        )
 
     def test_paginated_build_table(self):
         """
@@ -206,13 +355,20 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         with patch('corehq.apps.userreports.tasks.ID_CHUNK_SIZE', 1):
             report, view = self._build_report_and_view()
-
         expected = [
             [
                 'foo',
                 [
-                    ['report_column_display_fruit', 'report_column_display_percent'],
-                    ['apple', '150%']
+                    [
+                        'report_column_display_fruit',
+                        'report_column_display_percent',
+                        'report_column_display_expanded_num1-1',
+                        'report_column_display_expanded_num1-4',
+                        'report_column_display_expanded_num1-7',
+                    ],
+                    ['apple', '150%', 0, 1, 0],
+                    ['mango', '57%', 0, 0, 1],
+                    ['unknown', '0%', 1, 0, 0]
                 ]
             ]
         ]

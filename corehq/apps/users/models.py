@@ -442,6 +442,9 @@ class DomainMembership(Membership):
 class IsMemberOfMixin(DocumentSchema):
 
     def _is_member_of(self, domain, allow_enterprise):
+        if not domain:
+            return False
+
         if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
 
@@ -563,14 +566,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     @memoized
     def is_domain_admin(self, domain=None):
+        # this is a hack needed because we can't pass parameters from views
+        domain = domain or getattr(self, 'current_domain', None)
         if not domain:
-            # hack for template
-            if hasattr(self, 'current_domain'):
-                # this is a hack needed because we can't pass parameters from views
-                domain = self.current_domain
-            else:
-                return False  # no domain, no admin
-        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return False  # no domain, no admin
+        if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
@@ -586,19 +586,13 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
-        if not restrict_global_admin:
-            # is_admin is the same as having all the permissions set
-            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
-                return True
-            elif self.is_domain_admin(domain):
-                return True
+    def has_permission(self, domain, permission, data=None):
+        # is_admin is the same as having all the permissions set
+        if self.is_domain_admin(domain):
+            return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
-            # an admin has access to all features by default, restrict that if needed
-            if dm.is_admin and restrict_global_admin:
-                return False
             return dm.has_permission(permission, data)
         return False
 
@@ -607,19 +601,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         Get the role object for this user
         """
-        if domain is None:
-            # default to current_domain for django templates
-            if hasattr(self, 'current_domain'):
-                domain = self.current_domain
-            else:
-                domain = None
+        # default to current_domain for django templates
+        domain = domain or getattr(self, 'current_domain', None)
 
         if checking_global_admin and self.is_global_admin():
             return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_enterprise):
-            return self.get_domain_membership(domain, allow_enterprise).role
-        else:
-            raise DomainMembershipError()
+            dm = self.get_domain_membership(domain, allow_enterprise)
+            if dm:
+                return dm.role
+        raise DomainMembershipError()
 
     def set_role(self, domain, role_qualified_id):
         """
@@ -639,13 +630,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         self.has_permission.reset_cache(self)
         self.get_role.reset_cache(self)
+        try:
+            self.is_domain_admin.reset_cache(self)
+        except AttributeError:
+            pass
+        DomainMembership.role.fget.reset_cache(dm)
 
     def role_label(self, domain=None):
+        domain = domain or getattr(self, 'current_domain', None)
         if not domain:
-            try:
-                domain = self.current_domain
-            except (AttributeError, KeyError):
-                return None
+            return None
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
@@ -1506,10 +1500,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return models
 
     def _get_viewable_report_slugs(self, domain):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
+        domain = domain or getattr(self, 'current_domain', None)
 
         if self.is_commcare_user():
             role = self.get_role(domain)
@@ -1553,10 +1544,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def _get_perm_check_fn(self, perm):
         def fn(domain=None, data=None):
-            try:
-                domain = domain or self.current_domain
-            except AttributeError:
-                domain = None
+            domain = domain or getattr(self, 'current_domain', None)
             return self.has_permission(domain, perm, data)
         return fn
 
@@ -2216,7 +2204,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),

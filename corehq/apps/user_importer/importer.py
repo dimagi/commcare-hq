@@ -561,7 +561,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             log = commcare_user_importer.save_log()
 
             if web_user_username:
-                check_can_upload_web_users(upload_user)
+                check_can_upload_web_users(domain, upload_user)
                 web_user = CouchUser.get_by_username(web_user_username)
                 if web_user:
                     web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
@@ -704,7 +704,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
             remove = spec_value_to_boolean_or_none(row, 'remove')
             check_user_role(username, role)
             role_qualified_id = domain_info.roles_by_name[role]
-            check_can_upload_web_users(upload_user)
+            check_can_upload_web_users(domain, upload_user)
 
             user = CouchUser.get_by_username(username, strict=True)
             if user:
@@ -789,8 +789,8 @@ def check_user_role(username, role):
             "a role").format(username=username))
 
 
-def check_can_upload_web_users(upload_user):
-    if not upload_user.can_edit_web_users():
+def check_can_upload_web_users(domain, upload_user):
+    if not upload_user.can_edit_web_users(domain):
         raise UserUploadError(_(
             "Only users with the edit web users permission can upload web users"
         ))
