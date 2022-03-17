@@ -136,6 +136,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             urlObject.setQueryData({}, false, false);
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
+            sessionStorage.queryKey = menuResponse.queryKey;
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
