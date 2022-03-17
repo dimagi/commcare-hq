@@ -18,7 +18,6 @@ hqDefine("export/js/export_list_main", [
         var $createExport = $("#create-export"),
             isOData = initialPageData.get('is_odata', true),
             isLiveGoogleSheet = initialPageData.get('is_live_google_sheet', true);
-        console.log("test1");
         if ($createExport.length) {
             $createExport.koApplyBindings(createModels.createExportModel({
                 model_type: initialPageData.get("model_type", true),
@@ -33,7 +32,6 @@ hqDefine("export/js/export_list_main", [
                     model_type: initialPageData.get('model_type', true),
                 },
             }));
-            console.log("test2");
             $('#createExportOptionsModal').on('show.bs.modal', function () {
                 kissmetricsAnalytics.track.event("Clicked New Export");
 

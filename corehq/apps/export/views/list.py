@@ -1168,7 +1168,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
 @location_safe
 class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
     is_live_google_sheet = True
-    url = 'list_live_google_sheets'
+    urlname = 'list_live_google_sheets'
     page_title = "Live Google Sheet Integration"
 
     @flag_enabled('GOOGLE_SHEETS_INTEGRATION')

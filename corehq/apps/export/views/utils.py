@@ -10,6 +10,7 @@ from django.views.generic import View
 
 import pytz
 from memoized import memoized
+from corehq.util.test_utils import flag_enabled
 
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
@@ -80,7 +81,7 @@ def user_can_view_odata_feed(domain, couch_user):
 
 
 def user_can_view_google_sheet(domain, couch_user):
-    domain_can_view_gsheet = toggles.GOOGLE_SHEETS_INTEGRATION.enabled(domain)
+    domain_can_view_gsheet = toggles.GOOGLE_SHEETS_INTEGRATION.enabled(couch_user.username)
     return (domain_can_view_gsheet
             and has_permission_to_view_report(couch_user, domain, LIVE_GOOGLE_SHEET_PERMISSION))
 
@@ -274,6 +275,45 @@ class ODataFeedMixin(object):
         export_instance.transform_dates = False
         export_instance.name = _("Copy of {}").format(export_instance.name)
         return export_instance
+
+
+class LiveGoogleSheetMixin(object):
+
+    @flag_enabled('GOOGLE_SHEETS_INTEGRATION')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @property
+    def terminology(self):
+        return {
+            'page_header': _("Live Google Sheet Settings"),
+            'help_text': "?",
+            'name_label': _("Sheet Name"),
+            'choose_fields_label': _("Choose the fields you want to include in this sheet."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them.
+                You can also rename fields, which will update the column names in Google Sheets.
+            """),
+        }
+
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings)
+        instance.transform_dates = False
+        return instance
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context['format_options'] = ["gsheet"]
+        return context
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import LiveGoogleSheetListView
+        return LiveGoogleSheetListView
 
 
 class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
