@@ -50,7 +50,7 @@ class TestDhis2EventsHelpers(TestCase):
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
-
+        Dhis2Repeater.set_db(self.fakedb)
         self.form = {
             "domain": DOMAIN,
             "form": {
@@ -104,8 +104,6 @@ class TestDhis2EventsHelpers(TestCase):
         self.repeater = Dhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
         self.repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
         self.repeater.save()
-
-        Dhis2Repeater.set_db(self.fakedb)
 
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
