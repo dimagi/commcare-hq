@@ -58,7 +58,6 @@ branches:
     #- sr/memoized-toggle # Sravan July 26
     - smh/remove-extra-spinner-icons # Steph Oct 6
     - ml/remove-pickles-phonelog # Minha Oct 7
-    - dependabot/npm_and_yarn/moment-2.29.1 # Amit Oct 8
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - dm/django3-branches+others
