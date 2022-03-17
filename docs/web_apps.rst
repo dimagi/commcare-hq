@@ -350,3 +350,98 @@ Tests
 =====
 
 There are tests in the ``spec`` directory. There's decent test coverage for js-only workflows, but not for HTML interaction.
+
+Marionette Views
+^^^^^^^^^^^^^^^^
+
+Web apps development frequently happens in ``FormplayerFrontend`` views. These views are javascript classes that
+inherit from `Marionette.View <https://marionettejs.com/docs/master/marionette.view.html>`__. This section
+describes the ``View`` attributes that web apps most frequently uses.
+
+For code references, take a look at the `query views
+<https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js>`__,
+which control the case search screen, or the `menus views
+<https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js>`__,
+which control menus, case lists, and case details.
+
+``template`` and ``getTemplate``
+================================
+These attributes link view code with the relevant HTML template.
+
+We typically use ``template`` and just fetch a template by its id, then run it through underscore's ``_.template``
+function. The `QueryListView
+<https://github.com/dimagi/commcare-hq/blob/1a60854e1bf075c64f4253184ba30abfd30ea488/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L273>`__,
+which controls the case search screen, is a good example, defining ``template`` as ``_.template($("#query-view-list-template").html() || "")``.
+
+``getTemplate`` is a callback, so it has access to ``this`` and allows for more complex logic. We use it in the
+<MenuView
+`https://github.com/dimagi/commcare-hq/blob/9baa5a05181e3e74cdf8608223eeff69aca5c0d7/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js#L35-L43`>__ to determine whether to display the menu in a list style or in a grid style.
+
+``tagName``, ``className``, and ``attributes``
+==============================================
+All views have a single encompassing container, which is added by Marionette, so it doesn't show up in the view's
+HTML template. These attributes influence that container.
+
+``tagName``, which can be a string or a callback, defines the HTML node type, typically ``div`` or ``tr``.
+
+``className`` allows setting a CSS class on the container.
+
+``attributes`` allows setting HTML attributes. We mostly use this for accessibility, to set attributes like ``tabindex``.
+
+``initialize``, ``templateContext``, and ``onRender``
+=====================================================
+``initialize`` is for any setup, particularly for storing any options that were passed into the view
+(although ``this.options`` is available throughout the view).
+
+``templateContext`` is for building an object of context to pass to the template, as with ``_.template`` and django
+views.
+
+``onRender`` is called every time Marionette renders the view. We use this primarily for attaching events to
+content. Note that Marionette has its own attributes for event handling, discussed below, but ``onRender`` is
+useful for non-standard events provided by third-party widgets like select2 and jQuery UI.
+
+``ui``, ``events``, and ``modelEvents``
+=======================================
+These attributes are for event handling.
+
+``ui`` is an object where keys are identifiers and values are jQuery selectors. Elements defined in ``ui`` are
+available to other code in the view using ``this.ui``. For an example, see how `QueryListView
+<https://github.com/dimagi/commcare-hq/blob/1a60854e1bf075c64f4253184ba30abfd30ea488/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L288-L292>`__
+defines ui elements for the case search screen's submit and clear buttons.
+
+``events`` ties elements from ``ui`` with standard HTML events. Events references the event, the ui element, and
+the callback to invoke. Again, `QueryListView
+<https://github.com/dimagi/commcare-hq/blob/1a60854e1bf075c64f4253184ba30abfd30ea488/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L294-L297>`__
+is a good example.
+
+``modelEvents`` attaches callbacks to events on the Backbone model, as opposed to ui events. We don't use this
+often, but `QueryView
+<https://github.com/dimagi/commcare-hq/blob/1a60854e1bf075c64f4253184ba30abfd30ea488/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L193-L195>`__,
+which controls an individual search field on the case search screen, uses it to force the view to re-render
+whenever the underlying model changes, so that select2 behaves properly.
+
+``childView``, ``childViewContainer``, and ``childViewOptions``
+===============================================================
+These options apply to views that extend `Marionette.CollectionView
+<https://marionettejs.com/docs/master/marionette.collectionview.html>`__. These views are structured to display a
+list of child views.  As an example, `QueryListView
+<https://github.com/dimagi/commcare-hq/blob/d8ebdc04a9d9ea08f358cd695f93c501585ced2c/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L271>`__
+controls the case search screen and has a child `QueryView
+<https://github.com/dimagi/commcare-hq/blob/d8ebdc04a9d9ea08f358cd695f93c501585ced2c/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L271>`__
+for each individual search field. The case list's `CaseListView
+<https://github.com/dimagi/commcare-hq/blob/9baa5a05181e3e74cdf8608223eeff69aca5c0d7/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js#L288>`__
+is a more complex example, with a `CaseView
+<https://github.com/dimagi/commcare-hq/blob/9baa5a05181e3e74cdf8608223eeff69aca5c0d7/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js#L224>`__
+child view that has several subclasses.
+
+``childView`` names the view that is a child of this view.
+
+``childViewContainer`` tells Marionette where in the parent view to render the children. This can be an HTML node
+name, analagous to ``tagName``, or it can be a jQuery selector identifying a specific element in the view that
+should contain the children.
+
+``childViewOptions`` allows the parent view to pass data to the children views. Some use cases:
+
+* `DetailTabListView <https://github.com/dimagi/commcare-hq/blob/9baa5a05181e3e74cdf8608223eeff69aca5c0d7/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js#L659-L663>`__ * uses it to pass information about the parent to the child views.
+* `QueryListView <https://github.com/dimagi/commcare-hq/blob/d8ebdc04a9d9ea08f358cd695f93c501585ced2c/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js#L276>`__ uses it to give the child views access to the entire parent view.
+* `MenuListView <https://github.com/dimagi/commcare-hq/blob/9baa5a05181e3e74cdf8608223eeff69aca5c0d7/corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js#L115-L120>`__ uses it to pass information that the parent view calculates, namely, the child's index position in the collection.
