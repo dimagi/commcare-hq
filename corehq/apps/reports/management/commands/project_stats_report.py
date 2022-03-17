@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime
 
 from django.core.management import BaseCommand
-from django.db import ProgrammingError, connections, models
+from django.db import ProgrammingError, connections, models, router
 from django.db.models import Count, F, Func
 from django.db.models.aggregates import Avg, StdDev
 
@@ -43,46 +43,46 @@ from corehq.util.markup import (
     SimpleTableWriter,
     TableRowFormatter,
 )
-from typing import TypeVar, Literal
+from casexml.apps.phone.models import SyncLogSQL
+
+
+RESOURCE_MODEL_STATS = [
+    'total_users',
+    'monthly_forms_per_user',
+    'monthly_cases_per_user',
+    'monthly_user_form_stats_expanded',
+    'monthly_user_case_stats_expanded',
+    'monthly_user_cases_updated',
+    'case_index_ratio',
+    'attachments',
+    'forms_total',
+    'cases_total',
+    'case_transactions_per_form',
+    'case_transactions_total',
+    'case_indices',
+    'synclogs_per_user',
+    'static_datasources',
+    'dynamic_datasources',
+    'datasources_info',
+]
 
 
 class ResourceModel(object):
 
-    StatName = TypeVar(
-        'StatName',
-        None,  # TypeVar doesn't allow single constraints
-        Literal[
-            'total_users',
-            'monthly_forms_per_user',
-            'monthly_cases_per_user',
-            'monthly_user_form_stats_expanded',
-            'monthly_user_case_stats_expanded',
-            'monthly_user_cases_updated',
-            'case_index_ratio',
-            'attachments',
-            'forms_total',
-            'cases_total',
-            'case_transactions',
-            'case_transactions_total',
-            'case_indices',
-            'synclogs_monthly',
-            'static_datasources',
-            'dynamic_datasources',
-            'datasources_info',
-        ],
-    )
+    def __init__(self, dictionary):
+        self._dictionary = dictionary
 
-    @classmethod
-    def set_stat(cls, name: StatName, value: any):
-        if name is None:
-            raise ValueError("set_stat 'name' cannot be None")
-        cls.stats[name] = value
+    def __setitem__(self, key, item):
+        if key not in self._dictionary:
+            raise KeyError("The key {} is not defined.".format(key))
+        self._dictionary[key] = item
 
-    @classmethod
-    def get_stat(cls, name: StatName):
-        if name is None:
-            raise ValueError("get_stat 'name' cannot be None")
-        return cls.stats[name]
+    def __getitem__(self, key):
+        return self._dictionary[key]
+
+
+resource_model_stats_dict = {key: '' for key in RESOURCE_MODEL_STATS}
+resource_model = ResourceModel(resource_model_stats_dict)
 
 
 class Month(Func):
@@ -137,8 +137,8 @@ class Command(BaseCommand):
         self.output_stats()
 
     def collect_doc_counts(self):
-        ResourceModel.set_stat('forms_total', FormES().domain(self.domain).count())
-        ResourceModel.set_stat('cases_total', CaseES().domain(self.domain).count())
+        resource_model.__setitem__('forms_total', FormES().domain(self.domain).count())
+        resource_model.__setitem__('cases_total', CaseES().domain(self.domain).count())
 
     def collect_forms_per_user_per_month(self):
         performance_threshold = get_performance_threshold(self.domain)
@@ -168,17 +168,17 @@ class Command(BaseCommand):
             total_users += stat['num_users']
             months += 1
 
-        ResourceModel.set_stat('total_users', total_users)
+        resource_model.__setitem__('total_users', total_users)
 
         if months > 0:
-            ResourceModel.set_stat('monthly_forms_per_user', total_average_forms/months)
+            resource_model.__setitem__('monthly_forms_per_user', total_average_forms/months)
 
         monthly_user_stats = user_stat_from_malt\
             .filter(user_type__in=['CommCareUser'])\
             .filter(user_id__in=self.active_not_deleted_users)\
             .filter(num_of_forms__gte=performance_threshold)
 
-        ResourceModel.set_stat('monthly_user_form_stats_expanded', monthly_user_stats)
+        resource_model.__setitem__('monthly_user_form_stats_expanded', monthly_user_stats)
 
     def collect_cases_created_per_user_per_month(self, case_type=None):
         query = (
@@ -210,9 +210,9 @@ class Command(BaseCommand):
             final_stats.append((month, average_cases_per_user))
 
         if n > 0:
-            ResourceModel.set_stat('monthly_cases_per_user', total_average_cases_per_user/n)
+            resource_model.__setitem__('monthly_cases_per_user', total_average_cases_per_user/n)
 
-        ResourceModel.set_stat('monthly_user_case_stats_expanded', final_stats)
+        resource_model.__setitem__('monthly_user_case_stats_expanded', final_stats)
 
     def _print_table(self, headers, rows):
         if self.csv:
@@ -259,7 +259,7 @@ class Command(BaseCommand):
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
-        ResourceModel.set_stat('monthly_user_cases_updated', final_stats)
+        resource_model.__setitem__('monthly_user_cases_updated', final_stats)
 
     def collect_ledgers_per_case(self):
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
@@ -328,7 +328,7 @@ class Command(BaseCommand):
         case_count = estimate_row_count(case_query, db_name)
         case_index_count = estimate_row_count(index_query, db_name)
 
-        ResourceModel.set_stat('case_index_ratio', case_index_count / case_count)
+        resource_model.__setitem__('case_index_ratio', case_index_count / case_count)
 
     def collect_attachment_sizes(self):
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
@@ -347,7 +347,7 @@ class Command(BaseCommand):
             """, [self.domain])
 
             result = [i for i in fetchall_as_namedtuple(cursor)]
-            ResourceModel.set_stat('attachments', result)
+            resource_model.__setitem__('attachments', result)
 
     def collect_ucr_data(self):
         static_datasources = StaticDataSourceConfiguration.by_domain(self.domain)
@@ -385,7 +385,7 @@ class Command(BaseCommand):
             for datasource in static_datasources + dynamic_datasources
         ], key=lambda r: r[-1] if r[-1] != 'Table not found' else 0)
 
-        ResourceModel.set_stat('datasources_info', rows)
+        resource_model.__setitem__('datasources_info', rows)
 
     def collect_case_transactions(self):
         db_name = get_db_aliases_for_partitioned_query()[0]
@@ -414,7 +414,7 @@ class Command(BaseCommand):
                 total_forms += num_forms
                 running_form_case_updates += num_forms * num_updates
 
-            ResourceModel.set_stat('case_transactions', running_form_case_updates / total_forms)
+            resource_model.__setitem__('case_transactions_per_form', running_form_case_updates / total_forms)
 
             cursor.execute("""
                 SELECT COUNT(*)
@@ -426,7 +426,7 @@ class Command(BaseCommand):
                 );
             """, [self.domain])
             (total_transactions,) = cursor.fetchone()
-            ResourceModel.set_stat('case_transactions_total', total_transactions)
+            resource_model.__setitem__('case_transactions_total', total_transactions)
 
     def collect_case_indices(self):
         db_name = get_db_aliases_for_partitioned_query()[0]
@@ -440,12 +440,12 @@ class Command(BaseCommand):
             """, [self.domain])
             (total_case_indices,) = cursor.fetchone()
 
-            total_cases = ResourceModel.get_stat('cases_total')
+            total_cases = resource_model.__getitem__('cases_total')
             if total_cases > 0:
-                ResourceModel.set_stat('case_indices', total_case_indices/total_cases)
+                resource_model.__setitem__('case_indices', total_case_indices/total_cases)
 
     def collect_synclogs(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]
+        db_name = router.db_for_read(SyncLogSQL)
         db_cursor = connections[db_name].cursor()
 
         with db_cursor as cursor:
@@ -468,7 +468,7 @@ class Command(BaseCommand):
                 total_users += num_users
                 total_user_synclogs += num_users * num_synclogs
 
-            ResourceModel.set_stat('synclogs_monthly', total_user_synclogs / total_users)
+            resource_model.__setitem__('synclogs_per_user', total_user_synclogs / total_users)
 
     def output_stats(self):
         self._print_section_title('Docs count')
@@ -494,10 +494,10 @@ class Command(BaseCommand):
         self._output_ucr()
 
     def _output_docs_count(self):
-        total_forms = ResourceModel.get_stat('forms_total')
+        total_forms = resource_model.__getitem__('forms_total')
         self.stdout.write(f'Total forms: {total_forms}')
 
-        total_cases = ResourceModel.get_stat('cases_total')
+        total_cases = resource_model.__getitem__('cases_total')
         self.stdout.write(f'Total cases: {total_cases}')
 
     def _output_monthly_user_form_stats(self):
@@ -507,7 +507,7 @@ class Command(BaseCommand):
                 for row in query_
             ]
 
-        user_stats = ResourceModel.get_stat('monthly_user_form_stats_expanded')
+        user_stats = resource_model.__getitem__('monthly_user_form_stats_expanded')
         headers = ['Month', 'Active Users', 'Average forms per user', 'Std Dev']
 
         self._print_table(
@@ -517,7 +517,7 @@ class Command(BaseCommand):
             )
         )
 
-        monthly_forms_per_user = ResourceModel.get_stat('monthly_forms_per_user')
+        monthly_forms_per_user = resource_model.__getitem__('monthly_forms_per_user')
         self.stdout.write(f'Average forms per user per month: {monthly_forms_per_user}')
 
         self.stdout.write('')
@@ -528,7 +528,7 @@ class Command(BaseCommand):
         )
 
     def _output_monthly_user_case_stats(self, case_type=None):
-        case_stats = ResourceModel.get_stat('monthly_user_case_stats_expanded')
+        case_stats = resource_model.__getitem__('monthly_user_case_stats_expanded')
 
         suffix = ''
         if case_type:
@@ -536,19 +536,19 @@ class Command(BaseCommand):
         self.stdout.write('Cases created per user (estimate)')
         self._print_table(['Month', 'Cases created per user %s' % suffix], case_stats)
 
-        case_updates = ResourceModel.get_stat('monthly_user_cases_updated')
+        case_updates = resource_model.__getitem__('monthly_user_cases_updated')
         self.stdout.write('Cases updated per user (estimate)')
         self._print_table(['Month', 'Cases updated per user'], case_updates)
 
-        monthly_cases_per_user = ResourceModel.get_stat('monthly_cases_per_user')
+        monthly_cases_per_user = resource_model.__getitem__('monthly_cases_per_user')
         self.stdout.write(f'Average cases per user per month: {monthly_cases_per_user}')
 
     def _output_case_ratio_index(self):
-        case_index_ratio = ResourceModel.get_stat('case_index_ratio')
+        case_index_ratio = resource_model.__getitem__('case_index_ratio')
         self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
     def _output_attachment_sizes(self):
-        attachments = ResourceModel.get_stat('attachments')
+        attachments = resource_model.__getitem__('attachments')
 
         self.stdout.write('Form attachment sizes (bytes)')
         self._print_table(
@@ -560,10 +560,10 @@ class Command(BaseCommand):
         )
 
     def _output_ucr(self):
-        self.stdout.write(f"Static UCR data sources: {ResourceModel.get_stat('static_datasources')}")
-        self.stdout.write(f"Dynamic UCR data sources: {ResourceModel.get_stat('dynamic_datasources')}")
+        self.stdout.write(f"Static UCR data sources: {resource_model.__getitem__('static_datasources')}")
+        self.stdout.write(f"Dynamic UCR data sources: {resource_model.__getitem__('dynamic_datasources')}")
 
-        rows = ResourceModel.get_stat('datasources_info')
+        rows = resource_model.__getitem__('datasources_info')
 
         self.stdout.write('')
         self.stdout.write('UCR datasource sizes')
@@ -573,12 +573,12 @@ class Command(BaseCommand):
         )
 
     def _output_case_transactions(self):
-        case_transactions = ResourceModel.get_stat('case_transactions')
-        self.stdout.write(f'Average cases updated per form per month: {case_transactions}')
+        case_transactions = resource_model.__getitem__('case_transactions_per_form')
+        self.stdout.write(f'Average cases updated per form: {case_transactions}')
 
-        case_transactions_total = ResourceModel.get_stat('case_transactions_total')
+        case_transactions_total = resource_model.__getitem__('case_transactions_total')
         self.stdout.write(f'Total case transactions: {case_transactions_total}')
 
     def _output_synclogs(self):
-        synclogs_monthly = ResourceModel.get_stat('synclogs_monthly')
-        self.stdout.write(f'Synclogs per user per month: {synclogs_monthly}')
+        synclogs_per_user = resource_model.__getitem__('synclogs_per_user')
+        self.stdout.write(f'Synclogs per user: {synclogs_per_user}')
