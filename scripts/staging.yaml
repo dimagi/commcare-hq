@@ -77,4 +77,5 @@ branches:
     - ml/sumologic-on-staging-check # Minha Mar 10
     - dm/django3.1-deprecations # Daniel 3/14
     - ap/update-modernizer # Amit Mar 17
+    - sk/set-query-key-case-list  # Simon March 17
 submodules: { }
