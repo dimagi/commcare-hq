@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.conf import settings
 
 
 class ElasticAppConfig(AppConfig):
@@ -8,4 +7,4 @@ class ElasticAppConfig(AppConfig):
 
     def ready(self):
         from .transient_util import populate_doc_adapter_map
-        populate_doc_adapter_map(is_test=settings.UNIT_TESTING)
+        populate_doc_adapter_map()
