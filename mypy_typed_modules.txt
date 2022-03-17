@@ -1,1 +1,1 @@
-corehq/motech/value_source.py
+-mcorehq.motech.value_source
