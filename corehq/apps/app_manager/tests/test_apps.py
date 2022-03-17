@@ -262,7 +262,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
 
-    def testBuildTemplateApps(self):
+    @patch('os.path.exists', return_value=False)
+    def testBuildTemplateApps(self, exists_mock):
         # Tests that these apps successfully build
         for slug in ['agriculture', 'health', 'wash']:
             load_app_from_slug(self.domain, 'username', slug)
