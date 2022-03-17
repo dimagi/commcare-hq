@@ -104,6 +104,7 @@ from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
+from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -1334,7 +1335,8 @@ def log_email_event(request, secret):
         # confirmation, where we need to access the subscribe URL to confirm we
         # are able to receive messages at this endpoint
         subscribe_url = request_json['SubscribeURL']
-        requests.get(subscribe_url)
+        session = get_public_only_session(domain_name='n/a', src="log_email_event")
+        session.get(subscribe_url)
         return HttpResponse()
 
     message = json.loads(request_json['Message'])

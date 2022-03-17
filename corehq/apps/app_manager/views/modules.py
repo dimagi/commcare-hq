@@ -894,6 +894,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_variables',
         'custom_xml',
         'case_tile_configuration',
+        'multi_select',
         'print_template',
         'search_properties',
         'search_default_properties',
@@ -1074,6 +1075,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
+    multi_select = params.get('multi_select', None)
 
     app = get_app(domain, app_id)
 
@@ -1120,6 +1122,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+    if multi_select is not None:
+        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:
