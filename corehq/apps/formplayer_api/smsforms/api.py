@@ -276,16 +276,18 @@ class FormplayerInterface:
 
         return self._user_id
 
-    def get_raw_instance(self):
+    def get_raw_instance(self, for_submission=False):
         """
         Gets the raw xml instance of the current session regardless of the state that we're in
         (used for logging partially complete forms to couch when errors happen).
+        :param for_submission: indicates whether relevancy should be respected when serializing instance xml
         """
 
         data = {
             "action": "get-instance",
             "session-id": self.session_id,
-            "domain": self.domain
+            "domain": self.domain,
+            "for_submission": for_submission
         }
 
         response = _post_data(data, self.user_id)
