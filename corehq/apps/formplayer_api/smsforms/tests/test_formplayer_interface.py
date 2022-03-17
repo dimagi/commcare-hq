@@ -40,6 +40,7 @@ class FormplayerInterfaceTests(SimpleTestCase):
             'domain': DOMAIN,
             'oneQuestionPerScreen': True,
             'nav_mode': 'prompt',
+            'for_submission': False,
         }
         self.validate_request(request, expected_request_data)
 
