@@ -238,9 +238,9 @@ invocation. Each RMI request creates a Promise for handling the server
 response.
 
 ``dimagi/jquery.rmi`` was modeled after `Djangular’s
-RMI <http://django-angular.readthedocs.org/en/latest/remote-method-invocation.html>`__),
-and currently relies on a portion of that library to handle server
-responses.
+RMI <http://django-angular.readthedocs.org/en/latest/remote-method-invocation.html>`__).
+Since that project is now dead we have internalized the relevant parts
+of it as ``corehq.util.jqueryrmi``.
 
 The `README for
 dimagi/jquery.rmi <http://github.com/dimagi/jquery.rmi>`__ has excellent

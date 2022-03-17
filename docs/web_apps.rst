@@ -15,9 +15,60 @@ Web apps is tightly coupled with formplayer, so check out the `formplayer README
 
 - **CloudCare** is a legacy name for web apps. Web apps code is in the ``cloudcare`` django app. It should not be used in documentation or anything user-facing. It shouldn't be used in code, either, unless needed for consistency. It mostly shows up in filenames and URLs.
 
-The coupling with formplayer also means web apps tends to use formplay/mobile/CommCare vocabulary rather than HQ vocabulary: "entities" instead of "cases", etc.
+The coupling with formplayer also means web apps tends to use formplayer/mobile/CommCare vocabulary rather than HQ vocabulary: "entities" instead of "cases", etc.
 
 The code has three major components: form entry, formplayer, and everything else, described in more detail below. But first, let's look at how web apps interacts with related systems.
+
+Is Web Apps Part of HQ? Yes and No.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Web apps is a part of HQ, but once you move into an app, its communication with the rest of HQ is quite limited.
+
+Ways in which web apps is a typical piece of HQ code:
+
+* The ``cloudcare`` django app contains the HQ side of web apps.
+* The ``cloudcare.views`` module contains views. Note that there's just one major view for web apps, ``FormplayerMain``, and another for app preview, ``PreviewAppView``.
+* When you look at the web apps home page, where there's a tile for each app, those apps come from HQ.
+* Web apps does have some interactions with HQ once you're in an app:
+
+   * The Login As action works via HQ
+   * HQ provides some system information, like the current user's username and the mapbox API key, via the original context and initial page data
+   * HQ directly serves multimedia files
+   * Web apps calls HQ analytics code (Google Analytics, Kissmetrics, etc.)
+
+However, in most ways, once you move into an app, web apps only interacts with formplayer and is just a thin UI layer.
+
+Also, before going into an app, on the web apps home page, the sync and saved forms options are formplayer requests.
+
+Example: Case Search
+====================
+
+As an example, consider case search, where the user triggers a search that runs against all cases in the domain,
+not just cases in their casedb, which requires a query to postgres.
+
+If web apps were a typical area of HQ, this might be implemented as a single ajax request:
+
+.. image:: images/web_apps_case_search_false.png
+
+Instead, formplayer acts as an intermediary.
+Web apps sends a navigation request to formplayer, which constructs and sends a search request to HQ,
+which returns a search results response to formplayer, which transforms the results into a case list response and
+sends that back to web apps.
+
+Note that formplayer does a good deal of processing here. It's formplayer that determines a search request is
+needed, and it's formplayer that processes the results and turns them into a table. Web apps doesn't even know that a search happened.
+
+.. image:: images/web_apps_case_search_true.png
+
+This approach clearly isn't minimizing network requests. However, this architecture is what allows CommCare mobile
+and web apps to share the majority of their logic, which is huge for developing and maintaining features to work on
+both platforms.
+
+This architecture also makes formplayer responsible for security. Formplayer authorizes the user, via a request to
+HQ. It also means that formplayer mediates all access to data, so the user never has access to the full
+restore. This means that in-app limitations, like case list filters, are genuinely firm boundaries. You could
+imagine a javascript implementation of formplayer, which would reduce network requests, but would involve the
+browser making a request for the full restore, which the user could then inspect.
 
 Anatomy of a Web Apps Feature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
