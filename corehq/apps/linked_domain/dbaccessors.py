@@ -1,9 +1,7 @@
 from django.db.models.expressions import RawSQL
 
 from corehq import toggles
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.accounting.utils.account import domain_is_enterprise
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 from corehq.apps.linked_domain.util import (

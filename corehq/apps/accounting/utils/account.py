@@ -15,11 +15,3 @@ def get_account_or_404(domain):
 def request_has_permissions_for_enterprise_admin(request, account):
     return (account.has_enterprise_admin(request.couch_user.username)
             or has_privilege(request, privileges.ACCOUNTING_ADMIN))
-
-
-def domain_is_enterprise(domain):
-    subscription = Subscription.get_active_subscription_by_domain(domain)
-    try:
-        return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
-    except AttributeError:
-        return False
