@@ -52,7 +52,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def mark_as_read(self, in_data):
         Notification.objects.get(pk=in_data['id']).mark_as_read(self.request.user)
-        return {}
+        return {
+            'email': self.request.couch_user.username,
+            'domain': self.get_domain()
+        }
 
     @allow_remote_invocation
     def save_last_seen(self, in_data):
@@ -64,8 +67,18 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         except IllegalModelStateException as e:
             raise JSONResponseException(str(e))
         return {
-            'activated': notification.activated
+            'activated': notification.activated,
+            'email': self.request.couch_user.username,
+            'domain': self.get_domain()
         }
+
+    def get_domain(self):
+        import re
+        regex = '(?<=a\/)(.*?)(?=\s*\/)'
+        domain = re.search(regex, self.request.META['HTTP_REFERER'])
+        if domain:
+            return domain.group(0)
+        return self.request.couch_user.domains[0]
 
     @allow_remote_invocation
     def dismiss_ui_notify(self, in_data):
