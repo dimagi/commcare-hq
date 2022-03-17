@@ -46,7 +46,7 @@ def get_extra_permissions():
     )
     yield ReportPermission(
         LIVE_GOOGLE_SHEET_PERMISSION, LiveGoogleSheetListView.page_title,
-        lambda domain: toggles.GOOGLE_SHEETS_INTEGRATION.enabled(domain)
+        lambda couch_user: toggles.GOOGLE_SHEETS_INTEGRATION.enabled(couch_user)
     )
 
 
