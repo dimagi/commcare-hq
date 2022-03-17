@@ -1252,6 +1252,51 @@ class TestBulkActionItem(SimpleTestCase):
         with self.assertRaises(ValueError):
             BulkActionItem(BulkActionItem.OpType.index, doc_id="1")
 
+    def test_index___eq__(self):
+        doc = TestDoc("1", "test")
+        self.assertEqual(
+            BulkActionItem.index(doc),
+            BulkActionItem.index(doc),
+        )
+        self.assertNotEqual(
+            BulkActionItem.index(doc),
+            BulkActionItem.index(TestDoc("2", "test")),
+        )
+
+    def test_delete___eq__(self):
+        doc = TestDoc("1", "test")
+        self.assertEqual(
+            BulkActionItem.delete(doc),
+            BulkActionItem.delete(doc),
+        )
+        self.assertNotEqual(
+            BulkActionItem.delete(doc),
+            BulkActionItem.delete(TestDoc("2", "test")),
+        )
+
+    def test_delete_id___eq__(self):
+        doc_id = "1"
+        self.assertEqual(
+            BulkActionItem.delete_id(doc_id),
+            BulkActionItem.delete_id(doc_id),
+        )
+        self.assertNotEqual(
+            BulkActionItem.delete_id(doc_id),
+            BulkActionItem.delete_id("2"),
+        )
+
+    def test_delete_delete_and_delete_id_not_equal(self):
+        """Bulk delete items are not equal when instantiated via different args
+        because the BulkActionItem cannot know that an ID belongs to a specifc
+        document (the ID alone does not carry sufficient information to make
+        this connection).
+        """
+        doc = TestDoc("1", "test")
+        self.assertNotEqual(
+            BulkActionItem.delete(doc),
+            BulkActionItem.delete_id(doc.id),
+        )
+
 
 class OneshotIterable:
 

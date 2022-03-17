@@ -812,6 +812,11 @@ class BulkActionItem:
         """``True`` if this is an index action, otherwise ``False``."""
         return self.op_type is self.OpType.index
 
+    def __eq__(self, other):
+        if not isinstance(other, BulkActionItem):
+            return False
+        return (self.op_type, self.doc, self.doc_id) == (other.op_type, other.doc, other.doc_id)
+
     def __repr__(self):
         if self.doc_id is not None:
             doc_info = f"_id={self.doc_id!r}"
