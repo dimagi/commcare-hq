@@ -814,7 +814,7 @@ class BulkActionItem:
 
     def __eq__(self, other):
         if not isinstance(other, BulkActionItem):
-            return False
+            return NotImplemented
         return (self.op_type, self.doc, self.doc_id) == (other.op_type, other.doc, other.doc_id)
 
     def __repr__(self):
