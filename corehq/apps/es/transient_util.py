@@ -46,7 +46,13 @@ def report_and_fail_on_shard_failures(search_result):
     ElasticDocumentAdapter._report_and_fail_on_shard_failures(search_result)
 
 
-def _populate_doc_adapter_map(is_test):
+def populate_doc_adapter_map(is_test):
+    """Populate "map" dictionaries needed to allow `ElasticsearchInterface`
+    instances to acquire adapters by their index names/aliases.
+
+    NOTE: this function is only meant to be used by the Django app's ``ready()``
+    method. Do not call this function other places.
+    """
     from .apps import ElasticApp
     from .case_search import ElasticCaseSearch
     from .cases import ElasticCase, ElasticReportCase
