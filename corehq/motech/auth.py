@@ -97,7 +97,7 @@ class AuthManager:
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
-        session = get_public_only_session(domain_name, src='sent_attempt')
+        session = get_public_only_session(domain_name, src='motech_send_attempt')
         session.auth = self.get_auth()
         return session
 
@@ -230,7 +230,7 @@ class OAuth2ClientGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
         return session
 
 
@@ -313,5 +313,5 @@ class OAuth2PasswordGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-        make_session_public_only(session, domain_name, src='oauth_sent_attempt')
+        make_session_public_only(session, domain_name, src='motech_oauth_send_attempt')
         return session
