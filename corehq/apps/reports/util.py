@@ -8,7 +8,7 @@ from importlib import import_module
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import pytz
 from memoized import memoized

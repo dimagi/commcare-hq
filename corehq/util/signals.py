@@ -42,8 +42,8 @@ class SignalHandlerContext(object):
             signal.signal(sig, self.default_handler)
 
 
-pre_command = Signal(providing_args=["args", "kwargs"])
-post_command = Signal(providing_args=["args", "kwargs", "outcome"])
+pre_command = Signal()  # providing args: args, kwargs
+post_command = Signal()  # providing args: args, kwargs, outcome
 
 
 def signalcommand(func):

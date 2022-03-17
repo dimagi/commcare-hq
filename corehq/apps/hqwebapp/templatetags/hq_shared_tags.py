@@ -1,4 +1,3 @@
-import hashlib
 import json
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -17,15 +16,13 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
-from memoized import memoized
 
 from dimagi.utils.web import json_handler
 
-from corehq import privileges, toggles
-from corehq.apps.domain.models import Domain
+from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
@@ -76,7 +73,7 @@ def add_days(date, days=1):
     span = timedelta(days=days)
     try:
         return date + span
-    except:
+    except Exception:
         return datetime.strptime(date, '%m/%d/%Y').date() + span
 
 
@@ -162,6 +159,8 @@ def listsort(value):
         return new_list
     else:
         return value
+
+
 listsort.is_safe = True
 
 
@@ -329,7 +328,7 @@ def case(parser, token):
         tag = args[0]
         if len(args) > 1:
             raise template.TemplateSyntaxError(
-                "'{}' tag does not accept arguments, got {}".format(tag))
+                f"'{tag}' tag does not accept arguments, got {len(args) - 1}")
     assert tag == "endcase", token.contents
     parser.delete_first_token()
     return CaseNode(lookup_expr, branches, default)
@@ -466,7 +465,7 @@ class AddToBlockNode(template.Node):
     def write(self, context, text):
         rendered_blocks = AppendingBlockNode.get_rendered_blocks_dict(context)
         if self.block_name in rendered_blocks:
-            raise AlreadyRenderedException('Block {} already rendered. Cannot add new node'.format(self.block_name))
+            raise AlreadyRenderedException(f'Block {self.block_name} already rendered. Cannot add new node')
         request_blocks = self.get_addtoblock_contents_dict(context)
         if self.block_name not in request_blocks:
             request_blocks[self.block_name] = ''

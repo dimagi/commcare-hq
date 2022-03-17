@@ -5,7 +5,7 @@ import traceback
 from datetime import datetime, timedelta
 from distutils.version import LooseVersion
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 from requests import RequestException

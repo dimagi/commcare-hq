@@ -1,6 +1,6 @@
 import logging
 
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.core.exceptions import ImproperlyConfigured
 
 from corehq.apps.hqwebapp.decorators import waf_allow
