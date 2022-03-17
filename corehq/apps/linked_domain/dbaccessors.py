@@ -89,31 +89,14 @@ def get_available_upstream_domains(downstream_domain, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    upstream_domains = set()
-    if domain_is_enterprise(downstream_domain) and domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
-        upstream_domains = upstream_domains.union(
-            get_available_upstream_domains_for_enterprise(downstream_domain, user)
-        )
-
     if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
-        upstream_domains = upstream_domains.union(
-            get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
-        )
-
-    if upstream_domains:
-        return list(upstream_domains)
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
 
     # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
     if toggles.LINKED_DOMAINS.enabled(downstream_domain):
         return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
     return []
-
-
-def get_available_upstream_domains_for_enterprise(downstream_domain, user):
-    account = BillingAccount.get_account_by_domain(downstream_domain)
-    domains = account.get_domains() if account else []
-    return list({d for d in domains if is_available_upstream_domain(d, downstream_domain, user)})
 
 
 def get_available_upstream_domains_for_user(domain_name, user, should_enforce_admin):
