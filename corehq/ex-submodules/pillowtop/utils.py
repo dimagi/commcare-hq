@@ -261,21 +261,12 @@ def build_bulk_payload(changes, doc_transform=None, error_collector=None):
                     raise
                 error_collector.add_error(ChangeError(change, e))
         else:
-            # NOTE: Uncertain: this scenario seems possible because the 'if' and
-            # 'elif' clauses are checking different things (albeit, seemingly
-            # related).
+            # See PR discussion: https://github.com/dimagi/commcare-hq/pull/31243
             #
-            # The previous implementation didn't have an 'else' clause here,
-            # meaning if this did happen, then an action lacking an '_op_type'
-            # key was added to the payload . I assume Elastic would return an
-            # error in that case, but I'm not sure.
-            #
-            # If this 'else' block gets hit in the new 'BulkActionItem'
-            # implementation, no action is added to the payload. I would prefer
-            # to raise an exception here, but in the spirit of not
-            # catastrophically breaking what is perhaps not a catastrophic
-            # situation, I'll just log an error instead.
-            pillow_logging.error("skipping bulk processing for change: %s", change)
+            # Discarding changes when the deletion status is ambiguous feels
+            # like guessing to me, which goes against the zen. Log a warning
+            # for trackability.
+            pillow_logging.warning("discarding ambiguous bulk change: %s", change)
 
     return payload
 

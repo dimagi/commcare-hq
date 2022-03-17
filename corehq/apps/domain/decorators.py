@@ -13,7 +13,7 @@ from django.http import (
 )
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.decorators import available_attrs, method_decorator
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views import View
 
@@ -391,7 +391,7 @@ def two_factor_exempt(view_func):
     def wrapped_view(*args, **kwargs):
         return view_func(*args, **kwargs)
     wrapped_view.two_factor_exempt = True
-    return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
+    return wraps(view_func)(wrapped_view)
 
 
 # Use api_auth or api_auth_with_scope decorators to allow -

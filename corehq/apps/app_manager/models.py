@@ -27,7 +27,6 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import SafeBytes
 from django.utils.translation import override
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
@@ -2068,6 +2067,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
 
+    # Allow selection of mutiple cases. Only applies to 'short' details
+    multi_select = BooleanProperty(default=False)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
@@ -2698,6 +2700,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
 
 class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -3290,6 +3296,10 @@ class AdvancedModule(ModuleBase):
         return self._uses_case_type(USERCASE_TYPE)
 
     @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
+    @property
     def phase_anchors(self):
         return [phase.anchor for phase in self.schedule_phases]
 
@@ -3836,6 +3846,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return None
         return self.source_module.case_type
+
+    @property
+    def additional_case_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.additional_case_types
 
     @property
     def requires(self):
@@ -4479,7 +4495,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                     for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
-                    name: (contents if isinstance(contents, (bytes, SafeBytes)) else contents.encode('utf-8'))
+                    name: (contents if isinstance(contents, bytes) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()

@@ -5,11 +5,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-from djng.views.mixins import (
-    JSONResponseException,
-    JSONResponseMixin,
-    allow_remote_invocation,
-)
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_required, require_superuser
@@ -20,6 +15,11 @@ from corehq.apps.notifications.models import (
     IllegalModelStateException,
     LastSeenNotification,
     Notification,
+)
+from corehq.util.jqueryrmi import (
+    JSONResponseException,
+    JSONResponseMixin,
+    allow_remote_invocation,
 )
 
 

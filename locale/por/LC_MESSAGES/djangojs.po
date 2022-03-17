@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-09 21:12+0000\n"
+"POT-Creation-Date: 2022-03-16 19:55+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -2866,7 +2866,7 @@ msgid ""
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:158
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:157
 msgid "Switching project spaces..."
 msgstr ""
 
@@ -4104,7 +4104,7 @@ msgid "Please check above for any errors in your configuration."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
-msgid "Edit a custom web report or custom web report source"
+msgid "Edit a report or data source"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
@@ -4368,11 +4368,11 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:362
-msgid "Create and Edit Custom Web Reports"
+msgid "Create and Edit Configurable Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:365
-msgid "Allow role to create and edit custom web reports."
+msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:373

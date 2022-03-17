@@ -17,6 +17,7 @@ from corehq.apps.es.case_search import (
     case_property_text_query,
     flatten_result,
     wrap_case_search_hit,
+    case_property_query
 )
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
@@ -166,6 +167,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "AUTO"
                                                                     }
                                                                 }
@@ -190,6 +192,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "0"
                                                                     }
                                                                 }
@@ -548,4 +551,19 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
             ['c2', 'c3']
+        )
+
+    # Differs from above case_property_query because this is not an instance method but seperated from
+    # the CaseSearchES class. More thorough testing of this method is in test_case_search_registry.py
+    # and test_filter_dsl.py.
+    def test_case_property_query(self):
+
+        # mutlivalue_mode must be lowercase
+        self.assertRaises(
+            ValueError,
+            lambda: case_property_query(
+                'description',
+                'redbeard blackbeard',
+                multivalue_mode='AND'
+            )
         )
