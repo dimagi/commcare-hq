@@ -79,4 +79,5 @@ branches:
     - sk/set-query-key-case-list  # Simon March 17
     - ml/case-sharing-feature-discoverability # Minha March 17
     # - revert-31233-dm/revert-31219+31229 # Amit March 18
+    - rc/@category-test # Robert March 18
 submodules: { }
