@@ -961,18 +961,17 @@ class TestDeleteDomain(TestCase):
             )
             repeater = SQLCaseRepeater.objects.create(
                 domain=domain_name,
-                repeater_id=str(uuid.uuid4()),
                 connection_settings=conn
             )
             record = repeater.repeat_records.create(
                 domain=domain_name,
-                payload_id=str(uuid.uuid4()),
                 registered_at=datetime.utcnow(),
             )
             record.sqlrepeatrecordattempt_set.create(
                 state=RECORD_SUCCESS_STATE,
             )
             self._assert_repeaters_count(domain_name, 1)
+            self.addCleanup(repeater.delete)
 
         self.domain.delete()
 
