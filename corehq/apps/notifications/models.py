@@ -36,7 +36,7 @@ class Notification(models.Model):
         ordering = ["-activated"]
 
     @classmethod
-    def get_by_user(cls, django_user, couch_user, limit=10, plan='Community'):
+    def get_by_user(cls, django_user, couch_user, limit=10, plan='Community', has_cs_groups='False'):
         """Returns notifications for a particular user
 
         After five notifications all notifications should be marked as read.
@@ -63,6 +63,8 @@ class Notification(models.Model):
         notifications = list(map(_fmt_note, enumerate(notes)))
         if any(p in str(plan) for p in ['Pro', 'Advanced', 'Enterprise']):
             remove = 'feat_basic'
+            if has_cs_groups:
+                notifications = [notif for notif in notifications if notif['type'] != 'feat_pro']
         else:
             remove = 'feat_pro'
         return [notif for notif in notifications if notif['type'] != remove]
