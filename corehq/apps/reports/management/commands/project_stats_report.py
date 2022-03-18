@@ -64,6 +64,7 @@ RESOURCE_MODEL_STATS = [
     'static_datasources',
     'dynamic_datasources',
     'datasources_info',
+    'devicelogs_per_user',
 ]
 
 
@@ -129,6 +130,7 @@ class Command(BaseCommand):
         self.collect_case_transactions()
         self.collect_case_indices()
         self.collect_synclogs()
+        self.collect_devicelogs()
         self.collect_case_to_case_index_ratio()
         self.collect_ledgers_per_case()
         self.collect_attachment_sizes()
@@ -353,8 +355,8 @@ class Command(BaseCommand):
         static_datasources = StaticDataSourceConfiguration.by_domain(self.domain)
         dynamic_datasources = DataSourceConfiguration.by_domain(self.domain)
 
-        ResourceModel.set_stat('static_datasources', len(static_datasources))
-        ResourceModel.set_stat('dynamic_datasources', len(dynamic_datasources))
+        resource_model.__setitem__('static_datasources', len(static_datasources))
+        resource_model.__setitem__('dynamic_datasources', len(dynamic_datasources))
 
         def _get_count(config):
             table_name = get_table_name(config.domain, config.table_id)
@@ -470,6 +472,19 @@ class Command(BaseCommand):
 
             resource_model.__setitem__('synclogs_per_user', total_user_synclogs / total_users)
 
+    def collect_devicelogs(self):
+        from phonelog.models import DeviceReportEntry
+        device_log_data = DeviceReportEntry.objects.filter(domain=self.domain)\
+            .aggregate(
+                num_authors=Count('user_id', distinct=True),
+                num_device_logs=Count('id'),
+        )
+
+        devicelogs_per_user = \
+            device_log_data['num_device_logs'] // device_log_data['num_authors'] if device_log_data['num_authors'] > 0 else 0
+
+        resource_model.__setitem__('devicelogs_per_user', devicelogs_per_user)
+
     def output_stats(self):
         self._print_section_title('Docs count')
         self._output_docs_count()
@@ -486,6 +501,9 @@ class Command(BaseCommand):
 
         self._print_section_title('Sync logs')
         self._output_synclogs()
+
+        self._print_section_title('Device logs')
+        self._output_devicelogs()
 
         self._print_section_title('Attachments')
         self._output_attachment_sizes()
@@ -582,3 +600,7 @@ class Command(BaseCommand):
     def _output_synclogs(self):
         synclogs_per_user = resource_model.__getitem__('synclogs_per_user')
         self.stdout.write(f'Synclogs per user: {synclogs_per_user}')
+
+    def _output_devicelogs(self):
+        synclogs_per_user = resource_model.__getitem__('devicelogs_per_user')
+        self.stdout.write(f'Device logs per user: {synclogs_per_user}')
