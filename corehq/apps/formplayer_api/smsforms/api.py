@@ -276,7 +276,7 @@ class FormplayerInterface:
 
         return self._user_id
 
-    def get_raw_instance(self, respect_relevancy=False):
+    def get_raw_instance(self, respect_relevancy=True):
         """
         Gets the raw xml instance of the current session regardless of the state that we're in
         (used for logging partially complete forms to couch when errors happen).

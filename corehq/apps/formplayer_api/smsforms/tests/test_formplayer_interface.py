@@ -40,15 +40,15 @@ class FormplayerInterfaceTests(SimpleTestCase):
             'domain': DOMAIN,
             'oneQuestionPerScreen': True,
             'nav_mode': 'prompt',
-            # defaults to False
-            'respect_relevancy': False,
+            # defaults to True
+            'respect_relevancy': True,
         }
         self.validate_request(request, expected_request_data)
 
-    def test_get_raw_instance_where_respect_relevancy_is_true(self):
+    def test_get_raw_instance_where_respect_relevancy_is_false(self):
         action = 'get-instance'
         with MockFormplayerRequest(action, {}) as mocker:
-            self.interface.get_raw_instance(respect_relevancy=True)
+            self.interface.get_raw_instance(respect_relevancy=False)
 
         mocker.assert_exactly_one_request()
         request = mocker.get_last_request()
@@ -60,7 +60,7 @@ class FormplayerInterfaceTests(SimpleTestCase):
             'domain': DOMAIN,
             'oneQuestionPerScreen': True,
             'nav_mode': 'prompt',
-            'respect_relevancy': True,
+            'respect_relevancy': False,
         }
         self.validate_request(request, expected_request_data)
 
