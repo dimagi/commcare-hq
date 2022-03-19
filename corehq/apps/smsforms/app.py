@@ -116,7 +116,7 @@ def _fetch_xml(formplayer_interface):
     :return: xml if successful
     """
     try:
-        response = formplayer_interface.get_raw_instance()
+        response = formplayer_interface.get_raw_instance(respect_relevancy=True)
         # Formplayer's ExceptionResponseBean includes the exception message,
         # status ("error"), url, and type ("text")
         if response.get('status') == 'error':
