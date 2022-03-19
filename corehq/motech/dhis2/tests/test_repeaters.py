@@ -172,11 +172,6 @@ class ApiVersionTests(SimpleTestCase):
         super().__init__(*args, **kwargs)
         self.just_now = datetime.now().isoformat(timespec='seconds') + 'Z'
 
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_repeaters()
-        return super().tearDownClass()
-
     def test_major_minor_patch(self):
         repeater = Dhis2Repeater.wrap({
             "dhis2_version": "2.31.6",
