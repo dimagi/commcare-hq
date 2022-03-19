@@ -1,20 +1,25 @@
 import uuid
+from unittest.mock import patch
 from xml.etree.ElementTree import XML
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest.mock import patch
 
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.formplayer_api.smsforms.api import (
+    FormplayerInterface,
+    InvalidSessionIdException,
     TouchformsError,
-    XformsResponse, FormplayerInterface, InvalidSessionIdException,
+    XformsResponse,
 )
 from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
-from corehq.apps.smsforms.app import start_session, _fetch_xml, _clean_xml_for_partial_submission
+from corehq.apps.smsforms.app import (
+    _clean_xml_for_partial_submission,
+    _fetch_xml,
+    start_session,
+)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
