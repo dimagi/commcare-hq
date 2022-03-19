@@ -172,6 +172,7 @@ class ApiVersionTests(SimpleTestCase):
         super().__init__(*args, **kwargs)
         self.just_now = datetime.now().isoformat(timespec='seconds') + 'Z'
 
+    @classmethod
     def tearDownClass(cls):
         delete_all_repeaters()
         return super().tearDownClass()
@@ -217,6 +218,7 @@ class SlowApiVersionTest(TestCase):
             "password": "district",
         })
 
+    @classmethod
     def tearDownClass(cls):
         delete_all_repeaters()
         return super().tearDownClass()
