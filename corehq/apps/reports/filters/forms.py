@@ -1,8 +1,8 @@
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
@@ -86,15 +86,15 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         Application or Application-Deleted).
     """
     slug = "form"
-    label = ugettext_lazy("Filter Forms")
+    label = gettext_lazy("Filter Forms")
     css_class = "span5"
-    drilldown_empty_text = ugettext_lazy("You don't have any applications set up, so there are no forms "
-                                         "to choose from. Please create an application!")
+    drilldown_empty_text = gettext_lazy("You don't have any applications set up, so there are no forms "
+                                        "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
-    display_app_type = False # whether we're displaying the application type select box in the filter
+    display_app_type = False  # whether we're displaying the application type select box in the filter
 
     @property
     def display_lang(self):
@@ -114,13 +114,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         labels = self.get_labels()
         if self.drilldown_map and self.drilldown_map[0]['val'] == PARAM_VALUE_STATUS_ACTIVE:
             labels = [
-                 (_('Application Type'),
-                  _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
-                  'status'),
-                 (_('Application'),
-                  _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  PARAM_SLUG_APP_ID),
-             ] + labels[1:]
+                (_('Application Type'),
+                 _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
+                 'status'),
+                (_('Application'),
+                 _("Select Application...") if self.use_only_last else _(
+                     "Show all Forms of this Application Type..."),
+                 PARAM_SLUG_APP_ID),
+            ] + labels[1:]
         return labels
 
     @property
@@ -145,7 +146,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         })
 
         show_advanced = self.request.GET.get('show_advanced') == 'on'
-        
+
         #set Default app type to active only when advanced option is not selected
         if self.display_app_type and not context['selected'] and not show_advanced:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
@@ -287,12 +288,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             }
         """
         data = get_all_form_details(self.domain)
-        default_module = lambda num: {'module': None, 'forms': []}
+        default_module = lambda num: {'module': None, 'forms': []}  # noqa: E731
         app_forms = {}
         for app_structure in data:
             index_offset = 1 if app_structure.is_user_registration else 0
             app_id = app_structure.app.id
-            if not app_id in app_forms:
+            if app_id not in app_forms:
                 app_forms[app_id] = {
                     'app': app_structure.app,
                     'is_user_registration': app_structure.is_user_registration,
@@ -602,22 +603,22 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     """
         Same as its superclass, except you _must_ select one form by the end of it.
     """
-    label = ugettext_noop("Choose a Form")
+    label = gettext_noop("Choose a Form")
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
 
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"
-    label = ugettext_lazy("Filter Dates By")
+    label = gettext_lazy("Filter Dates By")
     css_class = "span2"
-    default_text = ugettext_lazy("Completion Time")
+    default_text = gettext_lazy("Completion Time")
 
     def _generate_help_message():
-        completion_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        completion_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
             "<strong>Completion</strong> time is when the form is completed on the phone."))
 
-        submission_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        submission_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
             "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
                 hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'])))
 

@@ -1,8 +1,8 @@
 from collections import namedtuple
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from corehq import toggles
 
@@ -11,11 +11,11 @@ LandingPage = namedtuple('LandingPage', ['id', 'name', 'urlname'])
 
 
 ALL_LANDING_PAGES = (
-    LandingPage('dashboard', ugettext_noop('Dashboard'), 'dashboard_default'),
-    LandingPage('webapps', ugettext_noop('Web Apps'), 'formplayer_main'),
-    LandingPage('reports', ugettext_noop('Reports'), 'reports_home'),
+    LandingPage('dashboard', gettext_noop('Dashboard'), 'dashboard_default'),
+    LandingPage('webapps', gettext_noop('Web Apps'), 'formplayer_main'),
+    LandingPage('reports', gettext_noop('Reports'), 'reports_home'),
     # Only allowed if toggles.DATA_FILE_DOWNLOAD.enabled(domain)
-    LandingPage('downloads', ugettext_noop('Data File Downloads'), 'download_data_files'),
+    LandingPage('downloads', gettext_noop('Data File Downloads'), 'download_data_files'),
 )
 
 

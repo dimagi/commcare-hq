@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import Promise
 
 
@@ -15,10 +15,10 @@ class DecimalEncoder(json.JSONEncoder):
 
 class LazyEncoder(DecimalEncoder):
     """Taken from https://github.com/tomchristie/django-rest-framework/issues/87
-    This makes sure that ugettext_lazy refrences in a dict are properly evaluated
+    This makes sure that gettext_lazy refrences in a dict are properly evaluated
     """
 
     def default(self, obj):
         if isinstance(obj, Promise):
-            return force_text(obj)
+            return force_str(obj)
         return super(LazyEncoder, self).default(obj)

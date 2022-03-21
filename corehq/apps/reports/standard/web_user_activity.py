@@ -2,8 +2,8 @@ import inspect
 
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -18,7 +18,7 @@ from corehq.toggles import WEB_USER_ACTIVITY_REPORT
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'web_user_activity'
-    name = ugettext_noop("Web User Activity")
+    name = gettext_noop("Web User Activity")
     ajax_pagination = True
     sortable = False
     toggles = [WEB_USER_ACTIVITY_REPORT]
