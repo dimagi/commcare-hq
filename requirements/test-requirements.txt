@@ -251,7 +251,7 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.10
+jsonobject @ git+https://github.com/dimagi/jsonobject@dm/jsonarray-with-iterable
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
@@ -464,7 +464,6 @@ six==1.15.0
     #   google-auth-httplib2
     #   isodate
     #   jsonfield
-    #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   jsonschema
