@@ -10,6 +10,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
+from django.http.request import QueryDict
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
@@ -215,6 +216,10 @@ class GenericReportView(object):
         """
             Restoring a report from report parameters returned by get_json_report_parameters.
         """
+        GET_data = QueryDict('', mutable=True)
+        GET_data.update(state['request']['GET'])
+        state['request']['GET'] = GET_data
+
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -227,6 +232,7 @@ class GenericReportView(object):
             datespan = None
             can_access_all_locations = None
 
+        date_holder = {}
         if 'startdate' and 'enddate' in state['request_params']:
             date_holder = state['request_params']
         elif 'startdate' and 'enddate' in state['request']:

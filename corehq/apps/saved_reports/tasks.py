@@ -122,10 +122,9 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
     GET_data = QueryDict('', mutable=True)
     GET_data.update(request_data['GET'])
-    request_data['GET'] = GET_data
 
     mock_request.method = 'GET'
-    mock_request.GET = request_data['GET']
+    mock_request.GET = GET_data
 
     config = ReportConfig()
 
@@ -137,7 +136,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     config.owner_id = user_id
     config.domain = domain
 
-    request_GET = request_data['GET'].dict()
+    request_GET = request_data['GET']
     if 'startdate' in request_GET:
         config.start_date = iso_string_to_datetime(request_GET['startdate']).date()
     else:
@@ -148,6 +147,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     else:
         config.date_range = 'since'
 
+    request_data['GET'] = GET_data
     GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}

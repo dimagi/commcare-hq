@@ -531,6 +531,7 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
     datespan = request_data.pop('datespan')
     request_data['startdate'] = datespan.startdate.isoformat()
     request_data['enddate'] = datespan.enddate.isoformat()
+    #set is not JSON serializable, hence recipient_emails is converted to a list
     send_email_report.delay(list(recipient_emails), domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
