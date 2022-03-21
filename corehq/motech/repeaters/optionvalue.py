@@ -36,11 +36,11 @@ class OptionValue(property):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        if self.coder:
-            return self.coder.from_json(obj.options[self.name])
         if self.schema:
             return self.schema(obj.options.setdefault(self.name, {}))
         if self.name in obj.options:
+            if self.coder:
+                return self.coder.from_json(obj.options[self.name])
             return obj.options[self.name]
         if self.default is self.NOT_SET:
             raise AttributeError(self.name)
