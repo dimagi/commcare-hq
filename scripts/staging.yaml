@@ -61,7 +61,6 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - dm/django3-branches+others
-    - ml/remove-pickles-reports # Minha Jan 24
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/mrm/base # Graham Feb 8
