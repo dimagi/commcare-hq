@@ -2,7 +2,7 @@ import json
 
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es.es_query import ESQuery

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
@@ -40,6 +40,7 @@ def build_domain_link_view_model(link, timezone):
         'downstream_url': link.downstream_url,
         'is_remote': link.is_remote,
         'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else _('Never'),
+        'has_full_access': link.has_full_access(),
     }
 
 

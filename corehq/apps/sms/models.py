@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.utils.encoding import force_str
-from django.utils.translation import ugettext_lazy, ugettext_noop, ugettext as _
+from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
 
 import jsonfield
 
@@ -64,12 +64,12 @@ class Log(models.Model):
     couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     phone_number = models.CharField(max_length=126, null=True, db_index=True)
     direction = models.CharField(max_length=1, null=True)
-    error = models.NullBooleanField(default=False)
+    error = models.BooleanField(null=True, default=False)
     system_error_message = models.TextField(null=True)
     system_phone_number = models.CharField(max_length=126, null=True)
     backend_api = models.CharField(max_length=126, null=True)
     backend_id = models.CharField(max_length=126, null=True)
-    billed = models.NullBooleanField(default=False)
+    billed = models.BooleanField(null=True, default=False)
 
     # Describes what kind of workflow this log was a part of
     workflow = models.CharField(max_length=126, null=True)
@@ -203,25 +203,25 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
-            ugettext_noop('Gateway error.'),
+            gettext_noop('Gateway error.'),
         ERROR_MESSAGE_IS_STALE:
-            ugettext_noop('Message is stale and will not be processed.'),
+            gettext_noop('Message is stale and will not be processed.'),
         ERROR_INVALID_DIRECTION:
-            ugettext_noop('Unknown message direction.'),
+            gettext_noop('Unknown message direction.'),
         ERROR_PHONE_NUMBER_OPTED_OUT:
-            ugettext_noop('Phone number has opted out of receiving SMS.'),
+            gettext_noop('Phone number has opted out of receiving SMS.'),
         ERROR_INVALID_DESTINATION_NUMBER:
-            ugettext_noop("The gateway can't reach the destination number."),
+            gettext_noop("The gateway can't reach the destination number."),
         ERROR_MESSAGE_TOO_LONG:
-            ugettext_noop("The gateway could not process the message because it was too long."),
+            gettext_noop("The gateway could not process the message because it was too long."),
         'MESSAGE_BLANK':
-            ugettext_noop("The message was blank."),
+            gettext_noop("The message was blank."),
         ERROR_CONTACT_IS_INACTIVE:
-            ugettext_noop("The recipient has been deactivated."),
+            gettext_noop("The recipient has been deactivated."),
         ERROR_TRIAL_SMS_EXCEEDED:
-            ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
+            gettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
         ERROR_MESSAGE_FORMAT_INVALID:
-            ugettext_noop("The message format was invalid.")
+            gettext_noop("The message format was invalid.")
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -233,7 +233,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # from the gateway
     raw_text = models.TextField(null=True)
     datetime_to_process = models.DateTimeField(null=True, db_index=True)
-    processed = models.NullBooleanField(default=True, db_index=True)
+    processed = models.BooleanField(null=True, default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
@@ -246,7 +246,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # Set to True to send the message regardless of whether the destination
     # phone number has opted-out. Should only be used to send opt-out
     # replies or other info-related queries while opted-out.
-    ignore_opt_out = models.NullBooleanField(default=False)
+    ignore_opt_out = models.BooleanField(null=True, default=False)
 
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
@@ -258,11 +258,11 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
     # True if this was an inbound message that was an
     # invalid response to a survey question
-    invalid_survey_response = models.NullBooleanField(default=False)
+    invalid_survey_response = models.BooleanField(null=True, default=False)
 
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
-    fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
+    fri_message_bank_lookup_completed = models.BooleanField(null=True, default=False)
     fri_message_bank_message_id = models.CharField(max_length=126, null=True)
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
@@ -458,9 +458,9 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
         ]
 
     STATUS_CHOICES = (
-        (CALLBACK_PENDING, ugettext_lazy("Pending")),
-        (CALLBACK_RECEIVED, ugettext_lazy("Received")),
-        (CALLBACK_MISSED, ugettext_lazy("Missed")),
+        (CALLBACK_PENDING, gettext_lazy("Pending")),
+        (CALLBACK_RECEIVED, gettext_lazy("Received")),
+        (CALLBACK_MISSED, gettext_lazy("Missed")),
     )
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -608,7 +608,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     # when making calls to this number. Can be None to use domain/system
     # defaults.
     ivr_backend_id = models.CharField(max_length=126, null=True)
-    verified = models.NullBooleanField(default=False)
+    verified = models.BooleanField(null=True, default=False)
     contact_last_modified = models.DateTimeField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -913,12 +913,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_EMAIL_DELIVERED = 'DEL'
 
     STATUS_CHOICES = (
-        (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
-        (STATUS_COMPLETED, ugettext_noop('Completed')),
-        (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
-        (STATUS_ERROR, ugettext_noop('Error')),
-        (STATUS_EMAIL_SENT, ugettext_noop('Email Sent')),
-        (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
+        (STATUS_IN_PROGRESS, gettext_noop('In Progress')),
+        (STATUS_COMPLETED, gettext_noop('Completed')),
+        (STATUS_NOT_COMPLETED, gettext_noop('Not Completed')),
+        (STATUS_ERROR, gettext_noop('Error')),
+        (STATUS_EMAIL_SENT, gettext_noop('Email Sent')),
+        (STATUS_EMAIL_DELIVERED, gettext_noop('Email Delivered')),
     )
 
     STATUS_SLUGS = {
@@ -941,15 +941,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_CASE_RULE = 'CRL'
 
     SOURCE_CHOICES = (
-        (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
-        (SOURCE_SCHEDULED_BROADCAST, ugettext_noop('Scheduled Broadcast')),
-        (SOURCE_IMMEDIATE_BROADCAST, ugettext_noop('Immediate Broadcast')),
-        (SOURCE_KEYWORD, ugettext_noop('Keyword')),
-        (SOURCE_REMINDER, ugettext_noop('Reminder')),
-        (SOURCE_CASE_RULE, ugettext_noop('Conditional Alert')),
-        (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
-        (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
-        (SOURCE_OTHER, ugettext_noop('Other')),
+        (SOURCE_BROADCAST, gettext_noop('Broadcast')),
+        (SOURCE_SCHEDULED_BROADCAST, gettext_noop('Scheduled Broadcast')),
+        (SOURCE_IMMEDIATE_BROADCAST, gettext_noop('Immediate Broadcast')),
+        (SOURCE_KEYWORD, gettext_noop('Keyword')),
+        (SOURCE_REMINDER, gettext_noop('Reminder')),
+        (SOURCE_CASE_RULE, gettext_noop('Conditional Alert')),
+        (SOURCE_UNRECOGNIZED, gettext_noop('Unrecognized')),
+        (SOURCE_FORWARDED, gettext_noop('Forwarded Message')),
+        (SOURCE_OTHER, gettext_noop('Other')),
     )
 
     SOURCE_SLUGS = {
@@ -976,16 +976,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_EMAIL = 'EML'
 
     CONTENT_CHOICES = (
-        (CONTENT_NONE, ugettext_noop('None')),
-        (CONTENT_SMS, ugettext_noop('SMS Message')),
-        (CONTENT_SMS_CALLBACK, ugettext_noop('SMS Expecting Callback')),
-        (CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
-        (CONTENT_IVR_SURVEY, ugettext_noop('IVR Survey')),
-        (CONTENT_PHONE_VERIFICATION, ugettext_noop('Phone Verification')),
-        (CONTENT_ADHOC_SMS, ugettext_noop('Manually Sent Message')),
-        (CONTENT_API_SMS, ugettext_noop('Message Sent Via API')),
-        (CONTENT_CHAT_SMS, ugettext_noop('Message Sent Via Chat')),
-        (CONTENT_EMAIL, ugettext_noop('Email')),
+        (CONTENT_NONE, gettext_noop('None')),
+        (CONTENT_SMS, gettext_noop('SMS Message')),
+        (CONTENT_SMS_CALLBACK, gettext_noop('SMS Expecting Callback')),
+        (CONTENT_SMS_SURVEY, gettext_noop('SMS Survey')),
+        (CONTENT_IVR_SURVEY, gettext_noop('IVR Survey')),
+        (CONTENT_PHONE_VERIFICATION, gettext_noop('Phone Verification')),
+        (CONTENT_ADHOC_SMS, gettext_noop('Manually Sent Message')),
+        (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
+        (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
+        (CONTENT_EMAIL, gettext_noop('Email')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1014,19 +1014,19 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     RECIPIENT_UNKNOWN = 'UNK'
 
     RECIPIENT_CHOICES = (
-        (RECIPIENT_CASE, ugettext_noop('Case')),
-        (RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
-        (RECIPIENT_WEB_USER, ugettext_noop('Web User')),
-        (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
-        (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
-        (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
-        (RECIPIENT_LOCATION, ugettext_noop('Location')),
+        (RECIPIENT_CASE, gettext_noop('Case')),
+        (RECIPIENT_MOBILE_WORKER, gettext_noop('Mobile Worker')),
+        (RECIPIENT_WEB_USER, gettext_noop('Web User')),
+        (RECIPIENT_USER_GROUP, gettext_noop('User Group')),
+        (RECIPIENT_CASE_GROUP, gettext_noop('Case Group')),
+        (RECIPIENT_VARIOUS, gettext_noop('Multiple Recipients')),
+        (RECIPIENT_LOCATION, gettext_noop('Location')),
         (RECIPIENT_LOCATION_PLUS_DESCENDANTS,
-            ugettext_noop('Location (including child locations)')),
-        (RECIPIENT_VARIOUS_LOCATIONS, ugettext_noop('Multiple Locations')),
+            gettext_noop('Location (including child locations)')),
+        (RECIPIENT_VARIOUS_LOCATIONS, gettext_noop('Multiple Locations')),
         (RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
-            ugettext_noop('Multiple Locations (including child locations)')),
-        (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
+            gettext_noop('Multiple Locations (including child locations)')),
+        (RECIPIENT_UNKNOWN, gettext_noop('Unknown Contact')),
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
@@ -1057,56 +1057,56 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
-            ugettext_noop('No recipient'),
+            gettext_noop('No recipient'),
         ERROR_NO_MESSAGE:
-            ugettext_noop('No message available for the given language settings.'),
+            gettext_noop('No message available for the given language settings.'),
         ERROR_CANNOT_RENDER_MESSAGE:
-            ugettext_noop('Error rendering message; please check syntax.'),
+            gettext_noop('Error rendering message; please check syntax.'),
         ERROR_UNSUPPORTED_COUNTRY:
-            ugettext_noop('Gateway does not support the destination country.'),
+            gettext_noop('Gateway does not support the destination country.'),
         ERROR_NO_PHONE_NUMBER:
-            ugettext_noop('Contact has no phone number.'),
+            gettext_noop('Contact has no phone number.'),
         ERROR_NO_TWO_WAY_PHONE_NUMBER:
-            ugettext_noop('Contact has no two-way phone number.'),
+            gettext_noop('Contact has no two-way phone number.'),
         ERROR_PHONE_OPTED_OUT:
-            ugettext_noop('Phone number has opted out of receiving SMS.'),
+            gettext_noop('Phone number has opted out of receiving SMS.'),
         ERROR_INVALID_CUSTOM_CONTENT_HANDLER:
-            ugettext_noop('Invalid custom content handler.'),
+            gettext_noop('Invalid custom content handler.'),
         ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER:
-            ugettext_noop('Cannot load custom content handler.'),
+            gettext_noop('Cannot load custom content handler.'),
         ERROR_CANNOT_FIND_FORM:
-            ugettext_noop('Cannot find form.'),
+            gettext_noop('Cannot find form.'),
         ERROR_FORM_HAS_NO_QUESTIONS:
-            ugettext_noop('No questions were available in the form. Please '
+            gettext_noop('No questions were available in the form. Please '
                 'check that the form has questions and that display conditions '
                 'are not preventing questions from being asked.'),
         ERROR_CASE_EXTERNAL_ID_NOT_FOUND:
-            ugettext_noop('The case with the given external ID was not found.'),
+            gettext_noop('The case with the given external ID was not found.'),
         ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND:
-            ugettext_noop('Multiple cases were found with the given external ID.'),
+            gettext_noop('Multiple cases were found with the given external ID.'),
         ERROR_NO_CASE_GIVEN:
-            ugettext_noop('The form requires a case but no case was provided.'),
+            gettext_noop('The form requires a case but no case was provided.'),
         ERROR_NO_EXTERNAL_ID_GIVEN:
-            ugettext_noop('No external ID given; please include case external ID after keyword.'),
+            gettext_noop('No external ID given; please include case external ID after keyword.'),
         ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS:
-            ugettext_noop('Error processing structured SMS.'),
+            gettext_noop('Error processing structured SMS.'),
         ERROR_SUBEVENT_ERROR:
-            ugettext_noop('View details for more information.'),
+            gettext_noop('View details for more information.'),
         ERROR_TOUCHFORMS_ERROR:
-            ugettext_noop('An error occurred in the formplayer service.'),
+            gettext_noop('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
-            ugettext_noop('Internal Server Error'),
+            gettext_noop('Internal Server Error'),
         ERROR_NO_SUITABLE_GATEWAY:
-            ugettext_noop('No suitable gateway could be found.'),
+            gettext_noop('No suitable gateway could be found.'),
         ERROR_GATEWAY_NOT_FOUND:
-            ugettext_noop('Gateway could not be found.'),
+            gettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
-            ugettext_noop('Recipient has no email address.'),
+            gettext_noop('Recipient has no email address.'),
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
-            ugettext_noop("Cannot send any more reminder emails. The limit for "
+            gettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),
-        ERROR_EMAIL_BOUNCED: ugettext_noop("Email Bounced"),
-        ERROR_EMAIL_GATEWAY: ugettext_noop("Email Gateway Error"),
+        ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
+        ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1530,9 +1530,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     Used to track the status of a MessagingEvent for each of its recipients.
     """
     RECIPIENT_CHOICES = (
-        (MessagingEvent.RECIPIENT_CASE, ugettext_noop('Case')),
-        (MessagingEvent.RECIPIENT_MOBILE_WORKER, ugettext_noop('Mobile Worker')),
-        (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
+        (MessagingEvent.RECIPIENT_CASE, gettext_noop('Case')),
+        (MessagingEvent.RECIPIENT_MOBILE_WORKER, gettext_noop('Mobile Worker')),
+        (MessagingEvent.RECIPIENT_WEB_USER, gettext_noop('Web User')),
     )
 
     RECIPIENT_SLUGS = {
@@ -1605,8 +1605,8 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     IVR = 'IVR'
 
     TYPE_CHOICES = (
-        (SMS, ugettext_lazy('SMS')),
-        (IVR, ugettext_lazy('IVR')),
+        (SMS, gettext_lazy('SMS')),
+        (IVR, gettext_lazy('IVR')),
     )
 
     UUIDS_TO_GENERATE = ['couch_id', 'inbound_api_key']
@@ -2443,7 +2443,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     # will be closed and this Keyword will be invoked. If False, this Keyword will be
     # skipped and the form session handler will count the text as the next
     # answer in the open survey.
-    override_open_sessions = models.NullBooleanField()
+    override_open_sessions = models.BooleanField(null=True)
 
     # List of doc types representing the only types of contacts who should be
     # able to invoke this keyword. Empty list means anyone can invoke.
@@ -2553,7 +2553,7 @@ class KeywordAction(models.Model):
     # Set to True if the expected structured SMS format should name the values
     # being passed. For example the format "register name=joe age=20" would set
     # this to True, while the format "register joe 20" would set it to False.
-    use_named_args = models.NullBooleanField()
+    use_named_args = models.BooleanField(null=True)
 
     # Only used for action == ACTION_STRUCTURED_SMS
     # When use_named_args is True, this is a dictionary of {arg name (caps) : form question xpath}

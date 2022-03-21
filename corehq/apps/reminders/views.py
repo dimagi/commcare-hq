@@ -5,8 +5,8 @@ from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -14,7 +14,6 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -22,16 +21,16 @@ from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 from corehq.apps.linked_domain.keywords import create_linked_keyword
 from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
+from corehq.apps.linked_domain.util import can_domain_access_release_management
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.privileges import RELEASE_MANAGEMENT
 
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
     urlname = 'add_structured_keyword'
-    page_title = ugettext_noop("New Structured Keyword")
+    page_title = gettext_noop("New Structured Keyword")
     template_name = 'reminders/keyword.html'
     process_structured_message = True
 
@@ -133,13 +132,13 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
 class AddNormalKeywordView(AddStructuredKeywordView):
     urlname = 'add_normal_keyword'
-    page_title = ugettext_noop("New Keyword")
+    page_title = gettext_noop("New Keyword")
     process_structured_message = False
 
 
 class EditStructuredKeywordView(AddStructuredKeywordView):
     urlname = 'edit_structured_keyword'
-    page_title = ugettext_noop("Edit Structured Keyword")
+    page_title = gettext_noop("Edit Structured Keyword")
 
     @property
     def page_url(self):
@@ -235,7 +234,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
 
 class EditNormalKeywordView(EditStructuredKeywordView):
     urlname = 'edit_normal_keyword'
-    page_title = ugettext_noop("Edit Normal Keyword")
+    page_title = gettext_noop("Edit Normal Keyword")
     process_structured_message = False
 
     @property
@@ -252,11 +251,11 @@ class EditNormalKeywordView(EditStructuredKeywordView):
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = 'reminders/keyword_list.html'
     urlname = 'keyword_list'
-    page_title = ugettext_noop("Keywords")
+    page_title = gettext_noop("Keywords")
 
-    limit_text = ugettext_noop("keywords per page")
-    empty_notification = ugettext_noop("You have no keywords. Please add one!")
-    loading_message = ugettext_noop("Loading keywords...")
+    limit_text = gettext_noop("keywords per page")
+    empty_notification = gettext_noop("You have no keywords. Please add one!")
+    loading_message = gettext_noop("Loading keywords...")
 
     @use_multiselect
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
@@ -288,7 +287,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             for domain_link in get_linked_domains(self.domain)
         ]
         context['linkable_keywords'] = self._linkable_keywords()
-        context['has_release_management_privilege'] = domain_has_privilege(self.domain, RELEASE_MANAGEMENT)
+        context['has_release_management_privilege'] = can_domain_access_release_management(self.domain)
         return context
 
     def _linkable_keywords(self):

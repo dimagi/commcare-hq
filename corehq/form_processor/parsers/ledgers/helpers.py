@@ -1,7 +1,7 @@
 from collections import namedtuple
 from dimagi.ext import jsonobject
 from dimagi.utils import parsing as dateparse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import StockActions
 from corehq.apps.commtrack.exceptions import MissingProductId
