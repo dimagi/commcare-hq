@@ -67,9 +67,9 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         # No change on the original domain
         self._assert_value_equals(domain_1, 9)
 
-        # The new domain should get a proportion of total included users for the shared account
+        # Shared account domains return 0
 
-        self._assert_value_equals(domain_2, 7.2)
+        self._assert_value_equals(domain_2, 0)
 
     def _assert_value_equals(self, domain, value):
         get_n_users_for_rate_limiting.clear(domain)
