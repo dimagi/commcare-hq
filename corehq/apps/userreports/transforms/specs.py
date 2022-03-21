@@ -138,6 +138,8 @@ class MarkDownTransform(Transform):
 
     def get_transform_function(self):
         def _markdown_text(value):
-            return mark_safe(markdown.markdown(value))
+            if isinstance(value, str):
+                return mark_safe(markdown.markdown(value))
+            return value
 
         return _markdown_text
