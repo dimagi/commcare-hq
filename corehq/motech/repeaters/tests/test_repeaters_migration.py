@@ -1,3 +1,4 @@
+from copy import deepcopy
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -49,11 +50,12 @@ class TestMigrationCommand(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.conn = ConnectionSettings(id=1, url="http://url.com", domain='rtest')
+        cls.conn = ConnectionSettings(url="http://url.com", domain='rtest')
         cls.conn.save()
         cls.couch_repeaters = []
-        for r in repeater_test_data:
+        for r in deepcopy(repeater_test_data):
             r = Repeater.wrap(r)
+            r.connection_settings_id = cls.conn.id
             r.save(sync_to_sql=False)
             cls.couch_repeaters.append(r)
         return super().setUpClass()
@@ -141,11 +143,17 @@ class TestMigrationCommand(TestCase):
 
 class RepeaterSyncTestsBase(TestCase):
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.url = "http://example.com"
+        cls.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=cls.url, url=cls.url)
+
+        cls.test_data = deepcopy(repeater_test_data)
+        for r in cls.test_data:
+            r['connection_settings_id'] = cls.conn.id
+        return super().setUpClass()
+
     def setUp(self):
-        self.url = "http://example.com"
-        ConnectionSettings.objects.all().delete()
-        # figure out why conn already exists
-        self.conn = ConnectionSettings.objects.create(id=1, domain=DOMAIN, name=self.url, url=self.url)
         return super().setUp()
 
     def tearDown(self):
@@ -160,10 +168,10 @@ class RepeaterSyncTestsBase(TestCase):
         self.assertEqual(sql_repeater.connection_settings.id, couch_repeater.connection_settings_id)
 
     def get_couch_objects(self, couch_cls):
-        return [couch_cls.wrap(r) for r in repeater_test_data if r['doc_type'] == couch_cls.__name__]
+        return [couch_cls.wrap(r) for r in self.test_data if r['doc_type'] == couch_cls.__name__]
 
     def get_sql_objects(self, sql_cls):
-        return [sql_cls(**r) for r in repeater_test_data if r['doc_type'] == sql_cls._repeater_type]
+        return [sql_cls(**r) for r in self.test_data if r['doc_type'] == sql_cls._repeater_type]
 
 
 class TestSQLCaseRepeater(RepeaterSyncTestsBase):
