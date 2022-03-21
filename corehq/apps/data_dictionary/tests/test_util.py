@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from unittest.mock import patch
 
@@ -107,7 +107,7 @@ class MiscUtilTest(TestCase):
         values_hints = get_values_hints_dict(self.domain, case_type_name)
         self.assertEqual(len(values_hints), 1)
         self.assertTrue(date_prop_name in values_hints)
-        self.assertEqual(values_hints[date_prop_name], [ugettext('YYYY-MM-DD')])
+        self.assertEqual(values_hints[date_prop_name], [gettext('YYYY-MM-DD')])
 
     def test_select_hints(self):
         case_type_name = 'case1'

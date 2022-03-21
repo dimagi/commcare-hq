@@ -5,7 +5,7 @@ from collections import OrderedDict, namedtuple
 
 from django import forms
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton

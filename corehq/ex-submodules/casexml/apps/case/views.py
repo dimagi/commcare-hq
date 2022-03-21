@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.hqwebapp.templatetags.proptable_tags import DisplayConfig
 from corehq.apps.users.util import cached_owner_id_to_display

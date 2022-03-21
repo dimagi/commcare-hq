@@ -13,7 +13,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit.exceptions import BadValueError
@@ -22,6 +22,7 @@ from jsonpath_ng.ext import parser
 from memoized import memoized
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
+from corehq.apps.registry.helper import DataRegistryHelper
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -48,7 +49,6 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )

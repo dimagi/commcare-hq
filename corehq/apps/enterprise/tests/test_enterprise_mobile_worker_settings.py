@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase
 
+from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.enterprise.tests.utils import (
@@ -230,3 +231,120 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
                 ('inactive2', False),
             ]
         )
+
+
+class TestEnterpriseMobileWorkerSettingsCustomDeactivation(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        today = datetime.datetime.utcnow()
+
+        one_year_ago = add_months_to_date(today.date(), -12)
+        enterprise_plan = get_enterprise_software_plan()
+        cls.account1 = get_enterprise_account()
+        cls.account2 = get_enterprise_account()
+        cls.account3 = get_enterprise_account()
+        cls.addClassCleanup(cleanup_accounting)
+        cls.domains1 = [
+            create_domain('test-deactivation-account1-001'),
+            create_domain('test-deactivation-account1-002'),
+        ]
+        cls.domains2 = [
+            create_domain('test-deactivation-account2-001'),
+        ]
+        cls.domains3 = [
+            create_domain('test-deactivation-account3-001'),
+        ]
+        add_domains_to_enterprise_account(
+            cls.account1,
+            cls.domains1,
+            enterprise_plan,
+            one_year_ago
+        )
+        toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.set(
+            cls.domains1[0].name, True, namespace=toggles.NAMESPACE_DOMAIN
+        )
+        add_domains_to_enterprise_account(
+            cls.account2,
+            cls.domains2,
+            enterprise_plan,
+            one_year_ago
+        )
+        toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.set(
+            cls.domains2[0].name, True, namespace=toggles.NAMESPACE_DOMAIN
+        )
+        add_domains_to_enterprise_account(
+            cls.account3,
+            cls.domains3,
+            enterprise_plan,
+            one_year_ago
+        )
+        toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.set(
+            cls.domains3[0].name, True
+        )
+
+        cls.emw_settings1 = EnterpriseMobileWorkerSettings.objects.create(
+            account=cls.account1,
+            allow_custom_deactivation=True,
+        )
+
+        cls.emw_settings2 = EnterpriseMobileWorkerSettings.objects.create(
+            account=cls.account2,
+            allow_custom_deactivation=False,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        EnterpriseMobileWorkerSettings.objects.all().delete()
+        for domains in [cls.domains1, cls.domains2, cls.domains3]:
+            for domain in domains:
+                domain.delete()
+        super().tearDownClass()
+
+    def tearDown(self):
+        for domains in [self.domains1, self.domains2, self.domains3]:
+            for domain in domains:
+                EnterpriseMobileWorkerSettings.clear_domain_caches(domain.name)
+        super().tearDown()
+
+    def test_domain_is_enabled(self):
+        self.assertTrue(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domains1[0].name
+        ))
+
+    def test_domain_is_disabled_by_toggle(self):
+        self.assertFalse(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domains1[1].name
+        ))
+
+    def test_domain_has_setting_disabled(self):
+        self.assertFalse(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domains2[0].name
+        ))
+
+    def test_domain_has_no_settings_created(self):
+        self.assertFalse(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domains3[0].name
+        ))
+
+    def _cleanup_cache_test(self):
+        self.emw_settings1.allow_custom_deactivation = True
+        self.emw_settings1.save()
+
+    def test_cache_clearing(self):
+        self.addCleanup(self._cleanup_cache_test)
+        domain = self.domains1[0].name
+        self.assertTrue(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            domain
+        ))
+        self.emw_settings1.allow_custom_deactivation = False
+        self.emw_settings1.save()
+        self.assertTrue(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            domain
+        ))
+        EnterpriseMobileWorkerSettings.clear_domain_caches(domain)
+        self.assertFalse(EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            domain
+        ))

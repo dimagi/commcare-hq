@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.task import task
 from celery.utils.log import get_task_logger
