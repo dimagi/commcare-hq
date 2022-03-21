@@ -4906,11 +4906,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
                     # set form version to previous version, and only update if content has changed
                     current_form.version = previous_form.get_version()
-                    current_hash = _hash(self.fetch_xform(current_form))
+                    current_form = current_form.validate_form()
+                    rendered_form = current_form.render_xform()
+                    current_hash = _hash(rendered_form)
                     if previous_hash != current_hash:
                         current_form.version = None
-                        # fetch_xform calls render_xform which is memoized
-                        # clear cache since fetch_xform was called with a mutated form set to the previous version
+                        # clear cache since render_xform was called with a mutated form set to the previous version
                         current_form.render_xform.reset_cache(current_form)
             else:
                 current_form.version = None
@@ -5155,7 +5156,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
+                    files[filename] = form.render_xform(build_profile_id=build_profile_id)
                 except XFormValidationFailed:
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
