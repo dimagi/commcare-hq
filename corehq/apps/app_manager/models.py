@@ -4907,8 +4907,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                     # set form version to previous version, and only update if content has changed
                     current_form.version = previous_form.get_version()
                     current_form = current_form.validate_form()
-                    rendered_form = current_form.render_xform()
-                    current_hash = _hash(rendered_form)
+                    current_hash = _hash(current_form.render_xform())
                     if previous_hash != current_hash:
                         current_form.version = None
                         # clear cache since render_xform was called with a mutated form set to the previous version
