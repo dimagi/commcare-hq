@@ -1,7 +1,15 @@
 from django.test import SimpleTestCase, TestCase
+
+from nose.tools import assert_raises_regexp
+
 from corehq.apps.domain.shortcuts import create_domain
 
-from ..dispatcher import ProjectReportDispatcher, AdminReportDispatcher, DomainReportDispatcher
+from ..dispatcher import (
+    AdminReportDispatcher,
+    DomainReportDispatcher,
+    ProjectReportDispatcher,
+    ReportDispatcher,
+)
 
 
 class ProjectReportDispatcherTests(TestCase):
@@ -70,3 +78,45 @@ class DomainReportDispatcherTests(SimpleTestCase):
             'project_link_report',
             'repeat_record_report'
         })
+
+
+def test_render_as_not_found():
+    dispatcher = FooReportDispatcher()
+    with assert_raises_regexp(AssertionError, (
+            r'^FooReport\.not_found_response\(\) not found in '
+            r'ReportDispatcher\.dispatch\(\)$'
+    )):
+        dispatcher.dispatch(
+            request=object(),
+            domain=None,
+            report_slug=None,
+            render_as='not_found',
+        )
+
+
+class FooReport:
+
+    def __init__(self, request, domain, **kwargs):
+        self.rendered_as = None
+
+    @property
+    def does_not_exist_response(self):
+        raise Exception(
+            'This exists but is not called, because it is missing from '
+            'ReportDispatcher.dispatch().'
+        )
+
+    @classmethod
+    def allow_access(cls, request):
+        return True
+
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        pass
+
+
+class FooReportDispatcher(ReportDispatcher):
+    map_name = 'FOO_REPORTS'
+
+    @classmethod
+    def get_report(cls, domain, report_slug, config_id=None):
+        return FooReport
