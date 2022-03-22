@@ -67,6 +67,18 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
+        self.additional_case_id = uuid4().hex
+        _, [self.additional_case] = post_case_blocks([CaseBlock.deprecated_init(
+            create=True,
+            case_id=self.additional_case_id,
+            case_type=CASE_TYPE,
+            case_name="Bilbo Baggins",
+            external_id="Bilbo Baggins",
+            user_id=OWNER_ID,
+            owner_id=OWNER_ID,
+            update={'opened_by': OWNER_ID},
+        ).as_xml()], {'domain': DOMAIN})
+        self.case_ids = [self.case_id, self.additional_case_id]
         domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
@@ -127,6 +139,26 @@ class CaseClaimEndpointTests(TestCase):
         response = client2.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
+
+    def test_multiple_case_claim(self):
+        """
+        Server shoud handle and claim multiple cases in one request
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        # Claim multiple cases in one request as space separated values
+        response = client.post(url, {'case_id': " ".join(self.case_ids)})
+        self.assertEqual(response.status_code, 200)
+
+        # Claim multiple cases with a fake case_id and return a 410 not found status
+        fake_case_id = uuid4().hex
+        case_ids_to_fail = [self.case_id, fake_case_id]
+        response = client.post(url, {'case_id': " ".join(case_ids_to_fail)})
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(response.content.decode('utf-8'),
+            f'The cases "{fake_case_id}" you are trying to claim was not found')
 
     @flaky
     def test_claim_restore_as(self):

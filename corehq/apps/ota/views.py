@@ -139,22 +139,55 @@ def claim(request, domain):
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = unquote(request.POST.get('case_id', ''))
-    if not case_id:
+    # This will be expecting space seperated values of all the cases to be claimed
+    case_ids = unquote(request.POST.get('case_id', '')).split()
+
+    if not case_ids:
         return HttpResponse('A case_id is required', status=400)
 
-    try:
-        if get_first_claim(domain, restore_user.user_id, case_id):
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                status=409)
+    if len(case_ids) == 1:
+        try:
+            if get_first_claim(domain, restore_user.user_id, case_ids[0]):
+                return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                    status=409)
 
-        claim_case(domain, restore_user, case_id,
-                   host_type=unquote(request.POST.get('case_type', '')),
-                   host_name=unquote(request.POST.get('case_name', '')),
-                   device_id=__name__ + ".claim")
-    except CaseNotFound:
-        return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                            status=410)
+            claim_case(domain, restore_user, case_ids[0],
+                    host_type=unquote(request.POST.get('case_type', '')),
+                    host_name=unquote(request.POST.get('case_name', '')),
+                    device_id=__name__ + ".claim")
+        except CaseNotFound:
+            return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_ids[0]),
+                                status=410)
+    else:
+        case_ids_to_claim = list()
+        case_ids_already_claimed = list()
+        case_ids_not_found = list()
+
+        for case_id in case_ids:
+            if not case_id:
+                return HttpResponse('A case_id is required', status=400)
+
+            try:
+                if get_first_claim(domain, restore_user.user_id, case_id):
+                    case_ids_already_claimed.append(case_id)
+                else:
+                    case_ids_to_claim.append(case_id)
+            except CaseNotFound:
+                case_ids_not_found.append(case_id)
+
+        # If one or more cases return a CaseNotFound Error
+        # Throw 410 error with cases ids not found
+        if len(case_ids_not_found) != 0:
+            cases = ', '.join(case_ids_not_found)
+            return HttpResponse('The cases "{}" you are trying to claim was not found'.format(cases),
+                                status=410)
+
+        for case_id in case_ids_to_claim:
+            claim_case(domain, restore_user, case_id,
+                    host_type=unquote(request.POST.get('case_type', '')),
+                    host_name=unquote(request.POST.get('case_name', '')),
+                    device_id=__name__ + ".claim")
+
     return HttpResponse(status=200)
 
 
