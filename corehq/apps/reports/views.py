@@ -541,7 +541,6 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
-
 @login_and_domain_required
 @datespan_default
 @require_POST
@@ -555,17 +554,16 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
-    recipient_emails = set(form.cleaned_data['recipient_emails'])
+    recipient_list = form.cleaned_data['recipient_list']
     if form.cleaned_data['send_to_owner']:
-        recipient_emails.add(request.couch_user.get_email())
+        recipient_list.append(request.couch_user.get_email())
 
     request_data = request_as_dict(request)
     report_type = dispatcher_class.prefix
     datespan = request_data.pop('datespan')
     request_data['startdate'] = datespan.startdate.isoformat()
     request_data['enddate'] = datespan.enddate.isoformat()
-    #set is not JSON serializable, hence recipient_emails is converted to a list
-    send_email_report.delay(list(recipient_emails), domain, report_slug, report_type,
+    send_email_report.delay(recipient_list, domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
 

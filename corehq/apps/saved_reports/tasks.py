@@ -162,6 +162,7 @@ def send_email_report(
 
     config.filters = filters
 
+    dedup_recipients = set(recipient_list)
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     try:
@@ -171,7 +172,7 @@ def send_email_report(
         )[0]
         body = render_full_report_notification(None, report_text).content
 
-        for recipient in recipient_list:
+        for recipient in dedup_recipients:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
