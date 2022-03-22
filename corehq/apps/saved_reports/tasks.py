@@ -126,10 +126,8 @@ def send_email_report(
     couch_user = CouchUser.get_by_user_id(user_id)
 
     mock_request = HttpRequest()
-    GET_data = QueryDict('', mutable=True)
-    GET_data.update(request_data['GET'])
     mock_request.method = 'GET'
-    mock_request.GET = GET_data
+    mock_request.GET.update(request_data['GET'])
 
     request_params = request_data['GET'].dict()
     config = _get_report_config(
@@ -143,9 +141,6 @@ def send_email_report(
         request_params=request_params,
     )
 
-    # TODO: This just makes request_data['GET'] mutable, but we don't
-    #       ever change it
-    # request_data['GET'] = GET_data
     dedup_recipients = set(recipient_list)
     try:
         report_text = _render_report_configs(
