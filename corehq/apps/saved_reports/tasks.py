@@ -196,11 +196,14 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
+            request_params = json_request(request_data['GET'])
+            request_params['startdate'] = request_data['startdate']
+            request_params['enddate'] = request_data['enddate']
             report_state = {
                 'request': request_data,
                 'domain': domain,
                 'context': {},
-                'request_params': json_request(request_data['GET'])
+                'request_params': request_params
             }
             export_all_rows_task(config.report.slug, report_state, recipient_list=recipient_emails)
         else:
