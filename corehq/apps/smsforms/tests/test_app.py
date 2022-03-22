@@ -201,10 +201,6 @@ class TestFetchXml(TestCase):
         with self.assertRaises(TouchformsError):
             _ = _fetch_xml(self.formplayer_interface)
 
-    def test_get_raw_instance_respects_relevancy(self):
-        _ = _fetch_xml(self.formplayer_interface)
-        self.mock_get_raw_instance.assert_called_once_with(respect_relevancy=True)
-
 
 class TestCleanXMLForPartialSubmission(SimpleTestCase):
 
