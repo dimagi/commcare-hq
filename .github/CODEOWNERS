@@ -72,5 +72,7 @@
 /scripts/docker @millerdev @joxl
 /scripts/vellum-to-hq @millerdev
 
+/requirements/ @dimagi/dependency-watchers
+
 /testapps/test_pillowtop/ @joxl
 /testapps/test_elasticsearch/ @joxl
