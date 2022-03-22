@@ -141,7 +141,7 @@ class MarkDownTransform(Transform):
         def _markdown_text(value):
             if isinstance(value, str):
                 escaped_value = conditional_escape(value)
-                return mark_safe(markdown.markdown(escaped_value))
+                return mark_safe(markdown.markdown(escaped_value))  # nosec: trust markdown after escaping value
             return value
 
         return _markdown_text
