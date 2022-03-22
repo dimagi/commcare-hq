@@ -563,8 +563,16 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
     datespan = request_data.pop('datespan')
     request_data['startdate'] = datespan.startdate.isoformat()
     request_data['enddate'] = datespan.enddate.isoformat()
-    send_email_report.delay(recipient_list, domain, report_slug, report_type,
-                            request_data, once, form.cleaned_data)
+    send_email_report.delay(
+        recipient_list,
+        domain,
+        report_slug,
+        report_type,
+        request_data,
+        is_once_off=once,
+        subject=form.cleaned_data['subject'] or _("Email report from CommCare HQ"),
+        notes=form.cleaned_data['notes'],
+    )
     return HttpResponse()
 
 

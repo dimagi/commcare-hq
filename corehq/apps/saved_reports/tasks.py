@@ -112,7 +112,8 @@ def send_email_report(
     report_type,
     request_data,
     is_once_off,
-    cleaned_data,
+    subject='',
+    notes='',
 ):
     """
     Function invokes send_HTML_email to email the html text report.
@@ -163,12 +164,10 @@ def send_email_report(
     config.filters = filters
 
     dedup_recipients = set(recipient_list)
-    subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
-
     try:
         report_text = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-            notes=cleaned_data['notes'], once=is_once_off
+            notes=notes, once=is_once_off
         )[0]
         body = render_full_report_notification(None, report_text).content
 

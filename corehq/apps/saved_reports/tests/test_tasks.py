@@ -78,10 +78,6 @@ class TestSendEmailReport(SimpleTestCase):
                 'enddate': '2022-01-31T23:59:59Z',
             }
         }
-        cleaned_data = {
-            'subject': '',
-            'notes': ''
-        }
         with patch('corehq.apps.saved_reports.tasks.CouchUser', CouchUser), \
                 patch('corehq.apps.reports.views._render_report_configs') as render_configs, \
                 patch('corehq.apps.reports.views.render_full_report_notification') as render_report, \
@@ -96,7 +92,8 @@ class TestSendEmailReport(SimpleTestCase):
                 'report_type',
                 request_data,
                 is_once_off=True,
-                cleaned_data=cleaned_data,
+                subject='',
+                notes='',
             )
 
             send_html_email.assert_called_once()
