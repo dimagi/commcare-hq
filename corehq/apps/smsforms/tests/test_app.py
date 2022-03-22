@@ -14,7 +14,6 @@ from corehq.apps.formplayer_api.smsforms.api import (
     TouchformsError,
     XformsResponse,
 )
-from corehq.apps.formplayer_api.smsforms.exceptions import PartialSubmissionXMLIsNone
 from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
 from corehq.apps.smsforms.app import (
     _clean_xml_for_partial_submission,
@@ -256,7 +255,3 @@ class TestCleanXMLForPartialSubmission(SimpleTestCase):
         self.assertIsNone(xml.find('case').find('create'))
         self.assertIsNone(xml.find('case').find('update'))
         self.assertIsNone(xml.find('case').find('close'))
-
-    def test_raises_exception_if_xml_is_none(self):
-        with self.assertRaises(PartialSubmissionXMLIsNone):
-            _clean_xml_for_partial_submission(None, should_remove_case_actions=True)

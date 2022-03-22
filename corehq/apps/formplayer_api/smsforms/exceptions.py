@@ -11,7 +11,3 @@ class XFormException(TouchFormsError):
 
 class BadDataError(TouchFormsError):
     pass
-
-
-class PartialSubmissionXMLIsNone(Exception):
-    pass
