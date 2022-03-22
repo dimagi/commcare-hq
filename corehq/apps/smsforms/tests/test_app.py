@@ -181,11 +181,7 @@ class TestFetchXml(TestCase):
         self.addCleanup(patcher.stop)
 
     def test_successful_response(self):
-        expected_result = '''
-        <data>
-            <question>answer</question>
-        </data>
-        '''.strip()
+        expected_result = '<data><question>answer</question></data>'
 
         self.mock_get_raw_instance.return_value = {'status': 'success', 'output': expected_result}
         result = _fetch_xml(self.formplayer_interface)
@@ -199,7 +195,7 @@ class TestFetchXml(TestCase):
     def test_raises_touchforms_error_if_response_errors(self):
         self.mock_get_raw_instance.return_value = {'status': 'error'}
         with self.assertRaises(TouchformsError):
-            _ = _fetch_xml(self.formplayer_interface)
+            _fetch_xml(self.formplayer_interface)
 
 
 class TestCleanXMLForPartialSubmission(SimpleTestCase):
