@@ -124,45 +124,28 @@ def send_email_report(
 
     user_id = request_data['couch_user']
     couch_user = CouchUser.get_by_user_id(user_id)
-    mock_request = HttpRequest()
 
+    mock_request = HttpRequest()
     GET_data = QueryDict('', mutable=True)
     GET_data.update(request_data['GET'])
-
     mock_request.method = 'GET'
     mock_request.GET = GET_data
 
-    config = ReportConfig()
+    request_params = request_data['GET'].dict()
+    config = _get_report_config(
+        domain,
+        report_type,
+        report_slug,
+        user_id,
+        date_range='range' if 'enddate' in request_params else 'since',
+        start_date=request_params.get('startdate', request_data['startdate']),
+        end_date=request_params.get('enddate'),
+        request_params=request_params,
+    )
 
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    request_GET = request_data['GET']
-    if 'startdate' in request_GET:
-        config.start_date = iso_string_to_datetime(request_GET['startdate']).date()
-    else:
-        config.start_date = iso_string_to_datetime(request_data['startdate']).date()
-    if 'enddate' in request_GET:
-        config.date_range = 'range'
-        config.end_date = iso_string_to_datetime(request_GET['enddate']).date()
-    else:
-        config.date_range = 'since'
-
-    request_data['GET'] = GET_data
-    GET = dict(six.iterlists(request_data['GET']))
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if field not in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
+    # TODO: This just makes request_data['GET'] mutable, but we don't
+    #       ever change it
+    # request_data['GET'] = GET_data
     dedup_recipients = set(recipient_list)
     try:
         report_text = _render_report_configs(
@@ -198,3 +181,41 @@ def send_email_report(
             export_all_rows_task(config.report.slug, report_state, recipient_list=recipient_list)
         else:
             self.retry(exc=er)
+
+
+def _get_report_config(
+    domain,
+    report_type,
+    report_slug,
+    user_id,
+    *,
+    date_range,
+    start_date,
+    end_date=None,
+    request_params,
+):
+    exclude = {
+        'startdate',
+        'enddate',
+        'subject',
+        'send_to_owner',
+        'notes',
+        'recipient_emails',
+    }
+    filters = {k: v for k, v in request_params.items() if k not in exclude}
+
+    return ReportConfig(
+        # "config_id" is omitted from ReportConfig.query_string if its
+        # value is "dummy". See ReportConfig.query_string for details.
+        _id='dummy',
+
+        domain=domain,
+        name=_("Emailed report"),
+        report_type=report_type,
+        report_slug=report_slug,
+        owner_id=user_id,
+        date_range=date_range,
+        start_date=iso_string_to_datetime(start_date),
+        end_date=iso_string_to_datetime(end_date) if end_date else None,
+        filters=filters,
+    )
