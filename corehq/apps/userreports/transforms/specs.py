@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import markdown
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 
@@ -139,7 +140,8 @@ class MarkDownTransform(Transform):
     def get_transform_function(self):
         def _markdown_text(value):
             if isinstance(value, str):
-                return mark_safe(markdown.markdown(value))
+                escaped_value = conditional_escape(value)
+                return mark_safe(markdown.markdown(escaped_value))
             return value
 
         return _markdown_text

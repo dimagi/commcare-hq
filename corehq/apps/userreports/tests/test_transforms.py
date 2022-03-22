@@ -233,3 +233,5 @@ class MarkdownTransformTest(SimpleTestCase):
         self.assertEqual(transform('Hello **strong** world!'), '<p>Hello <strong>strong</strong> world!</p>')
         self.assertEqual(transform('Hello [example](http://www.example.com)!'),
                          '<p>Hello <a href="http://www.example.com">example</a>!</p>')
+        self.assertEqual(transform('Hello <script>alert("pwned!");</script>'),
+                         '<p>Hello &lt;script&gt;alert(&quot;pwned!&quot;);&lt;/script&gt;</p>')
