@@ -133,7 +133,7 @@ class MultipleValueStringTranslationTransform(TranslationTransform):
         return transform_function
 
 
-class MarkDownTransform(Transform):
+class MarkdownTransform(Transform):
     """Transform that lets you render markdown to HTML in a report."""
     type = TypeProperty('markdown')
 

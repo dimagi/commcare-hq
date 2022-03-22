@@ -11,7 +11,7 @@ from corehq.apps.userreports.transforms.specs import (
     MultipleValueStringTranslationTransform,
     NumberFormatTransform,
     TranslationTransform,
-    MarkDownTransform,
+    MarkdownTransform,
 )
 
 
@@ -22,7 +22,7 @@ class TransformFactory(object):
         'number_format': NumberFormatTransform,
         'translation': TranslationTransform,
         'multiple_value_string_translation': MultipleValueStringTranslationTransform,
-        'markdown': MarkDownTransform,
+        'markdown': MarkdownTransform,
     }
 
     @classmethod
