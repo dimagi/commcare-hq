@@ -24,6 +24,7 @@ class Command(RepeaterMigrationHelper):
     def get_sql_options_obj(cls, doc):
         return {
             "options": {
-                "white_listed_form_xmlns": doc.get("white_listed_form_xmlns")
+                "white_listed_form_xmlns": doc.get("white_listed_form_xmlns"),
+                "include_app_id_param": doc.get("include_app_id_param")
             }
         }
