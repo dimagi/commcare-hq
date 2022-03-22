@@ -16,6 +16,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 
+from ..formplayer_api.smsforms.exceptions import PartialSubmissionXMLIsNone
 from .models import SQLXFormsSession
 
 COMMCONNECT_DEVICE_ID = "commconnect"
@@ -101,7 +102,10 @@ def submit_unfinished_form(session):
     The form is only submitted if the smsforms session has not yet completed.
     """
     formplayer_interface = FormplayerInterface(session.session_id, session.domain)
-    xml = _fetch_xml(formplayer_interface)
+    try:
+        xml = _fetch_xml(formplayer_interface)
+    except InvalidSessionIdException:
+        return
 
     remove_case_actions = not session.include_case_updates_in_partial_submissions
     cleaned_xml = _clean_xml_for_partial_submission(xml, should_remove_case_actions=remove_case_actions)
@@ -113,19 +117,14 @@ def submit_unfinished_form(session):
 def _fetch_xml(formplayer_interface):
     """
     :param formplayer_interface: FormplayerInterface obj
-    :return: xml if successful
+    :return: serialized instance xml with relevant nodes only
     """
-    try:
-        response = formplayer_interface.get_raw_instance()
-        # Formplayer's ExceptionResponseBean includes the exception message,
-        # status ("error"), url, and type ("text")
-        if response.get('status') == 'error':
-            raise TouchformsError(response.get('exception'))
-        xml = response['output']
-    except InvalidSessionIdException:
-        return
-
-    return xml
+    response = formplayer_interface.get_raw_instance()
+    # Formplayer's ExceptionResponseBean includes the exception message,
+    # status ("error"), url, and type ("text")
+    if response.get('status') == 'error':
+        raise TouchformsError(response.get('exception'))
+    return response['output']
 
 
 def _clean_xml_for_partial_submission(xml, should_remove_case_actions):
@@ -135,6 +134,9 @@ def _clean_xml_for_partial_submission(xml, should_remove_case_actions):
     :param should_remove_case_actions: if True, remove case actions (create, update, close) from xml
     :return: byte str of cleaned xml
     """
+    if not xml:
+        raise PartialSubmissionXMLIsNone
+
     root = XML(xml)
     case_tag_regex = re.compile(r"^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
     meta_tag_regex = re.compile(r"^(\{.*\}){0,1}meta$")

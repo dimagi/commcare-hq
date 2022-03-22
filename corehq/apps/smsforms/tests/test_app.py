@@ -14,6 +14,7 @@ from corehq.apps.formplayer_api.smsforms.api import (
     TouchformsError,
     XformsResponse,
 )
+from corehq.apps.formplayer_api.smsforms.exceptions import PartialSubmissionXMLIsNone
 from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
 from corehq.apps.smsforms.app import (
     _clean_xml_for_partial_submission,
@@ -187,10 +188,10 @@ class TestFetchXml(TestCase):
         result = _fetch_xml(self.formplayer_interface)
         self.assertEqual(result, expected_result)
 
-    def test_returns_none_if_invalid_session_id(self):
+    def test_raises_exception_if_invalid_session_id(self):
         self.mock_get_raw_instance.side_effect = InvalidSessionIdException
-        result = _fetch_xml(self.formplayer_interface)
-        self.assertIsNone(result)
+        with self.assertRaises(InvalidSessionIdException):
+            _fetch_xml(self.formplayer_interface)
 
     def test_raises_touchforms_error_if_response_errors(self):
         self.mock_get_raw_instance.return_value = {'status': 'error'}
@@ -255,3 +256,7 @@ class TestCleanXMLForPartialSubmission(SimpleTestCase):
         self.assertIsNone(xml.find('case').find('create'))
         self.assertIsNone(xml.find('case').find('update'))
         self.assertIsNone(xml.find('case').find('close'))
+
+    def test_raises_exception_if_xml_is_none(self):
+        with self.assertRaises(PartialSubmissionXMLIsNone):
+            _clean_xml_for_partial_submission(None, should_remove_case_actions=True)
