@@ -233,9 +233,9 @@ class GenericReportView(object):
             can_access_all_locations = None
 
         date_holder = {}
-        if 'startdate' and 'enddate' in state['request_params']:
+        if 'startdate' in state['request_params'] and 'enddate' in state['request_params']:
             date_holder = state['request_params']
-        elif 'startdate' and 'enddate' in state['request']:
+        elif 'startdate' in state['request_params'] and 'enddate' in state['request']:
             date_holder = state['request']
         if date_holder:
             start_date = iso_string_to_datetime(date_holder['startdate'])
