@@ -69,6 +69,8 @@
 
 /docker/ @millerdev @joxl
 
+/package.json @dimagi/dependency-watchers
+
 /scripts/docker @millerdev @joxl
 /scripts/vellum-to-hq @millerdev
 
@@ -76,3 +78,5 @@
 
 /testapps/test_pillowtop/ @joxl
 /testapps/test_elasticsearch/ @joxl
+
+/yarn.lock @dimagi/dependency-watchers
