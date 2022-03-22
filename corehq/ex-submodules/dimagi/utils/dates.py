@@ -122,6 +122,8 @@ class DateSpan(object):
         self.inclusive = inclusive
         self.timezone = timezone
         self.max_days = max_days
+        # todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
+        self._pickle_standard = 2
 
     def __eq__(self, other):
         return (
@@ -132,6 +134,35 @@ class DateSpan(object):
             and self.timezone == other.timezone
             and self.max_days == other.max_days
         )
+
+    def __setstate__(self, state):
+        """
+            For un-pickling the DateSpan object.
+
+            This does the same thing as not definining __setstate__ at all,
+            unless it detects state pickled with our previous custom __getstate__ code.
+            todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
+        """
+        if state.get('_pickle_standard') == 2:
+            self.__dict__.update(state)
+            return
+
+        # unpickle from state pickled with our previous custom __getstate__ code
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery
+        try:
+            self.startdate = dateutil.parser.parse(state.get('startdate')) if state.get('startdate') else None
+            self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
+        except Exception as e:
+            logging.error("Could not unpack start and end dates for DateSpan. Error: %s" % e)
+        self.format = state.get('format', ISO_DATE_FORMAT)
+        self.inclusive = state.get('inclusive', True)
+        self.timezone = pytz.utc
+        self.is_default = state.get('is_default', False)
+        self.max_days = state.get('max_days')
+        try:
+            self.timezone = pytz.timezone(state.get('timezone'))
+        except Exception as e:
+            logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
 
     @property
     def max_days(self):
