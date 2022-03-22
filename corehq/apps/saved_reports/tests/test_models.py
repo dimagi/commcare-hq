@@ -23,6 +23,25 @@ class TestReportConfig(TestCase):
         self.assertFalse(self.config.is_shared_on_domain())
 
 
+class TestReportConfigQueryString(SimpleTestCase):
+
+    def test_query_string_config_id(self):
+        config = ReportConfig(
+            _id='abc123',
+            domain='test-domain',
+            filters={'foo': 'bar'}
+        )
+        self.assertEqual(config.query_string, 'config_id=abc123&foo=bar')
+
+    def test_query_string_dummy_id(self):
+        config = ReportConfig(
+            _id='dummy',
+            domain='test-domain',
+            filters={'foo': 'bar'}
+        )
+        self.assertEqual(config.query_string, 'foo=bar')
+
+
 class TestReportNotification(SimpleTestCase):
     def test_unauthorized_user_cannot_view_report(self):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=[])
