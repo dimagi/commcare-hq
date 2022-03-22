@@ -94,7 +94,7 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
                 return f"{prop}: couch value != sql value {sql!r}"
 
         diff_results = [diff for diff in diff_results if diff]
-        return '\n'.join(diff_results) if diff_results else None
+        return diff_results if diff_results else None
 
     def update_or_create_sql_object(self, doc):
         default_obj = self.get_common_sql_attr_obj(doc)
