@@ -61,9 +61,9 @@
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 /corehq/util/es/ @joxl
 
-/custom/icds_reports/ @calellowitz @Rohit25negi
-/custom/icds_reports/templates/ @calellowitz @Rohit25negi
-/custom/icds_reports/static/ @calellowitz @Rohit25negi
+/custom/icds_reports/ @calellowitz
+/custom/icds_reports/templates/ @calellowitz
+/custom/icds_reports/static/ @calellowitz
 
 /docs/js-guide/ @orangejenny @millerdev
 
