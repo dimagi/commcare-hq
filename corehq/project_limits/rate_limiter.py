@@ -61,7 +61,7 @@ class RateLimiter(object):
     def allow_usage(self, scope=None):
         for rates in self.iter_rates(scope):
             allowed = all(current_rate < limit
-                          for rate_counter_key, current_rate, limit in self.iter_rates(scope))
+                          for rate_counter_key, current_rate, limit in rates)
             # allow usage if any limiter is below the threshold
             if allowed:
                 return True
