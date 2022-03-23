@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, Dict, List
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from requests import HTTPError
 from schema import Schema, SchemaError

@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop, gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -26,7 +26,7 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
     label = ""
     placeholder = "place"
-    default_text = ugettext_lazy("Select a Table")
+    default_text = gettext_lazy("Select a Table")
 
     @property
     def selected(self):
@@ -45,7 +45,7 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
 
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
-    name = ugettext_noop("View Tables")
+    name = gettext_noop("View Tables")
     slug = "view_lookup_tables"
 
     report_template_path = 'fixtures/view_table.html'
@@ -143,7 +143,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
 
 class FixtureEditInterface(FixtureInterface):
-    name = ugettext_noop("Manage Tables")
+    name = gettext_noop("Manage Tables")
     slug = "edit_lookup_tables"
 
     report_template_path = 'fixtures/manage_tables.html'

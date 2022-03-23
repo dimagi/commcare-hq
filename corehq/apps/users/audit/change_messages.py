@@ -1,5 +1,5 @@
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop as noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop as noop
 
 
 class UserChangeMessage(object):

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,

@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -15,7 +15,7 @@ from corehq.apps.sso.models import IdentityProvider
 
 
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
-    page_title = ugettext_lazy("Manage Single Sign-On")
+    page_title = gettext_lazy("Manage Single Sign-On")
     urlname = 'manage_sso'
     template_name = 'sso/enterprise_admin/manage_sso.html'
 
@@ -30,7 +30,7 @@ class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
 
 
 class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMixin):
-    page_title = ugettext_lazy("Edit Identity Provider")
+    page_title = gettext_lazy("Edit Identity Provider")
     urlname = 'edit_idp_enterprise'
     template_name = 'sso/enterprise_admin/edit_identity_provider.html'
     async_handlers = [

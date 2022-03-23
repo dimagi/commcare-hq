@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.http import HttpRequest
 from django.http.request import QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import six
 from celery.schedules import crontab

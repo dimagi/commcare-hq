@@ -3,8 +3,8 @@ import json
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
@@ -35,7 +35,7 @@ def delete_program(request, domain, prog_id):
 class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
     template_name = 'programs/manage/programs.html'
-    page_title = ugettext_noop("Programs")
+    page_title = gettext_noop("Programs")
 
     @property
     def page_context(self):
@@ -73,7 +73,7 @@ class FetchProgramListView(ProgramListView):
 
 class NewProgramView(BaseCommTrackManageView):
     urlname = 'commtrack_program_new'
-    page_title = ugettext_noop("New Program")
+    page_title = gettext_noop("New Program")
     template_name = 'programs/manage/program.html'
 
     @property
@@ -112,7 +112,7 @@ class NewProgramView(BaseCommTrackManageView):
 
 class EditProgramView(NewProgramView):
     urlname = 'commtrack_program_edit'
-    page_title = ugettext_noop("Edit Program")
+    page_title = gettext_noop("Edit Program")
 
     DEFAULT_LIMIT = 10
 
