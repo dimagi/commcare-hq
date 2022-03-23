@@ -54,7 +54,7 @@ class TestMigrationDiff(TestCase):
             self.incorrect_sql_repeater_obj
         )
 
-        self.assertEqual(output.split('\n'), [
+        self.assertEqual(output, [
             "paused: couch value False != sql value True",
             "white_listed_case_types: 2 in couch != 1 in sql",
             "black_listed_users: couch value 'user1' != sql value 'user2'"
