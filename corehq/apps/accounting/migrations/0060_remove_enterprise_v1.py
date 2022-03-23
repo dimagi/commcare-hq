@@ -37,5 +37,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_consolidate_enterprise_v1_into_v0),
+        migrations.RunPython(
+            _consolidate_enterprise_v1_into_v0,
+            reverse_code=migrations.RunPython.noop,
+        ),
     ]
