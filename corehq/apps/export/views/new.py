@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import SuspiciousOperation
 from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
