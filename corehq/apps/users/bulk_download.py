@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.utils.translation import gettext
 
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 from soil.util import expose_download, get_download_file_path
@@ -27,7 +28,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_usernames_by_filters,
     get_web_users_by_filters,
 )
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import UserRole, DeactivateMobileWorkerTrigger
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
     flatten_json,
@@ -91,7 +92,7 @@ def get_phone_numbers(user_data):
     return phone_numbers_dict
 
 
-def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition):
+def make_mobile_user_dict(user, group_names, location_cache, domain, fields_definition, deactivation_triggers):
     model_data = {}
     uncategorized_data = {}
     model_data, uncategorized_data = (
@@ -129,6 +130,7 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
         'registered_on (read only)': _format_date(user.created_on),
         'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
         'last_sync (read only)': activity.last_sync_for_user.sync_date,
+        'deactivate_after': deactivation_triggers.get(user._id, ''),
     }
 
     user_dict.update(get_phone_numbers(user))
@@ -212,13 +214,27 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     current_user_downloaded_count = 0
     for current_domain in domains_list:
         location_cache = LocationIdToSiteCodeCache(current_domain)
+        if EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
+            deactivation_triggers = {
+                f.user_id: f.deactivate_after.strftime('%m-%Y')
+                for f in DeactivateMobileWorkerTrigger.objects.filter(domain=domain)
+            }
+        else:
+            deactivation_triggers = {}
         for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
             ], key=alphanumeric_sort_key)
 
-            user_dict = make_mobile_user_dict(user, group_names, location_cache, current_domain, fields_definition)
+            user_dict = make_mobile_user_dict(
+                user,
+                group_names,
+                location_cache,
+                current_domain,
+                fields_definition,
+                deactivation_triggers,
+            )
             user_dicts.append(user_dict)
             unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
             user_groups_length = max(user_groups_length, len(group_names))
@@ -241,6 +257,9 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 
     if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
+
+    if EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
+        user_headers += ['deactivate_after']
     user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
