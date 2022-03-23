@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.views.generic import View
 
 from memoized import memoized
@@ -77,7 +77,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
 class ManageNotificationView(BasePageView):
     urlname = 'manage_notifications'
-    page_title = ugettext_noop("Manage Notification")
+    page_title = gettext_noop("Manage Notification")
     template_name = 'notifications/manage_notifications.html'
 
     @method_decorator(require_superuser)

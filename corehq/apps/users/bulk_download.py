@@ -1,7 +1,7 @@
 import uuid
 
 from django.conf import settings
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
@@ -138,14 +138,14 @@ def make_mobile_user_dict(user, group_names, location_cache, domain, fields_defi
 
 def get_user_role_name(domain_membership):
     if domain_membership.is_admin:
-        return ugettext('Admin')
+        return gettext('Admin')
     else:
         role_name = ''
         if domain_membership.role_id:
             try:
                 role_name = UserRole.objects.by_couch_id(domain_membership.role_id).name
             except UserRole.DoesNotExist:
-                role_name = ugettext('Unknown Role')
+                role_name = gettext('Unknown Role')
     return role_name
 
 
@@ -161,7 +161,7 @@ def make_web_user_dict(user, location_cache, domain):
         'email': user.email,
         'role': role_name,
         'location_code': location_codes,
-        'status': ugettext('Active User'),
+        'status': gettext('Active User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
@@ -182,7 +182,7 @@ def make_invited_web_user_dict(invite, location_cache):
         'email': invite.email,
         'role': invite.get_role_name(),
         'location_code': location_codes,
-        'status': ugettext('Invited'),
+        'status': gettext('Invited'),
         'last_access_date (read only)': 'N/A',
         'last_login (read only)': 'N/A',
         'remove': '',

@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.db.models import Q
@@ -27,14 +28,13 @@ from corehq.util.timezones.conversions import ServerTime
 from memoized import memoized
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
-from six.moves.urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
-DATA_NOTICE = ugettext_lazy(
+DATA_NOTICE = gettext_lazy(
     "This report will only show data for the past 60 days. Furthermore the report may not "
     "always show the latest log data but will be updated over time",
 )
@@ -46,7 +46,7 @@ TAGS = {
 
 
 class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
-    name = ugettext_lazy("Device Log Details")
+    name = gettext_lazy("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
@@ -74,20 +74,21 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(ugettext_lazy("Log Date"), span=1, sort_type=DATE, prop_name='date',
+            DataTablesColumn(gettext_lazy("Log Date"), span=1, sort_type=DATE, prop_name='date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn(ugettext_lazy("Log Submission Date"), span=1, sort_type=DATE, prop_name='server_date',
+            DataTablesColumn(gettext_lazy("Log Submission Date"), span=1, sort_type=DATE, prop_name='server_date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn(ugettext_lazy("Log Type"), span=1, prop_name='type'),
-            DataTablesColumn(ugettext_lazy("Logged in Username"), span=2,
+            DataTablesColumn(gettext_lazy("Log Type"), span=1, prop_name='type'),
+            DataTablesColumn(gettext_lazy("Logged in Username"), span=2,
                              prop_name='username'),
-            DataTablesColumn(ugettext_lazy("Device Users"), span=2),
-            DataTablesColumn(ugettext_lazy("Device ID"), span=2, prop_name='device_id'),
-            DataTablesColumn(ugettext_lazy("Message"), span=5, prop_name='msg'),
-            DataTablesColumn(ugettext_lazy("App Version"), span=1, prop_name='app_version'),
-            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version', sortable=False),
+            DataTablesColumn(gettext_lazy("Device Users"), span=2),
+            DataTablesColumn(gettext_lazy("Device ID"), span=2, prop_name='device_id'),
+            DataTablesColumn(gettext_lazy("Message"), span=5, prop_name='msg'),
+            DataTablesColumn(gettext_lazy("App Version"), span=1, prop_name='app_version'),
+            DataTablesColumn(gettext_lazy("CommCare Version"), span=1,
+                             prop_name='commcare_version', sortable=False),
         )
 
     @property

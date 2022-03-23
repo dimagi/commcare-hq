@@ -2,7 +2,7 @@ from copy import copy
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.db import transaction
 
 from corehq.apps.data_interfaces.models import (

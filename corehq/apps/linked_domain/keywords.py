@@ -1,6 +1,6 @@
 import uuid
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.exceptions import (

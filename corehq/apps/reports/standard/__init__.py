@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.core.cache import cache
 from django.urls import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 import dateutil
 from memoized import memoized
@@ -28,7 +28,7 @@ from corehq.util.timezones.conversions import ServerTime
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = ugettext_noop("Project Reports")
+    section_name = gettext_noop("Project Reports")
     base_template = 'reports/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
