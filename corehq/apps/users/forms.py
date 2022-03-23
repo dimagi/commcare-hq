@@ -414,9 +414,9 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ),
         widget=forms.HiddenInput())
     deactivate_after_date = forms.CharField(
-        label=ugettext_lazy("Deactivate After"),
+        label=gettext_lazy("Deactivate After"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "When specified, the mobile worker is automatically deactivated "
             "on the first day of the month and year selected."
         )
@@ -670,9 +670,9 @@ class NewMobileWorkerForm(forms.Form):
         label=gettext_noop("Password"),
     )
     deactivate_after_date = forms.CharField(
-        label=ugettext_lazy("Deactivate After"),
+        label=gettext_lazy("Deactivate After"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "When specified, the mobile worker is automatically deactivated "
             "on the first day of the month and year selected."
         ),
