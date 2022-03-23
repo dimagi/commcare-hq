@@ -199,7 +199,7 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def _clean_url(self, url):
         try:
-            validate_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+            validate_user_input_url_for_repeaters(url, domain=self.domain, src='motech_save_config')
         except CannotResolveHost:
             # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
             # The reason this is important is because we want to accept configurations where the host has not
