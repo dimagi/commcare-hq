@@ -507,6 +507,6 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
 
 
 class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
-    page_title = ugettext_lazy("Manage Mobile Workers")
+    page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'domain_manage_mobile_workers'

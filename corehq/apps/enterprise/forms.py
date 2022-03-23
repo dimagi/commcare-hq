@@ -229,9 +229,9 @@ class EnterpriseSettingsForm(forms.Form):
 
 class EnterpriseManageMobileWorkersForm(forms.Form):
     enable_auto_deactivation = forms.BooleanField(
-        label=ugettext_lazy("Auto-Deactivation by Inactivity"),
+        label=gettext_lazy("Auto-Deactivation by Inactivity"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically deactivate Mobile Workers who have not "
                 "submitted a form within the Inactivity Period below."
             ),
@@ -239,32 +239,32 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
         required=False,
     )
     inactivity_period = forms.ChoiceField(
-        label=ugettext_lazy("Inactivity Period"),
+        label=gettext_lazy("Inactivity Period"),
         required=False,
         initial=90,
         choices=(
-            (30, ugettext_lazy("30 days")),
-            (60, ugettext_lazy("60 days")),
-            (90, ugettext_lazy("90 days")),
-            (120, ugettext_lazy("120 days")),
-            (150, ugettext_lazy("150 days")),
-            (180, ugettext_lazy("180 days")),
+            (30, gettext_lazy("30 days")),
+            (60, gettext_lazy("60 days")),
+            (90, gettext_lazy("90 days")),
+            (120, gettext_lazy("120 days")),
+            (150, gettext_lazy("150 days")),
+            (180, gettext_lazy("180 days")),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "Mobile workers who have not submitted a form after these many "
             "days will be considered inactive."
         ),
     )
     allow_custom_deactivation = forms.BooleanField(
-        label=ugettext_lazy("Auto-Deactivation by Month"),
+        label=gettext_lazy("Auto-Deactivation by Month"),
         required=False,
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Allow auto-deactivation of Mobile Workers after "
                 "a specific month."
             ),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "When this is enabled, an option to select a month and "
             "year for deactivating a Mobile Worker will be present when "
             "creating that Mobile Worker."
