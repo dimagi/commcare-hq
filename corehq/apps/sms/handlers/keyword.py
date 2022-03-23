@@ -49,9 +49,9 @@ class StructuredSMSException(Exception):
         super(StructuredSMSException, self).__init__(*args, **kwargs)
 
 
-def contact_can_use_keyword(v, keyword):
+def contact_can_use_keyword(verified_number, keyword):
     has_keyword_restrictions = len(keyword.initiator_doc_type_filter) > 0
-    can_initiate = v.owner_doc_type in keyword.initiator_doc_type_filter
+    can_initiate = verified_number.owner_doc_type in keyword.initiator_doc_type_filter
     if has_keyword_restrictions and not can_initiate:
         return False
     else:
@@ -75,34 +75,33 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
     return fcn(v, text, msg, text_words, open_sessions)
 
 
-def global_keyword_start(v, text, msg, text_words, open_sessions):
+def global_keyword_start(verified_number, text, msg, text_words, open_sessions):
     outbound_metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
     )
 
     if len(text_words) > 1:
         keyword = text_words[1]
-        k = Keyword.get_keyword(v.domain, keyword)
+        k = Keyword.get_keyword(verified_number.domain, keyword)
         if k:
-            if not contact_can_use_keyword(v, k):
+            if not contact_can_use_keyword(verified_number, k):
                 return False
-            process_survey_keyword_actions(v, k, text[6:].strip(), msg)
+            process_survey_keyword_actions(verified_number, k, text[6:].strip(), msg)
         else:
-            message = get_message(MSG_KEYWORD_NOT_FOUND, v, (keyword,))
-            send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+            message = get_message(MSG_KEYWORD_NOT_FOUND, verified_number, (keyword,))
+            send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
     else:
-        message = get_message(MSG_START_KEYWORD_USAGE, v, 
-            (text_words[0],))
-        send_sms_to_verified_number(v, message, metadata=outbound_metadata)
+        message = get_message(MSG_START_KEYWORD_USAGE, verified_number, (text_words[0],))
+        send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
     return True
 
 
-def global_keyword_stop(v, text, msg, text_words, open_sessions):
-    SQLXFormsSession.close_all_open_sms_sessions(v.domain, v.owner_id)
+def global_keyword_stop(verified_number, text, msg, text_words, open_sessions):
+    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
     return True
 
 
-def global_keyword_current(v, text, msg, text_words, open_sessions):
+def global_keyword_current(verified_number, text, msg, text_words, open_sessions):
     if len(open_sessions) == 1:
         session = open_sessions[0]
         outbound_metadata = MessageMetadata(
@@ -111,22 +110,22 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             xforms_session_couch_id=session._id,
         )
 
-        resp = FormplayerInterface(session.session_id, v.domain).current_question()
+        resp = FormplayerInterface(session.session_id, verified_number.domain).current_question()
 
-        send_sms_to_verified_number(v, resp.event.text_prompt,
-            metadata=outbound_metadata, events=[resp.event])
+        send_sms_to_verified_number(verified_number, resp.event.text_prompt,
+                                    metadata=outbound_metadata, events=[resp.event])
     return True
 
 
-def global_keyword_unknown(v, text, msg, text_words, open_sessions):
-    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, v, (text_words[0],))
-    send_sms_to_verified_number(v, message)
+def global_keyword_unknown(verified_number, text, msg, text_words, open_sessions):
+    message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, verified_number, (text_words[0],))
+    send_sms_to_verified_number(verified_number, message)
     return True
 
 
-def handle_domain_keywords(v, text, msg, text_words, sessions):
+def handle_domain_keywords(verified_number, text, msg, text_words, sessions):
     any_session_open = len(sessions) > 0
-    for survey_keyword in Keyword.get_by_domain(v.domain):
+    for survey_keyword in Keyword.get_by_domain(verified_number.domain):
         args = split_args(text, survey_keyword)
         keyword = args[0].upper()
         if keyword == survey_keyword.keyword.upper():
@@ -134,7 +133,7 @@ def handle_domain_keywords(v, text, msg, text_words, sessions):
                 # We don't want to override any open sessions, so just pass and
                 # let the form session handler handle the message
                 return False
-            elif not contact_can_use_keyword(v, survey_keyword):
+            elif not contact_can_use_keyword(verified_number, survey_keyword):
                 # The contact type is not allowed to invoke this keyword
                 return False
             else:
@@ -142,25 +141,25 @@ def handle_domain_keywords(v, text, msg, text_words, sessions):
                     workflow=WORKFLOW_KEYWORD,
                 )
                 add_msg_tags(msg, inbound_metadata)
-                process_survey_keyword_actions(v, survey_keyword, text, msg)
+                process_survey_keyword_actions(verified_number, survey_keyword, text, msg)
                 return True
     # No keywords matched, so pass the message onto the next handler
     return False
 
 
-def sms_keyword_handler(v, text, msg):
-    with critical_section_for_smsforms_sessions(v.owner_id):
+def sms_keyword_handler(verified_number, text, msg):
+    with critical_section_for_smsforms_sessions(verified_number.owner_id):
         text = text.strip()
         if text == "":
             return False
 
-        sessions = SQLXFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
+        sessions = SQLXFormsSession.get_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
         text_words = text.upper().split()
 
         if text.startswith("#"):
-            return handle_global_keywords(v, text, msg, text_words, sessions)
+            return handle_global_keywords(verified_number, text, msg, text_words, sessions)
         else:
-            return handle_domain_keywords(v, text, msg, text_words, sessions)
+            return handle_domain_keywords(verified_number, text, msg, text_words, sessions)
 
 
 def _handle_structured_sms(domain, args, contact_id, session_id,
@@ -566,8 +565,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
 
     # Close any open sessions even if it's just an sms that we're
     # responding with.
-    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
-        verified_number.owner_id)
+    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain, verified_number.owner_id)
 
     if is_commcarecase(sender):
         case = sender
