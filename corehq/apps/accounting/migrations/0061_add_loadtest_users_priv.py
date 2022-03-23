@@ -22,5 +22,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_grandfather_basic_privs),
+        migrations.RunPython(
+            _grandfather_basic_privs,
+            reverse_code=migrations.RunPython.noop,
+        ),
     ]
