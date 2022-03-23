@@ -4,7 +4,8 @@ from django.db import migrations
 from django_prbac.models import Role
 
 from corehq.apps.accounting.management.commands.change_role_for_software_plan_version import (
-    change_role_for_software_plan_version, OldRoleDoesNotExist, NewRoleDoesNotExist,
+    change_role_for_software_plan_version,
+    OldRoleDoesNotExist
 )
 from corehq.util.django_migrations import skip_on_fresh_install
 
