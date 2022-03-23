@@ -5,7 +5,7 @@ from django.conf import settings
 from django.urls import reverse
 from lxml.html.clean import Cleaner
 
-from .form_iterator import FormIteratorCommandBase, get_current_apps, get_forms
+from ._form_iterator import FormIteratorCommandBase, get_current_apps, get_forms
 
 
 class Command(FormIteratorCommandBase):
@@ -36,33 +36,42 @@ class Command(FormIteratorCommandBase):
 
 
 def form_contains_xss_attempt(form):
-    regex = '(?<=<value>)(.*?)(?=\s*<\/value>)'
-    regexoutput = '(?<=<output)(.*?)(?=\s*>)'
-    cleaner = Cleaner()
-    clean_html = cleaner.clean_html
-    cleaner_js = Cleaner(javascript=False, safe_attrs_only=False)
-    cleaner_html_js = cleaner_js.clean_html
-
+    regex = '(?<=<value>)(.*)(?=<\/value>)'
     try:
         source = form.source
     except ResourceNotFound:
         return False, ''
 
     for value in re.findall(regex, form.source):
-        if '&lt;' and '&gt;' in value:
-            value = value.replace("&lt;", "<").replace("&gt;", ">")
-        if '<output' in value:
-            for output in re.findall(regexoutput, value):
-                value = value.replace(output, '')
-            value = value.replace("<output>", '').replace("</output>", '')
-        cleaned_js = cleaner_html_js("<div>" + value + "</div>")[5:-6]
-        cleaned = clean_html("<div>" + value + "</div>")[5:-6]
-        if cleaned != cleaned_js:
-            return True, cleaned_js
+        prepared_value = prepare_value(value)
+        clean_html = get_cleaned_value(Cleaner(javascript=True, safe_attrs_only=True).clean_html, prepared_value)
+        dirty_html = get_cleaned_value(Cleaner(javascript=False, safe_attrs_only=False).clean_html, prepared_value)
+        if clean_html != dirty_html:
+            return True, dirty_html
     return False, ''
 
 
-#this should be further abstracted
+def get_cleaned_value(clean_func, value):
+    opening_tag = '<div>'
+    closing_tag = '</div>'
+    opening_tag_len = len(opening_tag)
+    closing_tag_len = len(closing_tag)
+
+    wrapped = f'{opening_tag}{value}{closing_tag}'
+    return clean_func(wrapped)[opening_tag_len:-closing_tag_len]
+
+
+def prepare_value(value):
+    regexoutput = '(?<=<output)(.*)(?=\s*>)'
+    if '&lt;' and '&gt;' in value:
+        value = value.replace("&lt;", "<").replace("&gt;", ">")
+    if '<output' in value:
+        for output in re.findall(regexoutput, value):
+            value = value.replace(output, '')
+        value = value.replace("<output>", '').replace("</output>", '')
+    return value
+
+
 def handle_entity_form(form, app, value, log_file):
     print('Found JS usage', file=log_file)
     print(f'\tForm: {form.unique_id}, app {app._id}', file=log_file)

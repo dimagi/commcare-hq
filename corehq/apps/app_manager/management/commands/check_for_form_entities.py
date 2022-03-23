@@ -5,7 +5,7 @@ from django.urls import reverse
 from corehq.apps.app_manager.xform import parse_xml
 from corehq.apps.app_manager.exceptions import DangerousXmlException, XFormException
 
-from .form_iterator import FormIteratorCommandBase, get_current_apps, get_forms
+from ._form_iterator import FormIteratorCommandBase, get_current_apps, get_forms
 
 
 class Command(FormIteratorCommandBase):
