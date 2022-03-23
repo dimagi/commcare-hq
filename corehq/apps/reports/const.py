@@ -29,4 +29,7 @@ def get_report_class(slug):
         CurrentStockStatusReport.slug: CurrentStockStatusReport,
     }
 
-    return reports[slug]
+    if slug not in reports:
+        raise Exception("Report class not supported yet, try adding the slug in reports/const.py")
+    else:
+        return reports[slug]

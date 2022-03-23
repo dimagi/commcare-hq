@@ -14,6 +14,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.utils.safestring import SafeText
 from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
@@ -417,9 +418,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def _sanitize_column(cls, col):
-        if isinstance(col, str):
+        if isinstance(col, str) and not isinstance(col, SafeText):
             return escape(col)
-
         return col
 
     def get_ajax(self, params):
