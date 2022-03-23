@@ -167,7 +167,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         if not isinstance(node, FunctionCall):
             return node
         try:
-            return XPATH_VALUE_FUNCTIONS[node.name](node)
+            return XPATH_VALUE_FUNCTIONS[node.name](domain, node)
         except KeyError:
             raise CaseFilterError(
                 _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(
