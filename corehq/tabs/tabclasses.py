@@ -620,6 +620,8 @@ class ProjectDataTab(UITab):
                 EditCaseFeedView,
                 EditODataCaseFeedView,
                 EditODataFormFeedView,
+                EditLiveGoogleSheetCaseView,
+                EditLiveGoogleSheetFormView,
                 EditFormDailySavedExportView,
                 EditFormFeedView,
                 EditNewCustomCaseExportView,
@@ -834,9 +836,17 @@ class ProjectDataTab(UITab):
                         'urlname': CreateGoogleSheetCaseView.urlname,
                     },
                     {
+                        'title': _(EditLiveGoogleSheetCaseView.page_title),
+                        'urlname': EditLiveGoogleSheetCaseView.urlname,
+                    },
+                    {
                         'title': _(CreateGoogleSheetFormView.page_title),
                         'urlname': CreateGoogleSheetFormView.urlname,
-                    }
+                    },
+                    {
+                        'title': _(EditLiveGoogleSheetFormView.page_title),
+                        'urlname': EditLiveGoogleSheetFormView.urlname,
+                    },
                 ]
                 export_data_views.append({
                     'title': _(LiveGoogleSheetListView.page_title),

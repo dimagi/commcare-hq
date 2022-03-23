@@ -1173,6 +1173,12 @@ class LiveGoogleSheetListHelper(ExportListHelper):
             data['editUrl'] = '#IntegratedExportLimitReachedModal'
         return data
 
+    def _edit_view(self, export):
+        from corehq.apps.export.views.edit import EditLiveGoogleSheetCaseView, EditLiveGoogleSheetFormView
+        if isinstance(export, FormExportInstance):
+            return EditLiveGoogleSheetFormView
+        return EditLiveGoogleSheetCaseView
+
 
 @location_safe
 class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
