@@ -1,3 +1,4 @@
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
@@ -1897,8 +1898,8 @@ def _get_administration_section(domain):
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
-    # todo also check is_domain_enterprise once PR 31047 is merged in
-    if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(domain):
+    if (toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(domain)
+            and not is_domain_enterprise(domain)):
         administration.append(({
             'title': _(ManageDomainMobileWorkersView.page_title),
             'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
