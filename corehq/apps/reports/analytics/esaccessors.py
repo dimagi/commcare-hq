@@ -32,17 +32,16 @@ from corehq.apps.export.const import (
     MAX_MULTIMEDIA_EXPORT_SIZE,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.elastic import ES_DEFAULT_INSTANCE, ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_alias=ES_DEFAULT_INSTANCE):
+def get_last_submission_time_for_users(domain, user_ids, datespan, for_export=False):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
     query = (
-        FormES(es_instance_alias=es_instance_alias)
+        FormES(for_export=for_export)
         .domain(domain)
         .user_id(user_ids)
         .submitted(gte=datespan.startdate.date(), lte=datespan.enddate.date())
@@ -76,8 +75,7 @@ def get_total_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=
 
 
 def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False, owner_ids=None, export=False):
-    es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
-    case_query = (CaseES(es_instance_alias=es_instance)
+    case_query = (CaseES(for_export=export)
          .domain(domain)
          .opened_range(lte=datespan.enddate.date())
          .NOT(closed_range_filter(lt=datespan.startdate.date()))
@@ -113,8 +111,7 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
-    es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
-    case_query = (CaseES(es_instance_alias=es_instance)
+    case_query = (CaseES(for_export=export)
         .domain(domain)
         .filter(
             filters.date_range(
@@ -236,8 +233,7 @@ def get_completed_counts_by_user(domain, datespan, user_ids=None, export=False):
 
 
 def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None, export=False):
-    es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
-    form_query = FormES(es_instance_alias=es_instance).domain(domain)
+    form_query = FormES(for_export=export).domain(domain)
     for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
         form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
 
@@ -373,8 +369,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    es_instance = ES_EXPORT_INSTANCE if export else ES_DEFAULT_INSTANCE
-    query = (FormES(es_instance_alias=es_instance)
+    query = (FormES(for_export=export)
              .domain(domain)
              .filter(date_filter_fn(gte=startdate, lt=enddate))
              .aggregation(
