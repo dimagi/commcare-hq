@@ -5,18 +5,18 @@
 {% requirejs_main 'userreports/js/configurable_reports_home' %}
 
 {% block page_content %}
-  <h1>{% trans "Configurable Reports" %}</h1>
+  <h1>{% trans "Custom Web Reports" %}</h1>
   <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
     <i class="fa fa-plus"></i>
-    {% trans 'Add Report' %}
+    {% trans 'Add Custom Web Report' %}
   </a>
   <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
     <i class="fa fa-cloud-upload"></i>
-    {% trans 'Import Report' %}
+    {% trans 'Import Custom Web Report' %}
   </a>
   <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
     <i class="fa fa-plus"></i>
-    {% trans 'Add Data Source' %}
+    {% trans 'Add Custom Web Report Source' %}
   </a>
 
   <br><br><br>

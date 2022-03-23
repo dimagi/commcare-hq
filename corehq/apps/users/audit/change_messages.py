@@ -215,6 +215,24 @@ class UserChangeMessage(object):
             }
         }
 
+    @staticmethod
+    def updated_deactivate_after(deactivate_after, change_message):
+        from corehq.apps.users.models import DeactivateMobileWorkerTriggerUpdateMessage
+        if change_message == DeactivateMobileWorkerTriggerUpdateMessage.DELETED:
+            message = {
+                DEACTIVATE_AFTER_DATE_DELETED: {},
+            }
+        else:
+            message = {
+                DEACTIVATE_AFTER_DATE: {
+                    "value": deactivate_after,
+                    "status": change_message,
+                }
+            }
+        return {
+            DEACTIVATE_AFTER_FIELD: message,
+        }
+
 
 class UserChangeFormatter(object):
     @staticmethod
@@ -263,6 +281,9 @@ LOCATION_FIELD = "location"
 ASSIGNED_LOCATIONS_FIELD = "assigned_locations"
 GROUPS_FIELD = "groups"
 DOMAIN_INVITATION_FIELD = "domain_invitation"
+DEACTIVATE_AFTER_FIELD = "deactivate_after"
+DEACTIVATE_AFTER_DATE = "deactivate_after_date"
+DEACTIVATE_AFTER_DATE_DELETED = 'deactivate_after_date_deleted'
 
 CHANGE_MESSAGES_FIELDS = [
     PROGRAM_FIELD,
@@ -277,6 +298,7 @@ CHANGE_MESSAGES_FIELDS = [
     ASSIGNED_LOCATIONS_FIELD,
     GROUPS_FIELD,
     DOMAIN_INVITATION_FIELD,
+    DEACTIVATE_AFTER_FIELD,
 ]
 
 # message slugs
@@ -339,7 +361,13 @@ MESSAGES = {
     ADD_DOMAIN_INVITATION: UserChangeFormatter.simple_formatter(noop("Invited to domain '{domain}'")),
     REMOVE_DOMAIN_INVITATION: UserChangeFormatter.simple_formatter(
         noop("Invitation revoked for domain '{domain}'")
-    )
+    ),
+    DEACTIVATE_AFTER_DATE: UserChangeFormatter.simple_formatter(
+        noop("Deactivation After date {status}: {value}")
+    ),
+    DEACTIVATE_AFTER_DATE_DELETED: UserChangeFormatter.simple_formatter(
+        noop("Deactivation After date has been deleted")
+    ),
 }
 
 

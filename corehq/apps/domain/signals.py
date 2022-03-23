@@ -2,7 +2,7 @@ from django.dispatch import Signal, receiver
 from django.db.models.signals import post_save
 from .models import AllowedUCRExpressionSettings
 
-commcare_domain_post_save = Signal(providing_args=["domain"])
+commcare_domain_post_save = Signal()  # providing args: domain
 
 
 @receiver(post_save, sender=AllowedUCRExpressionSettings)

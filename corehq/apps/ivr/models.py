@@ -27,7 +27,7 @@ class Call(UUIDGeneratorMixin, Log):
     """ Call Metadata """
 
     # True if the call was answered, False if not
-    answered = models.NullBooleanField(default=False)
+    answered = models.BooleanField(null=True, default=False)
 
     # Length of the call in seconds
     duration = models.IntegerField(null=True)
@@ -40,12 +40,12 @@ class Call(UUIDGeneratorMixin, Log):
 
     # If True, on hangup, a partial form submission will occur if the
     # survey is not yet completed
-    submit_partial_form = models.NullBooleanField(default=False)
+    submit_partial_form = models.BooleanField(null=True, default=False)
 
     # Only matters when submit_partial_form is True.
     # If True, case side effects are applied to any partial form submissions,
     # otherwise they are excluded.
-    include_case_side_effects = models.NullBooleanField(default=False)
+    include_case_side_effects = models.BooleanField(null=True, default=False)
 
     # The maximum number of times to retry a question with an invalid response
     # before hanging up
@@ -65,12 +65,12 @@ class Call(UUIDGeneratorMixin, Log):
     # This is set to True by the framework if the backend is preparing the first
     # IVR response when initiating the call. If True, then first_response is
     # the prepared first response
-    use_precached_first_response = models.NullBooleanField(default=False)
+    use_precached_first_response = models.BooleanField(null=True, default=False)
     first_response = models.TextField(null=True)
 
     # The case id of the case to submit the form against
     case_id = models.CharField(max_length=126, null=True)
-    case_for_case_submission = models.NullBooleanField(default=False)
+    case_for_case_submission = models.BooleanField(null=True, default=False)
 
     # The form unique id of the form that plays the survey for the call
     app_id = models.CharField(max_length=126, null=True)
