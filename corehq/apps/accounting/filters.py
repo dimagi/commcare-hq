@@ -237,8 +237,9 @@ class DateRangeFilter(BaseReportFilter):
 
     @classmethod
     def get_date_str(cls, request, date_type):
-        date_str = request.GET.get('%s_%s' % (cls.slug, date_type))
-        if date_str is None:
+        if request.method == 'GET':
+            date_str = request.GET.get('%s_%s' % (cls.slug, date_type))
+        elif request.method == 'POST':
             date_str = request.POST.get('%s_%s' % (cls.slug, date_type))
         return date_str
 

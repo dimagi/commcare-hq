@@ -2,7 +2,6 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from django.http.request import QueryDict
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -162,10 +161,6 @@ def apps_update_calculated_properties():
 
 @task(ignore_result=True)
 def export_all_rows_task(report_class_name, report_state, recipient_list=None, subject=None):
-    GET_data = QueryDict('', mutable=True)
-    GET_data.update(report_state['request']['GET'])
-    report_state['request']['GET'] = GET_data
-
     report = object.__new__(get_report_class(report_class_name))
     report.set_report_parameters(report_state)
     report.rendered_as = 'export'
