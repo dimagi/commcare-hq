@@ -919,6 +919,8 @@ def submit_app_data_drilldown_form(request, domain):
         CreateNewFormFeedView,
         CreateODataCaseFeedView,
         CreateODataFormFeedView,
+        CreateGoogleSheetCaseView,
+        CreateGoogleSheetFormView,
     )
 
     if is_odata:
@@ -928,6 +930,13 @@ def submit_app_data_drilldown_form(request, domain):
         else:
             export_tag = create_form.cleaned_data['form']
             cls = CreateODataFormFeedView
+    elif is_live_google_sheet:
+        if create_form.cleaned_data['model_type'] == "case":
+            export_tag = create_form.cleaned_data['case_type']
+            cls = CreateGoogleSheetCaseView
+        else:
+            export_tag = create_form.cleaned_data['form']
+            cls - CreateGoogleSheetFormView
     elif is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
@@ -1126,7 +1135,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
     @property
     def create_export_form(self):
         form = CreateExportTagForm(True, True)
-        form.fields['model_type'].label = _("Feed Type")
+        form.fields['model_type'].label = _("Sheet Type")
 
         model_type_choices = [
             ('', _("Select field type")),
