@@ -35,7 +35,7 @@ def create_linked_keyword(domain_link, keyword_id):
                 keyword=keyword.keyword, domain=domain_link.linked_domain)
         )
 
-    keyword_actions = keyword.keywordaction_set.all()
+    keyword_actions = list(keyword.keywordaction_set.all())
 
     keyword.upstream_id = keyword.id
     keyword.id = None
