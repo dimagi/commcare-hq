@@ -78,4 +78,6 @@ branches:
     - ap/ucr-renaming # Amit March 21
     - ml/amend-report-pickle-pr # Minha March 22
     - ap/sql-case-repeater # Amit March 23
+    - rp/gsheet/create-livegooglesheetview # Rynhard March 23
+    - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
 submodules: { }
