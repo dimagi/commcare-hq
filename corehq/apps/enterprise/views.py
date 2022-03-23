@@ -449,6 +449,6 @@ def update_enterprise_permissions_source_domain(request, domain):
 
 
 class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
-    page_title = ugettext_lazy("Manage Mobile Workers")
+    page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
     urlname = 'enterprise_manage_mobile_workers'

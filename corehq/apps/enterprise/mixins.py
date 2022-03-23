@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import (
     HttpResponseRedirect,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
