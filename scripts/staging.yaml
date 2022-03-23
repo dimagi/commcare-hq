@@ -78,4 +78,5 @@ branches:
     - ml/case-sharing-feature-discoverability # Minha March 17
     - ap/ucr-renaming # Amit March 21
     - ml/amend-report-pickle-pr # Minha March 22
+    - ap/sql-case-repeater # Amit March 23
 submodules: { }
