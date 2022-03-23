@@ -1174,6 +1174,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
             data['editUrl'] = '#IntegratedExportLimitReachedModal'
         return data
 
+<<<<<<< HEAD
     def _download_view(self, export):
         # If this isn't added in it will cause the listview to not populate. Will not show up in the UI
         from corehq.apps.export.views.download import DownloadNewCaseExportView, DownloadNewFormExportView
@@ -1181,6 +1182,8 @@ class LiveGoogleSheetListHelper(ExportListHelper):
             return DownloadNewFormExportView
         return DownloadNewCaseExportView
 
+=======
+>>>>>>> created edit classes
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditLiveGoogleSheetCaseView, EditLiveGoogleSheetFormView
         if isinstance(export, FormExportInstance):
