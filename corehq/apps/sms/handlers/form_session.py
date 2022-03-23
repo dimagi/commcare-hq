@@ -21,7 +21,7 @@ from corehq.apps.sms.messages import (
     MSG_INVALID_INT_RANGE,
     MSG_INVALID_LONG,
     MSG_INVALID_TIME,
-    MSG_MULTIPLE_SESSIONS,
+    MSG_GENERIC_ERROR,
     MSG_TOUCHFORMS_DOWN,
     get_message,
 )
@@ -61,7 +61,7 @@ def form_session_handler(verified_number, text, msg):
                     session.mark_completed(False)  # this will also release the channel
                     session.save()
                     send_sms_to_verified_number(
-                        verified_number, get_message(MSG_MULTIPLE_SESSIONS, verified_number)
+                        verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
                     )
                     return True
                 if not session.session_is_open:
@@ -78,7 +78,7 @@ def form_session_handler(verified_number, text, msg):
                 verified_number.domain, verified_number.owner_id
             )
             if multiple:
-                send_sms_to_verified_number(verified_number, get_message(MSG_MULTIPLE_SESSIONS, verified_number))
+                send_sms_to_verified_number(verified_number, get_message(MSG_GENERIC_ERROR, verified_number))
                 return True
 
         if session:
