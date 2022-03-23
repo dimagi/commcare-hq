@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from dimagi.utils.logging import notify_error
+
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
@@ -9,13 +11,32 @@ from corehq.apps.sms.api import (
     log_sms_exception,
     send_sms_to_verified_number,
 )
-from corehq.apps.sms.messages import *
+from corehq.apps.sms.messages import (
+    MSG_CHOICE_OUT_OF_RANGE,
+    MSG_FIELD_REQUIRED,
+    MSG_INVALID_CHOICE,
+    MSG_INVALID_DATE,
+    MSG_INVALID_FLOAT,
+    MSG_INVALID_INT,
+    MSG_INVALID_INT_RANGE,
+    MSG_INVALID_LONG,
+    MSG_INVALID_TIME,
+    MSG_MULTIPLE_SESSIONS,
+    MSG_TOUCHFORMS_DOWN,
+    get_message,
+)
 from corehq.apps.sms.util import format_message_list, get_date_format
-from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
-from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
-    get_channel_for_contact
+from corehq.apps.smsforms.app import (
+    _responses_to_text,
+    get_events_from_responses,
+    get_responses,
+)
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+    get_channel_for_contact,
+)
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from dimagi.utils.logging import notify_error
 
 
 def form_session_handler(verified_number, text, msg):
