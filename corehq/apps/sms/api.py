@@ -665,6 +665,8 @@ def get_inbound_phone_entry(msg):
                         }
                     )
 
+            # NOTE: I don't think the backend could ever be global here since global backends
+            # don't have a 'domain' and so the toggles would never be activated
             if not backend.is_global:
                 p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
                 return (
