@@ -180,7 +180,7 @@ class TestGetInboundPhoneEntry(TestCase):
     @flag_enabled("ONE_PHONE_NUMBER_MULTIPLE_CONTACTS")
     def test_get_inbound_phone_entry__one_phone_number_multiple_contacts_on__session_different_domain(self):
         """Phone number returned belongs to a domain which does not have access to this backend.
-        TODO: This should probably be an error"""
+        TODO: This should probably be an error or it should fall back to 'lenient' query"""
         channel = SMSChannel(self.domain2_backend.couch_id, self.phone_number)
         info = RunningSessionInfo(uuid.uuid4().hex, "fake-owner-2")
         XFormsSessionSynchronization._set_running_session_info_for_channel(channel, info, 60)

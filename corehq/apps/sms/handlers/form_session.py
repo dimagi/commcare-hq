@@ -52,6 +52,18 @@ def form_session_handler(verified_number, text, msg):
             running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
             if running_session_info.session_id:
                 session = SQLXFormsSession.by_session_id(running_session_info.session_id)
+                if session.connection_id != verified_number.owner_id:
+                    notify_error("SMS response contact does not match open session contact", details={
+                        "session_id": session.session_id,
+                        "phone_number_id": verified_number.couch_id,
+                        "message_id": msg.couch_id
+                    })
+                    session.mark_completed(False)  # this will also release the channel
+                    session.save()
+                    send_sms_to_verified_number(
+                        verified_number, get_message(MSG_MULTIPLE_SESSIONS, verified_number)
+                    )
+                    return True
                 if not session.session_is_open:
                     # This should never happen. But if it does we should set the channel free
                     # and act like there was no available session
