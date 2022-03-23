@@ -17,7 +17,9 @@ faceted query), filtered by a provided list of domains and a report date range.
     histo_data = domains_after_date.run().aggregations.date.buckets_list
 """
 from . import filters
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class DomainES(HQESQuery):
@@ -45,6 +47,20 @@ class DomainES(HQESQuery):
             created_by_user,
             self_started,
         ] + super(DomainES, self).builtin_filters
+
+
+class ElasticDomain(ElasticDocumentAdapter):
+
+    _index_name = "hqdomains_2021-03-08"
+    type = "hqdomain"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def non_test_domains():
