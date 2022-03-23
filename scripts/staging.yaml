@@ -64,7 +64,7 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/mrm/base # Graham Feb 8
-    - gh/form-version-bug # Graham Feb 15
+    # - gh/form-version-bug # Graham Feb 15
     # - gh/erm/consolidate-enterprise-roles # Graham Feb 20
     # - nh/loadtest_users_ga+others  # Norman Mar 2
     # - ad/multivalued-search-functions # Addison Mar 2
