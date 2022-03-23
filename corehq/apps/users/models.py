@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -17,8 +17,8 @@ from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -47,7 +47,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
-from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.dates import (
+    force_to_datetime,
+    get_date_from_month_and_year_string,
+)
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
@@ -301,16 +304,16 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
     # because these are in JSON and cannot be serialized
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,
     # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
-    APP_EDITOR = ugettext_noop("App Editor")
-    READ_ONLY = ugettext_noop("Read Only")
-    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
-    BILLING_ADMIN = ugettext_noop("Billing Admin")
+    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
+    APP_EDITOR = gettext_noop("App Editor")
+    READ_ONLY = gettext_noop("Read Only")
+    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
+    BILLING_ADMIN = gettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -3096,6 +3099,12 @@ class UserHistory(models.Model):
         ]
 
 
+class DeactivateMobileWorkerTriggerUpdateMessage:
+    UPDATED = 'updated'
+    CREATED = 'created'
+    DELETED = 'deleted'
+
+
 class DeactivateMobileWorkerTrigger(models.Model):
     """
     This determines if a Mobile Worker / CommCareUser is to be deactivated
@@ -3121,3 +3130,41 @@ class DeactivateMobileWorkerTrigger(models.Model):
         for chunked_ids in chunked(user_ids, 100):
             bulk_auto_deactivate_commcare_users(chunked_ids, domain)
             cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()
+
+    @classmethod
+    def update_trigger(cls, domain, user_id, deactivate_after):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not deactivate_after:
+            if existing_trigger.exists():
+                existing_trigger.delete()
+                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+            # noop
+            return
+        if isinstance(deactivate_after, str):
+            try:
+                deactivate_after = get_date_from_month_and_year_string(deactivate_after)
+            except ValueError:
+                raise ValueError("Deactivate After Date is not in MM-YYYY format")
+        if isinstance(deactivate_after, date):
+            if existing_trigger.exists():
+                trigger = existing_trigger.first()
+                if trigger.deactivate_after == deactivate_after:
+                    # don't update or record a message
+                    return
+                trigger.deactivate_after = deactivate_after
+                trigger.save()
+                return DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+            else:
+                cls.objects.create(
+                    domain=domain,
+                    user_id=user_id,
+                    deactivate_after=deactivate_after,
+                )
+                return DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+
+    @classmethod
+    def get_deactivate_after_date(cls, domain, user_id):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not existing_trigger.exists():
+            return None
+        return existing_trigger.first().deactivate_after

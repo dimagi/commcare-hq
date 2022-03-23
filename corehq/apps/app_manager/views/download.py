@@ -10,7 +10,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 
 from django.urls import Resolver404
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 

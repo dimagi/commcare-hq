@@ -2,7 +2,7 @@ import six.moves.urllib.parse
 from collections import namedtuple
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 
 def dropdown_dict(title, url=None, html=None,

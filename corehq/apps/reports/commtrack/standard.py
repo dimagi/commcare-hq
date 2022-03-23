@@ -1,6 +1,6 @@
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -71,7 +71,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
 
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Stock Status by Product')
+    name = gettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
@@ -231,9 +231,10 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Inventory by Location')
+    name = gettext_noop('Inventory by Location')
     slug = SimplifiedInventoryDataSource.slug
-    special_notice = ugettext_noop('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
+    special_notice = gettext_noop('A maximum of 100 locations will be shown. '
+                                  'Filter by location if you need to see more.')
     exportable = True
     emailable = True
     fields = [
@@ -280,7 +281,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Aggregate Inventory')
+    name = gettext_noop('Aggregate Inventory')
     slug = StockStatusDataSource.slug
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
