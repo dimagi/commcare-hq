@@ -387,6 +387,17 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
         return export_instance
 
 
+class CreateGoogleSheetCaseView(LiveGoogleSheetMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_gsheet_case_feed'
+    page_title = ugettext_lazy("Create Google Sheet Case Export")
+    metric_name = 'Live Google Sheet Case'
+
+
+class CreateGoogleSheetFormView(LiveGoogleSheetMixin, CreateNewCustomFormExportView):
+    urlname = 'new_gsheet_form_feed'
+    page_title = ugettext_lazy("Create Google Sheet Form Export")
+    metric_name = 'Live Google Sheet Form'
+
 @location_safe
 class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'

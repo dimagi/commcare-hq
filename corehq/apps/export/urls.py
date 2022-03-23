@@ -59,6 +59,8 @@ from corehq.apps.export.views.new import (
     CreateNewFormFeedView,
     CreateODataCaseFeedView,
     CreateODataFormFeedView,
+    CreateGoogleSheetCaseView,
+    CreateGoogleSheetFormView,
     DeleteNewCustomExportView,
 )
 from corehq.apps.export.views.utils import (
@@ -140,6 +142,12 @@ urlpatterns = [
     url(r"^custom/new/odata_form_feed/create$",
         CreateODataFormFeedView.as_view(),
         name=CreateODataFormFeedView.urlname),
+    url(r"^custom/new/live_google_sheet_case/create$",
+        CreateGoogleSheetCaseView.as_view(),
+        name=CreateGoogleSheetCaseView.urlname),
+    url(r"^custom/new/live_google_sheet_form/create$",
+        CreateGoogleSheetFormView.as_view(),
+        name=CreateGoogleSheetFormView.urlname),
     url(r"^custom/new/case_daily_saved/create$",
         CreateNewDailySavedCaseExport.as_view(),
         name=CreateNewDailySavedCaseExport.urlname),
