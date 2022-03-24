@@ -35,7 +35,7 @@ from .analytics.esaccessors import (
     get_form_ids_with_multimedia,
     scroll_case_names,
 )
-from .app_config import get_report_class
+from .const import get_report_class
 
 logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
