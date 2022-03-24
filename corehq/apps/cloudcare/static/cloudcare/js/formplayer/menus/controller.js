@@ -180,7 +180,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
-        var templateForms = detailObject.get('templateForms') || [];
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -188,9 +187,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
-            obj.templateForm = templateForms[i];
             obj.id = i;
-            if (obj.templateForm === 'markdown') {
+            if (obj.style.displayFormat === 'Markdown') {
                 obj.html = DOMPurify.sanitize(md.render(details[i]));
             }
             detailModel.push(obj);

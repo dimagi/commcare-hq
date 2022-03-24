@@ -4,9 +4,8 @@ fixture
 sniffer
 psutil>5.1.3  # for memory profiling
 django-extensions
-ipython
+ipython  # for nicer django shell experience
 wheel
-transifex-client
 gnureadline
 git-build-branch
 

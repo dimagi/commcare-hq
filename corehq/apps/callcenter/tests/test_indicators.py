@@ -33,7 +33,7 @@ from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
@@ -139,7 +139,7 @@ class BaseCCTests(TestCase):
         super(BaseCCTests, self).tearDown()
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(user.domain, user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
@@ -307,11 +307,8 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self, mock):
-        user_case = (
-            CaseAccessors(self.cc_domain.name)
-            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
-        )
-
+        user_case = CommCareCase.objects.get_case_by_external_id(
+            self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
             self.cc_domain.default_timezone,
@@ -390,10 +387,8 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self, mock):
-        user_case = (
-            CaseAccessors(self.cc_domain.name)
-            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
-        )
+        user_case = CommCareCase.objects.get_case_by_external_id(
+            self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,

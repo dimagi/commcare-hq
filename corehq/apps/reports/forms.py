@@ -1,8 +1,8 @@
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from memoized import memoized
 
@@ -105,9 +105,9 @@ class SavedReportConfigForm(forms.Form):
 
 class ScheduledReportForm(forms.Form):
     INTERVAL_CHOICES = [
-        ("daily", ugettext("Daily")),
-        ("weekly", ugettext("Weekly")),
-        ("monthly", ugettext("Monthly"))
+        ("daily", gettext("Daily")),
+        ("weekly", gettext("Weekly")),
+        ("monthly", gettext("Monthly"))
     ]
 
     config_ids = forms.MultipleChoiceField(
@@ -176,13 +176,13 @@ class ScheduledReportForm(forms.Form):
 
         domain = kwargs.get('initial', {}).get('domain', None)
         if domain is not None and HOURLY_SCHEDULED_REPORT.enabled(domain, NAMESPACE_DOMAIN):
-            self.fields['interval'].choices.insert(0, ("hourly", ugettext("Hourly")))
-            self.fields['interval'].widget.choices.insert(0, ("hourly", ugettext("Hourly")))
+            self.fields['interval'].choices.insert(0, ("hourly", gettext("Hourly")))
+            self.fields['interval'].widget.choices.insert(0, ("hourly", gettext("Hourly")))
 
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    ugettext("Configure Scheduled Report"),
+                    gettext("Configure Scheduled Report"),
                     'config_ids',
                     'interval',
                     'day',
@@ -212,9 +212,9 @@ class ScheduledReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
-        if cleaned_data["interval"] == "daily":
+        if cleaned_data.get("interval") == "daily":
             del cleaned_data["day"]
-        if cleaned_data["interval"] == "hourly":
+        if cleaned_data.get("interval") == "hourly":
             del cleaned_data["day"]
             del cleaned_data["hour"]
         _verify_email(cleaned_data)

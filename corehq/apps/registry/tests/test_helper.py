@@ -11,8 +11,8 @@ from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.schema import RegistrySchemaBuilder
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
 from corehq.apps.users.models import Permissions
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -32,7 +32,7 @@ class TestDataRegistryHelper(SimpleTestCase):
 
     def test_get_case(self):
         mock_case = _mock_case("a", "domain1")
-        with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
+        with patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             case = self.helper.get_case("case1", _mock_user(), "app")
         self.assertEqual(case, mock_case)
         self.log_data_access.assert_called_with("user", "domain1", "app", filters={
@@ -42,28 +42,28 @@ class TestDataRegistryHelper(SimpleTestCase):
 
     def test_get_case_type_not_in_registry(self):
         mock_case = _mock_case("other-type", "domain1")
-        with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case), \
+        with patch.object(CommCareCase.objects, 'get_case', return_value=mock_case), \
              self.assertRaisesMessage(RegistryAccessException, "'other-type' not available in registry"):
             self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_not_found(self):
         with self.assertRaises(CaseNotFound), \
-             patch.object(CaseAccessorSQL, 'get_case', side_effect=CaseNotFound):
+             patch.object(CommCareCase.objects, 'get_case', side_effect=CaseNotFound):
             self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_domain_not_in_registry(self):
         mock_case = _mock_case("a", "other-domain")
         with self.assertRaisesMessage(RegistryAccessException, "Data not available in registry"), \
-             patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
+             patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", _mock_user(), "app")
         self.log_data_access.not_called()
 
     def test_get_case_access_to_current_domain_allowed_even_if_user_has_no_permission(self):
         mock_case = _mock_case("a", "domain1")
         mock_user = _mock_user(has_permission=False)
-        with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
+        with patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", mock_user, "app")
         self.log_data_access.assert_called_with("user", "domain1", "app", filters={
             "case_type": "a",
@@ -74,13 +74,13 @@ class TestDataRegistryHelper(SimpleTestCase):
         mock_case = _mock_case("a", "domain2")
         mock_user = _mock_user(has_permission=False)
         with self.assertRaisesMessage(RegistryAccessException, "User not permitted to access registry data"),\
-             patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
+             patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", mock_user, "app")
 
     def test_get_case_access_to_other_domain_allowed_if_user_has_permission(self):
         mock_case = _mock_case("a", "domain2")
         mock_user = _mock_user(has_permission=True)
-        with patch.object(CaseAccessorSQL, 'get_case', return_value=mock_case):
+        with patch.object(CommCareCase.objects, 'get_case', return_value=mock_case):
             self.helper.get_case("case1", mock_user, "app")
         self.log_data_access.assert_called_with("user", "domain2", "app", filters={
             "case_type": "a",
@@ -180,7 +180,7 @@ class TestGetCaseHierarchy(TestCase):
 
     @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
     def test_get_case_hierarchy(self):
-        case = CaseAccessorSQL.get_case(self.parent_case_id)
+        case = CommCareCase.objects.get_case(self.parent_case_id)
         cases = self.helper.get_case_hierarchy(self.domain, None, [case])
         self.assertEqual({case.case_id for case in cases}, {
             self.grand_parent_case_id_closed, self.host_case_id, self.grand_parent_case_id,
@@ -190,8 +190,8 @@ class TestGetCaseHierarchy(TestCase):
     @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
     def test_get_case_hierarchy_multiple_cases_no_duplicates(self):
         starting_cases = [
-            CaseAccessorSQL.get_case(self.parent_case_id),
-            CaseAccessorSQL.get_case(self.extension_case_id)
+            CommCareCase.objects.get_case(self.parent_case_id),
+            CommCareCase.objects.get_case(self.extension_case_id)
         ]
         all_cases = self.helper.get_case_hierarchy(self.domain, None, starting_cases)
         counter = Counter([c.case_id for c in all_cases])
@@ -205,8 +205,8 @@ class TestGetCaseHierarchy(TestCase):
     @patch.object(DataRegistryHelper, '_check_user_has_access', new=Mock())
     def test_get_case_hierarchy_across_domains(self):
         starting_cases = [
-            CaseAccessorSQL.get_case(self.parent_case_id),
-            CaseAccessorSQL.get_case(self.invited_domain_child_id)
+            CommCareCase.objects.get_case(self.parent_case_id),
+            CommCareCase.objects.get_case(self.invited_domain_child_id)
         ]
         all_cases = self.helper.get_multi_domain_case_hierarchy(None, starting_cases)
         counter = Counter([c.case_id for c in all_cases])

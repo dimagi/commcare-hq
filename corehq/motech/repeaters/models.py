@@ -74,7 +74,7 @@ from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 from requests.exceptions import ConnectionError, Timeout, RequestException
 
@@ -85,10 +85,8 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -375,7 +373,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
             # to prevent serializing the repeater in the celery task payload
             RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
 
-        repeat_record.attempt_forward_now(fire_synchronously)
+        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -672,7 +670,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -795,7 +793,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         if host_index and host_index.referenced_type in self.white_listed_case_types:
             return False
 
-        transaction = CaseAccessorSQL.get_most_recent_form_transaction(payload.case_id)
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
         if transaction:
             # prevent chaining updates
             return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
@@ -1128,7 +1126,7 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def attempt_forward_now(self, is_retry=False, fire_synchronously=False):
+    def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
 
         def is_ready():
@@ -1158,9 +1156,9 @@ class RepeatRecord(Document):
         task = retry_process_repeat_record if is_retry else process_repeat_record
 
         if fire_synchronously:
-            task(self)
+            task(self._id)
         else:
-            task.delay(self)
+            task.delay(self._id)
 
     def requeue(self):
         self.cancelled = False
@@ -1345,7 +1343,7 @@ def attempt_forward_now(repeater: SQLRepeater):
         return
     if not repeater.is_ready:
         return
-    process_repeater.delay(repeater)
+    process_repeater.delay(repeater.id)
 
 
 def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:

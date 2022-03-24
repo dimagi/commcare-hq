@@ -104,17 +104,7 @@ class Attachment(IsImageMixin):
         """
         if isinstance(self.raw_content, (bytes, str)):
             return BytesIO(self.content)
-        fileobj = self.raw_content.open()
-
-        # TODO remove when Django 1 is no longer supported
-        if fileobj is None:
-            assert not isinstance(self.raw_content, BlobMeta), repr(self)
-            # work around Django 1.11 bug, fixed in 2.0
-            # https://github.com/django/django/blob/1.11.15/django/core/files/base.py#L131-L137
-            # https://github.com/django/django/blob/2.0/django/core/files/base.py#L128
-            return self.raw_content
-
-        return fileobj
+        return self.raw_content.open()
 
     @memoized
     def content_md5(self):
@@ -151,6 +141,20 @@ class Attachment(IsImageMixin):
             content_type=self.content_type,
             properties=self.properties,
         )
+
+
+@attr.s
+class AttachmentContent:
+    content_type = attr.ib()
+    content_stream = attr.ib()
+
+    @property
+    def content_body(self):
+        # WARNING an error is likely if this property is accessed more than once
+        # self.content_stream is a file-like object, and most file-like objects
+        # will error on subsequent read attempt once closed (by with statement).
+        with self.content_stream as stream:
+            return stream.read()
 
 
 class AttachmentMixin(SaveStateMixin):

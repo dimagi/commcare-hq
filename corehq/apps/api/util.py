@@ -2,7 +2,7 @@ import datetime
 
 from dateutil.parser import parse
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.bundle import Bundle

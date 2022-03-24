@@ -57,7 +57,6 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
@@ -340,16 +339,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
-
-    def test_get_form_counts_for_domains(self):
-        self._send_form_to_es()
-        self._send_form_to_es()
-        self._send_form_to_es(domain='other')
-
-        self.assertEqual(
-            get_form_counts_for_domains([self.domain, 'other']),
-            {self.domain: 2, 'other': 1}
-        )
 
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
@@ -1261,7 +1250,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = self._send_case_to_es()
         case.external_id = '123'
         case.save()
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
         es_case = transform_case_for_elasticsearch(case_json)

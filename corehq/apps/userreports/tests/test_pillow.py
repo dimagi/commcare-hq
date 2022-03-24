@@ -42,10 +42,10 @@ from corehq.apps.userreports.tests.utils import (
     skip_domain_filter_patch,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flaky_slow
 
 
 def setup_module():
@@ -482,7 +482,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
@@ -509,11 +509,11 @@ class IndicatorPillowTest(TestCase):
 
         # delete the case and verify it's removed
         since = self.pillow.get_change_feed().get_latest_offsets()
-        CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.soft_delete_cases(case.domain, [case.case_id])
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(0, self.adapter.get_query_object().count())
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_filter_no_longer_pass(self, datetime_mock):
@@ -562,14 +562,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -650,14 +650,14 @@ class ReuseEvaluationContextTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -731,20 +731,21 @@ class AsyncIndicatorTest(TestCase):
         self.config.validations = []
         self.config.save()
 
+    @flaky_slow
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -782,14 +783,14 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
@@ -816,6 +817,7 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
 
+    @flaky_slow
     def test_async_invalid_data(self):
         # re-fetch from DB to bust object caches
         self.config = DataSourceConfiguration.get(self.config.data_source_id)
@@ -842,14 +844,14 @@ class AsyncIndicatorTest(TestCase):
         for i in range(3):
             form, cases = post_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -914,7 +916,7 @@ def _save_sql_case(doc):
     with drop_connected_signals(sql_case_post_save):
         form, cases = post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],

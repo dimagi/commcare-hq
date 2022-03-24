@@ -79,6 +79,7 @@ accounting
  0057_add_sms_report_toggle
  0058_delete_linked_projects_role
  0059_add_lite_release_management_priv
+ 0060_add_loadtest_users_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -86,6 +87,9 @@ admin
 aggregate_ucrs
  0001_initial_squashed_0008_auto_20180625_1105 (8 squashed migrations)
  0002_auto_20180827_1148
+analytics
+ 0001_initial
+ 0002_data_point_unique_constraint
 api
  0001_initial
  0002_alter_permissions
@@ -116,6 +120,7 @@ app_manager
  0018_migrate_case_search_labels
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
+ 0021_migrate_case_search_itemset_ids
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -147,6 +152,8 @@ blobs
  0009_delete_blobexpiration
  0010_auto_20191023_0938
  0011_blobmeta_compressed
+ 0012_rename_indexes
+ 0013_drop_icds_cas_index
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -232,6 +239,7 @@ data_analytics
  0007_auto_20160819_1423
  0008_auto_20161114_1903
  0009_remove_girrow_wam
+ 0010_maltrow_last_run_date
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -298,6 +306,8 @@ domain
  0007_auto_20200924_1753
  0008_use_livequery
  0009_restrict_mob_access_from_FF
+ 0010_projectlimit
+ 0011_alloweducrexpressionsettings
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -308,6 +318,7 @@ enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
+ 0004_enterprisemobileworkersettings
 export
  0001_initial
  0002_datafile
@@ -337,6 +348,7 @@ fixtures
  0001_initial
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
+ 0004_userlookuptablestatus
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -434,6 +446,8 @@ form_processor
  0091_auto_20190603_2023
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
+formplayer_api
+ 0001_drop_old_tables
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -545,6 +559,11 @@ oauth2_provider
  0002_auto_20190406_1805
  0003_auto_20201211_1314
  0004_auto_20200902_2022
+oauth_integrations
+ 0001_initial
+ 0002_livegooglesheetschedule
+ 0003_livegooglesheetrefreshstatus
+ 0004_auto_20220304_1139
 ota
  0001_initial
  0002_alter_db_index
@@ -674,6 +693,7 @@ scheduling_partitioned
  0005_timed_schedule_instance_schedule_revision
  0006_unique_indexes
  0007_index_cleanup
+ 0008_track_attempts
 sessions
  0001_initial
 sites
@@ -985,6 +1005,7 @@ users
  0039_merge_20211007_0556
  0040_add_repr_and_changed_by_repr
  0041_migrate_reprs
+ 0042_deactivatemobileworkertrigger
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

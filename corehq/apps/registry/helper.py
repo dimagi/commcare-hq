@@ -4,7 +4,7 @@ from operator import attrgetter
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import RegistryPermissionCheck
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.timer import TimingContext
 
 
@@ -52,9 +52,7 @@ class DataRegistryHelper:
             See ``corehq.apps.registry.models.RegistryAuditHelper.data_accessed``
         :return:
         """
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-
-        case = CaseAccessorSQL.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id)
         self.check_data_access(couch_user, [case.type], case.domain)
         self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
             "case_type": case.type,
@@ -85,7 +83,7 @@ class DataRegistryHelper:
         # using livequery to get related cases matches the semantics of case claim
         all_case_ids, indices = get_live_case_ids_and_indices(domain, case_ids, TimingContext())
         new_case_ids = list(all_case_ids - case_ids)
-        new_cases = PrefetchIndexCaseAccessor(CaseAccessors(domain), indices).get_cases(new_case_ids)
+        new_cases = PrefetchIndexCaseAccessor(domain, indices).get_cases(new_case_ids)
 
         return cases + new_cases
 

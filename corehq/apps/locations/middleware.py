@@ -1,12 +1,12 @@
 from django.utils.deprecation import MiddlewareMixin
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from .permissions import is_location_safe, location_restricted_response
 
-RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
+RESTRICTED_USER_UNASSIGNED_MSG = gettext_lazy("""
 Your user role allows you to access data based on your assigned location in the
 organization hierarchy. You do not currently have an assigned location, and
 will be unable to access CommCareHQ until that is corrected. Please contact

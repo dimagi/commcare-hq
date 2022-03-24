@@ -6,6 +6,7 @@ from dimagi.utils.dates import (
     DateSpan,
     add_months_to_date,
     get_start_and_end_dates_of_month,
+    get_date_from_month_and_year_string,
 )
 from django.test import SimpleTestCase
 from django.http import HttpRequest, QueryDict
@@ -205,3 +206,15 @@ class StartAndEndDatesOfMonthTest(SimpleTestCase):
         date_start, date_end = get_start_and_end_dates_of_month(2021, 2)
         self.assertEqual(date_start, date(2021, 2, 1))
         self.assertEqual(date_end, date(2021, 2, 28))
+
+
+class DateFromMonthAndYearStringTest(SimpleTestCase):
+    def test_correct_format_is_parsed(self):
+        self.assertEqual(
+            get_date_from_month_and_year_string('02-2022'),
+            date(2022, 2, 1)
+        )
+
+    def test_invalid_format_throws_error(self):
+        with self.assertRaises(ValueError):
+            get_date_from_month_and_year_string('03-03-2022')

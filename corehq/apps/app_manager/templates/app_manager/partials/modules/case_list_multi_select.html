@@ -1,0 +1,26 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if request|toggle_enabled:"USH_CASE_LIST_MULTI_SELECT" %}
+
+  <div class="panel panel-appmanager" data-bind="with: shortScreen">
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "Multi-Select Case List Options" %}
+      </h4>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-sm-8">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: multiSelectEnabled"/>
+              {% trans "Enable multi-select case list" %}
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endif %}

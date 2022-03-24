@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
+    get_auto_filter_configurations, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -894,6 +894,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_variables',
         'custom_xml',
         'case_tile_configuration',
+        'multi_select',
         'print_template',
         'search_properties',
         'search_default_properties',
@@ -1074,6 +1075,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
+    multi_select = params.get('multi_select', None)
 
     app = get_app(domain, app_id)
 
@@ -1120,6 +1122,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+    if multi_select is not None:
+        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:
@@ -1449,16 +1453,16 @@ def _init_biometrics_enroll_module(app, lang):
 
     enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
     enroll.actions.open_case = OpenCaseAction(
-        name_path="/data/name",
+        name_update=ConditionalCaseUpdate(question_path="/data/name"),
         condition=FormActionCondition(type='always'),
     )
     enroll.actions.update_case = UpdateCaseAction(
         update={
-            'simprintsId': '/data/simprintsId',
-            'rightIndex': '/data/rightIndex',
-            'rightThumb': '/data/rightThumb',
-            'leftIndex': '/data/leftIndex',
-            'leftThumb': '/data/leftThumb',
+            'simprintsId': ConditionalCaseUpdate(question_path='/data/simprintsId'),
+            'rightIndex': ConditionalCaseUpdate(question_path='/data/rightIndex'),
+            'rightThumb': ConditionalCaseUpdate(question_path='/data/rightThumb'),
+            'leftIndex': ConditionalCaseUpdate(question_path='/data/leftIndex'),
+            'leftThumb': ConditionalCaseUpdate(question_path='/data/leftThumb'),
         },
         condition=FormActionCondition(type='always'),
     )

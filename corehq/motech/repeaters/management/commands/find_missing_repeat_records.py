@@ -10,8 +10,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
@@ -175,7 +174,7 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
     # get all cases in domain
     case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
     case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
-    cases = CaseAccessors(domain).get_cases(case_ids)
+    cases = CommCareCase.objects.get_cases(case_ids, domain)
 
     missing_case_counts = defaultdict(int)
     for case in cases:

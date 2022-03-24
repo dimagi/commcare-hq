@@ -41,7 +41,6 @@ def _reprocess_archive_stubs():
 @serial_task("reprocess_archive_stubs", queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
     # Check for archive stubs
-    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from corehq.form_processor.models import XFormInstance
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
@@ -57,11 +56,11 @@ def reprocess_archive_stubs():
             xform = XFormInstance.objects.get_form(stub.xform_id, stub.domain)
             # If the history wasn't updated the first time around, run the whole thing again.
             if not stub.history_updated:
-                FormAccessors.do_archive(xform, stub.archive, stub.user_id, trigger_signals=True)
+                XFormInstance.objects.do_archive(xform, stub.archive, stub.user_id, trigger_signals=True)
 
             # If the history was updated the first time around, just send the update to kafka
             else:
-                FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
+                XFormInstance.objects.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
         except Exception:
             # Errors should not prevent processing other stubs
             notify_exception(None, "Error processing UnfinishedArchiveStub")

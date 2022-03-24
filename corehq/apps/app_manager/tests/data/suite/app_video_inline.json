@@ -451,15 +451,42 @@
                                 "type": "always"
                             },
                             "update": {
-                                "address": "/data/address",
-                                "enum": "/data/enum",
-                                "filter": "/data/filter",
-                                "invisible": "/data/invisible",
-                                "late-flag": "/data/late-flag",
-                                "my_date": "/data/date",
-                                "phone": "/data/phone",
-                                "plain": "/data/plain",
-                                "time-ago": "/data/time-ago"
+                                "address": {
+                                  "question_path": "/data/address",
+                                  "update_mode": "always"
+                                },
+                                "enum": {
+                                  "question_path": "/data/enum",
+                                  "update_mode": "always"
+                                },
+                                "filter": {
+                                  "question_path": "/data/filter",
+                                  "update_mode": "always"
+                                },
+                                "invisible": {
+                                  "question_path": "/data/invisible",
+                                  "update_mode": "always"
+                                },
+                                "late-flag": {
+                                  "question_path": "/data/late-flag",
+                                  "update_mode": "always"
+                                },
+                                "my_date": {
+                                  "question_path": "/data/date",
+                                  "update_mode": "always"
+                                },
+                                "phone": {
+                                  "question_path": "/data/phone",
+                                  "update_mode": "always"
+                                },
+                                "plain": {
+                                  "question_path": "/data/plain",
+                                  "update_mode": "always"
+                                },
+                                "time-ago": {
+                                  "question_path": "/data/time-ago",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {
@@ -552,7 +579,10 @@
                                 "type": "always"
                             },
                             "update": {
-                                "name": "/data/rename"
+                                "name": {
+                                      "question_path": "/data/rename",
+                                      "update_mode": "always"
+                                    }
                             }
                         },
                         "update_referral": {

@@ -5,7 +5,7 @@ import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import dateutil
 from couchdbkit import ResourceNotFound

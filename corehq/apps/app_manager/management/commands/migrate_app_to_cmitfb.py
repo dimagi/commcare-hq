@@ -176,7 +176,7 @@ def iter_forms(app):
 
 def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
     updated = False
-    xform = XForm(form.source)
+    xform = XForm(form.source, domain=app.domain)
     refs = {xform.resolve_path(ref): prop for ref, prop in preloads.items()}
     for node in xform.model_node.findall("{f}setvalue"):
         if (node.attrib.get('ref') in refs
@@ -204,7 +204,7 @@ def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
 
 def fix_user_props_caseref(app, module, form, form_ix, dry):
     updated = False
-    xform = XForm(form.source)
+    xform = XForm(form.source, domain=app.domain)
     refs = {xform.resolve_path(ref): vals
         for ref, vals in form.case_references.load.items()
         if any(v.startswith("#user/") for v in vals)}
@@ -295,7 +295,7 @@ class SkipApp(Exception):
 
 
 def migrate_preloads(app, form, preload_items, form_ix, dry):
-    xform = XForm(form.source)
+    xform = XForm(form.source, domain=app.domain)
     if form.case_references:
         load_refs = form.case_references.load
     else:

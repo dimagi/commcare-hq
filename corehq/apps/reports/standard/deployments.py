@@ -6,8 +6,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -54,7 +54,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 @location_safe
 class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
-    name = ugettext_lazy("Application Status")
+    name = gettext_lazy("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
@@ -540,7 +540,7 @@ def _bootstrap_class(obj, severe, warn):
 
 
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
-    name = ugettext_lazy("Application Error Report")
+    name = gettext_lazy("Application Error Report")
     slug = "application_error"
     ajax_pagination = True
     sortable = False
@@ -637,8 +637,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
-    name = ugettext_lazy("Aggregate User Status")
-    description = ugettext_lazy("See the last activity of your project's users in aggregate.")
+    name = gettext_lazy("Aggregate User Status")
+    description = gettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',

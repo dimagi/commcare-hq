@@ -7,7 +7,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 from .core import SubmissionError, UserError
 
@@ -37,6 +37,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     owner_id = jsonobject.StringProperty()
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex)
+    close = jsonobject.BooleanProperty(default=False)
     _is_case_creation = False
 
     _allow_dynamic_properties = False
@@ -68,6 +69,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             owner_id=_if_specified(self.owner_id),
             create=self._is_case_creation,
             update=dict(self.properties),
+            close=self.close,
             index={
                 name: IndexAttrs(index.case_type, index.case_id, index.relationship)
                 for name, index in self.indices.items()
@@ -152,7 +154,7 @@ def _get_bulk_updates(domain, all_data, user):
 
 
 def _missing_cases(domain, case_ids):
-    real_case_ids = CaseAccessors(domain).get_case_ids_that_exist(case_ids)
+    real_case_ids = CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
     return set(case_ids) - set(real_case_ids)
 
 

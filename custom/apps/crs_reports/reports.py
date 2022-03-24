@@ -3,10 +3,10 @@
 # completed (2021-05-12) will either cause errors or incorrect report output.
 from datetime import timedelta
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 from django.utils.html import format_html
 from django.urls import reverse, NoReverseMatch
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 
 from corehq.apps.es import filters
@@ -14,7 +14,7 @@ from corehq.apps.es.cases import CaseES
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.base import restore_property_dict
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
@@ -23,7 +23,7 @@ from dimagi.utils.parsing import json_format_date
 def visit_completion_counter(case):
     mother_counter = 0
     child_counter = 0
-    case_obj = CaseAccessorSQL.get_case(case['_id'])
+    case_obj = CommCareCase.objects.get_case(case['_id'])
     baby_case = [c for c in case_obj.get_subcases() if c.type == 'baby']
     for i in range(1, 8):
         if "pp_%s_done" % i in case:
@@ -92,7 +92,7 @@ class HNBCReportDisplay(CaseDisplay):
 
     @property
     def baby_name(self):
-        case = CaseAccessorSQL.get_case(self.case['_id'])
+        case = CommCareCase.objects.get_case(self.case['_id'])
 
         baby_case = [c for c in case.get_subcases() if c.type == 'baby']
         if baby_case:
@@ -183,7 +183,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
 class HBNCMotherReport(BaseHNBCReport):
 
-    name = ugettext_noop('Mother HBNC Form')
+    name = gettext_noop('Mother HBNC Form')
     slug = 'hbnc_mother_report'
     report_template_name = 'mothers_form_reports_template'
     default_case_type = 'pregnant_mother'
