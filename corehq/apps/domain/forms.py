@@ -1283,10 +1283,11 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 site_name = domain = domain_override
 
             couch_user = CouchUser.from_django_user(user)
-            if not couch_user:
-                continue
-
-            user_email = couch_user.get_email()
+            if couch_user:
+                user_email = couch_user.get_email()
+            # If there is no CouchUser then this could be a ConsumerUser
+            else:
+                user_email = user.email
             if not user_email:
                 continue
 
@@ -1334,9 +1335,10 @@ class HQSetPasswordForm(SetPasswordForm):
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
         couch_user = CouchUser.from_django_user(user)
-        couch_user.last_password_set = datetime.datetime.utcnow()
-        if commit:
-            couch_user.save()
+        if couch_user:
+            couch_user.last_password_set = datetime.datetime.utcnow()
+            if commit:
+                couch_user.save()
         return user
 
 

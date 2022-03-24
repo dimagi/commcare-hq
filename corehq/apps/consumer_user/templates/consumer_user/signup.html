@@ -1,0 +1,63 @@
+{% extends "consumer_user/consumer_user_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}{% trans "Sign Up" %}{% endblock title %}
+
+{% block background_content %}
+<div class="bg-container">
+  <div class="bg-full-cover-fixed bg-registration b-lazy b-loaded"
+       style="background-image: url({% static 'hqwebapp/images/molly.jpg' %})"></div>
+  <div class="bg-overlay"></div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+{% compress css %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/registration.less' %}" />
+{% endcompress %}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="reg-form-container sign-in-container">
+        <div class="form-bubble form-bubble-lg">
+          <h2 class="text-center">{% trans "Sign Up" %}</h2>
+          <p>
+            {% blocktrans %}
+              Thank you for accepting your invitation for <strong>{{domain}}</strong>. By creating an account you will be able to access your personal information stored in this system.
+            {% endblocktrans %}
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary" type="submit">{% trans "Submit" %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="reg-form-container sign-in-container">
+        <div class="form-bubble form-bubble-lg">
+          <p>
+          {% blocktrans %}
+            If you already have a username that you want to link to the invitation that was sent to <strong>{{ invitation_email }}</strong>
+          {% endblocktrans %}
+          </p>
+          <a class="btn btn-primary" href="{{ login_url }}">{% trans "Sign In" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

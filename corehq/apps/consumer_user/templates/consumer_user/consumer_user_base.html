@@ -1,0 +1,53 @@
+{% extends "hqwebapp/full_screen.html" %}
+{% load i18n %}
+
+{% block navigation %}
+  <div id="hq-navigation"
+    class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
+    <div class="container-fluid">
+      <div class="navbar-header hq-header">
+        <a href="{% url "consumer_user:homepage" %}" class="navbar-brand">
+          <!-- navbar.less supplies the default logo -->
+          <div></div>
+        </a>
+      </div>
+      {% if hide_menu %}
+        <nav class="navbar-menus navbar-signin" role="navigation">
+          <div class="nav-settings-bar pull-right">
+            <a href="{% url "consumer_user:login" %}" class="btn btn-primary navbar-btn">{% trans "Sign In"%}
+            </a>
+          </div>
+        </nav>
+
+      {% else %}
+        <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="{% url "consumer_user:change_password" %}">
+                {% trans "Change Password" %}
+              </a>
+            </li>
+            <li>
+              <a href="{% url "consumer_user:change_contact_details" %}">
+                {% trans "Change Contact Details" %}
+              </a>
+            </li>
+
+          </ul>
+          <div class="nav-settings-bar pull-right">
+            <ul class="nav navbar-nav">
+              <li>
+                <a href="{% url "consumer_user:logout" %}">
+                  <i class="icon-signout fa fa-sign-out"></i>
+                  {% trans 'Sign Out' %}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock navigation %}

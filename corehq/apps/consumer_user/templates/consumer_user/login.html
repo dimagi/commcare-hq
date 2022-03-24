@@ -1,0 +1,23 @@
+{% extends "login_and_password/login.html" %}
+{% load i18n %}
+{% block content %}
+  {{ block.super }}
+  {% if register_url %}
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="reg-form-container sign-in-container">
+            <div class="form-bubble form-bubble-lg">
+              <p>
+                {% blocktrans %}
+                  By signing in, you are about to accept a invitation for <strong>{{ invitation_email }}</strong>. If you want to create a new user.
+                {% endblocktrans %}
+              </p>
+              <a class="btn btn-primary" href="{{ register_url }}">{% trans "Sign Up" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
