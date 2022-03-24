@@ -34,7 +34,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, ProjectLimit, TransferDomainRequest
+from corehq.apps.domain.models import Domain, ProjectLimit, ProjectLimitType, TransferDomainRequest
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -88,7 +88,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @memoized
     def internal_settings_form(self):
         try:
-            gsheet_limit = ProjectLimit.objects.get(domain=self.domain_object)
+            gsheet_limit = ProjectLimit.objects.get(
+                domain=self.domain_object,
+                limit_type=ProjectLimitType.LIVE_GOOGLE_SHEETS
+            )
         except ProjectLimit.DoesNotExist:
             gsheet_limit = None
 

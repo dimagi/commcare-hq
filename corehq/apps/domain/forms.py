@@ -1163,9 +1163,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    "to send an email to the partner.").format(dimagi_user.username)
             self.add_error('dimagi_contact', msg)
 
-    def save_gsheet_limit(self, domain, limit_value):
+    def save_gsheet_limit(self, domain, limit_value, limit_type):
         try:
-            limit = ProjectLimit.objects.get(domain=domain)
+            limit = ProjectLimit.objects.get(domain=domain, limit_type=limit_type)
 
             if self.cleaned_data.get('use_custom_gsheet_limit') != 'Y':
                 limit.delete()
@@ -1193,7 +1193,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
-        self.save_gsheet_limit(domain, self.cleaned_data['gsheet_limit'])
+        self.save_gsheet_limit(domain, self.cleaned_data['gsheet_limit', ProjectLimitType.LIVE_GOOGLE_SHEETS])
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
