@@ -10,9 +10,10 @@ from corehq.apps.accounting.management.commands.change_role_for_software_plan_ve
     change_role_for_software_plan_version,
 )
 from corehq.apps.accounting.models import (
+    SoftwarePlan,
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
-    Subscription, SoftwarePlan,
+    Subscription,
 )
 from corehq.apps.toggle_ui.utils import find_static_toggle
 
