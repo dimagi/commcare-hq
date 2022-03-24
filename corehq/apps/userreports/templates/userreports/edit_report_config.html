@@ -20,7 +20,7 @@
              class="btn btn-default track-usage-link"
              data-category="UCR"
              data-action="View Source"
-             data-label="Report Config">{% trans 'Custom Web Report Source' %}</a>
+             data-label="Report Config">{% trans 'Custom Web Report JSON' %}</a>
         </div>
         {% if not report.is_static%}
           {% include 'userreports/partials/delete_report_button.html' with report_id=report.get_id %}
