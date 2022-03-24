@@ -15,11 +15,25 @@ def _add_release_management_to_enterprise(apps, schema_editor):
     )
 
 
+def _reverse():
+    call_command(
+        'cchq_prbac_revoke_privs',
+        RELEASE_MANAGEMENT,
+        skip_edition='Paused,Community,Standard,Pro,Advanced',
+        delete_privs=False,
+        check_privs_exist=True,
+        noinput=True,
+    )
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ('accounting', '0061_remove_enterprise_v1'),
     ]
 
     operations = [
-        migrations.RunPython(_add_release_management_to_enterprise),
+        migrations.RunPython(
+            _add_release_management_to_enterprise,
+            reverse_code=_reverse
+        ),
     ]
