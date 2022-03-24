@@ -12,6 +12,7 @@ from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 
 DOMAIN = "dhis2-test"
@@ -49,7 +50,7 @@ class TestDhis2EventsHelpers(TestCase):
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
-
+        Dhis2Repeater.set_db(self.fakedb)
         self.form = {
             "domain": DOMAIN,
             "form": {
@@ -99,11 +100,10 @@ class TestDhis2EventsHelpers(TestCase):
         config_form = Dhis2ConfigForm(data=self.config)
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
-        self.repeater = Dhis2Repeater()
+        conn = ConnectionSettings.objects.create(url="http://dummy.com", domain=DOMAIN)
+        self.repeater = Dhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
         self.repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
         self.repeater.save()
-
-        Dhis2Repeater.set_db(self.fakedb)
 
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
