@@ -85,6 +85,8 @@ RELEASE_MANAGEMENT = 'release_management'
 
 LITE_RELEASE_MANAGEMENT = 'lite_release_management'
 
+LOADTEST_USERS = 'loadtest_users'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -131,6 +133,7 @@ MAX_PRIVILEGES = [
     DEFAULT_EXPORT_SETTINGS,
     RELEASE_MANAGEMENT,
     LITE_RELEASE_MANAGEMENT,
+    LOADTEST_USERS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -189,4 +192,5 @@ class Titles(object):
             DEFAULT_EXPORT_SETTINGS: _("Default Export Settings"),
             RELEASE_MANAGEMENT: _("Enterprise Release Management"),
             LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
+            LOADTEST_USERS: _('Loadtest Users'),
         }.get(privilege, privilege)
