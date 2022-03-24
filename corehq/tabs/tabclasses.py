@@ -544,6 +544,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_google_sheet(self):
+        from corehq.apps.export.views.utils import user_can_view_google_sheet
+        return user_can_view_google_sheet(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -576,6 +582,7 @@ class ProjectDataTab(UITab):
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 ODataFeedListView,
+                LiveGoogleSheetListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
@@ -596,6 +603,12 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                })
+
+            if self.can_view_google_sheet:
+                export_data_views.append({
+                    'title': _(LiveGoogleSheetListView.page_title),
+                    'url': reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
                 })
 
         elif self.can_export_data:
@@ -621,6 +634,7 @@ class ProjectDataTab(UITab):
                 DashboardFeedListView,
                 DailySavedExportListView,
                 ODataFeedListView,
+                LiveGoogleSheetListView,
             )
             from corehq.apps.export.views.new import (
                 CreateNewCustomFormExportView,
@@ -631,6 +645,8 @@ class ProjectDataTab(UITab):
                 CreateNewCaseFeedView,
                 CreateODataCaseFeedView,
                 CreateODataFormFeedView,
+                CreateGoogleSheetCaseView,
+                CreateGoogleSheetFormView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -814,6 +830,25 @@ class ProjectDataTab(UITab):
                     'subpages': subpages
                 })
 
+            if self.can_view_google_sheet:
+                subpages = [
+                    {
+                        'title': _(CreateGoogleSheetCaseView.page_title),
+                        'urlname': CreateGoogleSheetCaseView.urlname,
+                    },
+                    {
+                        'title': _(CreateGoogleSheetFormView.page_title),
+                        'urlname': CreateGoogleSheetFormView.urlname,
+                    }
+                ]
+                export_data_views.append({
+                    'title': _(LiveGoogleSheetListView.page_title),
+                    'url': reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-google',
+                    'show_in_dropdown': False,
+                    'subpages': subpages
+                })
+
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
 
@@ -935,6 +970,12 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
                 url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
+            ))
+        if self.can_view_google_sheet:
+            from corehq.apps.export.views.list import LiveGoogleSheetListView
+            items.append(dropdown_dict(
+                _(LiveGoogleSheetListView.page_title),
+                url=reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
             ))
 
         if items:
