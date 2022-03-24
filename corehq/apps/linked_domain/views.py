@@ -386,14 +386,14 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         try:
             validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
         except NoDownstreamDomainsProvided:
-            error_message = ugettext("No downstream project spaces were selected. Please contact support.")
+            error_message = gettext("No downstream project spaces were selected. Please contact support.")
         except DomainLinkNotFound:
-            error_message = ugettext(
+            error_message = gettext(
                 "Links between one or more project spaces do not exist. Please contact support."
             )
         except AttemptedPushViolatesConstraints:
             formatted_domains = ', '.join(in_data['linked_domains'])
-            error_message = ugettext('''
+            error_message = gettext('''
                 The attempted push from {} to {} is disallowed. Please contact support.
             '''.format(self.domain, formatted_domains))
             notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
