@@ -100,28 +100,50 @@ def submit_unfinished_form(session):
 
     The form is only submitted if the smsforms session has not yet completed.
     """
-    # Get and clean the raw xml
+    formplayer_interface = FormplayerInterface(session.session_id, session.domain)
     try:
-        response = FormplayerInterface(session.session_id, session.domain).get_raw_instance()
-        # Formplayer's ExceptionResponseBean includes the exception message,
-        # stautus ("error"), url, and type ("text")
-        if response.get('status') == 'error':
-            raise TouchformsError(response.get('exception'))
-        xml = response['output']
+        xml = _fetch_xml(formplayer_interface)
     except InvalidSessionIdException:
         return
+
+    remove_case_actions = not session.include_case_updates_in_partial_submissions
+    cleaned_xml = _clean_xml_for_partial_submission(xml, should_remove_case_actions=remove_case_actions)
+
+    result = submit_form_locally(cleaned_xml, session.domain, app_id=session.app_id, partial_submission=True)
+    session.submission_id = result.xform.form_id
+
+
+def _fetch_xml(formplayer_interface):
+    """
+    :param formplayer_interface: FormplayerInterface obj
+    :return: serialized instance xml with relevant nodes only
+    """
+    response = formplayer_interface.get_raw_instance()
+    # Formplayer's ExceptionResponseBean includes the exception message,
+    # status ("error"), url, and type ("text")
+    if response.get('status') == 'error':
+        raise TouchformsError(response.get('exception'))
+    return response['output']
+
+
+def _clean_xml_for_partial_submission(xml, should_remove_case_actions):
+    """
+    Helper method to cleanup partially completed xml for submission
+    :param xml: partially completed xml
+    :param should_remove_case_actions: if True, remove case actions (create, update, close) from xml
+    :return: byte str of cleaned xml
+    """
     root = XML(xml)
     case_tag_regex = re.compile(r"^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
     meta_tag_regex = re.compile(r"^(\{.*\}){0,1}meta$")
     timeEnd_tag_regex = re.compile(r"^(\{.*\}){0,1}timeEnd$")
-    current_timstamp = json_format_datetime(utcnow())
+    current_timestamp = json_format_datetime(utcnow())
     for child in root:
         if case_tag_regex.match(child.tag) is not None:
             # Found the case tag
             case_element = child
-            case_element.set("date_modified", current_timstamp)
-            if not session.include_case_updates_in_partial_submissions:
-                # Remove case actions (create, update, close)
+            case_element.set("date_modified", current_timestamp)
+            if should_remove_case_actions:
                 child_elements = [case_action for case_action in case_element]
                 for case_action in child_elements:
                     case_element.remove(case_action)
@@ -129,9 +151,5 @@ def submit_unfinished_form(session):
             # Found the meta tag, now set the value for timeEnd
             for meta_child in child:
                 if timeEnd_tag_regex.match(meta_child.tag):
-                    meta_child.text = current_timstamp
-    cleaned_xml = tostring(root)
-    
-    # Submit the xml
-    result = submit_form_locally(cleaned_xml, session.domain, app_id=session.app_id, partial_submission=True)
-    session.submission_id = result.xform.form_id
+                    meta_child.text = current_timestamp
+    return tostring(root)

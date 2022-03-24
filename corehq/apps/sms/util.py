@@ -5,7 +5,7 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -16,6 +16,8 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.toggles import IS_CONTRACTOR
 from corehq.util.quickcache import quickcache
 
@@ -96,7 +98,8 @@ def format_message_list(message_list):
                 message_start = message_start[0:extra_space-3] + "..."
         return message_start + question
     """
-    # Some gateways (yo) allow a longer message to be sent and handle splitting it up on their end, so for now just join all messages together
+    # Some gateways (yo) allow a longer message to be sent and handle splitting
+    # it up on their end, so for now just join all messages together
     return " ".join(message_list)
 
 
@@ -129,16 +132,18 @@ def register_sms_contact(domain, case_type, case_name, user_id,
     return case_id
 
 
-def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_phone_number_is_verified=None, contact_backend_id=None, language_code=None, time_zone=None):
+def update_contact(domain, case_id, user_id, contact_phone_number=None,
+        contact_phone_number_is_verified=None, contact_backend_id=None,
+        language_code=None, time_zone=None):
     context = {
-        "case_id" : case_id,
-        "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
-        "user_id" : user_id,
-        "contact_phone_number" : contact_phone_number,
-        "contact_phone_number_is_verified" : contact_phone_number_is_verified,
-        "contact_backend_id" : contact_backend_id,
-        "language_code" : language_code,
-        "time_zone" : time_zone
+        "case_id": case_id,
+        "date_modified": json_format_datetime(datetime.datetime.utcnow()),
+        "user_id": user_id,
+        "contact_phone_number": contact_phone_number,
+        "contact_phone_number_is_verified": contact_phone_number_is_verified,
+        "contact_backend_id": contact_backend_id,
+        "language_code": language_code,
+        "time_zone": time_zone
     }
     submit_case_block_from_template(domain, "sms/xml/update_contact.xml", context, user_id=user_id)
 
@@ -194,11 +199,9 @@ def clean_text(text):
 
 
 def get_contact(domain, contact_id):
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-    from corehq.form_processor.exceptions import CaseNotFound
     contact = None
     try:
-        contact = CaseAccessors(domain).get_case(contact_id)
+        contact = CommCareCase.objects.get_case(contact_id, domain)
     except (ResourceNotFound, CaseNotFound):
         pass
 
@@ -251,7 +254,7 @@ def get_backend_name(backend_id):
     from corehq.apps.sms.models import SQLMobileBackend
     try:
         return SQLMobileBackend.load(backend_id, is_couch_id=True).name
-    except:
+    except Exception:
         return None
 
 
@@ -275,11 +278,8 @@ def set_domain_default_backend_to_test_backend(domain):
 
 @quickcache(['domain', 'case_id'], timeout=60 * 60)
 def is_case_contact_active(domain, case_id):
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-    from corehq.form_processor.exceptions import CaseNotFound
-
     try:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
     except (ResourceNotFound, CaseNotFound):
         return False
 

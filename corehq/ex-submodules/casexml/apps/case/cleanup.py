@@ -10,8 +10,8 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.auth import AuthContext
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCase
 
 
 def close_cases(case_ids, domain, user, device_id, case_db=None):
@@ -32,7 +32,7 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         user_id = user
         username = user
 
-    case_blocks = [ElementTree.tostring(CaseBlock.deprecated_init(
+    case_blocks = [ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
         close=True,
@@ -100,11 +100,11 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
     """
     claim_id = uuid4().hex
     if not (host_type and host_name):
-        case = CaseAccessors(domain).get_case(host_id)
+        case = CommCareCase.objects.get_case(host_id, domain)
         host_type = case.type
         host_name = case.name
     identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    claim_case_block = CaseBlock.deprecated_init(
+    claim_case_block = CaseBlock(
         create=True,
         case_id=claim_id,
         case_name=host_name,
@@ -140,7 +140,7 @@ def get_first_claim(domain, user_id, case_id):
     """
     Returns the first claim by user_id of case_id, or None
     """
-    case = CaseAccessors(domain).get_case(case_id)
+    case = CommCareCase.objects.get_case(case_id, domain)
     identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
     try:
         return next((c for c in case.get_subcases(identifier)

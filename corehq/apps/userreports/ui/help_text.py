@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 TABLE_ID = _(
     "Choose something short, unique, and memorable using "
@@ -41,3 +41,6 @@ NAMED_EXPRESSIONS = _(
     'wherever an expression goes using: <code>{"type": "named", "name": "myvarname"}</code>')
 NAMED_FILTER = _('These behave exactly like named expressions (see above), except the values '
                  'should be a valid filter, and they can be used wherever filters are used above.')
+ANALYTICS = _(
+    'Enabling this will let this data source and the data be imported into Analytics'
+)

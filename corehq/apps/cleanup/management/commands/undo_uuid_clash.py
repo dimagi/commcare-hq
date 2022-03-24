@@ -9,11 +9,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.commtrack.processing import process_stock
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL,
-)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import (
@@ -21,6 +17,7 @@ from corehq.form_processor.backends.sql.update_strategy import (
 )
 from corehq.form_processor.models import (
     CaseTransaction,
+    CommCareCase,
     LedgerTransaction,
     RebuildWithReason,
     XFormInstance,
@@ -89,7 +86,7 @@ def undo_form_edits(form_tuples, logger):
                 operation=XFormOperation.UUID_DATA_FIX,
                 date=operation_date)
             )
-            FormAccessorSQL.update_form(form)
+            XFormInstance.objects.update_form(form)
 
         logger.log('Form edit undone: {}, {}({})'.format(
             live_form.form_id, deprecated_form.form_id, deprecated_form.original_form_id
@@ -97,7 +94,7 @@ def undo_form_edits(form_tuples, logger):
         cases_to_rebuild[live_form.domain].update(affected_cases)
         ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
         logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
-        logger.log('Ledgers to rebuild: {}'.format(','.join([l.as_id() for l in affected_ledgers])))
+        logger.log('Ledgers to rebuild: {}'.format(','.join([line.as_id() for line in affected_ledgers])))
 
     return cases_to_rebuild, ledgers_to_rebuild
 
@@ -154,11 +151,11 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
 
 
 def rebuild_cases(cases_to_rebuild_by_domain, logger):
-        detail = RebuildWithReason(reason='undo UUID clash')
-        for domain, case_ids in cases_to_rebuild_by_domain.items():
-            for case_id in case_ids:
-                FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
-                logger.log('Case %s rebuilt' % case_id)
+    detail = RebuildWithReason(reason='undo UUID clash')
+    for domain, case_ids in cases_to_rebuild_by_domain.items():
+        for case_id in case_ids:
+            FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
+            logger.log('Case %s rebuilt' % case_id)
 
 
 def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
@@ -189,7 +186,7 @@ class Command(BaseCommand):
 
         if case_ids:
             form_ids = set()
-            for case in CaseAccessorSQL.get_cases(case_ids):
+            for case in CommCareCase.objects.get_cases(case_ids):
                 assert not domain or case.domain == domain, 'Case "%s" not in domain "%s"' % (case.case_id, domain)
                 form_ids.update(case.xform_ids)
 

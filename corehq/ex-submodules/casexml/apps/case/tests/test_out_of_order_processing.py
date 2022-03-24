@@ -2,7 +2,7 @@ import os
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import softer_assert
 
 
@@ -20,7 +20,7 @@ class OutOfOrderCaseTest(TestCase):
                 xml_data = f.read()
             submit_form_locally(xml_data, 'test-domain')
 
-        case = CaseAccessors('test-domain').get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
+        case = CommCareCase.objects.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe', 'test-domain')
         self.assertEqual('from the update form', case.case_json['pupdate'])
         self.assertEqual('from the create form', case.case_json['pcreate'])
         # NOTE the SQL form processor works differently than the Couch one did:

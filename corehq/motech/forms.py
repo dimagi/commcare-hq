@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -199,7 +199,7 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def _clean_url(self, url):
         try:
-            validate_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+            validate_user_input_url_for_repeaters(url, domain=self.domain, src='motech_save_config')
         except CannotResolveHost:
             # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
             # The reason this is important is because we want to accept configurations where the host has not

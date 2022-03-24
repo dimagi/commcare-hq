@@ -27,7 +27,7 @@ from corehq.apps.userreports.reports.specs import (
 )
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 
 
@@ -168,14 +168,14 @@ class TestExpandedColumn(TestCase):
 
     def _new_case(self, properties):
         id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=id,
             case_type=self.case_type,
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
-        return CaseAccessors(self.domain).get_case(id)
+        return CommCareCase.objects.get_case(id, self.domain)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
         """

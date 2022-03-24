@@ -4,7 +4,7 @@ from decimal import Decimal
 import logging
 
 import iso8601
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -109,7 +109,7 @@ def get_ledger_case_action_intents(xform, case_ids):
 
 def get_all_stock_report_helpers_from_form(xform):
     """
-    Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
+    Given an instance of an XFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.
     """
     form_xml = xform.get_xml_element()

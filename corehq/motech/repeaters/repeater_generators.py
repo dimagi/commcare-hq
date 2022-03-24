@@ -7,7 +7,7 @@ from uuid import uuid4
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
@@ -19,7 +19,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -249,7 +249,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         else:
             case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
-        cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
+        cases_to_forward = CommCareCase.objects.get_cases(case_ids_to_forward, payload_doc.domain)
         case_ids_to_forward = set(case_ids_to_forward)
         included_case_types = payload_doc.get_case_property('case_types').split(' ')
         case_type_configs = {}
@@ -397,7 +397,6 @@ class CaseUpdateConfig:
         "registry_slug",
         "domain",
         "case_id",
-        "case_type",
     ]
 
     intent_case = attr.ib()
@@ -463,6 +462,8 @@ class CaseUpdateConfig:
         if self.create_case:
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+            if not self.case_type:
+                raise DataRegistryCaseUpdateError("'case_type' required when creating cases")
             kwargs = {
                 "create": True,
                 "case_type": self.case_type,
@@ -548,7 +549,7 @@ class CaseUpdateConfig:
                 return index_spec
 
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
+            index_case = CommCareCase.objects.get_case(self.index_create_case_id, self.domain)
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
@@ -592,7 +593,7 @@ class CaseUpdateConfig:
         if for_create:
             raise DataRegistryCaseUpdateError(f"Unable to create case as it already exists: {case_id}")
 
-        if case.domain != domain or case.type != case_type:
+        if case.domain != domain or (case_type and case.type != case_type):
             raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
 
         return case

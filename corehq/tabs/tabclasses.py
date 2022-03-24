@@ -1,14 +1,17 @@
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
 from django.utils.html import format_html, strip_tags
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
+
+from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -109,7 +112,7 @@ from corehq.tabs.utils import (
 
 
 class ProjectReportsTab(UITab):
-    title = ugettext_noop("Reports")
+    title = gettext_noop("Reports")
     view = "reports_home"
 
     url_prefix_formats = (
@@ -286,7 +289,7 @@ class ProjectReportsTab(UITab):
 
 
 class DashboardTab(UITab):
-    title = ugettext_noop("Dashboard")
+    title = gettext_noop("Dashboard")
     view = 'dashboard_default'
 
     url_prefix_formats = ('/a/{domain}/dashboard/project/',)
@@ -309,7 +312,7 @@ class DashboardTab(UITab):
 
 
 class SetupTab(UITab):
-    title = ugettext_noop("Setup")
+    title = gettext_noop("Setup")
     view = "default_commtrack_setup"
 
     url_prefix_formats = (
@@ -437,7 +440,7 @@ class SetupTab(UITab):
 
 
 class ProjectDataTab(UITab):
-    title = ugettext_noop("Data")
+    title = gettext_noop("Data")
     view = "data_interfaces_default"
     url_prefix_formats = (
         '/a/{domain}/data/',
@@ -840,7 +843,7 @@ class ProjectDataTab(UITab):
                 if edit_section:
                     edit_section[0][1].append(automatic_update_rule_list_view)
                 else:
-                    edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
             if self.can_deduplicate_cases:
                 from corehq.apps.data_interfaces.views import DeduplicationRuleListView
@@ -1006,7 +1009,7 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    title = ugettext_noop("Web Apps")
+    title = gettext_noop("Web Apps")
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
@@ -1027,7 +1030,7 @@ class CloudcareTab(UITab):
 
 
 class MessagingTab(UITab):
-    title = ugettext_noop("Messaging")
+    title = gettext_noop("Messaging")
     view = "sms_default"
 
     url_prefix_formats = (
@@ -1149,7 +1152,7 @@ class MessagingTab(UITab):
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
             supply_urls.append(
-                {'title': ugettext_lazy("Subscribe to SMS Reports"),
+                {'title': gettext_lazy("Subscribe to SMS Reports"),
                  'url': reverse(SubscribeSMSView.urlname, args=[self.domain])}
             )
 
@@ -1208,9 +1211,9 @@ class MessagingTab(UITab):
 
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             settings_urls.extend([
-                {'title': ugettext_lazy("General Settings"),
+                {'title': gettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
-                {'title': ugettext_lazy("Languages"),
+                {'title': gettext_lazy("Languages"),
                  'url': reverse('sms_languages', args=[self.domain])},
             ])
 
@@ -1304,7 +1307,7 @@ class MessagingTab(UITab):
 
 
 class ProjectUsersTab(UITab):
-    title = ugettext_noop("Users")
+    title = gettext_noop("Users")
     view = "users_default"
 
     url_prefix_formats = (
@@ -1595,7 +1598,7 @@ class ProjectUsersTab(UITab):
 
 
 class EnterpriseSettingsTab(UITab):
-    title = ugettext_noop("Enterprise Settings")
+    title = gettext_noop("Enterprise Settings")
 
     url_prefix_formats = (
         '/a/{domain}/enterprise/',
@@ -1607,6 +1610,7 @@ class EnterpriseSettingsTab(UITab):
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
         enterprise_views = []
+        enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
             enterprise_views.extend([
@@ -1629,7 +1633,7 @@ class EnterpriseSettingsTab(UITab):
                 ManageSSOEnterpriseView,
                 EditIdentityProviderEnterpriseView,
             )
-            enterprise_views.append({
+            manage_sso = {
                 'title': _(ManageSSOEnterpriseView.page_title),
                 'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
                 'subpages': [
@@ -1638,7 +1642,11 @@ class EnterpriseSettingsTab(UITab):
                         'urlname': EditIdentityProviderEnterpriseView.urlname,
                     },
                 ],
-            })
+            }
+            if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+                enterprise_user_management_views.append(manage_sso)
+            else:
+                enterprise_views.append(manage_sso)
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
@@ -1650,8 +1658,13 @@ class EnterpriseSettingsTab(UITab):
                     'subpages': [],
                     'show_in_dropdown': False,
                 })
-
         items.append((_('Manage Enterprise'), enterprise_views))
+        if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+            enterprise_user_management_views.append({
+                'title': _(ManageEnterpriseMobileWorkersView.page_title),
+                'url': reverse(ManageEnterpriseMobileWorkersView.urlname, args=[self.domain]),
+            })
+            items.append((_("User Management"), enterprise_user_management_views))
 
         if BillingAccount.should_show_sms_billable_report(self.domain):
             items.extend(EnterpriseReportDispatcher.navigation_sections(
@@ -1661,7 +1674,7 @@ class EnterpriseSettingsTab(UITab):
 
 
 class TranslationsTab(UITab):
-    title = ugettext_noop('Translations')
+    title = gettext_noop('Translations')
 
     url_prefix_formats = (
         '/a/{domain}/translations/',
@@ -1704,7 +1717,7 @@ class TranslationsTab(UITab):
 
 
 class ProjectSettingsTab(UITab):
-    title = ugettext_noop("Project Settings")
+    title = gettext_noop("Project Settings")
     view = 'domain_settings_default'
 
     url_prefix_formats = (
@@ -1855,6 +1868,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         RecoveryMeasuresHistory,
+        ManageDomainMobileWorkersView,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
@@ -1882,6 +1896,13 @@ def _get_administration_section(domain):
             'title': _(ManageReleasesByLocation.page_title),
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
+
+    if (toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(domain)
+            and not is_domain_enterprise(domain)):
+        administration.append(({
+            'title': _(ManageDomainMobileWorkersView.page_title),
+            'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
+        }))
 
     return administration
 
@@ -2058,7 +2079,7 @@ def _get_release_management_items(user, domain):
 
 
 class MySettingsTab(UITab):
-    title = ugettext_noop("My Settings")
+    title = gettext_noop("My Settings")
     view = 'default_my_settings'
     url_prefix_formats = ('/account/',)
 
@@ -2111,7 +2132,7 @@ class MySettingsTab(UITab):
 
 
 class AccountingTab(UITab):
-    title = ugettext_noop("Accounting")
+    title = gettext_noop("Accounting")
     view = "accounting_default"
 
     url_prefix_formats = ('/hq/accounting/',)
@@ -2172,7 +2193,7 @@ class AccountingTab(UITab):
 
 
 class SMSAdminTab(UITab):
-    title = ugettext_noop("SMS Connectivity & Billing")
+    title = gettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
 
     url_prefix_formats = ('/hq/sms/',)
@@ -2204,7 +2225,7 @@ class SMSAdminTab(UITab):
 
 
 class AdminTab(UITab):
-    title = ugettext_noop("Admin")
+    title = gettext_noop("Admin")
     view = "default_admin_report"
 
     url_prefix_formats = ('/hq/admin/',)

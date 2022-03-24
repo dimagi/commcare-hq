@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 
 from dimagi.utils.chunked import chunked
 
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import XFormInstance
 from corehq.util.log import with_progress_bar
 
@@ -14,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, user_id, **options):
         get_forms = XFormInstance.objects.get_forms
-        form_ids = FormAccessors(domain).get_form_ids_for_user(user_id)
+        form_ids = XFormInstance.objects.get_form_ids_for_user(domain, user_id)
         print("Found %s forms for user" % len(form_ids))
         response = input("Are you sure you want to archive them? (yes to proceed)")
         if response == 'yes':

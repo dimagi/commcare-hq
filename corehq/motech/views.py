@@ -1,10 +1,12 @@
+import csv
+import json
 import re
 from datetime import datetime, timedelta
 
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
@@ -14,6 +16,7 @@ from memoized import memoized
 from requests import RequestException
 
 from corehq import privileges, toggles
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -21,9 +24,8 @@ from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
-from no_exceptions.exceptions import Http400
-
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from no_exceptions.exceptions import Http400
 
 
 class Http409(Http400):
@@ -41,35 +43,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        filter_from_date = self.request.GET.get("filter_from_date",
-                                                _a_week_ago())
-        filter_to_date = self.request.GET.get("filter_to_date")
-        filter_payload = self.request.GET.get("filter_payload")
-        filter_url = self.request.GET.get("filter_url")
-        filter_status = self.request.GET.get("filter_status")
-
-        queryset = (RequestLog.objects
-                    .filter(domain=self.domain)
-                    .filter(timestamp__gte=filter_from_date))
-        if filter_to_date:
-            queryset = queryset.filter(timestamp__lte=filter_to_date)
-        if filter_payload:
-            queryset = queryset.filter(payload_id=filter_payload)
-        if filter_url:
-            queryset = queryset.filter(request_url__istartswith=filter_url)
-        if filter_status:
-            if re.match(r'^\d{3}$', filter_status):
-                queryset = queryset.filter(response_status=filter_status)
-            elif re.match(r'^\dxx$', filter_status.lower()):
-                # Filtering response status code by "2xx", "4xx", etc. will
-                # return all responses in that range
-                status_min = int(filter_status[0]) * 100
-                status_max = status_min + 99
-                queryset = (queryset.filter(response_status__gte=status_min)
-                            .filter(response_status__lt=status_max))
-            elif filter_status.lower() == "none":
-                queryset = queryset.filter(response_status=None)
-
+        queryset = _get_request_log_queryset(self.request, self.domain)
         return queryset.order_by('-timestamp').only(
             'timestamp',
             'payload_id',
@@ -114,6 +88,69 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     def page_url(self):
         pk = self.kwargs['pk']
         return reverse(self.urlname, args=[self.domain, pk])
+
+
+@login_or_api_key
+@require_permission(Permissions.edit_motech)
+def motech_log_export_view(request, domain):
+    """
+    Download ``RequestLog``s as CSV. Uses ``StreamingHttpResponse`` to
+    support large file sizes.
+    """
+
+    def as_utc_timestamp(timestamp):
+        """
+        Formats a datetime as a string that Postgres recognizes as a UTC
+        timestamp.
+        """
+        return timestamp.isoformat(sep=' ', timespec='milliseconds') + '+00'
+
+    def json_or_none(dict_):
+        if not dict_:
+            return None
+        return json.dumps(dict_)
+
+    def int_or_none(value):
+        if value is None:
+            return None
+        if value == '':
+            return None
+        return int(value)
+
+    def string_or_none(value):
+        if value is None:
+            return None
+        if value == '':
+            return None
+        return str(value)
+
+    fields = [
+        # attribute, column label, transform
+        ('timestamp', _('Timestamp'), as_utc_timestamp),
+        ('payload_id', _('Payload ID'), string_or_none),
+        ('request_method', _('Request Method'), lambda x: x),
+        ('request_url', _('Request URL'), lambda x: x),
+        ('request_body', _('Request Body'), string_or_none),
+        ('request_error', _('Error'), string_or_none),
+        ('response_status', _('Status Code'), int_or_none),
+        ('response_headers', _('Response Headers'), json_or_none),
+        ('response_body', _('Response Body'), string_or_none),
+    ]
+
+    def stream():
+        queryset = (_get_request_log_queryset(request, domain)
+                    .order_by('timestamp')
+                    .only(*[f[0] for f in fields]))
+        pseudo_buffer = PseudoBuffer()
+        writer = csv.writer(pseudo_buffer, dialect='excel')
+        yield writer.writerow([f[1] for f in fields])  # Header row
+        for request_log in queryset:
+            row = [f[2](getattr(request_log, f[0])) for f in fields]
+            yield writer.writerow(row)
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="remote_api_logs.csv"'
+    return response
 
 
 class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
@@ -294,6 +331,42 @@ def test_connection_settings(request, domain):
                 "success": False,
                 "response": "Try saving the connection first"
             })
+
+
+class PseudoBuffer:
+    def write(self, value):
+        return value
+
+
+def _get_request_log_queryset(request, domain):
+    filter_from_date = request.GET.get("filter_from_date", _a_week_ago())
+    filter_to_date = request.GET.get("filter_to_date")
+    filter_payload = request.GET.get("filter_payload")
+    filter_url = request.GET.get("filter_url")
+    filter_status = request.GET.get("filter_status")
+
+    queryset = (RequestLog.objects
+                .filter(domain=domain)
+                .filter(timestamp__gte=filter_from_date))
+    if filter_to_date:
+        queryset = queryset.filter(timestamp__lte=filter_to_date)
+    if filter_payload:
+        queryset = queryset.filter(payload_id=filter_payload)
+    if filter_url:
+        queryset = queryset.filter(request_url__istartswith=filter_url)
+    if filter_status:
+        if re.match(r'^\d{3}$', filter_status):
+            queryset = queryset.filter(response_status=filter_status)
+        elif re.match(r'^\dxx$', filter_status.lower()):
+            # Filtering response status code by "2xx", "4xx", etc. will
+            # return all responses in that range
+            status_min = int(filter_status[0]) * 100
+            status_max = status_min + 99
+            queryset = (queryset.filter(response_status__gte=status_min)
+                        .filter(response_status__lt=status_max))
+        elif filter_status.lower() == "none":
+            queryset = queryset.filter(response_status=None)
+    return queryset
 
 
 def _a_week_ago() -> str:

@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
@@ -9,7 +9,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.view_utils import get_case_or_404
@@ -84,9 +84,8 @@ def search_view(request, domain, fhir_version_name, resource_type):
     patient_case_id = request.GET.get('patient_id')
     if not patient_case_id:
         return JsonResponse(status=400, data={'message': "Please pass patient_id"})
-    case_accessor = CaseAccessors(domain)
     try:
-        patient_case = case_accessor.get_case(patient_case_id)
+        patient_case = CommCareCase.objects.get_case(patient_case_id, domain)
         if patient_case.is_deleted:
             return JsonResponse(status=400, data={'message': f"Patient with ID {patient_case_id} was removed"})
     except CaseNotFound:
@@ -101,8 +100,8 @@ def search_view(request, domain, fhir_version_name, resource_type):
         return JsonResponse(status=400,
                             data={'message': f"Resource type {resource_type} not available on {domain}"})
 
-    cases = case_accessor.get_reverse_indexed_cases([patient_case_id],
-                                                    case_types=case_types_for_resource_type, is_closed=False)
+    cases = CommCareCase.objects.get_reverse_indexed_cases(
+        domain, [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
     response = {
         'resourceType': "Bundle",
         "type": "searchset",

@@ -22,7 +22,6 @@ from ..registry import (
     registry_entry,
 )
 
-
 TEST_ES_MAPPING = {
     '_meta': {
         'comment': 'Bare bones index for ES testing',

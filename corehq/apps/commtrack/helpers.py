@@ -29,7 +29,7 @@ def make_supply_point(domain, location):
     user_id = const.get_commtrack_user_id(domain)
     owner_id = location.location_id
     kwargs = {'external_id': location.external_id} if location.external_id else {}
-    caseblock = CaseBlock.deprecated_init(
+    caseblock = CaseBlock(
         case_id=case_id,
         create=True,
         case_name=location.name,
@@ -57,7 +57,7 @@ def update_supply_point_from_location(supply_point, location):
 
     if are_different:
         kwargs = {'external_id': location.external_id} if location.external_id else {}
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             case_id=supply_point.case_id,
             create=False,
             case_name=location.name,

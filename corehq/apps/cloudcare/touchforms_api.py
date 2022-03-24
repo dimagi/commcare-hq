@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -58,7 +58,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CaseAccessors(self.domain).get_case(self.case_id)
+            self._case = CommCareCase.objects.get_case(self.case_id, self.domain)
         return self._case
 
     @property

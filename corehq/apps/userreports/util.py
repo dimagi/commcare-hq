@@ -6,16 +6,18 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
+    DataSourceConfigurationNotFoundError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -281,7 +283,7 @@ def get_report_config_or_not_found(domain, config_id):
     try:
         doc = ReportConfiguration.get_db().get(config_id)
         config = wrap_report_config_by_type(doc)
-    except (ResourceNotFound, KeyError):
+    except (ResourceNotFound, KeyError, ReportConfigurationNotFoundError):
         raise DocumentNotFound()
 
     if config.domain != domain:
@@ -290,7 +292,7 @@ def get_report_config_or_not_found(domain, config_id):
     return config
 
 
-def get_ucr_datasource_config_by_id(indicator_config_id):
+def get_ucr_datasource_config_by_id(indicator_config_id, allow_deleted=False):
     from corehq.apps.userreports.models import (
         id_is_static,
         StaticDataSourceConfiguration,
@@ -300,15 +302,18 @@ def get_ucr_datasource_config_by_id(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
     else:
         doc = DataSourceConfiguration.get_db().get(indicator_config_id)
-        return _wrap_data_source_by_doc_type(doc)
+        return _wrap_data_source_by_doc_type(doc, allow_deleted)
 
 
-def _wrap_data_source_by_doc_type(doc):
+def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
     from corehq.apps.userreports.models import (
         DataSourceConfiguration,
         RegistryDataSourceConfiguration,
     )
-    doc_type = doc["doc_type"].replace(DELETED_SUFFIX, '')
+    if is_deleted(doc) and not allow_deleted:
+        raise DataSourceConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(doc["doc_type"])
     return {
         "DataSourceConfiguration": DataSourceConfiguration,
         "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
@@ -320,7 +325,10 @@ def wrap_report_config_by_type(config):
         ReportConfiguration,
         RegistryReportConfiguration,
     )
-    return {
-        "ReportConfiguration": ReportConfiguration,
-        "RegistryReportConfiguration": RegistryReportConfiguration,
-    }[config["doc_type"]].wrap(config)
+    try:
+        return {
+            "ReportConfiguration": ReportConfiguration,
+            "RegistryReportConfiguration": RegistryReportConfiguration,
+        }[config["doc_type"]].wrap(config)
+    except KeyError:
+        raise ReportConfigurationNotFoundError()

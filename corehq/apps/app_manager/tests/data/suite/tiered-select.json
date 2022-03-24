@@ -378,7 +378,10 @@
                                 "type": "always"
                             },
                             "update": {
-                                "color": "/data/color"
+                                "color": {
+                                  "question_path": "/data/color",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {

@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
@@ -32,7 +32,6 @@ from sqlalchemy.util import immutabledict
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
@@ -66,6 +65,7 @@ from corehq.util.view_utils import absolute_reverse
 from smtplib import SMTPSenderRefused
 
 from .logging import ScheduledReportLogger
+from corehq.util.quickcache import quickcache
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
@@ -111,7 +111,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, skip=None, limit=None):
+                            stale=True, skip=None, limit=None, include_shared=False):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -127,7 +127,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if limit is not None:
             kwargs['limit'] = limit
 
-        result = cache_core.cached_view(
+        configs = cache_core.cached_view(
             db,
             "reportconfig/configs_by_domain",
             reduce=False,
@@ -137,7 +137,25 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             wrapper=cls.wrap,
             **kwargs
         )
-        return result
+
+        if include_shared:
+            user_configs_ids = [c._id for c in configs]
+            shared_configs = [c for c in cls.shared_on_domain(domain) if c._id not in user_configs_ids]
+            configs = configs + shared_configs
+
+        return configs
+
+    @classmethod
+    @quickcache(['domain', 'only_id'], timeout=1*60*60)
+    def shared_on_domain(cls, domain, only_id=False):
+        shared_config_ids = {
+            id_ for rn in ReportNotification.by_domain(domain, stale=False)
+            for id_ in rn.config_ids
+        }
+        if only_id:
+            return shared_config_ids
+        else:
+            return {ReportConfig.get(config_id) for config_id in shared_config_ids}
 
     @classmethod
     def default(self):
@@ -155,6 +173,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
+            'report_creator': self.owner.username,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
@@ -510,6 +529,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'slug': None,
             }] + localized_datespan_filters
 
+    def is_shared_on_domain(self):
+        config_ids = self.shared_on_domain(self.domain, only_id=True)
+        return self._id in config_ids
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -553,11 +576,23 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return notification
 
     @classmethod
+    def by_domain(cls, domain, stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
+        key = [domain]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
+    def _get_view_by_key(cls, key, **kwargs):
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
                                         include_docs=True, startkey=key, endkey=key + [{}],
@@ -803,11 +838,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _export_report(self, emails, title):
         from corehq.apps.reports.standard.deployments import ApplicationStatusReport
+        from corehq.apps.reports.standard.monitoring import CaseActivityReport
 
         for report_config in self.configs:
             mock_request = HttpRequest()
             mock_request.couch_user = self.owner
-            mock_request.user = self.owner.get_django_user()
             mock_request.domain = self.domain
             mock_request.couch_user.current_domain = self.domain
             mock_request.couch_user.language = self.language
@@ -818,20 +853,19 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
             request_data = vars(mock_request)
             request_data['couch_user'] = mock_request.couch_user.userID
-            if report_config.report_slug != ApplicationStatusReport.slug:
-                # ApplicationStatusReport doesn't have date filter
+            request_params = json_request(request_data['GET'])
+            if report_config.report_slug not in [ApplicationStatusReport.slug, CaseActivityReport.slug]:
+                # ApplicationStatusReport and CaseActivityReport don't have date filter
                 date_range = report_config.get_date_range()
-                start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-                datespan = DateSpan(start_date, end_date)
-                request_data['datespan'] = datespan
+                request_params['startdate'] = datetime.strptime(date_range['startdate'], '%Y-%m-%d').isoformat()
+                request_params['enddate'] = datetime.strptime(date_range['enddate'], '%Y-%m-%d').isoformat()
 
             full_request = {'request': request_data,
                             'domain': request_data['domain'],
                             'context': {},
-                            'request_params': json_request(request_data['GET'])}
+                            'request_params': request_params}
 
-            export_all_rows_task(report_config.report, full_request, emails, title)
+            export_all_rows_task(report_config.report.slug, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:

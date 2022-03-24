@@ -25,8 +25,7 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -811,12 +810,12 @@ class RelatedDocExpressionTest(SimpleTestCase):
         })
 
     def patch_cases_database(self):
-        def get_case(self_, case_id):
+        def get_case(case_id, domain):
             doc = self.database.get(case_id)
             if doc is None:
                 raise CaseNotFound
             return Config(to_json=lambda: doc)
-        get_case_patch = patch.object(CaseAccessors, "get_case", get_case)
+        get_case_patch = patch.object(CommCareCase.objects, "get_case", get_case)
         get_case_patch.start()
         self.addCleanup(get_case_patch.stop)
         self.database = {}
