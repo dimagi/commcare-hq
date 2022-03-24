@@ -194,7 +194,7 @@ def swallow_programming_errors(fn):
 
 @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
-    section_name = gettext_lazy("Configurable Reports")
+    section_name = gettext_lazy("Custom Web Reports")
 
     @property
     def main_context(self):
