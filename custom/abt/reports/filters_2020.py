@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from custom.abt.reports.fixture_utils import (
@@ -31,7 +31,7 @@ class VectorLinkLocFilter(BaseSingleOptionFilter):
 
 class LevelOneFilter(VectorLinkLocFilter):
     slug = 'level_1'
-    label = ugettext_lazy('Level 1')
+    label = gettext_lazy('Level 1')
 
     @property
     def options(self):
@@ -46,7 +46,7 @@ class LevelOneFilter(VectorLinkLocFilter):
 
 class LevelTwoFilter(VectorLinkLocFilter):
     slug = 'level_2'
-    label = ugettext_lazy('Level 2')
+    label = gettext_lazy('Level 2')
 
     @property
     def options(self):
@@ -57,7 +57,7 @@ class LevelTwoFilter(VectorLinkLocFilter):
 
 class LevelThreeFilter(VectorLinkLocFilter):
     slug = 'level_3'
-    label = ugettext_lazy('Level 3')
+    label = gettext_lazy('Level 3')
 
     @property
     def options(self):
@@ -75,7 +75,7 @@ class LevelThreeFilter(VectorLinkLocFilter):
 
 class LevelFourFilter(VectorLinkLocFilter):
     slug = 'level_4'
-    label = ugettext_lazy('Level 4')
+    label = gettext_lazy('Level 4')
 
     @property
     def options(self):

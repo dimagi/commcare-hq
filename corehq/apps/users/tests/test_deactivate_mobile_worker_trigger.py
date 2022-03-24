@@ -6,6 +6,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import (
     CommCareUser,
     DeactivateMobileWorkerTrigger,
+    DeactivateMobileWorkerTriggerUpdateMessage,
 )
 
 
@@ -114,4 +115,159 @@ class TestDeactivateMobileWorkerTrigger(TestCase):
 
         self.assertEqual(
             DeactivateMobileWorkerTrigger.objects.count(), 1
+        )
+
+
+class UpdateDeactivateMobileWorkerTriggerTest(TestCase):
+
+    def tearDown(self):
+        DeactivateMobileWorkerTrigger.objects.all().delete()
+        super().tearDown()
+
+    def test_updates(self):
+        existing_trigger = DeactivateMobileWorkerTrigger.objects.create(
+            domain='test-trigger',
+            user_id='user-trigger-001',
+            deactivate_after=datetime.date(2022, 2, 1),
+        )
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-001', datetime.date(2022, 3, 1),
+        )
+        self.assertEqual(
+            status, DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+        )
+        existing_trigger.refresh_from_db()
+        self.assertEqual(
+            existing_trigger.deactivate_after,
+            datetime.date(2022, 3, 1)
+        )
+
+    def test_creates(self):
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-002', datetime.date(2022, 2, 1)
+        )
+        self.assertEqual(
+            status, DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+        )
+        trigger = DeactivateMobileWorkerTrigger.objects.get(
+            domain='test-trigger',
+            user_id='user-trigger-002'
+        )
+        self.assertEqual(
+            trigger.deactivate_after,
+            datetime.date(2022, 2, 1)
+        )
+
+    def test_deletes(self):
+        DeactivateMobileWorkerTrigger.objects.create(
+            domain='test-trigger',
+            user_id='user-trigger-003',
+            deactivate_after=datetime.date(2022, 3, 1),
+        )
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-003', None
+        )
+        self.assertEqual(
+            status, DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+        )
+        self.assertFalse(
+            DeactivateMobileWorkerTrigger.objects.filter(
+                domain='test-trigger',
+                user_id='user-trigger-003'
+            ).exists()
+        )
+
+    def test_no_update_needed(self):
+        existing_trigger = DeactivateMobileWorkerTrigger.objects.create(
+            domain='test-trigger',
+            user_id='user-trigger-001',
+            deactivate_after=datetime.date(2022, 2, 1),
+        )
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-001', datetime.date(2022, 2, 1),
+        )
+        self.assertIsNone(status)
+        existing_trigger.refresh_from_db()
+        self.assertEqual(
+            existing_trigger.deactivate_after,
+            datetime.date(2022, 2, 1)
+        )
+
+    def test_noop(self):
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-004', None
+        )
+        self.assertIsNone(status)
+        self.assertFalse(
+            DeactivateMobileWorkerTrigger.objects.filter(
+                domain='test-trigger',
+                user_id='user-trigger-004'
+            ).exists()
+        )
+
+    def test_string_value(self):
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-005', '03-2022'
+        )
+        self.assertEqual(
+            status, DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+        )
+        trigger = DeactivateMobileWorkerTrigger.objects.get(
+            domain='test-trigger',
+            user_id='user-trigger-005'
+        )
+        self.assertEqual(
+            trigger.deactivate_after,
+            datetime.date(2022, 3, 1)
+        )
+
+    def test_bad_value(self):
+        with self.assertRaises(ValueError):
+            DeactivateMobileWorkerTrigger.update_trigger(
+                'test-trigger', 'user-trigger-006', 'foobar'
+            )
+
+    def test_bad_value_date(self):
+        with self.assertRaises(ValueError):
+            DeactivateMobileWorkerTrigger.update_trigger(
+                'test-trigger', 'user-trigger-006', '01-02-2023'
+            )
+
+    def test_noop_blank_string(self):
+        status = DeactivateMobileWorkerTrigger.update_trigger(
+            'test-trigger', 'user-trigger-007', ''
+        )
+
+        self.assertIsNone(status)
+        self.assertFalse(
+            DeactivateMobileWorkerTrigger.objects.filter(
+                domain='test-trigger',
+                user_id='user-trigger-007'
+            ).exists()
+        )
+
+
+class GetDeactivateAfterDateTest(TestCase):
+
+    def tearDown(self):
+        DeactivateMobileWorkerTrigger.objects.all().delete()
+        super().tearDown()
+
+    def test_no_trigger_exists(self):
+        deactivate_after = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+            'test-trigger-date', 'user-trigger-001'
+        )
+        self.assertIsNone(deactivate_after)
+
+    def test_date_is_fetched(self):
+        DeactivateMobileWorkerTrigger.objects.create(
+            domain='test-trigger-date',
+            user_id='user-trigger-002',
+            deactivate_after=datetime.date(2022, 2, 1),
+        )
+        deactivate_after = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+            'test-trigger-date', 'user-trigger-002'
+        )
+        self.assertEqual(
+            deactivate_after, datetime.date(2022, 2, 1)
         )

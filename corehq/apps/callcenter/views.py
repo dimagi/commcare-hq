@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from memoized import memoized
 
@@ -36,8 +36,8 @@ class _CallCenterOwnerOptionsUtils(object):
 
         if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
             return [
-                (USE_LOCATION_CHOICE, ugettext("user's location [location]")),
-                (USE_PARENT_LOCATION_CHOICE, ugettext("user's location's parent [location]")),
+                (USE_LOCATION_CHOICE, gettext("user's location [location]")),
+                (USE_PARENT_LOCATION_CHOICE, gettext("user's location's parent [location]")),
             ]
         return []
 

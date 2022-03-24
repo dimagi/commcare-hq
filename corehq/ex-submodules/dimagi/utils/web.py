@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-import os
 import re
-import traceback
-import sys
 import warnings
 
 from django.conf import settings
 from django.http import HttpResponse
 import json
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime, time
@@ -67,9 +64,9 @@ def json_handler(obj):
     elif isinstance(obj, time):
         return obj.strftime('%H:%M:%S')
     elif isinstance(obj, Decimal):
-        return float(obj) # warning, potential loss of precision
+        return float(obj)  # warning, potential loss of precision
     elif isinstance(obj, Promise):
-        return force_text(obj)  # to support ugettext_lazy
+        return force_str(obj)  # to support gettext_lazy
     elif isinstance(obj, bytes):
         return obj.decode('utf-8')
     else:
