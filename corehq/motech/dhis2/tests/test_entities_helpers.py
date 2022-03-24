@@ -30,6 +30,7 @@ from corehq.motech.dhis2.entities_helpers import (
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -166,8 +167,11 @@ class TestDhis2EntitiesHelpers(TestCase):
         config_form = Dhis2ConfigForm(data=config)
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
-        repeater = Dhis2Repeater()
+        repeater = Dhis2Repeater(domain=DOMAIN)
+        conn = ConnectionSettings(domain=DOMAIN, url="http://dummy.com")
+        conn.save()
         repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        repeater.connection_settings_id = conn.id
         repeater.save()
 
         info = CaseTriggerInfo(
