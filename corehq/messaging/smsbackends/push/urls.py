@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 from corehq.messaging.smsbackends.push.views import PushIncomingView
 
 
