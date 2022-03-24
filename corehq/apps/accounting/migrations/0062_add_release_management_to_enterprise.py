@@ -17,7 +17,7 @@ def _add_release_management_to_enterprise(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('accounting', '0060_remove_enterprise_v1'),
+        ('accounting', '0061_remove_enterprise_v1'),
     ]
 
     operations = [
