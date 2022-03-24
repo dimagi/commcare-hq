@@ -104,12 +104,27 @@ def queue_scheduled_reports():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_list, domain, report_slug, report_type,
-                      request_data, is_once_off, cleaned_data):
+def send_email_report(self, recipient_emails, domain, report_slug, report_type,
+                      request_data, once, cleaned_data):
     """
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
+    :Parameter recipient_list:
+            list of recipient to whom email is to be sent
+    :Parameter domain:
+            domain name
+    :Parameter report_slug:
+            report slug
+    :Parameter report_type:
+            type of the report
+    :Parameter request_data:
+            Dict containing request data
+    :Parameter once
+            boolean argument specifying whether the report is once off report
+            or scheduled report
+    :Parameter cleaned_data:
+            Dict containing cleaned data from the submitted form
     """
     from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
 
@@ -159,11 +174,11 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
     try:
         report_text = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-            notes=cleaned_data['notes'], is_once_off=is_once_off
+            notes=cleaned_data['notes'], once=once
         )[0]
         body = render_full_report_notification(None, report_text).content
 
-        for recipient in recipient_list:
+        for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
@@ -174,22 +189,19 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
             message="Encountered error while generating report or sending email",
             details={
                 'subject': subject,
-                'recipients': str(recipient_list),
+                'recipients': str(recipient_emails),
                 'error': er,
             }
         )
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
-            request_params = json_request(request_data['GET'])
-            request_params['startdate'] = request_data['startdate']
-            request_params['enddate'] = request_data['enddate']
             report_state = {
                 'request': request_data,
                 'domain': domain,
                 'context': {},
-                'request_params': request_params
+                'request_params': json_request(request_data['GET'])
             }
-            export_all_rows_task(config.report.slug, report_state, recipient_list=recipient_list)
+            export_all_rows_task(config.report.slug, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)

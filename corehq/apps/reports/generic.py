@@ -214,9 +214,7 @@ class GenericReportView(object):
 
     def set_report_parameters(self, state):
         """
-            Restores a report from report parameters passed from the export_all_rows_task Celery task.
-            When export_all_rows_task is called from the reports app,the report parameters
-            are returned from get_json_report_parameters.
+            Restoring a report from report parameters returned by get_json_report_parameters.
         """
         GET_data = QueryDict('', mutable=True)
         GET_data.update(state['request']['GET'])
@@ -235,8 +233,10 @@ class GenericReportView(object):
             can_access_all_locations = None
 
         date_holder = {}
-        if 'startdate' in state['request_params'] and 'enddate' in state['request_params']:
+        if 'startdate' and 'enddate' in state['request_params']:
             date_holder = state['request_params']
+        elif 'startdate' and 'enddate' in state['request']:
+            date_holder = state['request']
         if date_holder:
             start_date = iso_string_to_datetime(date_holder['startdate'])
             end_date = iso_string_to_datetime(date_holder['enddate'])
