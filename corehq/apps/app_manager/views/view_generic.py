@@ -7,7 +7,6 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -49,7 +48,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_upstream_domain_link,
     is_active_downstream_domain,
 )
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.apps.linked_domain.util import can_domain_access_release_management
 from corehq.util.soft_assert import soft_assert
 
 
@@ -272,7 +271,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 and get_upstream_domain_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
-    if domain_has_privilege(request.domain, RELEASE_MANAGEMENT):
+    if can_domain_access_release_management(request.domain):
         linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
     else:
         # keep behavior the same as before for LINKED_DOMAINS toggle
@@ -280,7 +279,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     context.update({
         'domain_names': sorted(domain_names),
         'linkable_domains': sorted(linkable_domains),
-        'limit_to_linked_domains': (domain_has_privilege(request.domain, RELEASE_MANAGEMENT)
+        'limit_to_linked_domains': (can_domain_access_release_management(request.domain)
                                     and not request.couch_user.is_superuser)
     })
     context.update({
