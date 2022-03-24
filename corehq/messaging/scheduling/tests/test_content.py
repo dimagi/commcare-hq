@@ -1,5 +1,6 @@
 from unittest.mock import Mock
 
+from django.apps import apps
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -44,6 +45,18 @@ class TestContent(TestCase):
         cls.sms_translations = get_or_create_sms_translations(cls.domain)
         cls.sms_translations.set_translations('es', {})
         cls.sms_translations.save()
+
+        global Content, Schedule
+
+        class Content(AbstractContent):
+            pass
+
+        class Schedule(AbstractSchedule):
+            pass
+
+        # unregister test models to prevent other test failures
+        del apps.get_app_config("scheduling").models["content"]
+        del apps.get_app_config("scheduling").models["schedule"]
 
     @classmethod
     def tearDownClass(cls):
@@ -210,11 +223,3 @@ class TestContent(TestCase):
             content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
             message_dict['*']
         )
-
-
-class Content(AbstractContent):
-    pass
-
-
-class Schedule(AbstractSchedule):
-    pass

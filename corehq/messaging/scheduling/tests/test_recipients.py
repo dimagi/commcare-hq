@@ -2,6 +2,7 @@ import contextlib
 import uuid
 from datetime import time
 
+from django.apps import apps
 from django.test import TestCase, override_settings
 
 from unittest.mock import patch
@@ -127,6 +128,14 @@ class SchedulingRecipientTest(TestCase):
 
         cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
         cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
+
+        global ScheduleInstance
+
+        class ScheduleInstance(AbstractScheduleInstance):
+            pass
+
+        # unregister test model to prevent other test failures
+        del apps.get_app_config("scheduling").models["scheduleinstance"]
 
     @classmethod
     def tearDownClass(cls):
@@ -844,7 +853,3 @@ class SchedulingRecipientTest(TestCase):
         self.assertPhoneEntryCount(3)
         self.assertPhoneEntryCount(1, only_count_two_way=True)
         self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user), '23456')
-
-
-class ScheduleInstance(AbstractScheduleInstance):
-    pass
