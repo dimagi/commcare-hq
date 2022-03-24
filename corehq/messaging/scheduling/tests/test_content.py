@@ -1,3 +1,7 @@
+from unittest.mock import Mock
+
+from django.test import TestCase, override_settings
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_NONE,
@@ -6,15 +10,17 @@ from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
+from corehq.messaging.scheduling.models import (
+    Content as AbstractContent,
+    CustomContent,
+    Schedule as AbstractSchedule,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from django.test import TestCase, override_settings
-from unittest.mock import Mock
 
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
@@ -204,3 +210,11 @@ class TestContent(TestCase):
             content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
             message_dict['*']
         )
+
+
+class Content(AbstractContent):
+    pass
+
+
+class Schedule(AbstractSchedule):
+    pass
