@@ -14,7 +14,6 @@ from s3transfer import S3Transfer
 
 from corehq.apps.es import CaseES, FormES
 from corehq.blobs.s3db import is_not_found
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.log import with_progress_bar
 
 
@@ -110,10 +109,10 @@ def _get_file(doc_type):
 
 
 def _get_form_query(domain):
-    return (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (FormES(for_export=True)
             .domain(domain)
             .remove_default_filter('has_user'))
 
 
 def _get_query(ES, domain):
-    return ES(es_instance_alias=ES_EXPORT_INSTANCE).domain(domain)
+    return ES(for_export=True).domain(domain)
