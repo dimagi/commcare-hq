@@ -14,6 +14,7 @@ from djng.views.mixins import (
 )
 from memoized import memoized
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.views import BasePageView
@@ -39,11 +40,15 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
+        plan = Subscription.get_subscribed_plan_by_domain(self.get_domain())
         groups = Group.get_case_sharing_groups(self.get_domain())
+        subscription_type = Subscription.get_active_subscription_by_domain(self.get_domain()).service_type
+        is_USH_or_Solutions = subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX'
         notifications = Notification.get_by_user(self.request.user,
                                                  self.request.couch_user,
-                                                 plan=self.request.plan,
-                                                 has_cs_groups=groups != [])
+                                                 plan=plan,
+                                                 has_cs_groups=groups != [],
+                                                 is_USH_or_Solutions=is_USH_or_Solutions)
         has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user

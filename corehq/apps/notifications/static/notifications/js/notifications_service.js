@@ -86,6 +86,9 @@ hqDefine('notifications/js/notifications_service', [
         })
 
         self.seen = ko.computed(function () {
+            if (self.hasUnreadFeatureNotification()) {
+                return false;
+            }
 
             if (!self.hasUnread()) {
                 return true;

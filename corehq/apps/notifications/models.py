@@ -36,7 +36,8 @@ class Notification(models.Model):
         ordering = ["-activated"]
 
     @classmethod
-    def get_by_user(cls, django_user, couch_user, limit=10, plan='Community', has_cs_groups='False'):
+    def get_by_user(cls, django_user, couch_user, limit=10, plan='Community',
+                    has_cs_groups=False, is_USH_or_Solutions=False):
         """Returns notifications for a particular user
 
         After five notifications all notifications should be marked as read.
@@ -61,13 +62,35 @@ class Notification(models.Model):
             return note_dict
 
         notifications = list(map(_fmt_note, enumerate(notes)))
-        if any(p in str(plan) for p in ['Pro', 'Advanced', 'Enterprise']):
-            remove = 'feat_basic'
-            if has_cs_groups:
-                notifications = [notif for notif in notifications if notif['type'] != 'feat_pro']
+
+        # pushes feature discovery notification to new web users
+        if not notifications:
+            print("notification is empty bitch")
+            all_notes = cls.objects.filter(Q(domain_specific=False) | Q(domains__overlap=couch_user.domains),
+                                        is_active=True)[:limit]
+            notifications = list(map(_fmt_note, enumerate(all_notes)))
+            notifications = [notif for notif in notifications
+                             if notif['type'] == 'feat_basic' or notif['type'] == 'feat_pro']
+
+        def remove_feature_notifications(feat_basic=False, feat_pro=False, both=False):
+            if both:
+                return [notif for notif in notifications
+                        if notif['type'] != 'feat_basic' and notif['type'] != 'feat_pro']
+            if feat_basic:
+                notif = [notif for notif in notifications if notif['type'] != 'feat_basic']
+            if feat_pro:
+                notif = [notif for notif in notifications if notif['type'] != 'feat_pro']
+            return notif
+
+        if is_USH_or_Solutions:
+            return remove_feature_notifications(both=True)
         else:
-            remove = 'feat_pro'
-        return [notif for notif in notifications if notif['type'] != remove]
+            if any(p in str(plan) for p in ['Pro', 'Advanced', 'Enterprise']):
+                if has_cs_groups:
+                    return remove_feature_notifications(both=True)
+                return remove_feature_notifications(feat_basic=True)
+            else:
+                return remove_feature_notifications(feat_pro=True)
 
     def mark_as_read(self, user):
         self.users_read.add(user)
