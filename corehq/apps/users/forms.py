@@ -34,8 +34,8 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import (
-    EnterprisePermissions,
     EnterpriseMobileWorkerSettings,
+    EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
@@ -48,7 +48,6 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
@@ -56,7 +55,7 @@ from dimagi.utils.dates import get_date_from_month_and_year_string
 
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import UserRole
+from .models import DeactivateMobileWorkerTrigger, UserRole
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -418,7 +417,8 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             "Multiply this user's case load by a number for load testing on phones. "
             "Leave blank for normal users."
         ),
-        widget=forms.HiddenInput())
+        widget=forms.HiddenInput()
+    )
     deactivate_after_date = forms.CharField(
         label=gettext_lazy("Deactivate After"),
         required=False,
