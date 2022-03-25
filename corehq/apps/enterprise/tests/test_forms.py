@@ -111,7 +111,7 @@ class EnterpriseManageMobileWorkersFormTest(TestCase):
         domains_cache_cleared = [
             arg[0][0] for arg in clear_domain_caches.call_args_list
         ]
-        self.assertListEqual(
+        self.assertCountEqual(
             domains_cache_cleared,
             [
                 'test-emws-form-002',

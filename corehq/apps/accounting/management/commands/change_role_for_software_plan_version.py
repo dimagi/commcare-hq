@@ -17,7 +17,11 @@ class NewRoleDoesNotExist(Exception):
     pass
 
 
-def change_role_for_software_plan_version(old_role, new_role, dry_run=False):
+class PlanVersionAndRoleMismatch(Exception):
+    pass
+
+
+def change_role_for_software_plan_version(old_role, new_role, limit_to_plan_version_id=None, dry_run=False):
     """
     We typically do not support modifying SoftwarePlanVersions directly, and instead encourage creating a new one.
     This command should only be used when it seems appropriate. The most typical use case would be when it is
@@ -38,7 +42,13 @@ def change_role_for_software_plan_version(old_role, new_role, dry_run=False):
     except Role.DoesNotExist:
         raise NewRoleDoesNotExist
 
-    versions = SoftwarePlanVersion.objects.filter(role__slug=old_role, is_active=True)
+    if limit_to_plan_version_id:
+        version = SoftwarePlanVersion.objects.get(id=limit_to_plan_version_id)
+        if version.role.slug != old_role:
+            raise PlanVersionAndRoleMismatch
+        versions = [version]
+    else:
+        versions = SoftwarePlanVersion.objects.filter(role__slug=old_role, is_active=True)
 
     changed_plans = set()
     for software_plan_version in versions:
