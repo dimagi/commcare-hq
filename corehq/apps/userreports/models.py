@@ -54,9 +54,11 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 )
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
+    ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_NAMED_EXPRESSION,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
@@ -1344,6 +1346,23 @@ class InvalidUCRData(models.Model):
 
     class Meta(object):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
+
+
+class UCRExpression(models.Model):
+    """
+    A single UCR expression, filter, named expression or named filter that can
+    be shared amongst features that use these
+    """
+    name = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    expression_type = models.CharField(
+        max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
+    )
+    definition = models.JSONField(null=True)
+
+    class Meta:
+        app_label = 'userreports'
+        unique_together = ('name', 'domain')
 
 
 def get_datasource_config_infer_type(config_id, domain):
