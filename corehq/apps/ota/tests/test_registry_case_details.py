@@ -124,6 +124,16 @@ class RegistryCaseDetailsTests(TestCase):
         expected_cases = {case.case_id: case for case in self.cases}
         self.assertEqual(set(actual_cases), set(expected_cases))
 
+    def test_get_case_details_post_json(self):
+        response_content = self._make_request({
+            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug,
+            "case_id": self.parent_case_id,
+            "case_type": "parent",
+        }, 200, method="post", content_type="application/json")
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {case.case_id: case for case in self.cases}
+        self.assertEqual(set(actual_cases), set(expected_cases))
+
     def test_get_case_details_missing_case(self):
         self._make_request({
             CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": "missing", "case_type": "parent",
@@ -134,13 +144,17 @@ class RegistryCaseDetailsTests(TestCase):
             CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
 
-    def _make_request(self, params, expected_response_code, method="get"):
+    def _make_request(self, params, expected_response_code, method="get", content_type=None):
         request_method = {
             "get": self.client.get,
             "post": self.client.post,
         }[method]
         with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
-            response = request_method(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
+            kwargs = {}
+            if content_type:
+                kwargs["content_type"] = content_type
+            url = reverse('registry_case', args=[self.domain, self.app.get_id])
+            response = request_method(url, data=params, **kwargs)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
         return content.decode('utf8')
