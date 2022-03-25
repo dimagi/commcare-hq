@@ -1,0 +1,42 @@
+{% load i18n %}
+
+<div class="modal fade" id="IntegratedExportLimitReachedModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
+        </button>
+        <h4 class="modal-title">
+          {% if isOData %}
+            {% blocktrans %}
+              Maximum number of OData feeds reached.
+            {% endblocktrans %}
+          {% elif isLiveGoogleSheet %}
+            {% blocktrans %}
+              Maximum number of Google Sheets reached.
+            {% endblocktrans %}
+          {% endif %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        {% if isOData %}
+          {% blocktrans %}
+            At this time we allow a maximum of {{ odata_feed_limit }} OData feeds per project space.
+            Please consider deleting the feeds that you don't need anymore.
+          {% endblocktrans %}
+        {% elif isLiveGoogleSheet %}
+          {% blocktrans %}
+            At this time we allow a maximum of {{ google_sheet_limit }} Google Sheets per project space.
+            Please consider deleting the sheets that you don't need anymore.
+          {% endblocktrans %}
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          {% trans "Ok" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
