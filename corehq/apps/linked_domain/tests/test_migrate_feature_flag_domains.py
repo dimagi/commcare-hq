@@ -12,9 +12,9 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
 )
 from corehq.apps.linked_domain.management.commands.migrate_feature_flag_domains import (
-    _create_new_software_plan,
-    _create_new_software_plan_version,
     _get_migration_info,
+    _get_or_create_new_software_plan,
+    _get_or_create_new_software_plan_version,
     _get_or_create_role_with_privilege,
     _should_skip_role,
     _update_roles_in_place,
@@ -188,7 +188,7 @@ class UpdateVersionInPlaceTests(TestCase):
             Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
 
 
-class CreateNewSoftwarePlanTest(TestCase):
+class GetOrCreateNewSoftwarePlanTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -204,7 +204,7 @@ class CreateNewSoftwarePlanTest(TestCase):
         )
 
     def test_new_plan_created(self):
-        new_plan = _create_new_software_plan(self.software_plan)
+        new_plan = _get_or_create_new_software_plan(self.software_plan)
         self.assertEqual(new_plan.name, "Test Software Plan (With ERM)")
         self.assertEqual(new_plan.description, self.software_plan.description)
         self.assertEqual(new_plan.edition, self.software_plan.edition)
@@ -213,65 +213,77 @@ class CreateNewSoftwarePlanTest(TestCase):
         self.assertEqual(new_plan.max_domains, self.software_plan.max_domains)
         self.assertEqual(new_plan.is_annual_plan, self.software_plan.is_annual_plan)
 
+    def test_existing_plan_returned_if_exists(self):
+        expected_software_plan = SoftwarePlan.objects.create(
+            name="Test Software Plan (With ERM)",
+            description="Software Plan For Unit Tests",
+            edition=SoftwarePlanEdition.PRO,
+            visibility=SoftwarePlanVisibility.INTERNAL,
+            is_customer_software_plan=False,
+            is_annual_plan=True,
+            max_domains=3,
+        )
+        new_plan = _get_or_create_new_software_plan(self.software_plan)
 
-class CreateNewSoftwarePlanVersionTest(TestCase):
+        self.assertEqual(new_plan.name, expected_software_plan.name)
+        self.assertEqual(new_plan.id, expected_software_plan.id)
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.software_plan = SoftwarePlan.objects.create(
+
+class GetOrCreateNewSoftwarePlanVersionTest(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.software_plan = SoftwarePlan.objects.create(
             name="Test Software Plan",
             description="Software Plan For Unit Tests",
             edition=SoftwarePlanEdition.PRO,
             visibility=SoftwarePlanVisibility.INTERNAL,
             is_customer_software_plan=False,
         )
-        cls.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cls.software_plan.name)
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.privilege_role = Role.objects.create(slug='privilege', name='test privilege')
-        self.existing_role = Role.objects.create(slug='role', name='Role')
+        self.product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=self.software_plan.name)
+        self.existing_role = Role.objects.create(slug='existing_role', name='Existing Role')
+        self.new_role = Role.objects.create(slug='new_role', name='New Role')
+        self.software_plan_version = SoftwarePlanVersion.objects.create(
+            plan=self.software_plan,
+            product_rate=self.product_rate,
+            role=self.existing_role,
+        )
 
     def test_new_version_referencing_new_role(self):
-        new_plan = SoftwarePlan.objects.create(
-            name="Test Software Plan (With ERM)",
-            description="Software Plan For Unit Tests",
-            edition=SoftwarePlanEdition.PRO,
-            visibility=SoftwarePlanVisibility.INTERNAL,
-            is_customer_software_plan=False,
-        )
         version = SoftwarePlanVersion.objects.create(
             plan=self.software_plan,
             product_rate=self.product_rate,
             role=self.existing_role,
         )
 
-        new_version = _create_new_software_plan_version(new_plan, version, self.privilege_role)
+        new_version = _get_or_create_new_software_plan_version(self.software_plan, version, self.new_role)
 
         # refetch
         updated_version = SoftwarePlanVersion.objects.get(id=new_version.id)
-        self.assertEqual(new_plan.get_version(), updated_version)
+        self.assertEqual(self.software_plan.get_version(), updated_version)
         with self.assertRaises(Grant.DoesNotExist):
-            Grant.objects.get(from_role=updated_version.role, to_role=self.privilege_role)
+            Grant.objects.get(from_role=updated_version.role, to_role=self.new_role)
 
-    def test_dry_run_returns_none(self):
-        new_plan = SoftwarePlan.objects.create(
-            name="Test Software Plan (With ERM)",
-            description="Software Plan For Unit Tests",
-            edition=SoftwarePlanEdition.PRO,
-            visibility=SoftwarePlanVisibility.INTERNAL,
-            is_customer_software_plan=False,
-        )
-        version = SoftwarePlanVersion.objects.create(
+    def test_existing_version_returned(self):
+        expected_version = SoftwarePlanVersion.objects.create(
             plan=self.software_plan,
             product_rate=self.product_rate,
-            role=self.existing_role,
+            role=self.new_role,
+        )
+        new_version = _get_or_create_new_software_plan_version(
+            self.software_plan, self.software_plan_version, self.new_role
         )
 
-        new_version = _create_new_software_plan_version(new_plan, version, self.privilege_role, dry_run=True)
+        self.assertEqual(expected_version.role.slug, new_version.role.slug)
+        self.assertEqual(expected_version.id, new_version.id)
 
-        self.assertIsNone(new_version)
+    def test_dry_run_does_not_make_changes(self):
+        new_version = _get_or_create_new_software_plan_version(
+            self.software_plan, self.software_plan_version, self.new_role, dry_run=True
+        )
+
+        self.assertIsNone(new_version.id)
+        self.assertEqual(self.software_plan.get_version(), self.software_plan_version)
 
 
 class ShouldSkipRoleTests(TestCase):
