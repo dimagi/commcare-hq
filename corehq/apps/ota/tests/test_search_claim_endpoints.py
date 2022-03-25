@@ -187,10 +187,17 @@ class CaseClaimEndpointTests(TestCase):
         claim_cases = CommCareCase.objects.get_cases(claim_ids, DOMAIN)
         self.assertIn(another_user._id, [case.owner_id for case in claim_cases])
 
-    def test_search_endpoint(self):
-        self.maxDiff = None
+    def test_search_endpoint__get_request(self):
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
+        self._test_search_endpoint(client.get)
+
+    def test_search_endpoint__post_request(self):
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        self._test_search_endpoint(client.post)
+
+    def _test_search_endpoint(self, make_request):
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
 
         matching_criteria = [
@@ -201,7 +208,7 @@ class CaseClaimEndpointTests(TestCase):
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
-            response = client.get(url, params)
+            response = make_request(url, params)
             self._assert_known_search_result(response, params)
 
         non_matching_criteria = [
@@ -212,7 +219,7 @@ class CaseClaimEndpointTests(TestCase):
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})
-            response = client.get(url, params)
+            response = make_request(url, params)
             self._assert_empty_search_result(response, params)
 
     def _assert_known_search_result(self, response, message=None):
