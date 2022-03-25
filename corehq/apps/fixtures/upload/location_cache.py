@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.locations.models import SQLLocation
 

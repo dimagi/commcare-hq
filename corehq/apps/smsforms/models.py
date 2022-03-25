@@ -8,7 +8,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
@@ -44,10 +44,10 @@ class SQLXFormsSession(models.Model):
     STATUS_NOT_FINISHED = "not-finished"
 
     STATUS_DISPLAY = {
-        STATUS_PARTIALLY_COMPLETE: ugettext_noop('Completed (Partially Completed Submission)'),
-        STATUS_COMPLETE: ugettext_noop('Completed'),
-        STATUS_IN_PROGRESS: ugettext_noop('In Progress'),
-        STATUS_NOT_FINISHED: ugettext_noop('Not Finished'),
+        STATUS_PARTIALLY_COMPLETE: gettext_noop('Completed (Partially Completed Submission)'),
+        STATUS_COMPLETE: gettext_noop('Completed'),
+        STATUS_IN_PROGRESS: gettext_noop('In Progress'),
+        STATUS_NOT_FINISHED: gettext_noop('Not Finished'),
     }
 
     # generic properties

@@ -1,6 +1,6 @@
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,

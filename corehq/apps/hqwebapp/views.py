@@ -39,8 +39,8 @@ from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -948,11 +948,11 @@ class CRUDPaginatedViewMixin(object):
     """
     DEFAULT_LIMIT = 10
 
-    limit_text = ugettext_noop("items per page")
-    empty_notification = ugettext_noop("You have no items.")
-    loading_message = ugettext_noop("Loading...")
-    deleted_items_header = ugettext_noop("Deleted Items:")
-    new_items_header = ugettext_noop("New Items:")
+    limit_text = gettext_noop("items per page")
+    empty_notification = gettext_noop("You have no items.")
+    loading_message = gettext_noop("Loading...")
+    deleted_items_header = gettext_noop("Deleted Items:")
+    new_items_header = gettext_noop("New Items:")
 
     def _safe_escape(self, expression, default):
         try:
@@ -1238,7 +1238,7 @@ def osdd(request, template='osdd.xml'):
 
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
-    page_title = ugettext_noop("Maintenance Alerts")
+    page_title = gettext_noop("Maintenance Alerts")
     template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(require_superuser)

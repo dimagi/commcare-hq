@@ -8,7 +8,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 import requests
@@ -43,7 +43,7 @@ from corehq.toggles import SUPPORT
 
 
 class SystemInfoView(BaseAdminSectionView):
-    page_title = ugettext_lazy("System Info")
+    page_title = gettext_lazy("System Info")
     urlname = 'system_info'
     template_name = "hqadmin/system_info.html"
 
@@ -265,7 +265,7 @@ def _get_submodules():
 @method_decorator(require_superuser, name='dispatch')
 class GlobalThresholds(BaseAdminSectionView):
     urlname = 'global_thresholds'
-    page_title = ugettext_lazy("Global Usage Thresholds")
+    page_title = gettext_lazy("Global Usage Thresholds")
     template_name = 'hqadmin/global_thresholds.html'
 
     @property

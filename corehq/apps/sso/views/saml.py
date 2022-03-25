@@ -6,7 +6,7 @@ from django.http import (
 )
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils

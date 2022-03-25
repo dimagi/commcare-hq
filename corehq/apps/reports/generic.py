@@ -15,7 +15,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.utils.html import conditional_escape
 
 from memoized import memoized
@@ -157,8 +157,8 @@ class GenericReportView(object):
     parent_report_class = None
 
     is_deprecated = False
-    deprecation_email_message = ugettext("This report has been deprecated.")
-    deprecation_message = ugettext("This report has been deprecated.")
+    deprecation_email_message = gettext("This report has been deprecated.")
+    deprecation_message = gettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -214,7 +214,9 @@ class GenericReportView(object):
 
     def set_report_parameters(self, state):
         """
-            Restoring a report from report parameters returned by get_json_report_parameters.
+            Restores a report from report parameters passed from the export_all_rows_task Celery task.
+            When export_all_rows_task is called from the reports app,the report parameters
+            are returned from get_json_report_parameters.
         """
         GET_data = QueryDict('', mutable=True)
         GET_data.update(state['request']['GET'])
@@ -233,10 +235,8 @@ class GenericReportView(object):
             can_access_all_locations = None
 
         date_holder = {}
-        if 'startdate' and 'enddate' in state['request_params']:
+        if 'startdate' in state['request_params'] and 'enddate' in state['request_params']:
             date_holder = state['request_params']
-        elif 'startdate' and 'enddate' in state['request']:
-            date_holder = state['request']
         if date_holder:
             start_date = iso_string_to_datetime(date_holder['startdate'])
             end_date = iso_string_to_datetime(date_holder['enddate'])
@@ -319,7 +319,7 @@ class GenericReportView(object):
     @property
     @memoized
     def rendered_report_title(self):
-        return ugettext(self.name)
+        return gettext(self.name)
 
     @property
     @memoized

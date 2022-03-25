@@ -2,7 +2,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.utils.translation import ugettext, ugettext_noop
+from django.utils.translation import gettext, gettext_noop
 
 import yaml
 from memoized import memoized
@@ -25,9 +25,9 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 def _translate_setting(setting, prop):
     value = setting[prop]
     if not isinstance(value, str):
-        return [ugettext(v) for v in value]
+        return [gettext(v) for v in value]
     else:
-        return ugettext(value)
+        return gettext(value)
 
 
 def _load_custom_commcare_settings():
@@ -67,7 +67,7 @@ def _load_commcare_settings_layout(app):
     j2me_section_ids = ['app-settings-j2me-properties', 'app-settings-j2me-ui']
     for section in layout:
         # i18n; not statically analyzable
-        section['title'] = ugettext_noop(section['title'])
+        section['title'] = gettext_noop(section['title'])
         for i, key in enumerate(section['settings']):
             include = False
             setting = settings.pop(key)

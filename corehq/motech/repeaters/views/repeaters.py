@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
@@ -35,7 +35,7 @@ RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
-    page_title = ugettext_lazy("Data Forwarding")
+    page_title = gettext_lazy("Data Forwarding")
     template_name = 'repeaters/repeaters.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
@@ -75,7 +75,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
 
 class BaseRepeaterView(BaseAdminProjectSettingsView):
-    page_title = ugettext_lazy("Forward Data")
+    page_title = gettext_lazy("Forward Data")
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
@@ -257,7 +257,7 @@ class AddFormRepeaterView(AddRepeaterView):
 
 class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     urlname = 'edit_form_repeater'
-    page_title = ugettext_lazy("Edit Form Repeater")
+    page_title = gettext_lazy("Edit Form Repeater")
 
     @property
     def page_url(self):
@@ -283,7 +283,7 @@ class AddCaseRepeaterView(AddRepeaterView):
 
 class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     urlname = 'edit_case_repeater'
-    page_title = ugettext_lazy("Edit Case Repeater")
+    page_title = gettext_lazy("Edit Case Repeater")
 
     @property
     def page_url(self):
