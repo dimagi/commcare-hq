@@ -5,9 +5,10 @@ from django.test import TestCase
 from django_prbac.models import Role
 
 from corehq.apps.accounting.management.commands.change_role_for_software_plan_version import (
-    change_role_for_software_plan_version,
     NewRoleDoesNotExist,
     OldRoleDoesNotExist,
+    PlanVersionAndRoleMismatch,
+    change_role_for_software_plan_version,
 )
 from corehq.apps.accounting.models import (
     SoftwarePlan,
@@ -92,3 +93,38 @@ class ChangeRoleForSoftwarePlanVersionTest(TestCase):
         # refetch
         plan = SoftwarePlan.objects.get(name='Test Plan')
         self.assertEqual(plan.get_version().role.slug, 'old_role')
+
+    def test_limit_to_plan_version_id(self):
+        plan_to_update = SoftwarePlan(name='Plan To Update')
+        plan_to_update.save()
+        version_to_update = SoftwarePlanVersion(
+            role=self.old_role, plan=plan_to_update, product_rate=self.generic_product_rate
+        )
+        version_to_update.save()
+
+        plan_to_ignore = SoftwarePlan(name='Plan To Ignore')
+        plan_to_ignore.save()
+        version_to_ignore = SoftwarePlanVersion(
+            role=self.old_role, plan=plan_to_ignore, product_rate=self.generic_product_rate
+        )
+        version_to_ignore.save()
+
+        change_role_for_software_plan_version(
+            'old_role', 'new_role', limit_to_plan_version_id=version_to_update.id
+        )
+
+        # refetch
+        plan_to_update = SoftwarePlan.objects.get(name='Plan To Update')
+        plan_to_ignore = SoftwarePlan.objects.get(name='Plan To Ignore')
+        self.assertEqual(plan_to_update.get_version().role.slug, 'new_role')
+        self.assertEqual(plan_to_ignore.get_version().role.slug, 'old_role')
+
+    def test_raises_exception_if_plan_version_id_does_not_reference_old_role(self):
+        plan = SoftwarePlan(name='Test Plan 1')
+        plan.save()
+        version = SoftwarePlanVersion(role=self.old_role, plan=plan, product_rate=self.generic_product_rate)
+        version.save()
+        Role.objects.create(slug='mismatch_role', name='mismatch')
+
+        with self.assertRaises(PlanVersionAndRoleMismatch):
+            change_role_for_software_plan_version('mismatch_role', 'new_role', limit_to_plan_version_id=version.id)
