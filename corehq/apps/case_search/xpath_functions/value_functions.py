@@ -12,6 +12,8 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def date(domain, node):
+    from corehq.apps.case_search.dsl_utils import unwrap_value
+
     assert node.name == 'date'
     if len(node.args) != 1:
         raise XPathFunctionException(
@@ -19,6 +21,8 @@ def date(domain, node):
             serialize(node)
         )
     arg = node.args[0]
+
+    arg = unwrap_value(domain, arg)
 
     if isinstance(arg, int):
         return (datetime.date(1970, 1, 1) + datetime.timedelta(days=arg)).strftime("%Y-%m-%d")
