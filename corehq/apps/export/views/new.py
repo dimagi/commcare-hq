@@ -391,11 +391,29 @@ class CreateGoogleSheetCaseView(LiveGoogleSheetMixin, CreateNewCustomCaseExportV
     page_title = gettext_lazy("Create Google Sheet Case Export")
     metric_name = 'Live Google Sheet Case'
 
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings
+        )
+        export.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
+        return export
+
 
 class CreateGoogleSheetFormView(LiveGoogleSheetMixin, CreateNewCustomFormExportView):
     urlname = 'new_gsheet_form_feed'
     page_title = gettext_lazy("Create Google Sheet Form Export")
     metric_name = 'Live Google Sheet Form'
+
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings
+        )
+        export.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
+        return export
 
 
 @location_safe

@@ -12,7 +12,7 @@ import pytz
 from memoized import memoized
 from corehq.util.test_utils import flag_enabled
 
-from couchexport.models import Format
+from couchexport.models import Format, IntegrationFormat
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -302,12 +302,13 @@ class LiveGoogleSheetMixin(object):
             username,
             export_settings=export_settings)
         instance.transform_dates = False
+        instance.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
         return instance
 
     @property
     def page_context(self):
         context = super().page_context
-        context['format_options'] = ["gsheet"]
+        context['format_options'] = [IntegrationFormat.LIVE_GOOGLE_SHEETS]
         return context
 
     @property

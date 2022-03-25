@@ -1162,7 +1162,8 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         return _("Select Model Type")
 
     def _should_appear_in_list(self, export):
-        return IntegrationFormat.is_integration_format(export['export_format'])
+        test = IntegrationFormat.is_integration_format(export['export_format'])
+        return test
 
     def fmt_export_data(self, export):
         data = super(LiveGoogleSheetListHelper, self).fmt_export_data(export)
@@ -1172,6 +1173,13 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
             data['editUrl'] = '#IntegratedExportLimitReachedModal'
         return data
+
+    def _download_view(self, export):
+        # If this isn't added in it will cause the listview to not populate. Will not show up in the UI
+        from corehq.apps.export.views.download import DownloadNewCaseExportView, DownloadNewFormExportView
+        if isinstance(export, FormExportInstance):
+            return DownloadNewFormExportView
+        return DownloadNewCaseExportView
 
 
 @location_safe
