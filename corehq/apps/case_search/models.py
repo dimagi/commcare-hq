@@ -33,14 +33,20 @@ UNSEARCHABLE_KEYS = (
 ) + tuple(CONFIG_KEYS_MAPPING.values())
 
 
-def _flatten_singleton_list(value):
+def flatten_singleton_list(value):
     return value[0] if value and isinstance(value, list) and len(value) == 1 else value
+
+
+def coerce_to_list(value):
+    if value is None:
+        return value
+    return value if isinstance(value, list) else [value]
 
 
 @attr.s(frozen=True)
 class SearchCriteria:
     key = attr.ib()
-    value = attr.ib(converter=_flatten_singleton_list)
+    value = attr.ib()
 
     @property
     def is_empty(self):
@@ -80,7 +86,7 @@ class SearchCriteria:
         return SearchCriteria(self.key, self._value_without_empty())
 
     def _value_without_empty(self):
-        return _flatten_singleton_list([v for v in self.value if v != ''])
+        return flatten_singleton_list([v for v in self.value if v != ''])
 
     def validate(self):
         self._validate_multiple_terms()
@@ -129,9 +135,9 @@ def criteria_dict_to_criteria_list(criteria_dict):
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
     criteria = attr.ib(kw_only=True)
-    case_types = attr.ib(kw_only=True, default=None)
-    data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    case_types = attr.ib(kw_only=True, default=None, converter=coerce_to_list)
+    data_registry = attr.ib(kw_only=True, default=None)
+    custom_related_case_property = attr.ib(kw_only=True, default=None)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
@@ -147,7 +153,7 @@ class CaseSearchRequestConfig:
 
 
 def extract_search_request_config(request_dict):
-    params = dict(request_dict.lists())
+    params = request_dict.copy()
 
     kwargs_from_params = {
         config_name: params.pop(param_name, None)

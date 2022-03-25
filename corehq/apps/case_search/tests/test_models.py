@@ -55,13 +55,14 @@ class TestCaseSearch(TestCase):
 ])
 def test_extract_criteria_config(self, case_type, data_registry, custom_related_case_property, expect_exception):
     with assert_raises(None if not expect_exception else CaseSearchUserError):
-        request_dict = _make_request_dict({
+        search_data = {
             CASE_SEARCH_CASE_TYPE_KEY: case_type,
             CASE_SEARCH_REGISTRY_ID_KEY: data_registry,
             CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
             "other_key": "jim",
-        })
-        config = extract_search_request_config(request_dict)
+        }
+        search_data = {k: v for k, v in search_data.items() if v is not None}
+        config = extract_search_request_config(search_data)
 
     if not expect_exception:
         expected_case_types = case_type if isinstance(case_type, list) else [case_type]
@@ -69,20 +70,6 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
             criteria=[SearchCriteria("other_key", "jim")],
             case_types=expected_case_types, data_registry=data_registry, custom_related_case_property=custom_related_case_property
         ))
-
-
-def _make_request_dict(params):
-    """All values must be a list to match what we get from Django during a request.
-    """
-    request_dict = MultiValueDict()
-    for key, value in params.items():
-        if value is None:
-            continue
-        if isinstance(value, list):
-            request_dict.setlist(key, value)
-        else:
-            request_dict[key] = value
-    return request_dict
 
 
 @generate_cases([

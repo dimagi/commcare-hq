@@ -41,7 +41,7 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, flatten_singleton_list, coerce_to_list
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
@@ -120,20 +120,28 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    if request.method == "POST":
-        if request.content_type == "application/json":
-            request_dict = json.loads(request.body)
-        else:
-            request_dict = dict(request.POST.lists())
-    else:
-        request_dict = dict(request.GET.lists())
-
+    search_data = _get_search_data(request)
     try:
-        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
+        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, search_data)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+def _get_search_data(request):
+    """Get search data from request handling legacy request types"""
+
+    def _make_dict(key_values):
+        return {key: flatten_singleton_list(values) for key, values in key_values}
+
+    if request.method == "POST":
+        if request.content_type == "application/json":
+            return json.loads(request.body)
+        else:
+            return _make_dict(request.POST.lists())
+
+    return _make_dict(request.GET.lists())
 
 
 @location_safe_bypass
@@ -426,10 +434,10 @@ def recovery_measures(request, domain, build_id):
 @toggles.DATA_REGISTRY.required_decorator()
 @require_http_methods(["GET", "POST"])
 def registry_case(request, domain, app_id):
-    request_dict = request.GET if request.method == 'GET' else request.POST
-    case_ids = request_dict.getlist("case_id")
-    case_types = request_dict.getlist("case_type")
-    registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
+    search_data = _get_search_data(request)
+    case_ids = coerce_to_list(search_data.get("case_id"))
+    case_types = coerce_to_list(search_data.get("case_type"))
+    registry = search_data.get(CASE_SEARCH_REGISTRY_ID_KEY)
 
     missing = [
         name
