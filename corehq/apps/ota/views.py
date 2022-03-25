@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -119,7 +120,14 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    request_dict = request.GET if request.method == 'GET' else request.POST
+    if request.method == "POST":
+        if request.content_type == "application/json":
+            request_dict = json.loads(request.body)
+        else:
+            request_dict = dict(request.POST.lists())
+    else:
+        request_dict = dict(request.GET.lists())
+
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:

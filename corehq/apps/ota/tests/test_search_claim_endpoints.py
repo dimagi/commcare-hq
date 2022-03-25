@@ -197,6 +197,15 @@ class CaseClaimEndpointTests(TestCase):
         client.login(username=USERNAME, password=PASSWORD)
         self._test_search_endpoint(client.post)
 
+    def test_search_endpoint__post_json(self):
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+
+        def make_request(url, data):
+            return client.post(url, data, content_type="application/json")
+
+        self._test_search_endpoint(make_request)
+
     def _test_search_endpoint(self, make_request):
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
 
