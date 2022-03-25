@@ -14,7 +14,7 @@ from django.http import (
 from django.utils.translation import ngettext
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
@@ -81,6 +81,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @handle_401_response
 @mobile_auth_or_formplayer
 @check_domain_migration
+@require_GET
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -99,6 +100,7 @@ def restore(request, domain, app_id=None):
 @mobile_auth
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@require_http_methods(["GET", "POST"])
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
@@ -108,6 +110,7 @@ def search(request, domain):
 @mobile_auth
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@require_http_methods(["GET", "POST"])
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -131,6 +134,7 @@ def app_aware_search(request, domain, app_id):
 @mobile_auth
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@require_POST
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
@@ -412,6 +416,7 @@ def recovery_measures(request, domain, build_id):
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 @toggles.DATA_REGISTRY.required_decorator()
+@require_http_methods(["GET", "POST"])
 def registry_case(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
