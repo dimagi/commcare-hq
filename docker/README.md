@@ -18,39 +18,11 @@ Initial setup
 
 There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine. If you are planning on doing local development, it is recommended to run HQ on your local machine, and use docker only for supporting services
 
-### Run only services in docker
-
-This is the recommended setup for local development.  If you want to run the server process in docker, see below.
+### Run services in docker
 
 * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
 * Run `./scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio` to build and start those docker services in the background.
 * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ DEV_SETUP and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#set-up-your-django-environment).
-
-### Run services and HQ in docker
-
-This setup is not recommended for local development, since you'll typically want more direct access to the django process.
-
-Bootstrap the setup.
-
-```
-$ ./scripts/docker runserver --bootstrap
-```
-
-This will do the following:
-
-* build all the images (if not already built)
-* run all the service containers
-* migrate the DB and sync the Couch views
-* bootstrap a superuser and domain:
-  * username: admin@example.com
-  * password: password
-  * domain: demo
-* run the Django dev server
-
-If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
-the login details above.
-
-You can create another user and domain with `$ ./manage.py make_superuser <email>`
 
 On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 
@@ -62,7 +34,7 @@ General usage
   $ ./scripts/docker --help
 ```
 
-**The services (couch, postgres, elastic, redis, zookeeper, kafka)**
+**The services (couch, postgres, elastic, redis, zookeeper, kafka, minio)**
 ```
   $ ./scripts/docker start
   $ ./scripts/docker stop
@@ -77,13 +49,42 @@ directly.
 * Redis (6397)
 * Zookeeper (2181)
 * Kafka (9092)
-* Riak CS (9980)
+* Minio (9980)
+
+**Bootstrap the setup**
+
+```
+$ ./scripts/run.sh bootstrap
+```
+
+This will do the following:
+
+* migrate the DB and sync the Couch views
+* bootstrap a superuser and domain:
+  * username: admin@example.com
+  * password: password
+  * domain: demo
+
+You can create another user and domain with `$ ./manage.py make_superuser <email>`
 
 **Run the django server**
 
+After bootstrap you can run the server using the following command:
+
 ```
-  $ ./scripts/docker runserver
+  $ ./scripts/run.sh runserver
 ```
+
+Note: the server process is launched directly on the local machine. It does not
+run in a docker container.
+
+If all goes according to plan you should be able to log into CommCare:
+http://localhost:8000 using the login details above.
+
+### Run services and HQ in docker
+
+This setup is not recommended for local development, since you'll typically want more direct access to the django process.
+
 
 Caveats
 -------
@@ -101,32 +102,12 @@ manually manipulate data in your Docker volumes this is the place to do it.
 
 Note that you can destabilize your system if you manually edit data in this directory, so do so with care! 
 
-Travis
-------
-Travis also uses Docker to run the HQ test suite. To simulate the travis build you can use the `./scripts/docker`
-script:
+Github Actions
+--------------
+Github Actions also uses Docker to run services for the HQ test suite.
 
-```
-  $ JS_SETUP=yes ./scripts/docker test
-  runs python tests
-
-  $ TEST=javascript ./scripts/docker test
-  runs the javascript tests
-
-  $ TEST=python-sharded ./scripts/docker test
-  runs the python sharded tests
-  
-  $ ./scripts/docker test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
-  runs only the corehq.apps.app_manager.tests.test_suite.SuiteTest
-  
-  $ ./scripts/docker bash
-  drops you into a bash shell in the docker web container from where you can
-  run any other commands
-  
-  $ ./scripts/docker hqtest teardown
-  remove all test containers and volumes
-  
-```
+See .github/workflows/tests.yml for env variable options used to run tests on
+Github Actions.
 
 ENV Vars
 --------
@@ -143,23 +124,6 @@ ENV Vars
     Also sends static analysis to datadog if job is travis "cron" event.
 * NOSE_DIVIDED_WE_RUN
   * used to only run a subset of tests
-  * see .travis.yml for exact options
+  * see .github/workflows/tests.yml for exact options
 * REUSE_DB
   * Same as normal `REUSE_DB`
-* DOCKER_HQ_OVERLAY=[**none**|overlayfs|**aufs**]
-  * `none`: mounts commcare-hq directory in docker container read/write for
-    direct access.  This is the default when running in Travis.
-  * `overlayfs`: mounts commcare-hq directory in docker container read-only and
-    uses it as the "lowerdir" in an `overlayfs` mount to insulate the host OS
-    data from being modified by the container.
-  * `aufs`: [deprecated] same behavior as `overlayfs`, only using Docker's `aufs`
-    overlay engine instead of `overlayfs`. This is the default when not running
-    in Travis.
-* DOCKER_HQ_OVERLAYFS_CHMOD=[yes|**no**]
-  * Perform a recursive chmod on the commcare-hq overlay to ensure read access
-    for cchq user.
-* DOCKER_HQ_OVERLAYFS_METACOPY=[on|**off**]
-  * Set the `metacopy=on` mount option for the overlayfs mount (performance
-    optimization, has security implications).
-
-See .travis.yml for env variable options used on travis.

@@ -24,16 +24,20 @@ Dimagi offers tools to help others use the CommCare HQ FHIR API:
 A CommCare HQ Sandbox
 ^^^^^^^^^^^^^^^^^^^^^
 
-The sandbox is a suite of Docker containers that launches a complete
-CommCare HQ instance and the services it needs:
+The sandbox is a CommCare HQ web server and a suite of Docker containers that
+run the services it needs:
 
 #. Clone the CommCare HQ repository::
 
        $ git clone https://github.com/dimagi/commcare-hq.git
 
-#. Launch CommCare HQ using the script provided::
+#. Start the docker services::
 
-       $ scripts/docker runserver
+       $ scripts/docker up -d
+
+#. Launch the CommCare HQ web server::
+
+       $ scripts/run.sh runserver
 
 CommCare HQ is now accessible at ``http://localhost:8000/``
 
