@@ -1,20 +1,5 @@
 #! /bin/bash
-# This script runs inside the web container
 set -e
-
-if [ -z "$1" ]; then
-    # the main container need not stay running for services
-    exit 0
-fi
-
-
-# NOTE: the following variable is:
-#   - Used by the 'run_tests' subcommand only.
-#   - Not externally exposed because it's only useful for debugging this script.
-# Enabling this option skips setup and actual tests and instead runs some recon
-# commands inside the container for debugging overlay filesystem configurations,
-# owners and file modes.
-DOCKER_OVERLAY_TEST_DEBUG='no'
 
 VALID_TEST_SUITES=(
     javascript
@@ -29,8 +14,12 @@ function setup {
     [ -n "$1" ] && TEST="$1"
     logmsg INFO "performing setup..."
 
-    rm *.log || true
+    [ ! -f localsettings.py ] && rm *.log || true
 
+    # prefer https for git checkouts made by pip
+    git config --global url."https://".insteadOf git://
+
+    pip install pip-tools
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
@@ -51,10 +40,22 @@ function setup {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
+        # make sure to set in mocha-headless-chrome options
+        #   executablePath: 'google-chrome-unstable'
+        export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+        sudo npm -g install yarn bower grunt-cli uglify-js puppeteer mocha-headless-chrome
         yarn install --progress=false --frozen-lockfile
     fi
 
-    /mnt/wait.sh
+    scripts/docker hqtest up -d
+    docker/wait.sh
+
+    if [ ! -f localsettings.py ]; then
+        ln -s docker/localsettings.py localsettings.py
+
+        # cleanup dev environment without localsettings.py
+        trap 'rm localsettings.py' EXIT
+    fi
 }
 
 function python_preheat {
@@ -76,7 +77,7 @@ function python_preheat {
     python -c 'import eulxml.xmlmap' >/dev/null 2>&1 || true
 }
 
-function run_tests {
+function tests {
     # Disabled due to: https://github.com/github/feedback/discussions/8848
     # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
@@ -86,62 +87,27 @@ function run_tests {
         logmsg ERROR "invalid test suite: $TEST (choices=${suite_pat})"
         exit 1
     fi
-    if truthy "$DOCKER_OVERLAY_TEST_DEBUG"; then
-        # skip setup and tests and run debugging commands instead
-        function overlay_debug {
-            function logdo {
-                echo -e "\\n$ $*"
-                "$@"
-            }
-            logdo sh -c "mount | grep 'on /mnt/'"
-            logdo id
-            logdo pwd
-            logdo ls -ld . .. corehq manage.py node_modules staticfiles docker/wait.sh
-            if logdo df -hP .; then
-                upone=..
-            else
-                # can't read CWD, use absolute path
-                upone=$(dirname "$(pwd)")
-            fi
-            logdo ls -la "$upone"
-            for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
-                logdo ls -la "$dirpath"
-            done
-            logdo python -m site
-            logdo pip freeze
-            logdo npm config list
-            logdo yarn --version
-            logdo cat -n ../run_tests
-        }
-        echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
-    else
-        # ensure overlayfs (CWD) is readable and emit a useful message if it is not
-        if ! su cchq -c "test -r ."; then
-            logmsg ERROR "commcare-hq filesystem (${DOCKER_HQ_OVERLAY}) is not readable (consider setting/changing DOCKER_HQ_OVERLAY)"
-            exit 1
-        fi
 
-        log_group_begin "Django test suite setup"
-        now=$(date +%s)
-        setup "$TEST"
-        delta=$(($(date +%s) - $now))
-        log_group_end
+    log_group_begin "Django test suite setup"
+    now=$(date +%s)
+    setup "$TEST"
+    delta=$(($(date +%s) - $now))
+    log_group_end
 
-        send_timing_metric_to_datadog "setup" $delta
+    send_timing_metric_to_datadog "setup" $delta
 
-        log_group_begin "Django test suite: $TEST"
-        now=$(date +%s)
-        argv_str=$(printf ' %q' "$TEST" "$@")
-        su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
-        log_group_end  # only log group end on success (notice: `set -e`)
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-        [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
-        delta=$(($(date +%s) - $now))
+    log_group_begin "Django test suite: $TEST"
+    now=$(date +%s)
+    argv_str=$(printf ' %q' "$TEST" "$@")
+    #su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1  # TODO inline _run_tests
+    log_group_end  # only log group end on success (notice: `set -e`)
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+    [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+    delta=$(($(date +%s) - $now))
 
-        send_timing_metric_to_datadog "tests" $delta
-        send_counter_metric_to_datadog
-    fi
+    send_timing_metric_to_datadog "tests" $delta
+    send_counter_metric_to_datadog
 }
 
 function send_timing_metric_to_datadog() {
@@ -196,7 +162,7 @@ function _run_tests {
     function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        /mnt/wait.sh 127.0.0.1:8000
+        scripts/wait.sh 127.0.0.1:8000
         logmsg INFO "grunt test ${js_test_args[*]}"
         grunt test "${js_test_args[@]}"
     }
@@ -222,132 +188,20 @@ function _run_tests {
 }
 
 function bootstrap {
-    JS_SETUP=yes setup python
-    su cchq -c "export CCHQ_IS_FRESH_INSTALL=1 &&
-                ./manage.py sync_couch_views &&
-                ./manage.py migrate --noinput &&
-                ./manage.py compilejsi18n &&
-                ./manage.py create_kafka_topics &&
-                ./manage.py make_superuser admin@example.com"
+    export CCHQ_IS_FRESH_INSTALL=1 &&
+        ./manage.py sync_couch_views &&
+        ./manage.py migrate --noinput &&
+        ./manage.py compilejsi18n &&
+        ./manage.py create_kafka_topics &&
+        ./manage.py make_superuser admin@example.com
 }
 
 function runserver {
-    JS_SETUP=yes setup python
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
-source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
-source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
-
-# build the run_tests script to be executed as cchq later
-func_text logmsg _run_tests  > /mnt/run_tests
-echo '_run_tests "$@"'      >> /mnt/run_tests
-
-# Initial state of /mnt docker volumes:
-# /mnt/commcare-hq-ro:
-#   - points to local commcare-hq repo directory
-#   - read-only (except for travis).
-# /mnt/lib:
-#   - empty (except for travis)
-cd /mnt
-if [ "$DOCKER_HQ_OVERLAY" == "none" ]; then
-    ln -s commcare-hq-ro commcare-hq
-    mkdir commcare-hq/staticfiles
-    chown cchq:cchq commcare-hq-ro commcare-hq/staticfiles
-else
-    # commcare-hq source overlay prevents modifications in this container
-    # from leaking to the host; allows safe overwrite of localsettings.py
-    rm -rf lib/overlay  # clear source overlay (if it exists)
-    mkdir -p commcare-hq lib/{overlay,node_modules,staticfiles}
-    ln -s /mnt/lib/node_modules lib/overlay/node_modules
-    ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
-    logmsg INFO "mounting $(pwd)/commcare-hq via $DOCKER_HQ_OVERLAY"
-    if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
-        # Default Docker overlay engine
-        rm -rf lib/work
-        mkdir lib/work
-        overlayopts="lowerdir=/mnt/commcare-hq-ro,upperdir=/mnt/lib/overlay,workdir=/mnt/lib/work"
-        if truthy "$DOCKER_HQ_OVERLAYFS_METACOPY"; then
-            # see: https://www.kernel.org/doc/html/latest/filesystems/overlayfs.html#metadata-only-copy-up
-            # Significantly speeds up recursive chmods (<1sec when enabled
-            # compared to ~20sec when not). Provided as a configurable setting
-            # since there are security implications.
-            overlayopts="metacopy=on,${overlayopts}"
-        fi
-        mount -t overlay -o"$overlayopts" overlay commcare-hq
-        if truthy "$DOCKER_HQ_OVERLAYFS_CHMOD"; then
-            # May be required so cchq user can read files in the mounted
-            # commcare-hq volume. Provided as a configurable setting because it
-            # is an expensive operation and some container ecosystems (travis
-            # perhaps?) may not require it. I suspect this is the reason local
-            # testing was not working for many people in the past.
-            logmsg -n INFO "chmod'ing commcare-hq overlay... "
-            now=$(date +%s)
-            # add world-read (and world-x for dirs and existing-x files)
-            chmod -R o+rX commcare-hq
-            delta=$(($(date +%s) - $now))
-            echo "(delta=${delta}sec)"  # append the previous log line
-        fi
-    else
-        # This (aufs) was the default (perhaps only?) Docker overlay engine when
-        # this script was originally written, and has hung around ever since.
-        # Likely because this script has not been kept up-to-date with the
-        # latest Docker features.
-        #
-        # TODO: use overlayfs and drop support for aufs
-        mount -t aufs -o br=/mnt/lib/overlay:/mnt/commcare-hq-ro none commcare-hq
-    fi
-    # Own the new dirs after the overlay is mounted.
-    chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
-    # with one that points at the overlay mount.
-    ln -sf commcare-hq/docker/wait.sh wait.sh
-fi
-# New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
-#
-# none (travis, typically):
-#   /mnt
-#   ├── commcare-hq -> commcare-hq-ro
-#   ├── commcare-hq-ro  # NOTE: not read-only
-#   │   ├── staticfiles
-#   │   │   └── [empty]
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       └── [maybe files with travis...]
-#
-# overlayfs:
-#   /mnt
-#   ├── commcare-hq
-#   │   └── [overlayfs of /mnt/commcare-hq-ro + /mnt/lib/overlay + /mnt/lib/work]
-#   ├── commcare-hq-ro
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       ├── node_modules
-#       ├── overlay
-#       │   ├── node_modules -> /mnt/lib/node_modules
-#       │   └── staticfiles -> /mnt/lib/staticfiles
-#       ├── staticfiles
-#       └── work
-#
-# aufs:
-#   /mnt
-#   ├── commcare-hq
-#   │   └── [aufs of /mnt/commcare-hq-ro + /mnt/lib/overlay]
-#   ├── commcare-hq-ro
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       ├── node_modules
-#       ├── overlay
-#       │   ├── node_modules -> /mnt/lib/node_modules
-#       │   └── staticfiles -> /mnt/lib/staticfiles
-#       └── staticfiles
-
-mkdir -p lib/sharedfiles
-ln -sf /mnt/lib/sharedfiles /sharedfiles
-chown cchq:cchq lib/sharedfiles
-
-cd commcare-hq
-ln -sf docker/localsettings.py localsettings.py
+source scripts/datadog-utils.sh  # provides send_metric_to_datadog
+source scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
 logmsg INFO "running: $*"
 "$@"

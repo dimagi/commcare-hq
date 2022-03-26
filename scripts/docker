@@ -3,49 +3,6 @@
 
 function usage() {
     case $1 in
-        test)
-            echo "Run tests"
-            echo ""
-            echo "$0 test [OPTIONS]"
-            echo ""
-            echo "OPTIONS are passed to the selected test runner."
-            echo ""
-            echo "Set TEST environment variable to select a test runner:"
-            echo "  TEST=python|python-sharded|javascript|python-sharded-and-javascript"
-            echo ""
-            echo "The default is python."
-            echo ""
-            echo "Tests are run with a project name of 'hqtest', so the"
-            echo "containers and volumes it creates will not interfere with"
-            echo "'hqservice' containers managed by other commands."
-            echo ""
-            ;;
-        bash)
-            echo "Run bash in container"
-            echo ""
-            echo "$0 bash [SERVICE_NAME]"
-            echo ""
-            echo "Run bash in the currently running container if it is up."
-            echo "Otherwise create a new container and run bash inside it."
-            echo "See docker/hq-compose.yml for applicable service names."
-            echo "The default is 'web'."
-            echo ""
-            ;;
-        runserver)
-            echo "Run Django web server on port 8000"
-            echo ""
-            echo "$0 runserver [-d|--bootstrap|COMMAND]"
-            echo ""
-            echo "Options:"
-            echo ""
-            echo "  --bootstrap     Migrate new database and setup demo user."
-            echo "  -d              Run in background."
-            echo ""
-            ;;
-        shell)
-            echo "Run Django shell in web container"
-            echo ""
-            ;;
         hqtest)
             echo "Manage test containers"
             echo ""
@@ -85,14 +42,10 @@ function usage() {
             echo "$0 help COMMAND"
             echo ""
             echo "Commands:"
-            echo "  bash        Run bash in container"
             echo "  help        Get help on a command"
             echo "  hqtest      Manage test containers"
             echo "  rebuild     Stop, remove, and rebuild image(s)"
-            echo "  runserver   Run Django web server on port 8000"
-            echo "  shell       Run Django shell in web container"
             echo "  teardown    Remove all containers, images and volumes"
-            echo "  test        Run tests"
             echo ""
             echo "All other commands are passed directly to docker-compose."
             echo ""
@@ -128,15 +81,16 @@ export COMPOSE_ARCH="hq-compose-arch-${arch_suffix}.yml"
 
 CMD="$1"
 shift
-if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
-    if [ "$CMD" == "hqtest" ]; then
-        CMD="$1"
-        shift
-        if [ -z "$CMD" ]; then
-            CMD=help
-        fi
+if [ "$CMD" == "test" ]; then
+    echo "ERROR Tests are no longer run in a docker container."
+    echo "Use ./manage.py test ..."
+    exit 1
+elif [ "$CMD" == "hqtest" ]; then
+    CMD="$1"
+    shift
+    if [ -z "$CMD" ]; then
+        CMD=help
     fi
-    export COMPOSE_FILE="docker/hq-compose.yml"
     export COMPOSE_PROJECT_NAME=hqtest
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
@@ -160,19 +114,10 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
         export BLANK_IF_TESTS=""
     fi
 else
-    if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
-        SERVICES="runserver"
-        if [ "$CMD" == "runserver" ]; then
-            CMD="$1"
-            shift
-            if [ "$CMD" == "--bootstrap" ]; then
-                CMD=bootstrap
-            elif [ "$CMD" == "-d" ]; then
-                CMD="up -d"
-            elif [ -z "$CMD" ]; then
-                CMD="up"
-            fi
-        fi
+    if [[ "$CMD" =~ ^(runserver|bash|shell)$ ]]; then
+        echo "ERROR: $CMD is no longer supported."
+        echo "Use ./scripts/run.sh runserver ..."
+        exit 1
     else
         SERVICES="services"
         if [ -z "$CMD" ]; then
@@ -194,54 +139,11 @@ else
     fi
 
     export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
-    export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
-# export variables for compose file (they must be set or it complains)
-export CI="$CI"
-export CODECOV_TOKEN="$CODECOV_TOKEN"
-export DATADOG_API_KEY="$DATADOG_API_KEY"
-export DATADOG_APP_KEY="$DATADOG_APP_KEY"
-export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
-export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
-export DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
-export GITHUB_ACTIONS="$GITHUB_ACTIONS"
-export GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
-export JS_SETUP="${JS_SETUP:-no}"
-export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
-export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
-export REUSE_DB="$REUSE_DB"
-export TRAVIS="$TRAVIS"
-export TRAVIS_BRANCH="$TRAVIS_BRANCH"
-export TRAVIS_BUILD_ID="$TRAVIS_BUILD_ID"
-export TRAVIS_BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
-export TRAVIS_COMMIT="$TRAVIS_COMMIT"
-export TRAVIS_EVENT_TYPE="$TRAVIS_EVENT_TYPE"
-export TRAVIS_JOB_ID="$TRAVIS_JOB_ID"
-export TRAVIS_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
-export TRAVIS_PULL_REQUEST="$TRAVIS_PULL_REQUEST"
-export TRAVIS_PULL_REQUEST_BRANCH="$TRAVIS_PULL_REQUEST_BRANCH"
-export TRAVIS_PULL_REQUEST_SHA="$TRAVIS_PULL_REQUEST_SHA"
-export TRAVIS_REPO_SLUG="$TRAVIS_REPO_SLUG"
-
-if [ "$CI" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
-    # don't mount /mnt/commcare-hq-ro volume read-only on CI
-    # overwrite of localsettings.py, etc. doesn't matter here
-    export RO=""
-    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
-else
-    # TODO: use overlayfs and drop support for aufs
-    export RO=":ro"
-    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
-fi
-
-if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
-    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-yes}"
-else
-    export DOCKER_HQ_OVERLAYFS_CHMOD="${DOCKER_HQ_OVERLAYFS_CHMOD:-no}"
-fi
+export COMPOSE_FILE="docker/hq-compose.yml"
 
 case $CMD in
     -h | --help | help | services | "")
@@ -258,26 +160,7 @@ case $CMD in
         ;;
 esac
 
-if [ "$CMD" == "test" ]; then
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
-    echo "Pulling docker containers..."
-    docker-compose pull --quiet
-    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
-elif [ "$CMD" == "shell" ]; then
-    docker-compose run --rm web ./manage.py $CMD "$@"
-elif [ "$CMD" == "bootstrap" ]; then
-    docker-compose run --rm web bootstrap
-elif [ "$CMD" == "bash" ]; then
-    SERVICE_NAME="${1:-web}"
-    shift
-    CONTAINER="${COMPOSE_PROJECT_NAME}_${SERVICE_NAME}_1"
-    if [ "$(docker inspect -f {{.State.Running}} $CONTAINER 2> /dev/null)" == "true" ]; then
-        docker exec -it $CONTAINER $CMD "$@"
-    else
-        docker-compose run --rm $SERVICE_NAME $CMD "$@"
-    fi
-elif [ "$CMD" == "rebuild" ]; then
+if [ "$CMD" == "rebuild" ]; then
     if [ -z "$1" ]; then
         docker-compose down --rmi local
         docker-compose build

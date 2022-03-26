@@ -134,7 +134,7 @@ services:
             fi
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
-        - ${DOCKER_SOCK}:${DOCKER_SOCK}
+        - ${DOCKER_SOCK:-/var/run/docker.sock}:${DOCKER_SOCK:-/var/run/docker.sock}
         - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:

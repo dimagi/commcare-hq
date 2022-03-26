@@ -69,8 +69,9 @@ jobs:
       env:
         TEST: ${{ matrix.TEST }}
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
+        PYTHONUNBUFFERED: yes
         JS_SETUP: yes
-      run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
+      run: scripts/run.sh tests $TEST --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
       uses: codecov/codecov-action@v2
       with:
