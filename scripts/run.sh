@@ -101,7 +101,6 @@ function tests {
     argv_str=$(printf ' %q' "$TEST" "$@")
 
     py_test_args=("$@")
-    js_test_args=("$@")
     case "$TEST" in
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
@@ -116,41 +115,17 @@ function tests {
             ;;
     esac
 
-    function _test_python {
-        ./manage.py create_kafka_topics
-        if [ -n "$CI" ]; then
-            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
-            # `coverage` generates a file that's then sent to codecov
-            coverage run manage.py test "${py_test_args[@]}"
-            coverage xml
-            if [ -n "$TRAVIS" ]; then
-                bash <(curl -s https://codecov.io/bash)
-            fi
-        else
-            logmsg INFO "./manage.py test ${py_test_args[*]}"
-            ./manage.py test "${py_test_args[@]}"
-        fi
-    }
-
-    function _test_javascript {
-        ./manage.py migrate --noinput
-        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        scripts/wait.sh 127.0.0.1:8000
-        logmsg INFO "grunt test ${js_test_args[*]}"
-        grunt test "${js_test_args[@]}"
-    }
-
     case "$TEST" in
         python-sharded-and-javascript)
-            _test_python
-            _test_javascript
+            python_tests "${py_test_args[@]}"
+            javascript_tests "$@"
             ./manage.py static_analysis
             ;;
         python|python-sharded|python-elasticsearch-v5)
-            _test_python
+            python_tests "${py_test_args[@]}"
             ;;
         javascript)
-            _test_javascript
+            javascript_tests "$@"
             ;;
         *)
             # this should never happen (would mean there is a bug in this script)
@@ -167,6 +142,30 @@ function tests {
 
     send_timing_metric_to_datadog "tests" $delta
     send_counter_metric_to_datadog
+}
+
+function python_tests {
+    ./manage.py create_kafka_topics
+    if [ -n "$CI" ]; then
+        logmsg INFO "coverage run manage.py test $*"
+        # `coverage` generates a file that's then sent to codecov
+        coverage run manage.py test "$@"
+        coverage xml
+        if [ -n "$TRAVIS" ]; then
+            bash <(curl -s https://codecov.io/bash)
+        fi
+    else
+        logmsg INFO "./manage.py test $*"
+        ./manage.py test "$@"
+    fi
+}
+
+function javascript_tests {
+    ./manage.py migrate --noinput
+    ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
+    scripts/wait.sh 127.0.0.1:8000
+    logmsg INFO "grunt test $*"
+    grunt test "$@"
 }
 
 function send_timing_metric_to_datadog() {
