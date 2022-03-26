@@ -89,44 +89,17 @@ function tests {
     fi
 
     log_group_begin "Django test suite setup"
-    now=$(date +%s)
+    setup_start=$(date +%s)
     setup "$TEST"
-    delta=$(($(date +%s) - $now))
+    delta=$(($(date +%s) - $setup_start))
     log_group_end
 
     send_timing_metric_to_datadog "setup" $delta
 
     log_group_begin "Django test suite: $TEST"
-    now=$(date +%s)
+    tests_start=$(date +%s)
     argv_str=$(printf ' %q' "$TEST" "$@")
-    #su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1  # TODO inline _run_tests
-    log_group_end  # only log group end on success (notice: `set -e`)
-    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-    [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
-    delta=$(($(date +%s) - $now))
 
-    send_timing_metric_to_datadog "tests" $delta
-    send_counter_metric_to_datadog
-}
-
-function send_timing_metric_to_datadog() {
-    send_metric_to_datadog "travis.timings.$1" $2 "gauge" "test_type:$TEST"
-}
-
-function send_counter_metric_to_datadog() {
-    send_metric_to_datadog "travis.count" 1 "counter" "test_type:$TEST"
-}
-
-function _run_tests {
-    # NOTE: this function is only used as source code which gets written to a
-    # file and executed by the test runner. It does not have implicit access to
-    # the defining-script's environment (variables, functions, etc). Do not use
-    # resources defined elsewhere in this *file* within this function unless
-    # they also get written into the destination script.
-    set -e
-    TEST="$1"
-    shift
     py_test_args=("$@")
     js_test_args=("$@")
     case "$TEST" in
@@ -185,6 +158,23 @@ function _run_tests {
             exit 1
             ;;
     esac
+
+    log_group_end  # only log group end on success (notice: `set -e`)
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+    [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+    delta=$(($(date +%s) - $tests_start))
+
+    send_timing_metric_to_datadog "tests" $delta
+    send_counter_metric_to_datadog
+}
+
+function send_timing_metric_to_datadog() {
+    send_metric_to_datadog "travis.timings.$1" $2 "gauge" "test_type:$TEST"
+}
+
+function send_counter_metric_to_datadog() {
+    send_metric_to_datadog "travis.count" 1 "counter" "test_type:$TEST"
 }
 
 function bootstrap {
