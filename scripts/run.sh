@@ -43,7 +43,7 @@ function setup {
         # make sure to set in mocha-headless-chrome options
         #   executablePath: 'google-chrome-unstable'
         export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-        sudo npm -g install yarn bower grunt-cli uglify-js puppeteer mocha-headless-chrome
+        sudo npm -g install bower uglify-js puppeteer mocha-headless-chrome
         yarn install --progress=false --frozen-lockfile
     fi
 
