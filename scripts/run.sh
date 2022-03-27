@@ -16,6 +16,8 @@ function setup {
 
     [ ! -f localsettings.py ] && rm *.log || true
 
+    scripts/docker hqtest up -d
+
     # prefer https for git checkouts made by pip
     git config --global url."https://".insteadOf git://
 
@@ -46,9 +48,6 @@ function setup {
         sudo npm -g install bower uglify-js puppeteer mocha-headless-chrome
         yarn install --progress=false --frozen-lockfile
     fi
-
-    scripts/docker hqtest up -d
-    docker/wait.sh
 
     if [ ! -f localsettings.py ]; then
         ln -s docker/localsettings.py localsettings.py
