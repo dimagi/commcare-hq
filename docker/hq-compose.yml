@@ -87,7 +87,7 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_BROKER_ID: 1
-      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME:-kafka}
+      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME:-localhost}
       KAFKA_ADVERTISED_PORT: 9092
     volumes:
       - ${DOCKER_SOCK:-/var/run/docker.sock}:${DOCKER_SOCK:-/var/run/docker.sock}

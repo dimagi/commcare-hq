@@ -9,7 +9,7 @@ DATABASES = {
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
+        'HOST': 'localhost',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
@@ -25,7 +25,7 @@ if USE_PARTITIONED_DATABASE:
             'NAME': 'commcarehq_proxy',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
+            'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {
                 'SERIALIZE': False,
@@ -40,7 +40,7 @@ if USE_PARTITIONED_DATABASE:
             'NAME': 'commcarehq_p1',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
+            'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {
                 'SERIALIZE': False,
@@ -54,7 +54,7 @@ if USE_PARTITIONED_DATABASE:
             'NAME': 'commcarehq_p2',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
+            'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {
                 'SERIALIZE': False,
@@ -70,14 +70,14 @@ COUCH_DATABASES = {
     'default': {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
-        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
+        'COUCH_SERVER_ROOT': 'localhost:5984',  # 6984 for https couch
         'COUCH_USERNAME': '',
         'COUCH_PASSWORD': '',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
 
-redis_host = 'redis'
+redis_host = 'localhost'
 
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
@@ -93,7 +93,7 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch2'
+ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200  # ES 2 port
 ELASTICSEARCH_MAJOR_VERSION = 2
 
@@ -101,7 +101,7 @@ if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 S3_BLOB_DB_SETTINGS = {
-    "url": "http://minio:9980/",
+    "url": "http://localhost:9980/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
     "config": {
@@ -111,7 +111,7 @@ S3_BLOB_DB_SETTINGS = {
     },
 }
 
-KAFKA_BROKERS = ['kafka:9092']
+KAFKA_BROKERS = ['localhost:9092']
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
@@ -205,7 +205,7 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     COMPRESS_OFFLINE = False
 
-    FORMPLAYER_URL = 'http://formplayer:8080'
+    FORMPLAYER_URL = 'http://localhost:8080'
     FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
