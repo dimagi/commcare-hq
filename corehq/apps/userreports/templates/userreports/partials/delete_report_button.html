@@ -6,7 +6,7 @@
     class="btn btn-danger"
     href="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
   >
-    {% trans 'Delete Report' %}
+    {% trans 'Delete Custom Web Report' %}
   </a>
 {% else %}
   <div class="btn-group">
@@ -17,7 +17,7 @@
     {% else %}
       <form method='post' action="{% url 'delete_configurable_report' domain report_id %}" >
         {% csrf_token %}
-        <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
+        <input type="submit" value="{% trans 'Delete Custom Web Report'%}" class="btn btn-danger disable-on-submit pull-right">
       </form>
     {% endif %}
   </div>
