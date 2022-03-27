@@ -1,7 +1,8 @@
+from corehq.apps.es.groups import ElasticGroup
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, GROUP_HQ_INDEX_NAME
 
-GROUP_INDEX = prefix_for_tests("hqgroups_2017-05-29")
+GROUP_INDEX = ElasticGroup.index_name
 GROUP_ES_ALIAS = prefix_for_tests('hqgroups')
 GROUP_MAPPING = {
     "date_formats": [
@@ -67,7 +68,7 @@ GROUP_MAPPING = {
 GROUP_INDEX_INFO = ElasticsearchIndexInfo(
     index=GROUP_INDEX,
     alias=GROUP_ES_ALIAS,
-    type='group',
+    type=ElasticGroup.type,
     mapping=GROUP_MAPPING,
     hq_index_name=GROUP_HQ_INDEX_NAME
 )
