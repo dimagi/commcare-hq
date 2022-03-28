@@ -82,4 +82,5 @@ branches:
     - gh/revert-remove-report-pickling # Graham March 27
     - ap/ucr-custom-text # Amit March 28
     - jls/case-claim-http-codes # Jenny March 28
+    - ad/user-history-excel-export # Addison March 28
 submodules: { }
