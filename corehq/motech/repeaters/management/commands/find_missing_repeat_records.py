@@ -433,7 +433,7 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
 
 
 def get_form_ids_in_domain_between_dates(domain, startdate, enddate):
-    return FormES(es_instance_alias='export').domain(domain)\
+    return FormES(for_export=True).domain(domain)\
         .date_range('server_modified_on', gte=startdate, lte=enddate).source(['_id']).run().hits
 
 
@@ -441,7 +441,7 @@ def get_case_ids_in_domain_since_date(domain, startdate):
     """
     Can only search for cases modified since a date
     """
-    return CaseES(es_instance_alias='export').domain(domain).server_modified_range(gte=startdate)\
+    return CaseES(for_export=True).domain(domain).server_modified_range(gte=startdate)\
         .source(['_id']).run().hits
 
 
@@ -453,12 +453,12 @@ def get_users_created_since_startdate(domain, startdate):
     """
     Had to use created_on because last_modified did not seem to work
     """
-    return UserES(es_instance_alias='export').mobile_users().domain(domain)\
+    return UserES(for_export=True).mobile_users().domain(domain)\
         .date_range('created_on', gte=startdate).run().hits
 
 
 def get_apps_updated_between_dates(domain, startdate, enddate):
-    return AppES(es_instance_alias='export').domain(domain)\
+    return AppES(for_export=True).domain(domain)\
         .date_range('last_modified', gte=startdate, lte=enddate).run().hits
 
 
