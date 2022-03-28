@@ -9,21 +9,55 @@ from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_access_linked_domains(user, domain):
+def can_user_access_release_management(user, domain, include_lite_version=True, include_toggle=False):
+    """
+    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
+    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
+    NOTE: can remove include_toggle once the linked domains toggle is deleted
+    Checks if the current domain has any of the following enabled:
+    - privileges.RELEASE_MANAGEMENT
+    - privileges.LITE_RELEASE_MANAGEMENT
+    - toggles.LINKED_DOMAINS
+    If yes, and the user meets the criteria needed, returns True
+    """
     if not user or not domain:
         return False
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT):
-        return user.is_domain_admin(domain)
-    else:
-        return toggles.LINKED_DOMAINS.enabled(domain)
+
+    is_admin = user.is_domain_admin(domain)
+
+    if domain_has_privilege(domain, RELEASE_MANAGEMENT) and is_admin:
+        return True
+    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and is_admin:
+        return True
+    if include_toggle and toggles.LINKED_DOMAINS.enabled(domain):
+        return True
+    return False
 
 
-def can_access_release_management_feature(user, domain):
-    return domain_has_privilege(domain, RELEASE_MANAGEMENT) and user.is_domain_admin(domain)
+def can_domain_access_release_management(domain, include_lite_version=True, include_toggle=False):
+    """
+    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
+    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
+    NOTE: can remove include_toggle once the linked domains toggle is deleted
+    Checks if the current domain has any of the following enabled:
+    - privileges.RELEASE_MANAGEMENT
+    - privileges.LITE_RELEASE_MANAGEMENT
+    - toggles.LINKED_DOMAINS
+    """
+    if not domain:
+        return False
+
+    has_access = domain_has_privilege(domain, RELEASE_MANAGEMENT)
+    if include_lite_version:
+        has_access |= domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT)
+    if include_toggle:
+        has_access |= toggles.LINKED_DOMAINS.enabled(domain)
+
+    return has_access
 
 
 def _clean_json(doc):
