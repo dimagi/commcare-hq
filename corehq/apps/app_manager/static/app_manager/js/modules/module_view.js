@@ -37,7 +37,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     fixtureSelect: detail.fixture_select,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
-                    searchDefaultRelevant: options.search_default_relevant,
                     searchAdditionalRelevant: options.search_additional_relevant,
                     autoLaunch: options.auto_launch,
                     defaultSearch: options.default_search,
