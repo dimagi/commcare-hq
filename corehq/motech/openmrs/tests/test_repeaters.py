@@ -11,6 +11,7 @@ from django.test import SimpleTestCase, TestCase
 from unittest import mock
 from requests import RequestException
 from testil import eq
+from corehq.motech.models import ConnectionSettings
 
 import corehq.motech.openmrs.repeater_helpers
 from corehq.apps.case_importer.const import LookupErrors
@@ -140,14 +141,18 @@ CASE_CONFIG = {
 }
 
 
-@mock.patch.object(CommCareCase.objects, 'get_cases', lambda case_ids, domain=None, ordered=False: [{
-    '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
-        case_id='65e55473-e83b-4d78-9dde-eaf949758997',
-        type='paciente',
-        name='Elsa',
-        case_json={'estado_tarv': '1', 'tb': '0'},
-    )
-}[case_id] for case_id in case_ids])
+def mock_get_cases(self, case_ids, domain=None, ordered=False):
+    return [{
+        '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
+            case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+            type='paciente',
+            name='Elsa',
+            case_json={'estado_tarv': '1', 'tb': '0'},
+        )
+    }[case_id] for case_id in case_ids]
+
+
+@mock.patch.object(type(CommCareCase.objects), 'get_cases', mock_get_cases)
 class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -353,6 +358,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         cls.openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
+        cls.conn = ConnectionSettings.objects.create(domain=cls.domain, url="http://url.com")
         with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
             super(CaseLocationTests, cls).setUpClass()
 
@@ -460,6 +466,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
             'doc_type': 'OpenmrsRepeater',
             'domain': self.domain,
             'location_id': gardens.location_id,
+            'connection_settings_id': self.conn.id,
         })
         gardens_repeater.save()
 
@@ -479,12 +486,14 @@ class CaseLocationTests(LocationHierarchyTestCase):
             'doc_type': 'OpenmrsRepeater',
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
+            'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
         western_cape_repeater = OpenmrsRepeater.wrap({
             'doc_type': 'OpenmrsRepeater',
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
+            'connection_settings_id': self.conn.id,
         })
         western_cape_repeater.save()
 
