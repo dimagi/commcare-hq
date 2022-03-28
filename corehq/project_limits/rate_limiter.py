@@ -52,14 +52,15 @@ class RateLimiter(object):
                 rate_counter.increment((self.feature_key,) + limit_scope, delta=delta)
 
     def get_window_of_first_exceeded_limit(self, scope=None):
-        for rate_counter_key, current_rate, limit in self.iter_rates(scope):
-            if current_rate >= limit:
-                return rate_counter_key
+        for limit_scope, rates in self.iter_rates(scope):
+            for rate_counter_key, current_rate, limit in rates:
+                if current_rate >= limit:
+                    return rate_counter_key
 
         return None
 
     def allow_usage(self, scope=None):
-        for rates in self.iter_rates(scope):
+        for limit_scope, rates in self.iter_rates(scope):
             allowed = all(current_rate < limit
                           for rate_counter_key, current_rate, limit in rates)
             # allow usage if any limiter is below the threshold
@@ -69,19 +70,23 @@ class RateLimiter(object):
 
     def iter_rates(self, scope=None):
         """
-        Get generator of (key, current rate, rate limit) for each set of limits returned by get_rate_limits
+        Get generator of tuples for each set of limits returned by get_rate_limits, where the first item
+        of the tuple is the normalized scope, and the second is a generator of (key, current rate, rate limit)
+        for each limit in that scope
 
         e.g.
+        (('test-domain'), [
             ('week', 92359, 115000)
             ('day', ...)
             ...
-
+        ])
         """
         scope = self.get_normalized_scope(scope)
         for limit_scope, limits in self.get_rate_limits(*scope):
             yield (
-                (rate_counter.key, rate_counter.get((self.feature_key,) + limit_scope), limit)
-                for rate_counter, limit in limits
+                limit_scope,
+                ((rate_counter.key, rate_counter.get((self.feature_key,) + limit_scope), limit)
+                for rate_counter, limit in limits)
             )
 
     def wait(self, scope, timeout, windows_not_to_wait_on=('hour', 'day', 'week')):
@@ -90,7 +95,8 @@ class RateLimiter(object):
         delay = 0
         larger_windows_allow = all(
             current_rate < limit
-            for rate_counter_key, current_rate, limit in self.iter_rates(scope)
+            for limit_scope, limits in self.iter_rates(scope)
+            for rate_counter_key, current_rate, limit in limits
             if rate_counter_key in windows_not_to_wait_on
         )
         if not larger_windows_allow:
@@ -113,39 +119,18 @@ class RateLimiter(object):
                 time.sleep(delay)
 
 
-@quickcache(['domain', 'enterprise_limit'], memoize_timeout=60, timeout=60 * 60)
-def get_n_users_for_rate_limiting(domain, enterprise_limit=False):
-    """
-    Returns the number of users "allocated" to the project
-
-    That is, the actual number of users or the number of users included in the subscription,
-    whichever is higher.
-
-    This number is then used to portion out resource allocation through rate limiting.
-
-    """
-    n_users_included_in_subscription = _get_users_included_in_subscription(domain, enterprise_limit)
-    if enterprise_limit:
-        n_users = 0
-    else:
-        n_users = _get_user_count(domain)
-    return max(n_users_included_in_subscription, n_users)
-
-
-def _get_user_count(domain):
+@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
+def get_n_users_in_domain(domain):
     return CommCareUser.total_by_domain(domain, is_active=True)
 
 
-def _get_users_included_in_subscription(domain, enterprise_limit):
+@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
+def get_n_users_in_subscription(domain):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
         plan_version = subscription.plan_version
-        num_users = plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
-        if enterprise_limit or not plan_version.plan.is_customer_software_plan:
-            return num_users
-        else:
-            return 0
+        return plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
     else:
         return 0
 
@@ -153,7 +138,11 @@ def _get_users_included_in_subscription(domain, enterprise_limit):
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
 def _get_account_name(domain):
     from corehq.apps.accounting.models import BillingAccount
-    return BillingAccount.get_account_by_domain(domain).name
+    account = BillingAccount.get_account_by_domain(domain)
+    if account is not None:
+        return account.name
+    else:
+        return domain + 'no_account'
 
 
 class PerUserRateDefinition(object):
@@ -162,8 +151,8 @@ class PerUserRateDefinition(object):
         self.constant_rate_definition = constant_rate_definition or RateDefinition()
 
     def get_rate_limits(self, domain):
-        domain_users = get_n_users_for_rate_limiting(domain)
-        enterprise_users = get_n_users_for_rate_limiting(domain, enterprise_limit=True)
+        domain_users = get_n_users_in_domain(domain)
+        enterprise_users = get_n_users_in_subscription(domain)
         limit_pairs = [
             (domain_users, domain),
             (enterprise_users, _get_account_name(domain))
@@ -175,7 +164,7 @@ class PerUserRateDefinition(object):
                 .times(n_users)
                 .plus(self.constant_rate_definition)
             ).get_rate_limits((scope_key,))
-            limits.append(domain_limit)
+            limits.extend(domain_limit)
         return limits
 
 
@@ -214,14 +203,14 @@ class RateDefinition(object):
     def get_rate_limits(self, scope=None):
         if scope is None:
             scope = ()
-        return (scope, [(rate_counter, limit) for limit, rate_counter in (
+        return [(scope, [(rate_counter, limit) for limit, rate_counter in (
             # order matters for returning the highest priority window
             (self.per_week, week_rate_counter),
             (self.per_day, day_rate_counter),
             (self.per_hour, hour_rate_counter),
             (self.per_minute, minute_rate_counter),
             (self.per_second, second_rate_counter),
-        ) if limit])
+        ) if limit])]
 
 
 @quickcache(['key'], timeout=24 * 60 * 60)

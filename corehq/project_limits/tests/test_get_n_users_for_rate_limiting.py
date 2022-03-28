@@ -6,7 +6,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.project_limits.rate_limiter import get_n_users_for_rate_limiting
+from corehq.project_limits.rate_limiter import get_n_users_in_domain
 
 
 class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
@@ -53,8 +53,8 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
 
         _setup(domain_1)
 
-        # With no real users, it's the number of users in the subscription
-        self._assert_value_equals(domain_1, _get_included_in_subscription())
+        # There are no users yet
+        self._assert_value_equals(domain_1, 0)
 
         self._set_n_users(domain_1, 9)
 
@@ -67,13 +67,12 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         # No change on the original domain
         self._assert_value_equals(domain_1, 9)
 
-        # Shared account domains return 0
-
+        # new domain has no users
         self._assert_value_equals(domain_2, 0)
 
     def _assert_value_equals(self, domain, value):
-        get_n_users_for_rate_limiting.clear(domain)
-        self.assertEqual(get_n_users_for_rate_limiting(domain), value)
+        get_n_users_in_domain.clear(domain)
+        self.assertEqual(get_n_users_in_domain(domain), value)
 
     def _set_n_users(self, domain, n_users):
         start_n_users = CommCareUser.total_by_domain(domain, is_active=True)
