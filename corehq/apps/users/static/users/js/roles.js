@@ -4,7 +4,7 @@ hqDefine('users/js/roles',[
     'knockout',
     'hqwebapp/js/toggles',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, toggles) {
+], function ($, _, ko, toggles, alertUser) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
