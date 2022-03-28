@@ -178,7 +178,16 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield self._user_history_row(record, self.domain, self.timezone)
+            yield self._user_history_row(record, self.domain, self.timezone, for_export=False)
+
+    # Override parent method to add new lines to cell values of certain columns
+    @property
+    def export_rows(self):
+        records = self._get_queryset().order_by(self.ordering)[
+            self.pagination.start:self.pagination.start + self.pagination.count
+        ]
+        for record in records:
+            yield self._user_history_row(record, self.domain, self.timezone, for_export=True)
 
     @property
     def ordering(self):
@@ -196,14 +205,27 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             return None
         return location_object.display_name
 
-    def _user_history_row(self, record, domain, timezone):
+    def _user_history_row(self, record, domain, timezone, for_export):
+        def _convert_list_to_string(changes_list):
+            if changes_list:
+                s = ''
+                for value in changes_list[0: len(changes_list) - 1]:
+                    s += value + ', \n'
+                s += changes_list[len(changes_list) - 1]
+                return s
+            return ''
+
+        if for_export:
+            change_messages = _convert_list_to_string(list(get_messages(record.change_messages)))
+        else:
+            change_messages = self._html_list(list(get_messages(record.change_messages)))
         return [
             record.user_repr,
             record.changed_by_repr,
             _get_action_display(record.action),
             record.changed_via,
-            self._user_history_details_cell(record.changes, domain),
-            self._html_list(list(get_messages(record.change_messages))),
+            self._user_history_details_cell(record.changes, domain, for_export),
+            change_messages,
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
@@ -222,7 +244,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             items = ["<li>{}</li>".format(format_html(change)) for change in changes]
         return mark_safe(f"<ul class='list-unstyled'>{''.join(items)}</ul>")
 
-    def _user_history_details_cell(self, changes, domain):
+    def _user_history_details_cell(self, changes, domain, for_export):
         properties = UserHistoryReport.get_primary_properties(domain)
         properties.pop("user_data", None)
         primary_changes = {}
@@ -240,11 +262,27 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
         more_count = len(all_changes) - len(primary_changes)
-        return render_to_string("reports/standard/partials/user_history_changes.html", {
-            "primary_changes": self._html_list(primary_changes),
-            "all_changes": self._html_list(all_changes),
-            "more_count": more_count,
-        })
+
+        if for_export:
+            def _convert_dict_to_string(changes_dict):
+                s = ''
+                for i, key in enumerate(changes_dict):
+                    if not key:
+                        continue
+                    elif not changes_dict[key]:
+                        s += key + ": None"
+                    else:
+                        s += key + ': ' + str(changes_dict[key])
+                    if not i == len(changes_dict) - 1:
+                        s += ', \n'
+                return s
+            return _convert_dict_to_string(all_changes)
+        else:
+            return render_to_string("reports/standard/partials/user_history_changes.html", {
+                "primary_changes": self._html_list(primary_changes),
+                "all_changes": self._html_list(all_changes),
+                "more_count": more_count,
+            })
 
 
 def _get_action_display(logged_action):
