@@ -127,7 +127,6 @@ hqDefine('notifications/js/notifications_service', [
                 .done(function (data) {
                     self.lastSeenNotificationDate(data.activated);
                     if (self.hasUnreadFeatureNotification()) {
-                        console.log("in here")
                         kissmetrics.track.event("Notifications tab - Clicked notifications tab",
                             {email: data.email, domain: data.domain});
                     }

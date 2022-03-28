@@ -40,15 +40,26 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
-        plan = Subscription.get_subscribed_plan_by_domain(self.get_domain())
-        groups = Group.get_case_sharing_groups(self.get_domain())
-        subscription_type = Subscription.get_active_subscription_by_domain(self.get_domain()).service_type
-        is_USH_or_Solutions = subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX'
+        subscribed_plan = Subscription.get_subscribed_plan_by_domain(self.get_domain())
+        if any(p in str(subscribed_plan) for p in ['Pro', 'Advanced', 'Enterprise']):
+            plan_tier = 'pro'
+        else:
+            plan_tier = 'basic'
+
+        def should_hide_feature_notifs(domain, plan):
+            groups = Group.get_case_sharing_groups(domain)
+            subscription_type = Subscription.get_active_subscription_by_domain(domain).service_type
+            if plan == 'pro' and groups != []:
+                return True
+            if subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX':
+                return True
+            return False
+
         notifications = Notification.get_by_user(self.request.user,
                                                  self.request.couch_user,
-                                                 plan=plan,
-                                                 has_cs_groups=groups != [],
-                                                 is_USH_or_Solutions=is_USH_or_Solutions)
+                                                 plan_tier=plan_tier,
+                                                 hide_features=should_hide_feature_notifs(
+                                                     self.get_domain(), plan_tier))
         has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user
