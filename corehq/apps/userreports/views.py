@@ -201,8 +201,13 @@ class BaseUserConfigReportsView(BaseDomainView):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + RegistryReportConfiguration.by_domain(self.domain) + static_reports,
-            'data_sources': get_datasources_for_domain(self.domain, include_static=True)
+            'reports': (
+                ReportConfiguration.by_domain(self.domain)
+                + RegistryReportConfiguration.by_domain(self.domain)
+                + static_reports
+            ),
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True),
+            'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -224,6 +229,9 @@ class BaseUserConfigReportsView(BaseDomainView):
                 get_permission_name(Permissions.edit_ucrs)
             )
         )
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.section_name = gettext_lazy("Custom Web Reports")
+
         if allow_access_to_ucrs:
             return super().dispatch(*args, **kwargs)
         raise Http404()
