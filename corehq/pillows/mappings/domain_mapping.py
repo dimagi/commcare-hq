@@ -1,7 +1,8 @@
+from corehq.apps.es.domains import ElasticDomain
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = prefix_for_tests("hqdomains_2021-03-08")
+DOMAIN_INDEX = ElasticDomain.index_name
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
@@ -247,7 +248,7 @@ DOMAIN_MAPPING = {
 DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
     index=DOMAIN_INDEX,
     alias=DOMAIN_ES_ALIAS,
-    type='hqdomain',
+    type=ElasticDomain.type,
     mapping=DOMAIN_MAPPING,
     hq_index_name=DOMAIN_HQ_INDEX_NAME
 )
