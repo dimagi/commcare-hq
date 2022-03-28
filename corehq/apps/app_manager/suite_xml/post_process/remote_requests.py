@@ -1,4 +1,5 @@
 from django.utils.functional import cached_property
+from django.template.base import Lexer, TokenType
 
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
@@ -206,7 +207,10 @@ class RemoteRequestFactory(object):
         ]
 
         datums.extend(
-            QueryData(key=c.property, ref=c.defaultValue)
+            QueryData(
+                key=c.property,
+                ref=self._convert_curly_braces_to_concat(c.defaultValue)
+            )
             for c in self.module.search_config.default_properties
         )
         if self.module.search_config.blacklisted_owner_ids_expression:
@@ -231,6 +235,34 @@ class RemoteRequestFactory(object):
                 )
             )
         return datums
+
+    # Enables app builders to use a special {{variable}} brace syntax to insert
+    # variables and functions for interpretation by formplayer.
+    @staticmethod
+    def _convert_curly_braces_to_concat(xpath_query_inputted):
+        vars = []
+        texts = []
+        for token in Lexer(xpath_query_inputted).tokenize():
+            if token.token_type == TokenType.VAR:
+                vars.append(token.contents)
+            else:
+                # Can be TokenType.TEXT or TokenType.BLOCK (any blocks will just be treated like text)
+                texts.append(token.contents)
+
+        xpath_query_outputted = ""
+        # If we found any variables then we know to perform a conversion
+        if vars:
+            # The app builder will be required to use single quotes to denote a variable/function when using
+            # this syntax
+            xpath_query_outputted = 'concat('
+            # We assume there is one more text token than variable token and that they alternate
+            for i in range(0, len(texts) - 1):
+                xpath_query_outputted += '"' + texts[i] + '", '
+                xpath_query_outputted += vars[i] + ', '
+            xpath_query_outputted += '"' + texts[len(texts) - 1] + '")'
+            return xpath_query_outputted
+        else:
+            return xpath_query_inputted
 
     def build_query_prompts(self):
         prompts = []
