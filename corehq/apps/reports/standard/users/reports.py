@@ -42,6 +42,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     name = ugettext_lazy("User History")
     section_name = ugettext_lazy("User Management")
 
+    exportable = True
+    exportable_all = True
+
     dispatcher = UserManagementReportDispatcher
 
     fields = [
