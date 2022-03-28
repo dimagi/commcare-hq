@@ -1,5 +1,6 @@
 from datetime import date
 
+from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.case_search.models import FuzzyProperties, IgnorePatterns
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
@@ -156,3 +157,30 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             None,
             ['c3', 'c5']
         )
+
+    def test_selected_any_function_string_prop_name(self):
+        self._create_case_search_config()
+        cases = [
+            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
+            {'_id': 'c2', 'case_type': 'song', 'description': 'Manchester'},
+            {'_id': 'c3', 'case_type': 'song', 'description': 'Manchester Boston'},
+        ]
+        self._assert_query_runs_correctly(
+            self.domain,
+            cases,
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "selected-any('description', 'New York Boston')"},
+            ),
+            None,
+            ['c1', 'c3']
+        )
+
+    def test_selected_validate_property_name(self):
+        with self.assertRaises(XPathFunctionException):
+            get_case_search_query(
+                self.domain,
+                ['song'],
+                {'_xpath_query': "selected-all(3, 'New York Boston')"},
+            )

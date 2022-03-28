@@ -97,12 +97,12 @@ class SQLXFormsSession(models.Model):
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
-    submit_partially_completed_forms = models.NullBooleanField()
+    submit_partially_completed_forms = models.BooleanField(null=True)
 
     # Only matters when submit_partially_completed_forms is True.
     # If True, any case changes will be included in the submission.
     # If False, any case changes will be removed from the submission.
-    include_case_updates_in_partial_submissions = models.NullBooleanField()
+    include_case_updates_in_partial_submissions = models.BooleanField(null=True)
 
     class Meta(object):
         app_label = 'smsforms'
