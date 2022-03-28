@@ -179,8 +179,11 @@ class ProjectReportsTab(UITab):
         if is_ucr_toggle_enabled and has_ucr_permissions:
 
             from corehq.apps.userreports.views import UserConfigReportsHomeView
+            title = _(UserConfigReportsHomeView.section_name)
+            if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+                title = _("Custom Web Reports")
             tools.append({
-                'title': _(UserConfigReportsHomeView.section_name),
+                'title': title,
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
             })
