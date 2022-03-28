@@ -328,7 +328,7 @@ def process_reporting_metadata_staging():
         with transaction.atomic():
             records = (
                 UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-            )[:100]
+            )[:10]
             for record in records:
                 user = CouchUser.get_by_user_id(record.user_id, record.domain)
                 try:
