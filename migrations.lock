@@ -81,6 +81,7 @@ accounting
  0059_add_lite_release_management_priv
  0060_add_loadtest_users_priv
  0061_remove_enterprise_v1
+ 0062_add_release_management_to_enterprise
 admin
  0001_initial
  0002_logentry_remove_auto_add
