@@ -142,23 +142,37 @@ class CaseClaimEndpointTests(TestCase):
 
     def test_multiple_case_claim(self):
         """
-        Server shoud handle and claim multiple cases in one request
+        Server should handle and claim multiple cases in one request
         """
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
 
         # Claim multiple cases in one request as space separated values
-        response = client.post(url, {'case_id': " ".join(self.case_ids)})
+        response = client.post(url, {'case_id': self.case_ids})
         self.assertEqual(response.status_code, 200)
 
-        # Claim multiple cases with a fake case_id and return a 410 not found status
+    def test_multiple_case_claim_fail(self):
+        """
+        Server should not claim any case after returning a 410 CaseNotFound error
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        # Claim multiple cases with a fake case_id
         fake_case_id = uuid4().hex
         case_ids_to_fail = [self.case_id, fake_case_id]
-        response = client.post(url, {'case_id': " ".join(case_ids_to_fail)})
+        response = client.post(url, {'case_id': case_ids_to_fail})
+
+        # Assert that no case was claimed
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 0)
+
+        # Assert that a 410 status was returned
         self.assertEqual(response.status_code, 410)
         self.assertEqual(response.content.decode('utf-8'),
-            f'The cases "{fake_case_id}" you are trying to claim was not found')
+            f'No cases claimed. Case IDs "{fake_case_id}" not found')
 
     @flaky
     def test_claim_restore_as(self):
