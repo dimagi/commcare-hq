@@ -1,3 +1,5 @@
+import re
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -7,7 +9,9 @@ from django.views.generic import View
 
 from memoized import memoized
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import login_required, require_superuser
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import (
@@ -36,7 +40,15 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
-        notifications = Notification.get_by_user(self.request.user, self.request.couch_user)
+        plan = Subscription.get_subscribed_plan_by_domain(self.get_domain())
+        groups = Group.get_case_sharing_groups(self.get_domain())
+        subscription_type = Subscription.get_active_subscription_by_domain(self.get_domain()).service_type
+        is_USH_or_Solutions = subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX'
+        notifications = Notification.get_by_user(self.request.user,
+                                                 self.request.couch_user,
+                                                 plan=plan,
+                                                 has_cs_groups=groups != [],
+                                                 is_USH_or_Solutions=is_USH_or_Solutions)
         has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user
@@ -50,7 +62,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def mark_as_read(self, in_data):
         Notification.objects.get(pk=in_data['id']).mark_as_read(self.request.user)
-        return {}
+        return {
+            'email': self.request.couch_user.username,
+            'domain': self.get_domain()
+        }
 
     @allow_remote_invocation
     def save_last_seen(self, in_data):
@@ -62,8 +77,17 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         except IllegalModelStateException as e:
             raise JSONResponseException(str(e))
         return {
-            'activated': notification.activated
+            'activated': notification.activated,
+            'email': self.request.couch_user.username,
+            'domain': self.get_domain()
         }
+
+    def get_domain(self):
+        regex = '(?<=a\/)(.*?)(?=\s*\/)'
+        domain = re.search(regex, self.request.META['HTTP_REFERER'])
+        if domain:
+            return domain.group(0)
+        return self.request.couch_user.domains[0]
 
     @allow_remote_invocation
     def dismiss_ui_notify(self, in_data):
