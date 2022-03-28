@@ -71,7 +71,7 @@ Anatomy of a Web Apps Feature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since web apps depends on HQ, formplayer, and the core CommCare engine, web apps development frequently involves
-working with multiple repositories, in multiple languages, which may have different release process.
+working with multiple repositories, in multiple languages, which may have different release processes.
 
 As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
 
