@@ -207,6 +207,8 @@ class BaseUserConfigReportsView(BaseDomainView):
                 + RegistryReportConfiguration.by_domain(self.domain)
                 + static_reports
             ),
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True),
+            'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
