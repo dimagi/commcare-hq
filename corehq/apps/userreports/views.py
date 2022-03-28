@@ -230,6 +230,9 @@ class BaseUserConfigReportsView(BaseDomainView):
                 get_permission_name(Permissions.edit_ucrs)
             )
         )
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.section_name = gettext_lazy("Custom Web Reports")
+
         if allow_access_to_ucrs:
             return super().dispatch(*args, **kwargs)
         raise Http404()
