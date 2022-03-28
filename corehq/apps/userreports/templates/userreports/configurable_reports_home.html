@@ -5,20 +5,35 @@
 {% requirejs_main 'userreports/js/configurable_reports_home' %}
 
 {% block page_content %}
-  <h1>{% trans "Configurable Reports" %}</h1>
-  <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
-    <i class="fa fa-plus"></i>
-    {% trans 'Add Report' %}
-  </a>
-  <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
-    <i class="fa fa-cloud-upload"></i>
-    {% trans 'Import Report' %}
-  </a>
-  <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
-    <i class="fa fa-plus"></i>
-    {% trans 'Add Data Source' %}
-  </a>
-
+  {% if use_updated_ucr_naming %}
+    <h1>{% trans "Custom Web Reports" %}</h1>
+    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Custom Web Report' %}
+    </a>
+    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
+      <i class="fa fa-cloud-upload"></i>
+      {% trans 'Import Custom Web Report' %}
+    </a>
+    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Custom Web Report Source' %}
+    </a>
+  {% else %}
+    <h1>{% trans "Configurable Reports" %}</h1>
+    <a href="{% url 'create_configurable_report' domain %}" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Report' %}
+    </a>
+    <a href="{% url 'import_configurable_report' domain %}" class="btn btn-default">
+      <i class="fa fa-cloud-upload"></i>
+      {% trans 'Import Report' %}
+    </a>
+    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Data Source' %}
+    </a>
+  {% endif %}
   <br><br><br>
 
   <div class="row">
