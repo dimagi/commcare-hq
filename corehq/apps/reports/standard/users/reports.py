@@ -172,22 +172,21 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             query_filters = Q(changes__has_key=user_property)
         return query_filters
 
-    @property
-    def rows(self):
+    def get_rows(self, for_export):
         records = self._get_queryset().order_by(self.ordering)[
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield self._user_history_row(record, self.domain, self.timezone, for_export=False)
+            yield self._user_history_row(record, self.domain, self.timezone, for_export)
+
+    @property
+    def rows(self):
+        return self.get_rows(for_export=False)
 
     # Override parent method to add new lines to cell values of certain columns
     @property
     def export_rows(self):
-        records = self._get_queryset().order_by(self.ordering)[
-            self.pagination.start:self.pagination.start + self.pagination.count
-        ]
-        for record in records:
-            yield self._user_history_row(record, self.domain, self.timezone, for_export=True)
+        return self.get_rows(for_export=True)
 
     @property
     def ordering(self):
@@ -206,17 +205,8 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         return location_object.display_name
 
     def _user_history_row(self, record, domain, timezone, for_export):
-        def _convert_list_to_string(changes_list):
-            if changes_list:
-                s = ''
-                for value in changes_list[0: len(changes_list) - 1]:
-                    s += value + ', \n'
-                s += changes_list[len(changes_list) - 1]
-                return s
-            return ''
-
         if for_export:
-            change_messages = _convert_list_to_string(list(get_messages(record.change_messages)))
+            change_messages = ", \n".join(list(get_messages(record.change_messages)))
         else:
             change_messages = self._html_list(list(get_messages(record.change_messages)))
         return [
@@ -264,6 +254,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         more_count = len(all_changes) - len(primary_changes)
 
         if for_export:
+            # Just adds a comma and newline between each change
             def _convert_dict_to_string(changes_dict):
                 s = ''
                 for i, key in enumerate(changes_dict):
@@ -272,7 +263,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                     elif not changes_dict[key]:
                         s += key + ": " + _("None")
                     else:
-                        s += key + ': ' + str(changes_dict[key])
+                        s += key + f": {changes_dict[key]}"
                     if not i == len(changes_dict) - 1:
                         s += ', \n'
                 return s
