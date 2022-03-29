@@ -62,7 +62,6 @@ branches:
     - es/mobile-auth # Simon Nov 23
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - ml/check-for-historical-xss # Minha Mar 3
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
