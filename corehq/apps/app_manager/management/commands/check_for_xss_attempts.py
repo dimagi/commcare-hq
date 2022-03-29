@@ -36,13 +36,13 @@ class Command(FormIteratorCommandBase):
 
 
 def form_contains_xss_attempt(form):
-    regex = '(?<=<value>)(.*)(?=<\/value>)'
+    match_user_input_regex = '<value>(.*?)</value>'
     try:
         source = form.source
     except ResourceNotFound:
         return False, ''
 
-    for value in re.findall(regex, form.source):
+    for value in re.findall(match_user_input_regex, form.source):
         prepared_value = prepare_value(value)
         clean_html = get_cleaned_value(Cleaner(javascript=True, safe_attrs_only=True).clean_html, prepared_value)
         dirty_html = get_cleaned_value(Cleaner(javascript=False, safe_attrs_only=False).clean_html, prepared_value)
@@ -62,13 +62,11 @@ def get_cleaned_value(clean_func, value):
 
 
 def prepare_value(value):
-    regexoutput = '(?<=<output)(.*)(?=\s*>)'
+    match_output_attributes_regex = '<output(.*?)>'
     if '&lt;' and '&gt;' in value:
         value = value.replace("&lt;", "<").replace("&gt;", ">")
     if '<output' in value:
-        for output in re.findall(regexoutput, value):
-            value = value.replace(output, '')
-        value = value.replace("<output>", '').replace("</output>", '')
+        value = re.sub(match_output_attributes_regex, '', value).replace("</output>", '')
     return value
 
 
