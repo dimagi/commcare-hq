@@ -21,7 +21,7 @@ from corehq.motech.repeaters.const import (
 )
 from corehq.motech.repeaters.models import (
     FormRepeater,
-    SQLRepeater,
+    SQLFormRepeater,
     send_request,
 )
 
@@ -46,12 +46,14 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             connection_settings_id=conn.id,
             include_app_id_param=False,
         )
-        cls.repeater.save()
-        cls.sql_repeater = SQLRepeater.objects.create(
+        cls.repeater.save(sync_to_sql=False)
+        cls.sql_repeater = SQLFormRepeater(
             domain=DOMAIN,
             repeater_id=cls.repeater.get_id,
             connection_settings=conn,
+            format='form_xml',
         )
+        cls.sql_repeater.save(sync_to_couch=False)
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
 
@@ -77,7 +79,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         super().tearDown()
 
     def reget_sql_repeater(self):
-        return SQLRepeater.objects.get(pk=self.sql_repeater.pk)
+        return SQLFormRepeater.objects.get(pk=self.sql_repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
