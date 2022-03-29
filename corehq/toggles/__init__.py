@@ -2146,6 +2146,14 @@ DATA_REGISTRY = StaticToggle(
     help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
 )
 
+DATA_REGISTRY_UCR = StaticToggle(
+    'data_registry_ucr',
+    'USH: Enable the creation of Custom Web Reports backed by Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+)
+
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
