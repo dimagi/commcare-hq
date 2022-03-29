@@ -2143,7 +2143,7 @@ DATA_REGISTRY = StaticToggle(
     'USH: Enable Data Registries for sharing data between project spaces',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
 )
 
 DATA_REGISTRY_UCR = StaticToggle(
