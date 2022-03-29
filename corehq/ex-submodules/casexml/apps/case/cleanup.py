@@ -154,7 +154,7 @@ def get_first_claims(domain, user_id, case_ids):
         try:
             if next((c for c in case.get_subcases(identifier)
                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id and c.closed is False)):
-                        previously_claimed_ids.append(case.get_id)
+                previously_claimed_ids.append(case.get_id)
         except StopIteration:
             pass
     return previously_claimed_ids if len(previously_claimed_ids) != 0 else None

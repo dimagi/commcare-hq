@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from django.test import TestCase
 
-from casexml.apps.case.cleanup import claim_case, get_first_claim
+from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 
@@ -88,14 +88,14 @@ class CaseClaimTests(TestCase):
         """
         claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
-        claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
+        claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
         self.assert_claim(claim, claim_id)
 
     def test_first_claim_none(self):
         """
         get_first_claim should return None if not found
         """
-        claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
+        claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(claim)
 
     def test_closed_claim(self):
@@ -105,7 +105,7 @@ class CaseClaimTests(TestCase):
         claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         self._close_case(claim_id)
-        first_claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
+        first_claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(first_claim)
 
     def test_claim_case_other_domain(self):
