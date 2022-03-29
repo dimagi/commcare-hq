@@ -10,7 +10,7 @@
   {% initial_page_data "document_type" request.GET.type %}
   {% initial_page_data "document_id" request.GET.id %}
   {% initial_page_data "data_source_id" request.GET.data_source %}
-  <h1>{% trans "UCR Expression Debugger" %}</h1>
+  <h1>{% trans "Custom Web Reports Expression Debugger" %}</h1>
   <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
   <form id="expression-debugger" class="form-horizontal ko-template" data-bind="submit: evaluateExpression">
     <div class="form-group">
@@ -42,7 +42,7 @@
     </div>
     {% if data_sources %}
       <div class="form-group">
-        <label for="data_source_id" class="col-sm-2 control-label">{% trans "Data Source (optional)" %}</label>
+        <label for="data_source_id" class="col-sm-2 control-label">{% trans "Custom Web Report Source (optional)" %}</label>
         <div class="col-sm-6">
           <select class="hqwebapp-select2" data-bind="value: dataSourceId">
             <option></option>

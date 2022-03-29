@@ -6,10 +6,10 @@
 {% endblock %}
 {% block page_content %}
   {% registerurl "data_source_evaluator" domain %}
-  <h1>{% trans "UCR Data Source Debugger" %}</h1>
+  <h1>{% trans "Custom Web Report Source Debugger" %}</h1>
   <form id="data-source-debugger" class="form-horizontal" data-bind="submit: evaluateDataSource">
     <div class="form-group">
-      <label for="data_source_id" class="col-sm-2 control-label">{% trans "Data Source" %}</label>
+      <label for="data_source_id" class="col-sm-2 control-label">{% trans "Custom Web Report Source" %}</label>
       <div class="col-sm-6">
         <select class="form-control hqwebapp-select2" id="data_source_id" data-bind="value: dataSourceId">
           {% for data_source in data_sources %}

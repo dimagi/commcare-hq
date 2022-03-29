@@ -914,7 +914,7 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/data_source_debugger.html'
-    page_title = gettext_lazy("Data Source Debugger")
+    page_title = gettext_lazy("Custom Web Report Source Debugger")
 
 
 @login_and_domain_required
