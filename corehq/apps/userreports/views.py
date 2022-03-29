@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
@@ -509,6 +510,10 @@ class ConfigureReport(ReportBuilderView):
             self.app_id = self.request.GET.get('application', None)
             self.source_id = self.request.GET['source']
             if self.registry_slug:
+                if not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
+                    return self.render_error_response(
+                        _("Data Registry Reports are not available to this project.")
+                    )
                 helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
                 helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
                 self.source_type = DATA_SOURCE_TYPE_CASE
@@ -524,18 +529,20 @@ class ConfigureReport(ReportBuilderView):
                 self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
-            self.template_name = 'userreports/report_error.html'
-            if self.existing_report:
-                context = {'report_id': self.existing_report.get_id,
-                           'is_static': self.existing_report.is_static}
-            else:
-                context = {}
-            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            context.update(self.main_context)
-            return self.render_to_response(context)
+            return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
+    def render_error_response(self, message):
+        if self.existing_report:
+            context = {'report_id': self.existing_report.get_id,
+                       'is_static': self.existing_report.is_static}
+        else:
+            context = {}
+        context['error_message'] = message
+        context.update(self.main_context)
+        return render(self.request, 'userreports/report_error.html', context)
 
     @property
     def page_name(self):
