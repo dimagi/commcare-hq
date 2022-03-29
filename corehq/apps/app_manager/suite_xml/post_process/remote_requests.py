@@ -37,6 +37,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
     module_uses_smart_links,
+    module_offers_registry_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -215,7 +216,7 @@ class RemoteRequestFactory(object):
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        if self.module.search_config.data_registry:
+        if module_offers_registry_search(self.module):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,

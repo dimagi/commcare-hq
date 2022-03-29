@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.http import HttpResponseNotFound
 
 from tastypie.api import Api

@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 19:55+0000\n"
+"POT-Creation-Date: 2022-03-23 19:20+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -324,29 +324,29 @@ msgstr ""
 msgid "Unknown menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:151
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:155
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:194
 msgid "There is an error in your tab: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:197
 msgid "There is an error in your property name: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:198
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
 msgid "All properties must be below a tab."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:206
 msgid ""
 "Search Properties and Default Search Filters can't have common properties. "
 "Please update following properties: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:207
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:211
 msgid "There are errors in your configuration."
 msgstr ""
 

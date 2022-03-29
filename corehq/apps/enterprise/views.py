@@ -22,7 +22,11 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
-from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
+from corehq.apps.enterprise.models import (
+    EnterprisePermissions,
+    EnterpriseMobileWorkerSettings,
+)
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -31,6 +35,7 @@ from corehq import privileges
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     CustomerBillingRecord,
+    BillingAccount,
 )
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
 from corehq.apps.domain.decorators import (
@@ -45,6 +50,7 @@ from corehq.apps.enterprise.enterprise import EnterpriseReport
 
 from corehq.apps.enterprise.forms import (
     EnterpriseSettingsForm,
+    EnterpriseManageMobileWorkersForm,
 )
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
@@ -440,3 +446,9 @@ def update_enterprise_permissions_source_domain(request, domain):
     clear_enterprise_permissions_cache_for_all_users.delay(config.id, old_domain)
     messages.success(request, _('Controlling domain set to {}.').format(source_domain))
     return HttpResponseRedirect(redirect)
+
+
+class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
+    page_title = gettext_lazy("Manage Mobile Workers")
+    template_name = 'enterprise/manage_mobile_workers.html'
+    urlname = 'enterprise_manage_mobile_workers'
