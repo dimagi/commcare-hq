@@ -62,7 +62,7 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         self._set_n_users(domain_1, 9)
 
         # With more users than included in subscription, it's the number of users
-        self._assert_value_equals(domain_1, 9)
+        self._assert_domain_value_equals(domain_1, 9)
 
         # subscription still returns only the billing amount
         self._assert_subscription_value_equals(domain_1, 8)
