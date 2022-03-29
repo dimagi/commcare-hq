@@ -117,6 +117,13 @@ class TestGetInboundPhoneEntry(TestCase):
         self.assertFalse(has_domain_two_way_scope)
         self.assertTrue(self.global_backend.domain_is_authorized(phone_number.domain))
 
+    def _get_inbound_phone_entry__backend_domain_2(self):
+        """The utilities main objective is to ensure consistency between the various
+        test methods that are testing `get_inbound_phone_entry` under different conditions
+        """
+        sms = SMS(phone_number=self.phone_number, backend_id=self.domain2_backend.couch_id)
+        return get_inbound_phone_entry(sms)
+
     def test_get_inbound_phone_entry__domain_backend(self):
         """Should return the only 'two way' number.
         Note that the backend 'belongs' to domain2 but the contact returned is from domain1.
@@ -203,7 +210,3 @@ class TestGetInboundPhoneEntry(TestCase):
         self.assertEqual(phone_number.owner_id, "fake-owner-3")
         self.assertTrue(has_domain_two_way_scope)
         self.assertTrue(self.domain2_backend.domain_is_authorized(phone_number.domain))
-
-    def _get_inbound_phone_entry__backend_domain_2(self):
-        sms = SMS(phone_number=self.phone_number, backend_id=self.domain2_backend.couch_id)
-        return get_inbound_phone_entry(sms)
