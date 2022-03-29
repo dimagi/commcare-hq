@@ -14,7 +14,7 @@ from djng.views.mixins import (
 )
 from memoized import memoized
 
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.views import BasePageView
@@ -41,7 +41,8 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
         subscribed_plan = Subscription.get_subscribed_plan_by_domain(self.get_domain())
-        if any(p in str(subscribed_plan) for p in ['Pro', 'Advanced', 'Enterprise']):
+        pro_tier_editions = [SoftwarePlanEdition.PRO, SoftwarePlanEdition.ADVANCED, SoftwarePlanEdition.ENTERPRISE]
+        if subscribed_plan.plan.edition in pro_tier_editions:
             plan_tier = 'pro'
         else:
             plan_tier = 'basic'
@@ -94,8 +95,8 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         }
 
     def get_domain(self):
-        regex = '(?<=a\/)(.*?)(?=\s*\/)'
-        domain = re.search(regex, self.request.META['HTTP_REFERER'])
+        domain_match_regex = '(?<=a\/)(.*?)(?=\s*\/)'
+        domain = re.search(domain_match_regex, self.request.META['HTTP_REFERER'])
         if domain:
             return domain.group(0)
         return self.request.couch_user.domains[0]
