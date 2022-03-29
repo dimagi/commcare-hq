@@ -62,7 +62,6 @@ branches:
     - es/mobile-auth # Simon Nov 23
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - ml/check-for-historical-xss # Minha Mar 3
     - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
@@ -74,7 +73,6 @@ branches:
     - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - bmb/upgrade-minimist  # Biyeun March 23
     - nh/loadtest_users_postmigration  # Norman March 24
-    - gh/erm/consolidate-enterprise-roles # Graham March 24
     - gh/erm/add-release-management-to-enterprise-plans # Graham March 24
     - gh/erm/migration-for-feature-flag # Graham March 24
     - gh/revert-remove-report-pickling # Graham March 27
