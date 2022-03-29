@@ -324,32 +324,37 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
 
     def collect_case_to_case_index_ratio(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
-        index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
-        case_count = estimate_row_count(case_query, db_name)
-        case_index_count = estimate_row_count(index_query, db_name)
+        case_count_total = 0
+        case_index_count_total = 0
 
-        resource_model['case_index_ratio'] = case_index_count / case_count
+        for db_name in get_db_aliases_for_partitioned_query():
+            case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
+            index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
+            case_count_total += estimate_row_count(case_query, db_name)
+            case_index_count_total += estimate_row_count(index_query, db_name)
+
+        resource_model['case_index_ratio'] = case_index_count_total / case_count_total
 
     def collect_attachment_sizes(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        with BlobMeta.get_cursor_for_partition_db(db_name, readonly=True) as cursor:
-            cursor.execute("""
-                SELECT
-                    meta.content_type,
-                    width_bucket(content_length, 0, 2900000, 10) AS bucket,
-                    min(content_length) as bucket_min, max(content_length) AS bucket_max,
-                    count(content_length) AS freq
-                FROM blobs_blobmeta meta INNER JOIN form_processor_xforminstancesql
-                  ON meta.parent_id = form_processor_xforminstancesql.form_id
-                WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
-                GROUP BY content_type, bucket
-                ORDER BY content_type, bucket
-            """, [self.domain])
+        result = []
 
-            result = [i for i in fetchall_as_namedtuple(cursor)]
-            resource_model['attachments'] = result
+        for db_name in get_db_aliases_for_partitioned_query():
+            with BlobMeta.get_cursor_for_partition_db(db_name, readonly=True) as cursor:
+                cursor.execute("""
+                    SELECT
+                        meta.content_type,
+                        width_bucket(content_length, 0, 2900000, 10) AS bucket,
+                        min(content_length) as bucket_min, max(content_length) AS bucket_max,
+                        count(content_length) AS freq
+                    FROM blobs_blobmeta meta INNER JOIN form_processor_xforminstancesql
+                      ON meta.parent_id = form_processor_xforminstancesql.form_id
+                    WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
+                    GROUP BY content_type, bucket
+                    ORDER BY content_type, bucket
+                """, [self.domain])
+                result = result + [i for i in fetchall_as_namedtuple(cursor)]
+
+        resource_model['attachments'] = result
 
     def collect_ucr_data(self):
         static_datasources = StaticDataSourceConfiguration.by_domain(self.domain)
@@ -390,61 +395,71 @@ class Command(BaseCommand):
         resource_model['datasources_info'] = rows
 
     def collect_case_transactions(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]
-        db_cursor = connections[db_name].cursor()
+        total_form_case_updates = 0
+        total_forms = 0
+        total_transactions = 0
 
-        with db_cursor as cursor:
-            cursor.execute("""
-                SELECT COUNT(*) as num_forms, d.count as num_updates
-                FROM (
-                    SELECT COUNT(*) as count
+        for db_name in get_db_aliases_for_partitioned_query():
+            db_cursor = connections[db_name].cursor()
+
+            with db_cursor as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) as num_forms, d.count as num_updates
+                    FROM (
+                        SELECT COUNT(*) as count
+                        FROM form_processor_casetransaction
+                        WHERE case_id IN (
+                            SELECT case_id
+                            FROM form_processor_commcarecasesql
+                            WHERE domain = %s
+                        )
+                        GROUP BY form_id
+                    ) AS d
+                    GROUP BY d.count;
+                """, [self.domain])
+                result = cursor.fetchall()
+
+                running_form_case_updates = 0
+                forms = 0
+                for num_forms, num_updates in result:
+                    forms += num_forms
+                    running_form_case_updates += num_forms * num_updates
+
+                total_form_case_updates += running_form_case_updates
+                total_forms += forms
+
+                cursor.execute("""
+                    SELECT COUNT(*)
                     FROM form_processor_casetransaction
                     WHERE case_id IN (
                         SELECT case_id
                         FROM form_processor_commcarecasesql
                         WHERE domain = %s
-                    )
-                    GROUP BY form_id
-                ) AS d
-                GROUP BY d.count;
-            """, [self.domain])
-            result = cursor.fetchall()
+                    );
+                """, [self.domain])
+                (transactions,) = cursor.fetchone()
+                total_transactions += transactions
 
-            running_form_case_updates = 0
-            total_forms = 0
-            for num_forms, num_updates in result:
-                total_forms += num_forms
-                running_form_case_updates += num_forms * num_updates
-
-            resource_model['case_transactions_per_form'] = running_form_case_updates / total_forms
-
-            cursor.execute("""
-                SELECT COUNT(*)
-                FROM form_processor_casetransaction
-                WHERE case_id IN (
-                    SELECT case_id
-                    FROM form_processor_commcarecasesql
-                    WHERE domain = %s
-                );
-            """, [self.domain])
-            (total_transactions,) = cursor.fetchone()
-            resource_model['case_transactions_total'] = total_transactions
+        resource_model['case_transactions_per_form'] = total_form_case_updates / total_forms
+        resource_model['case_transactions_total'] = total_transactions
 
     def collect_case_indices(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]
-        db_cursor = connections[db_name].cursor()
+        total_case_indices = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            db_cursor = connections[db_name].cursor()
 
-        with db_cursor as cursor:
-            cursor.execute("""
-                SELECT COUNT(*)
-                FROM form_processor_commcarecaseindexsql
-                WHERE domain = %s;
-            """, [self.domain])
-            (total_case_indices,) = cursor.fetchone()
+            with db_cursor as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM form_processor_commcarecaseindexsql
+                    WHERE domain = %s;
+                """, [self.domain])
+                (case_indices,) = cursor.fetchone()
+                total_case_indices += case_indices
 
-            total_cases = resource_model['cases_total']
-            if total_cases > 0:
-                resource_model['case_indices'] = total_case_indices/total_cases
+        total_cases = resource_model['cases_total']
+        if total_cases > 0:
+            resource_model['case_indices'] = total_case_indices/total_cases
 
     def collect_synclogs(self):
         db_name = router.db_for_read(SyncLogSQL)
