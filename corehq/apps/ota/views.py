@@ -145,8 +145,7 @@ def claim(request, domain):
 
     try:
         if get_first_claim(domain, restore_user.user_id, case_id):
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                status=409)
+            return HttpResponse(status=204)
 
         claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
@@ -155,7 +154,7 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    return HttpResponse(status=200)
+    return HttpResponse(status=201)
 
 
 def get_restore_params(request, domain):

@@ -732,6 +732,17 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
 )
 
+UCR_UPDATED_NAMING = StaticToggle(
+    'ucr_updated_naming',
+    'Show updated naming of UCRS',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Displays updated UCR naming if the feature flag is enabled."
+        "This is a temporary flag which would be removed when the updated naming is agreed upon by all divisons."
+    )
+)
+
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',

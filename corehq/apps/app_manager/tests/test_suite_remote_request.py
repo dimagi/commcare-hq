@@ -165,7 +165,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
-            default_relevant=True,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
@@ -191,16 +190,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_search_config_model(self, *args):
         config = CaseSearch()
 
-        config.default_relevant = True
         self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
-        config.default_relevant = False
-        self.assertEqual(config.get_relevant(), "")
-
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
-
-        config.default_relevant = True
         self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
