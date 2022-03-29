@@ -2,8 +2,9 @@ hqDefine('users/js/roles',[
     'jquery',
     'underscore',
     'knockout',
+    'hqwebapp/js/toggles',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, alertUser) {
+], function ($, _, ko, toggles, alertUser) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
@@ -357,14 +358,23 @@ hqDefine('users/js/roles',[
                         checkboxPermission: self.reportPermissions.all,
                         checkboxText: gettext("Allow role to access all reports."),
                     }];
-                self.ucrs = [{
-                    visibilityRestraint: self.permissions.access_all_locations,
-                    text: gettext("Create and Edit Configurable Reports"),
-                    checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                    checkboxPermission: self.permissions.edit_ucrs,
-                    checkboxText: gettext("Allow role to create and edit configurable reports."),
-                }];
-
+                if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
+                    self.ucrs = [{
+                        visibilityRestraint: self.permissions.access_all_locations,
+                        text: gettext("Create and Edit Custom Web Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        checkboxPermission: self.permissions.edit_ucrs,
+                        checkboxText: gettext("Allow role to create and edit custom web reports."),
+                    }];
+                } else {
+                    self.ucrs = [{
+                        visibilityRestraint: self.permissions.access_all_locations,
+                        text: gettext("Create and Edit Configurable Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        checkboxPermission: self.permissions.edit_ucrs,
+                        checkboxText: gettext("Allow role to create and edit configurable reports."),
+                    }];
+                }
                 self.registryPermissions = [
                     selectPermissionModel(
                         'manage_registries',
