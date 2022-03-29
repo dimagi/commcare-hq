@@ -254,20 +254,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         more_count = len(all_changes) - len(primary_changes)
 
         if for_export:
-            # Just adds a comma and newline between each change
-            def _convert_dict_to_string(changes_dict):
-                s = ''
-                for i, key in enumerate(changes_dict):
-                    if not key:
-                        continue
-                    elif not changes_dict[key]:
-                        s += key + ": " + _("None")
-                    else:
-                        s += key + f": {changes_dict[key]}"
-                    if not i == len(changes_dict) - 1:
-                        s += ', \n'
-                return s
-            return _convert_dict_to_string(all_changes)
+            # This just adds a comma and newline between each change
+            return ", \n".join(
+                [f"{key}: {value or _('None')}" for key, value in list(all_changes.items())]
+            )
         else:
             return render_to_string("reports/standard/partials/user_history_changes.html", {
                 "primary_changes": self._html_list(primary_changes),
