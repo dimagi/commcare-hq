@@ -510,10 +510,6 @@ class ConfigureReport(ReportBuilderView):
             self.app_id = self.request.GET.get('application', None)
             self.source_id = self.request.GET['source']
             if self.registry_slug:
-                if not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
-                    return self.render_error_response(
-                        _("Data Registry Reports are not available to this project.")
-                    )
                 helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
                 helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
                 self.source_type = DATA_SOURCE_TYPE_CASE
@@ -521,6 +517,11 @@ class ConfigureReport(ReportBuilderView):
             else:
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
+
+        if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
+            return self.render_error_response(
+                _("Creating or Editing Data Registry Reports are not enabled for this project."),
+            )
 
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
