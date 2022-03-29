@@ -924,6 +924,11 @@ class DataSourceDebuggerView(BaseUserConfigReportsView):
     template_name = 'userreports/data_source_debugger.html'
     page_title = gettext_lazy("Data Source Debugger")
 
+    def dispatch(self, *args, **kwargs):
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.page_title = gettext_lazy("Custom Web Report Source Debugger")
+        return super().dispatch(*args, **kwargs)
+
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
