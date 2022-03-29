@@ -122,8 +122,7 @@ class TestGetInboundPhoneEntry(TestCase):
         Note that the backend 'belongs' to domain2 but the contact returned is from domain1.
         This means that the message is ultimately associated with domain1.
         TODO: determine if this should be allowed"""
-        sms = SMS(phone_number=self.phone_number, backend_id=self.domain2_backend.couch_id)
-        phone_number, has_domain_two_way_scope = get_inbound_phone_entry(sms)
+        phone_number, has_domain_two_way_scope = self._get_inbound_phone_entry__backend_domain_2()
 
         self.assertEqual(phone_number.owner_id, "fake-owner-1")
         self.assertFalse(has_domain_two_way_scope)
