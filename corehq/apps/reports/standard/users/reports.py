@@ -270,7 +270,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                     if not key:
                         continue
                     elif not changes_dict[key]:
-                        s += key + ": None"
+                        s += key + ": " + _("None")
                     else:
                         s += key + ': ' + str(changes_dict[key])
                     if not i == len(changes_dict) - 1:
