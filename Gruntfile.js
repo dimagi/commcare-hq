@@ -64,11 +64,12 @@ module.exports = function(grunt) {
         var currentApp = queuedTests[0],
             currentTestPath = BASE_URL + currentApp,
             testText = "Running Test '" + currentApp + "'",
+            reporter = grunt.option('verbose') ? 'spec' : 'dot',
             runner_options = {
                 file: currentTestPath,
                 visible: false,
                 timeout: 120000,
-                reporter: 'dot',
+                reporter: reporter,
             };
 
         // For running in docker/travis

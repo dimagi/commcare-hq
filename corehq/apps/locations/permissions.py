@@ -101,7 +101,7 @@ from functools import wraps
 
 from django.http import Http404
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
@@ -120,13 +120,13 @@ from corehq.middleware import get_view_func
 from .models import SQLLocation
 
 
-# TODO: ugettext_lazy is likely not having the desired effect, as format_html will immediately
+# TODO: gettext_lazy is likely not having the desired effect, as format_html will immediately
 # evaluate it against the current language.
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 # has details on how to create a delayed format_html/mark_safe
 
 
-LOCATION_ACCESS_DENIED = format_html(ugettext_lazy(
+LOCATION_ACCESS_DENIED = format_html(gettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
     'More information is available <a href="{}">here</a>.'),

@@ -4,11 +4,10 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from django.views import View
 
 from couchdbkit import ResourceNotFound
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq.apps.accounting.models import BillingAccount
@@ -113,6 +112,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, WebUser
 from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -258,8 +258,8 @@ def pull_missing_multimedia(request, domain, app_id):
     if async_update:
         pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email, force)
         messages.success(request,
-                         ugettext('Your request has been submitted. '
-                                  'We will notify you via email once completed.'))
+                         gettext('Your request has been submitted. '
+                                 'We will notify you via email once completed.'))
     else:
         app = get_app(domain, app_id)
         pull_missing_multimedia_for_app(app, force=force)
@@ -269,7 +269,7 @@ def pull_missing_multimedia(request, domain, app_id):
 @method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Linked Project Spaces")
+    page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
 
     @use_multiselect
@@ -396,7 +396,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         return {
             'success': True,
-            'message': ugettext('''
+            'message': gettext('''
                 Your release has begun. You will receive an email when it is complete.
                 Until then, to avoid linked domains receiving inconsistent content, please
                 avoid editing any of the data contained in the release.
@@ -435,18 +435,18 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 def link_domains(couch_user, upstream_domain, downstream_domain):
     if not domain_exists(downstream_domain):
-        error = ugettext("The project space {} does not exist. Verify that the name is correct, and that the "
-                         "domain has not been deleted.").format(downstream_domain)
+        error = gettext("The project space {} does not exist. Verify that the name is correct, and that the "
+                        "domain has not been deleted.").format(downstream_domain)
         raise DomainDoesNotExist(error)
 
     if get_active_domain_link(upstream_domain, downstream_domain):
-        error = ugettext(
+        error = gettext(
             "The project space {} is already a downstream project space of {}."
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
     if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = ugettext("You must be an admin in both project spaces to create a link.")
+        error = gettext("You must be an admin in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
@@ -557,7 +557,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
         name = LINKED_MODELS_MAP[record.model]
         if record.model == MODEL_APP:
             detail = record.wrapped_detail
-            app_name = ugettext_lazy('Unknown App')
+            app_name = gettext_lazy('Unknown App')
             if detail:
                 app_names = self.linked_app_names(self.selected_link.linked_domain)
                 app_name = app_names.get(detail.app_id, detail.app_id)
@@ -565,7 +565,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_FIXTURE:
             detail = record.wrapped_detail
-            tag = ugettext_lazy('Unknown')
+            tag = gettext_lazy('Unknown')
             if detail:
                 data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
                 if data_type:
@@ -574,7 +574,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_REPORT:
             detail = record.wrapped_detail
-            report_name = ugettext_lazy('Unknown Report')
+            report_name = gettext_lazy('Unknown Report')
             if detail:
                 try:
                     report_name = ReportConfiguration.get(detail.report_id).title
@@ -584,7 +584,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_KEYWORD:
             detail = record.wrapped_detail
-            keyword_name = ugettext_lazy('Unknown Keyword')
+            keyword_name = gettext_lazy('Unknown Keyword')
             if detail:
                 try:
                     keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword
@@ -598,10 +598,10 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def headers(self):
         tzname = self.timezone.localize(datetime.utcnow()).tzname()
         columns = [
-            DataTablesColumn(ugettext('Link')),
-            DataTablesColumn(ugettext('Date ({})'.format(tzname))),
-            DataTablesColumn(ugettext('Data Model')),
-            DataTablesColumn(ugettext('User')),
+            DataTablesColumn(gettext('Link')),
+            DataTablesColumn(gettext('Date ({})'.format(tzname))),
+            DataTablesColumn(gettext('Data Model')),
+            DataTablesColumn(gettext('User')),
         ]
 
         return DataTablesHeader(*columns)

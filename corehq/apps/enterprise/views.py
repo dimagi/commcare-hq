@@ -14,7 +14,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
 
 from django_prbac.utils import has_privilege
@@ -22,7 +22,11 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
-from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
+from corehq.apps.enterprise.models import (
+    EnterprisePermissions,
+    EnterpriseMobileWorkerSettings,
+)
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -31,6 +35,7 @@ from corehq import privileges
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     CustomerBillingRecord,
+    BillingAccount,
 )
 from corehq.apps.accounting.utils import get_customer_cards, quantize_accounting_decimal, log_accounting_error
 from corehq.apps.domain.decorators import (
@@ -45,6 +50,7 @@ from corehq.apps.enterprise.enterprise import EnterpriseReport
 
 from corehq.apps.enterprise.forms import (
     EnterpriseSettingsForm,
+    EnterpriseManageMobileWorkersForm,
 )
 from corehq.apps.enterprise.tasks import email_enterprise_report
 
@@ -164,7 +170,7 @@ def edit_enterprise_settings(request, domain):
 
 @method_decorator(require_enterprise_admin, name='dispatch')
 class BaseEnterpriseAdminView(BaseDomainView):
-    section_name = ugettext_lazy("Enterprise Console")
+    section_name = gettext_lazy("Enterprise Console")
 
     @property
     def section_url(self):
@@ -179,11 +185,11 @@ class BaseEnterpriseAdminView(BaseDomainView):
 class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'enterprise_billing_statements'
-    page_title = ugettext_lazy("Billing Statements")
+    page_title = gettext_lazy("Billing Statements")
 
-    limit_text = ugettext_lazy("statements per page")
-    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
-    loading_message = ugettext_lazy("Loading statements...")
+    limit_text = gettext_lazy("statements per page")
+    empty_notification = gettext_lazy("No Billing Statements match the current criteria.")
+    loading_message = gettext_lazy("Loading statements...")
 
     @property
     def stripe_cards(self):
@@ -440,3 +446,9 @@ def update_enterprise_permissions_source_domain(request, domain):
     clear_enterprise_permissions_cache_for_all_users.delay(config.id, old_domain)
     messages.success(request, _('Controlling domain set to {}.').format(source_domain))
     return HttpResponseRedirect(redirect)
+
+
+class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
+    page_title = gettext_lazy("Manage Mobile Workers")
+    template_name = 'enterprise/manage_mobile_workers.html'
+    urlname = 'enterprise_manage_mobile_workers'

@@ -93,6 +93,7 @@ If you run formplayer as a separate service, make sure you're not acciddentally 
 If you run into "Unable to connect" formplayer errors, try the following:
 - Running formplayer as a standalone service instead of in Docker
 - Visiting localhost:8000 instead of 0.0.0.0:8000 when using your locally run HQ app
+- If running HQ app on 127.0.0.1:8000 and observe CORS error in browser's network tab while making API request to formplayer via localhost:8080, change HQ app url to use localhost:8000
 
 See the [Formplayer README](https://github.com/dimagi/formplayer/blob/master/README.md)
 and [Formplayer setup for HQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#formplayer).

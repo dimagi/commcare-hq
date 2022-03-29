@@ -3,7 +3,7 @@ from memoized import memoized
 import re
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from sqlalchemy import or_
 from sqlalchemy.exc import ProgrammingError
@@ -127,7 +127,7 @@ class StaticChoiceProvider(ChoiceProvider):
         default = self.default_value(query_context.user)
         if not default:
             default = SearchableChoice(SHOW_ALL_CHOICE,
-                                       "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All')))
+                                       "[{}]".format(gettext('Show All')), "[{}]".format(gettext('Show All')))
         filtered_set = [choice for choice in self.choices
                        if choice == default or any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
@@ -163,7 +163,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         try:
             default = self.default_value(query_context.user)
             if not default:
-                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
             choices = [
                 self._make_choice_from_value(value)
                 for value in self.get_values_for_query(query_context)
@@ -327,7 +327,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
             return self._locations_to_choices([location])
 
         # If the user isn't assigned to a location, they have access to all locations
-        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
 
     def _locations_to_choices(self, locations):
         cached_path_display = {}
@@ -480,7 +480,7 @@ class AbstractMultiProvider(ChoiceProvider):
 
         if choices[0] is None:
             if not default:
-                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
             choices[0] = default[0]
 
         return choices

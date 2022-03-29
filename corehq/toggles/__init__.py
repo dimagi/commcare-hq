@@ -732,6 +732,17 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
 )
 
+UCR_UPDATED_NAMING = StaticToggle(
+    'ucr_updated_naming',
+    'Show updated naming of UCRS',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Displays updated UCR naming if the feature flag is enabled."
+        "This is a temporary flag which would be removed when the updated naming is agreed upon by all divisons."
+    )
+)
+
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -835,6 +846,16 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+USH_CASE_LIST_MULTI_SELECT = StaticToggle(
+    'ush_case_list_multi_select',
+    'USH: Allow selecting multiple cases from the case list',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows user to select multiple cases and load them all into the form.
+    """
 )
 
 USH_CASE_CLAIM_UPDATES = StaticToggle(

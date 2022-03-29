@@ -7,13 +7,30 @@
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
         <div class="btn-group">
-          <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
-          <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+          {% if use_updated_ucr_naming %}
+            <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Custom Web Report Data' %}</a>
+            <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Custom Web Report Source Summary' %}</a>
+          {% else %}
+            <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview Data' %}</a>
+            <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+          {% endif %}
         </div>
         <div class="btn-group">
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
             {% csrf_token %}
             <div {% if is_rebuilding or data_source.disable_destructive_rebuild %}style="margin-right: 15px;"{% endif %}>
+              {% if use_updated_ucr_naming %}
+              <button type="submit"
+                class="btn btn-default disable-on-submit"
+                data-toggle="popover"
+                title="Warning"
+                data-container="body"
+                data-content="{% trans_html_attr "Rebuilding report sources erases all the existing data and will start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data" %}"
+                data-trigger="hover"
+                {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
+                {% trans 'Rebuild Custom Web Report Source' %}
+              </button>
+              {% else %}
               <button type="submit"
                 class="btn btn-default disable-on-submit"
                 data-toggle="popover"
@@ -24,6 +41,7 @@
                 {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
                 {% trans 'Rebuild Data Source'%}
               </button>
+              {% endif %}
               {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for #}
               {% if data_source.disable_destructive_rebuild %}
                 <span class="hq-help-template"
@@ -50,7 +68,14 @@
                class="track-usage-link"
                data-category="UCR"
                data-action="View Source"
-               data-label="Data Source">{% trans "Data Source JSON" %}</a>
+               data-label="Data Source"
+              >
+              {% if use_updated_ucr_naming %}
+                {% trans "Custom Web Report Source JSON" %}
+              {% else %}
+                {% trans "Data Source JSON" %}
+              {% endif %}
+              </a>
           </li>
           {% if not data_source.is_deactivated %}
             <li>
@@ -85,11 +110,19 @@
           {% if not used_by_reports %}
             <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
               {% csrf_token %}
-              <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit">
+              {% if use_updated_ucr_naming %}
+                <input type="submit" value="{% trans 'Delete Custom Web Report Source'%}" class="btn btn-danger disable-on-submit">
+              {% else %}
+                <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit">
+              {% endif %}
             </form>
           {% else %}
             <a href="#confirm_delete" class="btn btn-danger" data-toggle="modal">
-              {% trans 'Delete Data Source'%}
+              {% if use_updated_ucr_naming %}
+                {% trans 'Delete Custom Web Report Source'%}
+              {% else %}
+                {% trans 'Delete Data Source'%}
+              {% endif %}
             </a>
           {% endif %}
         {% endif %}

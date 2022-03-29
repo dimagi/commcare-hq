@@ -12,7 +12,7 @@ from django.http import (
     JsonResponse,
 )
 from django.utils.translation import ngettext
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -141,7 +141,6 @@ def claim(request, domain):
 
     # This will be expecting space seperated values of all the cases to be claimed
     case_ids = request.POST.getlist('case_id')
-    print(case_ids)
 
     if not case_ids:
         return HttpResponse('A case_id is required', status=400)
@@ -158,18 +157,14 @@ def claim(request, domain):
 
     for case_id in case_ids_to_claim:
         claim_case(domain, restore_user, case_id,
-                host_type=unquote(request.POST.get('case_type', '')),
-                host_name=unquote(request.POST.get('case_name', '')),
-                device_id=__name__ + ".claim")
+                   host_type=unquote(request.POST.get('case_type', '')),
+                   host_name=unquote(request.POST.get('case_name', '')),
+                   device_id=__name__ + ".claim")
 
-    if case_ids_already_claimed:
-        cases = ', '.join(case_ids_already_claimed)
-        if len(case_ids) == 1:
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                    status=409)
-        return HttpResponse(f"Case IDs {cases} already claimed", status=200)
+    if set(case_ids) == set(case_ids_already_claimed):
+            return HttpResponse(status=204)
 
-    return HttpResponse(status=200)
+    return HttpResponse(status=201)
 
 
 def get_restore_params(request, domain):

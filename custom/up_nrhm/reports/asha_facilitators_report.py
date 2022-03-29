@@ -3,11 +3,11 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import gettext as _, gettext_noop
 
 
 class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = ugettext_noop("Format-2 Consolidation of the Functionality numbers")
+    name = gettext_noop("Format-2 Consolidation of the Functionality numbers")
     slug = "asha_facilitators_report"
     no_value = '--'
 
