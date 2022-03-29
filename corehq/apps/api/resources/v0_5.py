@@ -220,16 +220,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle, user_change_logger=None, raise_error_if_invalid_key=True):
+    def _update(self, bundle, user_change_logger=None):
         should_save = False
         valid_keys = [
             'phone_numbers', 'groups', 'email', 'password', 'user_data', 'first_name', 'last_name', 'language'
         ]
         for key, value in bundle.data.items():
             if key not in valid_keys:
-                if raise_error_if_invalid_key:
-                    raise BadRequest(f'Cannot update the key {key}.')
-                continue
+                raise BadRequest(f'Cannot update the key {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -318,8 +316,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
-            del bundle.data['password']
-            self._update(bundle, raise_error_if_invalid_key=False)
+            # username cannot be updated
+            bundle.data.pop('username', None)
+            # password was just set
+            bundle.data.pop('password', None)
+            self._update(bundle)
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
