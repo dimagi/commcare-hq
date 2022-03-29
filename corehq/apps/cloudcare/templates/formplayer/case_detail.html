@@ -41,7 +41,15 @@
         <div class="js-detail-tabs module-casedetail-tabs"></div>
         <div class="js-detail-content"></div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="text-align: center">
+        <button type="button"
+            class="btn btn-success btn-lg module-casedetail-btn"
+            id="select-case-for-multi-select"
+            data-dismiss="modal">{% trans "Select" %}</button>
+        <button type="button"
+            class="btn btn-default btn-lg module-casedetail-btn"
+            id="cancel-case-select"
+            data-dismiss="modal">{% trans "Cancel" %}</button>
         <button type="button"
                 class="btn btn-success btn-lg module-casedetail-continue"
                 id="select-case"

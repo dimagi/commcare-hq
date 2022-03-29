@@ -118,6 +118,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId) {
+        var isMultiSelect = true; // TODO: add logic
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
@@ -143,14 +144,28 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $('#select-case').off('click').click(function () {
             FormplayerFrontend.trigger("menu:select", caseId);
         });
+        $('#select-case-for-multi-select').off('click').click(function () {
+            console.log("case selected!");
+            // select checkbox for case
+        });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
         $('#case-detail-modal').modal('show');
 
         if (model.isPersistentDetail) {
+            $('#case-detail-modal').find('#select-case-for-multi-select').hide();
+            $('#case-detail-modal').find('#cancel-case-select').hide();
             $('#case-detail-modal').find('#select-case').hide();
         } else {
-            $('#case-detail-modal').find('#select-case').show();
+            if (isMultiSelect) {
+                $('#case-detail-modal').find('#select-case-for-multi-select').show();
+                $('#case-detail-modal').find('#cancel-case-select').show();
+                $('#case-detail-modal').find('#select-case').hide();
+            } else {
+                $('#case-detail-modal').find('#select-case-for-multi-select').hide();
+                $('#case-detail-modal').find('#cancel-case-select').hide();
+                $('#case-detail-modal').find('#select-case').show();
+            }
         }
     };
 
