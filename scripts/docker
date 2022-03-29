@@ -112,19 +112,26 @@ function usage() {
     exit
 }
 
-case "$(uname -m)" in
-    x86_64)
-        arch_suffix='x86'
-        ;;
-    arm64)
-        arch_suffix='arm64'
-        ;;
-    *)
-        arch_suffix='x86'
-        echo "WARNING: unrecognized system architecture ($(uname -m)), falling back to ${arch_suffix}" >&2
-        ;;
-esac
-export COMPOSE_ARCH="hq-compose-arch-${arch_suffix}.yml"
+# This exists because of M1 Macs
+os_suffix='default'
+if [ "$(uname -m)" == "arm64" ]; then
+    IFS='.'
+    read -a mac_version <<< "$(uname -r)"
+    case "${mac_version[0]}" in
+        "20")
+            os_suffix='macos-m1-11'
+            ;;
+        "21")
+            os_suffix='macos-m1-12'
+            ;;
+        "*")
+            echo "WARNING: You are entering new territory with your new M1 Mac. Congratulations!"
+            echo "Defaulting to most recently known M1 setup."
+            os_suffix='macos-m1-12'
+            ;;
+    esac
+fi
+export COMPOSE_ARCH="hq-compose-os-${os_suffix}.yml"
 
 CMD="$1"
 shift
