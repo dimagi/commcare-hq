@@ -81,15 +81,21 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
 
         if not _contain_public_versions(versions) and _all_domains_have_toggle_enabled(domains, toggle_slug):
             roles_to_update.append(role.slug)
+            formatted_domains = '\n'.join(domains)
+            logger.info(f'[ERM Migration]Will update role {role.slug} for domains:\n{formatted_domains}')
             continue
 
         for version in versions:
             domains_for_version = _get_domains_for_version(version)
             if _all_domains_have_toggle_enabled(domains_for_version, toggle_slug):
                 plan_versions_to_update.append(version.id)
+                formatted_domains = '\n'.join(domains_for_version)
+                logger.info(f'[ERM Migration]Will update plan version {version.id} for domains:\n{formatted_domains}')
             else:
                 domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
                 if domains_with_toggle_enabled:
+                    formatted_domains = '\n'.join(domains_with_toggle_enabled)
+                    logger.info(f'[ERM Migration]Will update plan for version {version.id} for domains:\n{formatted_domains}')
                     plans_to_create[version.id] = domains_with_toggle_enabled
 
     return roles_to_update, plan_versions_to_update, plans_to_create
