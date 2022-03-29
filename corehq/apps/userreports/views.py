@@ -521,6 +521,7 @@ class ConfigureReport(ReportBuilderView):
         if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
             return self.render_error_response(
                 _("Creating or Editing Data Registry Reports are not enabled for this project."),
+                allow_delete=False
             )
 
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
@@ -535,12 +536,15 @@ class ConfigureReport(ReportBuilderView):
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
-    def render_error_response(self, message):
+    def render_error_response(self, message, allow_delete=None):
         if self.existing_report:
-            context = {'report_id': self.existing_report.get_id,
-                       'is_static': self.existing_report.is_static}
+            context = {
+                'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
+            }
         else:
             context = {}
+        if allow_delete is not None:
+            context['allow_delete'] = allow_delete
         context['error_message'] = message
         context.update(self.main_context)
         return render(self.request, 'userreports/report_error.html', context)
