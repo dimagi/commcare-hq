@@ -113,7 +113,9 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static, RegistryReportConfiguration,
+    report_config_id_is_static,
+    RegistryReportConfiguration,
+    RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -861,7 +863,9 @@ def delete_report(request, domain, report_id):
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
-        get_deleted_doc_type(ReportConfiguration)
+        get_deleted_doc_type(ReportConfiguration),
+        RegistryReportConfiguration.doc_type,
+        get_deleted_doc_type(RegistryReportConfiguration)
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -1236,7 +1240,9 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def undelete_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
-        get_deleted_doc_type(DataSourceConfiguration)
+        get_deleted_doc_type(DataSourceConfiguration),
+        RegistryDataSourceConfiguration.doc_type,
+        get_deleted_doc_type(RegistryDataSourceConfiguration),
     ])
     if config and is_deleted(config):
         undo_delete(config)
