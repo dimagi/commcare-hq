@@ -74,6 +74,5 @@ branches:
     - bmb/upgrade-minimist  # Biyeun March 23
     - nh/loadtest_users_postmigration  # Norman March 24
     - gh/erm/migration-for-feature-flag # Graham March 24
-    - gh/revert-remove-report-pickling # Graham March 27
     - ad/user-history-excel-export # Addison March 28
 submodules: { }
