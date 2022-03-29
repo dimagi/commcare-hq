@@ -1,7 +1,8 @@
 from django.test import SimpleTestCase
 from testil import assert_raises, eq
 
-from .utils import es_test, es_test_attr
+from .utils import es_test, es_test_attr, temporary_index
+from ..client import ElasticManageAdapter
 from ..exceptions import ESRegistryError
 from ..registry import (
     get_registry,
@@ -173,3 +174,44 @@ def test_teardown_class_expects_classmethods():
 
             def tearDownClass(self):
                 pass
+
+
+@es_test
+def test_temporary_index():
+    manager = ElasticManageAdapter()
+    index = "test_index"
+
+    def test_temporary_index_with_args(*args):
+        with temporary_index(index, *args):
+            assert manager.index_exists(index)
+        assert not manager.index_exists(index)
+
+    yield test_temporary_index_with_args,  # without type/mapping
+    yield test_temporary_index_with_args, "test_doc", {}  # with type/mapping
+
+
+@es_test
+def test_temporary_index_fails_with_invalid_args():
+    manager = ElasticManageAdapter()
+    index = "test_index"
+
+    def test_temporary_index_with_args(type_, mapping):
+        index_was_present = manager.index_exists(index)
+        with assert_raises(ValueError):
+            with temporary_index(index, type_, mapping):
+                pass
+        assert index_was_present == manager.index_exists(index), \
+            "unexpected index existence change"
+
+    no_mapping = ("test_doc", None)
+    no_type = (None, {})
+
+    with temporary_index(index):
+        # test while index exists
+        assert manager.index_exists(index)
+        yield test_temporary_index_with_args, *no_mapping
+        yield test_temporary_index_with_args, *no_type
+    # test while index does not exist
+    assert not manager.index_exists(index)
+    yield test_temporary_index_with_args, *no_mapping
+    yield test_temporary_index_with_args, *no_type
