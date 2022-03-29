@@ -168,6 +168,21 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
 
+    def test_cannot_update_username(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "username": "changed-test",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+
     def test_update(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",

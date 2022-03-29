@@ -220,9 +220,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle, user_change_logger=None):
+    def _update(self, bundle, user_change_logger=None, raise_error_if_invalid_key=True):
         should_save = False
+        valid_keys = [
+            'phone_numbers', 'groups', 'email', 'password', 'user_data', 'first_name', 'last_name', 'language'
+        ]
         for key, value in bundle.data.items():
+            if key not in valid_keys:
+                if raise_error_if_invalid_key:
+                    raise BadRequest(f'Cannot update the key {key}.')
+                continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -264,7 +271,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
                         user_change_logger.add_info(UserChangeMessage.groups_info(groups))
                     should_save = True
-                elif key in ['email', 'username']:
+                elif key == 'email':
                     lowercase_value = value.lower()
                     if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
                         user_change_logger.add_changes({key: lowercase_value})
@@ -312,7 +319,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
-            self._update(bundle)
+            self._update(bundle, raise_error_if_invalid_key=False)
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
