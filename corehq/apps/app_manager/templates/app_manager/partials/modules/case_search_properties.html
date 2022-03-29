@@ -8,7 +8,7 @@
 
 <div data-bind="with: search">
   <div class="alert alert-info" data-bind="hidden: isEnabled">
-    {% trans "Add at least one search property to active case search for this case list" %}
+    {% trans "Add at least one search property to activate case search for this case list" %}
   </div>
   <form>
     <div class="panel panel-appmanager">
@@ -208,16 +208,6 @@
                         id="claim-relevant-condition"
                         spellcheck="false"
               ></textarea>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="control-label {% css_label_class %}" for="search-default-relevant">
-              {% trans "Don't claim cases already owned by the user" %}
-            </label>
-            <div class="checkbox {% css_field_class %}">
-              <label>
-                <input type="checkbox" id="search-default-relevant" data-bind="checked: searchDefaultRelevant">
-              </label>
             </div>
           </div>
           <div class="form-group">

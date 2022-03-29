@@ -2,12 +2,12 @@ import json
 from collections import namedtuple
 from itertools import chain
 
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import gettext_noop, gettext as _
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -1036,7 +1036,7 @@ class ODataCaseResource(BaseODataResource):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
-                HttpForbidden(ugettext_noop(
+                HttpForbidden(gettext_noop(
                     "You do not have permission to view this feed."
                 ))
             )
@@ -1074,7 +1074,7 @@ class ODataFormResource(BaseODataResource):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
-                HttpForbidden(ugettext_noop(
+                HttpForbidden(gettext_noop(
                     "You do not have permission to view this feed."
                 ))
             )

@@ -1,8 +1,8 @@
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from dateutil.parser import parse
@@ -29,14 +29,14 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = 'reports/base_template.html'
     report_template_path = "reports/tabular.html"
-    section_name = ugettext_noop("ADMINREPORT")
+    section_name = gettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
 
 
 class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     slug = 'device_log_soft_asserts'
-    name = ugettext_lazy("Global Device Logs Soft Asserts")
+    name = gettext_lazy("Global Device Logs Soft Asserts")
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -100,7 +100,7 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
 
 
 class AdminPhoneNumberReport(PhoneNumberReport):
-    name = ugettext_lazy("Admin Phone Number Report")
+    name = gettext_lazy("Admin Phone Number Report")
     slug = 'phone_number_report'
     fields = [
         RequiredPhoneNumberFilter,
@@ -152,7 +152,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 
 class UserAuditReport(AdminReport, DatespanMixin):
     slug = 'user_audit_report'
-    name = ugettext_lazy("User Audit Events")
+    name = gettext_lazy("User Audit Events")
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -175,11 +175,11 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(ugettext_lazy("Date")),
-            DataTablesColumn(ugettext_lazy("Username")),
-            DataTablesColumn(ugettext_lazy("Domain")),
-            DataTablesColumn(ugettext_lazy("IP Address")),
-            DataTablesColumn(ugettext_lazy("Request Path")),
+            DataTablesColumn(gettext_lazy("Date")),
+            DataTablesColumn(gettext_lazy("Username")),
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("IP Address")),
+            DataTablesColumn(gettext_lazy("Request Path")),
         )
 
     @property
@@ -200,7 +200,7 @@ class UserListReport(GetParamsMixin, AdminReport):
     base_template = 'reports/base_template.html'
 
     slug = 'user_list_report'
-    name = ugettext_lazy("User List")
+    name = gettext_lazy("User List")
 
     fields = [
         'corehq.apps.reports.filters.simple.SimpleSearch',
@@ -281,7 +281,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     base_template = 'reports/base_template.html'
 
     slug = 'deploy_history_report'
-    name = ugettext_lazy("Deploy History Report")
+    name = gettext_lazy("Deploy History Report")
 
     emailable = False
     exportable = False

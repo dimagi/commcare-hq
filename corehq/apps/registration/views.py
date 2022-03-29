@@ -12,11 +12,10 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView, View
 
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq.apps.sso.models import IdentityProvider
@@ -58,6 +57,7 @@ from corehq.apps.registration.utils import (
 from corehq.apps.users.models import CouchUser, WebUser, Invitation
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.soft_assert import soft_assert
 
 _domainless_new_user_soft_assert = soft_assert(to=[

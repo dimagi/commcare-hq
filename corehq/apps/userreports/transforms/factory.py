@@ -1,6 +1,6 @@
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 
@@ -11,6 +11,7 @@ from corehq.apps.userreports.transforms.specs import (
     MultipleValueStringTranslationTransform,
     NumberFormatTransform,
     TranslationTransform,
+    MarkdownTransform,
 )
 
 
@@ -20,7 +21,8 @@ class TransformFactory(object):
         'date_format': DateFormatTransform,
         'number_format': NumberFormatTransform,
         'translation': TranslationTransform,
-        'multiple_value_string_translation': MultipleValueStringTranslationTransform
+        'multiple_value_string_translation': MultipleValueStringTranslationTransform,
+        'markdown': MarkdownTransform,
     }
 
     @classmethod

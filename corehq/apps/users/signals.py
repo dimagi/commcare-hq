@@ -5,8 +5,8 @@ from django.dispatch import Signal, receiver
 
 from corehq.elastic import send_to_elasticsearch
 
-commcare_user_post_save = Signal(providing_args=["couch_user"])
-couch_user_post_save = Signal(providing_args=["couch_user"])
+commcare_user_post_save = Signal()  # providing args: couch_user
+couch_user_post_save = Signal()  # providing args: couch_user
 
 
 @receiver(user_logged_in)

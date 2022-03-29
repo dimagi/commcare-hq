@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-09 21:12+0000\n"
+"POT-Creation-Date: 2022-03-23 19:20+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -327,29 +327,29 @@ msgstr "Padre"
 msgid "Unknown menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:151
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:155
 msgid "You have unsaved detail screen configurations."
 msgstr "Tiene configuraciones de detalle de pantalla sin guardar"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:194
 msgid "There is an error in your tab: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:197
 msgid "There is an error in your property name: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:198
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
 msgid "All properties must be below a tab."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:206
 msgid ""
 "Search Properties and Default Search Filters can't have common properties. "
 "Please update following properties: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:207
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:211
 msgid "There are errors in your configuration."
 msgstr ""
 
@@ -3000,7 +3000,7 @@ msgstr ""
 "formulario. Por favor reporte un problema si este mensaje continúa "
 "apareciendo."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:158
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:157
 msgid "Switching project spaces..."
 msgstr ""
 
@@ -4290,7 +4290,7 @@ msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
-msgid "Edit a custom web report or custom web report source"
+msgid "Edit a report or data source"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
@@ -4558,11 +4558,11 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:362
-msgid "Create and Edit Custom Web Reports"
+msgid "Create and Edit Configurable Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:365
-msgid "Allow role to create and edit custom web reports."
+msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:373

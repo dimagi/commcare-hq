@@ -228,59 +228,33 @@ Following expressions act on a list of objects or a list of lists (for
 e.g. on a repeat list) and return another list or value. These
 expressions can be combined to do complex aggregations on list data.
 
-+-------------------------------+-------------------------+------------+
-| Expression Type               | Description             | Example    |
-+===============================+=========================+============+
-| filter_items                  | Filter a list of items  | ``[1, 2, 3 |
-|                               | to make a new list      | , -1, -2,  |
-|                               |                         | -3] -> [1, |
-|                               |                         |  2, 3]``   |
-|                               |                         | (filter    |
-|                               |                         | numbers    |
-|                               |                         | greater    |
-|                               |                         | than zero) |
-+-------------------------------+-------------------------+------------+
-| map_items                     | Map one list to another | ``[{'name' |
-|                               | list                    | : 'a', gen |
-|                               |                         | der: 'f'}, |
-|                               |                         |  {'name':  |
-|                               |                         | 'b, gender |
-|                               |                         | : 'm'}]``  |
-|                               |                         | ->         |
-|                               |                         | ``['a', 'b |
-|                               |                         | ']``       |
-|                               |                         | (list of   |
-|                               |                         | names from |
-|                               |                         | list of    |
-|                               |                         | child      |
-|                               |                         | data)      |
-+-------------------------------+-------------------------+------------+
-| sort_items                    | Sort a list based on an | ``[{'name' |
-|                               | expression              | : 'a', age |
-|                               |                         | : 5}, {'na |
-|                               |                         | me': 'b, a |
-|                               |                         | ge: 3}]``  |
-|                               |                         | ->         |
-|                               |                         | ``[{'name' |
-|                               |                         | : 'b, age: |
-|                               |                         |  3}, {'nam |
-|                               |                         | e': 'a', a |
-|                               |                         | ge: 5}]``  |
-|                               |                         | (sort      |
-|                               |                         | child data |
-|                               |                         | by age)    |
-+-------------------------------+-------------------------+------------+
-| reduce_items                  | Aggregate a list of     | sum on     |
-|                               | items into one value    | ``[1, 2, 3 |
-|                               |                         | ]``        |
-|                               |                         | -> ``6``   |
-+-------------------------------+-------------------------+------------+
-| flatten                       | Flatten multiple lists  | ``[[1, 2], |
-|                               | of items into one list  |  [4, 5]]`` |
-|                               |                         | ->         |
-|                               |                         | ``[1, 2, 4 |
-|                               |                         | , 5]``     |
-+-------------------------------+-------------------------+------------+
++-------------------------------+-------------------------+-----------------------------------------------------------+
+| Expression Type               | Description             | Example                                                   |
++===============================+=========================+===========================================================+
+| filter_items                  | Filter a list of items  | ``[1, 2, 3, -1, -2, -3]``                                 |
+|                               | to make a new list      | ->                                                        |
+|                               |                         | ``[1, 2, 3]``                                             |
+|                               |                         | (filter numbers                                           |
+|                               |                         | greater than zero)                                        |
++-------------------------------+-------------------------+-----------------------------------------------------------+
+| map_items                     | Map one list to another | ``[{'name': 'a', sex: 'f'}, {'name': 'b', gender: 'm'}]`` |
+|                               | list                    | ->                                                        |
+|                               |                         | ``['a', 'b']``                                            |
+|                               |                         | (list of names from list of child data)                   |
++-------------------------------+-------------------------+-----------------------------------------------------------+
+| sort_items                    | Sort a list based on an | ``[{'name': 'a', age: 5}, {'name': 'b', age: 3}]``        |
+|                               | expression              | ->                                                        |
+|                               |                         | ``[{'name': 'b', age: 3}, {'name': 'a', age: 5}]``        |
+|                               |                         | (sort child data by age)                                  |
++-------------------------------+-------------------------+-----------------------------------------------------------+
+| reduce_items                  | Aggregate a list of     | sum on                                                    |
+|                               | items into one value    | ``[1, 2, 3]``                                             |
+|                               |                         | -> ``6``                                                  |
++-------------------------------+-------------------------+-----------------------------------------------------------+
+| flatten                       | Flatten multiple lists  | ``[[1, 2], [4, 5]]``                                      |
+|                               | of items into one list  |  ->                                                       |
+|                               |                         | ``[1, 2, 4, 5]``                                          |
++-------------------------------+-------------------------+-----------------------------------------------------------+
 
 JSON snippets for expressions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1835,6 +1809,24 @@ Round to the nearest whole number
        "type": "number_format",
        "format_string": "{0:.0f}"
    }
+
+
+Rich text formatting with Markdown
+''''''''''''''''''''''''''''''''''
+
+This can be used to do some rich text formatting, using [Markdown](https://www.markdownguide.org/).
+
+There is no configuration required, it will assume the input is valid, markdown-ready text.
+
+.. code:: json
+
+   {
+       "type": "markdown"
+   }
+
+**This transform works for report columns only.**
+Using it in a data source will add HTML markup, but it will not be displayed properly in HQ.
+
 
 Always round to 3 decimal places
 ''''''''''''''''''''''''''''''''

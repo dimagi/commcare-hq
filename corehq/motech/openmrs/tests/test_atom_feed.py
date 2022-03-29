@@ -396,7 +396,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
         date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
-        date_opened = case_blocks[0].date_opened
         case_block = f"""
             <case case_id="{case_blocks[0].case_id}" »
                   date_modified="{date_modified}" »
@@ -407,7 +406,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <owner_id>default-owner-id</owner_id>
               </create>
               <update>
-                <date_opened>{date_opened}</date_opened>
                 <observation_value>105</observation_value>
               </update>
               <index>
@@ -429,7 +427,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
         date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
-        date_opened = case_blocks[0].date_opened
         case_block = f"""
             <case case_id="{case_blocks[0].case_id}" »
                   date_modified="{date_modified}" »
@@ -440,7 +437,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <owner_id>default-owner-id</owner_id>
               </create>
               <update>
-                <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
                 <diagnosis_date>2019-10-18</diagnosis_date>
                 <is_primary>yes</is_primary>

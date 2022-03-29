@@ -57,7 +57,7 @@ class CaseClaimEndpointTests(TestCase):
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
-        _, [self.case] = post_case_blocks([CaseBlock.deprecated_init(
+        _, [self.case] = post_case_blocks([CaseBlock(
             create=True,
             case_id=self.case_id,
             case_type=CASE_TYPE,
@@ -105,11 +105,10 @@ class CaseClaimEndpointTests(TestCase):
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
         # First claim
         response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         # Dup claim
         response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
+        self.assertEqual(response.status_code, 204)
 
     def test_duplicate_user_claim(self):
         """
@@ -120,13 +119,12 @@ class CaseClaimEndpointTests(TestCase):
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
         # First claim
         response = client1.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         # Dup claim
         client2 = Client()
         client2.login(username=USERNAME, password=PASSWORD)
         response = client2.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
+        self.assertEqual(response.status_code, 204)
 
     @flaky
     def test_claim_restore_as(self):

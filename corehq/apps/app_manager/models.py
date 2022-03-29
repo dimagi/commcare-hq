@@ -28,8 +28,8 @@ from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import override
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 import qrcode
 from couchdbkit import ResourceNotFound
@@ -2067,6 +2067,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
 
+    # Allow selection of mutiple cases. Only applies to 'short' details
+    multi_select = BooleanProperty(default=False)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
@@ -2222,8 +2225,7 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty(exclude_if_none=True)
+    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -2241,14 +2243,10 @@ class CaseSearch(DocumentSchema):
         return "search_case_id"
 
     def get_relevant(self):
-        relevant = self.additional_relevant or ""
-        if self.default_relevant:
-            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
-            if relevant:
-                relevant = f"({default_condition}) and ({relevant})"
-            else:
-                relevant = default_condition
-        return relevant
+        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        if self.additional_relevant:
+            return f"({default_condition}) and ({self.additional_relevant})"
+        return default_condition
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2697,6 +2695,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
 
 class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -2953,7 +2955,7 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
-            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+            options = [(self.shadow_parent_form_id, gettext_lazy("Unknown, please change"))] + options
         return options
 
     @staticmethod
@@ -3287,6 +3289,10 @@ class AdvancedModule(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return self._uses_case_type(USERCASE_TYPE)
+
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
 
     @property
     def phase_anchors(self):
@@ -3835,6 +3841,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return None
         return self.source_module.case_type
+
+    @property
+    def additional_case_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.additional_case_types
 
     @property
     def requires(self):

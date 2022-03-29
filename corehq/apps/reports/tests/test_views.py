@@ -44,7 +44,7 @@ class TestEmailReport(TestCase):
 
         self.assertEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
-            {'user1@test.com'}
+            ['user1@test.com']
         )
 
     @patch.object(views, 'send_email_report')
@@ -56,9 +56,9 @@ class TestEmailReport(TestCase):
         })
         self.email_report()
 
-        self.assertEqual(
+        self.assertCountEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
-            {'test_user@dimagi.com', 'user1@test.com'}
+            ['test_user@dimagi.com', 'user1@test.com']
         )
 
     def test_invalid_form_returns_bad_request(self):
@@ -75,6 +75,11 @@ class TestEmailReport(TestCase):
         self._set_user_report_access('not_this_report')
         with self.assertRaises(Http404):
             self.email_report(report_name='worker_activity')
+
+    def test_disallowed_request_get_method(self):
+        self.request = self._create_request(method='get')
+        response = self.email_report()
+        self.assertEqual(response.status_code, 405)
 
 # ################ Helpers / Setup
     def email_report(self, domain=None, report_name='worker_activity'):
@@ -115,15 +120,17 @@ class TestEmailReport(TestCase):
 
         super().tearDown()
 
-    def _create_request(self, params=None):
+    def _create_request(self, params=None, method='post'):
         if params is None:
             params = {'send_to_owner': True}
 
-        params = urlencode(params)
+        url = f'/a/{self.domain}/emailReport'
 
-        base_url = f'/a/{self.domain}/emailReport'
-        url = f'{base_url}?{params}'
-        request = RequestFactory().get(url)
+        if method == 'get':
+            request = RequestFactory().get(url, params)
+        else:
+            request = RequestFactory().post(url, params)
+
         request.user = self.user
         return request
 

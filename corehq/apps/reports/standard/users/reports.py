@@ -3,8 +3,8 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -39,8 +39,8 @@ from corehq.util.timezones.conversions import ServerTime
 
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport, PaginatedReportMixin):
     slug = 'user_history'
-    name = ugettext_lazy("User History")
-    section_name = ugettext_lazy("User Management")
+    name = gettext_lazy("User History")
+    section_name = gettext_lazy("User Management")
 
     dispatcher = UserManagementReportDispatcher
 
@@ -53,7 +53,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
         'corehq.apps.reports.filters.users.UserUploadRecordFilter',
     ]
 
-    description = ugettext_lazy("History of user updates")
+    description = gettext_lazy("History of user updates")
     ajax_pagination = True
     default_sort = {'changed_at': 'desc'}
 
@@ -245,9 +245,9 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
 
 def _get_action_display(logged_action):
-    action = ugettext_lazy("Updated")
+    action = gettext_lazy("Updated")
     if logged_action == UserHistory.CREATE:
-        action = ugettext_lazy("Added")
+        action = gettext_lazy("Added")
     elif logged_action == UserHistory.DELETE:
-        action = ugettext_lazy("Deleted")
+        action = gettext_lazy("Deleted")
     return action

@@ -172,7 +172,7 @@ class AllActivityCompleteDateTest(BaseCaseRuleTest):
         today = datetime.today().strftime(ISO_DATE_FORMAT)
         case1 = CommCareCase.objects.get_case(case1.case_id)
         case2 = CommCareCase.objects.get_case(case2.case_id)
-        self.assertEqual(case1.get_case_property("all_activity_complete_date"), today)
+        self.assertEqual(case1.get_case_property("all_activity_complete_date"), "2021-06-31")
         self.assertEqual(case2.get_case_property("all_activity_complete_date"), today)
         self.assertFalse(case1.closed)
         self.assertFalse(case2.closed)
