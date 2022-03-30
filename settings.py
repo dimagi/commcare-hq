@@ -1039,6 +1039,8 @@ RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
+DEFAULT_GSHEET_LIMIT = 20
+
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
