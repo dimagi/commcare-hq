@@ -72,7 +72,6 @@ branches:
     - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - bmb/upgrade-minimist  # Biyeun March 23
     - nh/loadtest_users_postmigration  # Norman March 24
-    - gh/erm/migration-for-feature-flag # Graham March 24
     - ad/user-history-excel-export # Addison March 28
     - ml/notification-migration # Minha March 30
 
