@@ -11,6 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         run_once_off_migration(
-            'migrate_case_search_prompt_itemset_ids', required_commit='TODO'
+            'migrate_case_search_prompt_itemset_ids', required_commit='116a6fc9556ac929e29a35fd2dfa673984820561'
         )
     ]
