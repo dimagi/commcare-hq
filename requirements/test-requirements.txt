@@ -114,7 +114,7 @@ django-countries==7.3.2
     # via -r base-requirements.in
 django-crispy-forms==1.10.0
     # via -r base-requirements.in
-django-cte==1.1.4
+django-cte==1.2.0
     # via -r base-requirements.in
 django-formtools==2.3
     # via
