@@ -9,8 +9,6 @@ NOTIFICATION_TYPES = (
     ('billing', 'Billing Notification'),
     ('info', 'Product Notification'),
     ('alert', 'Maintenance Notification'),
-    ('feat_basic', 'Feature Discovery (Basic)'),
-    ('feat_pro', 'Feature Discovery (Advanced)')
 )
 
 
