@@ -49,7 +49,7 @@ def change_role_for_software_plan_version(old_role, new_role, limit_to_plan_vers
             raise PlanVersionAndRoleMismatch
         versions = [version]
     else:
-        versions = SoftwarePlanVersion.objects.filter(role__slug=old_role, is_active=True)
+        versions = SoftwarePlanVersion.objects.filter(role__slug=old_role)
 
     changed_plans = set()
     for software_plan_version in versions:

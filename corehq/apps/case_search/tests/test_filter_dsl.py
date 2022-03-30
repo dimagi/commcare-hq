@@ -575,6 +575,66 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         with self.assertRaises(CaseFilterError):
             build_filter_from_ast(None, parse_xpath("parent/name > other_property"))
 
+    @freeze_time('2021-08-02')
+    def test_filter_today(self):
+        parsed = parse_xpath("age > today()")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "age"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gt": "2021-08-02"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
+    @freeze_time('2021-08-02')
+    def test_filter_date_today(self):
+        parsed = parse_xpath("age > date(today())")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "age"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gt": "2021-08-02"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
 
 @es_test
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
