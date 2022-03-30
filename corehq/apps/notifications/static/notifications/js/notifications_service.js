@@ -9,12 +9,14 @@ hqDefine('notifications/js/notifications_service', [
     'knockout',
     'underscore',
     'jquery.rmi/jquery.rmi',
+    'analytix/js/kissmetrix',
     'hqwebapp/js/hq.helpers',
 ], function (
     $,
     ko,
     _,
-    RMI
+    RMI,
+    kissmetrics
 ) {
     'use strict';
 
@@ -48,8 +50,18 @@ hqDefine('notifications/js/notifications_service', [
         self.isInfo = ko.computed(function () {
             return self.type() === 'info';
         });
+        self.isFeature = ko.computed(function () {
+            return self.type() === 'feat_basic' || self.type() === 'feat_pro';
+        });
         self.markAsRead = function () {
-            _private.RMI("mark_as_read", {id: self.id()});
+            _private.RMI("mark_as_read", {id: self.id()})
+                .done(function (data) {
+                    if (self.isFeature()) {
+                        kissmetrics.track.event("Notifications tab - Clicked notifications tab - " +
+                            "Clicked on Case Sharing text link",
+                            {email: data.email, domain: data.domain});
+                    }
+                });
             self.isRead(true);
             return true;
         };
@@ -67,7 +79,16 @@ hqDefine('notifications/js/notifications_service', [
             });
         });
 
+        self.hasUnreadFeatureNotification = ko.computed(function () {
+            return _.some(self.notifications(), function (note) {
+                return !note.isRead() && (note.type() === 'feat_basic' || note.type() === 'feat_pro')
+            });
+        })
+
         self.seen = ko.computed(function () {
+            if (self.hasUnreadFeatureNotification()) {
+                return false;
+            }
 
             if (!self.hasUnread()) {
                 return true;
@@ -105,6 +126,10 @@ hqDefine('notifications/js/notifications_service', [
             _private.RMI("save_last_seen", {"notification_id": self.notifications()[0].id()})
                 .done(function (data) {
                     self.lastSeenNotificationDate(data.activated);
+                    if (self.hasUnreadFeatureNotification()) {
+                        kissmetrics.track.event("Notifications tab - Clicked notifications tab",
+                            {email: data.email, domain: data.domain});
+                    }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown); // eslint-disable-line no-console
