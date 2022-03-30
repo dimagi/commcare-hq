@@ -164,7 +164,7 @@ def _get_account_name(domain):
     from corehq.apps.accounting.models import BillingAccount
     account = BillingAccount.get_account_by_domain(domain)
     if account is not None:
-        return account.name
+        return f'account:{account.name}'
     else:
         return f'no_account:{domain}'
 
