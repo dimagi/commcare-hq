@@ -375,3 +375,14 @@ def gauge_pending_user_confirmations():
                 },
                 multiprocess_mode=MPM_MAX
             )
+
+
+@task()
+def reset_loadtest_factor(user_ids):
+    from corehq.apps.users.models import CommCareUser
+
+    for user_id in user_ids:
+        user = CommCareUser.get_by_user_id(user_id)
+        if user.loadtest_factor is not None:
+            user.loadtest_factor = None
+            user.save()
