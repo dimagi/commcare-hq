@@ -16,7 +16,9 @@ For example,
 will give you JSON for the first 10 groups in `domain` with names matching `q`.
 """
 from . import filters
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class GroupES(HQESQuery):
@@ -30,6 +32,20 @@ class GroupES(HQESQuery):
             group_ids,
             not_deleted,
         ] + super(GroupES, self).builtin_filters
+
+
+class ElasticGroup(ElasticDocumentAdapter):
+
+    _index_name = "hqgroups_2017-05-29"
+    type = "group"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def is_case_sharing(value=True):
