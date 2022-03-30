@@ -122,6 +122,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', ManyFilters('domain', 'backend__domain')),
     FilteredModelIteratorBuilder('cloudcare.ApplicationAccess', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
+    FilteredModelIteratorBuilder('domain.MessagingSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),

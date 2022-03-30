@@ -63,7 +63,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
-from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.models import Domain, MessagingSettings, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import (
@@ -590,11 +590,16 @@ class TestDeleteDomain(TestCase):
 
     def _assert_domain_counts(self, domain_name, count):
         self._assert_queryset_count([
+            MessagingSettings.objects.filter(domain=domain_name),
+        ], count)
+
+        self._assert_queryset_count([
             TransferDomainRequest.objects.filter(domain=domain_name),
         ], count)
 
     def test_delete_domain(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            MessagingSettings.objects.create(domain=domain_name, granted_access=True)
             TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
             self._assert_domain_counts(domain_name, 1)
 
