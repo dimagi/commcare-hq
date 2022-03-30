@@ -34,7 +34,7 @@ jobs:
     - name: Docker login
       uses: docker/login-action@v1
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
+        username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Run tests
       env:
