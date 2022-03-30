@@ -1196,7 +1196,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
     def _save_messaging_settings(self, domain_obj, cleaned_data):
-        domain_obj.granted_messaging_access = cleaned_data['granted_messaging_access']
         settings, created = MessagingSettings.objects.update_or_create(domain=domain_obj.name, defaults={
             'granted_access': cleaned_data['granted_messaging_access'],
         })

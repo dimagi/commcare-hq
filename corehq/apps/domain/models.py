@@ -484,10 +484,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         if 'location_types' in data:
             data['obsolete_location_types'] = data.pop('location_types')
 
-        if 'granted_messaging_access' not in data:
-            # enable messaging for domains created before this flag was added
-            data['granted_messaging_access'] = True
-
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
