@@ -198,6 +198,9 @@ class GenericReportView(object):
             Returns a JSON serializable dict of report parameters for rebuilding the report in Celery.
         """
         request = request_as_dict(self.request)
+        if isinstance(request['GET'], QueryDict):
+            # include all elements from QueryDict, not just 1 per key
+            request['GET'] = dict(request['GET'].lists())
         report_state = dict(
             request=request,
             request_params=self.request_params,
@@ -219,11 +222,16 @@ class GenericReportView(object):
             are returned from get_json_report_parameters.
         """
         GET_data = QueryDict('', mutable=True)
-        GET_data.update(state['request']['GET'])
+        for key, values in state['request']['GET'].items():
+            for value in values:
+                GET_data.update({key: value})
         state['request']['GET'] = GET_data
 
+        request_data = state.get('request').copy()
+        request_params = state.get('request_params').copy()
+
         self.domain = state.get('domain')
-        self.context = state.get('context', {})
+        self.context = state.get('context', {}).copy()
 
         class FakeHttpRequest(object):
             method = 'GET'
@@ -234,15 +242,11 @@ class GenericReportView(object):
             datespan = None
             can_access_all_locations = None
 
-        date_holder = {}
-        if 'startdate' in state['request_params'] and 'enddate' in state['request_params']:
-            date_holder = state['request_params']
-        if date_holder:
-            start_date = iso_string_to_datetime(date_holder['startdate'])
-            end_date = iso_string_to_datetime(date_holder['enddate'])
-            state['request']['datespan'] = DateSpan(start_date, end_date)
+        if 'startdate' in request_params and 'enddate' in request_params:
+            start_date = iso_string_to_datetime(request_params['startdate'])
+            end_date = iso_string_to_datetime(request_params['enddate'])
+            request_data['datespan'] = DateSpan(start_date, end_date)
 
-        request_data = state.get('request')
         request = FakeHttpRequest()
         request.domain = self.domain
         request.GET = request_data.get('GET', {})
@@ -253,7 +257,7 @@ class GenericReportView(object):
         request.couch_user = couch_user
         self.request = request
         self._caching = True
-        self.request_params = state.get('request_params')
+        self.request_params = request_params
         self._update_initial_context()
 
     @property
