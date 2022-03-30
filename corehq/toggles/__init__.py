@@ -858,7 +858,8 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     USH Specific toggle to support several different case search/claim workflows in web apps:
     "search first", "see more", and "skip to default case search results", Geocoder
     and other options in Webapps Case Search.
-    """
+    """,
+    dependent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -1080,6 +1081,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    dependent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -1339,7 +1341,8 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_USER]
+    namespaces=[NAMESPACE_USER],
+    dependent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
