@@ -115,8 +115,7 @@ function usage() {
 # This exists because of M1 Macs
 os_suffix='default'
 if [ "$(uname -m)" == "arm64" ]; then
-    IFS='.'
-    read -a mac_version <<< "$(uname -r)"
+    mac_version=( $(uname -r | sed -E 's/\./ /g') )
     case "${mac_version[0]}" in
         "20")
             os_suffix='macos-m1-11'
