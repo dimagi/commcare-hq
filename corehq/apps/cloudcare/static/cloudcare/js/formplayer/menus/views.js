@@ -626,7 +626,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var DetailListView = Marionette.CollectionView.extend({
         tagName: "table",
-        className: "table module-table module-table-casedetail",
+        className: "table module-table module-table-case-detail",
         template: _.template($("#detail-view-list-template").html() || ""),
         childView: DetailView,
     });
