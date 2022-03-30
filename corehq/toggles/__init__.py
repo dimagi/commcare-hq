@@ -123,7 +123,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None):
+                 notification_emails=None, dependent_toggles=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -143,6 +143,7 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+        self.dependent_toggles = dependent_toggles
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -1975,7 +1976,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """,
-    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts"
+    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
+    dependent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -2143,6 +2145,7 @@ DATA_REGISTRY_UCR = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+    dependent_toggles=[DATA_REGISTRY]
 )
 
 DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
@@ -2151,6 +2154,7 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+    dependent_toggles=[DATA_REGISTRY]
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
