@@ -74,6 +74,5 @@ branches:
     - nh/loadtest_users_postmigration  # Norman March 24
     - ad/user-history-excel-export # Addison March 28
     - ml/notification-migration # Minha March 30
-    - ce/enterpries-rate-limits # Cal March 30
 
 submodules: { }
