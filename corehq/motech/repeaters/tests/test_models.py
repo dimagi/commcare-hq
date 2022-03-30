@@ -24,6 +24,7 @@ from ..const import (
 )
 from ..models import (
     FormRepeater,
+    SQLFormRepeater,
     RepeatRecord,
     SQLRepeater,
     are_repeat_records_migrated,
@@ -32,7 +33,7 @@ from ..models import (
     is_response,
 )
 
-DOMAIN = 'test-domain-ap'
+DOMAIN = 'test-domain'
 
 
 def test_get_all_repeater_types():
@@ -50,21 +51,17 @@ class RepeaterTestCase(TestCase):
         conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
         self.repeater = FormRepeater(
             domain=DOMAIN,
-            url=url
+            url=url,
         )
-        self.repeater.save()
-        self.sql_repeater = SQLRepeater.objects.create(
+        self.repeater.save(sync_to_sql=False)
+        self.sql_repeater = SQLFormRepeater(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
             connection_settings=conn,
         )
+        self.sql_repeater.save(sync_to_couch=False)
 
     def tearDown(self):
-        if self.repeater.connection_settings_id:
-            ConnectionSettings.objects.filter(
-                pk=self.repeater.connection_settings_id
-            ).delete()
-        self.sql_repeater.delete()
         self.repeater.delete()
         super().tearDown()
 
