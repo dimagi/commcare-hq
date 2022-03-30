@@ -40,6 +40,6 @@ class ReportsModule(AppConfig):
 
 def get_report_class(slug):
     if slug not in reports:
-        raise Exception("Report class not supported yet, try adding the slug in reports/const.py")
+        raise Exception("Report class not supported yet, try adding the slug in reports/app_config.py")
     else:
         return reports[slug]
