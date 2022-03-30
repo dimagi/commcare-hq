@@ -1041,6 +1041,10 @@ class MessagingSettings(models.Model):
     domain = models.CharField(max_length=126, unique=True)
     granted_access = models.BooleanField(default=False)
 
+    # Hack to get the couch to sql migration framework diff function to work properly
+    # Can be deleted when the populate_messagingsettings command is deleted
+    _migration_couch_id_name = 'domain'
+
 
 class AllowedUCRExpressionSettings(models.Model):
     """

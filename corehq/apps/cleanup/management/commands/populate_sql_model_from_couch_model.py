@@ -258,7 +258,7 @@ class PopulateSQLCommand(BaseCommand):
     def _verify_doc(self, doc, logfile, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
-            obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
+            obj = self.get_sql_obj(doc)
             diff = self.get_diff_as_string(doc, obj)
             if diff:
                 logfile.write(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}\n")
@@ -267,6 +267,14 @@ class PopulateSQLCommand(BaseCommand):
                     raise CommandError(f"Doc verification failed for '{getattr(obj, couch_id_name)}'. Exiting.")
         except self.sql_class().DoesNotExist:
             pass    # ignore, the difference in total object count has already been displayed
+
+    def get_sql_obj(self, doc):
+        """
+        Fetch the SQL object corresponding to a given Couch doc.
+        No need to override if using SyncCouchToSQLMixin and SyncSQLToCouchMixin.
+        """
+        couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
+        return self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
 
     def _migrate_doc(self, doc, logfile):
         with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
