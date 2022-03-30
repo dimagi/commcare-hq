@@ -239,9 +239,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (e.target.id === 'select-row-checkbox') {
-                //don't show detail and just select/deselect checkbox
-            } else {
+            if (!(e.target.className === 'module-caselist-column-checkbox' || e.target.id === 'select-row-checkbox')) {
                 e.preventDefault();
                 FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
             }
