@@ -210,6 +210,10 @@ class StaticToggle(object):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        if namespace not in self.namespaces:
+            return False
+
         return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
