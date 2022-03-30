@@ -5,7 +5,9 @@ FormES
 from corehq.pillows.mappings.const import NULL_VALUE
 
 from . import filters
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class FormES(HQESQuery):
@@ -48,6 +50,34 @@ class FormES(HQESQuery):
         """Include only archived forms, which are normally excluded"""
         return (self.remove_default_filter('is_xform_instance')
                 .filter(filters.doc_type('xformarchived')))
+
+
+class ElasticForm(ElasticDocumentAdapter):
+
+    _index_name = "xforms_2016-07-07"
+    type = "xform"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
+
+
+class ElasticReportForm(ElasticDocumentAdapter):
+
+    _index_name = "report_xforms_20160824_1708"
+    type = "report_xform"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def form_ids(form_ids):
