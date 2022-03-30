@@ -304,7 +304,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         ui: {
-            actionButton: '.caselist-action-button button',
+            actionButton: '.case-list-action-button button',
             searchButton: '#case-list-search-button',
             searchTextBox: '.module-search-container',
             paginators: '.js-page',
