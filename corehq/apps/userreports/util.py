@@ -6,13 +6,13 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.domain.models import AllowedUCRExpressionSettings, all_restricted_ucr_expressions
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
     DataSourceConfigurationNotFoundError
+from corehq.apps.userreports.models import is_data_registry_report
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
@@ -91,9 +91,8 @@ def _can_edit_report(request, report):
     data_registry_ucr_toggle = toggle_enabled(request, toggles.DATA_REGISTRY_UCR)
     add_on_priv = has_report_builder_add_on_privilege(request)
     created_by_builder = report.spec.report_meta.created_by_builder
-    is_data_registry_report = report.spec.config.meta.build.registry_slug
 
-    if is_data_registry_report and not data_registry_ucr_toggle:
+    if is_data_registry_report(report.spec) and not data_registry_ucr_toggle:
         # disable editing or deleting DR reports
         return False
 
