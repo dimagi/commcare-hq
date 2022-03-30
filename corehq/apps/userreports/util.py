@@ -71,7 +71,13 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
-    return _can_edit_report(request, report) and not is_linked_report(report)
+    return (
+        _can_edit_report(request, report)
+        and not is_linked_report(report)
+        and (
+            not is_data_registry_report(report)
+            or toggles.DATA_REGISTRY_UCR.enabled_for_request(request)
+        ))
 
 
 def can_delete_report(request, report):
@@ -88,13 +94,8 @@ def _can_edit_report(request, report):
     ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
-    data_registry_ucr_toggle = toggle_enabled(request, toggles.DATA_REGISTRY_UCR)
     add_on_priv = has_report_builder_add_on_privilege(request)
     created_by_builder = report.report_meta.created_by_builder
-
-    if is_data_registry_report(report) and not data_registry_ucr_toggle:
-        # disable editing or deleting DR reports
-        return False
 
     if created_by_builder:
         return report_builder_toggle or report_builder_beta_toggle or add_on_priv
