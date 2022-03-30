@@ -6,7 +6,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.project_limits.rate_limiter import get_n_users_for_rate_limiting
+from corehq.project_limits.rate_limiter import get_n_users_in_domain, get_n_users_in_subscription
 
 
 class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
@@ -16,11 +16,11 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
 
-        self._assert_value_equals(domain, 0)
+        self._assert_domain_value_equals(domain, 0)
 
         self._set_n_users(domain, 1)
 
-        self._assert_value_equals(domain, 1)
+        self._assert_domain_value_equals(domain, 1)
 
     def test_with_subscription(self):
 
@@ -53,27 +53,40 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
 
         _setup(domain_1)
 
-        # With no real users, it's the number of users in the subscription
-        self._assert_value_equals(domain_1, _get_included_in_subscription())
+        # There are no users yet
+        self._assert_domain_value_equals(domain_1, 0)
+
+        # subscription value returns those included
+        self._assert_subscription_value_equals(domain_1, 8)
 
         self._set_n_users(domain_1, 9)
 
         # With more users than included in subscription, it's the number of users
-        self._assert_value_equals(domain_1, 9)
+        self._assert_domain_value_equals(domain_1, 9)
+
+        # subscription still returns only the billing amount
+        self._assert_subscription_value_equals(domain_1, 8)
 
         _setup(domain_2)
         _link_domains(domain_1, domain_2)
 
         # No change on the original domain
-        self._assert_value_equals(domain_1, 9)
+        self._assert_domain_value_equals(domain_1, 9)
 
-        # The new domain should get a proportion of total included users for the shared account
+        # new domain has no users
+        self._assert_domain_value_equals(domain_2, 0)
 
-        self._assert_value_equals(domain_2, 7.2)
+        # domain_2 still has full subscription allocation
+        self._assert_subscription_value_equals(domain_2, 8)
 
-    def _assert_value_equals(self, domain, value):
-        get_n_users_for_rate_limiting.clear(domain)
-        self.assertEqual(get_n_users_for_rate_limiting(domain), value)
+    def _assert_domain_value_equals(self, domain, value):
+        get_n_users_in_domain.clear(domain)
+        self.assertEqual(get_n_users_in_domain(domain), value)
+
+
+    def _assert_subscription_value_equals(self, domain, value):
+        get_n_users_in_subscription.clear(domain)
+        self.assertEqual(get_n_users_in_subscription(domain), value)
 
     def _set_n_users(self, domain, n_users):
         start_n_users = CommCareUser.total_by_domain(domain, is_active=True)
