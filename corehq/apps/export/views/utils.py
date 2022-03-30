@@ -10,8 +10,9 @@ from django.views.generic import View
 
 import pytz
 from memoized import memoized
+from corehq.util.test_utils import flag_enabled
 
-from couchexport.models import Format
+from couchexport.models import Format, IntegrationFormat
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -44,6 +45,7 @@ from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
+    LIVE_GOOGLE_SHEET_PERMISSION,
     ODATA_FEED_PERMISSION,
     can_download_data_files,
     can_upload_data_files,
@@ -53,6 +55,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
+
+from corehq import toggles
 
 
 def get_timezone(domain, couch_user):
@@ -74,6 +78,12 @@ def user_can_view_odata_feed(domain, couch_user):
     domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
     return (domain_can_view_odata
             and has_permission_to_view_report(couch_user, domain, ODATA_FEED_PERMISSION))
+
+
+def user_can_view_google_sheet(domain, couch_user):
+    domain_can_view_gsheet = toggles.GOOGLE_SHEETS_INTEGRATION.enabled(couch_user.username)
+    return (domain_can_view_gsheet
+            and has_permission_to_view_report(couch_user, domain, LIVE_GOOGLE_SHEET_PERMISSION))
 
 
 class ExportsPermissionsManager(object):
@@ -128,10 +138,15 @@ class ExportsPermissionsManager(object):
     def has_odata_permissions(self):
         return user_can_view_odata_feed(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
+    @property
+    def has_gsheet_permissions(self):
+        return user_can_view_google_sheet(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False, is_live_google_sheet=False):
         if not (self.has_view_permissions
                 or (is_deid and self.has_deid_view_permissions)
-                or (is_odata and self.has_odata_permissions)):
+                or (is_odata and self.has_odata_permissions)
+                or (is_live_google_sheet and self.has_gsheet_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
@@ -260,6 +275,46 @@ class ODataFeedMixin(object):
         export_instance.transform_dates = False
         export_instance.name = _("Copy of {}").format(export_instance.name)
         return export_instance
+
+
+class LiveGoogleSheetMixin(object):
+
+    @flag_enabled('GOOGLE_SHEETS_INTEGRATION')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @property
+    def terminology(self):
+        return {
+            'page_header': _("Live Google Sheet Settings"),
+            'help_text': "?",
+            'name_label': _("Sheet Name"),
+            'choose_fields_label': _("Choose the fields you want to include in this sheet."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them.
+                You can also rename fields, which will update the column names in Google Sheets.
+            """),
+        }
+
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings)
+        instance.transform_dates = False
+        instance.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
+        return instance
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context['format_options'] = [IntegrationFormat.LIVE_GOOGLE_SHEETS]
+        return context
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import LiveGoogleSheetListView
+        return LiveGoogleSheetListView
 
 
 class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
