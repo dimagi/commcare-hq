@@ -6,105 +6,107 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_available_domains_to_link,
     get_available_upstream_domains,
 )
+from corehq.privileges import LITE_RELEASE_MANAGEMENT, RELEASE_MANAGEMENT
 from corehq.util.test_utils import flag_enabled
 
 
-class TestGetAvailableUpstreamDomainsForDownstreamDomain(SimpleTestCase):
+@patch('corehq.apps.users.models.CouchUser')
+class TestGetAvailableUpstreamDomains(SimpleTestCase):
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_no_privilege_or_feature_flag_returns_none(self, mock_user, mock_account):
-        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
-            upstream_domains = get_available_upstream_domains(
-                'downstream-1', mock_user, mock_account
-            )
+    def setUp(self):
+        super().setUp()
+        self.expected_domains = ['upstream-1', 'upstream-2']
+
+        privilege_patcher = patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege')
+        self.mock_domain_has_privilege = privilege_patcher.start()
+        self.addCleanup(privilege_patcher.stop)
+
+        user_patcher = patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_user')
+        self.mock_available_user_domains = user_patcher.start()
+        self.addCleanup(user_patcher.stop)
+
+    def test_returns_empty_if_no_privilege_or_feature_flag(self, mock_user):
+        self.mock_domain_has_privilege.return_value = False
+
+        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
+
         self.assertFalse(upstream_domains)
 
-    @flag_enabled("LINKED_DOMAINS")
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_release_management_privilege_returns_domains_for_account(self, mock_user, mock_account):
-        """NOTE: this also tests that the release_management privilege overrides the linked domains flag"""
-        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
-        expected_upstream_domains = ['upstream']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_account') \
-             as mock_account_domains,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_user') \
-             as mock_user_domains:
-            mock_domain_has_privilege.return_value = True
-            mock_account_domains.return_value = expected_upstream_domains
-            mock_user_domains.return_value = ['wrong']
-            upstream_domains = get_available_upstream_domains(
-                'downstream-1', mock_user, mock_account
-            )
-        self.assertEqual(expected_upstream_domains, upstream_domains)
+    def test_returns_domains_for_user_if_release_management_privilege(self, mock_user):
+        self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
+        self.mock_available_user_domains.return_value = self.expected_domains
+
+        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
+
+        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=True)
+        self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
+
+    def test_returns_domains_for_user_if_lite_release_management_privilege(self, mock_user):
+        self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == LITE_RELEASE_MANAGEMENT
+        self.mock_available_user_domains.return_value = self.expected_domains
+
+        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
+
+        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=True)
+        self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
 
     @flag_enabled("LINKED_DOMAINS")
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_linked_domains_flag_returns_domains_for_user(self, mock_user, mock_account):
-        expected_upstream_domains = ['upstream']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_account') \
-             as mock_account_domains,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_upstream_domains_for_user') \
-             as mock_user_domains:
-            mock_domain_has_privilege.return_value = False
-            mock_account_domains.return_value = ['wrong']
-            mock_user_domains.return_value = expected_upstream_domains
-            upstream_domains = get_available_upstream_domains(
-                'downstream-1', mock_user, mock_account
-            )
+    def test_returns_domains_for_user_if_linked_domains_flag(self, mock_user):
+        self.mock_domain_has_privilege.return_value = False
+        self.mock_available_user_domains.return_value = self.expected_domains
 
-        self.assertEqual(expected_upstream_domains, upstream_domains)
+        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
+
+        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=False)
+        self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
 
 
+@patch('corehq.apps.users.models.CouchUser')
 class TestGetAvailableDomainsToLink(SimpleTestCase):
 
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_no_privilege_or_feature_flag_returns_none(self, mock_user, mock_account):
-        mock_account.get_domains.return_value = ['upstream', 'downstream-1', 'downstream-2']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
-            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
+    def setUp(self):
+        super().setUp()
+        self.expected_domains = ['downstream-1', 'downstream-2']
 
-        self.assertEqual([], domains)
+        privilege_patcher = patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege')
+        self.mock_domain_has_privilege = privilege_patcher.start()
+        self.addCleanup(privilege_patcher.stop)
+
+        user_patcher = patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_user')
+        self.mock_available_user_domains = user_patcher.start()
+        self.addCleanup(user_patcher.stop)
+
+    def test_returns_empty_if_no_privilege_or_feature_flag(self, mock_user):
+        self.mock_domain_has_privilege.return_value = False
+
+        domains = get_available_domains_to_link('upstream', mock_user)
+
+        self.assertFalse(domains)
+
+    def test_returns_domains_for_user_if_release_management_privilege(self, mock_user):
+        self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
+        self.mock_available_user_domains.return_value = self.expected_domains
+
+        domains = get_available_domains_to_link('upstream', mock_user)
+
+        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=True)
+        self.assertSetEqual(set(domains), set(self.expected_domains))
+
+    def test_returns_domains_for_user_if_lite_release_management_privilege(self, mock_user):
+        self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == LITE_RELEASE_MANAGEMENT
+        self.mock_available_user_domains.return_value = self.expected_domains
+
+        domains = get_available_domains_to_link('upstream', mock_user)
+
+        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=True)
+        self.assertSetEqual(set(domains), set(self.expected_domains))
 
     @flag_enabled("LINKED_DOMAINS")
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_release_management_privilege_returns_domains_for_account(self, mock_user, mock_account):
-        """NOTE: this also tests that the release_management privilege overrides the linked domains flag"""
-        expected_domains = ['downstream-1', 'downstream-2']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_account') \
-             as mock_account_domains,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_user') \
-             as mock_user_domains:
-            mock_domain_has_privilege.return_value = True
-            mock_account_domains.return_value = expected_domains
-            mock_user_domains.return_value = ['wrong']
-            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
+    def test_returns_domains_for_user_for_linked_domains_flag(self, mock_user):
+        self.mock_domain_has_privilege.return_value = False
+        self.mock_available_user_domains.return_value = self.expected_domains
 
-        self.assertEqual(expected_domains, domains)
+        domains = get_available_domains_to_link('upstream', mock_user)
 
-    @flag_enabled("LINKED_DOMAINS")
-    @patch('corehq.apps.users.models.CouchUser')
-    @patch('corehq.apps.accounting.models.BillingAccount')
-    def test_linked_domains_flag_returns_domains_for_user(self, mock_user, mock_account):
-        expected_domains = ['downstream-1', 'downstream-2']
-        with patch('corehq.apps.linked_domain.dbaccessors.domain_has_privilege') as mock_domain_has_privilege,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_account') \
-             as mock_account_domains,\
-             patch('corehq.apps.linked_domain.dbaccessors.get_available_domains_to_link_for_user') \
-             as mock_user_domains:
-            mock_domain_has_privilege.return_value = False
-            mock_account_domains.return_value = ['wrong']
-            mock_user_domains.return_value = expected_domains
-            domains = get_available_domains_to_link('upstream', mock_user, mock_account)
-
-        self.assertEqual(expected_domains, domains)
+        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=False)
+        self.assertSetEqual(set(domains), set(self.expected_domains))
