@@ -145,7 +145,7 @@ def get_n_users_old_enterprise_count(domain):
     if subscription:
         plan_version = subscription.plan_version
         if plan_version.plan.is_customer_software_plan:
-            n_included_users = plan_version.feature_rates.get(feature__feature_type='User').monthly_limit)
+            n_included_users = plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
             # For now just give each domain that's part of an enterprise account
             # access to nearly all of the throughput allocation.
             # Really what we want is to limit enterprise accounts' submissions accross all
@@ -181,11 +181,12 @@ class PerUserRateDefinition(object):
             (domain_users, domain),
             (enterprise_users, _get_account_name(domain))
         ]
-        old_enterprise_calculation = get_n_users_old_enterprise_count
+        old_enterprise_calculation = get_n_users_old_enterprise_count(domain)
         if old_enterprise_calculation is not None:
             limit_pairs.append((old_enterprise_calculation, f'old_enterprise:{domain}'))
         limits = []
         for n_users, scope_key in limit_pairs:
+            print(n_users, scope_key)
             domain_limit = (
                 self.per_user_rate_definition
                 .times(n_users)
