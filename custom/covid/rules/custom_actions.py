@@ -19,6 +19,9 @@ def set_all_activity_complete_date_to_today(case, rule):
     For any case matching the criteria, set the all_activity_complete_date property
     to today's date, in YYYY-MM-DD format, based on the domain's default time zone.
     """
+    if case.get_case_property("all_activity_complete_date"):
+        return CaseRuleActionResult()
+
     from dimagi.utils.parsing import ISO_DATE_FORMAT
     domain_obj = Domain.get_by_name(case.domain)
     today = datetime.now(domain_obj.get_default_timezone()).strftime(ISO_DATE_FORMAT)
