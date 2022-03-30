@@ -18,6 +18,7 @@ class ReportsModule(AppConfig):
         from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport
         from corehq.apps.smsbillables.interface import SMSBillablesInterface, SMSGatewayFeeCriteriaInterface
         from phonelog.reports import DeviceLogDetailsReport
+        from custom.inddex.reports.r1_master_data import MasterDataReport
 
         global reports
         reports.update({
@@ -33,11 +34,12 @@ class ReportsModule(AppConfig):
             CaseListExplorer.slug: CaseListExplorer,
             DuplicateCasesExplorer.slug: DuplicateCasesExplorer,
             CurrentStockStatusReport.slug: CurrentStockStatusReport,
+            MasterDataReport.slug: MasterDataReport,
         })
 
 
 def get_report_class(slug):
     if slug not in reports:
-        raise Exception("Report class not supported yet, try adding the slug in reports/const.py")
+        raise Exception("Report class not supported yet, try adding the slug in reports/app_config.py")
     else:
         return reports[slug]
