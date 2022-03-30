@@ -12,7 +12,6 @@ from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
     DataSourceConfigurationNotFoundError
-from corehq.apps.userreports.models import is_data_registry_report
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
@@ -71,6 +70,7 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
+    from corehq.apps.userreports.models import is_data_registry_report
     return (
         _can_edit_report(request, report)
         and not is_linked_report(report)
