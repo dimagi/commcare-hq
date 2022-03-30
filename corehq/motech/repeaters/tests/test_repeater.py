@@ -149,6 +149,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.case_repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.case_connx.id,
+            format='case_json',
         )
         self.case_repeater.save()
 
@@ -159,6 +160,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.form_repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.form_connx.id,
+            format='form_json'
         )
         self.form_repeater.save()
         self.log = []
@@ -439,6 +441,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         cls.repeater = FormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
+            format='form_xml',
         )
         cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
             repeater=cls.repeater
@@ -476,6 +479,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         cls.repeater = FormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
+            format='form_xml',
         )
         cls.repeater.save()
 
@@ -548,6 +552,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            format='case_xml',
         )
         self.repeater.save()
 
@@ -684,6 +689,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            format='case_json',
         )
         self.repeater.save()
 
@@ -760,10 +766,11 @@ class IgnoreDocumentTest(BaseRepeaterTest):
             connection_settings_id=self.connx.id,
             format='new_format'
         )
-        self.repeater.save()
+        # We have created restriction on SQL Repeaters, so for now we would not be copying the new format to SQL
+        self.repeater.save(sync_to_sql=False)
 
     def tearDown(self):
-        self.repeater.delete()
+        self.repeater.delete(sync_to_sql=False)
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -813,10 +820,11 @@ class TestRepeaterFormat(BaseRepeaterTest):
             connection_settings_id=self.connx.id,
             format='new_format',
         )
-        self.repeater.save()
+        # SQL Repeater Model restricts format and would raise error on unexpected values
+        self.repeater.save(sync_to_sql=False)
 
     def tearDown(self):
-        self.repeater.delete()
+        self.repeater.delete(sync_to_sql=False)
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -1048,6 +1056,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            format='case_json',
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
@@ -1100,6 +1109,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            format='case_json',
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
