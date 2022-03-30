@@ -76,6 +76,7 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
         self.mock_available_user_domains = user_patcher.start()
         self.addCleanup(user_patcher.stop)
 
+
     def test_returns_empty_if_no_privilege_or_feature_flag(self, mock_user):
         self.mock_domain_has_privilege.return_value = False
 
