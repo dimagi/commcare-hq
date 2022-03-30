@@ -233,7 +233,7 @@ def _delete_demo_user_restores(domain_name):
         users = get_all_commcare_users_by_domain(domain_name)
 
     for user in users:
-        if user.demo_restore_id:
+        if getattr(user, "demo_restore_id", None):
             try:
                 DemoUserRestore.objects.get(id=user.demo_restore_id).delete()
             except DemoUserRestore.DoesNotExist:
@@ -252,6 +252,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
+    ModelDeletion('domain', 'AllowedUCRExpressionSettings', 'domain'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
@@ -299,6 +300,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
         'CaseProperty', 'CasePropertyAllowedValue', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
     ]),
+    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
@@ -323,7 +325,6 @@ DOMAIN_DELETE_OPERATIONS = [
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
-    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'TimedEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'RandomTimedEvent', 'schedule__domain'),

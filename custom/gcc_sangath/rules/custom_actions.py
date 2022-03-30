@@ -75,16 +75,17 @@ def _get_case_updates(peer_rating_cases):
 
 
 def _get_sum(case_property, peer_rating_cases):
-    return sum([
-        int(peer_rating_case.get_case_property(case_property) or 0)
+    total = sum([
+        float(peer_rating_case.get_case_property(case_property) or 0)
         for peer_rating_case in peer_rating_cases
     ])
+    return float("{:.1f}".format(total))
 
 
 def _get_aggregate(case_property, peer_rating_cases):
     total = _get_sum(case_property, peer_rating_cases)
     count = len(peer_rating_cases)
-    return round(total / count, 1)
+    return float("{:.1f}".format(total / count))
 
 
 def _get_latest_peer_review_date(peer_rating_cases):

@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.utils.decorators import classproperty
+try:
+    from django.utils.functional import classproperty
+except ImportError:
+    # Django < 3.1 compatibility
+    from django.utils.decorators import classproperty
+
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest import skipIf, skipUnless

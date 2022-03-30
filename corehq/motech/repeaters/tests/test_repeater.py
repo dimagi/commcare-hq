@@ -87,14 +87,14 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.case_block = CaseBlock.deprecated_init(
+        cls.case_block = CaseBlock(
             case_id=CASE_ID,
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
         ).as_text()
 
-        cls.update_case_block = CaseBlock.deprecated_init(
+        cls.update_case_block = CaseBlock(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
@@ -350,7 +350,10 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(mock_process.delay.call_count, 2)
 
     def test_automatic_cancel_repeat_record(self):
-        repeat_record = self.case_repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        rr = self.case_repeater.register(case)
+        # Fetch the revision that was updated:
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
@@ -573,7 +576,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.white_listed_case_types = ['planet']
         self.repeater.save()
 
-        white_listed_case = CaseBlock.deprecated_init(
+        white_listed_case = CaseBlock(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -581,7 +584,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         CaseFactory(self.domain).post_case_blocks([white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
-        non_white_listed_case = CaseBlock.deprecated_init(
+        non_white_listed_case = CaseBlock(
             case_id="b_case_id",
             create=True,
             case_type="cat",
@@ -595,7 +598,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         black_list_user_id = 'black_listed_user'
 
         # case-creations by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock.deprecated_init(
+        black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             create=True,
             case_type="planet",
@@ -613,7 +616,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
-        normal_user_case = CaseBlock.deprecated_init(
+        normal_user_case = CaseBlock(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -631,7 +634,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock.deprecated_init(
+        black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             case_type="planet",
             owner_id="owner",
@@ -647,7 +650,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
-        normal_user_case = CaseBlock.deprecated_init(
+        normal_user_case = CaseBlock(
             case_id="a_case_id",
             case_type="planet",
             owner_id="owner",
@@ -668,6 +671,12 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
     def setUp(self):
         super().setUp()
+
+        # Create the case before creating the repeater, so that the
+        # repeater doesn't fire for the case creation. Each test
+        # registers this case, and the repeater will fire then.
+        self.post_xml(self.xform_xml, self.domain)
+
         self.connx = ConnectionSettings.objects.create(
             domain=self.domain,
             url='case-repeater-url',
@@ -677,7 +686,6 @@ class RepeaterFailureTest(BaseRepeaterTest):
             connection_settings_id=self.connx.id,
         )
         self.repeater.save()
-        self.post_xml(self.xform_xml, self.domain)
 
     def tearDown(self):
         self.repeater.delete()
@@ -696,29 +704,32 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertFalse(repeat_record.succeeded)
 
     def test_failure(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=RequestException('Boom!')):
-            repeat_record.fire()
+            rr = self.repeater.register(case)  # calls repeat_record.fire()
 
+        # Fetch the repeat_record revision that was updated
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
     def test_unexpected_failure(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
-            repeat_record.fire()
+            rr = self.repeater.register(case)
 
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
         self.assertFalse(repeat_record.succeeded)
 
     def test_success(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-        repeat_record = RepeatRecord.get(repeat_record.record_id)
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_request') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
-            repeat_record.fire()
+            rr = self.repeater.register(case)
 
+        repeat_record = RepeatRecord.get(rr.record_id)
         self.assertTrue(repeat_record.succeeded)
 
 
@@ -834,12 +845,14 @@ class TestRepeaterFormat(BaseRepeaterTest):
             RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     def test_new_format_payload(self):
-        repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         with patch('corehq.motech.repeaters.models.simple_request') as mock_request, \
                 patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_request.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
-            repeat_record.fire()
+            rr = self.repeater.register(case)
+
+            repeat_record = RepeatRecord.get(rr.record_id)
             headers = self.repeater.get_headers(repeat_record)
             mock_request.assert_called_with(
                 self.domain,

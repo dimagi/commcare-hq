@@ -37,6 +37,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
     module_uses_smart_links,
+    module_offers_registry_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -181,7 +182,7 @@ class RemoteRequestFactory(object):
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
-            additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
+            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=RESULTS_INSTANCE)
@@ -215,7 +216,7 @@ class RemoteRequestFactory(object):
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        if self.module.search_config.data_registry:
+        if module_offers_registry_search(self.module):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,

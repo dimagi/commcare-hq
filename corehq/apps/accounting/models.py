@@ -13,7 +13,7 @@ from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
@@ -839,7 +839,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run migrations?"
+                f"No default {edition!r} product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod

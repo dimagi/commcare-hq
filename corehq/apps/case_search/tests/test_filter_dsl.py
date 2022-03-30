@@ -1,15 +1,13 @@
 from django.test import SimpleTestCase, TestCase
 
-from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
+from freezegun import freeze_time
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.case_search.filter_dsl import (
-    CaseFilterError,
-    build_filter_from_ast,
-)
+from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.filter_dsl import build_filter_from_ast
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -17,6 +15,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import trap_extra_setup
 
 
@@ -57,7 +56,47 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_not_filter(self):
+        parsed = parse_xpath("not(name = 'farid')")
+
+        expected_filter = {
+            "bool": {
+                "must_not": {
+                    "nested": {
+                        "path": "case_properties",
+                        "query": {
+                            "bool": {
+                                "filter": [
+                                    {
+                                        "bool": {
+                                            "filter": (
+                                                {
+                                                    "term": {
+                                                        "case_properties.key.exact": "name"
+                                                    }
+                                                },
+                                                {
+                                                    "term": {
+                                                        "case_properties.value.exact": "farid"
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                ],
+                                "must": {
+                                    "match_all": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast("domain", parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
@@ -77,6 +116,34 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                             "range": {
                                 "case_properties.value.date": {
                                     "gte": "2017-02-12"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
+
+    @freeze_time('2021-08-02')
+    def test_date_comparison__today(self):
+        parsed = parse_xpath("dob >= today()")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "dob"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gte": "2021-08-02"
                                 }
                             }
                         }
@@ -173,7 +240,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast("domain", parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_case_property_existence(self):
         parsed = parse_xpath("property != ''")
@@ -342,6 +409,160 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast("domain", parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_selected(self):
+        parsed = parse_xpath("selected(first_name, 'Jon')")
+        expected_filter_single = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon",
+                                    "operator": "or",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter_single, built_filter, is_raw_query=True)
+
+        parsed = parse_xpath("selected(first_name, 'Jon John Jhon')")
+        expected_filter_many = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon John Jhon",
+                                    "operator": "or",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter_many, built_filter, is_raw_query=True)
+
+    def test_selected_any(self):
+        parsed = parse_xpath("selected-any(first_name, 'Jon John Jhon')")
+        expected_filter = {
+            "bool": {
+                "should": [
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "first_name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "Jon John Jhon",
+                                                "operator": "or",
+                                                "fuzziness": "AUTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "first_name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "Jon John Jhon",
+                                                "operator": "or",
+                                                "fuzziness": "0"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=True)  # Note fuzzy is on for this one
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
+    def test_selected_all(self):
+        parsed = parse_xpath("selected-all(first_name, 'Jon John Jhon')")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match": {
+                                "case_properties.value": {
+                                    "query": "Jon John Jhon",
+                                    "operator": "and",
+                                    "fuzziness": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
     def test_self_reference(self):
@@ -353,6 +574,66 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         with self.assertRaises(CaseFilterError):
             build_filter_from_ast(None, parse_xpath("parent/name > other_property"))
+
+    @freeze_time('2021-08-02')
+    def test_filter_today(self):
+        parsed = parse_xpath("age > today()")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "age"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gt": "2021-08-02"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
+    @freeze_time('2021-08-02')
+    def test_filter_date_today(self):
+        parsed = parse_xpath("age > date(today())")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "age"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gt": "2021-08-02"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast("domain", parsed, fuzzy=False)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
 
 @es_test
@@ -366,7 +647,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
 
-        cls.child_case_id = 'margaery'
+        cls.child_case1_id = 'margaery'
+        cls.child_case2_id = 'loras'
         cls.parent_case_id = 'mace'
         cls.grandparent_case_id = 'olenna'
         cls.domain = "Tyrell"
@@ -399,8 +681,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                 relationship='child',
             )])
 
-        child_case = CaseStructure(
-            case_id=cls.child_case_id,
+        child_case1 = CaseStructure(
+            case_id=cls.child_case1_id,
             attrs={
                 'create': True,
                 'case_type': 'child',
@@ -415,7 +697,31 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                 relationship='extension',
             )],
         )
-        for case in factory.create_or_update_cases([child_case]):
+        child_case2 = CaseStructure(
+            case_id=cls.child_case2_id,
+            attrs={
+                'create': True,
+                'case_type': 'child',
+                'update': {
+                    "name": "Loras",
+                    "house": "Tyrell",
+                },
+            },
+            indices=[
+                CaseIndex(
+                    parent_case,
+                    identifier='father',
+                    relationship='extension',
+                ),
+                CaseIndex(
+                    grandparent_case,
+                    identifier='grandmother',
+                    relationship='child',
+                )
+            ],
+            walk_related=False,
+        )
+        for case in factory.create_or_update_cases([child_case1, child_case2]):
             send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
         cls.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
 
@@ -460,8 +766,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             }
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
-        self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
     def test_nested_parent_lookups(self):
         parsed = parse_xpath("father/mother/house = 'Tyrell'")
@@ -497,5 +803,85 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             }
         }
         built_filter = build_filter_from_ast(self.domain, parsed)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
-        self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+    def test_subcase_exists(self):
+        parsed = parse_xpath("subcase-exists('father', name='Margaery')")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_exists__filter_no_match(self):
+        parsed = parse_xpath("subcase-exists('father', name='Mace')")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_exists__no_subase_filter(self):
+        parsed = parse_xpath("subcase-exists('father')")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_exists_inverted(self):
+        parsed = parse_xpath("not(subcase-exists('father', name='Margaery'))")
+        expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count__no_subcase_filter(self):
+        parsed = parse_xpath("subcase-count('father') > 1")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count__filter_no_match(self):
+        parsed = parse_xpath("subcase-count('father', house='Martel') > 0")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count_gt(self):
+        parsed = parse_xpath("subcase-count('father', house='Tyrell') > 1")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count_lt(self):
+        parsed = parse_xpath("subcase-count('father', house='Tyrell') < 1")
+        expected_filter = {"bool": {"must_not": {"terms": {"_id": [self.parent_case_id]}}}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count_lt_no_match(self):
+        """Subcase filter matches no cases and since it's an 'inverted' filter (lt)
+        we don't need to apply any filtering to the parent query"""
+        parsed = parse_xpath("subcase-count('father', house='Reyne') < 1")
+        expected_filter = {"match_all": {}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count_no_match(self):
+        parsed = parse_xpath("subcase-count('father', house='Tyrell') > 2")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_count_eq(self):
+        parsed = parse_xpath("subcase-count('father', house='Tyrell') = 2")
+        expected_filter = {"terms": {"_id": [self.parent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_filter_relationship(self):
+        parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
+        expected_filter = {"terms": {"_id": [self.grandparent_case_id]}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_subcase_filter_relationship_no_hits(self):
+        parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') > 1")
+        expected_filter = {"terms": {"_id": []}}
+        built_filter = build_filter_from_ast(self.domain, parsed)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)

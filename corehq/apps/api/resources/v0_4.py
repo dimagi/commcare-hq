@@ -431,6 +431,7 @@ class ApplicationResource(BaseApplicationResource):
         try:
             dehydrated = {}
 
+            dehydrated['name'] = module.name
             dehydrated['case_type'] = module.case_type
 
             all_case_properties = self.get_all_case_properties_local(app)

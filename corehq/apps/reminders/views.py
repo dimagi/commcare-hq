@@ -5,8 +5,8 @@ from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -31,7 +31,7 @@ from corehq.privileges import RELEASE_MANAGEMENT
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
     urlname = 'add_structured_keyword'
-    page_title = ugettext_noop("New Structured Keyword")
+    page_title = gettext_noop("New Structured Keyword")
     template_name = 'reminders/keyword.html'
     process_structured_message = True
 
@@ -133,13 +133,13 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
 class AddNormalKeywordView(AddStructuredKeywordView):
     urlname = 'add_normal_keyword'
-    page_title = ugettext_noop("New Keyword")
+    page_title = gettext_noop("New Keyword")
     process_structured_message = False
 
 
 class EditStructuredKeywordView(AddStructuredKeywordView):
     urlname = 'edit_structured_keyword'
-    page_title = ugettext_noop("Edit Structured Keyword")
+    page_title = gettext_noop("Edit Structured Keyword")
 
     @property
     def page_url(self):
@@ -235,7 +235,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
 
 class EditNormalKeywordView(EditStructuredKeywordView):
     urlname = 'edit_normal_keyword'
-    page_title = ugettext_noop("Edit Normal Keyword")
+    page_title = gettext_noop("Edit Normal Keyword")
     process_structured_message = False
 
     @property
@@ -252,11 +252,11 @@ class EditNormalKeywordView(EditStructuredKeywordView):
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = 'reminders/keyword_list.html'
     urlname = 'keyword_list'
-    page_title = ugettext_noop("Keywords")
+    page_title = gettext_noop("Keywords")
 
-    limit_text = ugettext_noop("keywords per page")
-    empty_notification = ugettext_noop("You have no keywords. Please add one!")
-    loading_message = ugettext_noop("Loading keywords...")
+    limit_text = gettext_noop("keywords per page")
+    empty_notification = gettext_noop("You have no keywords. Please add one!")
+    loading_message = gettext_noop("Loading keywords...")
 
     @use_multiselect
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))

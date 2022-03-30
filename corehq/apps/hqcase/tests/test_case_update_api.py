@@ -132,6 +132,7 @@ class TestCaseAPI(TestCase):
         case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
+        self.assertFalse(case.closed)
         self.assertEqual(case.name, 'Elizabeth Harmon')
         self.assertEqual(case.external_id, '1')
         self.assertEqual(case.owner_id, 'methuen_home')
@@ -191,6 +192,7 @@ class TestCaseAPI(TestCase):
         self.assertItemsEqual(res.keys(), ['case', 'form_id'])
 
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertFalse(case.closed)
         self.assertEqual(case.name, 'Beth Harmon')
         self.assertEqual(case.owner_id, 'us_chess_federation')
         self.assertEqual(case.dynamic_case_properties(), {
@@ -209,6 +211,25 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 200)
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.type, 'legend')
+
+    def test_close_case(self):
+        case = self._make_case()
+        res = self._update_case(case.case_id, {'close': True})
+        self.assertEqual(res.status_code, 200)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertTrue(case.closed)
+
+    def test_create_closed_case(self):
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'us_chess_federation',
+            'close': True,
+        })
+        self.assertEqual(res.status_code, 200)
+        case_id = res.json()['case']['case_id']
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue(case.closed)
 
     def test_update_case_bad_id(self):
         res = self._update_case('notarealcaseid', {

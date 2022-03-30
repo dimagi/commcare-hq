@@ -732,6 +732,17 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
 )
 
+UCR_UPDATED_NAMING = StaticToggle(
+    'ucr_updated_naming',
+    'Show updated naming of UCRS',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Displays updated UCR naming if the feature flag is enabled."
+        "This is a temporary flag which would be removed when the updated naming is agreed upon by all divisons."
+    )
+)
+
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -835,6 +846,16 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+USH_CASE_LIST_MULTI_SELECT = StaticToggle(
+    'ush_case_list_multi_select',
+    'USH: Allow selecting multiple cases from the case list',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows user to select multiple cases and load them all into the form.
+    """
 )
 
 USH_CASE_CLAIM_UPDATES = StaticToggle(
@@ -1899,15 +1920,6 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
-    'data_registry_case_update_repeater',
-    'USH: Allow data registry repeater to be setup to update cases in other domains',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
-)
-
-
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'USH: Enable usage of AWS Connect Dialer',
@@ -2080,7 +2092,7 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry.',
+    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2133,7 +2145,23 @@ DATA_REGISTRY = StaticToggle(
     'USH: Enable Data Registries for sharing data between project spaces',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
+)
+
+DATA_REGISTRY_UCR = StaticToggle(
+    'data_registry_ucr',
+    'USH: Enable the creation of Custom Web Reports backed by Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+)
+
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
@@ -2158,6 +2186,13 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
+    'support_expanded_column_in_reports',
+    'Support count per choice column to show up in multibar graph in reports',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     'save-only-edited-form-fields',
     'Save a form field only if the answer has been edited',
@@ -2168,4 +2203,22 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     Enable a checkbox for the ability to save a form question's answer in Case Management in App
     Manager only if the question's inputted answer is different from the current value in the case.
     """
+)
+
+GOOGLE_SHEETS_INTEGRATION = StaticToggle(
+    'google-sheet-integration',
+    'Unlock the Google Sheets view in Exports',
+    TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_USER],
+    description="""
+    Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
+    on the Exports page.
+    """
+)
+
+SUPERSET_ANALYTICS = StaticToggle(
+    'superset-analytics',
+    'Activates Analytics features to create Superset based reports and dashboards using UCR data',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )

@@ -86,7 +86,7 @@ class RetireUserTestCase(TestCase):
         for i, case_id in enumerate(case_ids):
             owner_id = self.commcare_user._id
 
-            caseblocks.append(CaseBlock.deprecated_init(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -134,7 +134,7 @@ class RetireUserTestCase(TestCase):
         for case_id in case_ids:
             owner_id = self.commcare_user._id
 
-            caseblocks.append(CaseBlock.deprecated_init(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -144,7 +144,7 @@ class RetireUserTestCase(TestCase):
 
         # submit a system form to update one, and another to update two
         caseblocks = [
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=False,
                 case_id=case_id,
                 user_id=SYSTEM_USER_ID,
@@ -212,7 +212,7 @@ class RetireUserTestCase(TestCase):
         """
 
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -231,7 +231,7 @@ class RetireUserTestCase(TestCase):
         """ Don't rebuild cases that are owned by other users """
 
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -250,7 +250,7 @@ class RetireUserTestCase(TestCase):
 
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
-        caseblocks = [CaseBlock.deprecated_init(
+        caseblocks = [CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -283,7 +283,7 @@ class RetireUserTestCase(TestCase):
             else:
                 owner_id = self.commcare_user._id
 
-            caseblock = CaseBlock.deprecated_init(
+            caseblock = CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -306,7 +306,7 @@ class RetireUserTestCase(TestCase):
         usercase_id = self.commcare_user.get_usercase_id()
 
         # other user submits form against the case (should get deleted)
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=False,
             case_id=usercase_id,
         )
@@ -331,7 +331,7 @@ class RetireUserTestCase(TestCase):
 
     def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -342,11 +342,11 @@ class RetireUserTestCase(TestCase):
         # other user submits form against the case and another case not owned by the user
         # should NOT get deleted since this form touches a case that's still 'alive'
         double_case_xform, _ = submit_case_blocks([
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=False,
                 case_id=case_id,
             ).as_text(),
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=self.other_user._id,

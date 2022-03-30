@@ -2,20 +2,26 @@ hqDefine("userreports/js/configurable_reports_home", [
     'jquery',
     'underscore',
     'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     _,
-    DOMPurify
+    DOMPurify,
+    initialPageData
 ) {
     var $select = $("#select2-navigation");
-
     $select.on('select2:select', function () {
         document.location = $select.val();
     });
-
+    var selectTextHeading = '';
+    if (initialPageData.get('useUpdatedUcrNaming')) {
+        selectTextHeading = gettext("Edit a custom web report or custom web report source");
+    } else {
+        selectTextHeading = gettext("Edit a report or data source");
+    }
     $select.select2({
-        placeholder: gettext("Edit a report or data source"),
+        placeholder: selectTextHeading,
         templateResult: function (item) {
             var text = item.text.trim();
             if (!item.element) {

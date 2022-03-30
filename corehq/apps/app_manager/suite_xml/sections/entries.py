@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -501,7 +501,7 @@ class EntriesHelper(object):
                 instance_name, root_element,
                 datum['case_type'],
                 filter_xpath=filter_xpath,
-                additional_types=datum['module'].search_config.additional_case_types
+                additional_types=datum['module'].additional_case_types
             )
 
             datums.append(FormDatumMeta(
@@ -549,7 +549,7 @@ class EntriesHelper(object):
         ]
         data.extend([
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in get_ordered_case_types(datum.case_type, module.search_config.additional_case_types)
+            for case_type in get_ordered_case_types(datum.case_type, module.additional_case_types)
         ])
         data.extend([
             QueryData(key='case_id', ref=case_id_xpath)
