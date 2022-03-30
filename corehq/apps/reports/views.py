@@ -555,14 +555,20 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
 
-    recipient_emails = set(form.cleaned_data['recipient_emails'])
+    recipients = form.cleaned_data['recipient_emails']
     if form.cleaned_data['send_to_owner']:
-        recipient_emails.add(request.couch_user.get_email())
+        recipients.append(request.couch_user.get_email())
+    # removing duplicates
+    recipient_list = []
+    [recipient_list.append(email) for email in recipients if email not in recipient_list]
 
     request_data = request_as_dict(request)
-
     report_type = dispatcher_class.prefix
-    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+    datespan = request_data.pop('datespan')
+    request_data['startdate'] = datespan.startdate.isoformat()
+    request_data['enddate'] = datespan.enddate.isoformat()
+
+    send_email_report.delay(recipient_list, domain, report_slug, report_type,
                             request_data, once, form.cleaned_data)
     return HttpResponse()
 
@@ -1047,7 +1053,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None,
+                           notes=None, attach_excel=False, is_once_off=False, lang=None,
                            send_only_active=False):
     """
     Renders only notification's main content, which then may be used to generate full notification body.
@@ -1097,7 +1103,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "report_type": _("once off report") if once else _("scheduled report"),
+        "report_type": _("once off report") if is_once_off else _("scheduled report"),
     })
     return response.content.decode("utf-8"), excel_attachments
 
