@@ -10,7 +10,6 @@ from django.views import View
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
@@ -302,15 +301,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             is_superuser=is_superuser
         )
 
-        account = BillingAccount.get_account_by_domain(self.request.domain)
-        available_domains_to_link = get_available_domains_to_link(self.request.domain,
-                                                                  self.request.couch_user,
-                                                                  billing_account=account)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
 
         upstream_domain_urls = []
-        upstream_domains = get_available_upstream_domains(self.request.domain,
-                                                          self.request.couch_user,
-                                                          billing_account=account)
+        upstream_domains = get_available_upstream_domains(self.request.domain, self.request.couch_user)
         for domain in upstream_domains:
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
