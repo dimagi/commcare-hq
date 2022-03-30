@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
@@ -112,7 +113,9 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static, RegistryReportConfiguration,
+    report_config_id_is_static,
+    RegistryReportConfiguration,
+    RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -525,6 +528,12 @@ class ConfigureReport(ReportBuilderView):
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
 
+        if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
+            return self.render_error_response(
+                _("Creating or Editing Data Registry Reports are not enabled for this project."),
+                allow_delete=False
+            )
+
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
@@ -532,18 +541,23 @@ class ConfigureReport(ReportBuilderView):
                 self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
-            self.template_name = 'userreports/report_error.html'
-            if self.existing_report:
-                context = {'report_id': self.existing_report.get_id,
-                           'is_static': self.existing_report.is_static}
-            else:
-                context = {}
-            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            context.update(self.main_context)
-            return self.render_to_response(context)
+            return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
+    def render_error_response(self, message, allow_delete=None):
+        if self.existing_report:
+            context = {
+                'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
+            }
+        else:
+            context = {}
+        if allow_delete is not None:
+            context['allow_delete'] = allow_delete
+        context['error_message'] = message
+        context.update(self.main_context)
+        return render(self.request, 'userreports/report_error.html', context)
 
     @property
     def page_name(self):
@@ -857,7 +871,9 @@ def delete_report(request, domain, report_id):
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
-        get_deleted_doc_type(ReportConfiguration)
+        get_deleted_doc_type(ReportConfiguration),
+        RegistryReportConfiguration.doc_type,
+        get_deleted_doc_type(RegistryReportConfiguration)
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -1237,7 +1253,9 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def undelete_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
-        get_deleted_doc_type(DataSourceConfiguration)
+        get_deleted_doc_type(DataSourceConfiguration),
+        RegistryDataSourceConfiguration.doc_type,
+        get_deleted_doc_type(RegistryDataSourceConfiguration),
     ])
     if config and is_deleted(config):
         undo_delete(config)
