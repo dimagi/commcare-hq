@@ -1576,11 +1576,11 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking project spaces (successor to linked apps)',
-    TAG_SAAS_CONDITIONAL,
+    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+        "Replaced by Enterprise Release Management (release_management privilege)."
     ),
     help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
 )
