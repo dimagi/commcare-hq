@@ -143,13 +143,19 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
-        self.dependent_toggles = dependent_toggles
+        self.dependent_toggles = dependent_toggles or []
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
         self.notification_emails = notification_emails
+
+        for dependency in self.dependent_toggles:
+            if not set(self.namespaces) & set(dependency.namespaces):
+                raise Exception(
+                    "Namespaces of dependent toggles must overlap with dependency:"
+                    f" {self.slug}, {dependency.slug}")
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
