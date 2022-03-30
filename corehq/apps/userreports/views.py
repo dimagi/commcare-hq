@@ -69,7 +69,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
-from corehq.apps.linked_domain.util import is_linked_report
+from corehq.apps.linked_domain.util import is_linked_report, can_domain_access_release_management
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
@@ -155,7 +155,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
-from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -273,7 +272,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     @property
@@ -666,7 +665,7 @@ class ConfigureReport(ReportBuilderView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
             ) if self.existing_report else {},
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     def _get_bound_form(self, report_data):
