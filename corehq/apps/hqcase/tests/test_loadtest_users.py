@@ -10,7 +10,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import ENABLE_LOADTEST_USERS
+from corehq.toggles import ENABLE_LOADTEST_USERS, NAMESPACE_DOMAIN
 
 
 class LoadtestUserTest(TestCase):
@@ -23,7 +23,7 @@ class LoadtestUserTest(TestCase):
         cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password', None, None)
         cls.user_id = cls.user._id
         cls.factory = CaseFactory(domain='foo', case_defaults={'owner_id': cls.user_id})
-        ENABLE_LOADTEST_USERS.set('foo', True, namespace='domain')
+        ENABLE_LOADTEST_USERS.set('foo', True, namespace=NAMESPACE_DOMAIN)
 
     def setUp(self):
         delete_all_cases()

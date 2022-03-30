@@ -18,7 +18,7 @@ from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import generate_cases
 from corehq.apps.locations.tests.util import make_loc, delete_all_locations
 from corehq.apps.locations.models import LocationType
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
 
 
@@ -222,7 +222,7 @@ class TestCountWebUsers(TestCase):
         cls.domain = 'test'
         cls.domain_obj = create_domain(cls.domain)
 
-        set_toggle(FILTERED_BULK_USER_DOWNLOAD.slug, cls.domain, True, namespace='domain')
+        set_toggle(FILTERED_BULK_USER_DOWNLOAD.slug, cls.domain, True, namespace=NAMESPACE_DOMAIN)
 
         location_type = LocationType(domain=cls.domain, name='phony')
         location_type.save()

@@ -282,7 +282,7 @@ class TestEnterpriseMobileWorkerSettingsCustomDeactivation(TestCase):
             one_year_ago
         )
         toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.set(
-            cls.domains3[0].name, True
+            cls.domains3[0].name, True, toggles.NAMESPACE_DOMAIN
         )
 
         cls.emw_settings1 = EnterpriseMobileWorkerSettings.objects.create(
