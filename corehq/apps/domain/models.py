@@ -1037,6 +1037,11 @@ class DomainAuditRecordEntry(models.Model):
         obj.save(update_fields=[property_to_update])
 
 
+class MessagingSettings(models.Model):
+    domain = models.CharField(max_length=126, unique=True)
+    granted_access = models.BooleanField(default=False)
+
+
 class AllowedUCRExpressionSettings(models.Model):
     """
     Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.

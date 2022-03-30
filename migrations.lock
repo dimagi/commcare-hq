@@ -310,6 +310,7 @@ domain
  0009_restrict_mob_access_from_FF
  0010_projectlimit
  0011_alloweducrexpressionsettings
+ 0012_messagingsettings
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
