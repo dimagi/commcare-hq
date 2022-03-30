@@ -23,6 +23,10 @@ hqDefine('export/js/const', [], function () {
         XLS: 'xls',
         XLSX: 'xlsx',
     };
+    //Add new export formats if they're not file types
+    var INTEGRATED_EXPORT_FORMATS = {
+        LIVE_GOOGLE_SHEETS: 'live_google_sheets',
+    };
     var SHARING_OPTIONS = {
         PRIVATE: 'private',
         EXPORT_ONLY: 'export_only',
@@ -52,6 +56,7 @@ hqDefine('export/js/const', [], function () {
         USER_DEFINED_SPLIT_TYPES: USER_DEFINED_SPLIT_TYPES,
         SAVE_STATES: SAVE_STATES,
         EXPORT_FORMATS: EXPORT_FORMATS,
+        INTEGRATED_EXPORT_FORMATS: INTEGRATED_EXPORT_FORMATS,
         SHARING_OPTIONS: SHARING_OPTIONS,
         DEID_OPTIONS: DEID_OPTIONS,
         ANALYTICS_EVENT_CATEGORIES: ANALYTICS_EVENT_CATEGORIES,
