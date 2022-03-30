@@ -103,7 +103,8 @@ from corehq.apps.domain.models import (
     SUB_AREA_CHOICES,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
-    AllowedUCRExpressionSettings
+    AllowedUCRExpressionSettings,
+    MessagingSettings,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -1164,7 +1165,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.auto_case_update_hour = self.cleaned_data['auto_case_update_hour']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
         domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
-        domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
+        self._save_messaging_settings(domain, cleaned_data)
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
@@ -1193,6 +1194,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             dimagi_contact=self.cleaned_data['dimagi_contact'],
             **kwargs
         )
+
+    def _save_messaging_settings(self, domain_obj, cleaned_data):
+        domain_obj.granted_messaging_access = cleaned_data['granted_messaging_access']
+        settings, created = MessagingSettings.objects.update_or_create(domain=domain_obj.name, defaults={
+            'granted_access': cleaned_data['granted_messaging_access'],
+        })
 
 
 def clean_password(txt):
