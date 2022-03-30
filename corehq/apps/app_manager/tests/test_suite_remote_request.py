@@ -187,13 +187,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # reset to newly wrapped module
         self.module = self.app.modules[0]
 
-    def test_search_config_model(self, *args):
+    def test_search_config_relevant(self, *args):
         config = CaseSearch()
 
         self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
         config.additional_relevant = "double(now()) mod 2 = 0"
         self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+
+    def test_search_config_relevant_multi_select(self, *args):
+        config = CaseSearch()
+
+        self.assertEqual(config.get_relevant(multi_select=True), None)
+
+        config.additional_relevant = "double(now()) mod 2 = 0"
+        self.assertEqual(config.get_relevant(multi_select=True), "double(now()) mod 2 = 0")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
