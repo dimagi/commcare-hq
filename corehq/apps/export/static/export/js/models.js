@@ -4,6 +4,8 @@
  *
  */
 
+const { contains } = require("jquery");
+
 hqDefine('export/js/models', [
     'jquery',
     'knockout',
@@ -302,7 +304,8 @@ hqDefine('export/js/models', [
     };
 
     ExportInstance.prototype.getFormatOptionValues = function () {
-        return _.filter(constants.EXPORT_FORMATS, function (format) {
+        const availableExportFormats = Object.assign({}, constants.EXPORT_FORMATS, constants.INTEGRATED_EXPORT_FORMATS);
+        return _.filter(availableExportFormats, function (format) {
             return this.formatOptions.indexOf(format) !== -1;
         }, this);
     };
