@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.domain.models import MessagingSettings
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -68,7 +69,7 @@ class InvitationTest(TestCase):
         super(InvitationTest, cls).tearDownClass()
 
 
-class User_MessagingDomain_Tests(SimpleTestCase):
+class User_MessagingDomain_Tests(TestCase):
     def test_web_user_with_no_messaging_domain_returns_false(self):
         user = WebUser(domains=['domain_no_messaging_1', 'domain_no_messaging_2'])
         self.assertFalse(user.belongs_to_messaging_domain())
@@ -82,11 +83,15 @@ class User_MessagingDomain_Tests(SimpleTestCase):
         self.assertFalse(user.belongs_to_messaging_domain())
 
     def setUp(self):
-        self.domains = {
-            'domain_no_messaging_1': Domain(granted_messaging_access=False),
-            'domain_no_messaging_2': Domain(granted_messaging_access=False),
-            'domain_with_messaging': Domain(granted_messaging_access=True),
-        }
+        self.domains = {}
+
+        def _mock_domain(name, granted_access):
+            self.domains[name] = Domain(name=name)
+            MessagingSettings(domain=name, granted_access=granted_access).save()
+
+        _mock_domain('domain_no_messaging_1', False)
+        _mock_domain('domain_no_messaging_2', False)
+        _mock_domain('domain_with_messaging', True)
 
         patcher = patch.object(Domain, 'get_by_name', side_effect=self._get_domain_by_name)
         patcher.start()

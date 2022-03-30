@@ -378,6 +378,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     granted_messaging_access = BooleanProperty(default=False)
 
+    @property
+    def messaging_settings(self):
+        settings, created = MessagingSettings.objects.get_or_create(domain=self.name)
+        return settings
+
     # Allowed outbound SMS per day
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
     custom_daily_outbound_sms_limit = IntegerProperty()

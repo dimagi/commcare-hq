@@ -159,7 +159,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_granted_messaging_access(self):
-        if settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access:
+        if settings.ENTERPRISE_MODE or self.domain_object.messaging_settings.granted_access:
             return True
         subscription = Subscription.get_active_subscription_by_domain(self.domain_object)
         if subscription is not None:

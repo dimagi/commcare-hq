@@ -1590,7 +1590,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # For users that DO belong to many domains, I'm working off the assumption that most of them are for
         # enterprise domains, which have turned on messaging for most of their domains -- so we likely will
         # short-circuit after only a few domains
-        return any(domain.granted_messaging_access for domain in domains)
+        return any(domain.messaging_settings.granted_access for domain in domains)
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):

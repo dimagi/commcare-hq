@@ -100,7 +100,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
             'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
             'odata_feed_limit': self.domain_object.odata_feed_limit,
-            'granted_messaging_access': self.domain_object.granted_messaging_access,
+            'granted_messaging_access': self.domain_object.messaging_settings.granted_access,
         }
         internal_attrs = [
             'sf_contract_id',
