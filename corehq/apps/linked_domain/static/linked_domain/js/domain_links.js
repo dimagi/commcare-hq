@@ -12,8 +12,7 @@ hqDefine("linked_domain/js/domain_links", [
     initialPageData,
     _,
     ko,
-    alertUser,
-    multiselectUtils
+    alertUser
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -60,7 +59,7 @@ hqDefine("linked_domain/js/domain_links", [
     var DomainLinksViewModel = function (data) {
         var self = {};
         self.upstreamLink = data.upstream_link ? DomainLink(data.upstream_link) : null;
-        self.isSuperuser = data.is_superuser;
+
         // setup getting started view model
         var gettingStartedData = {
             parent: self,
@@ -88,12 +87,7 @@ hqDefine("linked_domain/js/domain_links", [
 
         // General data
         self.domain = data.domain;
-        self.hasFullAccess = data.has_full_access;
-        self.domainLinks = ko.observableArray(_.map(data.linked_domains, DomainLink));
-        self.domainLinksByName = ko.computed(function () {
-            return _.indexBy(self.domainLinks(), 'downstreamDomain');
-        });
-
+        self.domain_links = ko.observableArray(_.map(data.linked_domains, DomainLink));
         self.showRemoteReports = function () {
             if (data.linkable_ucr) {
                 return data.linkable_ucr.length > 0;
@@ -102,7 +96,7 @@ hqDefine("linked_domain/js/domain_links", [
         };
 
         self.isUpstreamDomain = ko.computed(function () {
-            return self.domainLinks().length > 0;
+            return self.domain_links().length > 0;
         });
         // doesn't need to be observable because it is impossible to update the existing page to change this property
         self.isDownstreamDomain = data.is_downstream_domain;
@@ -148,10 +142,10 @@ hqDefine("linked_domain/js/domain_links", [
         self.query = ko.observable();
         self.filteredDomainLinks = ko.observableArray([]);
         self.matchesQuery = function (domainLink) {
-            return !self.query() || domainLink.downstreamDomain.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+            return !self.query() || domainLink.downstreamDomain().toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
         self.filter = function () {
-            self.filteredDomainLinks(_.filter(self.domainLinks(), self.matchesQuery));
+            self.filteredDomainLinks(_.filter(self.domain_links(), self.matchesQuery));
             self.goToPage(1);
         };
 
@@ -159,7 +153,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.paginatedDomainLinks = ko.observableArray([]);
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.computed(function () {
-            return self.query() ? self.filteredDomainLinks().length : self.domainLinks().length;
+            return self.query() ? self.filteredDomainLinks().length : self.domain_links().length;
         });
         self.currentPage = 1;
 
@@ -167,7 +161,7 @@ hqDefine("linked_domain/js/domain_links", [
             self.currentPage = page;
             self.paginatedDomainLinks.removeAll();
             var skip = (self.currentPage - 1) * self.itemsPerPage();
-            var visibleDomains = self.query() ? self.filteredDomainLinks() : self.domainLinks();
+            var visibleDomains = self.query() ? self.filteredDomainLinks() : self.domain_links();
             self.paginatedDomainLinks(visibleDomains.slice(skip, skip + self.itemsPerPage()));
         };
 
@@ -182,7 +176,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.createRemoteReportLink = function (reportId) {
             _private.RMI("create_remote_report_link", {
                 "master_domain": self.upstreamLink.upstreamDomain,
-                "linked_domain": self.upstreamLink.downstreamDomain,
+                "linked_domain": self.upstreamLink.downstreamDomain(),
                 "report_id": reportId,
             }).done(function (data) {
                 if (data.success) {
@@ -201,11 +195,11 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {
-                "linked_domain": link.downstreamDomain,
+                "linked_domain": link.downstreamDomain(),
             }).done(function () {
-                self.domainLinks.remove(link);
+                self.domain_links.remove(link);
                 var availableDomains = self.addDownstreamDomainViewModel.availableDomains();
-                availableDomains.push(link.downstreamDomain);
+                availableDomains.push(link.downstreamDomain());
                 self.addDownstreamDomainViewModel.availableDomains(availableDomains.sort());
                 self.goToPage(self.currentPage);
             }).fail(function () {
@@ -226,13 +220,12 @@ hqDefine("linked_domain/js/domain_links", [
 
     var DomainLink = function (link) {
         var self = {};
-        self.downstreamDomain = link.downstream_domain;
+        self.downstreamDomain = ko.observable(link.downstream_domain);
         self.isRemote = link.is_remote;
         self.upstreamDomain = link.upstream_domain;
         self.lastUpdate = link.last_update;
         self.upstreamUrl = link.upstream_url;
         self.downstreamUrl = link.downstream_url;
-        self.hasFullAccess = link.has_full_access;
         return self;
     };
 
@@ -243,94 +236,14 @@ hqDefine("linked_domain/js/domain_links", [
         self.modelsToPush = ko.observableArray();
         self.buildAppsOnPush = ko.observable(false);
         self.pushInProgress = ko.observable(false);
-        self.shouldShowSelectedERMDomain = ko.observable(false);
-        self.shouldShowSelectedMRMDomain = ko.observable(false);
         self.enablePushButton = ko.computed(function () {
             return self.domainsToPush().length && self.modelsToPush().length && !self.pushInProgress();
         });
-        self.containsLiteAndFullLinks = ko.computed(function () {
-            if (!self.parent.hasFullAccess) {
-                // should not contain both
-                return false;
-            }
-            // check if both values for hasFullAccess are present within the current domainLinks
-            return _.uniq(_.pluck(self.parent.domainLinks(), 'hasFullAccess')).length === 2;
-        });
-
-
-        self.multiselectBindingDidUpdate = function () {
-            let shouldRebuildMultiselect = false;
-            for (const option of $('#domain-multiselect')[0].options) {
-                if (self.domainsToPush().includes(option.value)) {
-                    continue;
-                }
-                // option is enabled by default, only rebuild if disabled is set to true
-                let shouldDisable = false;
-                if (self.shouldShowSelectedERMDomain()) {
-                    // disable if not full access
-                    shouldDisable = !self.parent.domainLinksByName[option.value].hasFullAccess;
-                } else if (self.shouldShowSelectedMRMDomain()) {
-                    shouldDisable = true;
-                }
-                if (shouldDisable && !option.disabled) {
-                    option.disabled = true;
-                    shouldRebuildMultiselect = true;
-                }
-            }
-
-            if (shouldRebuildMultiselect) {
-                multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
-            }
-        };
-
-        self.domainsToPushSubscription = self.domainsToPush.subscribe(function (newValue) {
-            // receives updates every time a domain is selected/unselected from the multiselect
-            if (self.parent.isSuperuser) {
-                return;
-            }
-
-            // handles the Add All edge case if both lite and full access links exist
-            if (newValue.length > 1 && self.containsLiteAndFullLinks()) {
-                // the non-enterprise domains would have already been hidden in the callback, so just show the info text
-                self.shouldShowSelectedERMDomain(true);
-                // no need to rebuild multiselect
-                return;
-            }
-
-            if (newValue.length > 0) {
-                var selectedDomainLink = self.parent.domainLinksByName()[newValue[0]];
-                var pushedNonEnterpriseLink = !selectedDomainLink.hasFullAccess;
-                for (const option of $('#domain-multiselect')[0].options) {
-                    if (!newValue.includes(option.value)) {
-                        if (pushedNonEnterpriseLink) {
-                            option.disabled = true;
-                            self.shouldShowSelectedMRMDomain(true);
-                        } else {
-                            // disable if link does not have full access
-                            const tempLink = self.parent.domainLinksByName()[option.value];
-                            if (!tempLink.hasFullAccess) {
-                                option.disabled = !tempLink.hasFullAccess;
-                                self.shouldShowSelectedERMDomain(true);
-                            }
-                        }
-                    }
-                }
-            } else {
-                // nothing is selected, enable all options, hide info text
-                for (const option of $('#domain-multiselect')[0].options) {
-                    option.disabled = false;
-                }
-                self.shouldShowSelectedERMDomain(false);
-                self.shouldShowSelectedMRMDomain(false);
-            }
-
-            multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
-        });
 
         self.localDownstreamDomains = ko.computed(function () {
-            return self.parent.domainLinks().reduce(function (result, link) {
+            return self.parent.domain_links().reduce(function (result, link) {
                 if (!link.isRemote) {
-                    return result.concat(link.downstreamDomain);
+                    return result.concat(link.downstreamDomain());
                 }
                 return result;
             }, []);
@@ -341,26 +254,8 @@ hqDefine("linked_domain/js/domain_links", [
                 selectableHeaderTitle: gettext("All project spaces"),
                 selectedHeaderTitle: gettext("Project spaces to push to"),
                 searchItemTitle: gettext("Search project spaces"),
-                disableModifyAllActions: !self.parent.hasFullAccess && !self.parent.isSuperuser,
-                willSelectAllListener: function () {
-                    if (self.parent.isSuperuser) {
-                        return;
-                    }
-                    var requiresRebuild = false;
-                    for (var option of $('#domain-multiselect')[0].options) {
-                        var tempLink = self.parent.domainLinksByName()[option.value];
-                        if (!option.selected && !option.disabled && !tempLink.hasFullAccess) {
-                            option.disabled = true;
-                            requiresRebuild = true;
-                        }
-                    }
-                    if (requiresRebuild) {
-                        multiselectUtils.rebuildMultiselect('domain-multiselect', self.domainMultiselect.properties);
-                    }
-                },
             },
             options: self.localDownstreamDomains,
-            didUpdateListener: self.multiselectBindingDidUpdate,
         };
 
         self.canPush = ko.computed(function () {
@@ -434,7 +329,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.createLink = function () {
             _private.RMI("create_remote_report_link", {
                 "master_domain": upstreamLink.upstreamDomain,
-                "linked_domain": upstreamLink.downstreamDomain,
+                "linked_domain": upstreamLink.downstreamDomain(),
                 "report_id": self.id,
             }).done(function (data) {
                 if (data.success) {
@@ -472,7 +367,7 @@ hqDefine("linked_domain/js/domain_links", [
                     self.availableDomains(_.filter(self.availableDomains(), function (item) {
                         return item !== viewModel.domainToAdd();
                     }));
-                    self.parent.domainLinks.unshift(DomainLink(response.domain_link));
+                    self.parent.domain_links.unshift(DomainLink(response.domain_link));
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
