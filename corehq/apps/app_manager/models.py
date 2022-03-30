@@ -1181,7 +1181,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding='utf-8'))
+                    validate_xform(etree.tostring(form.xml, encoding='utf-8'))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -4975,27 +4975,28 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         force_new_version = self.build_profiles != latest_build.build_profiles
         for form_stuff in self.get_forms(bare=False):
             filename = 'files/%s' % self.get_form_filename(**form_stuff)
-            form = form_stuff["form"]
+            current_form = form_stuff["form"]
             if not force_new_version:
                 try:
-                    previous_form = latest_build.get_form(form.unique_id)
+                    previous_form = latest_build.get_form(current_form.unique_id)
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = latest_build.fetch_attachment(filename)
                 except (ResourceNotFound, FormNotFoundException):
-                    form.version = None
+                    current_form.version = None
                 else:
                     previous_hash = _hash(previous_source)
 
-                    # hack - temporarily set my version to the previous version
-                    # so that that's not treated as the diff
-                    previous_form_version = previous_form.get_version()
-                    form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form))
-                    if previous_hash != my_hash:
-                        form.version = None
+                    # set form version to previous version, and only update if content has changed
+                    current_form.version = previous_form.get_version()
+                    current_form = current_form.validate_form()
+                    current_hash = _hash(current_form.render_xform())
+                    if previous_hash != current_hash:
+                        current_form.version = None
+                        # clear cache since render_xform was called with a mutated form set to the previous version
+                        current_form.render_xform.reset_cache(current_form)
             else:
-                form.version = None
+                current_form.version = None
 
     @time_method()
     def set_media_versions(self):
@@ -5237,7 +5238,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
+                    files[filename] = form.render_xform(build_profile_id=build_profile_id)
                 except XFormValidationFailed:
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
