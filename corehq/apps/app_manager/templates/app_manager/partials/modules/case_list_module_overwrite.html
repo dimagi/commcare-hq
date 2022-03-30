@@ -10,7 +10,7 @@
               <label for="other_module_id">{% trans "Menu(s)" %} </label>
             </div>
             <div class="col-xs-3 col-sm-4">
-              <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple" >
+              <select name='dest_module_unique_ids' class='form-control case-type-dropdown' multiple="multiple" >
                 {% for other_mod in available_modules %}
                   <option value="{{ other_mod.unique_id }}">{{ other_mod.name|html_trans:langs }}</option>
                 {% endfor %}
