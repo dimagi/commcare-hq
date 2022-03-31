@@ -9,7 +9,7 @@ from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.functional import cached_property
@@ -133,7 +133,7 @@ class DataSourceActionLog(models.Model):
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
     ), db_index=True, null=False)
-    migration_diffs = JSONField(null=True, blank=True)
+    migration_diffs = models.JSONField(null=True, blank=True)
 
     # True for actions that were skipped because the data source
     # was marked with ``disable_destructive_rebuild``
@@ -907,6 +907,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     def validate(self, required=True):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
             duplicate_items = set(
@@ -953,6 +954,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     def is_static(self):
         return report_config_id_is_static(self._id)
+
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -1404,7 +1406,6 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
 
 
-
 def id_is_static(data_source_id):
     if data_source_id is None:
         return False
@@ -1506,7 +1507,7 @@ class ReportComparisonException(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     exception = models.TextField()
     notes = models.TextField(blank=True)
 
@@ -1516,10 +1517,10 @@ class ReportComparisonDiff(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
-    control = JSONField()
-    candidate = JSONField()
-    diff = JSONField()
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
+    control = models.JSONField()
+    candidate = models.JSONField()
+    diff = models.JSONField()
     notes = models.TextField(blank=True)
 
 
@@ -1528,6 +1529,6 @@ class ReportComparisonTiming(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

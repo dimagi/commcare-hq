@@ -11,7 +11,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -2848,7 +2848,7 @@ class UserReportingMetadataStaging(models.Model):
 
     # The following properties are null if a user has not submitted a form since their last sync
     xform_version = models.IntegerField(null=True)
-    form_meta = JSONField(null=True)  # This could be filtered to only the parts we need
+    form_meta = models.JSONField(null=True)  # This could be filtered to only the parts we need
     received_on = models.DateTimeField(null=True)
 
     # The following properties are null if a user has not synced since their last form submission
@@ -3073,7 +3073,7 @@ class UserHistory(models.Model):
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
     # JSON structured replacement for the deprecated text message field
-    change_messages = JSONField(default=dict)
+    change_messages = models.JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
@@ -3083,14 +3083,14 @@ class UserHistory(models.Model):
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
-    details = JSONField(default=dict)
+    details = models.JSONField(default=dict)
     # ToDo: remove blank=true post migration/reset of existing records since it will always be present
     # same as the deprecated details.changed_via
     # one of the USER_CHANGE_VIA_* constants
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [
