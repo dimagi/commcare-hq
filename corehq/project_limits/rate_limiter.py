@@ -12,6 +12,7 @@ from corehq.project_limits.rate_counter.presets import (
     second_rate_counter,
     week_rate_counter,
 )
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 
