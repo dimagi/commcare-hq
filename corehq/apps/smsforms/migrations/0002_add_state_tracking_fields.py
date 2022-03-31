@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sqlxformssession',
             name='include_case_updates_in_partial_submissions',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AddField(
             model_name='sqlxformssession',
@@ -44,12 +44,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sqlxformssession',
             name='session_is_open',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AddField(
             model_name='sqlxformssession',
             name='submit_partially_completed_forms',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AlterIndexTogether(
             name='sqlxformssession',

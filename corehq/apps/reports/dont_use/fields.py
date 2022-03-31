@@ -6,7 +6,7 @@ import uuid
 import warnings
 
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 import pytz
 
@@ -51,9 +51,9 @@ class ReportField(object):
 
 class ReportSelectField(ReportField):
     slug = "generic_select"
-    name = ugettext_noop("Generic Select")
+    name = gettext_noop("Generic Select")
     template = "reports/dont_use_fields/select_generic.html"
-    default_option = ugettext_noop("Select Something...")
+    default_option = gettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
     cssClasses = "span4"

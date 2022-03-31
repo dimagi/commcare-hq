@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound
 
@@ -45,10 +45,10 @@ class SQLXFormsSession(models.Model):
     STATUS_NOT_FINISHED = "not-finished"
 
     STATUS_DISPLAY = {
-        STATUS_PARTIALLY_COMPLETE: ugettext_noop('Completed (Partially Completed Submission)'),
-        STATUS_COMPLETE: ugettext_noop('Completed'),
-        STATUS_IN_PROGRESS: ugettext_noop('In Progress'),
-        STATUS_NOT_FINISHED: ugettext_noop('Not Finished'),
+        STATUS_PARTIALLY_COMPLETE: gettext_noop('Completed (Partially Completed Submission)'),
+        STATUS_COMPLETE: gettext_noop('Completed'),
+        STATUS_IN_PROGRESS: gettext_noop('In Progress'),
+        STATUS_NOT_FINISHED: gettext_noop('Not Finished'),
     }
 
     # generic properties
@@ -98,12 +98,12 @@ class SQLXFormsSession(models.Model):
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
-    submit_partially_completed_forms = models.NullBooleanField()
+    submit_partially_completed_forms = models.BooleanField(null=True)
 
     # Only matters when submit_partially_completed_forms is True.
     # If True, any case changes will be included in the submission.
     # If False, any case changes will be removed from the submission.
-    include_case_updates_in_partial_submissions = models.NullBooleanField()
+    include_case_updates_in_partial_submissions = models.BooleanField(null=True)
 
     class Meta(object):
         app_label = 'smsforms'

@@ -60,21 +60,17 @@ branches:
     - ml/remove-pickles-phonelog # Minha Oct 7
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
-    - dm/django3-branches+others
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
-    - gh/erm/consolidate-enterprise-roles # Graham Feb 20
-    - bmb/whh-003 # Biyeun Mar 1
-    - nh/loadtest_users_ga+others  # Norman Mar 2
-    # - ad/multivalued-search-functions # Addison Mar 2
-    - ml/check-for-historical-xss # Minha Mar 3
-    - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
-    - dm/django3.0-part1 # Daniel 3/9
     - jm/elastic-client-adapter  # Joel Mar 1
-    - ml/sumologic-on-staging-check # Minha Mar 10
-    - dm/django3.1-deprecations # Daniel 3/14
-    - ml/case-sharing-feature-discoverability # Minha March 17
-    - ap/ucr-renaming # Amit March 21
+    - ap/sql-case-repeater # Amit March 23
+    - rp/gsheet/create-livegooglesheetview # Rynhard March 23
+    - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
+    - bmb/upgrade-minimist  # Biyeun March 23
+    - nh/loadtest_users_postmigration  # Norman March 24
+    - ad/user-history-excel-export # Addison March 28
+    - dm/upgrade-architect
+    - dm/django3-tests
+
 submodules: { }

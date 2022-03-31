@@ -5,7 +5,7 @@ from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import pgettext
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from requests.compat import getproxies
 from six.moves.urllib.parse import urlencode
@@ -249,10 +249,13 @@ def _report_usage(ip_address, number, username):
 
 
 def _report_current_global_two_factor_setup_rate_limiter():
-    for window, value, threshold in global_two_factor_setup_rate_limiter.iter_rates():
-        metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
-            'window': window
-        }, multiprocess_mode=MPM_MAX)
-        metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
-            'window': window
-        }, multiprocess_mode=MPM_MAX)
+    for scope, limits in global_two_factor_setup_rate_limiter.iter_rates():
+        for window, value, threshold in limits:
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
+                'window': window,
+                'scope': ','.join(scope)
+            }, multiprocess_mode=MPM_MAX)
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
+                'window': window,
+                'scope': ','.join(scope)
+            }, multiprocess_mode=MPM_MAX)

@@ -4,8 +4,8 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.postgres.forms import SimpleArrayField
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -260,12 +260,12 @@ class HQApiKeyForm(forms.Form):
         forms.GenericIPAddressField(
             protocol='ipv4',
         ),
-        label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
+        label=gettext_lazy("Allowed IP Addresses (comma separated)"),
         required=False,
     )
     domain = forms.ChoiceField(
         required=False,
-        help_text=ugettext_lazy("Limit the key's access to a single project space")
+        help_text=gettext_lazy("Limit the key's access to a single project space")
     )
 
     def __init__(self, *args, **kwargs):
@@ -278,7 +278,7 @@ class HQApiKeyForm(forms.Form):
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
             crispy.Fieldset(
-                ugettext_lazy("Add New API Key"),
+                gettext_lazy("Add New API Key"),
                 crispy.Field('name'),
                 crispy.Field('domain'),
                 crispy.Field('ip_allowlist'),

@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.db import transaction
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from celery import chord
 
@@ -260,7 +260,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     message_html = render_to_string(
         'registration/email/mobile_signup_reminder.html', params)
 
-    subject = ugettext('Visit CommCareHQ on your computer!')
+    subject = gettext('Visit CommCareHQ on your computer!')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

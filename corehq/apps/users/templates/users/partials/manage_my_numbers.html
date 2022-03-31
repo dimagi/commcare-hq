@@ -11,28 +11,28 @@
             <label class="control-label col-sm-3 col-md-4 col-lg-2">+{{ phone.number }}<br />
               {% if user_type == "mobile" %}
 
-                {% ifequal phone.status "verified" %}
+                {% if phone.status == "verified" %}
                   <span class="label label-success">{% trans 'VERIFIED' %}</span>
-                {% endifequal %}
+                {% endif %}
 
-                {% ifequal phone.status "pending" %}
+                {% if phone.status == "pending" %}
                   <span class="label label-default">{% trans 'VERIFICATION PENDING' %}</span>
-                {% endifequal %}
+                {% endif %}
 
-                {% ifequal phone.status "duplicate" %}
+                {% if phone.status == "duplicate" %}
                   {% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}
                 <span class="label label-warning">{% trans 'ALREADY IN USE' %}</span>
                 {% if phone.dup_url %}</a>{% endif %}
-                {% endifequal %}
+                {% endif %}
 
-                {% ifequal phone.status "invalid" %}
+                {% if phone.status == "invalid" %}
                   <span class="label label-default">{% trans 'INVALID FORMAT' %}</span>
-                {% endifequal %}
+                {% endif %}
 
               {% endif %}
             </label>
             {% if user_type == "mobile" and can_use_inbound_sms %}
-              {% ifequal phone.status "unverified" %}
+              {% if phone.status == "unverified" %}
                 <form method="post"
                       action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
                       style="display: inline;">
@@ -42,23 +42,23 @@
                           class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
                   </button>
                 </form>
-              {% endifequal %}
+              {% endif %}
 
-              {% ifequal phone.status "duplicate" %}
+              {% if phone.status == "duplicate" %}
                 <button data-title="You cannot verify this phone because it is already being used elsewhere"
                         class="btn btn-primary disabled verify-button">
                   <i class="fa fa-signal"></i> {% trans 'Verify' %}
                 </button>
-              {% endifequal %}
+              {% endif %}
 
-              {% ifequal phone.status "pending" %}
+              {% if phone.status == "pending" %}
                 <button data-title="Re-send the verification SMS to this phone"
                         class="btn btn-primary verify-button"
                         data-toggle="modal"
                         href="#reverify_{{phone.number|urlencode}}">
                   <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
                 </button>
-              {% endifequal %}
+              {% endif %}
             {% endif %}
 
             <a class="btn btn-danger"

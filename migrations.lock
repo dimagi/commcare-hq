@@ -79,6 +79,10 @@ accounting
  0057_add_sms_report_toggle
  0058_delete_linked_projects_role
  0059_add_lite_release_management_priv
+ 0060_add_loadtest_users_priv
+ 0061_remove_enterprise_v1
+ 0062_add_release_management_to_enterprise
+ 0063_replace_linked_projects_ff_with_erm
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -553,6 +557,7 @@ notifications
  0005_domain_specific_notifications
  0006_add_billing_type
  0007_auto_20170704_1643
+ 0008_add_notification_types
 oauth2_provider
  0001_initial
  0002_auto_20190406_1805

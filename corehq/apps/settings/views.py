@@ -10,8 +10,8 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
 import qrcode
@@ -99,7 +99,7 @@ def project_id_mapping(request, domain):
 
 
 class BaseMyAccountView(BaseSectionPageView):
-    section_name = ugettext_lazy("My Account")
+    section_name = gettext_lazy("My Account")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -132,7 +132,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
-    page_title = ugettext_lazy("My Information")
+    page_title = gettext_lazy("My Information")
     template_name = 'settings/edit_my_account.html'
 
     @two_factor_exempt
@@ -258,7 +258,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
-    page_title = ugettext_lazy("My Projects")
+    page_title = gettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
     @method_decorator(login_required)
@@ -306,7 +306,7 @@ class MyProjectsList(BaseMyAccountView):
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
     template_name = 'settings/change_my_password.html'
-    page_title = ugettext_lazy("Change My Password")
+    page_title = gettext_lazy("Change My Password")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -358,7 +358,7 @@ def _user_can_use_phone(user):
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
     template_name = 'two_factor/profile/profile.html'
-    page_title = ugettext_lazy("Two Factor Authentication")
+    page_title = gettext_lazy("Two Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -389,7 +389,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
     template_name = 'two_factor/core/setup.html'
-    page_title = ugettext_lazy("Two Factor Authentication Setup")
+    page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
         ('welcome_setup', HQEmptyForm),
@@ -416,7 +416,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'
     template_name = 'two_factor/core/setup_complete.html'
-    page_title = ugettext_lazy("Two Factor Authentication Setup Complete")
+    page_title = gettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -433,7 +433,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
     template_name = 'two_factor/core/backup_tokens.html'
-    page_title = ugettext_lazy("Two Factor Authentication Backup Tokens")
+    page_title = gettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -460,7 +460,7 @@ def _show_link_to_webapps(user):
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
     template_name = 'two_factor/profile/disable.html'
-    page_title = ugettext_lazy("Remove Two-Factor Authentication")
+    page_title = gettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -474,7 +474,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
     template_name = 'two_factor/core/phone_register.html'
-    page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
+    page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
         ('method', HQPhoneNumberMethodForm),
@@ -514,7 +514,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 
     def get_success_url(self):
-        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number removed."))
+        messages.add_message(self.request, messages.SUCCESS, gettext_lazy("Phone number removed."))
         return reverse(TwoFactorProfileView.urlname)
 
     @method_decorator(login_required)
@@ -541,7 +541,7 @@ class TwoFactorResetView(TwoFactorSetupView):
 
 
 class BaseProjectDataView(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
 
     @property
     def section_url(self):
@@ -561,7 +561,7 @@ def get_qrcode(data):
 
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
-    page_title = ugettext_lazy("Enable Privileges on Mobile")
+    page_title = gettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -608,7 +608,7 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
 
 class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
-    page_title = ugettext_lazy("API Keys")
+    page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
     template_name = "settings/user_api_keys.html"

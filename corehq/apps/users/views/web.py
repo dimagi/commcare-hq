@@ -10,8 +10,8 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
@@ -255,7 +255,7 @@ def delete_invitation(request, domain):
 @method_decorator(always_allow_project_access, name='dispatch')
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
-    page_title = ugettext_lazy("Request Access")
+    page_title = gettext_lazy("Request Access")
     template_name = "users/domain_request.html"
     request_form = None
 

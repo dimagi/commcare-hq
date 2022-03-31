@@ -3,8 +3,8 @@ import hashlib
 import logging
 
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as _
 
 from jsonobject.exceptions import BadValueError
 
@@ -114,9 +114,9 @@ def REPORTS(project):
     )
 
     reports.extend([
-        (ugettext_lazy("Monitor Workers"), monitoring_reports),
-        (ugettext_lazy("Inspect Data"), inspect_reports),
-        (ugettext_lazy("Manage Deployments"), deployments_reports),
+        (gettext_lazy("Monitor Workers"), monitoring_reports),
+        (gettext_lazy("Inspect Data"), inspect_reports),
+        (gettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
     if project.commtrack_enabled:
@@ -126,7 +126,7 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
+        reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
     reports = list(_get_report_builder_reports(project)) + reports
 
@@ -150,7 +150,7 @@ def REPORTS(project):
         sms.ScheduleInstanceReport,
     ])
 
-    messaging = (ugettext_lazy("Messaging"), messaging_reports)
+    messaging = (gettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
 
     return reports
@@ -270,7 +270,7 @@ def get_report_builder_count(domain):
 
 
 EDIT_DATA_INTERFACES = (
-    (ugettext_lazy('Edit Data'), (
+    (gettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases,
         BulkFormManagementInterface,

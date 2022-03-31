@@ -10,7 +10,7 @@ from django.http import (
 )
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 import sys
 
 from casexml.apps.case.xform import close_extension_cases

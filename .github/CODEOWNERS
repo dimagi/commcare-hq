@@ -61,16 +61,22 @@
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 /corehq/util/es/ @joxl
 
-/custom/icds_reports/ @calellowitz @Rohit25negi
-/custom/icds_reports/templates/ @calellowitz @Rohit25negi
-/custom/icds_reports/static/ @calellowitz @Rohit25negi
+/custom/icds_reports/ @calellowitz
+/custom/icds_reports/templates/ @calellowitz
+/custom/icds_reports/static/ @calellowitz
 
 /docs/js-guide/ @orangejenny @millerdev
 
 /docker/ @millerdev @joxl
 
+/package.json @dimagi/dependency-watchers
+
 /scripts/docker @millerdev @joxl
 /scripts/vellum-to-hq @millerdev
 
+/requirements/ @dimagi/dependency-watchers
+
 /testapps/test_pillowtop/ @joxl
 /testapps/test_elasticsearch/ @joxl
+
+/yarn.lock @dimagi/dependency-watchers

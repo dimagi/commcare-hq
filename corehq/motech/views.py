@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import ModelFormMixin, ProcessFormView

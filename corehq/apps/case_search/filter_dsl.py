@@ -1,6 +1,6 @@
 import re
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import (
@@ -11,6 +11,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     TooManyRelatedCasesError,
@@ -18,7 +19,6 @@ from corehq.apps.case_search.exceptions import (
 )
 from corehq.apps.case_search.xpath_functions import (
     XPATH_QUERY_FUNCTIONS,
-    XPATH_VALUE_FUNCTIONS,
 )
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
@@ -159,26 +159,6 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             serialize(node)
         )
 
-    def _unwrap_function(node):
-        """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
-        """
-        if isinstance(node, UnaryExpression) and node.op == '-':
-            return -1 * node.right
-        if not isinstance(node, FunctionCall):
-            return node
-        try:
-            return XPATH_VALUE_FUNCTIONS[node.name](node)
-        except KeyError:
-            raise CaseFilterError(
-                _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(
-                    node.name,
-                    ", ".join(list(XPATH_VALUE_FUNCTIONS.keys())),
-                ),
-                serialize(node)
-            )
-        except XPathFunctionException as e:
-            raise CaseFilterError(str(e), serialize(node))
-
     def _equality(node):
         """Returns the filter for an equality operation (=, !=)
 
@@ -188,7 +168,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
                 isinstance(node.right, acceptable_rhs_types)):
             # This is a leaf node
             case_property_name = serialize(node.left)
-            value = _unwrap_function(node.right)
+            value = unwrap_value(domain, node.right)
             q = case_property_query(case_property_name, value, fuzzy=fuzzy)
 
             if node.op == '!=':
@@ -210,7 +190,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         try:
             case_property_name = serialize(node.left)
-            value = _unwrap_function(node.right)
+            value = unwrap_value(domain, node.right)
             return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
         except (TypeError, ValueError):
             raise CaseFilterError(

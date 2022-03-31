@@ -37,6 +37,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
     module_uses_smart_links,
+    module_offers_registry_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -107,7 +108,7 @@ class RemoteRequestFactory(object):
         return RemoteRequestPost(**kwargs)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant()
+        return self.module.search_config.get_relevant(self.module.case_details.short.multi_select)
 
     def build_command(self):
         return Command(
@@ -126,7 +127,7 @@ class RemoteRequestFactory(object):
 
         xpaths = {QuerySessionXPath(self.case_session_var).instance()}
         xpaths.update(datum.ref for datum in self._remote_request_query_datums)
-        xpaths.add(self.module.search_config.get_relevant())
+        xpaths.add(self.module.search_config.get_relevant(self.module.case_details.short.multi_select))
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
@@ -215,7 +216,7 @@ class RemoteRequestFactory(object):
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        if self.module.search_config.data_registry:
+        if module_offers_registry_search(self.module):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
@@ -351,7 +352,8 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         self.case_session_var = case_session_var
 
     def get_post_relevant(self):
-        return CaseClaimXpath(self.case_session_var).default_relevant()
+        if not self.module.case_details.short.multi_select:
+            return CaseClaimXpath(self.case_session_var).default_relevant()
 
     def build_command(self):
         return Command(

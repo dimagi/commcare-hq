@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -47,7 +47,7 @@ def mass_email(request):
 
 class CallcenterUCRCheck(BaseAdminSectionView):
     urlname = 'callcenter_ucr_check'
-    page_title = ugettext_lazy("Check Callcenter UCR tables")
+    page_title = gettext_lazy("Check Callcenter UCR tables")
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
@@ -80,7 +80,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
 
 class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
     urlname = 'reprocess_messaging_case_updates'
-    page_title = ugettext_lazy("Reprocess Messaging Case Updates")
+    page_title = gettext_lazy("Reprocess Messaging Case Updates")
     template_name = 'hqadmin/messaging_case_updates.html'
 
     @method_decorator(require_superuser)

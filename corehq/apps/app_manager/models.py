@@ -28,8 +28,8 @@ from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import override
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 import qrcode
 from couchdbkit import ResourceNotFound
@@ -2170,12 +2170,6 @@ class Itemset(DocumentSchema):
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)
 
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
-        (data, dirty) = wrap_itemset(data)
-        return super().wrap(data)
-
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2225,8 +2219,7 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty(exclude_if_none=True)
+    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -2243,15 +2236,15 @@ class CaseSearch(DocumentSchema):
     def case_session_var(self):
         return "search_case_id"
 
-    def get_relevant(self):
-        relevant = self.additional_relevant or ""
-        if self.default_relevant:
-            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
-            if relevant:
-                relevant = f"({default_condition}) and ({relevant})"
-            else:
-                relevant = default_condition
-        return relevant
+    def get_relevant(self, multi_select=False):
+        if multi_select:
+            return self.additional_relevant
+
+        # Single select case lists are irrelevant if the selected case is already in the casedb
+        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        if self.additional_relevant:
+            return f"({default_condition}) and ({self.additional_relevant})"
+        return default_condition
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2960,7 +2953,7 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
-            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+            options = [(self.shadow_parent_form_id, gettext_lazy("Unknown, please change"))] + options
         return options
 
     @staticmethod

@@ -11,7 +11,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (

@@ -1,20 +1,29 @@
 import uuid
-
-from django.test import TestCase
-
 from unittest.mock import patch
+from xml.etree.ElementTree import XML
+
+from django.test import SimpleTestCase, TestCase
+
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.formplayer_api.smsforms.api import (
+    FormplayerInterface,
+    InvalidSessionIdException,
     TouchformsError,
     XformsResponse,
 )
 from corehq.apps.formplayer_api.smsforms.sms import SessionStartInfo
-from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.app import (
+    _clean_xml_for_partial_submission,
+    _fetch_xml,
+    start_session,
+)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
+from corehq.messaging.scheduling.util import utcnow
 
 
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
@@ -155,3 +164,94 @@ class TestStartSession(TestCase):
         session, responses = self._start_session(yield_responses=False)
 
         self.assertEqual(responses, ["human-error"])
+
+
+class TestFetchXml(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.session = SQLXFormsSession(session_id='abc123', domain='test-domain', user_id='user_id')
+        cls.formplayer_interface = FormplayerInterface(cls.session.session_id, cls.session.domain)
+
+    def setUp(self) -> None:
+        super().setUp()
+        patcher = patch.object(self.formplayer_interface, 'get_raw_instance')
+        self.mock_get_raw_instance = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_successful_response(self):
+        expected_result = '<data><question>answer</question></data>'
+
+        self.mock_get_raw_instance.return_value = {'status': 'success', 'output': expected_result}
+        result = _fetch_xml(self.formplayer_interface)
+        self.assertEqual(result, expected_result)
+
+    def test_raises_exception_if_invalid_session_id(self):
+        self.mock_get_raw_instance.side_effect = InvalidSessionIdException
+        with self.assertRaises(InvalidSessionIdException):
+            _fetch_xml(self.formplayer_interface)
+
+    def test_raises_touchforms_error_if_response_errors(self):
+        self.mock_get_raw_instance.return_value = {'status': 'error'}
+        with self.assertRaises(TouchformsError):
+            _fetch_xml(self.formplayer_interface)
+
+
+class TestCleanXMLForPartialSubmission(SimpleTestCase):
+
+    def test_timeEnd_value_is_set(self):
+        xml_with_case_action = '''
+        <data>
+            <question>answer</question>
+            <meta>
+                <timeEnd/>
+            </meta>
+        </data>
+        '''.strip()
+
+        now = utcnow()
+        expected_time_end = json_format_datetime(now)
+        with patch('corehq.apps.smsforms.app.utcnow', return_value=now):
+            cleaned_xml = _clean_xml_for_partial_submission(xml_with_case_action, should_remove_case_actions=True)
+
+        xml = XML(cleaned_xml)
+        self.assertEqual(xml.find('meta').find('timeEnd').text, expected_time_end)
+
+    def test_case_actions_are_not_removed_when_false(self):
+        xml_with_case_create = '''
+                <data>
+                    <question>answer</question>
+                    <case>
+                        <create></create>
+                        <update></update>
+                        <close></close>
+                    </case>
+                </data>
+                '''.strip()
+
+        cleaned_xml = _clean_xml_for_partial_submission(xml_with_case_create, should_remove_case_actions=False)
+        xml = XML(cleaned_xml)
+        self.assertIsNotNone(xml.find('case'))
+        self.assertIsNotNone(xml.find('case').find('create'))
+        self.assertIsNotNone(xml.find('case').find('update'))
+        self.assertIsNotNone(xml.find('case').find('close'))
+
+    def test_case_actions_are_removed_when_true(self):
+        xml_with_case_create = '''
+                <data>
+                    <question>answer</question>
+                    <case>
+                        <create></create>
+                        <update></update>
+                        <close></close>
+                    </case>
+                </data>
+                '''.strip()
+
+        cleaned_xml = _clean_xml_for_partial_submission(xml_with_case_create, should_remove_case_actions=True)
+        xml = XML(cleaned_xml)
+        self.assertIsNotNone(xml.find('case'))
+        self.assertIsNone(xml.find('case').find('create'))
+        self.assertIsNone(xml.find('case').find('update'))
+        self.assertIsNone(xml.find('case').find('close'))

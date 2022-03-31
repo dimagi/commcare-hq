@@ -45,8 +45,8 @@
     <code>url(r'^myview/$', MyView.as_view(), name=MyView.urlname)</code>.
   </p>
   <pre>   template_name = 'all_the_views/my_view.html'
-    page_title = ugettext_lazy("My View")
-    section_title = ugettext_lazy("All the Views")
+    page_title = gettext_lazy("My View")
+    section_title = gettext_lazy("All the Views")
 
     @property
     def section_url(self):
