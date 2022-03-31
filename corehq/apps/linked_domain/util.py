@@ -147,7 +147,14 @@ def is_linked_report(report):
     return report.report_meta.master_id
 
 
-def is_domain_available_to_link(upstream_domain_name, candidate_name, user, should_enforce_admin=True):
+def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
+    """
+    User must be an admin in both domains
+    :param upstream_domain_name: str
+    :param candidate_name: potential domain to link downstream
+    :param user: CouchUser
+    :return: True if available to link, False otherwise
+    """
     if not upstream_domain_name or not candidate_name:
         return False
 
@@ -158,18 +165,15 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user, shou
         # cannot link to an already linked project
         return False
 
-    if should_enforce_admin:
-        return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
-    else:
-        return True
+    return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
 
 
-def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user, should_enforce_admin=True):
+def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user):
     """
+    User must be an admin in both domains
     :param potential_upstream_domain: potential upstream domain
     :param downstream_domain: domain that would be downstream in this link if able
     :param user: couch user
-    :param should_enforce_admin: enforce user is admin in both domains
     :return: True if the potential upstream domain is eligible to link to the specified downstream domain
     """
     from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
@@ -184,10 +188,7 @@ def is_available_upstream_domain(potential_upstream_domain, downstream_domain, u
         # needs to be an active upstream domain
         return False
 
-    if should_enforce_admin:
-        return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
-    else:
-        return True
+    return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
 
 
 def is_domain_in_active_link(domain_name):
