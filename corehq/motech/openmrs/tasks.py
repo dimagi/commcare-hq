@@ -40,7 +40,7 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.exceptions import OpenmrsException
 from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
@@ -318,7 +318,7 @@ def import_patients():
 
 @task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
-    for repeater in OpenmrsRepeater.by_domain(domain_name):
+    for repeater in SQLOpenmrsRepeater.by_domain(domain_name):
         errors = []
         if repeater.atom_feed_enabled and not repeater.paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
