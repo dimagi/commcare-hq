@@ -181,6 +181,8 @@ ln -s /opt/homebrew/Cellar/libmagic/5.41/lib/libmagic.dylib libmagic.dylib
 
 ## Refreshing data in `elasticsearch` manually (alternative to `run_ptop`)
 
+FYI, be sure to check out the [FAQ on elasticsearch](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md#elasticsearch).
+
 To refresh specific indices in elasticsearch you can do the following...
 
 First make sure everything is up-to-date
@@ -197,19 +199,4 @@ Force a re-index of `forms` and `cases`:
 ./manage.py ptop_reindexer_v2 sql-form --reset
 ```
 
-For other indices (pick and choose):
-```sh
-./manage.py ptop_reindexer_v2 user
-./manage.py ptop_reindexer_v2 group
-./manage.py ptop_reindexer_v2 groups-to-user
-./manage.py ptop_reindexer_v2 case-search
-./manage.py ptop_reindexer_v2 case-search-resumable
-./manage.py ptop_reindexer_v2 sms
-./manage.py ptop_reindexer_v2 report-case
-./manage.py ptop_reindexer_v2 report-xform
-./manage.py ptop_reindexer_v2 app
-./manage.py ptop_reindexer_v2 couch-app-form-submission
-./manage.py ptop_reindexer_v2 sql-app-form-submission
-./manage.py ptop_reindexer_v2 user-sync-history
-./manage.py ptop_reindexer_v2 user-app-form-submission
-```
+For other indices see `./manage.py ptop_reindexer_v2 --help`
