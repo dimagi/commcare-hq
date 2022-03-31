@@ -73,5 +73,7 @@ branches:
     - ad/user-history-excel-export # Addison March 28
     - ml/fix-feature-discoverability-bug # Minha March 30
     - gh/erm/support-non-enterprise-users # Graham March 30
+    - dm/upgrade-architect
+    - dm/django3-tests
 
 submodules: { }
