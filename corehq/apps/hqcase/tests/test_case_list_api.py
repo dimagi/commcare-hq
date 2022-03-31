@@ -25,7 +25,7 @@ BAD_GUYS_ID = str(uuid.uuid4())
 @es_test
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
-    domain = 'testcaselistapi'
+    domain = 'test-case-list-api'
 
     @classmethod
     def setUpClass(cls):

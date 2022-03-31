@@ -635,7 +635,7 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
-    'Allow external android callouts to search the caselist',
+    'Allow external android callouts to search the case list',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
