@@ -1,7 +1,7 @@
 import os
 
 from django.conf import settings
-from django.template.loaders.app_directories import get_app_template_dirs
+from django.template.utils import get_app_template_dirs
 from django.test import SimpleTestCase
 
 from nose.plugins.attrib import attr
@@ -35,7 +35,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
     def test_compress_offline(self):
         template_dir_list = []
         for template_dir in get_app_template_dirs('templates'):
-            if settings.BASE_DIR in template_dir:
+            if str(template_dir).startswith(settings.BASE_DIR):
                 template_dir_list.append(template_dir)
 
         template_list = []
