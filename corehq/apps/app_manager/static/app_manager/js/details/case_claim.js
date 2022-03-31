@@ -179,7 +179,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
         'customRelatedCaseProperty',
     ];
@@ -260,7 +260,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
-                search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 data_registry: self.dataRegistry(),
