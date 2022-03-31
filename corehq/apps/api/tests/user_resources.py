@@ -182,6 +182,10 @@ class TestCommCareUserResource(APIResourceTest):
         unmodified_user = CommCareUser.get(user._id)
         self.assertEqual(unmodified_user.username, 'test')
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Cannot update the key username."}'
+        )
 
     def test_update(self):
 
