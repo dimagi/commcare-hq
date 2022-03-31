@@ -191,11 +191,11 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        send_device_log_to_sumologic.delay(url, self.log_subreport(should_encode=False),
+        send_device_log_to_sumologic.delay(url, self.log_subreport(),
                                            self._get_header('log', False))
-        send_device_log_to_sumologic.delay(url, self.user_error_subreport(should_encode=False),
+        send_device_log_to_sumologic.delay(url, self.user_error_subreport(),
                                            self._get_header('user_error', False))
-        send_device_log_to_sumologic.delay(url, self.force_close_subreport(should_encode=False),
+        send_device_log_to_sumologic.delay(url, self.force_close_subreport(),
                                            self._get_header('force_close', False))
 
     def _get_header(self, fmt, should_encode=True):
@@ -258,14 +258,11 @@ class SumoLogicLog(object):
                 user_id = user_subreport[0].get('user_id')
             return username, user_id
 
-    def log_subreport(self, should_encode=True):
+    def log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        data = ("\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose']))
-        if should_encode:
-            return data.encode('utf-8')
-        return data
+        return "\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
 
-    def user_error_subreport(self, should_encode=True):
+    def user_error_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
         log_additions_template = " [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
 
@@ -278,11 +275,9 @@ class SumoLogicLog(object):
             ) for log in logs
         ))
 
-        if should_encode:
-            return data.encode('utf-8')
         return data
 
-    def force_close_subreport(self, should_encode=True):
+    def force_close_subreport(self):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
         log_additions_template = (
             " [app_id={app_id}] [user_id={user_id}] [session={session}] "
@@ -297,8 +292,6 @@ class SumoLogicLog(object):
             ) for log in logs
         ))
 
-        if should_encode:
-            return data.encode('utf-8')
         return data
 
 def clear_device_log_request(domain, xform):
