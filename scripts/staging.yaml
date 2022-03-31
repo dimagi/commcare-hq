@@ -73,5 +73,6 @@ branches:
     - dm/upgrade-architect
     - dm/django3-tests
     - gh/smsforms/app-version # Graham March 31
+    - ce/fix-rate-limits
 
 submodules: { }
