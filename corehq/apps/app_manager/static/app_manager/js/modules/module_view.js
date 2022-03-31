@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
-        $('.multiselect-caselist').select2();
+        $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
         });

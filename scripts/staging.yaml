@@ -62,23 +62,18 @@ branches:
     - es/mobile-auth # Simon Nov 23
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - gh/mrm/base # Graham Feb 8
     - gh/form-version-bug # Graham Feb 15
     - ml/check-for-historical-xss # Minha Mar 3
-    - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
     - jm/elastic-client-adapter  # Joel Mar 1
-    - ml/sumologic-on-staging-check # Minha Mar 10
-    - ml/case-sharing-feature-discoverability # Minha March 17
     - ap/sql-case-repeater # Amit March 23
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - bmb/upgrade-minimist  # Biyeun March 23
     - nh/loadtest_users_postmigration  # Norman March 24
-    - gh/erm/consolidate-enterprise-roles # Graham March 24
-    - gh/erm/add-release-management-to-enterprise-plans # Graham March 24
-    - gh/erm/migration-for-feature-flag # Graham March 24
-    - gh/revert-remove-report-pickling # Graham March 27
-    - ap/ucr-custom-text # Amit March 28
-    - jls/case-claim-http-codes # Jenny March 28
     - ad/user-history-excel-export # Addison March 28
+    - ml/fix-feature-discoverability-bug # Minha March 30
+    - gh/erm/support-non-enterprise-users # Graham March 30
+    - dm/upgrade-architect
+    - dm/django3-tests
+
 submodules: { }

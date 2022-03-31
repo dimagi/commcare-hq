@@ -635,7 +635,7 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
-    'Allow external android callouts to search the caselist',
+    'Allow external android callouts to search the case list',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
@@ -730,6 +730,17 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
+)
+
+UCR_UPDATED_NAMING = StaticToggle(
+    'ucr_updated_naming',
+    'Show updated naming of UCRS',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Displays updated UCR naming if the feature flag is enabled."
+        "This is a temporary flag which would be removed when the updated naming is agreed upon by all divisons."
+    )
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -1565,11 +1576,11 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking project spaces (successor to linked apps)',
-    TAG_SAAS_CONDITIONAL,
+    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+        "Replaced by Enterprise Release Management (release_management privilege)."
     ),
     help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
 )
@@ -1909,15 +1920,6 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
-    'data_registry_case_update_repeater',
-    'USH: Allow data registry repeater to be setup to update cases in other domains',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
-)
-
-
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'USH: Enable usage of AWS Connect Dialer',
@@ -2143,7 +2145,23 @@ DATA_REGISTRY = StaticToggle(
     'USH: Enable Data Registries for sharing data between project spaces',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
+)
+
+DATA_REGISTRY_UCR = StaticToggle(
+    'data_registry_ucr',
+    'USH: Enable the creation of Custom Web Reports backed by Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+)
+
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(

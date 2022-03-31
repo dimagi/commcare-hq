@@ -79,7 +79,7 @@ ALL_WORKFLOWS = [
 # allow all options as fallback except the one for form linking
 WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
-WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
+WORKFLOW_CASE_LIST = 'case_list'  # Return back to the case list after registering a case
 REGISTRATION_FORM_WORFLOWS = [
     WORKFLOW_DEFAULT,
     WORKFLOW_CASE_LIST,

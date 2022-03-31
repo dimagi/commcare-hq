@@ -9,8 +9,10 @@ from django.utils.translation import gettext as _
 
 import jsonobject
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.privileges import RELEASE_MANAGEMENT
 
 
 class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
@@ -65,6 +67,11 @@ class DomainLink(models.Model):
     @property
     def is_remote(self):
         return bool(self.remote_base_url) or 'http' in self.linked_domain
+
+    def has_full_access(self):
+        return (domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT)
+                and domain_has_privilege(self.linked_domain, RELEASE_MANAGEMENT))
+
 
     @atomic
     def update_last_pull(self, model, user_id, date=None, model_detail=None):

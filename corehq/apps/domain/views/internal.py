@@ -306,9 +306,10 @@ def get_project_limits_context(name_limiter_tuple_list, scope=None):
 
 def _get_rate_limits(scope, rate_limiter):
     return [
-        {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+        {'key': ','.join(scope) + ' ' + key, 'current_usage': int(current_usage), 'limit': int(limit),
          'percent_usage': round(100 * current_usage / limit, 1)}
-        for key, current_usage, limit in rate_limiter.iter_rates(scope)
+        for scope, limits in rate_limiter.iter_rates(scope)
+        for key, current_usage, limit in limits
     ]
 
 

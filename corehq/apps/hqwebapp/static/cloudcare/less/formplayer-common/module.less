@@ -88,7 +88,7 @@
   }
 }
 
-.module-table .module-caselist-header {
+.module-table .module-case-list-header {
   background-color: @cc-brand-low;
   color: white;
   padding: 20px 10px;
@@ -99,7 +99,7 @@
   border: none;
 }
 
-.module-table .module-caselist-column {
+.module-table .module-case-list-column {
   padding: 20px 10px;
   font-size: 14px;
   border: 0;
@@ -110,19 +110,19 @@
   cursor: default;
 }
 
-.module-table-caselist tbody tr td {
+.module-table-case-list tbody tr td {
   transition: background .6s;
 }
 
-.module-table-caselist tbody tr:nth-child(even) td {
+.module-table-case-list tbody tr:nth-child(even) td {
   background-color: @cc-bg;
 }
 
-.module-table-caselist tbody tr:hover td {
+.module-table-case-list tbody tr:hover td {
   background-color: darken(@cc-bg, 5);;
 }
 
-.module-search-container, .caselist-actions {
+.module-search-container, .case-list-actions {
   padding: 10px;
 }
 
@@ -136,20 +136,20 @@
   margin: 17px;
 }
 
-.module-table-caselist tbody tr:hover .module-caselist-column-empty {
+.module-table-case-list tbody tr:hover .module-case-list-column-empty {
   background-color: white;
   cursor: default;
 }
 
-.module-caselist-column-empty .alert {
+.module-case-list-column-empty .alert {
   margin-bottom: 0;
 }
 
-.module-table-casedetail {
+.module-table-case-detail {
   margin-top: 10px;
 }
 
-.module-table-casedetail tbody tr {
+.module-table-case-detail tbody tr {
   &:hover {
     cursor: default;
   }
@@ -178,13 +178,13 @@
   font-size: 14px;
 }
 
-.module-table-casedetail tbody tr:nth-child(odd) {
+.module-table-case-detail tbody tr:nth-child(odd) {
   th, td {
     background-color: darken(@cc-brand-hi, 3);
   }
 }
 
-.module-casedetail-tabs .nav-tabs li a {
+.module-case-detail-tabs .nav-tabs li a {
   text-transform: uppercase;
   font-weight: bold;
   .transition(1s all);
@@ -196,17 +196,17 @@
   }
 }
 
-.module-casedetail-continue {
+.module-case-detail-continue {
   width: 100%;
   .transition(.5s all);
 }
 
-.module-casedetail-btn {
+.module-case-detail-btn {
   width: 48%;
   display: inline;
 }
 
-.module-casedetail-modal, .module-modal {
+.module-case-detail-modal, .module-modal {
   .modal-header {
     border-bottom: none;
   }
@@ -274,7 +274,7 @@
 }
 
 @media(max-width: @screen-sm-max) {
-  .module-caselist-table-container {
+  .module-case-list-table-container {
     width: 100%;
     overflow-x: scroll;
   }
