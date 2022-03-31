@@ -126,6 +126,7 @@ if [ -n "$COMPOSE_OS_FILE" ]; then
 else
     # This exists because of M1 Macs
     os_info=$(uname -s)-$(uname -m)-$(uname -r | cut -d. -f1)
+    os_suffix='default'
     case "$os_info" in
         Darwin-arm64-20)
             os_suffix='macos-m1-11'
