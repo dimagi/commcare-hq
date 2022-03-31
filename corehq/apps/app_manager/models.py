@@ -2170,12 +2170,6 @@ class Itemset(DocumentSchema):
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)
 
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
-        (data, dirty) = wrap_itemset(data)
-        return super().wrap(data)
-
 
 class CaseSearchProperty(DocumentSchema):
     """
