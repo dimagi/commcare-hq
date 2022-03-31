@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-30 20:12+0000\n"
+"POT-Creation-Date: 2022-03-31 00:37+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
@@ -17047,10 +17047,8 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py:510 corehq/apps/enterprise/forms.py:291
 #: corehq/apps/enterprise/views.py:452
-#, fuzzy
-#| msgid "Mobile Workers"
 msgid "Manage Mobile Workers"
-msgstr "Trabalhadores Móveis"
+msgstr ""
 
 #: corehq/apps/domain/views/sms.py:22 corehq/apps/domain/views/sms.py:45
 msgid "SMS Rate Calculator"
@@ -17359,10 +17357,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py:242
-#, fuzzy
-#| msgid "Statement Period"
 msgid "Inactivity Period"
-msgstr "Período"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:246
 msgid "30 days"
@@ -33556,10 +33552,8 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:9
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:26
 #: corehq/apps/userreports/views.py:236 corehq/tabs/tabclasses.py:184
-#, fuzzy
-#| msgid "Create Report"
 msgid "Custom Web Reports"
-msgstr "Criar Relatório"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:12
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:32
@@ -34617,10 +34611,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py:417 corehq/apps/users/forms.py:673
-#, fuzzy
-#| msgid "Deactivate"
 msgid "Deactivate After"
-msgstr "Desativar"
+msgstr ""
 
 #: corehq/apps/users/forms.py:420 corehq/apps/users/forms.py:676
 msgid ""
@@ -34700,10 +34692,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py:850
-#, fuzzy
-#| msgid "Update Location Settings"
 msgid "Auto-Deactivation Settings"
-msgstr "Atualizar Definições de Localização"
+msgstr ""
 
 #: corehq/apps/users/forms.py:896 corehq/apps/users/forms.py:964
 msgid "Edit Group Membership"
@@ -40205,10 +40195,8 @@ msgid "Multi-Environment Release Management"
 msgstr ""
 
 #: corehq/privileges.py:195
-#, fuzzy
-#| msgid "Project Users"
 msgid "Loadtest Users"
-msgstr "Usuários do Projeto"
+msgstr ""
 
 #: corehq/reports.py:260
 msgid "Report Builder Reports"

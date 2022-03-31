@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-30 20:12+0000\n"
+"POT-Creation-Date: 2022-03-31 00:37+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Sravan Reddy <sreddy@dimagi.com>, 2017\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -17794,10 +17794,8 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py:510 corehq/apps/enterprise/forms.py:291
 #: corehq/apps/enterprise/views.py:452
-#, fuzzy
-#| msgid "New Mobile Workers"
 msgid "Manage Mobile Workers"
-msgstr "Nuevos Usuarios Móviles"
+msgstr ""
 
 #: corehq/apps/domain/views/sms.py:22 corehq/apps/domain/views/sms.py:45
 msgid "SMS Rate Calculator"
@@ -18114,46 +18112,32 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py:242
-#, fuzzy
-#| msgid "Inactive"
 msgid "Inactivity Period"
-msgstr "Inactivo"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:246
-#, fuzzy
-#| msgid "Last 30 days"
 msgid "30 days"
-msgstr "Últimos 30 días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:247
-#, fuzzy
-#| msgid "days"
 msgid "60 days"
-msgstr "días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:248
-#, fuzzy
-#| msgid "days"
 msgid "90 days"
-msgstr "días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:249
-#, fuzzy
-#| msgid "days"
 msgid "120 days"
-msgstr "días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:250
-#, fuzzy
-#| msgid "days"
 msgid "150 days"
-msgstr "días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:251
-#, fuzzy
-#| msgid "days"
 msgid "180 days"
-msgstr "días"
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py:254
 msgid ""
@@ -18228,10 +18212,8 @@ msgid "Is Valid?"
 msgstr ""
 
 #: corehq/apps/enterprise/mixins.py:52
-#, fuzzy
-#| msgid "Settings updated!"
 msgid "Settings have been updated!"
-msgstr "¡Configuraciones actualizadas!"
+msgstr ""
 
 #: corehq/apps/enterprise/mixins.py:56
 #: corehq/apps/sso/views/enterprise_admin.py:114
@@ -34781,31 +34763,23 @@ msgstr "Suscribirse a Desarrollador de Reporte"
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:9
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:26
 #: corehq/apps/userreports/views.py:236 corehq/tabs/tabclasses.py:184
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "Custom Web Reports"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:12
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:32
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "Add Custom Web Report"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:16
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:38
-#, fuzzy
-#| msgid "Import Report"
 msgid "Import Custom Web Report"
-msgstr "Importar Reporte"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:20
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:44
-#, fuzzy
-#| msgid "Add custom export property"
 msgid "Add Custom Web Report Source"
-msgstr "Agregar propiedad de exportación personalizada"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:23
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:69
@@ -34826,20 +34800,16 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/data_source_debugger.html:11
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:62
 #: corehq/apps/userreports/views.py:944
-#, fuzzy
-#| msgid "UCR Data Source Debugger"
 msgid "Custom Web Report Source Debugger"
-msgstr "Debugger de la Fuente de los Datos UCR"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/data_source_debugger.html:13
 msgid "UCR Data Source Debugger"
 msgstr "Debugger de la Fuente de los Datos UCR"
 
 #: corehq/apps/userreports/templates/userreports/data_source_debugger.html:20
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "Custom Web Report Source"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/data_source_debugger.html:34
 msgid "Document IDs"
@@ -34862,16 +34832,12 @@ msgid "Rows from the database"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:11
-#, fuzzy
-#| msgid "Preview Report"
 msgid "Preview Custom Web Report Data"
-msgstr "Vista Previa del Reporte"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:12
-#, fuzzy
-#| msgid "paste report source here"
 msgid "Custom Web Report Source Summary"
-msgstr "pegar fuente de reporte aquí"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:14
 msgid "Preview Data"
@@ -34883,20 +34849,16 @@ msgid "Data Source Summary"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:31
-#, fuzzy
-#| msgid "Rebuild Data Source"
 msgid "Rebuild Custom Web Report Source"
-msgstr "Desarrollar de Nuevo la Fuente de Datos"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:42
 msgid "Rebuild Data Source"
 msgstr "Desarrollar de Nuevo la Fuente de Datos"
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:74
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "Custom Web Report Source JSON"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:76
 msgid "Data Source JSON"
@@ -34912,10 +34874,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:114
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:122
-#, fuzzy
-#| msgid "Delete Data Source"
 msgid "Delete Custom Web Report Source"
-msgstr "Eliminar Fuente de Datos"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:116
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:124
@@ -34947,30 +34907,24 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:15
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "View Custom Web Report"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:17
 msgid "View Report"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:24
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "View Custom Web Report Source"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:26
 msgid "View Data Source"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:37
-#, fuzzy
-#| msgid "Custom Reports"
 msgid "Custom Web Report JSON"
-msgstr "Reportes Personalizados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_report_config.html:39
 msgid "Report Source"
@@ -35012,10 +34966,8 @@ msgid "Already Linked"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html:16
-#, fuzzy
-#| msgid "UCR Expression Debugger"
 msgid "Custom Web Report Expression Debugger"
-msgstr "Depurador de Expresión UCR"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html:18
 msgid "UCR Expression Debugger"
@@ -35092,10 +35044,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:10
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:25
-#, fuzzy
-#| msgid "Delete Report"
 msgid "Delete Custom Web Report"
-msgstr "Eliminar Reporte"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:12
 #: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html:19
@@ -35408,10 +35358,8 @@ msgid "Tools"
 msgstr "Herramientas"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:50
-#, fuzzy
-#| msgid "Create Data Source from Application"
 msgid "Custom Web Report Source from Application"
-msgstr "Crear Fuente de Datos desde Aplicación"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:56
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:99
@@ -35445,10 +35393,8 @@ msgid "Edit Reports"
 msgstr "Editar Reportes"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:129
-#, fuzzy
-#| msgid "Edit Data Sources"
 msgid "Edit Custom Data Sources"
-msgstr "Editar Fuentes de Datos"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:131
 msgid "Edit Data Sources"
@@ -35879,10 +35825,8 @@ msgid "This Mobile Worker already exists."
 msgstr "Este Usuario Móvil ya existe."
 
 #: corehq/apps/users/forms.py:108
-#, fuzzy
-#| msgid "Invalid time format: expected HHMM (24-hour)."
 msgid "Invalid Deactivation Date format (expects MM-YYYY)."
-msgstr "Formato de hora inválido: esperado HHMM (24-horas)."
+msgstr ""
 
 #: corehq/apps/users/forms.py:145
 msgid "Please enter a valid two or three digit language code."
@@ -35939,10 +35883,8 @@ msgstr ""
 "prueba de carga en teléfonos. Déjelo en blanco para usuarios normales. "
 
 #: corehq/apps/users/forms.py:417 corehq/apps/users/forms.py:673
-#, fuzzy
-#| msgid "Deactivate"
 msgid "Deactivate After"
-msgstr "Desactivar"
+msgstr ""
 
 #: corehq/apps/users/forms.py:420 corehq/apps/users/forms.py:676
 msgid ""
@@ -36024,10 +35966,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py:850
-#, fuzzy
-#| msgid "Location Settings"
 msgid "Auto-Deactivation Settings"
-msgstr "Configuración de Ubicación"
+msgstr ""
 
 #: corehq/apps/users/forms.py:896 corehq/apps/users/forms.py:964
 msgid "Edit Group Membership"
@@ -41610,10 +41550,8 @@ msgid "Multi-Environment Release Management"
 msgstr ""
 
 #: corehq/privileges.py:195
-#, fuzzy
-#| msgid "Loading Users..."
 msgid "Loadtest Users"
-msgstr "Cargar Usuarios..."
+msgstr ""
 
 #: corehq/reports.py:260
 msgid "Report Builder Reports"
@@ -43106,6 +43044,3 @@ msgstr ""
 #: manage.py:151
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Don't claim cases already owned by the user"
-#~ msgstr "No solicitar casos que ya son propiedad del usuario"

@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-30 20:12+0000\n"
+"POT-Creation-Date: 2022-03-31 00:37+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: esoergel, 2015\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -16960,10 +16960,8 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py:510 corehq/apps/enterprise/forms.py:291
 #: corehq/apps/enterprise/views.py:452
-#, fuzzy
-#| msgid "Monitor Workers"
 msgid "Manage Mobile Workers"
-msgstr "Change this translation manually"
+msgstr ""
 
 #: corehq/apps/domain/views/sms.py:22 corehq/apps/domain/views/sms.py:45
 msgid "SMS Rate Calculator"
