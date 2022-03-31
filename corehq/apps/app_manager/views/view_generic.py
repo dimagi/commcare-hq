@@ -271,11 +271,9 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 and get_upstream_domain_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
+    linkable_domains = []
     if can_domain_access_release_management(request.domain):
         linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
-    else:
-        # keep behavior the same as before for LINKED_DOMAINS toggle
-        linkable_domains = domain_names
     context.update({
         'domain_names': sorted(domain_names),
         'linkable_domains': sorted(linkable_domains),
