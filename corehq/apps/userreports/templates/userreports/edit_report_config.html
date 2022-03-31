@@ -10,17 +10,35 @@
     <div class="btn-toolbar">
       {% if report.get_id %}
         <div class="btn-group">
-          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
+          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">
+            {% if use_updated_ucr_naming %}
+              {% trans "View Custom Web Report" %}
+            {% else %}
+              {% trans 'View Report' %}
+            {% endif %}
+          </a>
         </div>
         <div class="btn-group">
-          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">{% trans 'View Data Source' %}</a>
+          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">
+            {% if use_updated_ucr_naming %}
+                {% trans 'View Custom Web Report Source' %}
+            {% else %}
+              {% trans 'View Data Source' %}
+            {% endif %}
+          </a>
         </div>
         <div class="btn-group">
           <a href="{% url 'configurable_report_json' domain report.get_id %}"
              class="btn btn-default track-usage-link"
              data-category="UCR"
              data-action="View Source"
-             data-label="Report Config">{% trans 'Report Source' %}</a>
+             data-label="Report Config">
+              {% if use_updated_ucr_naming %}
+                {% trans 'Custom Web Report JSON' %}
+              {% else %}
+                {% trans 'Report Source' %}
+              {% endif %}
+          </a>
         </div>
         {% if not report.is_static%}
           {% include 'userreports/partials/delete_report_button.html' with report_id=report.get_id %}

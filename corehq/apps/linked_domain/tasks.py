@@ -12,7 +12,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
@@ -41,12 +40,12 @@ from corehq.apps.linked_domain.ucr import (
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app_and_notify,
+    can_domain_access_release_management,
 )
 from corehq.apps.reminders.views import KeywordsListView
 from corehq.apps.sms.models import Keyword
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
-from corehq.privileges import RELEASE_MANAGEMENT
 
 
 @task(queue='linked_domain_queue')
@@ -168,7 +167,7 @@ The following linked project spaces received content:
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
 
         if not linked_report:
-            if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
+            if can_domain_access_release_management(self.upstream_domain):
                 try:
                     linked_report_info = create_linked_ucr(domain_link, report_id)
                     linked_report = linked_report_info.report
@@ -207,7 +206,7 @@ The following linked project spaces received content:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
                                  .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
-            if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
+            if can_domain_access_release_management(self.upstream_domain):
                 linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
             else:
                 return self._error_tuple(

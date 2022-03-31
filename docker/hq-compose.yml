@@ -126,7 +126,7 @@ services:
           KAFKA_ADVERTISED_PORT: 9092
           CUSTOM_INIT_SCRIPT: |
             URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
-            if curl --max-time 10 $URL > wait.sh ; then
+            if curl --max-time 10 $$URL > wait.sh ; then
               chmod +x ./wait.sh
               ./wait.sh -t 30 zookeeper:2181 || exit 1
             else

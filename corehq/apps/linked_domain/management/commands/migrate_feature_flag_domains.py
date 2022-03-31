@@ -53,7 +53,7 @@ class Command(BaseCommand):
         )
         _update_roles_in_place(roles_to_update, privilege_role_slug, dry_run=dry_run)
         _update_versions_in_place(versions_to_update, privilege_role_slug, dry_run=dry_run)
-        _create_new_software_plans(plans_to_create, privilege_role_slug, dry_run=dry_run)
+        _update_subscriptions_to_new_plans(plans_to_create, privilege_role_slug, dry_run=dry_run)
 
 
 def _get_migration_info(roles, toggle_slug, privilege_slug):
@@ -81,15 +81,21 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
 
         if not _contain_public_versions(versions) and _all_domains_have_toggle_enabled(domains, toggle_slug):
             roles_to_update.append(role.slug)
+            formatted_domains = '\n'.join(domains)
+            logger.info(f'[ERM Migration]Will update role {role.slug} for domains:\n{formatted_domains}')
             continue
 
         for version in versions:
             domains_for_version = _get_domains_for_version(version)
             if _all_domains_have_toggle_enabled(domains_for_version, toggle_slug):
                 plan_versions_to_update.append(version.id)
+                formatted_domains = '\n'.join(domains_for_version)
+                logger.info(f'[ERM Migration]Will update plan version {version.id} for domains:\n{formatted_domains}')
             else:
                 domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
                 if domains_with_toggle_enabled:
+                    formatted_domains = '\n'.join(domains_with_toggle_enabled)
+                    logger.info(f'[ERM Migration]Will update plan for version {version.id} for domains:\n{formatted_domains}')
                     plans_to_create[version.id] = domains_with_toggle_enabled
 
     return roles_to_update, plan_versions_to_update, plans_to_create
@@ -165,19 +171,21 @@ def _update_versions_in_place(version_ids, privilege_slug, dry_run=False):
                 logger.info(f'Modified role from {version.role.slug} to {new_role.slug} for version {version_id}.')
 
 
-def _create_new_software_plans(domains_by_plan_version, privilege_slug, dry_run=False):
+def _update_subscriptions_to_new_plans(domains_by_plan_version, privilege_slug, dry_run=False):
     """
     :param domains_by_plan_version: {'<plan_version_id>': [domains_for_version]}
     :param privilege_slug: slug for Role obj representing privilege to add
     """
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
-    for version_id, domains in domains_by_plan_version:
+    for version_id, domains in domains_by_plan_version.items():
         current_version = SoftwarePlanVersion.objects.get(id=version_id)
         current_plan = current_version.plan
 
         new_role = _get_or_create_role_with_privilege(current_version.role.slug, privilege_slug, dry_run=dry_run)
-        new_plan = _create_new_software_plan(current_plan, dry_run=dry_run)
-        new_version = _create_new_software_plan_version(new_plan, current_version, new_role, dry_run=dry_run)
+        new_plan = _get_or_create_new_software_plan(current_plan, dry_run=dry_run)
+        new_version = _get_or_create_new_software_plan_version(
+            new_plan, current_version, new_role, dry_run=dry_run
+        )
 
         if new_role and new_plan and new_version:
             for domain in domains:
@@ -188,7 +196,7 @@ def _create_new_software_plans(domains_by_plan_version, privilege_slug, dry_run=
                 logger.info(f'{dry_run_tag}Updated subscription\'s software plan to {new_plan.name} for {domain}.')
 
 
-def _create_new_software_plan(from_plan, dry_run=False):
+def _get_or_create_new_software_plan(from_plan, dry_run=False):
     """
     :param from_plan: plan to copy attributes from
     :param dry_run: if True, will not make changes to the db
@@ -196,39 +204,51 @@ def _create_new_software_plan(from_plan, dry_run=False):
     """
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
     new_name = from_plan.name + NEW_NAME_SUFFIX
-    new_plan = SoftwarePlan(
-        name=new_name,
-        description=from_plan.description,
-        edition=from_plan.edition,
-        visibility=from_plan.visibility,
-        is_customer_software_plan=from_plan.is_customer_software_plan,
-        max_domains=from_plan.max_domains,
-        is_annual_plan=from_plan.is_annual_plan,
-    )
+    try:
+        plan = SoftwarePlan.objects.get(name=new_name)
+    except SoftwarePlan.DoesNotExist:
+        plan = SoftwarePlan(
+            name=new_name,
+            description=from_plan.description,
+            edition=from_plan.edition,
+            visibility=from_plan.visibility,
+            is_customer_software_plan=from_plan.is_customer_software_plan,
+            max_domains=from_plan.max_domains,
+            is_annual_plan=from_plan.is_annual_plan,
+        )
+        logger.info(f"{dry_run_tag}Created new software plan {plan.name} from existing plan {from_plan.name}.")
+    else:
+        logger.info(f"{dry_run_tag}Found existing software plan {plan.name}.")
+
     if not dry_run:
-        new_plan.save()
-    logger.info(f"{dry_run_tag}Created new software plan {new_plan.name} from existing plan {from_plan.name}.")
-    return new_plan
+        plan.save()
+
+    return plan
 
 
-def _create_new_software_plan_version(new_plan, from_version, privilege_role, dry_run=False):
+def _get_or_create_new_software_plan_version(plan, from_version, new_role, dry_run=False):
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
-    new_version = SoftwarePlanVersion(
-        plan=new_plan,
-        product_rate=from_version.product_rate,
-        role=privilege_role,
-    )
-    if not dry_run:
-        new_version.save()
-        new_version.feature_rates.set(list(from_version.feature_rates.all()))
-        new_version.save()
+    version = plan.get_version()
+    if version and version.role.slug == new_role.slug:
+        logger.info(
+            f'{dry_run_tag}Found software plan version for plan {plan.name} with role {new_role.slug}.'
+        )
+        return version
+    else:
+        new_version = SoftwarePlanVersion(
+            plan=plan,
+            product_rate=from_version.product_rate,
+            role=new_role,
+        )
+        if not dry_run:
+            new_version.save()
+            new_version.feature_rates.set(list(from_version.feature_rates.all()))
+            new_version.save()
+
+        logger.info(
+            f'{dry_run_tag}Created new software plan version for plan {plan.name} with role {new_role.slug}.'
+        )
         return new_version
-
-    logger.info(
-        f'{dry_run_tag}Created new software plan version for plan {new_plan.name} with role {privilege_role.slug}.'
-    )
-
-    return None
 
 
 def _get_or_create_role_with_privilege(existing_role_slug, privilege_slug, dry_run=False):

@@ -325,19 +325,20 @@ def process_reporting_metadata_staging():
     try:
         start = datetime.utcnow()
 
-        with transaction.atomic():
-            records = (
-                UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-            )[:100]
-            for record in records:
-                user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                try:
-                    record.process_record(user)
-                except ResourceConflict:
-                    # https://sentry.io/organizations/dimagi/issues/1479516073/
+        for i in range(20):
+            with transaction.atomic():
+                records = (
+                    UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+                )[:5]
+                for record in records:
                     user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                    record.process_record(user)
-                record.delete()
+                    try:
+                        record.process_record(user)
+                    except ResourceConflict:
+                        # https://sentry.io/organizations/dimagi/issues/1479516073/
+                        user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                        record.process_record(user)
+                    record.delete()
     finally:
         process_reporting_metadata_lock.release()
 

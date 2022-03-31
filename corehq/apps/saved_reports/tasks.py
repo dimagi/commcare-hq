@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
-from django.http.request import QueryDict
 from django.utils.translation import gettext as _
 
 import six
@@ -11,8 +10,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
-from dimagi.utils.web import json_request
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
@@ -25,7 +24,6 @@ from corehq.apps.saved_reports.scheduled import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
@@ -56,7 +54,7 @@ def send_delayed_report(report_id):
         send_report.delay(report_id)
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
 
@@ -70,7 +68,7 @@ def send_report(notification_id):
         pass
 
 
-@task(queue='send_report_throttled', ignore_result=True)
+@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
 def send_report_throttled(notification_id):
     send_report(notification_id)
 
@@ -103,13 +101,28 @@ def queue_scheduled_reports():
             pass
 
 
-@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_list, domain, report_slug, report_type,
-                      request_data, is_once_off, cleaned_data):
+@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def send_email_report(self, recipient_emails, domain, report_slug, report_type,
+                      request_data, once, cleaned_data):
     """
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
+    :Parameter recipient_list:
+            list of recipient to whom email is to be sent
+    :Parameter domain:
+            domain name
+    :Parameter report_slug:
+            report slug
+    :Parameter report_type:
+            type of the report
+    :Parameter request_data:
+            Dict containing request data
+    :Parameter once
+            boolean argument specifying whether the report is once off report
+            or scheduled report
+    :Parameter cleaned_data:
+            Dict containing cleaned data from the submitted form
     """
     from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
 
@@ -117,11 +130,8 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
     couch_user = CouchUser.get_by_user_id(user_id)
     mock_request = HttpRequest()
 
-    GET_data = QueryDict('', mutable=True)
-    GET_data.update(request_data['GET'])
-
     mock_request.method = 'GET'
-    mock_request.GET = GET_data
+    mock_request.GET = request_data['GET']
 
     config = ReportConfig()
 
@@ -133,18 +143,13 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
     config.owner_id = user_id
     config.domain = domain
 
-    request_GET = request_data['GET']
-    if 'startdate' in request_GET:
-        config.start_date = iso_string_to_datetime(request_GET['startdate']).date()
-    else:
-        config.start_date = iso_string_to_datetime(request_data['startdate']).date()
-    if 'enddate' in request_GET:
+    config.start_date = request_data['datespan'].startdate.date()
+    if request_data['datespan'].enddate:
         config.date_range = 'range'
-        config.end_date = iso_string_to_datetime(request_GET['enddate']).date()
+        config.end_date = request_data['datespan'].enddate.date()
     else:
         config.date_range = 'since'
 
-    request_data['GET'] = GET_data
     GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
@@ -159,11 +164,11 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
     try:
         report_text = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-            notes=cleaned_data['notes'], is_once_off=is_once_off
+            notes=cleaned_data['notes'], once=once
         )[0]
         body = render_full_report_notification(None, report_text).content
 
-        for recipient in recipient_list:
+        for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
@@ -174,22 +179,19 @@ def send_email_report(self, recipient_list, domain, report_slug, report_type,
             message="Encountered error while generating report or sending email",
             details={
                 'subject': subject,
-                'recipients': str(recipient_list),
+                'recipients': str(recipient_emails),
                 'error': er,
             }
         )
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
-            request_params = json_request(request_data['GET'])
-            request_params['startdate'] = request_data['startdate']
-            request_params['enddate'] = request_data['enddate']
             report_state = {
                 'request': request_data,
+                'request_params': json_request(request_data['GET']),
                 'domain': domain,
                 'context': {},
-                'request_params': request_params
             }
-            export_all_rows_task(config.report.slug, report_state, recipient_list=recipient_list)
+            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)
