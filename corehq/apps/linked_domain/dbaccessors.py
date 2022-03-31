@@ -8,8 +8,9 @@ from corehq.apps.linked_domain.util import (
     is_available_upstream_domain,
     is_domain_available_to_link,
     user_has_admin_access_in_all_domains,
+    can_domain_access_release_management,
 )
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.quickcache import quickcache
 
 
@@ -60,7 +61,8 @@ def get_available_domains_to_link(upstream_domain, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT):
+    if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(upstream_domain, LITE_RELEASE_MANAGEMENT):
         return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=True)
 
     # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
@@ -85,7 +87,8 @@ def get_available_upstream_domains(downstream_domain, user):
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
+    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
         return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
 
     # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
@@ -108,7 +111,7 @@ def get_accessible_downstream_domains(upstream_domain_name, user):
     NOTE: if the RELEASE_MANAGEMENT privilege is enabled, ensure user has admin access
     """
     downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
-    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+    if can_domain_access_release_management(upstream_domain_name):
         return [domain for domain in downstream_domains
                 if user_has_admin_access_in_all_domains(user, [upstream_domain_name, domain])]
     return downstream_domains
