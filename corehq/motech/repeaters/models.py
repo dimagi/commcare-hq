@@ -309,6 +309,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
+    @classmethod
+    def by_domain(cls, domain):
+        return list(SQLRepeater.objects.filter(domain=domain))
+
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
