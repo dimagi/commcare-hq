@@ -58,7 +58,7 @@ services:
 
   postgres:
     extends:
-      file: "${COMPOSE_ARCH}"
+      file: "${COMPOSE_OS_FILE}"
       service: postgres
     environment:
       POSTGRES_USER: commcarehq
