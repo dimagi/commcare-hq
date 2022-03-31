@@ -1,7 +1,9 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
-from unittest.mock import MagicMock, patch
+
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -27,8 +29,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
 )
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
 @es_test
@@ -117,6 +118,36 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
+    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    def test_geopoint_property(self):
+        CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        domains_needing_search_index.clear()
+        c1 = self._make_case(case_properties={'coords': '-33.8561 151.2152 0 0'})
+        c2 = self._make_case(case_properties={'coords': '42 Wallaby Way'})
+        CaseSearchReindexerFactory(domain=self.domain).build().reindex()
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+
+        props_by_case_id = {c['_id']: c for c in CaseSearchES().run().hits}
+        c1_res = props_by_case_id[c1.case_id]
+        self.assertEqual(
+            self._get_prop(c1_res['case_properties'], 'coords'),
+            {
+                'key': 'coords',
+                'value': '-33.8561 151.2152 0 0',
+                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+            },
+        )
+        c2_res = props_by_case_id[c2.case_id]
+        self.assertEqual(
+            self._get_prop(c2_res['case_properties'], 'coords'),
+            # The value here isn't a geopoint, so it doesn't get indexed as such
+            {'key': 'coords', 'value': '42 Wallaby Way', 'geopoint_value': None},
+        )
+
+    @staticmethod
+    def _get_prop(case_properties, key):
+        return [prop for prop in case_properties if prop['key'] == key][0]
+
     def _make_case(self, domain=None, case_properties=None):
         # make a case
         case_id = uuid.uuid4().hex
@@ -127,7 +158,7 @@ class CaseSearchPillowTest(TestCase):
         return case
 
     def _assert_case_in_es(self, domain, case):
-        # confirm change made it to elasticserach
+        # confirm change made it to elasticsearch
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
         results = CaseSearchES().run()
         self.assertEqual(1, results.total)

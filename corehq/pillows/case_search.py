@@ -29,15 +29,18 @@ from corehq.pillows.mappings.case_search_mapping import (
 from corehq.toggles import (
     CASE_API_V0_6,
     CASE_LIST_EXPLORER,
-    EXPLORE_CASE_DATA,
+    CASE_SEARCH_SMART_TYPES,
     ECD_MIGRATED_DOMAINS,
+    EXPLORE_CASE_DATA,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.parsing import json_format_datetime
+from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
@@ -100,11 +103,28 @@ def _get_case_properties(doc_dict):
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
         for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
-    dynamic_case_properties = dict(doc_dict['case_json'])
+    dynamic_properties = [_format_property(key, value, case_id)
+                          for key, value in doc_dict['case_json'].items()]
 
-    dynamic_mapping = [_format_property(key, value, case_id) for key, value in dynamic_case_properties.items()]
+    if CASE_SEARCH_SMART_TYPES.enabled(domain):
+        _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
-    return base_case_properties + dynamic_mapping
+    return base_case_properties + dynamic_properties
+
+
+def _add_smart_types(dynamic_properties, domain, case_type):
+    smart_types = _smart_types_by_prop(domain, case_type)
+    for prop in dynamic_properties:
+        prop_type = smart_types.get(prop['key'])
+        if prop_type == 'gps':
+            try:
+                prop['geopoint_value'] = GeoPointProperty().wrap(prop['value']).lat_lon
+            except BadValueError:
+                prop['geopoint_value'] = None
+
+
+def _smart_types_by_prop(domain, case_type):
+    return {'coords': 'gps'}
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
