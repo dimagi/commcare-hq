@@ -58,7 +58,7 @@ data_dictionary_rebuild_rate_limiter = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
+    ).get_rate_limits(scope),
     scope_length=1,
 )
 
