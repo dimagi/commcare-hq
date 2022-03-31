@@ -195,7 +195,7 @@ two_factor_rate_limiter_per_ip = RateLimiter(
             per_minute=700,
             per_second=60,
         )
-    ).get_rate_limits(),
+    ).get_rate_limits(scope),
     scope_length=1,
 )
 
@@ -210,7 +210,7 @@ two_factor_rate_limiter_per_user = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
+    ).get_rate_limits(scope),
     scope_length=1,
 )
 
@@ -225,7 +225,7 @@ two_factor_rate_limiter_per_number = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
+    ).get_rate_limits(scope),
     scope_length=1,
 )
 
