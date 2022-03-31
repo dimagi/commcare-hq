@@ -25,6 +25,7 @@ from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
     RepeatRecord,
+    SQLRepeater,
     are_repeat_records_migrated,
     get_all_repeater_types,
 )
@@ -206,7 +207,7 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            repeater = Repeater.get(repeater_id)
+            repeater = SQLRepeater.get(repeater_id=repeater_id)
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
@@ -223,7 +224,7 @@ class EditRepeaterView(BaseRepeaterView):
         return super(EditRepeaterView, self).dispatch(request, *args, **kwargs)
 
     def initialize_repeater(self):
-        return Repeater.get(self.kwargs['repeater_id'])
+        return SQLRepeater.objects.get(repeater_id=self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
         messages.success(request, _("Repeater Successfully Updated"))
@@ -294,6 +295,7 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
+    # Todo: Think about retiring
     rep = Repeater.get(repeater_id)
     rep.retire()
     messages.success(request, "Forwarding stopped!")
@@ -306,7 +308,7 @@ def drop_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def pause_repeater(request, domain, repeater_id):
-    rep = Repeater.get(repeater_id)
+    rep = SQLRepeater.objects.get(repeater_id=repeater_id)
     rep.pause()
     messages.success(request, "Forwarding paused!")
     return HttpResponseRedirect(

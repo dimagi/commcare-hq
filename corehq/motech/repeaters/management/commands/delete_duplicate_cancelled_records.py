@@ -11,7 +11,7 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, SQLRepeater
 from corehq.util.couch import IterDB
 
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
-        repeater = Repeater.get(repeater_id)
+        repeater = SQLRepeater.objects.get(repeater_id=repeater_id)
         print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
