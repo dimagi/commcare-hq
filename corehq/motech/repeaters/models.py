@@ -313,6 +313,14 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def by_domain(cls, domain):
         return list(SQLRepeater.objects.filter(domain=domain))
 
+    def pause(self):
+        self.paused = True
+        self.save()
+
+    def resume(self):
+        self.paused = False
+        self.save()
+
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
