@@ -313,6 +313,40 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def by_domain(cls, domain):
         return list(SQLRepeater.objects.filter(domain=domain))
 
+    def register(self, payload, fire_synchronously=False):
+        if not self.allowed_to_forward(payload):
+            return
+
+        now = datetime.utcnow()
+        repeat_record = RepeatRecord(
+            repeater_id=self.repeater_id,
+            repeater_type=self.repeater_type,
+            domain=self.domain,
+            registered_on=now,
+            next_check=now,
+            payload_id=payload.get_id
+        )
+        metrics_counter('commcare.repeaters.new_record', tags={
+            'domain': self.domain,
+            'doc_type': self.doc_type,
+            'mode': 'sync' if fire_synchronously else 'async'
+        })
+        repeat_record.save()
+
+        if fire_synchronously:
+            # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
+            # to prevent serializing the repeater in the celery task payload
+            RepeatRecord.repeater.fget.get_cache(repeat_record)[()] = self
+
+        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
+        return repeat_record
+
+    def allowed_to_forward(self, payload):
+        """
+        Return True/False depending on whether the payload meets forawrding criteria or not
+        """
+        return True
+
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
