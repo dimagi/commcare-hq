@@ -5,7 +5,11 @@ from enum import Enum
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
-from django.utils.decorators import classproperty
+try:
+    from django.utils.functional import classproperty
+except ImportError:
+    # Django < 3.1 compatibility
+    from django.utils.decorators import classproperty
 
 from memoized import memoized
 
