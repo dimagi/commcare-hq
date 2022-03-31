@@ -55,7 +55,7 @@ from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplica
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
-from corehq.motech.repeaters.models import CommCareCase, Repeater, get_all_repeater_types
+from corehq.motech.repeaters.models import CommCareCase, Repeater, SQLRepeater, get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
@@ -208,7 +208,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
                                                           pk=obj._id))
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        repeaters = Repeater.by_domain(domain)
+        repeaters = SQLRepeater.by_domain(domain)
         return list(repeaters)
 
     def obj_get(self, bundle, **kwargs):
