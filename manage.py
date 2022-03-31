@@ -153,6 +153,13 @@ def patch_jsonfield():
 
     JSONField.to_python = to_python
 
+    import django
+    if django.VERSION < (3, 1):
+        # TODO remove after upgrading to Django 3.2
+        from django.contrib.postgres.fields.jsonb import JSONField
+        import django.db.models
+        django.db.models.JSONField = JSONField
+
 
 # HACK monkey-patch django setup to prevent second setup by django_nose
 def _setup_once(*args, **kw):
