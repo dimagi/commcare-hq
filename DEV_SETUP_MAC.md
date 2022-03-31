@@ -185,7 +185,7 @@ To refresh specific indices in elasticsearch you can do the following...
 
 First make sure everything is up-to-date
 ```sh
-./manage.py ptop_preindex
+./manage.py ptop_preindex --reset
 ./manage.py ptop_es_manage --flip_all_aliases
 
 ./manage.py preindex_everything
