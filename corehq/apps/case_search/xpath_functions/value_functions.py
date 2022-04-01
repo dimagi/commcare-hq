@@ -24,27 +24,30 @@ def date(domain, node):
 
     arg = unwrap_value(domain, arg)
 
-    if isinstance(arg, int):
-        return (datetime.date(1970, 1, 1) + datetime.timedelta(days=arg)).strftime("%Y-%m-%d")
+    parsed_date = _value_to_date(node, arg)
+    return parsed_date.strftime("%Y-%m-%d")
 
-    if isinstance(arg, str):
+
+def _value_to_date(node, value):
+    if isinstance(value, int):
+        parsed_date = datetime.date(1970, 1, 1) + datetime.timedelta(days=value)
+    elif isinstance(value, str):
         try:
-            parsed_date = parse_date(arg)
+            parsed_date = parse_date(value)
         except ValueError:
-            raise XPathFunctionException(_("{} is not a valid date").format(arg), serialize(node))
+            raise XPathFunctionException(_("{} is not a valid date").format(value), serialize(node))
+    elif isinstance(value, datetime.date):
+        parsed_date = value
+    else:
+        parsed_date = None
 
-        if parsed_date is None:
-            raise XPathFunctionException(
-                _("The \"date\" function only accepts strings of the format \"YYYY-mm-dd\""),
-                serialize(node)
-            )
+    if parsed_date is None:
+        raise XPathFunctionException(
+            _("Invalid date value. Dates must be an integer or a string of the format \"YYYY-mm-dd\""),
+            serialize(node)
+        )
 
-        return arg
-
-    raise XPathFunctionException(
-        "The \"date\" function only accepts integers or strings of the format \"YYYY-mm-dd\"",
-        serialize(node)
-    )
+    return parsed_date
 
 
 def today(domain, node):
