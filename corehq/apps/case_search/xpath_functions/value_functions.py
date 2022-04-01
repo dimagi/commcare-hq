@@ -1,14 +1,16 @@
 import datetime
 
-import pytz
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext as _
 
+import pytz
+from dateutil.relativedelta import relativedelta
 from eulxml.xpath.ast import serialize
+
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.domain.models import Domain
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 def date(domain, node):
@@ -61,3 +63,50 @@ def today(domain, node):
     domain_obj = Domain.get_by_name(domain)
     timezone = domain_obj.get_default_timezone() if domain_obj else pytz.UTC
     return datetime.datetime.now(timezone).strftime(ISO_DATE_FORMAT)
+
+
+def date_add(domain, node):
+    from corehq.apps.case_search.dsl_utils import unwrap_value
+
+    assert node.name == 'date_add'
+    if len(node.args) != 3:
+        raise XPathFunctionException(
+            _("The \"date_add\" function expects three arguments"),
+            serialize(node)
+        )
+
+    date_arg = unwrap_value(domain, node.args[0])
+    date = _value_to_date(node, date_arg)
+
+    interval_type = unwrap_value(domain, node.args[1])
+    interval_types = ("days", "weeks", "months", "years")
+    if interval_type not in interval_types:
+        raise XPathFunctionException(
+            _("The \"date_add\" function expects the interval argument to be one of {types}").format(
+                types=interval_types
+            ),
+            serialize(node)
+        )
+
+    quantity = unwrap_value(domain, node.args[2])
+    if isinstance(quantity, str):
+        try:
+            quantity = float(quantity)
+        except (ValueError, TypeError):
+            raise XPathFunctionException(
+                _("The \"date_add\" function expects the interval quantity to be a numeric value"),
+                serialize(node)
+            )
+
+    if not isinstance(quantity, (int, float)):
+        raise XPathFunctionException(
+            _("The \"date_add\" function expects the interval quantity to be a numeric value"),
+            serialize(node)
+        )
+
+    try:
+        result = date + relativedelta(**{interval_type: quantity})
+    except ValueError as e:
+        raise XPathFunctionException(str(e), serialize(node))
+
+    return result.strftime(ISO_DATE_FORMAT)
