@@ -1425,6 +1425,13 @@ def report_config_id_is_static(config_id):
     )
 
 
+def is_data_registry_report(report_config):
+    return (
+        isinstance(report_config, RegistryReportConfiguration)
+        or report_config.config.meta.build.registry_slug
+    )
+
+
 def get_report_configs(config_ids, domain):
     """
     Return a list of ReportConfigurations.
