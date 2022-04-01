@@ -200,6 +200,7 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
     'django.contrib.admin',
