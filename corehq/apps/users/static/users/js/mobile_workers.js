@@ -272,9 +272,10 @@ hqDefine("users/js/mobile_workers",[
             if (!self.skipStandardValidations()) {
                 // Standard validation
                 var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
-                if (score > 1) {
+                var minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
+                if (score >= minimumZxcvbnScore) {
                     return self.STATUS.SUCCESS;
-                } else if (score < 1) {
+                } else if (score < minimumZxcvbnScore - 1) {
                     return self.STATUS.ERROR;
                 }
                 return self.STATUS.WARNING;
