@@ -123,7 +123,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None, dependent_toggles=None):
+                 notification_emails=None, parent_toggles=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -143,7 +143,7 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
-        self.dependent_toggles = dependent_toggles or []
+        self.parent_toggles = parent_toggles or []
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -151,7 +151,7 @@ class StaticToggle(object):
             self.namespaces = [None]
         self.notification_emails = notification_emails
 
-        for dependency in self.dependent_toggles:
+        for dependency in self.parent_toggles:
             if not set(self.namespaces) & set(dependency.namespaces):
                 raise Exception(
                     "Namespaces of dependent toggles must overlap with dependency:"
@@ -869,7 +869,7 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     "search first", "see more", and "skip to default case search results", Geocoder
     and other options in Webapps Case Search.
     """,
-    dependent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -1091,7 +1091,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    dependent_toggles=[USER_CONFIGURABLE_REPORTS]
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -1352,7 +1352,7 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_USER],
-    dependent_toggles=[USER_CONFIGURABLE_REPORTS]
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1990,7 +1990,7 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """,
     help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
-    dependent_toggles=[INBOUND_SMS_LENIENCY]
+    parent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -2158,7 +2158,7 @@ DATA_REGISTRY_UCR = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
-    dependent_toggles=[DATA_REGISTRY]
+    parent_toggles=[DATA_REGISTRY]
 )
 
 DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
@@ -2167,7 +2167,7 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
-    dependent_toggles=[DATA_REGISTRY]
+    parent_toggles=[DATA_REGISTRY]
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(

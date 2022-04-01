@@ -115,14 +115,14 @@
         </div>
       {% endif %}
 
-      {% if static_toggle.dependent_toggles %}
+      {% if static_toggle.parent_toggles %}
         <div class="alert alert-info">
           <p><i class="fa fa-info-circle"></i>
           {% blocktrans %}
             This feature flag also requires the following flags to be enabled:
           {% endblocktrans %}
           <ul>
-            {% for dependency in static_toggle.dependent_toggles %}
+            {% for dependency in static_toggle.parent_toggles %}
               <li><a href="{% url "edit_toggle" dependency.slug %}" target="_blank">{{ dependency.label }}</a></li>
             {% endfor %}
           </ul></p>

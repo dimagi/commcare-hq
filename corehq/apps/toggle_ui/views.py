@@ -257,8 +257,8 @@ def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, stat
 
 
 def _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled):
-    if is_enabled and static_toggle.dependent_toggles:
-        for dependency in static_toggle.dependent_toggles:
+    if is_enabled and static_toggle.parent_toggles:
+        for dependency in static_toggle.parent_toggles:
             _set_toggle(request_username, dependency, item, namespace, is_enabled)
 
 
