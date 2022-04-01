@@ -16,6 +16,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -124,7 +125,11 @@ def _add_smart_types(dynamic_properties, domain, case_type):
 
 
 def _smart_types_by_prop(domain, case_type):
-    return {'coords': 'gps'}
+    return dict(CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type,
+        data_type='gps',
+    ).values_list('name', 'data_type'))
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
