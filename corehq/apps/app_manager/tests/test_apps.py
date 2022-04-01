@@ -275,7 +275,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
             # Tests that these apps successfully build
             for slug in ['agriculture', 'health', 'wash']:
-                load_app_from_slug(self.domain, 'username', slug)
+                self.assertIsNotNone(load_app_from_slug(self.domain, 'username', slug))
 
     def testGetLatestBuild(self):
         factory = AppFactory(build_version='2.40.0')
