@@ -79,6 +79,10 @@ def test_date_add():
         ("date_add('2022-01-01', 'days', -1)", "2021-12-31"),
         ("date_add('2022-01-01', 'days', 1.5)", "2022-01-02"),
         ("date_add('2022-01-01', 'days', '5')", "2022-01-06"),
+        ("date_add(0, 'days', '5')", "1970-01-06"),
+        ("date_add(365, 'years', '5')", "1976-01-01"),
+        ("date_add(date('2021-01-01'), 'years', '5')", "2026-01-01"),
+        ("date_add(date(5), 'months', '1')", "1970-02-06"),
     ]
 
     for expression, expected in test_cases:
@@ -94,6 +98,7 @@ def test_date_add_errors():
     test_cases = [
         # bad date
         "date_add('2020-02-31', 'years', 1)",
+        "date_add(1.5, 'years', 1)",
 
         # non-integer quantity
         "date_add('2020-02-01', 'years', 1.5)",
