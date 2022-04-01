@@ -2,8 +2,9 @@ import json
 import os
 import uuid
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
+from collections import namedtuple
 from memoized import memoized
 from unittest.mock import patch
 
@@ -35,6 +36,9 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
+
+
+MockRequest = namedtuple('MockRequest', ['status', 'data'])
 
 
 @patch_validate_xform()
@@ -262,11 +266,16 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
 
-    @patch('os.path.exists', return_value=False)
-    def testBuildTemplateApps(self, exists_mock):
-        # Tests that these apps successfully build
-        for slug in ['agriculture', 'health', 'wash']:
-            load_app_from_slug(self.domain, 'username', slug)
+    @patch('urllib3.PoolManager.request')
+    def testBuildTemplateApps(self, request_mock):
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
+                                  'commcare-hq-logo.png')
+        with open(image_path, 'rb') as f:
+            request_mock.return_value = MockRequest(status=200, data=f.read())
+
+            # Tests that these apps successfully build
+            for slug in ['agriculture', 'health', 'wash']:
+                load_app_from_slug(self.domain, 'username', slug)
 
     def testGetLatestBuild(self):
         factory = AppFactory(build_version='2.40.0')
