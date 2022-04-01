@@ -68,7 +68,7 @@ branches:
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - bmb/upgrade-minimist  # Biyeun March 23
-    - nh/loadtest_users_postmigration  # Norman March 24
+    # - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
     - dm/upgrade-architect
     - dm/django3-tests
