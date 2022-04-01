@@ -25,7 +25,7 @@ def date(domain, node):
     arg = unwrap_value(domain, arg)
 
     parsed_date = _value_to_date(node, arg)
-    return parsed_date.strftime("%Y-%m-%d")
+    return parsed_date.strftime(ISO_DATE_FORMAT)
 
 
 def _value_to_date(node, value):
