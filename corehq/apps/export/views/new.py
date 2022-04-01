@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import SuspiciousOperation
 from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -47,12 +46,14 @@ from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
+    LiveGoogleSheetMixin,
     clean_odata_columns,
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
+from couchexport.models import IntegrationFormat
 
 
 class BaseExportView(BaseProjectDataView):
@@ -385,6 +386,36 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
         return export_instance
 
 
+class CreateGoogleSheetCaseView(LiveGoogleSheetMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_gsheet_case_feed'
+    page_title = gettext_lazy("Create Google Sheet Case Export")
+    metric_name = 'Live Google Sheet Case'
+
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings
+        )
+        export.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
+        return export
+
+
+class CreateGoogleSheetFormView(LiveGoogleSheetMixin, CreateNewCustomFormExportView):
+    urlname = 'new_gsheet_form_feed'
+    page_title = gettext_lazy("Create Google Sheet Form Export")
+    metric_name = 'Live Google Sheet Form'
+
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings
+        )
+        export.export_format = IntegrationFormat.LIVE_GOOGLE_SHEETS
+        return export
+
+
 @location_safe
 class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'
@@ -447,9 +478,12 @@ class DeleteNewCustomExportView(BaseExportView):
             DashboardFeedListView,
             DailySavedExportListView,
             ODataFeedListView,
+            LiveGoogleSheetListView,
         )
         if self.export_instance.is_odata_config:
             return ODataFeedListView
+        elif self.export_instance.export_format == IntegrationFormat.LIVE_GOOGLE_SHEETS:
+            return LiveGoogleSheetListView
         elif self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
