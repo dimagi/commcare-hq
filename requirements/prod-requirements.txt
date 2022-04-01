@@ -8,7 +8,7 @@ alembic==1.4.3
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
-architect==0.5.6
+architect==0.6.0
     # via -r base-requirements.in
 asttokens==2.0.5
     # via stack-data
