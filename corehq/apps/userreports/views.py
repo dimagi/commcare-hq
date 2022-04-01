@@ -116,6 +116,7 @@ from corehq.apps.userreports.models import (
     report_config_id_is_static,
     RegistryReportConfiguration,
     RegistryDataSourceConfiguration,
+    is_data_registry_report,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -286,7 +287,11 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def read_only(self):
         if self.report_id is not None:
             return (report_config_id_is_static(self.report_id)
-                    or is_linked_report(self.config))
+                    or is_linked_report(self.config)
+                    or (
+                        is_data_registry_report(self.config)
+                        and not toggles.DATA_REGISTRY_UCR.enabled(self.domain)
+            ))
         return False
 
     @property

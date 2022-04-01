@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 
@@ -1524,7 +1524,7 @@ class DomainCaseRuleRun(models.Model):
     num_creates = models.IntegerField(default=0)
     num_errors = models.IntegerField(default=0)
 
-    dbs_completed = JSONField(default=list)
+    dbs_completed = models.JSONField(default=list)
 
     class Meta(object):
         index_together = (

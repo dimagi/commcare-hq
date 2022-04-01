@@ -48,50 +48,35 @@ class RateLimiter(object):
 
     def report_usage(self, scope=None, delta=1):
         scope = self.get_normalized_scope(scope)
-        for limit_scope, limits in self.get_rate_limits(*scope):
-            for rate_counter, limit in limits:
-                rate_counter.increment((self.feature_key,) + limit_scope, delta=delta)
+        for rate_counter, limit in self.get_rate_limits(*scope):
+            rate_counter.increment((self.feature_key,) + scope, delta=delta)
 
     def get_window_of_first_exceeded_limit(self, scope=None):
-        for limit_scope, rates in self.iter_rates(scope):
-            for rate_counter_key, current_rate, limit in rates:
-                if current_rate >= limit:
-                    return rate_counter_key
+        for rate_counter_key, current_rate, limit in self.iter_rates(scope):
+            if current_rate >= limit:
+                return rate_counter_key
 
         return None
 
     def allow_usage(self, scope=None):
-        allowed = False
-        for limit_scope, rates in self.iter_rates(scope):
-            allow = all(current_rate < limit
-                          for rate_counter_key, current_rate, limit in rates)
-            # allow usage if any limiter is below the threshold
-            if allow:
-                allowed = True
-            else:
-                metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': ','.join(scope)})
-        return allowed
+        return all(current_rate < limit
+                   for rate_counter_key, current_rate, limit in self.iter_rates(scope))
 
     def iter_rates(self, scope=None):
         """
-        Get generator of tuples for each set of limits returned by get_rate_limits, where the first item
-        of the tuple is the normalized scope, and the second is a generator of (key, current rate, rate limit)
-        for each limit in that scope
+        Get generator of (key, current rate, rate limit) as applies to scope
 
         e.g.
-        (('test-domain'), [
             ('week', 92359, 115000)
             ('day', ...)
             ...
-        ])
+
         """
         scope = self.get_normalized_scope(scope)
-        for limit_scope, limits in self.get_rate_limits(*scope):
-            yield (
-                limit_scope,
-                ((rate_counter.key, rate_counter.get((self.feature_key,) + limit_scope), limit)
-                for rate_counter, limit in limits)
-            )
+        return (
+            (rate_counter.key, rate_counter.get((self.feature_key,) + scope), limit)
+            for rate_counter, limit in self.get_rate_limits(*scope)
+        )
 
     def wait(self, scope, timeout, windows_not_to_wait_on=('hour', 'day', 'week')):
         start = time.time()
@@ -99,8 +84,7 @@ class RateLimiter(object):
         delay = 0
         larger_windows_allow = all(
             current_rate < limit
-            for limit_scope, limits in self.iter_rates(scope)
-            for rate_counter_key, current_rate, limit in limits
+            for rate_counter_key, current_rate, limit in self.iter_rates(scope)
             if rate_counter_key in windows_not_to_wait_on
         )
         if not larger_windows_allow:
@@ -124,29 +108,35 @@ class RateLimiter(object):
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def get_n_users_in_domain(domain):
+def get_n_users_for_rate_limiting(domain):
+    """
+    Returns the number of users "allocated" to the project
+
+    That is, the actual number of users or the number of users included in the subscription,
+    whichever is higher.
+
+    This number is then used to portion out resource allocation through rate limiting.
+
+    """
+    n_users = _get_user_count(domain)
+    n_users_included_in_subscription = _get_users_included_in_subscription(domain)
+    return max(n_users_included_in_subscription, n_users)
+
+
+def _get_user_count(domain):
     return CommCareUser.total_by_domain(domain, is_active=True)
 
 
-@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def get_n_users_in_subscription(domain):
+def _get_users_included_in_subscription(domain):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
         plan_version = subscription.plan_version
-        return plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
-    else:
-        return 0
 
+        n_included_users = (
+            plan_version.feature_rates.get(feature__feature_type='User').monthly_limit)
 
-@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def get_n_users_old_enterprise_count(domain):
-    from corehq.apps.accounting.models import Subscription
-    subscription = Subscription.get_active_subscription_by_domain(domain)
-    if subscription:
-        plan_version = subscription.plan_version
         if plan_version.plan.is_customer_software_plan:
-            n_included_users = plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
             # For now just give each domain that's part of an enterprise account
             # access to nearly all of the throughput allocation.
             # Really what we want is to limit enterprise accounts' submissions accross all
@@ -157,17 +147,10 @@ def get_n_users_old_enterprise_count(domain):
             # 80% minimum, plus a fraction of 20% inversely proportional
             # to the number of domains that share the throughput allocation.
             return n_included_users * (.8 + .2 / n_domains)
-    return None
-
-
-@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def _get_account_name(domain):
-    from corehq.apps.accounting.models import BillingAccount
-    account = BillingAccount.get_account_by_domain(domain)
-    if account is not None:
-        return f'account:{account.name}'
+        else:
+            return n_included_users
     else:
-        return f'no_account:{domain}'
+        return 0
 
 
 class PerUserRateDefinition(object):
@@ -176,25 +159,12 @@ class PerUserRateDefinition(object):
         self.constant_rate_definition = constant_rate_definition or RateDefinition()
 
     def get_rate_limits(self, domain):
-        domain_users = get_n_users_in_domain(domain)
-        enterprise_users = get_n_users_in_subscription(domain)
-        limit_pairs = [
-            (domain_users, domain),
-            (enterprise_users, _get_account_name(domain))
-        ]
-        old_enterprise_calculation = get_n_users_old_enterprise_count(domain)
-        if old_enterprise_calculation is not None:
-            limit_pairs.append((old_enterprise_calculation, f'old_enterprise:{domain}'))
-        limits = []
-        for n_users, scope_key in limit_pairs:
-            print(n_users, scope_key)
-            domain_limit = (
-                self.per_user_rate_definition
-                .times(n_users)
-                .plus(self.constant_rate_definition)
-            ).get_rate_limits((scope_key,))
-            limits.extend(domain_limit)
-        return limits
+        n_users = get_n_users_for_rate_limiting(domain)
+        return (
+            self.per_user_rate_definition
+            .times(n_users)
+            .plus(self.constant_rate_definition)
+        ).get_rate_limits()
 
 
 @attr.s
@@ -229,17 +199,15 @@ class RateDefinition(object):
                 kwargs[attribute.name] = math_func(value)
         return self.__class__(**kwargs)
 
-    def get_rate_limits(self, scope=None):
-        if scope is None:
-            scope = ()
-        return [(scope, [(rate_counter, limit) for limit, rate_counter in (
+    def get_rate_limits(self):
+        return [(rate_counter, limit) for limit, rate_counter in (
             # order matters for returning the highest priority window
             (self.per_week, week_rate_counter),
             (self.per_day, day_rate_counter),
             (self.per_hour, hour_rate_counter),
             (self.per_minute, minute_rate_counter),
             (self.per_second, second_rate_counter),
-        ) if limit])]
+        ) if limit]
 
 
 @quickcache(['key'], timeout=24 * 60 * 60)
