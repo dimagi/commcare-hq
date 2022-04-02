@@ -30,6 +30,27 @@
   <a href="" role="tab" data-keyboard="true" data-toggle="tab"><%- title %></a>
 </script>
 
+<script type="text/template" id="module-case-detail-persistent-detail">
+</script>
+
+<script type="text/template" id="module-case-detail-multi-select">
+  <button type="button"
+      class="btn btn-success btn-lg module-case-detail-btn"
+      id="select-case-for-multi-select"
+      data-dismiss="modal">{% trans "Select" %}</button>
+  <button type="button"
+      class="btn btn-default btn-lg module-case-detail-btn"
+      id="cancel-case-select"
+      data-dismiss="modal">{% trans "Cancel" %}</button>
+</script>
+
+<script type="text/template" id="module-case-detail">
+  <button type="button"
+          class="btn btn-success btn-lg module-case-detail-continue"
+          id="select-case"
+          data-dismiss="modal">{% trans "Continue" %}</button>
+</script>
+
 <div id="case-detail-modal" class="modal fade module-case-detail-modal" role="dialog" tabindex='-1'>
   <div class="modal-dialog">
     <div class="modal-content">
@@ -42,18 +63,7 @@
         <div class="js-detail-content"></div>
       </div>
       <div class="modal-footer" style="text-align: center">
-        <button type="button"
-            class="btn btn-success btn-lg module-case-detail-btn"
-            id="select-case-for-multi-select"
-            data-dismiss="modal">{% trans "Select" %}</button>
-        <button type="button"
-            class="btn btn-default btn-lg module-case-detail-btn"
-            id="cancel-case-select"
-            data-dismiss="modal">{% trans "Cancel" %}</button>
-        <button type="button"
-                class="btn btn-success btn-lg module-case-detail-continue"
-                id="select-case"
-                data-dismiss="modal">{% trans "Continue" %}</button>
+        <div class="js-detail-footer-content"></div>
       </div>
     </div>
   </div>

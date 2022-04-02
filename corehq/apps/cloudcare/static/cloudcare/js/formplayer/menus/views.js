@@ -688,6 +688,27 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    var CaseDetailFooterView = Marionette.View.extend({
+        tagName: "div",
+        className: "",
+        events: {
+            "click": "tabClick",
+        },
+        getTemplate: function () { // either return the multi-select footer or the regular case detail footer or empty footer depending on isMultiSelect and IsPersistant detail
+            var id = "#module-case-detail";
+            if (this.isPersistentDetail) {
+                id = "#module-case-detail-persistent-detail";
+            } else if (this.isMultiSelect) {
+                id = "#module-case-detail-multi-select";
+            }
+            return _.template($(id).html() || "");
+        },
+        initialize: function (options) {
+            this.isPersistentDetail = options.model.get('isPersistentDetail');
+            this.isMultiSelect = options.isMultiSelect;
+        },
+    });
+
     return {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
@@ -695,6 +716,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         FormMenuView: function (options) {
             return new FormMenuView(options);
+        },
+        CaseDetailFooterView: function (options) {
+            return new CaseDetailFooterView(options);
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);

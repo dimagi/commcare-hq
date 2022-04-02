@@ -140,33 +140,21 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 showDetail(model, detailTabIndex, caseId);
             },
         });
+        var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
+            model: model,
+            isMultiSelect: isMultiSelect,
+        });
+        $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
+        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
+        $('#case-detail-modal').modal('show');
 
         $('#select-case').off('click').click(function () {
             FormplayerFrontend.trigger("menu:select", caseId);
         });
         $('#select-case-for-multi-select').off('click').click(function () {
-            console.log("case selected!");
-            // select checkbox for case
+            // todo: add logic to select case id via checkbox
         });
-        $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
-        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
-        $('#case-detail-modal').modal('show');
-
-        if (model.isPersistentDetail) {
-            $('#case-detail-modal').find('#select-case-for-multi-select').hide();
-            $('#case-detail-modal').find('#cancel-case-select').hide();
-            $('#case-detail-modal').find('#select-case').hide();
-        } else {
-            if (isMultiSelect) {
-                $('#case-detail-modal').find('#select-case-for-multi-select').show();
-                $('#case-detail-modal').find('#cancel-case-select').show();
-                $('#case-detail-modal').find('#select-case').hide();
-            } else {
-                $('#case-detail-modal').find('#select-case-for-multi-select').hide();
-                $('#case-detail-modal').find('#cancel-case-select').hide();
-                $('#case-detail-modal').find('#select-case').show();
-            }
-        }
     };
 
     var getDetailList = function (detailObject) {
