@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
 
@@ -27,6 +28,12 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     reverse_index_case_query,
 )
+
+
+@dataclass
+class FilterContext:
+    domain: str
+    fuzzy: bool = False
 
 
 def print_ast(node):
@@ -71,7 +78,7 @@ NEQ = "!="
 ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
 
 
-def build_filter_from_ast(domain, node, fuzzy=False):
+def build_filter_from_ast(node, context):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
 
     If fuzzy is true, all equality operations will be treated as fuzzy.
@@ -122,7 +129,9 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             _raise_step_RHS(node)
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
 
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query, fuzzy=fuzzy)
+        es_query = CaseSearchES().domain(context.domain).xpath_query(
+            context.domain, new_query, fuzzy=context.fuzzy
+        )
         if es_query.count() > MAX_RELATED_CASES:
             raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
@@ -134,7 +143,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
         """
-        return CaseSearchES().domain(domain).get_child_cases(case_ids, identifier).scroll_ids()
+        return CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier).scroll_ids()
 
     def _is_ancestor_case_lookup(node):
         """Returns whether a particular AST node is an ancestory case lookup
@@ -168,8 +177,8 @@ def build_filter_from_ast(domain, node, fuzzy=False):
                 isinstance(node.right, acceptable_rhs_types)):
             # This is a leaf node
             case_property_name = serialize(node.left)
-            value = unwrap_value(domain, node.right)
-            q = case_property_query(case_property_name, value, fuzzy=fuzzy)
+            value = unwrap_value(node.right, context)
+            q = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
 
             if node.op == '!=':
                 return filters.NOT(q)
@@ -190,7 +199,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         """
         try:
             case_property_name = serialize(node.left)
-            value = unwrap_value(domain, node.right)
+            value = unwrap_value(node.right, context)
             return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
         except (TypeError, ValueError):
             raise CaseFilterError(
@@ -203,7 +212,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         if isinstance(node, FunctionCall):
             if node.name in XPATH_QUERY_FUNCTIONS:
-                return XPATH_QUERY_FUNCTIONS[node.name](domain, node, fuzzy)
+                return XPATH_QUERY_FUNCTIONS[node.name](node, context)
             else:
                 raise XPathFunctionException(
                     _("'{name}' is not a valid standalone function").format(name=node.name),
@@ -223,7 +232,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             return _walk_ancestor_cases(node)
 
         if _is_subcase_count(node):
-            return XPATH_QUERY_FUNCTIONS['subcase-count'](domain, node, fuzzy)
+            return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
         if node.op in [EQ, NEQ]:
             # This node is a leaf
@@ -253,8 +262,10 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
+
+    context = FilterContext(domain, fuzzy)
     try:
-        return build_filter_from_ast(domain, parse_xpath(xpath), fuzzy=fuzzy)
+        return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
         text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:
