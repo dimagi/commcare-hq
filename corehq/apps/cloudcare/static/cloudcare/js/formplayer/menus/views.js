@@ -332,7 +332,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
             'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
             'click @ui.selectRow': 'selectRowAction',
+            'keypress @ui.selectRow': 'selectRowAction',
         },
 
         caseListAction: function (e) {
