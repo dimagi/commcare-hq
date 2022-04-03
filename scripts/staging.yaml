@@ -72,7 +72,6 @@ branches:
     - ad/user-history-excel-export # Addison March 28
     - dm/upgrade-architect
     - dm/django3-tests
-    - gh/smsforms/app-version # Graham March 31
     - ce/fix-rate-limits
     - dmr/make-MINIMUM_ZXCVBN_SCORE-a-setting  # Danny Apr 1
 
