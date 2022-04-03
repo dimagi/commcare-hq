@@ -239,7 +239,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.className === 'module-caselist-column-checkbox' || e.target.id === 'select-row-checkbox')) {
+            if (!(e.target.className === 'module-case-list-column-checkbox' || e.target.id === 'select-row-checkbox')) {
                 e.preventDefault();
                 FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
             }
