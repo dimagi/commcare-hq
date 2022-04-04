@@ -31,7 +31,7 @@ from corehq.apps.es.case_search import (
 
 
 @dataclass
-class FilterContext:
+class SearchFilterContext:
     domain: str
     fuzzy: bool = False
 
@@ -263,7 +263,7 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "The operators we accept are: {}"
     )
 
-    context = FilterContext(domain, fuzzy)
+    context = SearchFilterContext(domain, fuzzy)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
