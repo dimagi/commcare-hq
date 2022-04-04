@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock, create_autospec, patch
+from unittest.mock import Mock, patch
 
 from django.test import RequestFactory, TestCase
 
@@ -7,7 +7,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import (
     DeduplicationRuleCreateView,
     DeduplicationRuleEditView,
-    reset_and_backfill_deduplicate_rule,
+    HttpResponseRedirect,
 )
 
 
@@ -35,7 +35,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
         self.assertEqual(False, AutomaticUpdateRule.objects.all()[0].active)
 
     def _create_request(self, params=None, method='post'):
-        url = f'dummy_url'
+        url = 'dummy_url'
         if method == 'get':
             request = RequestFactory().get(url, params)
         else:
@@ -45,7 +45,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
 
 
 class DeduplicationRuleEditViewTest(TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -62,15 +62,14 @@ class DeduplicationRuleEditViewTest(TestCase):
         view = DeduplicationRuleEditView()
         view.args = []
         view.kwargs = {"rule_id": rule_id, "domain": self.domain}
-        
-
         request = self._create_request(params={
             'properties_to_update': json.dumps({}),
             'case_properties': json.dumps({}),
             'name': rule_name,
             'case_type': case_type,
             'match_type': 'ttype'})
-        view.post(request)
+        resp = view.post(request)
+        self.assertEqual(HttpResponseRedirect, type(resp))
 
     def _save_dummy_rule(self, rule_name, case_type):
         res = AutomaticUpdateRule.objects.create(
@@ -86,7 +85,7 @@ class DeduplicationRuleEditViewTest(TestCase):
         return res.id
 
     def _create_request(self, params=None, method='post'):
-        url = f'dummy_url'
+        url = 'dummy_url'
         if method == 'get':
             request = RequestFactory().get(url, params)
         else:
