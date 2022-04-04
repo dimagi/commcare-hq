@@ -341,7 +341,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m0f0)
 
         m1f0 = self.module_1.get_form(0)
-        self.factory.form_requires_case(m1f0, 'gold-fish')
+        self.factory.form_requires_case(m1f0)
 
         self.module_1.parent_select.active = True
         self.module_1.parent_select.module_id = self.module_0.unique_id
@@ -353,6 +353,32 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         self.assertXmlPartialEqual(
             self.get_xml('child-module-entry-datums-parent-select-other'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_select_other_same_case_type(self, *args):
+        # set module case types to match
+        self.module_0.case_type = 'gold_fish'
+        self.module_1.case_type = self.module_0.case_type
+
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.module_1.parent_select.active = True
+        self.module_1.parent_select.module_id = self.module_0.unique_id
+        self.module_1.parent_select.relationship = None
+
+        # the filter expression does not get rewritten
+        filter_expression = "parent_id = instance('commcaresession')/session/data/case_id"
+        self.module_1.case_details.short.filter = filter_expression
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-parent-select-other-same-case-type'),
             self.app.create_suite(),
             "./entry"
         )
