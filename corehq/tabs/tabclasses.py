@@ -605,7 +605,7 @@ class ProjectDataTab(UITab):
             if self.can_view_google_sheet:
                 export_data_views.append({
                     'title': _(LiveGoogleSheetListView.page_title),
-                    'url': reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
+                    'url': reverse("google_sheet_oauth_redirect", args=(self.domain,)),
                 })
 
         elif self.can_export_data:
@@ -840,7 +840,7 @@ class ProjectDataTab(UITab):
                 ]
                 export_data_views.append({
                     'title': _(LiveGoogleSheetListView.page_title),
-                    'url': reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
+                    'url': reverse("google_sheet_oauth_redirect", args=(self.domain,)),
                     'icon': 'fa fa-google',
                     'show_in_dropdown': False,
                     'subpages': subpages
@@ -972,7 +972,7 @@ class ProjectDataTab(UITab):
             from corehq.apps.export.views.list import LiveGoogleSheetListView
             items.append(dropdown_dict(
                 _(LiveGoogleSheetListView.page_title),
-                url=reverse(LiveGoogleSheetListView.urlname, args=(self.domain,)),
+                url=reverse("google_sheet_oauth_redirect", args=(self.domain,)),
             ))
 
         if items:
