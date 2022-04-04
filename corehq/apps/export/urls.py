@@ -39,6 +39,7 @@ from corehq.apps.export.views.list import (
     DeIdFormExportListView,
     FormExportListView,
     ODataFeedListView,
+    LiveGoogleSheetListView,
     commit_filters,
     download_daily_saved_export,
     get_app_data_drilldown_values,
@@ -58,6 +59,8 @@ from corehq.apps.export.views.new import (
     CreateNewFormFeedView,
     CreateODataCaseFeedView,
     CreateODataFormFeedView,
+    CreateGoogleSheetCaseView,
+    CreateGoogleSheetFormView,
     DeleteNewCustomExportView,
 )
 from corehq.apps.export.views.utils import (
@@ -68,6 +71,7 @@ from corehq.apps.export.views.utils import (
     GenerateSchemaFromAllBuildsView,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.oauth_integrations.views.google import redirect_oauth_view, call_back_view
 
 urlpatterns = [
     # Export list views
@@ -95,6 +99,9 @@ urlpatterns = [
     url(r"^custom/odata_feed/$",
         ODataFeedListView.as_view(),
         name=ODataFeedListView.urlname),
+    url(r"^custom/google_sheet/$",
+        LiveGoogleSheetListView.as_view(),
+        name=LiveGoogleSheetListView.urlname),
     url(r"^custom/download_data_files/$",
         waf_allow('XSS_BODY')(DataFileDownloadList.as_view()),
         name=DataFileDownloadList.urlname),
@@ -136,6 +143,12 @@ urlpatterns = [
     url(r"^custom/new/odata_form_feed/create$",
         CreateODataFormFeedView.as_view(),
         name=CreateODataFormFeedView.urlname),
+    url(r"^custom/new/live_google_sheet_case/create$",
+        CreateGoogleSheetCaseView.as_view(),
+        name=CreateGoogleSheetCaseView.urlname),
+    url(r"^custom/new/live_google_sheet_form/create$",
+        CreateGoogleSheetFormView.as_view(),
+        name=CreateGoogleSheetFormView.urlname),
     url(r"^custom/new/case_daily_saved/create$",
         CreateNewDailySavedCaseExport.as_view(),
         name=CreateNewDailySavedCaseExport.urlname),
@@ -226,4 +239,12 @@ urlpatterns = [
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
         name=GenerateSchemaFromAllBuildsView.urlname),
+
+    # OAuth redirect views
+    url(r"^google_sheets_oauth/redirect/$",
+        redirect_oauth_view,
+        name="google_sheet_oauth_redirect"),
+    url(r"^google_sheets_oauth/callback/$",
+        call_back_view,
+        name="google_sheet_oauth_callback"),
 ]
