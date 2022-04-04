@@ -39,7 +39,7 @@ from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.parsing import json_format_datetime
 from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
@@ -120,7 +120,7 @@ def _add_smart_types(dynamic_properties, domain, case_type):
         if prop_type == 'gps':
             try:
                 # TODO modify this wrap fn to accept two-element coords
-                prop['geopoint_value'] = GeoPointProperty().wrap(prop['value']).lat_lon
+                prop['geopoint_value'] = GeoPoint.from_string(prop['value']).lat_lon
             except BadValueError:
                 prop['geopoint_value'] = None
 

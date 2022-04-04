@@ -2,8 +2,7 @@ from decimal import Decimal
 
 from nose.tools import assert_equal
 
-from ..datatypes import GeoPoint
-from ..jsonobject_extensions import GeoPointProperty
+from ..geopoint import GeoPoint
 
 
 def test_valid_geopoint_properties():
@@ -12,6 +11,6 @@ def test_valid_geopoint_properties():
         ('-7.130 -41.563 7.53E-4 8.0', ('-7.130', '-41.563', '0', '8.0')),
         ('-7.130 -41.563 -2.2709742188453674E-4 8.0', ('-7.130', '-41.563', '0', '8.0')),
     ]:
-        actual = GeoPointProperty().wrap(input_string)
+        actual = GeoPoint.from_string(input_string)
         expected = GeoPoint(*(Decimal(x) for x in output))
     yield assert_equal, actual, expected
