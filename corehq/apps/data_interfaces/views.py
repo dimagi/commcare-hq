@@ -1072,7 +1072,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             domain=domain,
             name=name,
             case_type=case_type,
-            active=True,
+            active=False,
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
@@ -1149,7 +1149,6 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
 
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
-        errors.extend(self.validate_rule_params(request.domain, rule_params))
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))
