@@ -131,15 +131,13 @@ def download_app_strings(request, domain, app_id, lang):
 @safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
-    See Application.fetch_xform
-
+    See FormBase.render_xform
     """
     profile = _get_build_profile_id(request)
     try:
         form = request.app.get_module(module_id).get_form(form_id)
-        return HttpResponse(
-            request.app.fetch_xform(form, build_profile_id=profile)
-        )
+        form = form.validate_form()
+        return HttpResponse(form.render_xform(build_profile_id=profile))
     except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
