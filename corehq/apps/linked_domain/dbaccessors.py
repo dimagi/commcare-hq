@@ -56,7 +56,6 @@ def get_actions_in_domain_link_history(link):
 
 def get_available_domains_to_link(upstream_domain, user):
     """
-    This supports both the old feature flagged version of linked projects and the GAed version
     :param upstream_domain: name of upstream domain candidate
     :param user: user object
     :return: list of domain names available to link as downstream projects
@@ -79,10 +78,9 @@ def get_available_domains_to_link_for_user(upstream_domain_name, user):
 
 def get_available_upstream_domains(downstream_domain, user):
     """
-    This supports both the old feature flagged version of linked projects and the GAed version
     :param downstream_domain: name of downstream domain in potential links
     :param user: user object
-    :return: list of domain names available to link as downstream projects
+    :return: list of existing upstream domain names available to link with the downstream_domain
     """
     if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
