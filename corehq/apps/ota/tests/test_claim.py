@@ -86,17 +86,17 @@ class CaseClaimTests(TestCase):
         """
         get_first_claim should return one claim
         """
-        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
-                              host_type=self.host_case_type, host_name=self.host_case_name)
-        claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
-        self.assert_claim(claim, claim_id)
+        claim_case(DOMAIN, self.restore_user, self.host_case_id,
+                host_type=self.host_case_type, host_name=self.host_case_name)
+        claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(len(claim), 1)
 
     def test_first_claim_none(self):
         """
         get_first_claim should return None if not found
         """
-        claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
-        self.assertIsNone(claim)
+        claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(len(claim), 0)
 
     def test_closed_claim(self):
         """
@@ -105,8 +105,8 @@ class CaseClaimTests(TestCase):
         claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         self._close_case(claim_id)
-        first_claim = get_first_claims(DOMAIN, self.user.user_id, self.host_case_id)
-        self.assertIsNone(first_claim)
+        first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(len(first_claim), 0)
 
     def test_claim_case_other_domain(self):
         malicious_domain = 'malicious_domain'

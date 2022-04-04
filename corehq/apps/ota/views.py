@@ -147,7 +147,7 @@ def claim(request, domain):
     try:
         case_ids_already_claimed = get_first_claims(domain, restore_user.user_id, case_ids)
         if case_ids_already_claimed:
-            case_ids_to_claim = [case for case in case_ids if case not in case_ids_already_claimed]
+            case_ids_to_claim = {case for case in case_ids if case not in case_ids_already_claimed}
         else:
             case_ids_to_claim = case_ids
     except CaseNotFound as err:
@@ -160,7 +160,7 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    if set(case_ids) == set(case_ids_already_claimed):
+    if set(case_ids) == case_ids_already_claimed:
             return HttpResponse(status=204)
 
     return HttpResponse(status=201)

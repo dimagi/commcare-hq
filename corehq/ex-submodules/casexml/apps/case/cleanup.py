@@ -141,20 +141,15 @@ def get_first_claims(domain, user_id, case_ids):
     """
     Returns the first claim by user_id of case_ids, or None
     """
-    cases_found = CommCareCase.objects.get_cases(case_ids, domain)
-    case_ids_found = [case.get_id for case in cases_found]
+    case_ids_found = CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
     cases_not_found = [case for case in case_ids if case not in case_ids_found]
 
     if len(cases_not_found) != 0:
         raise CaseNotFound(", ".join(cases_not_found))
 
-    identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    previously_claimed_ids = list()
-    for case in cases_found:
-        try:
-            if next((c for c in case.get_subcases(identifier)
-                    if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id and c.closed is False)):
-                previously_claimed_ids.append(case.get_id)
-        except StopIteration:
-            pass
-    return previously_claimed_ids if len(previously_claimed_ids) != 0 else None
+    potential_cases = CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
+    # creates set of claimed case_ids where owner_id = user_id
+    previously_claimed_ids = set(map(lambda case: case.get_index('host').referenced_id if case.owner_id == user_id else None, 
+                                    potential_cases))
+
+    return previously_claimed_ids
