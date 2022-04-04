@@ -46,21 +46,6 @@ class GeoPointProperty(JsonProperty):
     """
     wraps a GeoPoint object where the numbers are represented as Decimals
     to preserve exact formatting (number of decimal places, etc.)
-
-    # Test normal
-    >>> GeoPointProperty().wrap('42.3739063 -71.1109113 0.0 886.0')
-    GeoPoint(latitude=Decimal('42.3739063'), longitude=Decimal('-71.1109113'),
-             altitude=Decimal('0.0'), accuracy=Decimal('886.0'))
-
-    # Test scientific notation hack
-    >>> GeoPointProperty().wrap('-7.130 -41.563 7.53E-4 8.0')
-    GeoPoint(latitude=Decimal('-7.130'), longitude=Decimal('-41.563'),
-             altitude=Decimal('0'), accuracy=Decimal('8.0'))
-
-    >>> GeoPointProperty().wrap('-7.130 -41.563 -2.2709742188453674E-4 8.0')
-    GeoPoint(latitude=Decimal('-7.130'), longitude=Decimal('-41.563'),
-             altitude=Decimal('0'), accuracy=Decimal('8.0'))
-
     """
 
     def wrap(self, obj):
