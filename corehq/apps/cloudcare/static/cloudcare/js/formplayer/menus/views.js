@@ -696,10 +696,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         events: {
             "click": "tabClick",
         },
-        getTemplate: function () { // either return the multi-select footer or the regular case detail footer or empty footer depending on isMultiSelect and IsPersistant detail
+        getTemplate: function () {
             var id = "#module-case-detail";
             if (this.isPersistentDetail) {
-                id = "#module-case-detail-persistent-detail";
+                return _.template("");
             } else if (this.isMultiSelect) {
                 id = "#module-case-detail-multi-select";
             }
