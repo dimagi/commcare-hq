@@ -29,30 +29,16 @@ class RateLimiter(object):
     ...     my_feature_rate_limiter.report_usage('my_domain')
 
     """
-    def __init__(self, feature_key, get_rate_limits, scope_length=1):
+    def __init__(self, feature_key, get_rate_limits):
         self.feature_key = feature_key
         self.get_rate_limits = get_rate_limits
-        self.scope_length = scope_length
 
-    def get_normalized_scope(self, scope):
-        if scope is None:
-            scope = ()
-        elif isinstance(scope, str):
-            scope = (scope,)
-        elif not isinstance(scope, tuple):
-            raise ValueError("scope must be a string or tuple: {!r}".format(scope))
-        elif len(scope) != self.scope_length:
-            raise ValueError("The scope for this rate limiter must be of length {!r}"
-                             .format(self.scope_length))
-        return scope
-
-    def report_usage(self, scope=None, delta=1):
-        scope = self.get_normalized_scope(scope)
-        for limit_scope, limits in self.get_rate_limits(*scope):
+    def report_usage(self, scope='', delta=1):
+        for limit_scope, limits in self.get_rate_limits(scope):
             for rate_counter, limit in limits:
-                rate_counter.increment((self.feature_key,) + limit_scope, delta=delta)
+                rate_counter.increment(self.feature_key + limit_scope, delta=delta)
 
-    def get_window_of_first_exceeded_limit(self, scope=None):
+    def get_window_of_first_exceeded_limit(self, scope=''):
         for limit_scope, rates in self.iter_rates(scope):
             for rate_counter_key, current_rate, limit in rates:
                 if current_rate >= limit:
@@ -60,7 +46,7 @@ class RateLimiter(object):
 
         return None
 
-    def allow_usage(self, scope=None):
+    def allow_usage(self, scope=''):
         allowed = False
         for limit_scope, rates in self.iter_rates(scope):
             allow = all(current_rate < limit
@@ -69,27 +55,26 @@ class RateLimiter(object):
             if allow:
                 allowed = True
             else:
-                metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': ','.join(scope)})
+                metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
         return allowed
 
-    def iter_rates(self, scope=None):
+    def iter_rates(self, scope=''):
         """
         Get generator of tuples for each set of limits returned by get_rate_limits, where the first item
         of the tuple is the normalized scope, and the second is a generator of (key, current rate, rate limit)
         for each limit in that scope
 
         e.g.
-        (('test-domain'), [
+        ('test-domain', [
             ('week', 92359, 115000)
             ('day', ...)
             ...
         ])
         """
-        scope = self.get_normalized_scope(scope)
-        for limit_scope, limits in self.get_rate_limits(*scope):
+        for limit_scope, limits in self.get_rate_limits(scope):
             yield (
                 limit_scope,
-                ((rate_counter.key, rate_counter.get((self.feature_key,) + limit_scope), limit)
+                ((rate_counter.key, rate_counter.get(self.feature_key + limit_scope), limit)
                 for rate_counter, limit in limits)
             )
 
@@ -187,12 +172,11 @@ class PerUserRateDefinition(object):
             limit_pairs.append((old_enterprise_calculation, f'old_enterprise:{domain}'))
         limits = []
         for n_users, scope_key in limit_pairs:
-            print(n_users, scope_key)
             domain_limit = (
                 self.per_user_rate_definition
                 .times(n_users)
                 .plus(self.constant_rate_definition)
-            ).get_rate_limits((scope_key,))
+            ).get_rate_limits(scope_key)
             limits.extend(domain_limit)
         return limits
 
@@ -229,9 +213,7 @@ class RateDefinition(object):
                 kwargs[attribute.name] = math_func(value)
         return self.__class__(**kwargs)
 
-    def get_rate_limits(self, scope=None):
-        if scope is None:
-            scope = ()
+    def get_rate_limits(self, scope=''):
         return [(scope, [(rate_counter, limit) for limit, rate_counter in (
             # order matters for returning the highest priority window
             (self.per_week, week_rate_counter),
