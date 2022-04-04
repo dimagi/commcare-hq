@@ -13,24 +13,19 @@ from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_user_access_release_management(user, domain, include_lite_version=True):
+def can_user_access_linked_domains(user, domain):
     """
-    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
-    If yes, and the user meets the criteria needed, returns True
+    If yes, and the user is an admin, returns True
     """
     if not user or not domain:
         return False
 
+    privileges_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
     is_admin = user.is_domain_admin(domain)
-
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT) and is_admin:
-        return True
-    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and is_admin:
-        return True
-    return False
+    return any(domain_has_privilege(domain, priv) for priv in privileges_with_linked_domain_access) and is_admin
 
 
 def can_domain_access_release_management(domain, include_lite_version=True):
