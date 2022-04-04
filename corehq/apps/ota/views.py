@@ -139,7 +139,6 @@ def claim(request, domain):
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    # This will be expecting space seperated values of all the cases to be claimed
     case_ids = request.POST.getlist('case_id')
 
     if not case_ids:
