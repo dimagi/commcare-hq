@@ -118,7 +118,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId) {
-        var isMultiSelect = true; // TODO: add logic
+        var isMultiSelect = false; // TODO: add logic
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {

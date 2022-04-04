@@ -256,7 +256,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                isMultiSelect: true, // TODO: add logic
+                isMultiSelect: false, // TODO: add logic
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -436,7 +436,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: true, // TODO: create logic
+                isMultiSelect: false, // TODO: create logic
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
