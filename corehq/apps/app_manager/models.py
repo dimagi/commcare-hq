@@ -4874,9 +4874,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, form, build_profile_id=None):
-        return form.validate_form().render_xform(build_profile_id)
-
     @time_method()
     def set_form_versions(self):
         """
