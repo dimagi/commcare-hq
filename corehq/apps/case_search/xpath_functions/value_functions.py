@@ -13,7 +13,7 @@ from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.domain.models import Domain
 
 
-def date(domain, node):
+def date(node, context):
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
     assert node.name == 'date'
@@ -24,7 +24,7 @@ def date(domain, node):
         )
     arg = node.args[0]
 
-    arg = unwrap_value(domain, arg)
+    arg = unwrap_value(arg, context)
 
     parsed_date = _value_to_date(node, arg)
     return parsed_date.strftime(ISO_DATE_FORMAT)
@@ -52,7 +52,7 @@ def _value_to_date(node, value):
     return parsed_date
 
 
-def today(domain, node):
+def today(node, context):
     assert node.name == 'today'
     if len(node.args) != 0:
         raise XPathFunctionException(
@@ -60,12 +60,12 @@ def today(domain, node):
             serialize(node)
         )
 
-    domain_obj = Domain.get_by_name(domain)
+    domain_obj = Domain.get_by_name(context.domain)
     timezone = domain_obj.get_default_timezone() if domain_obj else pytz.UTC
     return datetime.datetime.now(timezone).strftime(ISO_DATE_FORMAT)
 
 
-def date_add(domain, node):
+def date_add(node, context):
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
     assert node.name == 'date_add'
@@ -75,10 +75,10 @@ def date_add(domain, node):
             serialize(node)
         )
 
-    date_arg = unwrap_value(domain, node.args[0])
+    date_arg = unwrap_value(node.args[0], context)
     date = _value_to_date(node, date_arg)
 
-    interval_type = unwrap_value(domain, node.args[1])
+    interval_type = unwrap_value(node.args[1], context)
     interval_types = ("days", "weeks", "months", "years")
     if interval_type not in interval_types:
         raise XPathFunctionException(
@@ -88,7 +88,7 @@ def date_add(domain, node):
             serialize(node)
         )
 
-    quantity = unwrap_value(domain, node.args[2])
+    quantity = unwrap_value(node.args[2], context)
     if isinstance(quantity, str):
         try:
             quantity = float(quantity)

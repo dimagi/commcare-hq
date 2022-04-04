@@ -17,7 +17,7 @@ from casexml.apps.phone.utils import MockDevice
 
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import sharded
-from corehq.toggles import LEGACY_SYNC_SUPPORT
+from corehq.toggles import LEGACY_SYNC_SUPPORT, NAMESPACE_DOMAIN
 from corehq.util.global_request.api import set_request
 
 
@@ -97,7 +97,7 @@ class TestNewSyncSpecifics(TestCase):
 
         # enabling the toggle should prevent the failure the second time
         # though we also need to hackily set the request object in the threadlocals
-        LEGACY_SYNC_SUPPORT.set(self.domain, True, namespace='domain')
+        LEGACY_SYNC_SUPPORT.set(self.domain, True, namespace=NAMESPACE_DOMAIN)
         request = JsonObject(domain=self.domain, path='testsubmit')
         set_request(request)
         factory.create_or_update_cases([

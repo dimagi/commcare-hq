@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
+from corehq.apps.case_search.filter_dsl import SearchFilterContext
 from corehq.apps.case_search.xpath_functions.value_functions import (
     date,
     date_add,
@@ -29,18 +30,18 @@ class TestToday(TestCase):
 
     def test_today_no_domain(self):
         node = parse_xpath("today()")
-        result = today("domain", node)
+        result = today(node, SearchFilterContext("domain"))
         eq(result, '2021-08-02')
 
     def test_today_domain_tz(self):
         node = parse_xpath("today()")
-        result = today(self.domain_name, node)
+        result = today(node, SearchFilterContext(self.domain_name))
         eq(result, '2021-08-03')
 
     def test_arg_validation(self):
         node = parse_xpath("today('utc')")
         with self.assertRaises(XPathFunctionException):
-            today("domain", node)
+            today(node, SearchFilterContext("domain"))
 
 
 @freeze_time('2021-08-02T22:00:00Z')
@@ -48,24 +49,24 @@ class TestDate(TestCase):
     def test_date_string(self):
         the_date = '2021-01-01'
         node = parse_xpath(f"date('{the_date}')")
-        result = date("domain", node)
+        result = date(node, SearchFilterContext("domain"))
         eq(result, the_date)
 
     def test_date_int(self):
         node = parse_xpath("date(15)")
-        result = date("domain", node)
+        result = date(node, SearchFilterContext("domain"))
         eq(result, '1970-01-16')
 
     def test_date_today(self):
         node = parse_xpath("date(today())")
-        result = date("domain", node)
+        result = date(node, SearchFilterContext("domain"))
         eq(result, '2021-08-02')
 
 
 def test_date_add():
     def _do_test(expression, expected):
         node = parse_xpath(expression)
-        result = date_add("domain", node)
+        result = date_add(node, SearchFilterContext("domain"))
         eq(result, expected)
 
     test_cases = [
@@ -93,7 +94,7 @@ def test_date_add_errors():
     def _do_test(expression):
         node = parse_xpath(expression)
         with assert_raises(XPathFunctionException):
-            date_add("domain", node)
+            date_add(node, SearchFilterContext("domain"))
 
     test_cases = [
         # bad date

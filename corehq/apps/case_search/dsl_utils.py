@@ -9,7 +9,7 @@ from corehq.apps.case_search.exceptions import (
 from corehq.apps.case_search.xpath_functions import XPATH_VALUE_FUNCTIONS
 
 
-def unwrap_value(domain, value):
+def unwrap_value(value, context):
     """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
     """
     if isinstance(value, (str, int, float, bool)):
@@ -19,7 +19,7 @@ def unwrap_value(domain, value):
     if not isinstance(value, FunctionCall):
         return value
     try:
-        return XPATH_VALUE_FUNCTIONS[value.name](domain, value)
+        return XPATH_VALUE_FUNCTIONS[value.name](value, context)
     except KeyError:
         raise CaseFilterError(
             _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(

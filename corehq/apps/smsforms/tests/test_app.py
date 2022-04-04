@@ -95,7 +95,7 @@ class TestStartSession(TestCase):
         session, responses = self._start_session(yield_responses=True)
 
         expected_session_data = {
-            'device_id': 'commconnect', 'app_version': '2.0', 'domain': self.domain,
+            'device_id': 'commconnect', 'app_version': self.app.version, 'domain': self.domain,
             'username': self.recipient.raw_username, 'user_id': self.recipient.get_id,
             'user_data': {},
             'app_id': None
@@ -121,7 +121,7 @@ class TestStartSession(TestCase):
         session, responses = self._start_session(yield_responses=True)
 
         expected_session_data = {
-            'device_id': 'commconnect', 'app_version': '2.0', 'domain': self.domain,
+            'device_id': 'commconnect', 'app_version': self.app.version, 'domain': self.domain,
             'username': self.recipient.raw_username, 'user_id': self.recipient.get_id,
             'user_data': {
                 'commcare_first_name': None,
