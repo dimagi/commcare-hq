@@ -1,7 +1,10 @@
 <partial>
   <remote-request>
     <post url="https://www.example.com/a/multiple-referrals/phone/claim-case/">
-      <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
+      <data key="case_id"
+            nodeset="instance('search_cases')/results/value"
+            exclude="count(instance('casedb')/casedb/case[@case_id = current()/.]) = 1"
+            ref="."/>
     </post>
     <command id="search_command.m0">
       <display>

@@ -96,16 +96,23 @@ class RemoteRequestFactory(object):
         kwargs = {
             "url": absolute_reverse('claim_case', args=[self.domain]),
             "data": [
-                QueryData(
-                    key='case_id',
-                    ref=QuerySessionXPath(self.case_session_var).instance(),
-                ),
+                self.build_case_id_query_data(),
             ],
         }
         relevant = self.get_post_relevant()
         if relevant:
             kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
+
+    def build_case_id_query_data(self):
+        data = QueryData(key='case_id')
+        if self.is_multi_select():
+            data.ref = "."
+            data.nodeset = "instance('search_cases')/results/value"
+            data.exclude = "count(instance('casedb')/casedb/case[@case_id = current()/.]) = 1"
+        else:
+            data.ref = QuerySessionXPath(self.case_session_var).instance()
+        return data
 
     def is_multi_select(self):
         return self.module.case_details.short.multi_select
