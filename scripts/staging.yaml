@@ -70,8 +70,8 @@ branches:
     - bmb/upgrade-minimist  # Biyeun March 23
     # - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
-    - dm/upgrade-architect
-    - dm/django3-tests
+    - dm/upgrade-architect # Daniel March 31
+    - dm/django3-tests # Daniel March 31
     - ce/fix-rate-limits
     - dmr/make-MINIMUM_ZXCVBN_SCORE-a-setting  # Danny Apr 1
 
