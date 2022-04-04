@@ -1229,9 +1229,10 @@ crypto-random-string@^1.0.0:
   resolved "https://registry.yarnpkg.com/crypto-random-string/-/crypto-random-string-1.0.0.tgz#a230f64f568310e1498009940790ec99545bca7e"
   integrity sha1-ojD2T1aDEOFJgAmUB5DsmVRbyn4=
 
-css-grid-polyfill-binaries@FremyCompany/css-grid-polyfill-binaries#1.1.1:
+css-grid-polyfill-binaries@FremyCompany/css-grid-polyfill-binaries#1.1.2:
   version "0.0.0"
-  resolved "https://codeload.github.com/FremyCompany/css-grid-polyfill-binaries/tar.gz/f67a7c7aa9ae5dac5d534727a04f00492d1e80b6"
+  uid d2414403355d7f49b10a6fa4a52c850972c5ab1d
+  resolved "https://codeload.github.com/FremyCompany/css-grid-polyfill-binaries/tar.gz/d2414403355d7f49b10a6fa4a52c850972c5ab1d"
 
 cyclist@^1.0.1:
   version "1.0.1"
