@@ -4,8 +4,6 @@
  *
  */
 
-const { contains } = require("jquery");
-
 hqDefine('export/js/models', [
     'jquery',
     'knockout',
