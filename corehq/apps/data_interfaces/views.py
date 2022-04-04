@@ -1032,15 +1032,15 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         }
         return rule_params, action_params
 
-    def validate_rule_params(self, domain, rule_params, rule_id=None):
-        existing_rule: AutomaticUpdateRule = AutomaticUpdateRule.objects.filter(
+    def validate_rule_params(self, domain, rule_params, rule=None):
+        existing_rule = AutomaticUpdateRule.objects.filter(
             deleted=False,
             domain=domain,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
             name=rule_params['name'],
         )
-        if existing_rule and id(existing_rule[0]) != rule_id:
-                return [_("A rule with name {name} already exists").format(name=rule_params['name'])]
+        if existing_rule and existing_rule[0] != rule:
+            return [_("A rule with name {name} already exists").format(name=rule_params['name'])]
         return []
 
     def validate_action_params(self, action_params):
@@ -1149,7 +1149,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
 
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
-        errors.extend(self.validate_rule_params(request.domain, rule_params, id(self.rule)))
+        errors.extend(self.validate_rule_params(request.domain, rule_params, self.rule))
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))

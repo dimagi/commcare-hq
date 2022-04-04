@@ -1,0 +1,95 @@
+import json
+from unittest.mock import Mock, create_autospec, patch
+
+from django.test import RequestFactory, TestCase
+
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.views import (
+    DeduplicationRuleCreateView,
+    DeduplicationRuleEditView,
+    reset_and_backfill_deduplicate_rule,
+)
+
+
+class DeduplicationRuleCreateViewTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain-create'
+
+    @patch('corehq.apps.data_interfaces.views.messages')
+    @patch('corehq.apps.data_interfaces.views.reverse', Mock(return_value='url'))
+    def test_newly_created_rule_is_inactive(self, *args):
+        view = DeduplicationRuleCreateView()
+        view.args = []
+        view.kwargs = {}
+        request = self._create_request(params={
+            'properties_to_update': json.dumps({}),
+            'case_properties': json.dumps({}),
+            'name': 'test_name',
+            'case_type': 'test_type',
+            'match_type': 'ttype'})
+        view.post(request)
+        self.assertEqual(1, len(AutomaticUpdateRule.objects.all()))
+        self.assertEqual(False, AutomaticUpdateRule.objects.all()[0].active)
+
+    def _create_request(self, params=None, method='post'):
+        url = f'dummy_url'
+        if method == 'get':
+            request = RequestFactory().get(url, params)
+        else:
+            request = RequestFactory().post(url, params)
+        request.domain = self.domain
+        return request
+
+
+class DeduplicationRuleEditViewTest(TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain-edit'
+
+    @patch('corehq.apps.data_interfaces.views.messages')
+    @patch('corehq.apps.data_interfaces.views.DeduplicationRuleEditView.dedupe_action')
+    @patch('corehq.apps.data_interfaces.views.reverse', Mock(return_value='url'))
+    def test_when_rule_edited_doesnt_throw_error(self, *args):
+        rule_name = 'test_rule'
+        case_type = 'test_type'
+        rule_id = self._save_dummy_rule(rule_name, case_type)
+
+        view = DeduplicationRuleEditView()
+        view.args = []
+        view.kwargs = {"rule_id": rule_id, "domain": self.domain}
+        
+
+        request = self._create_request(params={
+            'properties_to_update': json.dumps({}),
+            'case_properties': json.dumps({}),
+            'name': rule_name,
+            'case_type': case_type,
+            'match_type': 'ttype'})
+        view.post(request)
+
+    def _save_dummy_rule(self, rule_name, case_type):
+        res = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name=rule_name,
+            case_type=case_type,
+            active=False,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        return res.id
+
+    def _create_request(self, params=None, method='post'):
+        url = f'dummy_url'
+        if method == 'get':
+            request = RequestFactory().get(url, params)
+        else:
+            request = RequestFactory().post(url, params)
+        request.domain = self.domain
+        return request
