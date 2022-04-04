@@ -172,21 +172,20 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             query_filters = Q(changes__has_key=user_property)
         return query_filters
 
-    def get_rows(self, for_export):
+    @property
+    def rows(self):
         records = self._get_queryset().order_by(self.ordering)[
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield self._user_history_row(record, self.domain, self.timezone, for_export)
-
-    @property
-    def rows(self):
-        return self.get_rows(for_export=False)
+            yield self._user_history_row(record, self.domain, self.timezone, False)
 
     # Override parent method to add new lines to cell values of certain columns
     @property
     def export_rows(self):
-        return self.get_rows(for_export=True)
+        records = self._get_queryset().order_by(self.ordering)
+        for record in records:
+            yield self._user_history_row(record, self.domain, self.timezone, True)
 
     @property
     def ordering(self):
