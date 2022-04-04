@@ -34,6 +34,30 @@ class DeduplicationRuleCreateViewTest(TestCase):
         self.assertEqual(1, len(AutomaticUpdateRule.objects.all()))
         self.assertEqual(False, AutomaticUpdateRule.objects.all()[0].active)
 
+    @patch('corehq.apps.data_interfaces.views.messages')
+    @patch('corehq.apps.data_interfaces.views.DataInterfaceSection.get')
+    def test_creating_rule_with_existing_name_fails(self, *args):
+        rule_name = 'test_name'
+        case_type = 'test_type'
+        self._save_dummy_rule(rule_name, case_type)
+        # Existing rules count
+        existing_rules = AutomaticUpdateRule.objects.all()
+        self.assertEqual(1, len(existing_rules))
+        view = DeduplicationRuleCreateView()
+        view.args = []
+        view.kwargs = {}
+        request = self._create_request(params={
+            'properties_to_update': json.dumps({}),
+            'case_properties': json.dumps({}),
+            'name': rule_name,
+            'case_type': case_type,
+            'match_type': 'ttype'})
+        view.post(request)
+        # Rules count after making call
+        latest_rules = AutomaticUpdateRule.objects.all()
+        self.assertEqual(1, len(latest_rules))
+        self.assertEqual(existing_rules[0], latest_rules[0])
+
     def _create_request(self, params=None, method='post'):
         url = 'dummy_url'
         if method == 'get':
@@ -42,6 +66,19 @@ class DeduplicationRuleCreateViewTest(TestCase):
             request = RequestFactory().post(url, params)
         request.domain = self.domain
         return request
+
+    def _save_dummy_rule(self, rule_name, case_type):
+        res = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name=rule_name,
+            case_type=case_type,
+            active=False,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        return res.id
 
 
 class DeduplicationRuleEditViewTest(TestCase):
