@@ -16,7 +16,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import get_smart_types_by_prop
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -114,22 +114,15 @@ def _get_case_properties(doc_dict):
 
 
 def _add_smart_types(dynamic_properties, domain, case_type):
-    smart_types = _smart_types_by_prop(domain, case_type)
+    smart_types = get_smart_types_by_prop(domain, case_type)
     for prop in dynamic_properties:
         prop_type = smart_types.get(prop['key'])
         if prop_type == 'gps':
             try:
+                # TODO modify this wrap fn to accept two-element coords
                 prop['geopoint_value'] = GeoPointProperty().wrap(prop['value']).lat_lon
             except BadValueError:
                 prop['geopoint_value'] = None
-
-
-def _smart_types_by_prop(domain, case_type):
-    return dict(CaseProperty.objects.filter(
-        case_type__domain=domain,
-        case_type__name=case_type,
-        data_type='gps',
-    ).values_list('name', 'data_type'))
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
