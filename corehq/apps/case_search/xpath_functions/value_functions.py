@@ -76,7 +76,7 @@ def date_add(node, context):
         )
 
     date_arg = unwrap_value(node.args[0], context)
-    date = _value_to_date(node, date_arg)
+    date_value = _value_to_date(node, date_arg)
 
     interval_type = unwrap_value(node.args[1], context)
     interval_types = ("days", "weeks", "months", "years")
@@ -105,7 +105,7 @@ def date_add(node, context):
         )
 
     try:
-        result = date + relativedelta(**{interval_type: quantity})
+        result = date_value + relativedelta(**{interval_type: quantity})
     except ValueError as e:
         raise XPathFunctionException(str(e), serialize(node))
 
