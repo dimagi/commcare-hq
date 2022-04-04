@@ -1162,8 +1162,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         return _("Select Model Type")
 
     def _should_appear_in_list(self, export):
-        test = IntegrationFormat.is_integration_format(export['export_format'])
-        return test
+        return export['export_format'] == IntegrationFormat.LIVE_GOOGLE_SHEET
 
     def fmt_export_data(self, export):
         data = super(LiveGoogleSheetListHelper, self).fmt_export_data(export)

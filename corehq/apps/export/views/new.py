@@ -16,6 +16,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.oauth_integrations.models import LiveGoogleSheetSchedule
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
@@ -53,6 +54,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
+from corehq.apps.oauth_integrations.utils import create_spreadsheet, get_export_data, get_token
 from couchexport.models import IntegrationFormat
 
 
@@ -202,6 +204,23 @@ class BaseExportView(BaseProjectDataView):
                 "Feed Type": export.type,
                 "Number of additional nodes": num_nodes,
             })
+
+        if export.export_format == IntegrationFormat.LIVE_GOOGLE_SHEETS:
+            if get_token(request.user) is None:
+                from corehq.apps.export.views.list import LiveGoogleSheetListView
+                messages.error(
+                    request,
+                    format_html(_("We do not have access to your Google Sheet account!"))
+                )
+                return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=[self.domain]))
+
+            export_data = get_export_data(export, self.domain)
+            google_sheet = create_spreadsheet(export_data, request.couch_user)
+            new_schedule = LiveGoogleSheetSchedule(
+                export_config_id=export,
+                google_sheet_id=google_sheet["spreadsheetId"]
+            )
+            new_schedule.save()
 
         export.save()
         messages.success(
