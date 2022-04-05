@@ -5,13 +5,10 @@ import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import dateutil
 from couchdbkit import ResourceNotFound
-from memoized import memoized
-
-from casexml.apps.case.models import CommCareCaseAction
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -19,6 +16,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import get_user_id_from_form
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
@@ -83,8 +81,7 @@ class CaseDisplay:
             if 'actions' in self.case:
                 for action in self.case['actions']:
                     if action['action_type'] == 'create':
-                        action_doc = CommCareCaseAction.wrap(action)
-                        creator_id = action_doc.get_user_id()
+                        creator_id = get_user_id_from_form(action["xform_id"])
                         break
 
         if not creator_id:

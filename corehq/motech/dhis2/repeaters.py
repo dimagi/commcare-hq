@@ -5,7 +5,7 @@ import traceback
 from datetime import datetime, timedelta
 from distutils.version import LooseVersion
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 from requests import RequestException
@@ -19,7 +19,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION, XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
@@ -100,7 +100,7 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -158,8 +158,8 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
 
     def __eq__(self, other):
         return (
-            isinstance(other, self.__class__) and
-            self.get_id == other.get_id
+            isinstance(other, self.__class__)
+            and self.get_id == other.get_id
         )
 
     def __hash__(self):
@@ -167,7 +167,7 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):

@@ -1,9 +1,10 @@
 import datetime
-import logging
 import os
 import sys
 import traceback
+from contextlib import nullcontext
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -199,6 +200,7 @@ class PopulateSQLCommand(BaseCommand):
         )
         parser.add_argument(
             '--log-path',
+            default="-" if settings.UNIT_TESTING else None,
             help="File path to write logs to. If not provided a default will be used."
         )
 
@@ -212,7 +214,7 @@ class PopulateSQLCommand(BaseCommand):
             command_name = self.__class__.__module__.split('.')[-1]
             log_path = f"{command_name}_{date}.log"
 
-        if os.path.exists(log_path):
+        if log_path != "-" and os.path.exists(log_path):
             raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
@@ -239,7 +241,7 @@ class PopulateSQLCommand(BaseCommand):
             self.sql_class().__name__,
         ))
 
-        with open(log_path, 'w') as logfile:
+        with self._open_log(log_path) as logfile:
             for doc in with_progress_bar(docs, length=doc_count, oneline=False):
                 doc_index += 1
                 if not verify_only:
@@ -289,3 +291,8 @@ class PopulateSQLCommand(BaseCommand):
             )
             for doc in iter_docs(self.couch_db(), doc_id_iter):
                 yield doc
+
+    def _open_log(self, log_path):
+        if log_path == "-":
+            return nullcontext(sys.stdout)
+        return open(log_path, 'w')

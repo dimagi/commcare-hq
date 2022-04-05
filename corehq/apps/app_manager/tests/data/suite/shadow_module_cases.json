@@ -503,7 +503,10 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "name": "\/data\/name"
+                "name": {
+                  "question_path": "\/data\/name",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,

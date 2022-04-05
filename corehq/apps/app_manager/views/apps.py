@@ -12,7 +12,7 @@ from django.http import (
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 import urllib3
@@ -20,7 +20,6 @@ from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
-from toggle.shortcuts import set_toggle
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -106,6 +105,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
+from corehq.toggles.shortcuts import set_toggle
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -397,11 +397,6 @@ def get_apps_base_context(request, domain, app):
             and app.is_biometric_enabled
         )
 
-        disable_report_modules = (
-            is_active_upstream_domain(domain)
-            and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
-        )
-
         # ideally this should be loaded on demand
         practice_users = []
         if app.enable_practice_users:
@@ -418,7 +413,6 @@ def get_apps_base_context(request, domain, app):
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
-            'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_module_v1': toggles.V1_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
@@ -1044,7 +1038,7 @@ def pull_upstream_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
         update_linked_app_and_notify_task.delay(domain, app_id, upstream_app_id,
-                                                request.couch_user.get_id, request.couch_user.email)
+                                                request.couch_user.get_id, request.couch_user.get_email())
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:

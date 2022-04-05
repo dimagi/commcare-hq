@@ -1,16 +1,17 @@
 from collections import namedtuple
 from datetime import datetime
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import jsonobject
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.privileges import RELEASE_MANAGEMENT
 
 
 class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
@@ -66,6 +67,10 @@ class DomainLink(models.Model):
     def is_remote(self):
         return bool(self.remote_base_url) or 'http' in self.linked_domain
 
+    def has_full_access(self):
+        return (domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT)
+                and domain_has_privilege(self.linked_domain, RELEASE_MANAGEMENT))
+
     @atomic
     def update_last_pull(self, model, user_id, date=None, model_detail=None):
         self.last_pull = date or datetime.utcnow()
@@ -91,6 +96,11 @@ class DomainLink(models.Model):
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
+        """
+        With the GAing of linked projects in the form of ERM/MRM, this will become an internal method in favor
+        of the link_domains method in linked_domain/views.py to allow for proper validation of domain and user
+        privileges before creating any links
+        """
         existing_links = cls.all_objects.filter(linked_domain=linked_domain)
         active_links_with_other_domains = [
             domain_link for domain_link in existing_links
@@ -140,7 +150,7 @@ class DomainLinkHistory(models.Model):
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
     model = models.CharField(max_length=128, choices=ALL_LINKED_MODELS, null=False)
-    model_detail = JSONField(null=True, blank=True)
+    model_detail = models.JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
     hidden = models.BooleanField(default=False)
 

@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
@@ -72,7 +72,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
+    get_auto_filter_configurations, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     get_uuids_by_instance_id,
@@ -229,8 +229,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_default_relevant':
-                module.search_config.default_relevant if module_offers_search(module) else True,
             'search_additional_relevant':
                 module.search_config.additional_relevant if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
@@ -244,6 +242,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'data_registry': module.search_config.data_registry,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
+            'custom_related_case_property': module.search_config.custom_related_case_property,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -893,6 +892,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_variables',
         'custom_xml',
         'case_tile_configuration',
+        'multi_select',
         'print_template',
         'search_properties',
         'search_default_properties',
@@ -1073,6 +1073,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'short': params.get("short_custom_variables", None),
         'long': params.get("long_custom_variables", None)
     }
+    multi_select = params.get('multi_select', None)
 
     app = get_app(domain, app_id)
 
@@ -1119,6 +1120,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+    if multi_select is not None:
+        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:
@@ -1244,7 +1247,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_again_label=search_again_label,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
-                default_relevant=bool(search_properties.get('search_default_relevant')),
                 additional_relevant=search_properties.get('search_additional_relevant', ''),
                 auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
@@ -1258,6 +1260,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 data_registry=data_registry_slug,
                 data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
+                custom_related_case_property=search_properties.get('custom_related_case_property', ""),
             )
 
     resp = {}
@@ -1447,16 +1450,16 @@ def _init_biometrics_enroll_module(app, lang):
 
     enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
     enroll.actions.open_case = OpenCaseAction(
-        name_path="/data/name",
+        name_update=ConditionalCaseUpdate(question_path="/data/name"),
         condition=FormActionCondition(type='always'),
     )
     enroll.actions.update_case = UpdateCaseAction(
         update={
-            'simprintsId': '/data/simprintsId',
-            'rightIndex': '/data/rightIndex',
-            'rightThumb': '/data/rightThumb',
-            'leftIndex': '/data/leftIndex',
-            'leftThumb': '/data/leftThumb',
+            'simprintsId': ConditionalCaseUpdate(question_path='/data/simprintsId'),
+            'rightIndex': ConditionalCaseUpdate(question_path='/data/rightIndex'),
+            'rightThumb': ConditionalCaseUpdate(question_path='/data/rightThumb'),
+            'leftIndex': ConditionalCaseUpdate(question_path='/data/leftIndex'),
+            'leftThumb': ConditionalCaseUpdate(question_path='/data/leftThumb'),
         },
         condition=FormActionCondition(type='always'),
     )

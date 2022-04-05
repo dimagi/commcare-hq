@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     AdvancedOpenCaseAction,
     Application,
     AutoSelectCase,
+    ConditionalCaseUpdate,
     DetailColumn,
     LoadUpdateAction,
     Module,
@@ -530,7 +531,10 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     def test_case_list_form_basic(self):
         self._add_module_and_form(Module)
 
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+            external_id=None
+        )
         self.form.actions.open_case.condition.type = 'always'
         self.module.case_list_form.form_id = self.form.get_unique_id()
 
@@ -542,7 +546,7 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
         self.form.actions.open_cases.append(AdvancedOpenCaseAction(
             case_type=self.module.case_type,
             case_tag='open_1',
-            name_path="/data/question1"
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
         ))
         self.form.actions.open_cases[0].open_condition.type = 'always'
         self.module.case_list_form.form_id = self.form.get_unique_id()

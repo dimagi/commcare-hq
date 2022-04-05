@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
@@ -66,6 +66,7 @@ from corehq.util.view_utils import absolute_reverse
 from smtplib import SMTPSenderRefused
 
 from .logging import ScheduledReportLogger
+from corehq.util.quickcache import quickcache
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
@@ -111,7 +112,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None,
-                            stale=True, skip=None, limit=None):
+                            stale=True, skip=None, limit=None, include_shared=False):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
@@ -127,7 +128,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if limit is not None:
             kwargs['limit'] = limit
 
-        result = cache_core.cached_view(
+        configs = cache_core.cached_view(
             db,
             "reportconfig/configs_by_domain",
             reduce=False,
@@ -137,7 +138,25 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             wrapper=cls.wrap,
             **kwargs
         )
-        return result
+
+        if include_shared:
+            user_configs_ids = [c._id for c in configs]
+            shared_configs = [c for c in cls.shared_on_domain(domain) if c._id not in user_configs_ids]
+            configs = configs + shared_configs
+
+        return configs
+
+    @classmethod
+    @quickcache(['domain', 'only_id'], timeout=1*60*60)
+    def shared_on_domain(cls, domain, only_id=False):
+        shared_config_ids = {
+            id_ for rn in ReportNotification.by_domain(domain, stale=False)
+            for id_ in rn.config_ids
+        }
+        if only_id:
+            return shared_config_ids
+        else:
+            return {ReportConfig.get(config_id) for config_id in shared_config_ids}
 
     @classmethod
     def default(self):
@@ -155,6 +174,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
+            'report_creator': self.owner.username,
             'report_name': self.report_name,
             'date_description': self.date_description,
             'datespan_filters': self.datespan_filter_choices(
@@ -510,6 +530,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'slug': None,
             }] + localized_datespan_filters
 
+    def is_shared_on_domain(self):
+        config_ids = self.shared_on_domain(self.domain, only_id=True)
+        return self._id in config_ids
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -526,7 +550,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
-    interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    interval = StringProperty(choices=["hourly", "daily", "weekly", "monthly"])
     uuid = StringProperty()
     start_date = DateProperty(default=None)
 
@@ -553,11 +577,23 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         return notification
 
     @classmethod
+    def by_domain(cls, domain, stale=True, **kwargs):
+        if stale:
+            kwargs['stale'] = settings.COUCH_STALE_QUERY
+
+        key = [domain]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
     def by_domain_and_owner(cls, domain, owner_id, stale=True, **kwargs):
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
 
         key = [domain, owner_id]
+        return cls._get_view_by_key(key, **kwargs)
+
+    @classmethod
+    def _get_view_by_key(cls, key, **kwargs):
         db = cls.get_db()
         result = cache_core.cached_view(db, "reportconfig/user_notifications", reduce=False,
                                         include_docs=True, startkey=key, endkey=key + [{}],
@@ -635,6 +671,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     @property
     def day_name(self):
+        if self.interval == 'hourly':
+            return _("Every hour")
         if self.interval == 'weekly':
             return calendar.day_name[self.day]
         return {

@@ -1,15 +1,18 @@
 import logging
-
-from corehq import toggles
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
-
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
 from functools import wraps
 
 from django.http import HttpResponseForbidden
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.auth import BASIC
+from corehq.apps.domain.decorators import (
+    get_multi_auth_decorator,
+    two_factor_exempt,
+)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -46,3 +49,24 @@ def _test_token_valid(origin_token):
         return test_result.decode("UTF-8") == '"valid"'
 
     return False
+
+
+# This decorator should be used for any endpoints used by CommCare mobile
+# It supports basic, session, and apikey auth, but not digest
+# Endpoints with this decorator will not enforce two factor authentication
+def mobile_auth(view_func):
+    return get_multi_auth_decorator(default=BASIC)(
+        two_factor_exempt(
+            require_mobile_access(view_func)
+        )
+    )
+
+
+# This decorator is used only for anonymous web apps and SMS forms
+# Endpoints with this decorator will not enforce two factor authentication
+def mobile_auth_or_formplayer(view_func):
+    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(
+        two_factor_exempt(
+            require_mobile_access(view_func)
+        )
+    )

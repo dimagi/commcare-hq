@@ -18,7 +18,7 @@ from corehq.util.xml_utils import serialize
 from .utils import clean_fixture_field_name, get_index_schema_node
 
 
-def item_lists_by_domain(domain):
+def item_lists_by_domain(domain, namespace_ids=False):
     ret = list()
     for data_type in FixtureDataType.by_domain(domain):
         structure = {
@@ -33,7 +33,7 @@ def item_lists_by_domain(domain):
 
         uri = 'jr://fixture/%s:%s' % (ItemListsProvider.id, data_type.tag)
         ret.append({
-            'id': data_type.tag,
+            'id': f"{ItemListsProvider.id}:{data_type.tag}" if namespace_ids else data_type.tag,
             'uri': uri,
             'path': "/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
@@ -53,7 +53,7 @@ def item_lists_by_domain(domain):
 def item_lists_by_app(app):
     LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
     REPORT_FIXTURE = 'report_fixture'
-    lookup_lists = item_lists_by_domain(app.domain).copy()
+    lookup_lists = item_lists_by_domain(app.domain, namespace_ids=True).copy()
     for item in lookup_lists:
         item['fixture_type'] = LOOKUP_TABLE_FIXTURE
 

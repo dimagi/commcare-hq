@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -19,8 +19,8 @@ from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_hqadmin_base_context,
 )
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 
 
 @require_superuser_or_contractor
@@ -32,7 +32,7 @@ def mass_email(request):
             html = form.cleaned_data['email_body_html']
             text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
-            send_mass_emails.delay(request.couch_user.username, real_email, subject, html, text)
+            send_mass_emails.delay(request.couch_user.get_email(), real_email, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong, see below.')
@@ -47,7 +47,7 @@ def mass_email(request):
 
 class CallcenterUCRCheck(BaseAdminSectionView):
     urlname = 'callcenter_ucr_check'
-    page_title = ugettext_lazy("Check Callcenter UCR tables")
+    page_title = gettext_lazy("Check Callcenter UCR tables")
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
@@ -80,7 +80,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
 
 class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
     urlname = 'reprocess_messaging_case_updates'
-    page_title = ugettext_lazy("Reprocess Messaging Case Updates")
+    page_title = gettext_lazy("Reprocess Messaging Case Updates")
     template_name = 'hqadmin/messaging_case_updates.html'
 
     @method_decorator(require_superuser)
@@ -104,7 +104,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
     def get_case(self, case_id):
         try:
-            return CaseAccessorSQL.get_case(case_id)
+            return CommCareCase.objects.get_case(case_id)
         except CaseNotFound:
             return None
 

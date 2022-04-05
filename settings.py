@@ -179,6 +179,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+MINIMUM_ZXCVBN_SCORE = 2
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -200,6 +201,7 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
     'django.contrib.admin',
@@ -212,7 +214,6 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -230,7 +231,10 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -303,6 +307,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
+    'corehq.apps.oauth_integrations',
     'corehq.messaging',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
@@ -346,11 +351,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
-    'fluff',
-    'fluff.fluff_filter',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -362,6 +363,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
     'corehq.blobs',
@@ -370,8 +372,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.ucla',
@@ -602,6 +602,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
+    "malt_generation_queue": 6 * 60 * 60,
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
@@ -755,7 +756,11 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
-    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'COVID_US_SET_ACTIVITY_COMPLETE_TODAY':
+        'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
+    'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
+        'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
 }
 
 ####### auditcare parameters #######
@@ -832,6 +837,9 @@ LOCAL_REPEATER_CLASSES = []
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
+
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
 
@@ -867,6 +875,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -1090,7 +1099,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.nutrition_project.commcare_extensions"
+    "custom.nutrition_project.commcare_extensions",
+    "custom.samveg.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1216,6 +1226,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
+                'corehq.util.context_processors.status_page',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1234,7 +1245,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s'
         },
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
@@ -1336,10 +1347,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'notify_exception': {
-            'level': 'ERROR',
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -1391,7 +1398,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1452,7 +1459,7 @@ LOGGING = {
         },
         'commcare_auth': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         }
     }
@@ -1524,7 +1531,6 @@ COUCHDB_APPS = [
     'dhis2',
     'ext',
     'facilities',
-    'fluff_filter',
     'hqcase',
     'hqmedia',
     'case_importer',
@@ -1550,19 +1556,13 @@ COUCHDB_APPS = [
     'registration',
     'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
-    'pact',
     'accounting',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
-    ('fluff', 'fluff-bihar'),
-    ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1851,9 +1851,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
-    'fluff': [
-        'custom.m4change.models.M4ChangeFormFluffPillow',
-    ],
     'experimental': [
         {
             'name': 'CaseSearchToElasticsearchPillow',
@@ -1923,7 +1920,6 @@ COUCH_CACHE_BACKENDS = [
 # Custom fully indexed domains for ReportCase index/pillowtop
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
     'commtrack-public-demo',
     'crs-remind',
 ]
@@ -1934,7 +1930,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 # Adding a domain will not automatically index that domain's existing forms
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
-    'pact',
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -1950,7 +1945,6 @@ CUSTOM_MODULES = [
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
@@ -2087,3 +2081,14 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
+# Scopes to give read/write access to the code that generates the spreadsheets
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14

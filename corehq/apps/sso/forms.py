@@ -6,8 +6,8 @@ from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -59,19 +59,19 @@ class CreateIdentityProviderForm(forms.Form):
     """This form initializes the essential fields of an IdentityProvider
     """
     owner = forms.IntegerField(
-        label=ugettext_lazy("Billing Account Owner"),
+        label=gettext_lazy("Billing Account Owner"),
         widget=forms.Select(choices=[]),
     )
     name = forms.CharField(
-        label=ugettext_lazy("Public Name"),
-        help_text=ugettext_lazy(
+        label=gettext_lazy("Public Name"),
+        help_text=gettext_lazy(
             "Users will see this name when logging in."
         ),
         max_length=128,
     )
     slug = forms.CharField(
-        label=ugettext_lazy("Slug for SP Endpoints"),
-        help_text=ugettext_lazy(
+        label=gettext_lazy("Slug for SP Endpoints"),
+        help_text=gettext_lazy(
             "This will be the unique slug for this IdP's SAML2 urls. "
         ),
         max_length=256,
@@ -95,7 +95,7 @@ class CreateIdentityProviderForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Create Identity Provider"),
+                    gettext_lazy("Create Identity Provider"),
                     type="submit",
                     css_class="btn btn-primary",
                 )
@@ -130,27 +130,27 @@ class ServiceProviderDetailsForm(forms.Form):
     required service provider information that's needed to link with an
     identity provider."""
     sp_entity_id = forms.CharField(
-        label=ugettext_lazy("Identifier (Entity ID)"),
+        label=gettext_lazy("Identifier (Entity ID)"),
         required=False,
     )
     sp_acs_url = forms.CharField(
-        label=ugettext_lazy("Reply URL (Assertion Consumer Service)"),
+        label=gettext_lazy("Reply URL (Assertion Consumer Service)"),
         required=False,
     )
     sp_sign_on_url = forms.CharField(
-        label=ugettext_lazy("Sign on URL"),
+        label=gettext_lazy("Sign on URL"),
         required=False,
     )
     sp_public_cert = forms.CharField(
-        label=ugettext_lazy("Public x509 Cert"),
+        label=gettext_lazy("Public x509 Cert"),
         required=False,
     )
     sp_public_cert_expiration = forms.CharField(
-        label=ugettext_lazy("Certificate Expires On"),
+        label=gettext_lazy("Certificate Expires On"),
         required=False,
     )
     sp_rollover_cert = forms.CharField(
-        label=ugettext_lazy("Rollover x509 Cert"),
+        label=gettext_lazy("Rollover x509 Cert"),
         required=False,
     )
 
@@ -240,42 +240,42 @@ class EditIdentityProviderAdminForm(forms.Form):
     configuration
     """
     owner = forms.CharField(
-        label=ugettext_lazy("Billing Account Owner"),
+        label=gettext_lazy("Billing Account Owner"),
         required=False,
     )
     slug = forms.CharField(
-        label=ugettext_lazy("Slug"),
+        label=gettext_lazy("Slug"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "CAUTION: Changing this value will alter the SAML endpoint URLs "
             "below and affect active SSO setups for the client!"
         ),
     )
     name = forms.CharField(
-        label=ugettext_lazy("Public Name"),
+        label=gettext_lazy("Public Name"),
         max_length=128,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This text is what users will see when logging in with SSO."
         )
     )
     is_editable = forms.BooleanField(
-        label=ugettext_lazy("Enterprise Console"),
+        label=gettext_lazy("Enterprise Console"),
         required=False,
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Allow Enterprise Admins to edit SSO Enterprise Settings"
             ),
         ),
     )
     is_active = forms.BooleanField(
-        label=ugettext_lazy("Active Status"),
+        label=gettext_lazy("Active Status"),
         required=False,
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Single Sign On is active"
             ),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "Force users with matching email domains to log in with SSO."
         ),
     )
@@ -347,7 +347,7 @@ class EditIdentityProviderAdminForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update Configuration"),
+                    gettext_lazy("Update Configuration"),
                     type="submit",
                     css_class="btn btn-primary",
                 )
@@ -408,55 +408,55 @@ class SSOEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
     name = forms.CharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=False,
     )
     is_active = forms.BooleanField(
-        label=ugettext_lazy("Status"),
+        label=gettext_lazy("Status"),
         required=False,
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Single Sign On is active"
             ),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will also force users with matching linked email domains "
             "to log in with SSO."
         ),
     )
     linked_email_domains = forms.CharField(
-        label=ugettext_lazy("Linked Email Domains"),
+        label=gettext_lazy("Linked Email Domains"),
         required=False,
     )
     entity_id = forms.CharField(
-        label=ugettext_lazy("Azure AD Identifier"),
+        label=gettext_lazy("Azure AD Identifier"),
         required=False,
     )
     login_url = forms.CharField(
-        label=ugettext_lazy("Login URL"),
+        label=gettext_lazy("Login URL"),
         required=False,
     )
     logout_url = forms.CharField(
-        label=ugettext_lazy("Logout URL"),
+        label=gettext_lazy("Logout URL"),
         required=False,
     )
     idp_cert_public = forms.FileField(
-        label=ugettext_lazy("Upload Certificate (Base64)"),
+        label=gettext_lazy("Upload Certificate (Base64)"),
         required=False,
     )
     download_idp_cert_public = forms.CharField(
-        label=ugettext_lazy("Certificate (Base64)"),
+        label=gettext_lazy("Certificate (Base64)"),
         required=False,
     )
     date_idp_cert_expiration = forms.CharField(
-        label=ugettext_lazy("Certificate Expires On"),
+        label=gettext_lazy("Certificate Expires On"),
         required=False,
     )
     require_encrypted_assertions = forms.BooleanField(
-        label=ugettext_lazy("Token Encryption"),
+        label=gettext_lazy("Token Encryption"),
         required=False,
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Use Token Encryption"
             ),
         ),
@@ -555,7 +555,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update Configuration"),
+                    gettext_lazy("Update Configuration"),
                     type="submit",
                     css_class="btn btn-primary",
                 )

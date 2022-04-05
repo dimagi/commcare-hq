@@ -23,7 +23,7 @@ Example case graphs with outcomes:
 """
 import logging
 from collections import defaultdict
-from functools import wraps
+from functools import partial, wraps
 from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
@@ -34,7 +34,7 @@ from casexml.apps.phone.data_providers.case.load_testing import (
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_histogram, metrics_counter
@@ -63,39 +63,39 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
     """
 
     debug = logging.getLogger(__name__).debug
-    accessor = CaseAccessors(restore_state.domain)
+    domain = restore_state.domain
     owner_ids = list(restore_state.owner_ids)
 
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
-            owned_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
+            owned_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+                domain, owner_ids, closed=False)
             debug("owned: %r", owned_ids)
 
-        live_ids, indices = get_live_case_ids_and_indices(restore_state.domain, owned_ids, timing_context)
+        live_ids, indices = get_live_case_ids_and_indices(domain, owned_ids, timing_context)
 
         if restore_state.last_sync_log:
             with timing_context("discard_already_synced_cases"):
                 debug('last sync: %s', restore_state.last_sync_log._id)
-                sync_ids = discard_already_synced_cases(
-                    live_ids, restore_state, accessor)
+                sync_ids = discard_already_synced_cases(live_ids, restore_state)
         else:
             sync_ids = live_ids
         restore_state.current_sync_log.case_ids_on_phone = live_ids
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
-            iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
+            iaccessor = PrefetchIndexCaseAccessor(domain, indices)
             metrics_histogram(
                 'commcare.restore.case_load',
                 len(sync_ids),
                 'cases',
                 RESTORE_CASE_LOAD_BUCKETS,
                 tags={
-                    'domain': accessor.domain,
+                    'domain': domain,
                     'restore_type': 'incremental' if restore_state.last_sync_log else 'fresh'
                 }
             )
-            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': accessor.domain})
+            metrics_counter('commcare.restore.case_load.count', len(sync_ids), {'domain': domain})
             compile_response(
                 timing_context,
                 restore_state,
@@ -219,7 +219,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         """Update open_ids and deleted_ids with related case_ids
 
         TODO store referenced case (parent) deleted and closed status in
-        CommCareCaseIndexSQL to reduce number of related indices fetched
+        CommCareCaseIndex to reduce number of related indices fetched
         and avoid this extra query per related query.
         """
         case_ids = {case_id
@@ -233,7 +233,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             if index.relationship == 'extension'
         }
         check_cases = list(set(case_ids) - open_cases)
-        rows = accessor.get_closed_and_deleted_ids(check_cases)
+        rows = CommCareCase.objects.get_closed_and_deleted_ids(domain, check_cases)
         for case_id, closed, deleted in rows:
             if deleted:
                 deleted_ids.add(case_id)
@@ -243,7 +243,6 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
-    accessor = CaseAccessors(domain)
 
     # case graph data structures
     live_ids = set()
@@ -257,10 +256,11 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     next_ids = all_ids = set(owned_ids)
     owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
     open_ids = set(owned_ids)
+    get_related_indices = partial(CommCareCaseIndex.objects.get_related_indices, domain)
     while next_ids:
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
-            related = accessor.get_related_indices(list(next_ids), exclude)
+            related = get_related_indices(list(next_ids), exclude)
             if not related:
                 break
             update_open_and_deleted_ids(related)
@@ -290,7 +290,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     return live_ids, indices
 
 
-def discard_already_synced_cases(live_ids, restore_state, accessor):
+def discard_already_synced_cases(live_ids, restore_state):
     debug = logging.getLogger(__name__).debug
     sync_log = restore_state.last_sync_log
     phone_ids = sync_log.case_ids_on_phone
@@ -298,18 +298,18 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     if phone_ids:
         sync_ids = live_ids - phone_ids  # sync all live cases not on phone
         # also sync cases on phone that have been modified since last sync
-        sync_ids.update(accessor.get_modified_case_ids(list(phone_ids), sync_log))
+        sync_ids.update(CommCareCase.objects.get_modified_case_ids(
+            restore_state.domain, list(phone_ids), sync_log))
     else:
         sync_ids = live_ids
     debug('sync_ids: %r', sync_ids)
     return sync_ids
 
 
-class PrefetchIndexCaseAccessor(object):
+class PrefetchIndexCaseAccessor:
 
-    def __init__(self, accessor, indices):
-        self.domain = accessor.domain
-        self.accessor = accessor
+    def __init__(self, domain, indices):
+        self.domain = domain
         self.indices = indices
 
     def get_cases(self, case_ids, **kw):
@@ -317,7 +317,7 @@ class PrefetchIndexCaseAccessor(object):
         kw['prefetched_indices'] = [ix
             for case_id in case_ids
             for ix in self.indices[case_id]]
-        return self.accessor.get_cases(case_ids, **kw)
+        return CommCareCase.objects.get_cases(case_ids, self.domain, **kw)
 
 
 def batch_cases(accessor, case_ids):
@@ -332,7 +332,7 @@ def batch_cases(accessor, case_ids):
         if not next_ids:
             break
         track_load(len(next_ids))
-        yield accessor.get_cases(next_ids)
+        yield CommCareCase.objects.get_cases(next_ids, accessor.domain)
 
 
 def init_progress(async_task, total):

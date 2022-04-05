@@ -65,7 +65,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
                         expression: self.expressionText(),
                     },
                     success: function (data) {
-                        self.result(JSON.stringify(data.result));
+                        self.result(JSON.stringify(data.result, null, 4));
                         self.updateUrl();
                         self.isEvaluating(false);
                     },

@@ -9,9 +9,9 @@ from django.http import QueryDict
 from django.middleware.csrf import get_token
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
-from captcha.fields import CaptchaField
+from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
@@ -29,14 +29,15 @@ LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
-    username = forms.EmailField(label=_("Email Address"), max_length=75,
+    username = forms.EmailField(label=_("Email Address"),
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
-        captcha = CaptchaField(label=_("Type the letters in the box"))
+        captcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._fix_username_max_length()
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
@@ -47,6 +48,14 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                 'class': 'form-control',
                 'placeholder': _("Enter password"),
             })
+
+    def _fix_username_max_length(self):
+        # TODO remove when Django 2 is no longer supported
+        # Django overwrites username max length with
+        # UserModel._meta.get_field(UserModel.USERNAME_FIELD).max_length
+        # This was done incompletely prior to Django 3.1
+        # https://github.com/django/django/commit/6c9778a58e4f680db180d4cc9dc5639d2ec1b40c
+        self.fields['username'].widget.attrs["maxlength"] = self.fields['username'].max_length
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
@@ -82,7 +91,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
-    username = forms.CharField(label=_("Username"), max_length=75,
+    username = forms.CharField(label=_("Username"),
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 

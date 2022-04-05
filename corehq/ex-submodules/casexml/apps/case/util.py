@@ -14,7 +14,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
 from casexml.apps.phone.xml import get_case_element
 from corehq.util.soft_assert import soft_assert
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
@@ -214,7 +214,7 @@ def get_case_history(case):
     from corehq.apps.reports.display import xmlns_to_name
 
     changes = defaultdict(dict)
-    for form in FormAccessors(case.domain).get_forms(case.xform_ids):
+    for form in XFormInstance.objects.get_forms(case.xform_ids, case.domain):
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:

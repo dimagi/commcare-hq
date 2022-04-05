@@ -1,6 +1,7 @@
 import collections
 import hashlib
 
+from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
@@ -9,11 +10,13 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
+    DataSourceConfigurationNotFoundError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
+from dimagi.utils.couch.undo import is_deleted, remove_deleted_doc_type_suffix
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -67,7 +70,14 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
-    return _can_edit_report(request, report) and not is_linked_report(report.spec)
+    from corehq.apps.userreports.models import is_data_registry_report
+    return (
+        _can_edit_report(request, report)
+        and not is_linked_report(report)
+        and (
+            not is_data_registry_report(report)
+            or toggles.DATA_REGISTRY_UCR.enabled_for_request(request)
+        ))
 
 
 def can_delete_report(request, report):
@@ -85,7 +95,7 @@ def _can_edit_report(request, report):
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
     add_on_priv = has_report_builder_add_on_privilege(request)
-    created_by_builder = report.spec.report_meta.created_by_builder
+    created_by_builder = report.report_meta.created_by_builder
 
     if created_by_builder:
         return report_builder_toggle or report_builder_beta_toggle or add_on_priv
@@ -272,3 +282,59 @@ def get_static_report_mapping(from_domain, to_domain):
 
 def add_tabbed_text(text):
     return '\t' + '\n\t'.join(text.splitlines(False))
+
+
+def get_report_config_or_not_found(domain, config_id):
+    from corehq.apps.userreports.models import ReportConfiguration
+    try:
+        doc = ReportConfiguration.get_db().get(config_id)
+        config = wrap_report_config_by_type(doc)
+    except (ResourceNotFound, KeyError, ReportConfigurationNotFoundError):
+        raise DocumentNotFound()
+
+    if config.domain != domain:
+        raise DocumentNotFound()
+
+    return config
+
+
+def get_ucr_datasource_config_by_id(indicator_config_id, allow_deleted=False):
+    from corehq.apps.userreports.models import (
+        id_is_static,
+        StaticDataSourceConfiguration,
+        DataSourceConfiguration,
+    )
+    if id_is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        doc = DataSourceConfiguration.get_db().get(indicator_config_id)
+        return _wrap_data_source_by_doc_type(doc, allow_deleted)
+
+
+def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
+    from corehq.apps.userreports.models import (
+        DataSourceConfiguration,
+        RegistryDataSourceConfiguration,
+    )
+    if is_deleted(doc) and not allow_deleted:
+        raise DataSourceConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(doc["doc_type"])
+    return {
+        "DataSourceConfiguration": DataSourceConfiguration,
+        "RegistryDataSourceConfiguration": RegistryDataSourceConfiguration,
+    }[doc_type].wrap(doc)
+
+
+def wrap_report_config_by_type(config):
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    try:
+        return {
+            "ReportConfiguration": ReportConfiguration,
+            "RegistryReportConfiguration": RegistryReportConfiguration,
+        }[config["doc_type"]].wrap(config)
+    except KeyError:
+        raise ReportConfigurationNotFoundError()

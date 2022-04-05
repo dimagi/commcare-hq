@@ -16,7 +16,7 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     MissingFormXml,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -56,13 +56,14 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
 
     returns the UID of the resulting form.
     """
+    form_extras = form_extras or {}
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, str):
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns or SYSTEM_FORM_XMLNS,
+        'xmlns': xmlns or form_extras.pop('xmlns', SYSTEM_FORM_XMLNS),
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,
@@ -70,7 +71,6 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         'user_id': user_id or "",
         'device_id': device_id or "",
     })
-    form_extras = form_extras or {}
 
     result = submit_form_locally(
         instance=form_xml,
@@ -84,18 +84,15 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
 
 
 def get_case_by_identifier(domain, identifier):
-
-    case_accessors = CaseAccessors(domain)
-
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
         result = CaseES().domain(domain).filter(
             filters.term(identifier_type, identifier)).get_ids()
         if result:
-            return case_accessors.get_case(result[0])
+            return CommCareCase.objects.get_case(result[0], domain)
     # Try by case id
     try:
-        case_by_id = case_accessors.get_case(identifier)
+        case_by_id = CommCareCase.objects.get_case(identifier, domain)
         if case_by_id.domain == domain:
             return case_by_id
     except (CaseNotFound, KeyError):

@@ -21,10 +21,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -169,22 +166,20 @@ def _terminate_subscriptions(domain_name):
 
 def _delete_all_cases(domain_name):
     logger.info('Deleting cases...')
-    case_accessor = CaseAccessors(domain_name)
-    case_ids = case_accessor.get_case_ids_in_domain()
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
     for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
-        case_accessor.soft_delete_cases(list(case_id_chunk))
+        CommCareCase.objects.soft_delete_cases(domain_name, list(case_id_chunk))
     logger.info('Deleting cases complete.')
 
 
 def _delete_all_forms(domain_name):
     logger.info('Deleting forms...')
-    form_accessor = FormAccessors(domain_name)
     form_ids = list(itertools.chain(*[
-        form_accessor.get_all_form_ids_in_domain(doc_type=doc_type)
+        XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
         for doc_type in doc_type_to_state
     ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        form_accessor.soft_delete_forms(list(form_id_chunk))
+        XFormInstance.objects.soft_delete_forms(domain_name, list(form_id_chunk))
     logger.info('Deleting forms complete.')
 
 
@@ -238,7 +233,7 @@ def _delete_demo_user_restores(domain_name):
         users = get_all_commcare_users_by_domain(domain_name)
 
     for user in users:
-        if user.demo_restore_id:
+        if getattr(user, "demo_restore_id", None):
             try:
                 DemoUserRestore.objects.get(id=user.demo_restore_id).delete()
             except DemoUserRestore.DoesNotExist:
@@ -257,6 +252,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
+    ModelDeletion('domain', 'AllowedUCRExpressionSettings', 'domain'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
@@ -275,8 +271,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
-    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCaseSQL']),
-    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstanceSQL']),
+    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCase']),
+    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstance']),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
         'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
     ]),
@@ -302,8 +298,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
-        'CaseProperty', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
+        'CaseProperty', 'CasePropertyAllowedValue', 'fhir.FHIRResourceType', 'fhir.FHIRResourceProperty',
     ]),
+    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
@@ -328,7 +325,6 @@ DOMAIN_DELETE_OPERATIONS = [
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
-    ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'TimedEvent', 'schedule__domain'),
     ModelDeletion('scheduling', 'RandomTimedEvent', 'schedule__domain'),
@@ -376,6 +372,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'ReportComparisonException', 'domain'),
     ModelDeletion('userreports', 'ReportComparisonTiming', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
+    ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'UserRole', 'domain', [

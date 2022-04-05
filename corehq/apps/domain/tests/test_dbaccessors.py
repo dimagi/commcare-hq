@@ -4,10 +4,9 @@ import uuid
 
 from django.test import TestCase
 
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.casegroups.models import CommCareCaseGroup
 from dimagi.utils.couch.database import get_db
 
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.dbaccessors import (
     deleted_domain_exists,
     domain_exists,
@@ -22,6 +21,7 @@ from corehq.apps.domain.dbaccessors import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
 
 
 class DBAccessorsTest(TestCase):
@@ -41,15 +41,15 @@ class DBAccessorsTest(TestCase):
         cls.project.delete()
 
     def test_get_doc_count_in_domain_by_class(self):
-        case = CommCareCase(domain=self.domain, opened_on=datetime.datetime(2000, 1, 1))
-        case.save()
-        self.addCleanup(case.delete)
-        case2 = CommCareCase(domain=self.domain, opened_on=datetime.datetime(2001, 1, 1))
-        case2.save()
-        self.addCleanup(case2.delete)
+        user = CommCareUser(username="user", domain=self.domain)
+        user.save()
+        self.addCleanup(user.delete, self.domain, None)
+        user2 = CommCareUser(username="user2", domain=self.domain)
+        user2.save()
+        self.addCleanup(user2.delete, self.domain, None)
 
         get = functools.partial(
-            get_doc_count_in_domain_by_class, self.domain, CommCareCase)
+            get_doc_count_in_domain_by_class, self.domain, CommCareUser)
 
         self.assertEqual(get(), 2)
 

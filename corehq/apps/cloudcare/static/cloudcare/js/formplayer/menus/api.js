@@ -124,7 +124,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
-                    "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
@@ -153,6 +152,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
+
+        var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
+            progressMessage: gettext("Switching project spaces..."),
+        });
+        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
         var user = FormplayerFrontend.getChannel().request('currentUser');
         if (options.forceLoginAs && !user.restoreAs) {

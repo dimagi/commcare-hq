@@ -5,9 +5,9 @@ from django.utils.http import urlencode
 
 from corehq.apps.api.util import make_date_filter
 from corehq.apps.case_search.filter_dsl import (
-    CaseFilterError,
     build_filter_from_xpath,
 )
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
 from dimagi.utils.parsing import FALSE_STRINGS

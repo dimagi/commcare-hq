@@ -8,13 +8,11 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-
-from casexml.apps.case.models import CommCareCase
 
 from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -81,8 +79,7 @@ from corehq.apps.users.views.mobile import (
 )
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
 from corehq.messaging.scheduling.models import (
@@ -105,12 +102,12 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    name = ugettext_noop('SMS Usage')
+    name = gettext_noop('SMS Usage')
     slug = 'messages'
     fields = ['corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    special_notice = ugettext_noop(
+    special_notice = gettext_noop(
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
@@ -244,10 +241,8 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    obj = CaseAccessors(domain).get_case(recipient_id)
+                    obj = CommCareCase.objects.get_case(recipient_id, domain)
                     if isinstance(obj, CommCareCase):
-                        couch_object = obj
-                    elif isinstance(obj, CommCareCaseSQL):
                         sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
                     couch_object = CouchUser.get_by_user_id(recipient_id)
@@ -305,7 +300,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     So, to have this report abbreviate the phone number to only the first four digits for a certain domain, add
     the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number_domains"]
     """
-    name = ugettext_noop('Message Log')
+    name = gettext_noop('Message Log')
     slug = 'message_log'
     ajax_pagination = True
 
@@ -628,7 +623,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
-    name = ugettext_noop('Messaging History')
+    name = gettext_noop('Messaging History')
     slug = 'messaging_events'
     fields = [
         DatespanFilter,
@@ -845,9 +840,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
 
 class MessageEventDetailReport(BaseMessagingEventReport):
-    name = ugettext_noop('Message Event Detail')
+    name = gettext_noop('Message Event Detail')
     slug = 'message_event_detail'
-    description = ugettext_noop('Displays the detail for a given messaging event.')
+    description = gettext_noop('Displays the detail for a given messaging event.')
     emailable = False
     exportable = False
     hide_filters = True
@@ -1002,9 +997,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
 
 class SurveyDetailReport(BaseMessagingEventReport):
-    name = ugettext_noop('Survey Detail')
+    name = gettext_noop('Survey Detail')
     slug = 'survey_detail'
-    description = ugettext_noop('Displays the detail for a given messaging survey.')
+    description = gettext_noop('Displays the detail for a given messaging survey.')
     emailable = False
     exportable = False
     hide_filters = True
@@ -1073,7 +1068,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
 
 class SMSOptOutReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
 
-    name = ugettext_noop("SMS Opt Out Report")
+    name = gettext_noop("SMS Opt Out Report")
     slug = 'sms_opt_out'
     ajax_pagination = True
     exportable = True
@@ -1148,7 +1143,7 @@ class SMSOptOutReport(ProjectReport, ProjectReportParametersMixin, GenericTabula
 
 
 class PhoneNumberReport(BaseCommConnectLogReport):
-    name = ugettext_noop("Phone Number Report")
+    name = gettext_noop("Phone Number Report")
     slug = 'phone_number_report'
     ajax_pagination = True
     exportable = True
@@ -1340,7 +1335,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
 
 class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
-    name = ugettext_lazy('Scheduled Messaging Events')
+    name = gettext_lazy('Scheduled Messaging Events')
     slug = 'scheduled_messaging_events'
     fields = [
         ScheduleInstanceFilter,
@@ -1362,6 +1357,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             DataTablesColumn(_("Scheduling Configuration")),
             DataTablesColumn(_("Recipient")),
             DataTablesColumn(_("Triggering Case")),
+            DataTablesColumn(_("Attempt Number"))
         )
 
     @property
@@ -1563,6 +1559,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_broadcast_display(schedule_instance),
                 self.get_recipient_display(schedule_instance.recipient),
                 '-',
+                schedule_instance.attempts + 1
             ]
         elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
             return [
@@ -1570,6 +1567,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 self.get_rule_display(schedule_instance.rule_id),
                 self.get_recipient_display(schedule_instance.recipient),
                 self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
+                schedule_instance.attempts + 1
             ]
         else:
             raise TypeError("Unexpected type: %s" % type(schedule_instance))

@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
@@ -120,7 +120,7 @@ class TestProcessRepeater(TestCase):
         # payload
         with patch('corehq.motech.repeaters.models.log_repeater_error_in_datadog'), \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'):
-            process_repeater(self.sql_repeater)
+            process_repeater(self.sql_repeater.id)
 
         # All records were tried and cancelled
         records = list(self.sql_repeater.repeat_records.all())
@@ -138,7 +138,7 @@ class TestProcessRepeater(TestCase):
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
             post_mock.return_value = Mock(status_code=400, reason='Bad request')
-            process_repeater(self.sql_repeater)
+            process_repeater(self.sql_repeater.id)
 
         # Only the first record was attempted, the rest are still pending
         states = [r.state for r in self.sql_repeater.repeat_records.all()]
@@ -157,4 +157,4 @@ def form_context(form_ids):
     try:
         yield
     finally:
-        FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)

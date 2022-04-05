@@ -397,6 +397,24 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.isMulti = true;
         self.hideLabel = options.hideLabel;
 
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (answer === Const.NO_ANSWER) {
+                    return [];
+                }
+
+                let choices = this.choices();
+                return answer.map(index => choices[index - 1]);
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                // answer is based on a 1 indexed index of the choices
+                let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
+                self.onPreProcess.call(this, answer);
+            },
+        });
+
         self.colStyleIfHideLabel = ko.computed(function () {
             return self.hideLabel ? self.getColStyle(self.choices().length) : null;
         });
@@ -425,15 +443,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return "";
         };
 
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    id: idx + 1,
-                };
-            });
-        });
-
         self.afterRender = function () {
             select2ify(self, {});
         };
@@ -451,26 +460,33 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'select';
         self.isMulti = false;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (!answer) {
+                    return Const.NO_ANSWER;
+                }
+
+                let choices = this.choices();
+                return choices[answer - 1];
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.indexOf(choices, value);
+                // answer is based on a 1 indexed index of the choices
+                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
+            },
+        });
+
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
-        };
-        self.isValid = function () {
-            return true;
         };
 
         self.enableReceiver(question, options);
     }
     SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-    SingleSelectEntry.prototype.onPreProcess = function (newValue) {
-        if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
-                this.answer(newValue);
-            } else {
-                this.answer(+newValue);
-            }
-        }
-    };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         // Iterate through choices and select the one that matches the message[field]
         var self = this;
@@ -609,24 +625,45 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         query = query.toLowerCase();
         var haystack = option.text.toLowerCase();
 
-        var match;
+        var match,
+            wordsInQuery = query.split(/\s+/),
+            wordsInChoice = haystack.split(/\s+/);
         if (matchType === Const.COMBOBOX_MULTIWORD) {
             // Multiword filter, matches any choice that contains all of the words in the query
             //
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
-            var wordsInQuery = query.split(' ');
-            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
             });
         } else if (matchType === Const.COMBOBOX_FUZZY) {
+            var isFuzzyMatch = function (haystack, query, distanceThreshold) {
+                return (
+                    haystack === query ||
+                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
+                );
+            };
+
+            // First handle prefixes, which will fail fuzzy match if they're too short
+            var distanceThreshold = 2;
+            if (haystack.length > query.length + distanceThreshold) {
+                haystack = haystack.substring(0, query.length + distanceThreshold);
+            }
+
             // Fuzzy filter, matches if query is "close" to answer
-            match = (
-                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
-                haystack === query
-            );
+            match = isFuzzyMatch(haystack, query, distanceThreshold);
+
+            // For multiword strings, return true if any word in the query fuzzy matches any word in the target
+            if (!match) {
+                if (wordsInChoice.length > 1 || wordsInQuery.length > 1) {
+                    _.each(wordsInChoice, function (choiceWord) {
+                        _.each(wordsInQuery, function (queryWord) {
+                            match = match || isFuzzyMatch(choiceWord, queryWord, distanceThreshold);
+                        });
+                    });
+                }
+            }
         }
 
         // If we've already matched, return true

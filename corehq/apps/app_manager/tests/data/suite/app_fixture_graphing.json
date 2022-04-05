@@ -286,7 +286,10 @@
                   "update_case":{
                      "doc_type":"UpdateCaseAction",
                      "update":{
-                        "name":"/data/question1"
+                        "name": {
+                          "question_path": "/data/question1",
+                          "update_mode": "always"
+                        }
                      },
                      "condition":{
                         "answer":null,

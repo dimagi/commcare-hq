@@ -15,8 +15,8 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -91,7 +91,7 @@ class XFormPillowTest(TestCase):
 
         # soft delete the form
         with self.process_form_changes:
-            FormAccessors(self.domain).soft_delete_forms([form.form_id])
+            XFormInstance.objects.soft_delete_forms(self.domain, [form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 
         # ensure not there anymore

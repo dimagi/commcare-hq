@@ -17,7 +17,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.progress import (
@@ -193,7 +193,7 @@ class CaseHelper:
         if (es_modified_on, es_domain) != (modified_on, domain):
             # if the doc is newer in ES than sql, refetch from sql to get newest
             if es_modified_on is not None and es_modified_on > modified_on:
-                refreshed = CaseAccessors(domain).get_case(case_id)
+                refreshed = CommCareCase.objects.get_case(case_id, domain)
                 if refreshed.server_modified_on != modified_on:
                     return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                                    refreshed.domain, es_modified_on_by_ids,
@@ -205,7 +205,7 @@ class CaseHelper:
             if (es_modified_on, es_domain) != (modified_on, domain):
                 # if the doc is newer in ES than sql, refetch from sql to get newest
                 if es_modified_on is not None and es_modified_on > modified_on:
-                    refreshed = CaseAccessors(domain).get_case(case_id)
+                    refreshed = CommCareCase.objects.get_case(case_id, domain)
                     if refreshed.server_modified_on != modified_on:
                         return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                                        refreshed.domain, es_modified_on_by_ids,
@@ -222,7 +222,7 @@ class CaseHelper:
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod
@@ -233,7 +233,7 @@ class CaseHelper:
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod

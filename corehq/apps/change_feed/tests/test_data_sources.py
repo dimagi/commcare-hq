@@ -15,16 +15,14 @@ from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import LocationDocumentStore
 from corehq.apps.sms.document_stores import SMSDocumentStore
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     DocStoreLoadTracker,
     FormDocumentStore,
     LedgerV2DocumentStore,
 )
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
@@ -101,8 +99,8 @@ def case_form_data():
     try:
         yield form_ids, case_ids
     finally:
-        FormAccessorSQL.hard_delete_forms('domain', form_ids)
-        CaseAccessorSQL.hard_delete_cases('domain', case_ids)
+        XFormInstance.objects.hard_delete_forms('domain', form_ids)
+        CommCareCase.objects.hard_delete_cases('domain', case_ids)
 
 
 @contextmanager

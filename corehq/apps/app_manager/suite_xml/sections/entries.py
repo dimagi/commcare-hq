@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -17,6 +17,7 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
+    get_ordered_case_types,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
@@ -37,6 +38,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -125,13 +127,10 @@ class EntriesHelper(object):
 
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
-        if additional_types:
-            case_type_filter = " or ".join([
-                "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in set(additional_types).union({case_type})
-            ])
-        else:
-            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        case_type_filter = " or ".join([
+            "@case_type='{case_type}'".format(case_type=case_type)
+            for case_type in get_ordered_case_types(case_type, additional_types)
+        ])
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
@@ -214,9 +213,6 @@ class EntriesHelper(object):
                 EntriesHelper.add_usercase_id_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
-
-            if module_loads_registry_case(module):
-                EntriesHelper.add_registry_search_instances(e, form)
 
             if (
                 self.app.commtrack_enabled and
@@ -314,12 +310,6 @@ class EntriesHelper(object):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
-
-    @staticmethod
-    def add_registry_search_instances(entry, form):
-        for prop in form.get_module().search_config.properties:
-            if prop.itemset.instance_id:
-                entry.instances.append(Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri))
 
     @staticmethod
     def add_custom_assertions(entry, form):
@@ -505,12 +495,13 @@ class EntriesHelper(object):
             instance_name, root_element = "casedb", "casedb"
             if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
+                filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
                 instance_name, root_element,
                 datum['case_type'],
                 filter_xpath=filter_xpath,
-                additional_types=datum['module'].search_config.additional_case_types
+                additional_types=datum['module'].additional_case_types
             )
 
             datums.append(FormDatumMeta(
@@ -552,14 +543,13 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        case_types = set(module.search_config.additional_case_types) | {datum.case_type}
         case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
         data.extend([
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in sorted(case_types)
+            for case_type in get_ordered_case_types(datum.case_type, module.additional_case_types)
         ])
         data.extend([
             QueryData(key='case_id', ref=case_id_xpath)
@@ -814,6 +804,11 @@ class EntriesHelper(object):
                     requires_selection=True,
                     action=action
                 ))
+
+        for datum in form.arbitrary_datums:
+            datums.append(FormDatumMeta(
+                SessionDatum(id=datum['datum_id'], function=datum['datum_function']), None, False, None)
+            )
 
         if module.get_app().commtrack_enabled:
             try:

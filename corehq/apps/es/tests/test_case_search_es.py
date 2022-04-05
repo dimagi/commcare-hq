@@ -1,33 +1,13 @@
 import uuid
-from collections import Counter
-from datetime import date
+from datetime import date, datetime
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
-from unittest.mock import MagicMock, patch
-
-from casexml.apps.case.models import CommCareCase
-from pillowtop.es_utils import initialize_index_and_mapping
-
-from corehq.apps.app_manager.models import (
-    Application,
-    CaseSearchProperty,
-    DetailColumn,
-    Module,
-)
-from corehq.apps.case_search.const import RELEVANCE_SCORE
+from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    FuzzyProperties,
-    IgnorePatterns,
-)
-from corehq.apps.case_search.utils import (
-    CaseSearchCriteria,
-    _QueryHelper,
-    get_related_case_relationships,
-    get_related_case_results,
-    get_related_cases,
 )
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
@@ -36,9 +16,12 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     case_property_text_query,
     flatten_result,
+    wrap_case_search_hit,
+    case_property_query
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
@@ -47,6 +30,7 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 @es_test
@@ -182,6 +166,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "AUTO"
                                                                     }
                                                                 }
@@ -206,6 +191,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
+                                                                        "operator": "or",
                                                                         "fuzziness": "0"
                                                                     }
                                                                 }
@@ -254,23 +240,130 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def test_blacklisted_owner_ids(self):
         query = self.es.domain('swashbucklers').blacklist_owner_id('123').owner('234')
-        expected = {'query': {'bool': {'filter': [{'term': {'domain.exact': 'swashbucklers'}},
-                            {'bool': {'must_not': {'term': {'owner_id': '123'}}}},
-                            {'term': {'owner_id': '234'}},
-                            {'match_all': {}}],
-                'must': {'match_all': {}}}},
-                'size': SIZE_LIMIT}
-
+        expected = {
+            'query': {
+                'bool': {
+                    'filter': [
+                        {'term': {'domain.exact': 'swashbucklers'}},
+                        {'bool': {'must_not': {'term': {'owner_id': '123'}}}},
+                        {'term': {'owner_id': '234'}},
+                        {'match_all': {}}
+                    ],
+                    'must': {'match_all': {}},
+                },
+            },
+            'size': SIZE_LIMIT,
+        }
         self.checkQuery(query, expected, validate_query=False)
 
 
+class TestCaseSearchHitConversions(SimpleTestCase):
+    maxDiff = None
+
+    def test_wrap_case_search_hit(self):
+        case = wrap_case_search_hit(self.make_hit())
+        self.assertEqual(case.case_id, '2a3341db-0ca4-444b-a44c-3bde3a16954e')
+        self.assertEqual(case.closed, False)
+        self.assertEqual(case.closed_by, None)
+        self.assertEqual(case.closed_on, None)
+        self.assertEqual(case.doc_type, 'CommCareCase')
+        self.assertEqual(case.domain, 'healsec')
+        self.assertEqual(case.external_id, None)
+        self.assertEqual(case.location_id, None)
+        self.assertEqual(case.modified_on, datetime(2019, 6, 21, 17, 32, 48))
+        self.assertEqual(case.name, 'blah')
+        self.assertEqual(case.opened_by, '29383d6a335847f985aeeeca94031f82')
+        self.assertEqual(case.opened_on, datetime(2019, 6, 21, 17, 31, 18, 349000))
+        self.assertEqual(case.owner_id, '29383d6a335847f985aeeeca94031f82')
+        self.assertEqual(case.server_modified_on, datetime(2019, 6, 21, 17, 32, 48, 437901))
+        self.assertEqual(case.type, 'mother')
+        self.assertEqual(case.user_id, '29383d6a335847f985aeeeca94031f82')
+        self.assertEqual(case.indices, [
+            CommCareCaseIndex(
+                case_id=case.case_id,
+                domain='healsec',
+                identifier='host',
+                referenced_type='person',
+                referenced_id='abc123',
+                relationship_id=CommCareCaseIndex.EXTENSION,
+            )
+        ])
+        self.assertEqual(case.case_json, {
+            'closed': 'nope',
+            'doc_type': 'frankle',
+            'domain': 'batter',
+            'foo': 'bar',
+            'baz': 'buzz',
+        })
+
+    def test_wrap_case_search_hit_include_score(self):
+        case = wrap_case_search_hit(self.make_hit(), include_score=True)
+        self.assertEqual(case.case_json[RELEVANCE_SCORE], "1.095")
+
+    def test_wrap_case_search_hit_is_related_case(self):
+        case = wrap_case_search_hit(self.make_hit(), is_related_case=True)
+        self.assertEqual(case.case_json[IS_RELATED_CASE], 'true')
+
+    @staticmethod
+    def make_hit():
+        return {
+            "_score": "1.095",
+            "_source": {
+                '_id': '2a3341db-0ca4-444b-a44c-3bde3a16954e',
+                'closed': False,
+                'closed_by': None,
+                'closed_on': None,
+                'doc_type': 'CommCareCase',
+                'domain': 'healsec',
+                'external_id': None,
+                'location_id': None,
+                'modified_on': '2019-06-21T17:32:48Z',
+                'name': 'blah',
+                'opened_by': '29383d6a335847f985aeeeca94031f82',
+                'opened_on': '2019-06-21T17:31:18.349000Z',
+                'owner_id': '29383d6a335847f985aeeeca94031f82',
+                'server_modified_on': '2019-06-21T17:32:48.437901Z',
+                'type': 'mother',
+                'user_id': '29383d6a335847f985aeeeca94031f82',
+                '@indexed_on': '2020-04-18T12:34:56.332000Z',
+                'indices': [
+                    {
+                        'case_id': '2a3341db-0ca4-444b-a44c-3bde3a16954e',
+                        'domain': 'healsec',
+                        'identifier': 'host',
+                        'referenced_type': 'person',
+                        'referenced_id': 'abc123',
+                        'relationship': 'extension',
+                    },
+                ],
+                'case_properties': [
+                    {'key': '@case_id', 'value': '2a3341db-0ca4-444b-a44c-3bde3a16954e'},
+                    {'key': '@case_type', 'value': 'mother'},
+                    {'key': '@owner_id', 'value': '29383d6a335847f985aeeeca94031f82'},
+                    {'key': '@status', 'value': 'open'},
+                    {'key': 'name', 'value': 'blah'},
+                    {'key': 'case_name', 'value': 'blah'},
+                    {'key': 'external_id', 'value': None},
+                    {'key': 'date_opened', 'value': '2019-06-21T17:31:18.349000Z'},
+                    {'key': 'closed_on', 'value': None},
+                    {'key': 'last_modified', 'value': '2019-06-21T17:32:48.332000Z'},
+                    {'key': 'closed', 'value': 'nope'},
+                    {'key': 'doc_type', 'value': 'frankle'},
+                    {'key': 'domain', 'value': 'batter'},
+                    {'key': 'foo', 'value': 'bar'},
+                    {'key': 'baz', 'value': 'buzz'},
+                ],
+            },
+        }
+
+
 @es_test
-class TestCaseSearchLookups(TestCase):
+class BaseCaseSearchTest(TestCase):
 
     def setUp(self):
         self.domain = 'case_search_es'
         self.case_type = 'person'
-        super(TestCaseSearchLookups, self).setUp()
+        super(BaseCaseSearchTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -280,7 +373,7 @@ class TestCaseSearchLookups(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
-        super(TestCaseSearchLookups, self).tearDown()
+        super(BaseCaseSearchTest, self).tearDown()
 
     def _make_case(self, domain, case_properties, index=None):
         # make a case
@@ -320,6 +413,8 @@ class TestCaseSearchLookups(TestCase):
         self.addCleanup(config.delete)
         return config
 
+
+class TestCaseSearchLookups(BaseCaseSearchTest):
     def test_simple_case_property_query(self):
         self._assert_query_runs_correctly(
             self.domain,
@@ -457,207 +552,17 @@ class TestCaseSearchLookups(TestCase):
             ['c2', 'c3']
         )
 
-    def test_date_range_criteria(self):
-        self._create_case_search_config()
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'dob': date(2020, 3, 1)},
-                {'_id': 'c2', 'dob': date(2020, 3, 2)},
-                {'_id': 'c3', 'dob': date(2020, 3, 3)},
-                {'_id': 'c4', 'dob': date(2020, 3, 4)},
-            ],
-            CaseSearchCriteria(self.domain, [self.case_type], {'dob': '__range__2020-03-02__2020-03-03'}).search_es,
-            None,
-            ['c2', 'c3']
+    # Differs from above case_property_query because this is not an instance method but seperated from
+    # the CaseSearchES class. More thorough testing of this method is in test_case_search_registry.py
+    # and test_filter_dsl.py.
+    def test_case_property_query(self):
+
+        # mutlivalue_mode must be lowercase
+        self.assertRaises(
+            ValueError,
+            lambda: case_property_query(
+                'description',
+                'redbeard blackbeard',
+                multivalue_mode='AND'
+            )
         )
-
-    def test_get_related_case_relationships(self):
-        app = Application.new_app(self.domain, "Case Search App")
-        module = app.add_module(Module.new_module("Search Module", "en"))
-        module.case_type = self.case_type
-        detail = module.case_details.short
-        detail.columns.extend([
-            DetailColumn(header={"en": "x"}, model="case", field="x", format="plain"),
-            DetailColumn(header={"en": "y"}, model="case", field="parent/parent/y", format="plain"),
-            DetailColumn(header={"en": "z"}, model="case", field="host/z", format="plain"),
-        ])
-        module.search_config.properties = [CaseSearchProperty(
-            name="texture",
-            label={"en": "Texture"},
-        )]
-
-        module = app.add_module(Module.new_module("Non-Search Module", "en"))
-        module.case_type = self.case_type
-        detail = module.case_details.short
-        detail.columns.append(
-            DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
-        )
-
-        self.assertEqual(get_related_case_relationships(app, self.case_type), {"parent/parent", "host"})
-        self.assertEqual(get_related_case_relationships(app, "monster"), set())
-
-    def test_get_related_case_results(self):
-        # Note that cases must be defined before other cases can reference them
-        cases = [
-            {'_id': 'c1', 'case_type': 'monster', 'description': 'grandparent of first person'},
-            {'_id': 'c2', 'case_type': 'monster', 'description': 'parent of first person', 'index': {
-                'parent': ('monster', 'c1')
-            }},
-            {'_id': 'c3', 'case_type': 'monster', 'description': 'parent of host'},
-            {'_id': 'c4', 'case_type': 'monster', 'description': 'host of second person', 'index': {
-                'parent': ('monster', 'c3')
-            }},
-            {'_id': 'c5', 'description': 'first person', 'index': {
-                'parent': ('monster', 'c2')
-            }},
-            {'_id': 'c6', 'description': 'second person', 'index': {
-                'host': ('monster', 'c4')
-            }},
-        ]
-        self._bootstrap_cases_in_es_for_domain(self.domain, cases)
-
-        hits = CaseSearchES().domain(self.domain).case_type(self.case_type).run().hits
-        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
-        self.assertEqual({case.case_id for case in cases}, {'c5', 'c6'})
-
-        self._assert_related_case_ids(cases, set(), set())
-        self._assert_related_case_ids(cases, {"parent"}, {"c2"})
-        self._assert_related_case_ids(cases, {"host"}, {"c4"})
-        self._assert_related_case_ids(cases, {"parent/parent"}, {"c1"})
-        self._assert_related_case_ids(cases, {"host/parent"}, {"c3"})
-        self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
-        self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
-
-    def test_get_related_case_results_duplicates(self):
-        """Test that `get_related_cases` does not include any cases that are in the initial
-        set or are duplicates of others already found."""
-
-        # d1 :> c2 > c1 > a1
-        # d1 > c1
-        # Search for case type 'c'
-        # - initial results c1, c2
-        # - related lookups (parent, parent/parent) yield a1, c1, a1
-        # - child lookups yield c2, d1
-        # - (future) extension lookups yield d1
-        cases = [
-            {'_id': 'a1', 'case_type': 'a'},
-            {'_id': 'c1', 'case_type': 'c', 'index': {
-                'parent': ('a', 'a1'),
-            }},
-            {'_id': 'c2', 'case_type': 'c', 'index': {
-                'parent': ('c', 'c1'),
-            }},
-            {'_id': 'd1', 'case_type': 'd', 'index': {
-                'parent': ('c', 'c1'),
-                'host': ('c', 'c2'),
-            }},
-        ]
-        self._bootstrap_cases_in_es_for_domain(self.domain, cases)
-
-        hits = CaseSearchES().domain(self.domain).case_type("c").run().hits
-        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
-        self.assertEqual({case.case_id for case in cases}, {'c1', 'c2'})
-
-        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
-                   return_value={"parent", "parent/parent"}), \
-             patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
-             patch("corehq.apps.case_search.utils.get_app_cached"):
-            cases = get_related_cases(_QueryHelper(self.domain), None, {"c"}, cases)
-
-        case_ids = Counter([case.case_id for case in cases])
-        self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
-        self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
-
-    def _assert_related_case_ids(self, cases, paths, ids):
-        results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
-        result_ids = Counter([result['_id'] for result in results])
-        self.assertEqual(ids, set(result_ids))
-        if result_ids:
-            self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
-
-    def test_fuzzy_properties(self):
-        cases = [
-            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
-            {'_id': 'c2', 'case_type': 'song', 'description': 'Neu York'},
-            {'_id': 'c3', 'case_type': 'show', 'description': 'Boston'},
-        ]
-        config = self._create_case_search_config()
-        fuzzy_properties = FuzzyProperties.objects.create(domain=self.domain, case_type='song', properties=['description'])
-        config.fuzzy_properties.add(fuzzy_properties)
-        self.addCleanup(fuzzy_properties.delete)
-        self._assert_query_runs_correctly(
-            self.domain,
-            cases,
-            CaseSearchCriteria(self.domain, ['song', 'show'], {'description': 'New York'}).search_es,
-            None,
-            ['c1', 'c2']
-        )
-
-    def test_ignore_patterns(self):
-        cases = [
-            {'_id': 'c1', 'case_type': 'person', 'phone_number': '8675309'},
-            {'_id': 'c2', 'case_type': 'person', 'phone_number': '9045555555'},
-        ]
-        config = self._create_case_search_config()
-        pattern = IgnorePatterns.objects.create(
-            domain=self.domain, case_type='person', case_property='phone_number', regex="+1")
-        config.ignore_patterns.add(pattern)
-        self.addCleanup(pattern.delete)
-        self._assert_query_runs_correctly(
-            self.domain,
-            cases,
-            CaseSearchCriteria(self.domain, ['person'], {'phone_number': '+18675309'}).search_es,
-            None,
-            ['c1']
-        )
-
-    def test_multiple_case_types(self):
-        cases = [
-            {'_id': 'c1', 'case_type': 'song', 'description': 'New York'},
-            {'_id': 'c2', 'case_type': 'song', 'description': 'Another Song'},
-            {'_id': 'c3', 'case_type': 'show', 'description': 'New York'},
-            {'_id': 'c4', 'case_type': 'show', 'description': 'Boston'},
-        ]
-        self._create_case_search_config()
-        self._assert_query_runs_correctly(
-            self.domain,
-            cases,
-            CaseSearchCriteria(self.domain, ['show', 'song'], {'description': 'New York'}).search_es,
-            None,
-            ['c1', 'c3']
-        )
-
-    def test_blank_case_search(self):
-        # foo = '' should match all cases where foo is empty or absent
-        self._create_case_search_config()
-        self._bootstrap_cases_in_es_for_domain(self.domain, [
-            {'_id': 'c1', 'foo': 'redbeard'},
-            {'_id': 'c2', 'foo': 'blackbeard'},
-            {'_id': 'c3', 'foo': ''},
-            {'_id': 'c4'},
-        ])
-        for criteria, expected in [
-            ({'foo': ''}, ['c3', 'c4']),
-            ({'foo': ['', 'blackbeard']}, ['c2', 'c3', 'c4']),
-        ]:
-            actual = CaseSearchCriteria(self.domain, [self.case_type], criteria).search_es.get_ids()
-            msg = f"{criteria} yielded {actual}, not {expected}"
-            self.assertItemsEqual(actual, expected, msg=msg)
-
-    def test_blank_case_search_parent(self):
-        self._create_case_search_config()
-        self._bootstrap_cases_in_es_for_domain(self.domain, [
-            {'_id': 'c1', 'foo': 'redbeard'},
-            {'_id': 'c2', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
-            {'_id': 'c3', 'foo': 'blackbeard'},
-            {'_id': 'c4', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c3')}},
-            {'_id': 'c5', 'foo': ''},
-            {'_id': 'c6', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c5')}},
-            {'_id': 'c7'},
-            {'_id': 'c8', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c7')}},
-        ])
-        actual = CaseSearchCriteria(self.domain, ['child'], {
-            'parent/foo': ['', 'blackbeard'],
-        }).search_es.get_ids()
-        self.assertItemsEqual(actual, ['c4', 'c6', 'c8'])

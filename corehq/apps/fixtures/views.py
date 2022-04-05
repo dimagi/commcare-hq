@@ -15,8 +15,8 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
@@ -295,7 +295,7 @@ def fixtures_home(domain):
 
 
 class FixtureViewMixIn(object):
-    section_name = ugettext_noop("Lookup Tables")
+    section_name = gettext_noop("Lookup Tables")
 
     @property
     def section_url(self):
@@ -357,7 +357,7 @@ class UploadItemLists(TemplateView):
 
 class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
     urlname = 'fixture_upload_status'
-    page_title = ugettext_noop('Lookup Table Upload Status')
+    page_title = gettext_noop('Lookup Table Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
@@ -559,8 +559,7 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = False
         user_email = None
         if toggles.SUPPORT.enabled(request.couch_user.username):
-            user_email = request.couch_user.email if request.couch_user.email is not None \
-                else request.couch_user.username
+            user_email = request.couch_user.get_email()
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."

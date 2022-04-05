@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -18,7 +18,6 @@ class BaseSessionDataHelper(object):
         """
         session_data = {
             'device_id': device_id,
-            'app_version': '2.0',
             'domain': self.domain,
         }
         session_data.update(get_user_contributions_to_touchforms_session(self.domain, self.couch_user))
@@ -58,7 +57,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CaseAccessors(self.domain).get_case(self.case_id)
+            self._case = CommCareCase.objects.get_case(self.case_id, self.domain)
         return self._case
 
     @property
@@ -89,6 +88,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
                 session_data[self.case_session_variable_name] = self.case_id
         if self.app:
             session_data["app_id"] = self.app.get_id
+            session_data["app_version"] = self.app.version
         return session_data
 
     @property

@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     Itemset,
-    Module, DetailColumn,
+    Module, DetailColumn, ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
     AUTO_LAUNCH_EXPRESSION,
@@ -38,6 +38,7 @@ from corehq.util.test_utils import flag_enabled
 DOMAIN = 'test_domain'
 
 
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
 class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -71,21 +72,19 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.request_factory = RemoteRequestFactory(generator.suite, child_module, detail_section_elements)
 
     def testSmartLinkFunction(self):
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            concat_params = [
-                "'https://www.example.com/a/'",
-                "$domain",
-                f"'/app/v1/{self.app_id}/child_endpoint/'",
-                "'?case_id_leaf='",
-                "$case_id_leaf",
-                "'&case_id='",
-                "$case_id",
-            ]
-            self.assertEqual(
-                self.request_factory.get_smart_link_function(),
-                f'concat({", ".join(concat_params)})'
-            )
+        concat_params = [
+            "'https://www.example.com/a/'",
+            "$domain",
+            f"'/app/v1/{self.app_id}/child_endpoint/'",
+            "'?case_id_leaf='",
+            "$case_id_leaf",
+            "'&case_id='",
+            "$case_id",
+        ]
+        self.assertEqual(
+            self.request_factory.get_smart_link_function(),
+            f'concat({", ".join(concat_params)})'
+        )
 
     def testSmartLinkVariables(self):
         vars = self.request_factory.get_smart_link_variables()
@@ -98,9 +97,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         ])
 
     def testSuite(self):
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.factory.app.create_suite()
+        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('smart_link_remote_request').decode('utf-8').format(app_id=self.app_id),
             suite,
@@ -108,7 +105,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
 
-
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
@@ -168,7 +165,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
-            default_relevant=True,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
@@ -191,29 +187,28 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # reset to newly wrapped module
         self.module = self.app.modules[0]
 
-    def test_search_config_model(self, *args):
+    def test_search_config_relevant(self, *args):
         config = CaseSearch()
 
-        config.default_relevant = True
         self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
-        config.default_relevant = False
-        self.assertEqual(config.get_relevant(), "")
+        config.additional_relevant = "double(now()) mod 2 = 0"
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+
+    def test_search_config_relevant_multi_select(self, *args):
+        config = CaseSearch()
+
+        self.assertEqual(config.get_relevant(multi_select=True), None)
 
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
-
-        config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+        self.assertEqual(config.get_relevant(multi_select=True), "double(now()) mod 2 = 0")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
         """
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.app.create_suite()
+        suite = self.app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
             suite,
@@ -225,9 +220,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """Remote requests for modules with custom details point to the custom detail
         """
         self.module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.app.create_suite()
+        suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
@@ -238,9 +231,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         copy_app = Application.wrap(self.app.to_json())
         copy_app.modules.append(Module.wrap(copy_app.modules[0].to_json()))
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = copy_app.create_suite()
+        suite = copy_app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('remote_request').decode('utf-8').format(module_id="m0"),
             suite,
@@ -334,6 +325,47 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types__shadow_module(self, *args):
+        shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
+        shadow_module.source_module_id = self.module.get_or_create_unique_id()
+        shadow_module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(
+                label={
+                    'en': 'Search from Shadow Module'
+                }
+            ),
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+        )
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        app = Application.wrap(self.app.to_json())
+        suite_xml = app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        ref_path = './remote-request[2]/session/datum/@nodeset'
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}']{}".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                EXCLUDE_RELATED_CASES_FILTER
+            ),
+            suite.xpath(ref_path)[0]
+        )
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <data key="case_type" ref="'case'"/>
+              <data key="case_type" ref="'another_case_type'"/>
+            </partial>
+            """,
+            suite_xml,
+            "./remote-request[2]/session/query/data[@key='case_type']"
+        )
+
     def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
@@ -405,11 +437,20 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # wrap to have assign_references called
         self.app = Application.wrap(self.app.to_json())
-
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.app.create_suite()
+        suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_default_only'), suite, "./remote-request[1]")
+
+    def test_custom_related_case_property(self, *args):
+        self.module.search_config.custom_related_case_property = "potential_duplicate_id"
+        suite = self.app.create_suite()
+
+        expected = """
+        <partial>
+          <data key="x_commcare_custom_related_case_property" ref="'potential_duplicate_id'"/>
+        </partial>
+        """
+        xpath = "./remote-request[1]/session/query/data[@key='x_commcare_custom_related_case_property']"
+        self.assertXmlPartialEqual(expected, suite, xpath)
 
     def test_blacklisted_owner_ids(self, *args):
         self.module.search_config = CaseSearch(
@@ -421,10 +462,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # wrap to have assign_references called
         self.app = Application.wrap(self.app.to_json())
-
-        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
-            get_url_base_patch.return_value = 'https://www.example.com'
-            suite = self.app.create_suite()
+        suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
 
     def test_prompt_hint(self, *args):

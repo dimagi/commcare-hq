@@ -18,7 +18,7 @@ _soft_assert = soft_assert(
 def _make_all_notification_view_keys(period, target):
     """
 
-    :param period: 'daily', 'weekly', or 'monthly'
+    :param period: 'hourly', 'daily', 'weekly', or 'monthly'
     :param target: The 15-minute-aligned point in time we are targeting for a match
     :return: generator of couch view kwargs to use in view query for 'reportconfig/all_notifications'
     """
@@ -32,7 +32,12 @@ def _make_all_notification_view_keys(period, target):
     else:
         minutes = (target.minute,)
 
-    if period == 'daily':
+    if period == 'hourly' and target.minute == 0:
+        yield {
+            'startkey': [period],
+            'endkey': [period, {}]
+        }
+    elif period == 'daily':
         for minute in minutes:
             yield {
                 'startkey': [period, target.hour, minute],
@@ -67,7 +72,7 @@ def create_records_for_scheduled_reports(fake_now_for_tests=None):
         start_datetime = _get_default_start_datetime(end_datetime)
     new_checkpoint = ScheduledReportsCheckpoint(start_datetime=start_datetime, end_datetime=end_datetime)
     report_ids = []
-    for period in ('daily', 'weekly', 'monthly'):
+    for period in ('hourly', 'daily', 'weekly', 'monthly'):
         for report_id in get_scheduled_report_ids(period, start_datetime, end_datetime):
             report_ids.append(report_id)
     new_checkpoint.save()
@@ -81,11 +86,14 @@ def _get_default_start_datetime(end_datetime):
 
 def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
     end_datetime = end_datetime or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly'), period
+    assert period in ('hourly', 'daily', 'weekly', 'monthly'), period
     if not start_datetime:
         start_datetime = _get_default_start_datetime(end_datetime)
 
     for target_point_in_time in _iter_15_minute_marks_in_range(start_datetime, end_datetime):
+        if period == 'hourly' and target_point_in_time.minute != 0:
+            # Don't care if not on hour
+            continue
         keys = _make_all_notification_view_keys(period, target_point_in_time)
         for key in keys:
             for result in ReportNotification.view(

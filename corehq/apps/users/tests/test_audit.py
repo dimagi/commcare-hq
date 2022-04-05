@@ -9,6 +9,7 @@ from corehq.apps.users.audit.change_messages import (
     UserChangeMessage,
     get_messages,
 )
+from corehq.apps.users.models import DeactivateMobileWorkerTriggerUpdateMessage
 from corehq.apps.users.models_role import UserRole
 
 
@@ -408,4 +409,31 @@ class TestUserChangeMessageSlugs(SimpleTestCase):
                 }
             },
             "Invitation revoked for domain 'test-domain'"
+        )
+
+    def test_updated_deactivate_after(self):
+        self._test_change_messages(
+            UserChangeMessage.updated_deactivate_after,
+            ["02-2022", DeactivateMobileWorkerTriggerUpdateMessage.CREATED],
+            {
+                "deactivate_after": {
+                    "deactivate_after_date": {
+                        "value": "02-2022",
+                        "status": DeactivateMobileWorkerTriggerUpdateMessage.CREATED,
+                    },
+                }
+            },
+            "Deactivation After date created: 02-2022"
+        )
+
+    def test_updated_deactivate_after_deleted(self):
+        self._test_change_messages(
+            UserChangeMessage.updated_deactivate_after,
+            [None, DeactivateMobileWorkerTriggerUpdateMessage.DELETED],
+            {
+                "deactivate_after": {
+                    "deactivate_after_date_deleted": {},
+                },
+            },
+            "Deactivation After date has been deleted"
         )

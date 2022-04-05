@@ -369,10 +369,12 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response._headers["content-type"],
-            ("Content-Type", "application/vnd.ms-excel"),
-        )
+        try:
+            content_type = response.headers['content-type']
+        except AttributeError:
+            # TODO remove after upgrading to Django 3.2
+            content_type = response._headers['content-type'][1]
+        self.assertEqual(content_type, "application/vnd.ms-excel")
 
     def test_incorrect_api_key(self):
         """Sending an incorrect (or missing) API key returns a 401 response."""
@@ -407,10 +409,12 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response._headers["content-type"],
-            ("Content-Type", "application/vnd.ms-excel"),
-        )
+        try:
+            content_type = response.headers['content-type']
+        except AttributeError:
+            # TODO remove after upgrading to Django 3.2
+            content_type = response._headers['content-type'][1]
+        self.assertEqual(content_type, "application/vnd.ms-excel")
 
     def test_unsupported_request_methods(self):
         """Test sending requests by unsupported HTTP methods to the view."""

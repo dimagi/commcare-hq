@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
@@ -59,6 +59,7 @@ class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
+    metric_name = None  # Override
     is_async = True
 
     @method_decorator(require_can_edit_data)
@@ -145,12 +146,21 @@ class BaseExportView(BaseProjectDataView):
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
+
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
         if not export._rev:
+            # This is a new export
+
+            track_workflow(
+                request.user.username,
+                f'{self.metric_name} - Created Export',
+                properties={'domain': self.domain}
+            )
+
             if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
@@ -245,8 +255,9 @@ class BaseExportView(BaseProjectDataView):
 @location_safe
 class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
-    page_title = ugettext_lazy("Create Form Data Export")
+    page_title = gettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
+    metric_name = 'Form Export'
 
     @property
     @memoized
@@ -254,8 +265,14 @@ class CreateNewCustomFormExportView(BaseExportView):
         from corehq.apps.export.views.list import FormExportListView
         return FormExportListView
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+
+        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+            'domain': self.domain
+        })
+
+        return export
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
@@ -263,7 +280,10 @@ class CreateNewCustomFormExportView(BaseExportView):
 
         export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, app_id, xmlns)
-        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
+        self.export_instance = self.create_new_export_instance(
+            schema,
+            request.user.username,
+            export_settings=export_settings)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -271,8 +291,9 @@ class CreateNewCustomFormExportView(BaseExportView):
 @location_safe
 class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
-    page_title = ugettext_lazy("Create Case Data Export")
+    page_title = gettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
+    metric_name = 'Case Export'
 
     @property
     @memoized
@@ -280,15 +301,25 @@ class CreateNewCustomCaseExportView(BaseExportView):
         from corehq.apps.export.views.list import CaseExportListView
         return CaseExportListView
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        return self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, export_settings=None):
+
+        export = self.export_instance_cls.generate_instance_from_schema(schema, export_settings=export_settings)
+
+        track_workflow(username, f'{self.metric_name} - Clicked Add Export Popup', properties={
+            'domain': self.domain
+        })
+
+        return export
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
         export_settings = get_default_export_settings_if_available(self.domain)
         schema = self.get_export_schema(self.domain, None, case_type)
-        self.export_instance = self.create_new_export_instance(schema, export_settings=export_settings)
+        self.export_instance = self.create_new_export_instance(
+            schema,
+            request.user.username,
+            export_settings=export_settings)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
@@ -296,33 +327,39 @@ class CreateNewCustomCaseExportView(BaseExportView):
 @location_safe
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
-    page_title = ugettext_lazy("Create Dashboard Feed")
+    metric_name = 'Excel Dashboard Case Export'
+    page_title = gettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
 class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_feed_export'
-    page_title = ugettext_lazy("Create Dashboard Feed")
+    metric_name = 'Excel Dashboard Form Export'
+    page_title = gettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
 class CreateNewDailySavedCaseExport(DailySavedExportMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_daily_saved_export'
+    metric_name = 'Daily Saved Case Export'
 
 
 @location_safe
 class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_faily_saved_export'
+    metric_name = 'Daily Saved Form Export'
 
 
 @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
-    page_title = ugettext_lazy("Create OData Case Feed")
+    page_title = gettext_lazy("Create OData Case Feed")
+    metric_name = 'PowerBI Case Export'
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export_instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         clean_odata_columns(export_instance)
@@ -332,11 +369,13 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
 @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
-    page_title = ugettext_lazy("Create OData Form Feed")
+    page_title = gettext_lazy("Create OData Form Feed")
+    metric_name = 'PowerBI Form Export'
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        export_instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         # odata settings only apply to form exports

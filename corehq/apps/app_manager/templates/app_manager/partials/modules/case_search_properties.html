@@ -7,6 +7,9 @@
 </legend>
 
 <div data-bind="with: search">
+  <div class="alert alert-info" data-bind="hidden: isEnabled">
+    {% trans "Add at least one search property to activate case search for this case list" %}
+  </div>
   <form>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -86,7 +89,7 @@
         </p>
       </div>
     </div>
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
@@ -208,16 +211,6 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="control-label {% css_label_class %}" for="search-default-relevant">
-              {% trans "Don't claim cases already owned by the user" %}
-            </label>
-            <div class="checkbox {% css_field_class %}">
-              <label>
-                <input type="checkbox" id="search-default-relevant" data-bind="checked: searchDefaultRelevant">
-              </label>
-            </div>
-          </div>
-          <div class="form-group">
             <label for="blacklisted-user-ids" class="control-label {% css_label_class %}">
               {% trans "Don't search cases owned by the following ids" %}
               <span class="hq-help-template" data-title="{% trans "Ignore Owners" %}"
@@ -305,6 +298,28 @@
                   <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
                     <i class="fa fa-plus"></i> {% trans "Add Case ID to Data Registry Query" %}
                   </button>
+              </div>
+          </div>
+          {% endif %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          <div class="form-group">
+              <label for="custom-related-case-property" class="{% css_label_class %} control-label">
+                  {% trans "Case property with additional case id to add to results" %}
+                  <span class="hq-help-template" data-title="{% trans "Custom Related Case Property" %}"
+                        data-content="{% blocktrans %}
+                               Enter in the name of a case property that contains the ID of another
+                               case you'd like included in the results instance.  This is to allow
+                               you to configure your case list display to show properties of that
+                               related case. Read more on the
+                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.
+                        {% endblocktrans %}">
+                  </span>
+              </label>
+              <div class="{% css_field_class %}">
+                  <input id="custom-related-case-property"
+                         type="text"
+                         class="form-control"
+                         data-bind="value: customRelatedCaseProperty"/>
               </div>
           </div>
           {% endif %}

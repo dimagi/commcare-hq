@@ -9,7 +9,10 @@ reset: Drop existing test dbs, then create and migrate new ones, but do not
     teardown after running tests. This is convenient when the existing databases
     are outdated and need to be rebuilt.
 flush: Flush all objects from the old test databases before running tests.
-    Much faster than `reset`.
+    Much faster than `reset`. Also runs `bootstrap` (see below).
+bootstrap: Restore database state such as software plan versions and currencies
+    initialized by database migrations. Sometimes when running tests with
+    REUSE_DB=1 this state is lost, causing tests that depend on it to fail.
 migrate: Migrate the test databases before running tests.
 teardown: Skip database setup; do normal teardown after running tests.
 """
@@ -26,7 +29,7 @@ class CmdLineParametersPlugin(Plugin):
         parser.add_option(
             '--reusedb',
             default=None,
-            choices=['reset', 'flush', 'migrate', 'teardown'],
+            choices=['reset', 'flush', 'bootstrap', 'migrate', 'teardown'],
             help=REUSE_DB_HELP,
         )
         # --collect-only is a built-in option, adding it here causes a warning

@@ -91,6 +91,7 @@ def _format_property(key, value, case_id):
         VALUE: value
     }
 
+
 def _get_case_properties(doc_dict):
     domain = doc_dict.get('domain')
     case_id = doc_dict.get('_id')

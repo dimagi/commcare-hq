@@ -90,9 +90,9 @@ Presence of a row in the ``case_index`` adjacency list table implies that the
 referenced cases are available_. The ``case_index`` is updated when new data is
 received during a device sync: new case relationships are inserted and
 relationships for closed cases are deleted. All information in the
-``case_index`` table is also present in the ``CommCareCaseIndexSQL`` and
-``CommCareCaseSQL`` tables. Likewise for the ``cases`` table, which is a subset
-of ``CommCareCaseSQL``.
+``case_index`` table is also present in the ``CommCareCaseIndex`` and
+``CommCareCase`` tables. Likewise for the ``cases`` table, which is a subset
+of ``CommCareCase``.
 
 
 Case Study: UATBC case structure
@@ -142,7 +142,7 @@ simplified table definitions from the `Data Structure`_ section in this
 document, and they only return case IDs. If this algorithm is implemented it
 will likely make sense to expand the queries to retrieve all case data,
 including case relationship data, and to query directly from
-``CommCareCaseIndexSQL`` and ``CommCareCaseSQL``.
+``CommCareCaseIndex`` and ``CommCareCase``.
 
 The term “child” is a general term used to refer to a case that is related to
 another case by retaining a reference to the other case in its set of parent

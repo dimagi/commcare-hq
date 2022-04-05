@@ -34,12 +34,12 @@ from corehq.toggles import (
     toggles_enabled_for_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
+from corehq.toggles.models import Toggle
+from corehq.toggles.shortcuts import parse_toggle, namespaced_item
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle, namespaced_item
 
 NOT_FOUND = "Not Found"
 
@@ -203,7 +203,8 @@ class ToggleEditView(BasePageView):
             self.toggle_slug, self.request.user.username, currently_enabled, previously_enabled, randomness
         )
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
-        _call_save_fn_and_clear_cache(self.static_toggle, previously_enabled, currently_enabled)
+        _call_save_fn_and_clear_cache_and_enable_dependencies(
+            self.request.user.username, self.static_toggle, previously_enabled, currently_enabled)
 
         data = {
             'items': item_list
@@ -244,13 +245,35 @@ def _notify_on_change(static_toggle, added_entries, username):
         _assert(False, subject)
 
 
-def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_enabled):
+def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, static_toggle,
+                                                          previously_enabled, currently_enabled):
     changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
     for entry in changed_entries:
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
         _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
         _clear_cache_for_toggle(namespace, entry)
+        _enable_dependencies(request_username, static_toggle, entry, namespace, enabled)
+
+
+def _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled):
+    if is_enabled and static_toggle.parent_toggles:
+        for dependency in static_toggle.parent_toggles:
+            _set_toggle(request_username, dependency, item, namespace, is_enabled)
+
+
+def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
+    if static_toggle.set(item=item, enabled=is_enabled, namespace=namespace):
+        action = ToggleAudit.ACTION_ADD if is_enabled else ToggleAudit.ACTION_REMOVE
+        ToggleAudit.objects.log_toggle_action(
+            static_toggle.slug, request_username, [namespaced_item(item, namespace)], action
+        )
+
+        if is_enabled:
+            _notify_on_change(static_toggle, [item], request_username)
+
+        _clear_cache_for_toggle(namespace, item)
+        _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
 def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
@@ -357,16 +380,7 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
-        action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
-        ToggleAudit.objects.log_toggle_action(
-            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
-        )
-
-    if enabled:
-        _notify_on_change(static_toggle, [item], request.user.username)
-
-    _clear_cache_for_toggle(namespace, item)
+    _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
 

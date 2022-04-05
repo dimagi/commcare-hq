@@ -1,8 +1,3 @@
-# WARNING this module looks up cases in Couch, but the domain (crs-remind) has
-# been migrated to SQL, so any cases created or updated after the migration was
-# completed (2021-05-12) will either cause errors or incorrect report output.
-from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -10,8 +5,9 @@ from corehq.apps.reports.dispatcher import QuestionTemplateDispatcher
 from corehq.apps.reports.views import require_case_view_permission
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from django.template.loader import get_template
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
 
 
@@ -43,9 +39,12 @@ def get_questions_with_answers(forms, domain, report_slug):
         for question in section['questions']:
             question['answers'] = []
         for form in forms:
-            form_dict = form.form
+            form_dict = form.form_data["form"]
             for question in section['questions']:
-                if form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS and question['case_property'] in form_dict['baby_alive_group']:
+                if (
+                    form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS
+                    and question['case_property'] in form_dict['baby_alive_group']
+                ):
                     question['answers'].append(form_dict['baby_alive_group'][question['case_property']])
                     continue
 
@@ -54,7 +53,7 @@ def get_questions_with_answers(forms, domain, report_slug):
         for question in section['questions']:
 
             if 'answers' not in question:
-                    question['answers'] = []
+                question['answers'] = []
             if len(question['answers']) < count:
                 for i in range(len(question['answers']), count):
                     question['answers'].append('')
@@ -62,18 +61,16 @@ def get_questions_with_answers(forms, domain, report_slug):
 
 
 def get_dict_to_report(domain, case_id, report_slug):
-    try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
-
-    baby_case = [c for c in case.get_subcases().all() if c.type == 'baby']
+    case = CommCareCase.objects.get_case(case_id)
+    if case.domain != domain:
+        raise Http404
+    baby_case = [c for c in case.get_subcases() if c.type == 'baby']
     if baby_case:
-        mother_forms = [form for form in case.get_forms() if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
-        baby_forms = [form for form in baby_case[0].get_forms() if form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS]
+        mother_forms = [form for form in get_forms(case) if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
+        baby_forms = [form for form in get_forms(baby_case[0]) if form.xmlns == BABY_POSTPARTUM_VISIT_FORM_XMLNS]
         forms = mother_forms + baby_forms
     else:
-        forms = [form for form in case.get_forms() if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
+        forms = [form for form in get_forms(case) if form.xmlns == MOTHER_POSTPARTUM_VISIT_FORM_XMLNS]
 
     try:
         user = CommCareUser.get_by_user_id(case.user_id, domain)
@@ -94,3 +91,8 @@ def get_dict_to_report(domain, case_id, report_slug):
         "case": case,
         "sections": sections
     }
+
+
+def get_forms(case):
+    txx = case.get_form_transactions()
+    return XFormInstance.objects.get_forms([t.form_id for t in txx])

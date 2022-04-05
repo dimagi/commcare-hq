@@ -222,7 +222,7 @@
                 id="resave-form">{% csrf_token %}
             <span class="hq-help-template"
                   data-title="{% trans "Resaving Forms" %}"
-                  data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                  data-content="{% trans "Resaving a form manually can cause it to be reincluded in reports if something went wrong during initial processing." %}"
                   data-placement="left"
             ></span>
             <button type="submit" class="btn btn-default" id="resave-form-btn">
@@ -320,9 +320,9 @@
               {% if not forloop.first %}<br>{% endif %}
               <dt>{{ key }}</dt>
               {% if attachment.is_image %}
-                <dd><img src="{% url "api_form_attachment" domain=domain form_id=instance.form_id attachment_id=key %}"></dd>
+                <dd><img src="{% url "form_attachment_view" domain=domain instance_id=instance.form_id attachment_id=key %}"></dd>
               {% else %}
-                <dd><a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
+                <dd><a href="{% url "form_attachment_view" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
               {% endif %}
             </dl>
           </td></tr>

@@ -14,7 +14,6 @@ from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -44,6 +43,7 @@ from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 # The location metadata key that maps to its corresponding OpenMRS location UUID
@@ -134,7 +134,7 @@ def get_addpatient_caseblock(patient, importer, owner_id):
     """
     case_id = uuid.uuid4().hex
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock.deprecated_init(
+    return CaseBlock(
         create=True,
         case_id=case_id,
         owner_id=owner_id,
@@ -150,7 +150,7 @@ def get_updatepatient_caseblock(case, patient, importer):
     Updates a case with imported patient details. Does not change owner.
     """
     case_name, fields_to_update = get_case_properties(patient, importer)
-    return CaseBlock.deprecated_init(
+    return CaseBlock(
         create=False,
         case_id=case.get_id,
         case_name=case_name,
@@ -234,7 +234,7 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_with_importer.delay(importer.to_json())
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
@@ -333,6 +333,7 @@ def poll_openmrs_atom_feeds(domain_name):
                     import_encounter(repeater, encounter_uuid)
                 except (ConfigurationError, OpenmrsException) as err:
                     errors.append(str(err))
+
         if errors:
             repeater.requests.notify_error(
                 'Errors importing from Atom feed:\n' + '\n'.join(errors)

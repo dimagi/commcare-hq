@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from functools import partial
 
 from django.test import SimpleTestCase, TestCase
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from unittest import mock
 
@@ -31,7 +31,8 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, Permissions
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -80,6 +81,7 @@ class ChoiceProviderTestMixin(metaclass=ABCMeta):
     choice_provider = None
     static_choice_provider = None
     choice_query_context = ChoiceQueryContext
+    web_user = None
 
     def _test_query(self, query_context):
         self.assertEqual(
@@ -93,13 +95,13 @@ class ChoiceProviderTestMixin(metaclass=ABCMeta):
         )
 
     def test_query_no_search_all(self):
-        self._test_query(self.choice_query_context('', limit=20, page=0))
+        self._test_query(self.choice_query_context('', limit=20, page=0, user=self.web_user))
 
     def test_query_no_search_first_short_page(self):
-        self._test_query(self.choice_query_context('', 2, page=0))
+        self._test_query(self.choice_query_context('', 2, page=0, user=self.web_user))
 
     def test_query_no_search_second_short_page(self):
-        self._test_query(self.choice_query_context('', 2, page=1))
+        self._test_query(self.choice_query_context('', 2, page=1, user=self.web_user))
 
     @abstractmethod
     def test_query_search(self):
@@ -382,8 +384,8 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         cls.location = cls.locations['Massachusetts']
         cls.docs = [cls.group, cls.mobile_worker, cls.web_user, cls.location]
         cls.choices = [
-            SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')),
-                             "[{}]".format(ugettext('Show All'))),
+            SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')),
+                             "[{}]".format(gettext('Show All'))),
             SearchableChoice(cls.group.get_id, cls.group.name, [cls.group.name]),
             SearchableChoice(cls.mobile_worker.get_id, cls.mobile_worker.raw_username,
                              [cls.mobile_worker.username]),
@@ -516,6 +518,24 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = "domain-choicer-provider"
 
     @classmethod
+    def make_web_user_with_registry_role(cls, email, domain, has_registry_access=False):
+        web_user = WebUser.create(
+            domain=domain.name,
+            username=email,
+            password="*****",
+            created_by=None,
+            created_via=None,
+        )
+        role = UserRole.create(
+            domain=domain,
+            name='Registry Access',
+            permissions=Permissions(view_data_registry_contents=has_registry_access),
+        )
+        web_user.set_role(domain.name, role.get_qualified_id())
+        web_user.save()
+        return web_user
+
+    @classmethod
     def setUpClass(cls):
         super(DomainChoiceProviderTest, cls).setUpClass()
         cls.domain_a = create_domain(name="A")
@@ -525,7 +545,10 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
             domain.save()
         cls.user = create_user("admin", "123")
-        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain="A")
+        cls.web_user = cls.make_web_user_with_registry_role('web-user@ex.com', cls.domain_a,
+                                                            has_registry_access=True)
+        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role('other-web-user@ex.com',
+                                                                               cls.domain_a)
 
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         # A, B, and C are in the registry A has access to B and C, B has access to C
@@ -563,21 +586,34 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         super(DomainChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
-        self._test_query(ChoiceQueryContext("A", limit=1, page=0))
+        self._test_query(ChoiceQueryContext("A", limit=1, page=0, user=self.web_user))
 
-    def test_query(self):
+    def test_query_full_registry_access(self):
         self.assertEqual([Choice(value='A', display='A')],
-                         self.choice_provider.query(ChoiceQueryContext(query='A', offset=0)))
+                         self.choice_provider.query(ChoiceQueryContext(query='A', offset=0, user=self.web_user)))
         self.assertEqual([Choice(value='A', display='A'),
                           Choice(value='B', display='B'),
                           Choice(value='C', display='C')],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
-        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0)))
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0, user=self.web_user)))
+        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0, user=self.web_user)))
+
+    def test_query_no_registry_access(self):
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='A', offset=0,
+                                                                       user=self.web_user_no_registry_access)))
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
+                                                                       user=self.web_user_no_registry_access)))
+        self.assertEqual([Choice(value='A', display='A')],
+                         self.choice_provider.query(ChoiceQueryContext(query='D', offset=0,
+                                                                       user=self.web_user_no_registry_access)))
 
     def test_query_count(self):
-        self.assertEqual(1, self.choice_provider.query_count("A"))
-        self.assertEqual(3, self.choice_provider.query_count(""))
-        self.assertEqual(0, self.choice_provider.query_count("D"))
+        self.assertEqual(1, self.choice_provider.query_count("A", user=self.web_user))
+        self.assertEqual(3, self.choice_provider.query_count("", user=self.web_user))
+        self.assertEqual(0, self.choice_provider.query_count("D", user=self.web_user))
+        self.assertEqual(1, self.choice_provider.query_count("A", user=self.web_user_no_registry_access))
+        self.assertEqual(1, self.choice_provider.query_count("", user=self.web_user_no_registry_access))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
@@ -586,6 +622,8 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         )
 
     def test_domain_with_some_grants(self):
+        user = self.make_web_user_with_registry_role('another-web-user@ex.com', self.domain_b,
+                                                     has_registry_access=True)
         config = RegistryDataSourceConfiguration(
             domain="B", table_id='foo',
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
@@ -593,11 +631,14 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         config.save()
         report = RegistryReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
-        self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C')],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+        self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C', )],
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
+                                                                       user=user)))
         config.delete()
 
     def test_domain_with_no_grants(self):
+        user = self.make_web_user_with_registry_role('yet-another-web-user@ex.com', self.domain_c,
+                                                     has_registry_access=True)
         config = RegistryDataSourceConfiguration(
             domain="C", table_id='foo',
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
@@ -606,5 +647,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         report = RegistryReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
         self.assertEqual([Choice(value='C', display='C')],
-                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0)))
+                         self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
+                                                                       user=user)))
         config.delete()

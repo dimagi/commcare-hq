@@ -51,7 +51,7 @@ dummy_user_list = [
 
 dummy_case_list = [
     {
-        '_id': 'id-1',
+        'case_id': 'id-1',
         'domain': 'case-list-test',
         'name': 'Deactivated Owner case 1',
         'owner_id': 'deactive1',
@@ -62,7 +62,7 @@ dummy_case_list = [
         'closed_on': None,
     },
     {
-        '_id': 'id-2',
+        'case_id': 'id-2',
         'domain': 'case-list-test',
         'name': 'Active Owner case 1',
         'owner_id': 'active1',
@@ -73,7 +73,7 @@ dummy_case_list = [
         'closed_on': None,
     },
     {
-        '_id': 'id-3',
+        'case_id': 'id-3',
         'domain': 'case-list-test',
         'name': 'Active Owner case 2',
         'owner_id': 'active1',
@@ -84,7 +84,7 @@ dummy_case_list = [
         'closed_on': None,
     },
     {
-        '_id': 'id-4',
+        'case_id': 'id-4',
         'domain': 'case-list-test',
         'name': 'Web Owner case 1',
         'owner_id': 'web1',
@@ -95,7 +95,7 @@ dummy_case_list = [
         'closed_on': None,
     },
     {
-        '_id': 'id-5',
+        'case_id': 'id-5',
         'domain': 'case-list-test',
         'name': 'Active Owner case 2',
         'owner_id': 'active2',

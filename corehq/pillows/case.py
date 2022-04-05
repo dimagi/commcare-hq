@@ -4,7 +4,6 @@ import logging
 
 from django.conf import settings
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -17,7 +16,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
 from corehq.pillows.reportcase import get_case_to_report_es_processor
 from corehq.pillows.utils import get_user_type
-from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -150,29 +148,6 @@ def get_case_pillow(
         process_num=process_num,
         is_dedicated_migration_process=dedicated_migration_process and run_migrations
     )
-
-
-class CouchCaseReindexerFactory(ReindexerFactory):
-    slug = 'case'
-    arg_contributors = [
-        ReindexerFactory.resumable_reindexer_args,
-        ReindexerFactory.elastic_reindexer_args,
-    ]
-
-    def build(self):
-        iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
-        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-            CommCareCase,
-            ("CommCareCase-Deleted", CommCareCase)
-        ])
-        return ResumableBulkElasticPillowReindexer(
-            doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=CASE_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch,
-            pillow=get_case_to_elasticsearch_pillow(),
-            **self.options
-        )
 
 
 class SqlCaseReindexerFactory(ReindexerFactory):

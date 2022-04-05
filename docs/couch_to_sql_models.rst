@@ -51,6 +51,10 @@ This should contain:
 
     - If the script encounters any list or dict properties, it'll ask you if they're submodels. If you say no, it'll create them as json columns. If you say yes, it'll skip them, because it doesn't currently handle submodels. For the same reason, it'll skip SchemaProperty and SchemaListProperty attributes. More on this subject below.
 
+    - Properties found on documents in Couch that are not members of the Couch model class will be added to the SQL model. In most cases they can be dropped (and not migrated to SQL).
+
+    - Properties that are present in the Couch model, but always ``null`` or not found in Couch will be added to the SQL model as ``unknown_type(null=True)``. These fields may be able to be dropped (and not migrated to SQL).
+
   - Add the generated models code to your models file. Edit as needed. Note the TODOs marked in the code:
 
     - The new class's name will start with "SQL" but specify  table name ``db_table`` that does not include "sql." This is so that the class can later be renamed back to the original couch class's name by just removing the ``db_table``. This avoids renaming the table in a django migration, which can be a headache when submodels are involved.

@@ -2,7 +2,7 @@ from collections import namedtuple
 from itertools import chain
 
 from django.http import Http404
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
@@ -71,6 +71,7 @@ def get_latest_released_app_versions_by_app_id(domain):
     return {r['key'][2]: r['key'][3] for r in results}
 
 
+@quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)

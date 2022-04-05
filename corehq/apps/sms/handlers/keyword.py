@@ -31,7 +31,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -495,7 +495,11 @@ def keyword_uses_form_that_requires_case(survey_keyword):
 
 
 def get_case_by_external_id(domain, external_id, user):
-    cases = CaseAccessors(domain).get_cases_by_external_id(external_id)
+    try:
+        case = CommCareCase.objects.get_case_by_external_id(domain, external_id, raise_multiple=True)
+        cases = [case] if case is not None else []
+    except CommCareCase.MultipleObjectsReturned as err:
+        cases = err.cases
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)

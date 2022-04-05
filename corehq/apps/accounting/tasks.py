@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -819,3 +819,8 @@ def calculate_users_in_all_domains(today=None):
                 "Something went wrong while creating DomainUserHistory for domain %s: %s" % (domain, e),
                 show_stack_trace=True,
             )
+    # kick off the auto-deactivation of mobile workers after we calculate the
+    # DomainUserHistory for projects. This ensures this feature is never abused
+    # to get around our billing system.
+    from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
+    auto_deactivate_mobile_workers.delay()

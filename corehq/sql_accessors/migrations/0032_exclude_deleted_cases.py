@@ -1,10 +1,10 @@
 from django.db import migrations
 
-from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'RELATIONSHIP_TYPE_EXTENSION': CommCareCaseIndexSQL.EXTENSION
+    'RELATIONSHIP_TYPE_EXTENSION': CommCareCaseIndex.EXTENSION
 })
 
 

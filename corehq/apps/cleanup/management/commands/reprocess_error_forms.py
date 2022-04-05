@@ -2,8 +2,7 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.reprocess import reprocess_xform_error
 from corehq.util.log import with_progress_bar
 
@@ -38,7 +37,7 @@ class Command(BaseCommand):
         error_messages = defaultdict(lambda: 0)
         problem_ids = self._get_form_ids(domain)
         prefix = "Processing: "
-        form_iterator = FormAccessors(domain).iter_forms(problem_ids)
+        form_iterator = XFormInstance.objects.iter_forms(problem_ids)
         if not verbose:
             form_iterator = with_progress_bar(form_iterator, len(problem_ids), prefix=prefix, oneline=False)
         for form in form_iterator:
@@ -63,4 +62,4 @@ class Command(BaseCommand):
                       ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
 
     def _get_form_ids(self, domain):
-        return FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')
+        return XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormError')

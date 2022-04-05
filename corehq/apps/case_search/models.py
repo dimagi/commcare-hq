@@ -1,25 +1,160 @@
-import copy
-import json
 import re
 
+import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
+from django.utils.translation import gettext as _
 
-from jsonfield.fields import JSONField
-
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CASE_SEARCH_REGISTRY_ID_KEY = 'commcare_registry'
+CASE_SEARCH_CASE_TYPE_KEY = "case_type"
+
+# These use the `x_commcare_` prefix to distinguish them from 'filter' keys
+# This is a purely aesthetic distinction and not functional
+CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
+CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
+
+CONFIG_KEYS_MAPPING = {
+    CASE_SEARCH_CASE_TYPE_KEY: "case_types",
+    CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property"
+}
 UNSEARCHABLE_KEYS = (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     'owner_id',
     'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-)
+) + tuple(CONFIG_KEYS_MAPPING.values())
+
+
+def _flatten_singleton_list(value):
+    return value[0] if value and isinstance(value, list) and len(value) == 1 else value
+
+
+@attr.s(frozen=True)
+class SearchCriteria:
+    key = attr.ib()
+    value = attr.ib(converter=_flatten_singleton_list)
+
+    @property
+    def is_empty(self):
+        return not bool(self.value)
+
+    @property
+    def has_missing_filter(self):
+        if self.has_multiple_terms:
+            return bool([v for v in self.value if v == ''])
+        return self.value == ''
+
+    @property
+    def value_as_list(self):
+        assert not self.has_multiple_terms
+        return self.value.split(' ')
+
+    @property
+    def has_multiple_terms(self):
+        return isinstance(self.value, list)
+
+    @property
+    def is_daterange(self):
+        if self.has_multiple_terms:
+            return any([v.startswith('__range__') for v in self.value])
+        return self.value.startswith('__range__')
+
+    @property
+    def is_ancestor_query(self):
+        return '/' in self.key
+
+    def get_date_range(self):
+        """The format is __range__YYYY-MM-DD__YYYY-MM-DD"""
+        start, end = self.value.split('__')[2:]
+        return start, end
+
+    def clone_without_blanks(self):
+        return SearchCriteria(self.key, self._value_without_empty())
+
+    def _value_without_empty(self):
+        return _flatten_singleton_list([v for v in self.value if v != ''])
+
+    def validate(self):
+        self._validate_multiple_terms()
+        self._validate_daterange()
+
+    def _validate_multiple_terms(self):
+        if not self.has_multiple_terms:
+            return
+
+        disallowed_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+        ]
+
+        if self.key in disallowed_parameters or self.is_daterange:
+            raise CaseFilterError(
+                _("Multiple values are only supported for simple text and range searches"),
+                self.key
+            )
+
+        if self.is_ancestor_query:
+            non_missing = self.clone_without_blanks()
+            if non_missing.has_multiple_terms:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text and range searches"),
+                    self.key
+                )
+
+    def _validate_daterange(self):
+        if not self.is_daterange:
+            return
+
+        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
+        match = pattern.match(self.value)
+        if not match:
+            raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+
+
+def criteria_dict_to_criteria_list(criteria_dict):
+    criteria = [SearchCriteria(k, v) for k, v in criteria_dict.items()]
+    for search_criteria in criteria:
+        search_criteria.validate()
+    return criteria
+
+
+@attr.s(frozen=True)
+class CaseSearchRequestConfig:
+    criteria = attr.ib(kw_only=True)
+    case_types = attr.ib(kw_only=True, default=None)
+    data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+    custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
+
+    @case_types.validator
+    def _require_case_type(self, attribute, value):
+        # custom validator to allow custom exception and message
+        if not value:
+            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
+
+    @data_registry.validator
+    @custom_related_case_property.validator
+    def _is_string(self, attribute, value):
+        if value and not isinstance(value, str):
+            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute.name))
+
+
+def extract_search_request_config(request_dict):
+    params = dict(request_dict.lists())
+
+    kwargs_from_params = {
+        config_name: params.pop(param_name, None)
+        for param_name, config_name in CONFIG_KEYS_MAPPING.items()
+    }
+    criteria = criteria_dict_to_criteria_list(params)
+    return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):
@@ -175,7 +310,9 @@ def enable_case_search(domain):
 
 
 def disable_case_search(domain):
-    from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import (
+        delete_case_search_cases_for_domain,
+    )
     from corehq.pillows.case_search import domains_needing_search_index
 
     try:

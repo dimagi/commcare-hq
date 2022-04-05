@@ -7,13 +7,14 @@ from django.urls import reverse
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import COMMCARE_PROJECT
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import generate_cases, flag_enabled
 
 
@@ -71,9 +72,9 @@ class RegistryCaseDetailsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(deleted_by_domain=None, deleted_by=None)
-        xform_ids = CaseAccessorSQL.get_case_xform_ids(cls.parent_case_id)
-        CaseAccessorSQL.hard_delete_cases(cls.domain, [case.case_id for case in cls.cases])
-        FormAccessorSQL.hard_delete_forms(cls.domain, xform_ids)
+        xform_ids = CommCareCase.objects.get_case_xform_ids(cls.parent_case_id)
+        CommCareCase.objects.hard_delete_cases(cls.domain, [case.case_id for case in cls.cases])
+        XFormInstance.objects.hard_delete_forms(cls.domain, xform_ids)
         cls.app.delete()
         Domain.get_db().delete_doc(cls.domain_object)  # no need to run the full domain delete
         super().tearDownClass()
@@ -84,7 +85,7 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details(self):
         response_content = self._make_request({
-            "commcare_registry": self.registry.slug, "case_id": self.parent_case_id, "case_type": "parent",
+            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": self.parent_case_id, "case_type": "parent",
         }, 200)
         actual_cases = self._get_cases_in_response(response_content)
         expected_cases = {case.case_id: case for case in self.cases}
@@ -105,7 +106,7 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details_multiple_case_ids(self):
         response_content = self._make_request({
-            "commcare_registry": self.registry.slug,
+            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug,
             "case_id": [self.parent_case_id, "unrelated_case"],
             "case_type": ["parent", "other"],
         }, 200)
@@ -115,7 +116,7 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details_post_request(self):
         response_content = self._make_request({
-            "commcare_registry": self.registry.slug,
+            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug,
             "case_id": self.parent_case_id,
             "case_type": "parent",
         }, 200, method="post")
@@ -125,12 +126,12 @@ class RegistryCaseDetailsTests(TestCase):
 
     def test_get_case_details_missing_case(self):
         self._make_request({
-            "commcare_registry": self.registry.slug, "case_id": "missing", "case_type": "parent",
+            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": "missing", "case_type": "parent",
         }, 404)
 
     def test_get_case_details_missing_registry(self):
         self._make_request({
-            "commcare_registry": "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
+            CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
 
     def _make_request(self, params, expected_response_code, method="get"):
@@ -165,9 +166,9 @@ class _FixtureCase:
 
 
 @generate_cases([
-    ({}, "'case_id', 'case_type', 'commcare_registry' are required parameters"),
-    ({"case_id": "a"}, "'case_type', 'commcare_registry' are required parameters"),
-    ({"case_id": "a", "case_type": "b"}, "'commcare_registry' is a required parameter"),
+    ({}, f"'case_id', 'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
+    ({"case_id": "a"}, f"'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
+    ({"case_id": "a", "case_type": "b"}, f"'{CASE_SEARCH_REGISTRY_ID_KEY}' is a required parameter"),
 ], RegistryCaseDetailsTests)
 @flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 @flag_enabled("DATA_REGISTRY")

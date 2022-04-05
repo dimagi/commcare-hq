@@ -67,6 +67,45 @@ global_submission_rate_limiter = RateLimiter(
 )
 
 
+global_case_rate_limiter = RateLimiter(
+    feature_key='global_case_updates',
+    get_rate_limits=lambda: get_dynamic_rate_definition(
+        'global_case_updates',
+        default=RateDefinition(
+            per_hour=170000,
+            per_minute=4000,
+            per_second=300,
+        )
+    ).get_rate_limits(),
+    scope_length=0,
+)
+
+
+def _get_per_user_case_rate_definition(domain):
+    return PerUserRateDefinition(
+        per_user_rate_definition=get_dynamic_rate_definition(
+            'case_updates_per_user',
+            default=get_standard_ratio_rate_definition(events_per_day=460),
+        ),
+        constant_rate_definition=get_dynamic_rate_definition(
+            'baseline_case_updates_per_project',
+            default=RateDefinition(
+                per_week=1000,
+                per_day=500,
+                per_hour=300,
+                per_minute=100,
+                per_second=10,
+            ),
+        ),
+    ).get_rate_limits(domain)
+
+
+domain_case_rate_limiter = RateLimiter(
+    feature_key='domain_case_updates',
+    get_rate_limits=lambda domain: _get_per_user_case_rate_definition(domain)
+)
+
+
 SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings.UNIT_TESTING
 
 
@@ -76,11 +115,15 @@ SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings
 def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
     if TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE.enabled(domain):
         return True
-    should_allow_usage = (
+    allow_form_usage = (
         global_submission_rate_limiter.allow_usage()
         or submission_rate_limiter.allow_usage(domain))
 
-    if should_allow_usage:
+    allow_case_usage = (
+        global_case_rate_limiter.allow_usage()
+        or domain_case_rate_limiter.allow_usage(domain))
+
+    if allow_form_usage:
         allow_usage = True
     elif DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain):
         # If we're disabling rate limiting on a domain then allow it
@@ -94,6 +137,10 @@ def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
             domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
             datadog_metric='commcare.xform_submissions.rate_limited')
 
+    if allow_form_usage and not allow_case_usage:
+        _delay_and_report_rate_limit_submission(
+            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+            datadog_metric='commcare.case_updates.rate_limited.test')
     return not allow_usage
 
 
@@ -104,6 +151,12 @@ def report_submission_usage(domain):
     submission_rate_limiter.report_usage(domain)
     global_submission_rate_limiter.report_usage()
     _report_current_global_submission_thresholds()
+
+
+def report_case_usage(domain, num_cases):
+    global_case_rate_limiter.report_usage(delta=num_cases)
+    domain_case_rate_limiter.report_usage(scope=domain, delta=num_cases)
+    _report_current_global_case_update_thresholds()
 
 
 def _delay_and_report_rate_limit_submission(domain, max_wait, delay_rather_than_reject, datadog_metric):
@@ -150,5 +203,16 @@ def _report_current_global_submission_thresholds():
             'window': window
         }, multiprocess_mode='max')
         metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
+            'window': window
+        }, multiprocess_mode='max')
+
+
+@quickcache([], timeout=60)  # Only report up to once a minute
+def _report_current_global_case_update_thresholds():
+    for window, value, threshold in global_case_rate_limiter.iter_rates():
+        metrics_gauge('commcare.case_updates.global_threshold', threshold, tags={
+            'window': window
+        }, multiprocess_mode='max')
+        metrics_gauge('commcare.case_updates.global_usage', value, tags={
             'window': window
         }, multiprocess_mode='max')

@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 from datetime import date
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError

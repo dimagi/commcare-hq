@@ -49,12 +49,14 @@ class AppMigrationCommandBase(BaseCommand):
 
     def handle(self, **options):
         self.options = options
-        app_ids = self.get_app_ids()
-        domain = self.options.get('domain')
-        logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
-        results = iter_update(Application.get_db(), self._migrate_app, app_ids,
-                              verbose=True, chunksize=self.chunk_size)
-        self.results_callback(results)
+        if self.options['domain']:
+            domains = [self.options['domain']]
+        else:
+            domains = self.get_domains() or [None]
+        for domain in domains:
+            app_ids = self.get_app_ids(domain)
+            logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
+            iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
         logger.info('done')
 
     def _doc_types(self):
@@ -74,16 +76,11 @@ class AppMigrationCommandBase(BaseCommand):
             if self.options['failfast']:
                 raise e
 
-    def get_app_ids(self):
-        return get_all_app_ids(domain=self.options.get('domain', None), include_builds=self.include_builds)
+    def get_app_ids(self, domain=None):
+        return get_all_app_ids(domain=domain, include_builds=self.include_builds)
+
+    def get_domains(self):
+        return None
 
     def migrate_app(self, app):
         raise NotImplementedError()
-
-    def results_callback(self, results):
-        """
-        Override this to do custom result handling.
-        :param results:  an object with the following properties:
-                        'ignored_ids', 'not_found_ids', 'deleted_ids', 'updated_ids', 'error_ids'
-        """
-        pass

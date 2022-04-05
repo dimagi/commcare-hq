@@ -1,7 +1,13 @@
+import uuid
+from unittest import SkipTest
+
+from django.conf import settings
+
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.decorators import ContextDecorator
 
 
@@ -31,6 +37,22 @@ class temporary_database(ContextDecorator):
         finally:
             conn.close()
             self.root_engine.dispose()
+
+
+def new_id_in_different_dbalias(partition_value):
+    """
+    Returns a new partition value from a different db alias than
+    the given partition value does
+    """
+    if not settings.USE_PARTITIONED_DATABASE:
+        raise SkipTest("cannot get different db alias for non-sharded db")
+    old_db_name = get_db_alias_for_partitioned_doc(partition_value)
+    new_db_name = old_db_name
+    while old_db_name == new_db_name:
+        # todo; guard against infinite loop
+        new_partition_value = str(uuid.uuid4())
+        new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
+    return new_partition_value
 
 
 class DefaultShardingTestConfigMixIn(object):

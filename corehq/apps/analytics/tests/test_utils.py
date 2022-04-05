@@ -5,7 +5,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
 )
-from corehq.apps.analytics.utils import is_hubspot_js_allowed_for_request
+from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.tests import generator as accounting_generator
 

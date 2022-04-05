@@ -212,13 +212,7 @@
     {% endif %}
 
     {% if request.user.is_authenticated and request.project and request.session.secure_session %}
-      {% initial_page_data 'session_expiry' request.session.session_expiry %}
-      {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
-      {% registerurl 'iframe_domain_login' request.project.name %}
-      {% registerurl 'domain_login_new_window' %}
-      {% registerurl 'ping_login' %}
-      {% registerurl 'ping_session' %}
-      {% include 'hqwebapp/includes/inactivity_modal.html' %}
+      {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
     {% endif %}
     {% registerurl 'login_new_window' %}
 
@@ -236,6 +230,7 @@
     {% initial_page_data 'toggles_dict' toggles_dict %}
     {% initial_page_data 'previews_dict' previews_dict %}
     {% initial_page_data 'secure_cookies' secure_cookies %}
+    {% initial_page_data 'minimumZxcvbnScore' MINIMUM_ZXCVBN_SCORE %}
 
     {% if demo_workflow_ab_v2 %}
       {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
@@ -420,6 +415,10 @@
 
     {% if show_prepaid_modal and not requirejs_main %}
       <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
+    {% endif %}
+
+    {% if show_status_page %}
+      <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
     {% endif %}
 
     {% block js %}{% endblock js %}

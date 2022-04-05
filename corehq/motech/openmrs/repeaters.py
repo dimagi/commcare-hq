@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterable
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from jsonobject.containers import JsonDict
 from memoized import memoized
@@ -22,10 +22,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
@@ -61,7 +58,10 @@ from corehq.toggles import OPENMRS_INTEGRATION
 
 class AtomFeedStatus(DocumentSchema):
     last_polled_at = DateTimeProperty(default=None)
-    last_page = StringProperty(default=None)
+
+    # The first time the feed is polled, don't replay all the changes
+    # since OpenMRS was installed. Start from the most recent changes.
+    last_page = StringProperty(default='recent')
 
 
 class OpenmrsRepeater(CaseRepeater):
@@ -109,8 +109,8 @@ class OpenmrsRepeater(CaseRepeater):
 
     def __eq__(self, other):
         return (
-            isinstance(other, self.__class__) and
-            self.get_id == other.get_id
+            isinstance(other, self.__class__)
+            and self.get_id == other.get_id
         )
 
     @classmethod
@@ -137,7 +137,7 @@ class OpenmrsRepeater(CaseRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
@@ -169,7 +169,7 @@ class OpenmrsRepeater(CaseRepeater):
 
         case_blocks = extract_case_blocks(payload)
         case_ids = [case_block['@case_id'] for case_block in case_blocks]
-        cases = CaseAccessors(payload.domain).get_cases(case_ids, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids, payload.domain, ordered=True)
         if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
             # If none of the case updates in the payload are allowed to
             # be forwarded, drop it.

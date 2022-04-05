@@ -26,6 +26,7 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
+    api_auth,
     check_domain_migration,
     login_or_basic_ex,
     login_or_digest_ex,
@@ -47,7 +48,7 @@ from corehq.apps.receiverwrapper.util import (
     should_ignore_submission,
 )
 from corehq.form_processor.exceptions import XFormLockError
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
@@ -79,7 +80,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             instance = request.FILES[MAGIC_PROPERTY].read()
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
-        except:
+        except Exception:
             meta = {}
 
         metrics_counter('commcare.corrupt_multimedia_submissions', tags={
@@ -206,6 +207,24 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 
 
 @waf_allow('XSS_BODY')
+@csrf_exempt
+@api_auth
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
+@require_POST
+@check_domain_migration
+@set_request_duration_reporting_threshold(60)
+def post_api(request, domain):
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=None,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
@@ -276,7 +295,7 @@ def _noauth_post(request, domain, app_id=None):
 
         # todo: consider whether we want to remove this call, and/or pass the result
         # through to the next function so we don't have to get the cases again later
-        cases = CaseAccessors(domain).get_cases(list(case_ids))
+        cases = CommCareCase.objects.get_cases(list(case_ids), domain)
         for case in cases:
             if case.domain != domain:
                 return False

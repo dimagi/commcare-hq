@@ -5,7 +5,7 @@ from django.http import HttpResponseNotFound, StreamingHttpResponse, HttpRespons
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.forms import (

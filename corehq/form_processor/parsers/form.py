@@ -2,14 +2,12 @@ import datetime
 import logging
 from contextlib import contextmanager
 
-from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 from django.conf import settings
 
 from corehq.form_processor.exceptions import MissingFormXml
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
@@ -68,7 +66,7 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None)
     key is parameter name, value is
     `django.core.files.uploadedfile.UploadedFile` object.
 
-    :returns: FormProcessingResult containing the new XFormInstanceSQL
+    :returns: FormProcessingResult containing the new XFormInstance
     or raises an exception if anything goes wrong.
     """
     attachments = attachments or {}
@@ -109,7 +107,10 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     xform.auth_context = auth_context
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
-    attachments = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
+    attachments = [
+        Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type)
+        for a in attachments.items()
+    ]
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 
@@ -171,7 +172,7 @@ def _handle_duplicate(new_doc):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    existing_doc = XFormInstance.objects.get_with_attachments(conflict_id, new_doc.domain)
 
     is_icds = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
     try:

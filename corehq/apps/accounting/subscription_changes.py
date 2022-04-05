@@ -3,10 +3,12 @@ import datetime
 from django.db import transaction
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ungettext
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 
 from couchdbkit import ResourceConflict
+
+from dimagi.utils.parsing import json_format_date
 
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
@@ -20,10 +22,10 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
-    get_custom_roles_for_domain,
     archive_custom_roles_for_domain,
-    unarchive_roles_for_domain,
+    get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
+    unarchive_roles_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -118,7 +120,7 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 def get_refresh_alert_schedule_instances_call(broadcast):
     def refresh():
         refresh_alert_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
         )
 
@@ -128,9 +130,9 @@ def get_refresh_alert_schedule_instances_call(broadcast):
 def get_refresh_timed_schedule_instances_call(broadcast):
     def refresh():
         refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date_iso_string=json_format_date(broadcast.start_date)
         )
 
     return refresh
@@ -307,14 +309,19 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            unset_practice_mode_configured_apps,
+        )
         unset_practice_mode_configured_apps(project.name)
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
         """ Deactivates users if there are too many for a community plan """
         from corehq.apps.accounting.models import (
-            DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
+            UNLIMITED_FEATURE_USAGE,
+            DefaultProductPlan,
+            FeatureType,
+        )
 
         # checks for community plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
@@ -387,7 +394,11 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
-                    rebuild_indicators.delay(report.config._id, source='subscription_change')
+                    rebuild_indicators.delay(
+                        report.config._id,
+                        source='subscription_change',
+                        domain=project.name
+                    )
             except DataSourceConfigurationNotFoundError:
                 pass
         return True
@@ -463,7 +474,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
         num_apps = len(cloudcare_enabled_apps)
         return _fmt_alert(
-            ungettext(
+            ngettext(
                 "You have %(num_apps)d application that will lose Web Apps "
                 "access if you select this plan.",
                 "You have %(num_apps)d applications that will lose Web Apps "
@@ -489,7 +500,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         num_fixtures = FixtureDataType.total_by_domain(domain.name)
         if num_fixtures > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(num_fix)s Lookup Table set up. Selecting this "
                     "plan will delete this Lookup Table.",
                     "You have %(num_fix)s Lookup Tables set up. Selecting "
@@ -521,7 +532,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         )
         if num_active > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(num_active)d active Reminder Rule or Broadcast. Selecting "
                     "this plan will deactivate it.",
                     "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting "
@@ -544,7 +555,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         )
         if num_survey > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(num_active)d active Reminder Rule or Broadcast which uses a Survey. "
                     "Selecting this plan will deactivate it.",
                     "You have %(num_active)d active Reminder Rules and Broadcasts which use a Survey. "
@@ -564,7 +575,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         num_deid_reports = get_deid_export_count(project.name)
         if num_deid_reports > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(num)d De-Identified Export. Selecting this "
                     "plan will remove it.",
                     "You have %(num)d De-Identified Exports. Selecting this "
@@ -580,7 +591,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Get the allowed number of mobile workers based on plan version.
         """
-        from corehq.apps.accounting.models import FeatureType, FeatureRate, UNLIMITED_FEATURE_USAGE
+        from corehq.apps.accounting.models import (
+            UNLIMITED_FEATURE_USAGE,
+            FeatureRate,
+            FeatureType,
+        )
         num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
@@ -593,7 +608,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 from corehq.apps.accounting.models import DefaultProductPlan
                 if self.new_plan_version != DefaultProductPlan.get_default_plan_version():
                     return _fmt_alert(
-                        ungettext(
+                        ngettext(
                             "You have %(num_extra)d Mobile Worker over the monthly "
                             "limit of %(monthly_limit)d for this new plan. There "
                             "will be an additional monthly charge of USD "
@@ -616,7 +631,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     )
                 else:
                     return _fmt_alert(
-                        ungettext(
+                        ngettext(
                             "Community plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Worker, "
                             "all your project's Mobile Workers will be deactivated. "
@@ -661,7 +676,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             return
         if num_roles > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(num_roles)d Custom Role configured for your "
                     "project. If you select this plan, all users with that "
                     "role will change to having the Read Only role.",
@@ -680,8 +695,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         in the future.
         """
         from corehq.apps.accounting.models import (
-            Subscription,
             SoftwarePlanEdition,
+            Subscription,
         )
         later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
@@ -713,7 +728,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         ).count()
         if rule_count > 0:
             return _fmt_alert(
-                ungettext(
+                ngettext(
                     "You have %(rule_count)d automatic case update rule "
                     "configured in your project. If you select this plan, "
                     "this rule will be deactivated.",
@@ -767,12 +782,14 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            get_practice_mode_configured_apps,
+        )
         apps = get_practice_mode_configured_apps(project.name)
         if not apps:
             return None
         return _fmt_alert(
-            ungettext(
+            ngettext(
                 "You have %(num_apps)d application that has a practice mobile worker "
                 "configured, it will be unset on downgrade.",
                 "You have %(num_apps)d applications that has a practice mobile worker "

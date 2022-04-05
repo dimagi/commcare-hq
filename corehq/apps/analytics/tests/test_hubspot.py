@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.accounting.tests import generator
-from corehq.apps.analytics.utils import (
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
     get_blocked_hubspot_accounts,
     is_domain_blocked_from_hubspot,
@@ -145,9 +145,9 @@ class TestBlockedHubspotData(TestCase):
         cls.blocked_commcare_user.save()
 
     def test_get_blocked_domains(self):
-        self.assertListEqual(
-            get_blocked_hubspot_domains(),
-            [self.blocked_domain.name, self.second_blocked_domain.name]
+        self.assertEqual(
+            set(get_blocked_hubspot_domains()),
+            {self.blocked_domain.name, self.second_blocked_domain.name}
         )
 
     def test_get_blocked_hubspot_accounts(self):

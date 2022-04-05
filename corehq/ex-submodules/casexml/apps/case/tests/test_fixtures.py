@@ -1,11 +1,11 @@
 import datetime
-
 import os.path
-from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+
 from django.test import SimpleTestCase
+
+from casexml.apps.case.fixtures import CaseDBFixture
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.form_processor.models import CommCareCase
 
 
 class TestFixtures(TestXmlMixin, SimpleTestCase):
@@ -14,8 +14,9 @@ class TestFixtures(TestXmlMixin, SimpleTestCase):
 
     domain = 'winterfell'
 
-    def setUp(self):
-        self.case = CommCareCase(
+    def create_case(self):
+        return CommCareCase(
+            case_id='redwoman',
             domain=self.domain,
             opened_on=datetime.datetime(2016, 5, 31),
             modified_on=datetime.datetime(2016, 5, 31),
@@ -23,17 +24,16 @@ class TestFixtures(TestXmlMixin, SimpleTestCase):
             closed=False,
             name='melisandre',
             owner_id='lordoflight',
-            indices=[CommCareCaseIndex(
-                identifier='advisor',
-                referenced_type='human',
-                referenced_id='stannis',
-                relationship='extension',
-            )]
+            indices=[{
+                'identifier': 'advisor',
+                'referenced_type': 'human',
+                'referenced_id': 'stannis',
+                'relationship': 'extension',
+            }],
+            case_json={'power': 'prophecy', 'hometown': 'asshai'},
         )
-        self.case._id = 'redwoman'
-        self.case.power = 'prophecy'
-        self.case.hometown = 'asshai'
 
     def test_fixture(self):
-        fixture = CaseDBFixture([self.case, self.case]).fixture
-        self.assertXmlEqual(fixture, self.get_xml('case_fixture'))
+        case = self.create_case()
+        fixture = CaseDBFixture([case, case]).fixture
+        self.assertXmlEqual(self.get_xml('case_fixture'), fixture)

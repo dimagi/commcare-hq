@@ -1,8 +1,9 @@
-from django.test.testcases import TestCase
-from unittest.mock import patch
-from corehq.form_processor.models import CommCareCaseSQL
 from datetime import datetime
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from unittest.mock import patch
+
+from django.test.testcases import TestCase
+
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
 
 
@@ -37,7 +38,7 @@ class TestRepeaterHelpers(TestCase):
         self.case_1.delete()
         self.case_2.delete()
 
-    @patch.object(CaseAccessors, 'get_cases')
+    @patch.object(CommCareCase.objects, 'get_cases')
     def test__get_relevant_case_updates_from_form_json_with_case_types(self, get_cases):
         get_cases.return_value = [self.case_1, self.case_2]
 
@@ -49,7 +50,7 @@ class TestRepeaterHelpers(TestCase):
         )
         self.assertEqual(len(result), 2)
 
-    @patch.object(CaseAccessors, 'get_cases')
+    @patch.object(CommCareCase.objects, 'get_cases')
     def test__get_relevant_case_updates_from_form_json_without_case_types(self, get_cases):
         get_cases.return_value = [self.case_1, self.case_2]
 
@@ -63,7 +64,7 @@ class TestRepeaterHelpers(TestCase):
 
 
 def create_commcare_case(data):
-    cccsql = CommCareCaseSQL(
+    cccsql = CommCareCase(
         case_id=data['case_id'],
         domain=data['domain'],
         type=data['type'],

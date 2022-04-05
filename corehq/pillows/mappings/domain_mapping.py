@@ -2,7 +2,7 @@ from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
+DOMAIN_INDEX = prefix_for_tests("hqdomains_2021-03-08")
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
@@ -240,9 +240,6 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "creating_user": {
-            "type": "string"
-        },
-        "customer_type": {
             "type": "string"
         },
         "date_created": {

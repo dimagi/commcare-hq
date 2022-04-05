@@ -3,8 +3,8 @@ from collections import namedtuple
 from itertools import chain
 
 from django.db.models import Sum
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -238,10 +238,10 @@ def build_worksheet(title, headers, rows):
 
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
-    name = ugettext_lazy("Project Performance")
+    name = gettext_lazy("Project Performance")
     report_template_path = "reports/async/project_health_dashboard.html"
-    description = ugettext_lazy("A summary of the overall health of your project"
-                                " based on how your users are doing over time.")
+    description = gettext_lazy("A summary of the overall health of your project"
+                               " based on how your users are doing over time.")
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',

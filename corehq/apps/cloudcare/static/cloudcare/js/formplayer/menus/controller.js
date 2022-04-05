@@ -118,6 +118,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId) {
+        var isMultiSelect = false; // TODO: add logic
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
@@ -139,19 +140,21 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 showDetail(model, detailTabIndex, caseId);
             },
         });
+        var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
+            model: model,
+            isMultiSelect: isMultiSelect,
+        });
+        $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
+        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
+        $('#case-detail-modal').modal('show');
 
         $('#select-case').off('click').click(function () {
             FormplayerFrontend.trigger("menu:select", caseId);
         });
-        $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
-        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
-        $('#case-detail-modal').modal('show');
-
-        if (model.isPersistentDetail) {
-            $('#case-detail-modal').find('#select-case').hide();
-        } else {
-            $('#case-detail-modal').find('#select-case').show();
-        }
+        $('#select-case-for-multi-select').off('click').click(function () {
+            // todo: add logic to select case id via checkbox
+        });
     };
 
     var getDetailList = function (detailObject) {
@@ -180,7 +183,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
-        var templateForms = detailObject.get('templateForms') || [];
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -188,9 +190,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
-            obj.templateForm = templateForms[i];
             obj.id = i;
-            if (obj.templateForm === 'markdown') {
+            if (obj.style.displayFormat === 'Markdown') {
                 obj.html = DOMPurify.sanitize(md.render(details[i]));
             }
             detailModel.push(obj);

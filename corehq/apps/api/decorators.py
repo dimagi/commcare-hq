@@ -35,8 +35,9 @@ def allow_cors(allowed_methods):
         def wrapped_view(request, *args, **kwargs):
             if request.method == "OPTIONS":
                 response = HttpResponse()
-                response[ACCESS_CONTROL_ALLOW] = ', '.join(allowed_methods)
-                return add_cors_headers_to_response(response)
+                allowed_methods_header_value = ', '.join(allowed_methods)
+                response[ACCESS_CONTROL_ALLOW] = allowed_methods_header_value
+                return add_cors_headers_to_response(response, allowed_methods_header_value)
             response = view_func(request, *args, **kwargs)
             if request.method in allowed_methods:
                 add_cors_headers_to_response(response)

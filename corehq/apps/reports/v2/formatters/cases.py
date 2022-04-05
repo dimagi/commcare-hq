@@ -1,10 +1,7 @@
 from django.urls import NoReverseMatch
-from django.utils import html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
-
-from casexml.apps.case.models import CommCareCaseAction
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -16,6 +13,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.v2.models import BaseDataFormatter
 from corehq.apps.reports.v2.utils import report_date_to_json
+from corehq.apps.reports.util import get_user_id_from_form
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
@@ -169,8 +167,7 @@ class CaseDataFormatter(BaseDataFormatter):
             if 'actions' in self.raw_data:
                 for action in self.raw_data['actions']:
                     if action['action_type'] == 'create':
-                        action_doc = CommCareCaseAction.wrap(action)
-                        creator_id = action_doc.get_user_id()
+                        creator_id = get_user_id_from_form(action["xform_id"])
                         break
 
         if not creator_id:

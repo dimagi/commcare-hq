@@ -130,7 +130,10 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
 
         m1f0 = self.module_1.get_form(0)
         m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
-        self.factory.form_requires_case(m1f0, 'gold-fish', update={'question1': '/data/question1'})
+        self.factory.form_requires_case(m1f0, 'gold-fish',
+                                        update={
+                                              'question1': '/data/question1'
+                                        })
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
         self.assertXmlEqual(self.get_xml('advanced_submodule_xform'), m1f0.render_xform())
@@ -148,7 +151,8 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         m0f0.actions.load_update_cases[0].case_tag = 'load_goldfish_renamed'
 
         m1, m1f0 = factory.new_advanced_module('child', 'guppy', parent_module=m0)
-        factory.form_requires_case(m1f0, 'gold-fish', update={'question1': '/data/question1'})
+        factory.form_requires_case(m1f0, 'gold-fish',
+                                   update={'question1': '/data/question1'})
         factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
         # making this case tag the same as the one in the parent module should mean that it will also get changed
@@ -331,6 +335,54 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             "./entry"
         )
 
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_select_other(self, *args):
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.module_1.parent_select.active = True
+        self.module_1.parent_select.module_id = self.module_0.unique_id
+        self.module_1.parent_select.relationship = None
+
+        # the filter expression gets rewritten to use `case_id` instead of `parent_id`
+        filter_expression = "parent_id = instance('commcaresession')/session/data/parent_id"
+        self.module_1.case_details.short.filter = filter_expression
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-parent-select-other'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_select_other_same_case_type(self, *args):
+        # set module case types to match
+        self.module_0.case_type = 'gold_fish'
+        self.module_1.case_type = self.module_0.case_type
+
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.module_1.parent_select.active = True
+        self.module_1.parent_select.module_id = self.module_0.unique_id
+        self.module_1.parent_select.relationship = None
+
+        # the filter expression does not get rewritten
+        filter_expression = "parent_id = instance('commcaresession')/session/data/case_id"
+        self.module_1.case_details.short.filter = filter_expression
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-parent-select-other-same-case-type'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
 
 class UsercaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
@@ -390,7 +442,8 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             parent_module=upd_goldfish_mod,
         )
         upd_guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
-        factory.form_requires_case(upd_guppy_form, 'gold-fish', update={'question1': '/data/question1'})
+        factory.form_requires_case(upd_guppy_form, 'gold-fish',
+                                   update={'question1': '/data/question1'})
         factory.form_requires_case(
             upd_guppy_form,
             'guppy',
@@ -416,7 +469,8 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         factory.form_opens_case(lab_test_form, 'lab_referral', is_subcase=True, parent_tag='open_lab_test')
 
         lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
-        factory.form_requires_case(lab_update_form, 'episode', update={'episode_type': '/data/question1'})
+        factory.form_requires_case(lab_update_form, 'episode',
+                                   update={'episode_type': '/data/question1'})
         factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
         lab_update_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
 

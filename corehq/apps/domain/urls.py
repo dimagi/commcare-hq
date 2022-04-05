@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.contrib.auth.views import (
     PasswordChangeDoneView,
     PasswordChangeView,
@@ -7,7 +7,7 @@ from django.contrib.auth.views import (
     PasswordResetDoneView,
     PasswordResetView,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
@@ -64,9 +64,9 @@ from corehq.apps.domain.views.settings import (
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
     EditMyProjectSettingsView,
-    EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
+    ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
 )
@@ -135,7 +135,6 @@ domain_settings = [
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
-    url(r'^openclinica/$', EditOpenClinicaSettingsView.as_view(), name=EditOpenClinicaSettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),
     url(r'^subscription/change/confirm/$', ConfirmSelectedPlanView.as_view(),
         name=ConfirmSelectedPlanView.urlname),
@@ -184,9 +183,12 @@ domain_settings = [
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
-    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
+    url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(),
+        name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),
+        name=ManageDomainMobileWorkersView.urlname),
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
     url(r'^project_limits/$', ProjectLimitsView.as_view(), name=ProjectLimitsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),

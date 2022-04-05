@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_error, notify_exception
@@ -520,7 +520,7 @@ def process_sms_registration(msg):
                         domain=domain_obj.name,
                         cleaned_phone_number=cleaned_phone_number,
                         send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
-                        admin_alert_emails=domain_obj.sms_worker_registration_alert_emails,
+                        admin_alert_emails=list(domain_obj.sms_worker_registration_alert_emails),
                     )
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(

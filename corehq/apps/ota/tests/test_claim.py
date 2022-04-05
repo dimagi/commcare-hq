@@ -10,8 +10,8 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 
 DOMAIN = 'test_domain'
 USERNAME = 'lina.stern@ras.ru'
@@ -42,7 +42,7 @@ class CaseClaimTests(TestCase):
         super(CaseClaimTests, self).tearDown()
 
     def create_case(self):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=self.host_case_id,
             case_name=self.host_case_name,
@@ -53,9 +53,9 @@ class CaseClaimTests(TestCase):
 
     def assert_claim(self, claim=None, claim_id=None):
         if claim is None:
-            claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+            claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
             self.assertEqual(len(claim_ids), 1)
-            claim = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+            claim = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         if claim_id:
             self.assertEqual(claim.case_id, claim_id)
         self.assertEqual(claim.name, self.host_case_name)
@@ -115,10 +115,10 @@ class CaseClaimTests(TestCase):
         claim_id = claim_case(malicious_domain, self.restore_user, self.host_case_id,
                               host_type=self.host_case_type, host_name=self.host_case_name)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors(malicious_domain).get_case(claim_id)
+            CommCareCase.objects.get_case(claim_id, malicious_domain)
 
     def _close_case(self, case_id):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             close=True

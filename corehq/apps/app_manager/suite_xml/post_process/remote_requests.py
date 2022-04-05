@@ -11,6 +11,7 @@ from corehq.apps.app_manager.suite_xml.post_process.instances import (
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowDatumMeta
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.utils import get_ordered_case_types_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     CalculatedPropertyXPath,
     Command,
@@ -36,6 +37,7 @@ from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
     module_uses_smart_links,
+    module_offers_registry_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -49,6 +51,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
 )
 from corehq.util.timer import time_method
@@ -105,7 +108,7 @@ class RemoteRequestFactory(object):
         return RemoteRequestPost(**kwargs)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant()
+        return self.module.search_config.get_relevant(self.module.case_details.short.multi_select)
 
     def build_command(self):
         return Command(
@@ -124,7 +127,7 @@ class RemoteRequestFactory(object):
 
         xpaths = {QuerySessionXPath(self.case_session_var).instance()}
         xpaths.update(datum.ref for datum in self._remote_request_query_datums)
-        xpaths.add(self.module.search_config.get_relevant())
+        xpaths.add(self.module.search_config.get_relevant(self.module.case_details.short.multi_select))
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
@@ -179,7 +182,7 @@ class RemoteRequestFactory(object):
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
-            additional_types = list(set(self.module.search_config.additional_case_types) - {self.module.case_type})
+            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=RESULTS_INSTANCE)
@@ -197,10 +200,9 @@ class RemoteRequestFactory(object):
 
     @cached_property
     def _remote_request_query_datums(self):
-        additional_types = set(self.module.search_config.additional_case_types) - {self.module.case_type}
         datums = [
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in [self.module.case_type] + list(additional_types)
+            for case_type in get_ordered_case_types_for_module(self.module)
         ]
 
         datums.extend(
@@ -214,11 +216,18 @@ class RemoteRequestFactory(object):
                     ref=self.module.search_config.blacklisted_owner_ids_expression,
                 )
             )
-        if self.module.search_config.data_registry:
+        if module_offers_registry_search(self.module):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_REGISTRY_ID_KEY,
                     ref=f"'{self.module.search_config.data_registry}'",
+                )
+            )
+        if self.module.search_config.custom_related_case_property:
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
+                    ref=f"'{self.module.search_config.custom_related_case_property}'",
                 )
             )
         return datums
@@ -291,7 +300,7 @@ class RemoteRequestFactory(object):
         # Returns XPath that will evaluate to a URL.
         # For example, return value could be
         #   concat('https://www.cchq.org/a/', $domain, '/app/v1/123/smartlink/', '?arg1=', $arg1, '&arg2=', $arg2)
-        # Which could evalute to
+        # Which could evaluate to
         #   https://www.cchq.org/a/mydomain/app/v1/123/smartlink/?arg1=abd&arg2=def
         app_id = self.app.upstream_app_id if is_linked_app(self.app) else self.app.origin_id
         url = absolute_reverse("session_endpoint", args=["---", app_id, self.module.session_endpoint_id])
@@ -343,7 +352,8 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         self.case_session_var = case_session_var
 
     def get_post_relevant(self):
-        return CaseClaimXpath(self.case_session_var).default_relevant()
+        if not self.module.case_details.short.multi_select:
+            return CaseClaimXpath(self.case_session_var).default_relevant()
 
     def build_command(self):
         return Command(

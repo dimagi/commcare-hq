@@ -4,7 +4,7 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 from corehq.form_processor.tests.utils import sharded
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_alert_schedule_instance
@@ -34,7 +34,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
     def tearDown(self):
         for db in plproxy_config.form_processing_dbs:
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
-            XFormInstanceSQL.objects.using(db).filter(domain=self.domain).delete()
+            XFormInstance.objects.using(db).filter(domain=self.domain).delete()
 
     def test_uuids_used(self):
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p1_uuid), self.db1)
@@ -67,29 +67,29 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         from corehq.sql_db.shard_data_management import get_count_of_models_by_shard_for_testing
         form = self._make_form_instance(str(self.p2_uuid))
         form.save()
-        self.assertEqual(XFormInstanceSQL.objects.using(self.db2).count(), 1)
-        matches = get_count_of_unmatched_models_by_shard(self.db2, XFormInstanceSQL)
+        self.assertEqual(XFormInstance.objects.using(self.db2).count(), 1)
+        matches = get_count_of_unmatched_models_by_shard(self.db2, XFormInstance)
         self.assertEqual(0, len(matches))
-        all_data = get_count_of_models_by_shard_for_testing(self.db2, XFormInstanceSQL)
+        all_data = get_count_of_models_by_shard_for_testing(self.db2, XFormInstance)
         self.assertEqual(1, len(all_data))
         self.assertEqual((2, 1), all_data[0])
 
     def test_text_partitioning_incorrect(self):
         form = self._make_form_instance(str(self.p2_uuid))
         super(PartitionedModel, form).save(using=self.db1)
-        self.assertEqual(XFormInstanceSQL.objects.using(self.db1).count(), 1)
-        matches = get_count_of_unmatched_models_by_shard(self.db1, XFormInstanceSQL)
+        self.assertEqual(XFormInstance.objects.using(self.db1).count(), 1)
+        matches = get_count_of_unmatched_models_by_shard(self.db1, XFormInstance)
         self.assertEqual(1, len(matches))
         self.assertEqual((2, 1), matches[0])
 
     @classmethod
     def _make_form_instance(cls, form_id):
-        return XFormInstanceSQL(
+        return XFormInstance(
             form_id=form_id,
             xmlns='http://openrosa.org/formdesigner/form-processor',
             received_on=datetime.utcnow(),
             user_id='a-user',
             domain=cls.domain,
-            state=XFormInstanceSQL.NORMAL,
+            state=XFormInstance.NORMAL,
 
         )

@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, Dict, List
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from requests import HTTPError
 from schema import Schema, SchemaError
@@ -10,7 +10,7 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
 from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
 from corehq.motech.dhis2.exceptions import (
@@ -306,8 +306,7 @@ def create_relationships(
 
 
 def get_supercase(case_trigger_info, relationship_config):
-    case_accessor = CaseAccessors(case_trigger_info.domain)
-    case = case_accessor.get_case(case_trigger_info.case_id)
+    case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
     for index in case.live_indices:
         index_matches_config = (
             index.identifier == relationship_config.identifier
@@ -315,7 +314,7 @@ def get_supercase(case_trigger_info, relationship_config):
             and index.relationship == relationship_config.relationship
         )
         if index_matches_config:
-            return case_accessor.get_case(index.referenced_id)
+            return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
 
 
 def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
@@ -461,7 +460,7 @@ def save_case_updates(domain, case_id, case_updates):
             kwargs[case_property] = value
         else:
             case_update[case_property] = value
-    case_block = CaseBlock.deprecated_init(
+    case_block = CaseBlock(
         case_id=case_id,
         create=False,
         update=case_update,

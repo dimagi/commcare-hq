@@ -140,7 +140,7 @@ def patch_jsonfield():
     """
     import json
     from django.core.exceptions import ValidationError
-    from django.utils.translation import ugettext_lazy as _
+    from django.utils.translation import gettext_lazy as _
     from jsonfield import JSONField
 
     def to_python(self, value):
@@ -152,6 +152,13 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
+
+    import django
+    if django.VERSION < (3, 1):
+        # TODO remove after upgrading to Django 3.2
+        from django.contrib.postgres.fields.jsonb import JSONField
+        import django.db.models
+        django.db.models.JSONField = JSONField
 
 
 # HACK monkey-patch django setup to prevent second setup by django_nose

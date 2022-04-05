@@ -20,11 +20,7 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import UserArchivedRebuild
+from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
 
 
 class RetireUserTestCase(TestCase):
@@ -90,7 +86,7 @@ class RetireUserTestCase(TestCase):
         for i, case_id in enumerate(case_ids):
             owner_id = self.commcare_user._id
 
-            caseblocks.append(CaseBlock.deprecated_init(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -99,10 +95,10 @@ class RetireUserTestCase(TestCase):
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire(self.domain, deleted_by=None)
-        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
-        form = FormAccessors(self.domain).get_form(xform.form_id)
+        form = XFormInstance.objects.get_form(xform.form_id, self.domain)
         self.assertTrue(form.is_deleted)
 
         self.assertEqual(
@@ -124,10 +120,10 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
         self.assertEqual(user_history.changed_via, "Test")
 
-        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
         self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
-        form = FormAccessors(self.domain).get_form(xform.form_id)
+        form = XFormInstance.objects.get_form(xform.form_id, self.domain)
         self.assertFalse(form.is_deleted)
 
     def test_undelete_system_forms(self):
@@ -138,7 +134,7 @@ class RetireUserTestCase(TestCase):
         for case_id in case_ids:
             owner_id = self.commcare_user._id
 
-            caseblocks.append(CaseBlock.deprecated_init(
+            caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -148,7 +144,7 @@ class RetireUserTestCase(TestCase):
 
         # submit a system form to update one, and another to update two
         caseblocks = [
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=False,
                 case_id=case_id,
                 user_id=SYSTEM_USER_ID,
@@ -161,16 +157,16 @@ class RetireUserTestCase(TestCase):
 
         # Both forms should be deleted on `retire()`
         self.commcare_user.retire(self.domain, deleted_by=None)
-        form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
+        form_1 = XFormInstance.objects.get_form(xform_1.form_id, self.domain)
         self.assertTrue(form_1.is_deleted)
-        form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
+        form_2 = XFormInstance.objects.get_form(xform_2.form_id, self.domain)
         self.assertTrue(form_2.is_deleted)
 
         # Both forms should be undeleted on `unretire()`
         self.commcare_user.unretire(self.domain, unretired_by=None)
-        form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
+        form_1 = XFormInstance.objects.get_form(xform_1.form_id, self.domain)
         self.assertFalse(form_1.is_deleted)
-        form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
+        form_2 = XFormInstance.objects.get_form(xform_2.form_id, self.domain)
         self.assertFalse(form_2.is_deleted)
 
     def test_deleted_indices_removed(self):
@@ -197,13 +193,13 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        CaseAccessors(self.domain).soft_delete_cases([parent_id])
+        CommCareCase.objects.soft_delete_cases(self.domain, [parent_id])
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])
 
         # check that the index is removed via a new form
-        child = CaseAccessors(self.domain).get_case(child_id)
+        child = CommCareCase.objects.get_case(child_id, self.domain)
         self.assertEqual(1, len(child.indices))
         self.assertTrue(child.indices[0].is_deleted)
         self.assertEqual(2, len(child.xform_ids))
@@ -216,7 +212,7 @@ class RetireUserTestCase(TestCase):
         """
 
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -235,7 +231,7 @@ class RetireUserTestCase(TestCase):
         """ Don't rebuild cases that are owned by other users """
 
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -254,13 +250,16 @@ class RetireUserTestCase(TestCase):
 
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
-        caseblocks = [CaseBlock.deprecated_init(
+        caseblocks = [CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         ) for case_id in case_ids]
-        casexmls = [ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8') for caseblock in caseblocks]
+        casexmls = [
+            ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8')
+            for caseblock in caseblocks
+        ]
         submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire(self.domain, deleted_by=None)
@@ -284,7 +283,7 @@ class RetireUserTestCase(TestCase):
             else:
                 owner_id = self.commcare_user._id
 
-            caseblock = CaseBlock.deprecated_init(
+            caseblock = CaseBlock(
                 create=True,
                 case_id=case_id,
                 owner_id=owner_id,
@@ -302,21 +301,22 @@ class RetireUserTestCase(TestCase):
 
     def test_all_case_forms_deleted(self):
         from corehq.apps.callcenter.sync_usercase import sync_usercase
-        sync_usercase(self.commcare_user)
+        sync_usercase(self.commcare_user, self.domain)
 
         usercase_id = self.commcare_user.get_usercase_id()
 
         # other user submits form against the case (should get deleted)
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=False,
             case_id=usercase_id,
         )
         submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
-        case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
+        case_ids = CommCareCase.objects.get_case_ids_in_domain_by_owners(
+            self.domain, [self.commcare_user._id])
         self.assertEqual(1, len(case_ids))
 
-        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
+        form_ids = XFormInstance.objects.get_form_ids_for_user(self.domain, self.commcare_user._id)
         self.assertEqual(0, len(form_ids))
 
         usercase = self.commcare_user.get_usercase()
@@ -325,13 +325,13 @@ class RetireUserTestCase(TestCase):
         self.commcare_user.retire(self.domain, deleted_by=None)
 
         for form_id in usercase.xform_ids:
-            self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
+            self.assertTrue(XFormInstance.objects.get_form(form_id, self.domain).is_deleted)
 
-        self.assertTrue(CaseAccessors(self.domain).get_case(usercase_id).is_deleted)
+        self.assertTrue(CommCareCase.objects.get_case(usercase_id, self.domain).is_deleted)
 
     def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=case_id,
             owner_id=self.commcare_user._id,
@@ -342,11 +342,11 @@ class RetireUserTestCase(TestCase):
         # other user submits form against the case and another case not owned by the user
         # should NOT get deleted since this form touches a case that's still 'alive'
         double_case_xform, _ = submit_case_blocks([
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=False,
                 case_id=case_id,
             ).as_text(),
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=self.other_user._id,
@@ -356,10 +356,10 @@ class RetireUserTestCase(TestCase):
 
         self.commcare_user.retire(self.domain, deleted_by=None)
 
-        self.assertTrue(FormAccessors(self.domain).get_form(xform.form_id).is_deleted)
-        self.assertFalse(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)
+        self.assertTrue(XFormInstance.objects.get_form(xform.form_id, self.domain).is_deleted)
+        self.assertFalse(XFormInstance.objects.get_form(double_case_xform.form_id, self.domain).is_deleted)
 
         # When the other user is deleted then the form should get deleted since it no-longer touches
         # any 'live' cases.
         self.other_user.retire(self.domain, deleted_by=None)
-        self.assertTrue(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)
+        self.assertTrue(XFormInstance.objects.get_form(double_case_xform.form_id, self.domain).is_deleted)

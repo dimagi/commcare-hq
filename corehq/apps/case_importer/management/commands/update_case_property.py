@@ -5,7 +5,6 @@ import csv
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class Command(BaseCommand):
@@ -20,7 +19,6 @@ class Command(BaseCommand):
 
     def handle(self, domain, infile, logfile, *args, **options):
         self.domain = domain
-        self.case_accessor = CaseAccessors(self.domain)
         with open(infile, 'r', encoding='utf-8') as f, open(logfile, 'w', encoding='utf-8') as log:
             reader = csv.reader(f)
             _, case_prop_name = next(reader)

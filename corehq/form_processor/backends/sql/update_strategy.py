@@ -2,7 +2,7 @@ import logging
 import sys
 from functools import cmp_to_key
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from ddtrace import tracer
 from iso8601 import iso8601
@@ -21,19 +21,20 @@ from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 
 from corehq import toggles
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import StockProcessingError
 from corehq.form_processor.models import (
-    CaseAttachmentSQL,
+    CaseAttachment,
     CaseTransaction,
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
+    CommCareCaseIndex,
+    CommCareCase,
     RebuildWithReason,
     STANDARD_CHARFIELD_LENGTH,
 )
+from corehq.form_processor.models.forms import XFormInstance, XFormNotFound
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util import cmp
 from corehq.util.metrics import metrics_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.soft_assert import soft_assert
 
 reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']))
@@ -66,7 +67,7 @@ def _convert_type_check_length(property_name, value):
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
-    case_implementation_class = CommCareCaseSQL
+    case_implementation_class = CommCareCase
 
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case
@@ -196,7 +197,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             else:
                 # no id, no index
                 if index_update.referenced_id:
-                    index = CommCareCaseIndexSQL(
+                    index = CommCareCaseIndex(
                         domain=self.case.domain,
                         case=self.case,
                         identifier=index_update.identifier,
@@ -228,7 +229,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment = CaseAttachmentSQL.new(att.identifier)
+                    new_attachment = CaseAttachment.new(att.identifier)
                     new_attachment.from_form_attachment(
                         form_attachment, att.attachment_src)
                     new_attachment.case = self.case
@@ -293,11 +294,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self._delete_old_related_models(
             original_indices,
-            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+            self.case.get_live_tracked_models(CommCareCaseIndex)
         )
         self._delete_old_related_models(
             original_attachments,
-            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            self.case.get_live_tracked_models(CaseAttachment),
             key="name",
         )
 
@@ -332,7 +333,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
 
-        CaseAccessorSQL.fetch_case_transaction_forms(self.case, sorted_transactions)
+        self._fetch_case_transaction_forms(sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
         rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
@@ -352,6 +353,71 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)
+
+    def get_transactions_for_rebuild(self, updated_xforms=None):
+        """
+        Fetch all the transactions required to rebuild the case along
+        with all the forms for those transactions.
+
+        For any forms that have been updated it replaces the old form
+        with the new one.
+
+        :param updated_xforms: optional list of forms that have been changed.
+        :return: list of ``CaseTransaction`` objects with their associated forms attached.
+        """
+        transactions = CaseTransaction.objects.get_transactions_for_case_rebuild(self.case.case_id)
+        self._fetch_case_transaction_forms(transactions, updated_xforms)
+        return transactions
+
+    def _fetch_case_transaction_forms(self, transactions, updated_xforms=None):
+        """
+        Fetch the forms for a list of transactions, caching them on each transaction
+
+        :param transactions: list of ``CaseTransaction`` objects:
+        :param updated_xforms: optional list of forms that have been changed.
+        """
+        form_ids = {tx.form_id for tx in transactions if tx.form_id}
+        updated_xforms_map = {
+            xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
+        } if updated_xforms else {}
+
+        updated_xform_ids = set(updated_xforms_map)
+        form_ids_to_fetch = list(form_ids - updated_xform_ids)
+        form_load_counter("rebuild_case", self.case.domain)(len(form_ids_to_fetch))
+        xform_map = {
+            form.form_id: form
+            for form in XFormInstance.objects.get_forms_with_attachments_meta(form_ids_to_fetch)
+        }
+
+        forms_missing_transactions = list(updated_xform_ids - form_ids)
+        for form_id in forms_missing_transactions:
+            # Add in any transactions that aren't already present
+            form = updated_xforms_map[form_id]
+            case_updates = [update for update in get_case_updates(form) if update.id == self.case.case_id]
+            types = [
+                CaseTransaction.type_from_action_type_slug(a.action_type_slug)
+                for case_update in case_updates
+                for a in case_update.actions
+            ]
+            modified_on = case_updates[0].guess_modified_on()
+            new_transaction = CaseTransaction.form_transaction(self.case, form, modified_on, types)
+            transactions.append(new_transaction)
+
+        def get_form(form_id):
+            if form_id in updated_xforms_map:
+                return updated_xforms_map[form_id]
+
+            try:
+                return xform_map[form_id]
+            except KeyError:
+                raise XFormNotFound(form_id)
+
+        for case_transaction in transactions:
+            if case_transaction.form_id:
+                try:
+                    case_transaction.cached_form = get_form(case_transaction.form_id)
+                except XFormNotFound:
+                    logging.error('Form not found during rebuild: %s', case_transaction.form_id)
 
 
 def _transaction_sort_key_function(case):

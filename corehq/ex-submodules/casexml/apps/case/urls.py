@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, re_path as url
 from .views import reference_case_attachment_view
 
 urlpatterns = patterns('',

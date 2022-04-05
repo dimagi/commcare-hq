@@ -6,30 +6,23 @@ generic functions and accessors to access and operate on the models.
 
 This document provides a basic guide for how to do that.
 
-Models
-------
-In the codebase there are now two models for form and case data.
++-------------------+
+| Models            |
++===================+
+| CommCareCase      |
++-------------------+
+| CaseTransaction   |
++-------------------+
+| CaseAttachment    |
++-------------------+
+| CommCareCaseIndex |
++-------------------+
+| XFormInstance     |
++-------------------+
+| XFormOperation    |
++-------------------+
 
-+------------------------+----------------------+
-| Couch                  | SQL                  |
-+========================+======================+
-| CommCareCase           | CommCareCaseSQL      |
-+------------------------+----------------------+
-| CommCareCaseAction     | CaseTransaction      |
-+------------------------+----------------------+
-| CommCareCaseAttachment | CaseAttachmentSQL    |
-+------------------------+----------------------+
-| CommCareCaseIndex      | CommCareCaseIndexSQL |
-+------------------------+----------------------+
-|                        | XFormInstanceSQL     |
-+------------------------+----------------------+
-|                        | XFormOperationSQL    |
-+------------------------+----------------------+
-
-Some of these models define a common interface that allows you to perform the same operations
-irrespective of the type. Some examples are shown below:
-
-**Form Instance**
+**Form Instance API**
 
 +------------------------------------+--------------------------------------------------+
 | Property / method                  | Description                                      |
@@ -64,7 +57,7 @@ irrespective of the type. Some examples are shown below:
 +------------------------------------+--------------------------------------------------+
 
 
-**Case**
+**Case API**
 
 +--------------------------------+---------------------------------------+
 | Property / method              | Description                           |
@@ -92,23 +85,23 @@ name in order to know which DB needs to be queried.
 
 **Forms**
 
-- FormAccessors(domain).get_form(form_id)
-- FormAccessors(domain).get_forms(form_ids)
-- FormAccessors(domain).iter_forms(form_ids)
-- FormAccessors(domain).save_new_form(form)
+- XFormInstance.objects.get_form(form_id, domain)
+- XFormInstance.objects.get_forms(form_ids, domain)
+- XFormInstance.objects.iter_forms(form_ids, domain)
+- XFormInstance.objects.save_new_form(form)
 
   - only for new forms
 
-- FormAccessors(domain).get_with_attachments(form)
+- XFormInstance.objects.get_with_attachments(form, domain)
 
   - Preload attachments to avoid having to the the DB again
 
 **Cases**
 
-- CaseAccessors(domain).get_case(case_id)
-- CaseAccessors(domain).get_cases(case_ids)
-- CaseAccessors(domain).iter_cases(case_ids)
-- CaseAccessors(domain).get_case_ids_in_domain(type='dog')
+- CommCareCase.objects.get_case(case_id, domain)
+- CommCareCase.objects.get_cases(case_ids, domain)
+- CommCareCase.objects.iter_cases(case_ids, domain)
+- CommCareCase.objects.get_case_ids_in_domain(domain, type='dog')
 
 **Ledgers**
 
@@ -116,8 +109,6 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.FormAccessors`
-* :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 
 

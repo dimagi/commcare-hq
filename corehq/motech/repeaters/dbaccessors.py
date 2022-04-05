@@ -1,5 +1,6 @@
 import datetime
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.sql_db.util import estimate_row_count
@@ -254,22 +255,31 @@ def _get_repeater_ids_by_domain(domain):
     return [result['id'] for result in results]
 
 
-def iterate_repeat_records(due_before, chunk_size=10000, database=None):
+def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
-    json_now = json_format_datetime(due_before)
+    return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
+
+
+def iterate_repeat_record_ids(due_before, chunk_size=10000):
+    """
+    Yields repeat record ids only.
+    Use chunk_size to optimize db query. Has no effect on # of items returned.
+    """
+    from .models import RepeatRecord
+    json_due_before = json_format_datetime(due_before)
 
     view_kwargs = {
         'reduce': False,
         'startkey': [None],
-        'endkey': [None, json_now, {}],
-        'include_docs': True
+        'endkey': [None, json_due_before, {}],
+        'include_docs': False
     }
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'repeaters/repeat_records_by_next_check',
             chunk_size,
             **view_kwargs):
-        yield RepeatRecord.wrap(doc['doc'])
+        yield doc['id']
 
 
 def get_domains_that_have_repeat_records():

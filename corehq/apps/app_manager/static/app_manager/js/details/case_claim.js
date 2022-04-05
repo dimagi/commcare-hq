@@ -179,8 +179,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
+        'customRelatedCaseProperty',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -259,7 +260,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
-                search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 data_registry: self.dataRegistry(),
@@ -287,6 +287,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
                     return query.caseIdXpath();
                 }) : [],
+                custom_related_case_property: self.customRelatedCaseProperty(),
             };
         };
 
@@ -426,6 +427,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.isCommon = function (prop) {
             return self.commonProperties().indexOf(prop) !== -1;
         };
+
+        self.isEnabled = ko.computed(() => {
+            // match logic in corehq.apps.app_manager.util.module_offers_search
+            return self._getProperties().length > 0 || self._getDefaultProperties().length > 0;
+        });
 
         self.serialize = function () {
             return _.extend({

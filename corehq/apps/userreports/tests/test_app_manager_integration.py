@@ -5,12 +5,10 @@ from django.test import TestCase
 
 from unittest.mock import patch
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
-
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_sources,
     get_form_data_sources,
@@ -96,12 +94,12 @@ class AppManagerDataSourceConfigTest(TestCase):
         datetime_columns = ["last_modified_date", "opened_date", "closed_date", "inserted_at",
                             "server_last_modified_date"]
         expected_columns = set(
-            datetime_columns +
-            [
+            datetime_columns
+            + [
                 "doc_id", "case_type", "last_modified_by_user_id", "opened_by_user_id",
                 "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id", "count",
-            ] +
-            list(self.case_properties.keys())
+            ]
+            + list(self.case_properties.keys())
             + [index_column_id]
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
@@ -110,7 +108,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         opened_on = datetime(2014, 11, 11, 23, 34, 34, 25)
         parent_id = 'fake-parent-id'
         sample_doc = CommCareCase(
-            _id='some-doc-id',
+            case_id='some-doc-id',
             modified_on=modified_on,
             opened_on=opened_on,
             user_id="23407238074",
@@ -118,15 +116,18 @@ class AppManagerDataSourceConfigTest(TestCase):
             name="priority ticket",
             domain=app.domain,
             type=self.case_type,
-            first_name='test first',
-            last_name='test last',
-            children='3',
-            dob='2001-01-01',
-            indices=[
-                CommCareCaseIndex(
-                    identifier='parent', referenced_type=self.parent_type, referenced_id=parent_id
-                )
-            ]
+            case_json={
+                'first_name': 'test first',
+                'last_name': 'test last',
+                'children': '3',
+                'dob': '2001-01-01',
+            },
+            indices=[{
+                'identifier': 'parent',
+                'referenced_type': self.parent_type,
+                'referenced_id': parent_id,
+                'relationship': 'child',
+            }]
         ).to_json()
 
         def _get_column_property(column):

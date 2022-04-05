@@ -11,7 +11,6 @@ from lxml import etree
 
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
-
 class XPathField(StringField):
     """
     A string field that is supposed to contain an arbitrary xpath expression
@@ -86,21 +85,25 @@ class Id(XmlObject):
 
 class XPathEnum(TextXPath):
     @classmethod
-    def build(cls, enum, template, get_template_context, get_value):
+    def build(cls, enum, format, type, template, get_template_context, get_value):
         variables = []
         for item in enum:
             v_key = item.key_as_variable
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
-
         parts = []
         for i, item in enumerate(enum):
             template_context = get_template_context(item, i)
             parts.append(template.format(**template_context))
-        parts.append("''")
-        parts.append(")" * len(enum))
-        function = ''.join(parts)
+        if type == "display" and format == "enum":
+            parts.insert(0, "replace(join(' ', ")
+            parts[-1] = parts[-1][:-2] # removes extra comma from last string
+            parts.append("), '\s+', ' ')")
+        else:
+            parts.append("''")
+            parts.append(")" * len(enum))
 
+        function = ''.join(parts)
         return cls(
             function=function,
             variables=variables,

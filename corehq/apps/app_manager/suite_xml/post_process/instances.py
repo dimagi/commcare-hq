@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from memoized import memoized
 
@@ -46,6 +46,9 @@ class EntryInstances(PostProcessor):
             xpaths.add(datum.function)
         for query in entry.queries:
             xpaths.update({data.ref for data in query.data})
+            for prompt in query.prompts:
+                if prompt.itemset:
+                    xpaths.add(prompt.itemset.nodeset)
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 

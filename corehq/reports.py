@@ -3,8 +3,8 @@ import hashlib
 import logging
 
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as _
 
 from jsonobject.exceptions import BadValueError
 
@@ -29,7 +29,6 @@ from corehq.apps.data_interfaces.interfaces import (
     CaseReassignmentInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.views.incremental import IncrementalExportLogView
 from corehq.apps.fixtures.interface import (
     FixtureEditInterface,
@@ -44,7 +43,7 @@ from corehq.apps.hqadmin.reports import (
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.standard import deployments, inspect, monitoring, sms, tableau
+from corehq.apps.reports.standard import deployments, inspect, monitoring, sms
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,
 )
@@ -64,7 +63,7 @@ from corehq.apps.sso.views.accounting_admin import IdentityProviderInterface
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     ReportConfiguration,
-    StaticReportConfiguration,
+    StaticReportConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
@@ -75,7 +74,6 @@ from corehq.motech.repeaters.views import (
     DomainForwardingRepeatRecords,
     SQLRepeatRecordReport,
 )
-from custom.openclinica.reports import OdmExportReport
 
 from . import toggles
 
@@ -83,9 +81,6 @@ from . import toggles
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
 
-    report_set = None
-    if project.report_whitelist:
-        report_set = set(project.report_whitelist)
     reports = []
 
     reports.extend(_get_configurable_reports(project))
@@ -102,7 +97,7 @@ def REPORTS(project):
         ProjectHealthDashboard,
     )
     inspect_reports = [
-        inspect.SubmitHistory, CaseListReport, OdmExportReport,
+        inspect.SubmitHistory, CaseListReport,
     ]
     if toggles.CASE_LIST_EXPLORER.enabled(project.name):
         inspect_reports.append(CaseListExplorer)
@@ -118,14 +113,10 @@ def REPORTS(project):
         deployments.ApplicationErrorReport,
     )
 
-    monitoring_reports = _filter_reports(report_set, monitoring_reports)
-    inspect_reports = _filter_reports(report_set, inspect_reports)
-    deployments_reports = _filter_reports(report_set, deployments_reports)
-
     reports.extend([
-        (ugettext_lazy("Monitor Workers"), monitoring_reports),
-        (ugettext_lazy("Inspect Data"), inspect_reports),
-        (ugettext_lazy("Manage Deployments"), deployments_reports),
+        (gettext_lazy("Monitor Workers"), monitoring_reports),
+        (gettext_lazy("Inspect Data"), inspect_reports),
+        (gettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
     if project.commtrack_enabled:
@@ -135,8 +126,7 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        supply_reports = _filter_reports(report_set, supply_reports)
-        reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
+        reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
     reports = list(_get_report_builder_reports(project)) + reports
 
@@ -160,76 +150,41 @@ def REPORTS(project):
         sms.ScheduleInstanceReport,
     ])
 
-    messaging_reports = _filter_reports(report_set, messaging_reports)
-    messaging = (ugettext_lazy("Messaging"), messaging_reports)
+    messaging = (gettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
-
-    reports.extend(_get_dynamic_reports(project))
 
     return reports
 
 
-def _filter_reports(report_set, reports):
-    if report_set:
-        return [r for r in reports if r.slug in report_set]
-    else:
-        return reports
-
-
-def _get_dynamic_reports(project):
-    """include any reports that can be configured/customized with static parameters for this domain"""
-    for reportset in project.dynamic_reports:
-        yield (reportset.section_title,
-               [_f for _f in (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports) if _f])
-
-
-def _make_dynamic_report(report_config, keyprefix):
-    """create a report class the descends from a generic report class but has specific parameters set"""
-    # a unique key to distinguish this particular configuration of the generic report
-    report_key = keyprefix + [report_config.report, report_config.name]
-    slug = hashlib.sha1(':'.join(report_key)).hexdigest()[:12]
-    kwargs = dict(report_config.kwargs)
-    kwargs.update({
-        'name': report_config.name,
-        'slug': slug,
-    })
-    if report_config.previewers_only:
-        # note this is a classmethod that will be injected into the dynamic class below
-        @classmethod
-        def show_in_navigation(cls, domain=None, project=None, user=None):
-            return user and user.is_previewer()
-        kwargs['show_in_navigation'] = show_in_navigation
-
-    try:
-        metaclass = to_function(report_config.report, failhard=True)
-    except Exception:
-        logging.error('dynamic report config for [%s] is invalid' % report_config.report)
-        return None
-
-    # dynamically create a report class
-    return type('DynamicReport%s' % slug, (metaclass,), kwargs)
-
-
 def _safely_get_report_configs(project_name):
+    return (
+        _safely_get_report_configs_generic(project_name, ReportConfiguration) +  # noqa: W504
+        _safely_get_report_configs_generic(project_name, RegistryReportConfiguration) +  # noqa: W504
+        _safely_get_static_report_configs(project_name)
+    )
+
+
+def _safely_get_report_configs_generic(project_name, report_class):
     try:
-        configs = ReportConfiguration.by_domain(project_name)
+        configs = report_class.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
         configs = []
-        for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
+        for config_id in get_doc_ids_in_domain_by_class(project_name, report_class):
             try:
-                configs.append(ReportConfiguration.get(config_id))
+                configs.append(report_class.get(config_id))
             except (BadSpecError, BadValueError) as e:
                 logging.error("%s with report config %s" % (str(e), config_id))
+    return configs
 
+
+def _safely_get_static_report_configs(project_name):
     try:
-        configs.extend(StaticReportConfiguration.by_domain(project_name))
+        return StaticReportConfiguration.by_domain(project_name)
     except (BadSpecError, BadValueError) as e:
         logging.exception(e)
-
-    return configs
 
 
 def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
@@ -251,8 +206,8 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
         @classmethod
         def show_item(cls, domain=None, project=None, user=None):
             return additional_requirement and (
-                config.visible or
-                (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+                config.visible
+                or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
             )
         return show_item
 
@@ -315,7 +270,7 @@ def get_report_builder_count(domain):
 
 
 EDIT_DATA_INTERFACES = (
-    (ugettext_lazy('Edit Data'), (
+    (gettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
         ImportCases,
         BulkFormManagementInterface,

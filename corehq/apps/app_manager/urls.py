@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
@@ -99,6 +99,7 @@ from corehq.apps.translations.views import (
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
 )
+from ..hqwebapp.decorators import waf_allow
 
 app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
@@ -203,7 +204,7 @@ urlpatterns = [
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
-        edit_advanced_form_actions, name='edit_advanced_form_actions'),
+        waf_allow('XSS_BODY')(edit_advanced_form_actions), name='edit_advanced_form_actions'),
 
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',

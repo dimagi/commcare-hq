@@ -260,6 +260,14 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                     raise
                 error_collector.add_error(ChangeError(change, e))
                 continue
+        else:
+            # See PR discussion: https://github.com/dimagi/commcare-hq/pull/31243
+            #
+            # Discarding changes when the deletion status is ambiguous feels
+            # like guessing to me, which goes against the zen. Log a warning
+            # for trackability.
+            pillow_logging.warning("discarding ambiguous bulk change: %s", change)
+            continue
         payload.append(action)
 
     return payload

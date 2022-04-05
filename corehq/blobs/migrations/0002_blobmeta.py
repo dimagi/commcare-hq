@@ -2,7 +2,6 @@
 
 import datetime
 
-import partial_index
 from django.db import migrations, models
 
 import corehq.blobs.models
@@ -41,7 +40,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='blobmeta',
-            index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', unique=False, where='expires_on IS NOT NULL', where_postgresql='', where_sqlite=''),  # noqa: E501
+            index=models.Index(fields=['expires_on'], name='blobs_blobmeta_expires_64b92d', condition=models.Q(expires_on__isnull=False)),  # noqa: E501
         ),
         migrations.AlterIndexTogether(
             name='blobmeta',

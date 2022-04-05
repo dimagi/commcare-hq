@@ -6,8 +6,7 @@ from testil import eq
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import ReferCaseRepeater
 from corehq.motech.repeaters.repeater_generators import ReferCasePayloadGenerator
 
@@ -45,7 +44,7 @@ def _test_refer_case_payload_generator(initial_case_properties, expected_referra
     generator = ReferCasePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')
-    transfer_case = CommCareCaseSQL(
+    transfer_case = CommCareCase(
         type="transfer",
         case_json={
             "cases_to_forward": "case1",
@@ -57,12 +56,12 @@ def _test_refer_case_payload_generator(initial_case_properties, expected_referra
     copy_value = uuid.uuid4().hex
     properties = {"copy_this": copy_value}
     properties.update(initial_case_properties or {})
-    target_case = CommCareCaseSQL(
+    target_case = CommCareCase(
         case_id="1",
         type="patient",
         case_json=properties
     )
-    with patch.object(CaseAccessors, "get_cases", return_value=[target_case]):
+    with patch.object(CommCareCase.objects, "get_cases", return_value=[target_case]):
         form = generator.get_payload(None, transfer_case)
         formxml = ElementTree.fromstring(form)
         case = CaseBlock.from_xml(formxml.find("{%s}case" % V2_NAMESPACE))

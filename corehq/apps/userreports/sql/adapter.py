@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import psycopg2
 import sqlalchemy
