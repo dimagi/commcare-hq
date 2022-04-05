@@ -71,7 +71,7 @@ def date_add(node, context):
     assert node.name == 'date_add'
     if len(node.args) != 3:
         raise XPathFunctionException(
-            _("The \"date_add\" function expects three arguments"),
+            _("The \"date_add\" function expects three arguments, got {count}").format(count=len(node.args)),
             serialize(node)
         )
 
@@ -82,7 +82,7 @@ def date_add(node, context):
     interval_types = ("days", "weeks", "months", "years")
     if interval_type not in interval_types:
         raise XPathFunctionException(
-            _("The \"date_add\" function expects the interval argument to be one of {types}").format(
+            _("The \"date_add\" function expects the 'interval' argument to be one of {types}").format(
                 types=interval_types
             ),
             serialize(node)
