@@ -355,6 +355,11 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         self.paused = False
         self.save()
 
+    def retire(self):
+        self.paused = False
+        self.is_deleted = True
+        self.save()
+
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
