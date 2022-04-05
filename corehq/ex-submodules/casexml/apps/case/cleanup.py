@@ -147,9 +147,10 @@ def get_first_claims(domain, user_id, case_ids):
     if len(cases_not_found) != 0:
         raise CaseNotFound(", ".join(cases_not_found))
 
-    potential_cases = CommCareCase.objects.get_reverse_indexed_cases(domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
+    potential_cases = CommCareCase.objects.get_reverse_indexed_cases(
+        domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
     # creates set of claimed case_ids where owner_id = user_id
-    previously_claimed_ids = set(map(lambda case: case.get_index('host').referenced_id if case.owner_id == user_id else None,
-                                    potential_cases))
+    previously_claimed_ids = set(map(lambda case: case.get_index('host').referenced_id
+        if case.owner_id == user_id else None, potential_cases))
 
     return previously_claimed_ids

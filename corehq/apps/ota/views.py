@@ -161,7 +161,7 @@ def claim(request, domain):
                    device_id=__name__ + ".claim")
 
     if set(case_ids) == case_ids_already_claimed:
-            return HttpResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponse(status=201)
 
