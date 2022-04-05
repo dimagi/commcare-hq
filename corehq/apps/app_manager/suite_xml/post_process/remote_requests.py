@@ -112,14 +112,28 @@ class RemoteRequestFactory(object):
         data = QueryData(key='case_id')
         if self.is_multi_select():
             data.ref = "."
-            data.nodeset = CaseSearchInstanceXpath().instance()
-            data.exclude = CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
+            data.nodeset = self._get_multi_select_nodeset()
+            data.exclude = self._get_multi_select_exclude()
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
 
     def is_multi_select(self):
         return self.module.case_details.short.multi_select
+
+    def _get_multi_select_xpaths(self):
+        if not self.is_multi_select():
+            return set()
+        return {
+            self._get_multi_select_nodeset(),
+            self._get_multi_select_exclude(),
+        }
+
+    def _get_multi_select_nodeset(self):
+        return CaseSearchInstanceXpath().instance()
+
+    def _get_multi_select_exclude(self):
+        return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
         return self.module.search_config.get_relevant(self.is_multi_select())
@@ -141,7 +155,8 @@ class RemoteRequestFactory(object):
 
         xpaths = {QuerySessionXPath(self.case_session_var).instance()}
         xpaths.update(datum.ref for datum in self._remote_request_query_datums)
-        xpaths.add(self.module.search_config.get_relevant(self.is_multi_select()))
+        xpaths.add(self.get_post_relevant())
+        xpaths = xpaths.union(self._get_multi_select_xpaths())
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
