@@ -2183,6 +2183,7 @@ class CaseSearchProperty(DocumentSchema):
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
+    exclude = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
