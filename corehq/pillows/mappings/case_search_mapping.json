@@ -48,7 +48,7 @@
                         }
                     }
                 },
-                "geo_point": {
+                "geopoint_value": {
                     "type": "geo_point"
                 }
             }
