@@ -32,11 +32,11 @@
           </display>
         </prompt>
       </query>
-      <datum detail-confirm="m0_search_long" detail-select="m0_search_short" id="search_case_id" nodeset="instance('results')/results/case[@case_type='person'][not(commcare_is_related_case=true())]" value="./@case_id"/>
+      <datum detail-confirm="m0_search_long" detail-select="m0_search_short" id="search_cases" nodeset="instance('results')/results/case[@case_type='person'][not(commcare_is_related_case=true())]" value="./@case_id"/>
     </session>
     <stack>
       <push>
-        <rewind value="instance('commcaresession')/session/data/search_case_id"/>
+        <rewind value="instance('commcaresession')/session/data/search_cases"/>
       </push>
     </stack>
   </remote-request>

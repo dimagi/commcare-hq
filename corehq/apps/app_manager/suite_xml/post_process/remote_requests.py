@@ -81,7 +81,10 @@ class RemoteRequestFactory(object):
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        self.case_session_var = self.module.search_config.case_session_var
+        if self.is_multi_select():
+            self.case_session_var = "search_cases"
+        else:
+            self.case_session_var = self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
