@@ -58,7 +58,7 @@
     <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
       <% if (isMultiSelect) { %>
-      <button type="button" class="btn btn-success btn-lg formplayer-request" id="multi-select-continue-btn">{% trans "Continue (" %}<%- selectedCaseIdCount %>{% trans ")" %}</button>
+      <button type="button" class="btn btn-success btn-lg formplayer-request" id="multi-select-continue-btn">{% trans "Continue (" %}<%- selectedCaseIdsLength %>{% trans ")" %}</button>
       <% } %>
       <% if (actions) { %>
         <% _.each(actions, function(action, index) { %>

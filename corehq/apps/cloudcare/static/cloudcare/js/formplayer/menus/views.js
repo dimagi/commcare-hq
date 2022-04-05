@@ -4,6 +4,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
+    var selectedCaseIds = [];
+
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -225,9 +227,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "tr",
         template: _.template($("#case-view-item-template").html() || ""),
 
+        ui: {
+            selectRow: "#select-row-checkbox",
+        },
+
         events: {
             "click": "rowClick",
             "keydown": "rowKeyAction",
+            'click @ui.selectRow': 'selectRowAction',
+            'keypress @ui.selectRow': 'selectRowAction',
         },
 
         className: "formplayer-request",
@@ -248,6 +256,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         rowKeyAction: function (e) {
             if (e.keyCode === 13) {
                 this.rowClick(e);
+            }
+        },
+
+        selectRowAction: function (e) {
+            let prevSelectedCaseIdsLength = selectedCaseIds.length;
+            if (e.target.checked) {
+                selectedCaseIds.push(this.model.get('id'));
+                updateContinueButtonText(prevSelectedCaseIdsLength, selectedCaseIds.length);
+            } else {
+                const index = selectedCaseIds.indexOf(this.model.get('id'));
+                if (index > -1) {
+                    selectedCaseIds.splice(index, 1);
+                }
+                updateContinueButtonText(prevSelectedCaseIdsLength, selectedCaseIds.length);
             }
         },
 
@@ -305,7 +327,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedCaseIdCount = 0;
         },
 
         ui: {
@@ -319,7 +340,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
             selectAllCheckbox: "#select-all-checkbox",
-            selectRow: "#select-row-checkbox",
             continueButton: "#multi-select-continue-btn",
         },
 
@@ -335,8 +355,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.paginators': 'paginateKeyAction',
             'click @ui.selectAllCheckbox': 'selectAllAction',
             'keypress @ui.selectAllCheckbox': 'selectAllAction',
-            'click @ui.selectRow': 'selectRowAction',
-            'keypress @ui.selectRow': 'selectRowAction',
             'click @ui.continueButton': 'continueAction',
         },
 
@@ -410,21 +428,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             //do something
         },
-        selectRowAction: function (e) {
-            let currentText = document.getElementById('multi-select-continue-btn').innerText;
-            if (e.target.checked) {
-                document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(this.selectedCaseIdCount), String(this.selectedCaseIdCount + 1));
-                this.selectedCaseIdCount = this.selectedCaseIdCount + 1;
-                // add to list of selected cases
-            } else {
-                document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(this.selectedCaseIdCount), String(this.selectedCaseIdCount - 1));
-                this.selectedCaseIdCount = this.selectedCaseIdCount - 1;
-                // remove from list of selected cases
-            }
-        },
 
         continueAction: function (e) {
-            // TODO: implement function to send selected caseIds
+            // TODO: implement function to send selectedCaseIds
         },
 
         templateContext: function () {
@@ -451,7 +457,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
                 actionButtonStyle: (isMultiSelectCaseList ? 'btn-default' : 'btn-success'),
-                selectedCaseIdCount: this.selectedCaseIdCount,
+                selectedCaseIdsLength: selectedCaseIds.length,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -462,6 +468,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+
+    var updateContinueButtonText = function (prevValue, newValue) {
+        let currentText = document.getElementById('multi-select-continue-btn').innerText;
+        document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(prevValue), String(newValue));
+    };
 
     // this method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
@@ -761,6 +772,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
+        updateContinueButtonText: updateContinueButtonText,
         paginateOptions: paginateOptions,
         paginationGoPageNumber: paginationGoPageNumber,
     };
