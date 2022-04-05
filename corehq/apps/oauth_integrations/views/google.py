@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from corehq.apps.export.views.list import LiveGoogleSheetListView
 
 from corehq.apps.oauth_integrations.models import GoogleApiToken
 from corehq.apps.oauth_integrations.utils import (
@@ -32,8 +33,7 @@ def redirect_oauth_view(request, domain):
         # This will simply have them log into google sheets again to give us another refresh token
         except RefreshError:
             return HttpResponseRedirect(get_url_from_google(redirect_uri))
-        #replace with google sheet view
-        return HttpResponseRedirect("placeholder.com")
+        return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=(domain,)))
 
 
 def refresh_credentials(credentials, user):
@@ -82,8 +82,7 @@ def call_back_view(request, domain):
     except InvalidLoginException:
         messages.error(request, _("Something went wrong when trying to sign you in to Google. Please try again."))
 
-    #replace with google sheet view
-    return HttpResponseRedirect("placeholder.com")
+    return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=(domain,)))
 
 
 def check_state(request):
