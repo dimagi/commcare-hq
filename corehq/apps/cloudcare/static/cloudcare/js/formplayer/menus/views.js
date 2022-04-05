@@ -424,6 +424,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            var isMultiSelectCaseList = false; // TODO: create logic
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -442,7 +443,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: false, // TODO: create logic
+                isMultiSelect: isMultiSelectCaseList,
+                actionButtonStyle: (isMultiSelectCaseList ? 'btn-default' : 'btn-success'),
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
