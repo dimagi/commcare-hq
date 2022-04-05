@@ -400,6 +400,11 @@ class IndicatorXpath(InstanceXpath):
         return self
 
 
+class CaseSearchInstanceXpath(InstanceXpath):
+    id = "search_cases"
+    path = "results/value"
+
+
 class CommCareSession(object):
     username = SessionInstanceXpath().instance().slash("username")
     userid = SessionInstanceXpath().instance().slash("userid")

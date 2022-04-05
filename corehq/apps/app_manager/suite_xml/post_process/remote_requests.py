@@ -42,6 +42,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseIDXPath,
+    CaseSearchInstanceXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
@@ -111,8 +112,8 @@ class RemoteRequestFactory(object):
         data = QueryData(key='case_id')
         if self.is_multi_select():
             data.ref = "."
-            data.nodeset = "instance('search_cases')/results/value"
-            data.exclude = "count(instance('casedb')/casedb/case[@case_id = current()/.]) = 1"
+            data.nodeset = CaseSearchInstanceXpath().instance()
+            data.exclude = CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
         else:
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
