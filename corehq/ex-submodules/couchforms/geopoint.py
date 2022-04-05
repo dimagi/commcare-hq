@@ -14,9 +14,21 @@ class GeoPoint(namedtuple('GeoPoint', 'latitude longitude altitude accuracy')):
         }
 
     @classmethod
-    def from_string(cls, input_string):
+    def from_string(cls, input_string, flexible=False):
+        """
+        Construct GeoPoint object from string containing space-separated decimals.
+
+        Expects 4 elements, unless flexible=True, in which case 2 works too
+        """
         try:
-            latitude, longitude, altitude, accuracy = input_string.split(' ')
+            elements = input_string.split(' ')
+            if len(elements) == 4:
+                latitude, longitude, altitude, accuracy = elements
+            elif flexible and len(elements) == 2:
+                latitude, longitude = elements
+                altitude, accuracy = "NaN", "NaN"
+            else:
+                raise ValueError()
         except (TypeError, AttributeError, ValueError):
             raise BadValueError("GeoPoint format expects 4 decimals: {!r}"
                                 .format(input_string))
