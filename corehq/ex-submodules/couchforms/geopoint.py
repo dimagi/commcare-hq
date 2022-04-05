@@ -52,13 +52,14 @@ def _extract_elements(input_string, flexible):
 
 
 def _to_decimal(n):
-    """Coerces to Decimal and rounds small numbers to 0"""
+    """Coerces to Decimal and rounds small scientific notation inputs to 0"""
     try:
         ret = Decimal(n)
     except InvalidOperation as e:
         raise _GeoPointGenerationError(f"{n} is not a valid Decimal") from e
 
-    if not ret.is_nan() and abs(ret) < Decimal("0.001"):
+    uses_sci_notation = 'e' in n.lower()
+    if uses_sci_notation and abs(ret) < Decimal("0.001"):
         return Decimal("0")
     return ret
 
