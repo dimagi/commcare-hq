@@ -63,15 +63,16 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - gh/form-version-bug # Graham Feb 15
-    - ml/check-for-historical-xss # Minha Mar 3
     - jm/elastic-client-adapter  # Joel Mar 1
     - ap/sql-case-repeater # Amit March 23
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - bmb/upgrade-minimist  # Biyeun March 23
-    - nh/loadtest_users_postmigration  # Norman March 24
+    - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
-    - ml/fix-feature-discoverability-bug # Minha March 30
-    - gh/erm/support-non-enterprise-users # Graham March 30
+    - dm/upgrade-architect # Daniel March 31
+    - dm/django3-tests # Daniel March 31
+    - ce/fix-rate-limits
+    - dmr/make-MINIMUM_ZXCVBN_SCORE-a-setting  # Danny Apr 1
 
 submodules: { }

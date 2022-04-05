@@ -123,7 +123,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None):
+                 notification_emails=None, parent_toggles=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -143,12 +143,19 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+        self.parent_toggles = parent_toggles or []
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
         self.notification_emails = notification_emails
+
+        for dependency in self.parent_toggles:
+            if not set(self.namespaces) & set(dependency.namespaces):
+                raise Exception(
+                    "Namespaces of dependent toggles must overlap with dependency:"
+                    f" {self.slug}, {dependency.slug}")
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
@@ -203,6 +210,10 @@ class StaticToggle(object):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        if namespace not in self.namespaces:
+            return False
+
         return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
@@ -635,7 +646,7 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
-    'Allow external android callouts to search the caselist',
+    'Allow external android callouts to search the case list',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
@@ -868,7 +879,8 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     USH Specific toggle to support several different case search/claim workflows in web apps:
     "search first", "see more", and "skip to default case search results", Geocoder
     and other options in Webapps Case Search.
-    """
+    """,
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -1090,6 +1102,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -1349,7 +1362,8 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_USER]
+    namespaces=[NAMESPACE_USER],
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1986,7 +2000,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """,
-    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts"
+    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
+    parent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -2154,6 +2169,7 @@ DATA_REGISTRY_UCR = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+    parent_toggles=[DATA_REGISTRY]
 )
 
 DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
@@ -2162,6 +2178,7 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+    parent_toggles=[DATA_REGISTRY]
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(

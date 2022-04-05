@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from django.contrib import admin
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -13,8 +12,8 @@ from corehq.util.quickcache import quickcache
 
 class SMSTranslations(models.Model):
     domain = models.CharField(max_length=255, unique=True)
-    langs = JSONField(default=list)
-    translations = JSONField(default=dict)
+    langs = models.JSONField(default=list)
+    translations = models.JSONField(default=dict)
 
     @property
     def default_lang(self):
