@@ -309,39 +309,6 @@ DOMAIN_MAPPING = {
         "downloads": {
             "type": "long"
         },
-        "dynamic_reports": {
-            "dynamic": False,
-            "type": "object",
-            "properties": {
-                "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
-                },
-                "reports": {
-                    "dynamic": False,
-                    "type": "object",
-                    "properties": {
-                        "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        },
-                        "kwargs": {
-                            "dynamic": False,
-                            "type": "object"
-                        },
-                        "name": {
-                            "type": "string"
-                        },
-                        "report": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "section_title": {
-                    "type": "string"
-                }
-            }
-        },
         "full_downloads": {
             "type": "long"
         },
