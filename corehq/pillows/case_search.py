@@ -119,7 +119,7 @@ def _add_smart_types(dynamic_properties, domain, case_type):
         prop_type = smart_types.get(prop['key'])
         if prop_type == 'gps':
             try:
-                prop['geopoint_value'] = GeoPoint.from_string(prop['value']).lat_lon
+                prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
             except BadValueError:
                 prop['geopoint_value'] = None
 

@@ -124,9 +124,10 @@ class CaseSearchPillowTest(TestCase):
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         domains_needing_search_index.clear()
-        self._make_data_dictionary(gps_properties=['coords', 'other_coords'])
+        self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
         case = self._make_case(case_properties={
             'coords': '-33.8561 151.2152 0 0',
+            'short_coords': '-33.8561 151.2152',
             'other_coords': '42 Wallaby Way',
             'not_coords': '-33.8561 151.2152 0 0',
         })
@@ -139,6 +140,14 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'coords',
                 'value': '-33.8561 151.2152 0 0',
+                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+            },
+        )
+        self.assertEqual(
+            self._get_prop(es_case['case_properties'], 'short_coords'),
+            {
+                'key': 'short_coords',
+                'value': '-33.8561 151.2152',
                 'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
             },
         )
