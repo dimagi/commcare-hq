@@ -228,7 +228,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 
     def dispatch(self, *args, **kwargs):
         allow_access_to_ucrs = (
-            self.request.couch_user.has_permission(
+            hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
                 get_permission_name(Permissions.edit_ucrs)
             )
