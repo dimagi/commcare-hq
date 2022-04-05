@@ -1,3 +1,6 @@
+from django.core.management import call_command
+from django.db.migrations import RunPython
+
 from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 
@@ -6,6 +9,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.const import ONE_DAY
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_TYPE = "system"
@@ -89,3 +93,17 @@ def get_all_expected_es_indices():
 def format_form_meta_for_es(form_metadata):
     form_metadata['appVersion'] = form_metadata['appVersion'].get('#text')
     return form_metadata
+
+
+def update_mapping_migration_op(index, quiet=True):
+
+    @skip_on_fresh_install
+    def update_elastic_mapping(*args, **kwargs):
+        argv = ["update_es_mapping", index]
+        if quiet:
+            argv.append("--quiet")
+        else:
+            print(f"\nupdating mapping for index: {index} ...")
+        return call_command(*argv, noinput=True)
+
+    return RunPython(update_elastic_mapping, reverse_code=RunPython.noop, elidable=True)

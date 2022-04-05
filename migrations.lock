@@ -620,6 +620,8 @@ pillow_retry
  0007_remove_pillowerror_queued
  0008_index_cleanup
  0009_pillow_error_pk_to_bigint
+pillows
+ 0001_elastic_v5_mapping_compatibility
 pillowtop
  0001_initial
  0002_djangopillowcheckpoint_sequence_format
