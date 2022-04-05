@@ -156,6 +156,13 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.38')
 
     @property
+    def enable_case_search_title_translation(self):
+        """
+        Ability to configure case search title through translation attribute, only supported > 2.53
+        """
+        return self._require_minimum_version('2.53')
+
+    @property
     def enable_training_modules(self):
         return self._require_minimum_version('2.43')
 

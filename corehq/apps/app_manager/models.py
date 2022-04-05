@@ -2228,6 +2228,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
+    title_label = StringProperty()
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
