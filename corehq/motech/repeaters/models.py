@@ -239,9 +239,9 @@ class RepeaterManager(models.Manager):
     def get_queryset(self):
         repeater_obj = self.model()
         if type(repeater_obj).__name__ in ("SQLRepeater", "Repeater"):
-            return super().get_queryset()
+            return super().get_queryset().filter(is_deleted=False)
         else:
-            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type)
+            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=False)
 
 
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
