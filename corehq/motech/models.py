@@ -93,6 +93,9 @@ class ConnectionSettings(models.Model):
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
 
+    objects = ConnectionSoftDeleteManager()
+    all_objects = models.Manager()
+
     def __str__(self):
         return self.name
 
