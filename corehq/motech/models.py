@@ -240,6 +240,10 @@ class ConnectionSettings(models.Model):
 
         return kinds
 
+    def soft_delete(self):
+        self.is_deleted = True
+        self.save()
+
 
 class RequestLog(models.Model):
     """
