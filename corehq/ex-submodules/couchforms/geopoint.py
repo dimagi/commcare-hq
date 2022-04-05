@@ -1,13 +1,21 @@
 import re
 from collections import namedtuple
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 from jsonobject.exceptions import BadValueError
 
 
-class GeoPoint(namedtuple('GeoPoint', 'latitude longitude altitude accuracy')):
+@dataclass(frozen=True)
+class GeoPoint:
+    latitude: Decimal
+    longitude: Decimal
+    altitude: Decimal
+    accuracy: Decimal
+
     @property
     def lat_lon(self):
+        """Suitable to send to an elasticsearch geo_point field"""
         return {
             'lat': self.latitude,
             'lon': self.longitude
@@ -44,7 +52,7 @@ class GeoPoint(namedtuple('GeoPoint', 'latitude longitude altitude accuracy')):
         except ValueError:
             raise BadValueError("{!r} is not a valid format GeoPoint format"
                                 .format(input_string))
-        return GeoPoint(latitude, longitude, altitude, accuracy)
+        return cls(latitude, longitude, altitude, accuracy)
 
 
 def _canonical_decimal(n):

@@ -12,4 +12,4 @@ class GeoPointProperty(JsonProperty):
         return GeoPoint.from_string(obj)
 
     def unwrap(self, obj):
-        return obj, '{} {} {} {}'.format(*obj)
+        return obj, f"{obj.latitude} {obj.longitude} {obj.altitude} {obj.accuracy}"
