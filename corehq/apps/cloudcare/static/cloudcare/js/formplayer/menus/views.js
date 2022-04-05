@@ -319,6 +319,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             selectAllCheckbox: "#select-all-checkbox",
             selectRow: "#select-row-checkbox",
+            continueButton: "#multi-select-continue-btn",
         },
 
         events: {
@@ -335,6 +336,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.selectAllCheckbox': 'selectAllAction',
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
+            'click @ui.continueButton': 'continueAction',
         },
 
         caseListAction: function (e) {
@@ -413,6 +415,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 // remove from list of selected cases
             }
+        },
+
+        continueAction: function (e) {
+            // TODO: implement function to send selected caseIds
         },
 
         templateContext: function () {
