@@ -12,8 +12,6 @@ from corehq.apps.case_search.xpath_functions import XPATH_VALUE_FUNCTIONS
 def unwrap_value(value, context):
     """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
     """
-    if isinstance(value, (str, int, float, bool)):
-        return value
     if isinstance(value, UnaryExpression) and value.op == '-':
         return -1 * value.right
     if not isinstance(value, FunctionCall):
