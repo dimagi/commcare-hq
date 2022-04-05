@@ -40,6 +40,7 @@ def test_invalid_geopoint_properties():
             'these are not decimals',
             '42.3739063 -71.1109113 0.0 whoops',
             '42.3739063 -71.1109113 0.0',  # only three elements
+            3,  # wrong type
     ]:
         yield _is_invalid_input, input_string
 
