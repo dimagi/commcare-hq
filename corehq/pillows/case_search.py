@@ -114,6 +114,9 @@ def _get_case_properties(doc_dict):
 
 
 def _add_smart_types(dynamic_properties, domain, case_type):
+    # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
+    # `value` is a multi-field property that duck types numeric and date values
+    # We can't do that for geo_points in ES v2, as `ignore_malformed` is broken
     smart_types = get_smart_types_by_prop(domain, case_type)
     for prop in dynamic_properties:
         prop_type = smart_types.get(prop['key'])
