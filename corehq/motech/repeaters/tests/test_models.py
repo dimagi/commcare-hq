@@ -214,6 +214,19 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.assertEqual(repeat_records[1].payload_id, 'cain')
 
 
+class TestConnectionSettingsSoftDelete(TestCase):
+
+    def setUp(self):
+        self.conn_1 = ConnectionSettings.objects.create(domain=DOMAIN, url='http://dummy1.com')
+        self.conn_2 = ConnectionSettings.objects.create(domain=DOMAIN, url='http://dummy2.com')
+        return super().setUp()
+
+    def test_soft_delete(self):
+        self.conn_1.soft_delete()
+        self.assertEqual(ConnectionSettings.objects.all().count(), 1)
+        self.assertEqual(ConnectionSettings.objects.all()[0].id, self.conn_2.id)
+
+
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
