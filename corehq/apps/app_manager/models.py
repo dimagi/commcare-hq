@@ -5153,9 +5153,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 form = form_stuff['form']
                 try:
                     files[filename] = form.render_xform(build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
                 except XFormException as e:
                     raise XFormException(_('Error in form "{}": {}').format(trans(form.name), e))
         return files
