@@ -73,8 +73,8 @@ branches:
     - dm/django3-tests # Daniel March 31
     - ce/fix-rate-limits
     - rc/obh-case-search-ui # Robert April 5
-    - jm/elastic-modernize-mappings+es/gps-prop  # Joel Apr 5
+    #- jm/elastic-modernize-mappings+es/gps-prop  # Joel Apr 5
     - jm/elastic-modernize-mappings  # Joel Apr 5
-    - es/gps-prop  # Joel Apr 5
+    #- es/gps-prop  # Joel Apr 5
 
 submodules: { }
