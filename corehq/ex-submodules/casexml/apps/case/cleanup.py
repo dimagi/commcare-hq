@@ -150,7 +150,7 @@ def get_first_claims(domain, user_id, case_ids):
     potential_cases = CommCareCase.objects.get_reverse_indexed_cases(
         domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
     # creates set of claimed case_ids where owner_id = user_id
-    previously_claimed_ids = set(map(lambda case: case.get_index('host').referenced_id
-        if case.owner_id == user_id else None, potential_cases))
+    previously_claimed_ids = {case.get_index('host').referenced_id for case in potential_cases
+        if case.owner_id == user_id}
 
     return previously_claimed_ids

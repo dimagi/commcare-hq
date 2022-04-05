@@ -146,10 +146,7 @@ def claim(request, domain):
 
     try:
         case_ids_already_claimed = get_first_claims(domain, restore_user.user_id, case_ids)
-        if case_ids_already_claimed:
-            case_ids_to_claim = {case for case in case_ids if case not in case_ids_already_claimed}
-        else:
-            case_ids_to_claim = case_ids
+        case_ids_to_claim = {case for case in case_ids if case not in case_ids_already_claimed}
     except CaseNotFound as err:
         return HttpResponse(f'No cases claimed. Case IDs "{err}" not found',
                             status=410)
