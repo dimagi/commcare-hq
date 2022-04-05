@@ -934,7 +934,7 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
 
 CASE_SEARCH_SMART_TYPES = StaticToggle(
     'case_search_smart_types',
-    'Intelligently index specific case properties using the data dictionary',
+    'USH: Intelligently index specific case properties using the data dictionary',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
