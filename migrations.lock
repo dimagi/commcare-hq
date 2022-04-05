@@ -143,6 +143,7 @@ auth
  0009_alter_user_last_name_max_length
  0010_alter_group_name_max_length
  0011_update_proxy_permissions
+ 0012_alter_user_first_name_max_length
 blobs
  0001_squashed_0009_domains
  0002_blobmeta
