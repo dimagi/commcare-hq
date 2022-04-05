@@ -11,6 +11,7 @@ from nose.tools import assert_in, assert_raises
 
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_all_repeater_docs
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
@@ -112,11 +113,13 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         super().setUp()
         self.all_sql_repeaters = [self.sql_repeater]
         for i in range(5):
-            r = SQLFormRepeater(domain=DOMAIN, connection_settings=self.conn, repeater_id=str(uuid4()))
-            r.save(sync_to_couch=False)
+            r = SQLFormRepeater(domain=DOMAIN, connection_settings=self.conn)
             self.all_sql_repeaters.append(r)
 
     def test_soft_deletion(self):
+        for r in self.all_sql_repeaters:
+            r.repeater_id = uuid4().hex
+            r.save(sync_to_couch=False)
         self.assertEqual(SQLFormRepeater.objects.all().count(), 6)
         self.all_sql_repeaters[1].is_deleted = True
         self.all_sql_repeaters[1].save(sync_to_couch=False)
@@ -128,7 +131,28 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
             set([r.repeater_id for r in self.all_sql_repeaters if not r.is_deleted])
         )
 
+    def test_repeatrs_retired_from_sql(self):
+        for r in self.all_sql_repeaters:
+            r.save()
+        self.all_sql_repeaters[0].retire()
+        self.all_sql_repeaters[4].retire()
+        couch_repeater_count = len(get_all_repeater_docs())
+        sql_repeater_count = SQLRepeater.objects.all().count()
+        self.assertEqual(couch_repeater_count, sql_repeater_count)
+
+    def test_repeatrs_retired_from_couch(self):
+        for r in self.all_sql_repeaters:
+            r.save()
+        self.all_sql_repeaters[1].repeater.retire()
+        self.all_sql_repeaters[2].repeater.retire()
+        self.all_sql_repeaters[3].repeater.retire()
+
+        couch_repeater_count = len(get_all_repeater_docs())
+        sql_repeater_count = SQLRepeater.objects.all().count()
+        self.assertEqual(couch_repeater_count, sql_repeater_count)
+
     def tearDown(self) -> None:
+        delete_all_repeaters()
         return super().tearDown()
 
 
