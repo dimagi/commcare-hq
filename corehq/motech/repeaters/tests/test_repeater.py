@@ -45,6 +45,7 @@ from corehq.motech.repeaters.models import (
     LocationRepeater,
     Repeater,
     RepeatRecord,
+    SQLRepeater,
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
@@ -1117,6 +1118,8 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
+        # Making sure that SQL repeater are deleted after retire is called.
+        SQLRepeater.all_objects.all().delete()
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
