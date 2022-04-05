@@ -31,6 +31,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.factory.app._id = self.app_id
         module, form = self.factory.new_basic_module('basic', 'person')
         self.factory.form_requires_case(form, 'person')
+        form.xmlns = "some-xmlns"
 
         module.case_details.short.multi_select = True
         module.search_config = CaseSearch(
@@ -40,8 +41,33 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         module.assign_references()
 
     def test_multi_select_case_list(self):
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+<partial>
+  <entry>
+    <form>some-xmlns</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id"
+             nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+             value="./@case_id"
+             detail-select="m0_case_short"
+             detail-confirm="m0_case_long"/>
+    </session>
+  </entry>
+</partial>
+            """,
+            suite,
+            "./entry",
+        )
         self.assertXmlPartialEqual(
             self.get_xml('multi_select_case_list').decode('utf-8').format(app_id=self.factory.app._id),
-            self.factory.app.create_suite(),
+            suite,
             "./remote-request",
         )
