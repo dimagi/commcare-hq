@@ -48,7 +48,7 @@ class RepeaterTestCase(TestCase):
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
         self.repeater = FormRepeater(
             domain=DOMAIN,
             url=url,
@@ -57,7 +57,7 @@ class RepeaterTestCase(TestCase):
         self.sql_repeater = SQLFormRepeater(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
-            connection_settings=conn,
+            connection_settings=self.conn,
         )
         self.sql_repeater.save(sync_to_couch=False)
 
@@ -105,6 +105,31 @@ class RepeaterConnectionSettingsTests(RepeaterTestCase):
         conn = self.repeater.connection_settings
 
         self.assertEqual(conn.plaintext_password, self.repeater.plaintext_password)
+
+
+class TestSoftDeleteRepeaters(RepeaterTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.all_sql_repeaters = [self.sql_repeater]
+        for i in range(5):
+            r = SQLFormRepeater(domain=DOMAIN, connection_settings=self.conn, repeater_id=str(uuid4()))
+            r.save(sync_to_couch=False)
+            self.all_sql_repeaters.append(r)
+
+    def test_soft_deletion(self):
+        self.assertEqual(SQLFormRepeater.objects.all().count(), 6)
+        self.all_sql_repeaters[1].is_deleted = True
+        self.all_sql_repeaters[1].save(sync_to_couch=False)
+        self.all_sql_repeaters[0].is_deleted = True
+        self.all_sql_repeaters[0].save(sync_to_couch=False)
+        self.assertEqual(SQLFormRepeater.objects.all().count(), 4)
+        self.assertEqual(
+            set(SQLFormRepeater.objects.all().values_list('repeater_id', flat=True)),
+            set([r.repeater_id for r in self.all_sql_repeaters if not r.is_deleted])
+        )
+
+    def tearDown(self) -> None:
+        return super().tearDown()
 
 
 class TestRepeaterName(RepeaterTestCase):
