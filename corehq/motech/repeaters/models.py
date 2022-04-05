@@ -753,6 +753,10 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @property
+    def sql_repeater(self):
+        return SQLRepeater.objects.get(repeater_id=self._id)
+
+    @property
     def name(self):
         return self.connection_settings.name
 
