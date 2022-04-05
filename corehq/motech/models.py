@@ -52,6 +52,12 @@ class RequestLogEntry:
     response_body: str
 
 
+class ConnectionSoftDeleteManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 class ConnectionSettings(models.Model):
     """
     Stores the connection details of a remote API.
