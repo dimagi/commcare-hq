@@ -355,10 +355,12 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         self.paused = False
         self.save()
 
-    def retire(self):
+    def retire(self, sync_to_couch=True):
         self.paused = False
         self.is_deleted = True
-        self.save()
+        self.save(sync_to_couch=False)
+        if sync_to_couch:
+            self.repeater.retire(sync_to_sql=False)
 
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
@@ -921,13 +923,15 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         else:
             return None
 
-    def retire(self):
+    def retire(self, sync_to_sql=True):
         if DELETED_SUFFIX not in self['doc_type']:
             self['doc_type'] += DELETED_SUFFIX
         if DELETED_SUFFIX not in self['base_doc']:
             self['base_doc'] += DELETED_SUFFIX
         self.paused = False
-        self.save()
+        self.save(sync_to_sql=False)
+        if sync_to_sql:
+            self.sql_repeater.retire(sync_to_couch=False)
 
     def pause(self):
         self.paused = True
