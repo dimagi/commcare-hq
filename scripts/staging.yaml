@@ -73,6 +73,5 @@ branches:
     - dm/upgrade-architect # Daniel March 31
     - dm/django3-tests # Daniel March 31
     - ce/fix-rate-limits
-    - dmr/make-MINIMUM_ZXCVBN_SCORE-a-setting  # Danny Apr 1
 
 submodules: { }
