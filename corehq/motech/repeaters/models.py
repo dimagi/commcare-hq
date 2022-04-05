@@ -261,6 +261,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         ConnectionSettings,
         on_delete=models.PROTECT
     )
+    is_deleted = models.BooleanField(default=False, db_index=True)
 
     objects = RepeaterManager()
 

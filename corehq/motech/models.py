@@ -85,6 +85,7 @@ class ConnectionSettings(models.Model):
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
+    is_deleted = models.BooleanField(default=False, db_index=True)
 
     def __str__(self):
         return self.name
