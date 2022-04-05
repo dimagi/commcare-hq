@@ -83,7 +83,6 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         get_n_users_in_domain.clear(domain)
         self.assertEqual(get_n_users_in_domain(domain), value)
 
-
     def _assert_subscription_value_equals(self, domain, value):
         get_n_users_in_subscription.clear(domain)
         self.assertEqual(get_n_users_in_subscription(domain), value)
