@@ -104,9 +104,16 @@ def date_add(node, context):
             serialize(node)
         )
 
+    if interval_type in ("years", "months") and int(quantity) != quantity:
+        raise XPathFunctionException(
+            _("Non-integer years and months are ambiguous and not supported by the \"date_add\" function"),
+            serialize(node)
+        )
+
     try:
         result = date_value + relativedelta(**{interval_type: quantity})
-    except ValueError as e:
+    except Exception as e:
+        # catchall in case of an unexpected error
         raise XPathFunctionException(str(e), serialize(node))
 
     return result.strftime(ISO_DATE_FORMAT)
