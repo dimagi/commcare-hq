@@ -28,7 +28,7 @@ def can_user_access_linked_domains(user, domain):
     return any(domain_has_privilege(domain, priv) for priv in privileges_with_linked_domain_access) and is_admin
 
 
-def can_domain_access_release_management(domain, include_lite_version=True):
+def can_domain_access_linked_domains(domain, include_lite_version=True):
     """
     :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
     Checks if the current domain has any of the following enabled:
