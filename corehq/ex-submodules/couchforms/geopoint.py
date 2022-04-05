@@ -41,47 +41,21 @@ class GeoPoint:
             raise BadValueError("GeoPoint format expects 4 decimals: {!r}"
                                 .format(input_string)) from e
         try:
-            # this should eventually be removed once it's fixed on the mobile
-            # the mobile sometimes submits in scientific notation
-            # but only comes up for very small values
-            # http://manage.dimagi.com/default.asp?159863
-            latitude = _canonical_decimal_round_tiny_exp(latitude)
-            longitude = _canonical_decimal_round_tiny_exp(longitude)
-            altitude = _canonical_decimal_round_tiny_exp(altitude)
-            accuracy = _canonical_decimal_round_tiny_exp(accuracy)
+            latitude = _to_decimal(latitude)
+            longitude = _to_decimal(longitude)
+            altitude = _to_decimal(altitude)
+            accuracy = _to_decimal(accuracy)
         except ValueError as e:
             raise BadValueError("{!r} is not a valid format GeoPoint format"
                                 .format(input_string)) from e
         return cls(latitude, longitude, altitude, accuracy)
 
 
-def _canonical_decimal(n):
-    """
-    raises ValueError for non-canonically formatted decimal strings
-
-    example: '00.1' or '.1' whose canonical form is '0.1'
-
-    """
+def _to_decimal(n):
     try:
-        return Decimal(n)
+        ret = Decimal(n)
     except InvalidOperation:
-        raise ValueError('{!r} is not a canonically formatted decimal'
-                         .format(n))
-
-
-def _canonical_decimal_round_tiny_exp(n):
-    """
-    Same behavior as _canonical_decimal, but also accepts small values in
-    scientific notation, rounding them to zero
-
-    """
-    exp_match = re.match(r'^-?\d.\d+E-(\d)$', n)
-    if exp_match:
-        e = int(exp_match.group(1))
-        if e < 4:
-            raise ValueError('Hack for scientific notation only works for '
-                             'negative exponents 4 and above: {!r}'.format(n))
-        else:
-            return Decimal('0')
-    else:
-        return _canonical_decimal(n)
+        raise ValueError(f"{n} is not a valid Decimal")
+    if not ret.is_nan() and abs(ret) < Decimal("0.001"):
+        return Decimal("0")
+    return ret

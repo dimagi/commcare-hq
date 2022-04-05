@@ -12,6 +12,7 @@ def test_valid_geopoint_properties():
         ('-7.130 -41.563 7.53E-4 8.0', ('-7.130', '-41.563', '0', '8.0')),
         ('-7.130 -41.563 -2.2709742188453674E-4 8.0', ('-7.130', '-41.563', '0', '8.0')),
         ('-7.130 -41.563', ('-7.130', '-41.563', 'NaN', 'NaN')),
+        ('-7.130 -41.563 1.2E-3 0', ('-7.130', '-41.563', '0.012', '0')),
     ]:
         actual = GeoPoint.from_string(input_string, flexible=True)
         expected = GeoPoint(*(Decimal(x) for x in output))
@@ -39,7 +40,6 @@ def test_invalid_geopoint_properties():
             'these are not decimals',
             '42.3739063 -71.1109113 0.0 whoops',
             '42.3739063 -71.1109113 0.0',  # only three elements
-            '42.3739063 -71.1109113 1.2E-3 0',  # scientific notation too big
     ]:
         yield _is_invalid_input, input_string
 
