@@ -267,6 +267,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     objects = RepeaterManager()
+    all_objects = models.Manager()
 
     class Meta:
         db_table = 'repeaters_repeater'
