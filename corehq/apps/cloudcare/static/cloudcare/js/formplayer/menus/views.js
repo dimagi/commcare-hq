@@ -305,6 +305,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
+            this.selectedCaseIdCount = 0;
         },
 
         ui: {
@@ -410,9 +411,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             //do something
         },
         selectRowAction: function (e) {
+            let currentText = document.getElementById('multi-select-continue-btn').innerText;
             if (e.target.checked) {
+                document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(this.selectedCaseIdCount), String(this.selectedCaseIdCount + 1));
+                this.selectedCaseIdCount = this.selectedCaseIdCount + 1;
                 // add to list of selected cases
             } else {
+                document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(this.selectedCaseIdCount), String(this.selectedCaseIdCount - 1));
+                this.selectedCaseIdCount = this.selectedCaseIdCount - 1;
                 // remove from list of selected cases
             }
         },
@@ -445,6 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
                 actionButtonStyle: (isMultiSelectCaseList ? 'btn-default' : 'btn-success'),
+                selectedCaseIdCount: this.selectedCaseIdCount,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
