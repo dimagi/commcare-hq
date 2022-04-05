@@ -36,10 +36,10 @@ class GeoPoint:
                 latitude, longitude = elements
                 altitude, accuracy = "NaN", "NaN"
             else:
-                raise ValueError()
-        except (TypeError, AttributeError, ValueError):
+                raise ValueError(f"Unexpected number of elements: {len(elements)}")
+        except (TypeError, AttributeError, ValueError) as e:
             raise BadValueError("GeoPoint format expects 4 decimals: {!r}"
-                                .format(input_string))
+                                .format(input_string)) from e
         try:
             # this should eventually be removed once it's fixed on the mobile
             # the mobile sometimes submits in scientific notation
@@ -49,9 +49,9 @@ class GeoPoint:
             longitude = _canonical_decimal_round_tiny_exp(longitude)
             altitude = _canonical_decimal_round_tiny_exp(altitude)
             accuracy = _canonical_decimal_round_tiny_exp(accuracy)
-        except ValueError:
+        except ValueError as e:
             raise BadValueError("{!r} is not a valid format GeoPoint format"
-                                .format(input_string))
+                                .format(input_string)) from e
         return cls(latitude, longitude, altitude, accuracy)
 
 
@@ -62,15 +62,11 @@ def _canonical_decimal(n):
     example: '00.1' or '.1' whose canonical form is '0.1'
 
     """
-    value_error = False
     try:
-        decimal = Decimal(n)
+        return Decimal(n)
     except InvalidOperation:
-        value_error = True
-    if value_error:
         raise ValueError('{!r} is not a canonically formatted decimal'
                          .format(n))
-    return decimal
 
 
 def _canonical_decimal_round_tiny_exp(n):

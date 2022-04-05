@@ -29,11 +29,21 @@ def _geopoints_equal(a, b):
     )
 
 
-def test_invalid_geopoint_properties():
-    with assert_raises(BadValueError):
-        GeoPoint.from_string('these are not decimals')
-
-
 def test_inflexible_is_strict():
     with assert_raises(BadValueError):
         GeoPoint.from_string('-7.130 -41.563', flexible=False)
+
+
+def test_invalid_geopoint_properties():
+    for input_string in [
+            'these are not decimals',
+            '42.3739063 -71.1109113 0.0 whoops',
+            '42.3739063 -71.1109113 0.0',  # only three elements
+            '42.3739063 -71.1109113 1.2E-3 0',  # scientific notation too big
+    ]:
+        yield _is_invalid_input, input_string
+
+
+def _is_invalid_input(input_string):
+    with assert_raises(BadValueError):
+        GeoPoint.from_string(input_string)
