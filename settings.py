@@ -1480,7 +1480,6 @@ if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
     import warnings
     warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
