@@ -38,7 +38,7 @@ def _reprocess_archive_stubs():
     reprocess_archive_stubs.delay()
 
 
-@serial_task("reprocess_archive_stubs", queue=settings.CELERY_PERIODIC_QUEUE, serializer='pickle')
+@serial_task("reprocess_archive_stubs", queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
     # Check for archive stubs
     from corehq.form_processor.models import XFormInstance
