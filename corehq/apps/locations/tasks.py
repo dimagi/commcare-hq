@@ -47,7 +47,7 @@ def download_locations_async(domain, download_id, include_consumption,
 
 
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
-             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False, serializer='pickle')
+             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id, user_id):
     try:
         importer = MultiExcelImporter(import_locations_async, file_ref_id)
