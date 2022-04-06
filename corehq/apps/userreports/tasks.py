@@ -315,8 +315,7 @@ def time_in_range(time, time_dictionary):
     return False
 
 
-@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0,
-             serializer='pickle')
+@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
     """
         Fetches AsyncIndicators that
