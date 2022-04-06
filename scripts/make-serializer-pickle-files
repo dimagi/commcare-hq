@@ -8,4 +8,8 @@ cat << "EOF" > serializer-pickle-files.lock
 
 EOF
 
-grep -R "serializer='pickle'" --include='*.py' . | cut -d':' -f1 | cut -c3- | sort | uniq -c | awk '{printf "%s\t%s\n", $1, $2}' >> serializer-pickle-files.lock
+grep -rEc "serializer=['\"]pickle['\"]" --include='*.py' \
+    | grep -Ev ':0$' \
+    | sort \
+    | awk -F: '{printf("%3i %s\n", $2, $1)}' \
+    >> serializer-pickle-files.lock
