@@ -3,6 +3,7 @@ import datetime
 
 from dateutil.relativedelta import relativedelta
 from jsonobject.base_properties import DefaultProperty
+from corehq.apps.userreports.transforms.custom.date import get_ethiopian_to_gregorian, get_gregorian_to_ethiopian
 
 from dimagi.ext.jsonobject import JsonObject
 
@@ -235,3 +236,58 @@ class UTCNow(JsonObject):
 
     def __str__(self):
         return "utcnow"
+
+
+class GregorianDateToEthiopianDateSpec(JsonObject):
+    """
+    ``gregorian_date_to_ethiopian_date`` returns the ethiopian date for the
+    gregorian date specified by ``date_expression``. The date_expression
+    can be any valid expression, or simply a constant.
+
+    .. code:: json
+
+        {
+            "type": "gregorian_date_to_ethiopian_date",
+            "date_expression": {
+                "type": "property_name",
+                "property_name": "dob"
+            }
+        }
+
+    """
+    type = TypeProperty("gregorian_date_to_ethiopian_date")
+    date_expression = DefaultProperty(required=True)
+
+    def configure(self, date_expression):
+        self._date_expression = date_expression
+
+    def __call__(self, item, context=None):
+        date_val = transform_date(self._date_expression(item, context))
+        return get_gregorian_to_ethiopian(date_val)
+
+
+class EthiopianDateToGregorianDateSpec(JsonObject):
+    """
+    ``ethiopian_date_to_gregorian_date`` returns the gregorian date for the
+    ethiopian date specified by ``date_expression``. The date_expression
+    can be any valid expression, or simply a constant.
+
+    .. code:: json
+
+        {
+            "type": "gregorian_date_to_ethiopian_date",
+            "date_expression": {
+                "type": "property_name",
+                "property_name": "dob"
+            }
+        }
+
+    """
+    type = TypeProperty("ethiopian_date_to_gregorian_date")
+    date_expression = DefaultProperty(required=True)
+
+    def configure(self, date_expression):
+        self._date_expression = date_expression
+
+    def __call__(self, item, context=None):
+        return transform_date(get_ethiopian_to_gregorian(self._date_expression(item, context)))
