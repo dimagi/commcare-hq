@@ -228,7 +228,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 
     def dispatch(self, *args, **kwargs):
         allow_access_to_ucrs = (
-            self.request.couch_user.has_permission(
+            hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
                 get_permission_name(Permissions.edit_ucrs)
             )
@@ -1622,8 +1622,10 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         ]
 
     def configured_filter_summary(self):
-        return str(FilterFactory.from_spec(self.config.configured_filter,
-                                           context=self.config.get_factory_context()))
+        if self.config.configured_filter:
+            return str(FilterFactory.from_spec(self.config.configured_filter,
+                                            context=self.config.get_factory_context()))
+        return _("No filter defined")
 
     def _add_links_to_output(self, items):
         def make_link(match):

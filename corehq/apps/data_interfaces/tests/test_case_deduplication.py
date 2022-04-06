@@ -28,6 +28,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled, trap_extra_setup
+from corehq.util.test_utils import set_parent_case
 
 
 @es_test
@@ -490,6 +491,41 @@ class CaseDeduplicationActionTest(TestCase):
         duplicate_case_ids = CaseDuplicate.objects.all().values_list("case_id", flat=True)
 
         self.assertTrue(set(case.case_id for case in duplicates[0:3]) & set(duplicate_case_ids))
+
+    @es_test
+    def test_update_parent(self):
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
+
+        duplicates, uniques = self._create_cases(num_cases=2)
+        parent = uniques[0]
+        child = duplicates[0]
+
+        set_parent_case(self.domain, child, parent)
+
+        parent_case_property_value = parent.get_case_property('name')
+        new_parent_case_property_value = f'{parent_case_property_value}-someextratext'
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='parent/name',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value=new_parent_case_property_value,
+            )
+        ])
+        self.action.save()
+
+        for case in chain(duplicates, uniques):
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+        self.rule = AutomaticUpdateRule.objects.get(id=self.rule.id)
+        self.rule.run_actions_when_case_matches(child)
+
+        updated_parent_case = CommCareCase.objects.get_case(parent.case_id, self.domain)
+        self.assertEqual(updated_parent_case.get_case_property('name'), new_parent_case_property_value)
 
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)

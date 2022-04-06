@@ -864,6 +864,7 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'USH: Allow selecting multiple cases from the case list',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',
     description="""
     Allows user to select multiple cases and load them all into the form.
     """

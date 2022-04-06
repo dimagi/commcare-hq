@@ -348,35 +348,6 @@ def process_reporting_metadata_staging():
         process_reporting_metadata_staging.delay()
 
 
-@periodic_task(run_every=crontab(minute='*/10'), queue='background_queue')
-def gauge_pending_user_confirmations():
-    metric_name = 'commcare.pending_user_confirmations'
-    from corehq.apps.users.models import Invitation
-    for stats in (Invitation.objects.filter(is_accepted=False).all()
-                  .values('domain').annotate(Count('domain'))):
-        metrics_gauge(
-            metric_name, stats['domain__count'], tags={
-                'domain': stats['domain'],
-                'user_type': 'web',
-            },
-            multiprocess_mode=MPM_MAX
-        )
-
-    from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
-    for doc in Domain.get_all(include_docs=False):
-        domain_name = doc['key']
-        users = get_inactive_commcare_users_in_domain(domain_name)
-        num_unconfirmed = sum(1 for u in users if not u.is_account_confirmed)
-        if num_unconfirmed:
-            metrics_gauge(
-                metric_name, num_unconfirmed, tags={
-                    'domain': domain_name,
-                    'user_type': 'mobile',
-                },
-                multiprocess_mode=MPM_MAX
-            )
-
-
 @task()
 def reset_loadtest_factor(user_ids):
     from corehq.apps.users.models import CommCareUser
