@@ -48,7 +48,7 @@ def autogenerate_build(app, username):
         autogenerate_build_task.delay(app.get_id, app.domain, app.version, comment)
 
 
-@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60, serializer='pickle')
+@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def autogenerate_build_task(app_id, domain, version, comment):
     make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
 
