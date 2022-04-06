@@ -54,7 +54,7 @@ class Command(BaseCommand):
             raise CommandError(f"No matching index found: {index_name}")
 
         msg = f"Confirm that you want to update the mapping for {index_info.index!r} [y/N]: "
-        if not noinput and input(msg).lower() != "y":
+        if not (noinput or dry_run) and input(msg).lower() != "y":
             raise CommandError("abort")
 
         if quiet:
