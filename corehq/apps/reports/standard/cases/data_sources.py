@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 
 import pytz
@@ -150,7 +150,7 @@ class CaseDisplay:
         except Exception:
             try:
                 date_obj = dateutil.parser.parse(date_string)
-                if isinstance(date_obj, datetime.datetime):
+                if isinstance(date_obj, datetime):
                     return date_obj.replace(tzinfo=None)
                 else:
                     return date_obj
