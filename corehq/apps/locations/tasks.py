@@ -25,7 +25,7 @@ from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 
 @serial_task("{location_type.domain}-{location_type.pk}",
-             default_retry_delay=30, max_retries=3)
+             default_retry_delay=30, max_retries=3, serializer='pickle')
 def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
     for location in SQLLocation.objects.filter(location_type=location_type):
@@ -47,7 +47,7 @@ def download_locations_async(domain, download_id, include_consumption,
 
 
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
-             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
+             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False, serializer='pickle')
 def import_locations_async(domain, file_ref_id, user_id):
     try:
         importer = MultiExcelImporter(import_locations_async, file_ref_id)

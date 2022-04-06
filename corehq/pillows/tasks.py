@@ -34,7 +34,7 @@ def fix_user_types():
             resave_es_forms_with_unknown_user_type.delay(user_id)
 
 
-@serial_task('{user_id}', queue='background_queue')
+@serial_task('{user_id}', queue='background_queue', serializer='pickle')
 def resave_es_forms_with_unknown_user_type(user_id):
     domain_form_id_list = (
         FormES().user_type(UNKNOWN_USER_TYPE).user_id(user_id)

@@ -28,7 +28,7 @@ def create_usercases(domain_name):
 
 
 # Can be deleted after deploy
-@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
+@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60, serializer='pickle')
 def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
     try:
@@ -48,7 +48,7 @@ def autogenerate_build(app, username):
         autogenerate_build_task.delay(app.get_id, app.domain, app.version, comment)
 
 
-@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
+@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60, serializer='pickle')
 def autogenerate_build_task(app_id, domain, version, comment):
     make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
 
