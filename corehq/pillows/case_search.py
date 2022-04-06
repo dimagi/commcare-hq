@@ -16,6 +16,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
+from corehq.apps.data_dictionary.models import PROPERTY_TYPES
 from corehq.apps.data_dictionary.util import get_smart_types_by_prop
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
@@ -120,7 +121,7 @@ def _add_smart_types(dynamic_properties, domain, case_type):
     smart_types = get_smart_types_by_prop(domain, case_type)
     for prop in dynamic_properties:
         prop_type = smart_types.get(prop['key'])
-        if prop_type == 'gps':
+        if prop_type == PROPERTY_TYPES.GPS.slug:
             try:
                 prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
             except BadValueError:

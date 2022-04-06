@@ -9,7 +9,12 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import (
+    PROPERTY_TYPES,
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -237,5 +242,5 @@ def get_smart_types_by_prop(domain, case_type):
     return dict(CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type,
-        data_type='gps',
+        data_type=PROPERTY_TYPES.GPS.slug,
     ).values_list('name', 'data_type'))

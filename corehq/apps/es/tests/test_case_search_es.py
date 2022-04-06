@@ -9,6 +9,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.data_dictionary.models import PROPERTY_TYPES
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -568,7 +569,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         )
 
     @flag_enabled('CASE_SEARCH_SMART_TYPES')
-    @patch('corehq.pillows.case_search.get_smart_types_by_prop', return_value={'coords': 'gps'})
+    @patch('corehq.pillows.case_search.get_smart_types_by_prop', return_value={'coords': PROPERTY_TYPES.GPS.slug})
     def test_geopoint_query(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
