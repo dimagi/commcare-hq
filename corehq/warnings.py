@@ -19,6 +19,7 @@ def configure_deprecation_whitelist():
     whitelist("nose.importer", "the imp module is deprecated")
 
     # warnings that can be resolved with HQ code changes
+    whitelist("", "property_match are deprecated. Use boolean_expression instead.")
     whitelist("corehq.util.validation", "metaschema specified by $schema was not found")
 
     # other, resolution not obvious
