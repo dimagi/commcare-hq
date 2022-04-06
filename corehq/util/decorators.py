@@ -116,7 +116,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
 
 
 def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
-                queue='background_queue', ignore_result=True, serializer='pickle'):
+                queue='background_queue', ignore_result=True, serializer=None):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -139,12 +139,17 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
         greet.delay(joeshmoe)
         # Locking key used would be "greet-joeshmoe@test.commcarehq.org-Dimagi"
     """
+
+    task_kwargs = {}
+    if serializer:
+        task_kwargs['serializer'] = serializer
+
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
         from dimagi.utils.couch import get_redis_lock, release_lock
 
-        @task(serializer=serializer, bind=True, queue=queue, ignore_result=ignore_result,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
+              max_retries=max_retries, **task_kwargs)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
