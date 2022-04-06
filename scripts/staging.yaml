@@ -73,6 +73,5 @@ branches:
     - dm/django3-tests # Daniel March 31
     - ce/fix-rate-limits
     - rc/obh-case-search-ui # Robert April 5
-    - gh/temp-fix # Graham April 6
 
 submodules: { }
