@@ -1,13 +1,14 @@
 from datetime import datetime
 import json
+from typing import Union
 
-import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
 import dateutil
+import pytz
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.case_search.const import (
@@ -144,7 +145,7 @@ class CaseDisplay:
         except CouchUser.AccountTypeError:
             return None
 
-    def parse_date(self, date_string):
+    def parse_date(self, date_string: str) -> Union[datetime, str]:
         try:
             return iso_string_to_datetime(date_string)
         except Exception:
