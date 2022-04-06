@@ -27,8 +27,6 @@ def create_usercases(domain_name):
         sync_usercase(user, domain_name)
 
 
-# Can be deleted after deploy
-@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60, serializer='pickle')
 def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
     try:
