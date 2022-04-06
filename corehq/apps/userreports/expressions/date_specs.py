@@ -275,7 +275,7 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
     .. code:: json
 
         {
-            "type": "gregorian_date_to_ethiopian_date",
+            "type": "ethiopian_date_to_gregorian_date",
             "date_expression": {
                 "type": "property_name",
                 "property_name": "dob"
