@@ -361,7 +361,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm._create_casexml_2
+                    # see XForm._create_casexml
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(
