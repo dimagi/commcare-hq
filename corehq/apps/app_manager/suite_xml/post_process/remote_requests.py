@@ -42,7 +42,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseIDXPath,
-    CaseSearchInstanceXpath,
+    SelectedCasesInstanceXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
@@ -130,7 +130,7 @@ class RemoteRequestFactory(object):
         }
 
     def _get_multi_select_nodeset(self):
-        return CaseSearchInstanceXpath().instance()
+        return SelectedCasesInstanceXpath().instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)

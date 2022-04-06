@@ -2,7 +2,7 @@
   <remote-request>
     <post url="https://www.example.com/a/multiple-referrals/phone/claim-case/">
       <data key="case_id"
-            nodeset="instance('search_cases')/results/value"
+            nodeset="instance('selected_cases')/results/value"
             exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"
             ref="."/>
     </post>
@@ -15,7 +15,7 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
-    <instance id="search_cases" src="jr://instance/selected_cases"/>
+    <instance id="selected_cases" src="jr://instance/selected_cases"/>
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/multiple-referrals/phone/search/{app_id}/">
         <data key="case_type" ref="'person'"/>
@@ -34,11 +34,11 @@
           </display>
         </prompt>
       </query>
-      <datum detail-confirm="m0_search_long" detail-select="m0_search_short" id="search_cases" nodeset="instance('results')/results/case[@case_type='person'][not(commcare_is_related_case=true())]" value="./@case_id"/>
+      <datum detail-confirm="m0_search_long" detail-select="m0_search_short" id="selected_cases" nodeset="instance('results')/results/case[@case_type='person'][not(commcare_is_related_case=true())]" value="./@case_id"/>
     </session>
     <stack>
       <push>
-        <rewind value="instance('commcaresession')/session/data/search_cases"/>
+        <rewind value="instance('commcaresession')/session/data/selected_cases"/>
       </push>
     </stack>
   </remote-request>
