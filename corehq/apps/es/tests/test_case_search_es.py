@@ -9,7 +9,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.data_dictionary.models import PROPERTY_TYPES
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
