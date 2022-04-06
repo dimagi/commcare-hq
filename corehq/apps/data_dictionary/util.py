@@ -237,10 +237,10 @@ def fields_to_validate(domain, case_type_name):
 
 
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
-def get_smart_types_by_prop(domain, case_type):
+def get_gps_properties(domain, case_type):
     # Used for CASE_SEARCH_SMART_TYPES
-    return dict(CaseProperty.objects.filter(
+    return set(CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type,
         data_type=PROPERTY_TYPES.GPS.slug,
-    ).values_list('name', 'data_type'))
+    ).values_list('name', flat=True))

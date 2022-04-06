@@ -100,9 +100,9 @@ class CaseProperty(models.Model):
             return prop
 
     def save(self, *args, **kwargs):
-        from .util import get_data_dict_props_by_case_type, get_smart_types_by_prop
+        from .util import get_data_dict_props_by_case_type, get_gps_properties
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
-        get_smart_types_by_prop.clear(self.case_type.domain, self.case_type.name)
+        get_gps_properties.clear(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).save(*args, **kwargs)
 
     def check_validity(self, value):

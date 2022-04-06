@@ -569,7 +569,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
         )
 
     @flag_enabled('CASE_SEARCH_SMART_TYPES')
-    @patch('corehq.pillows.case_search.get_smart_types_by_prop', return_value={'coords': PROPERTY_TYPES.GPS.slug})
+    @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
     def test_geopoint_query(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
             {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
