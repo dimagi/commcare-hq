@@ -83,7 +83,7 @@ class RemoteRequestFactory(object):
         self.module = module
         self.detail_section_elements = detail_section_elements
         if self.is_multi_select():
-            self.case_session_var = "search_cases"
+            self.case_session_var = "selected_cases"
         else:
             self.case_session_var = self.module.search_config.case_session_var
 
