@@ -91,8 +91,7 @@ def purge_old_scheduled_report_logs():
     ScheduledReportLog.objects.filter(timestamp__lt=EXPIRED_DATE).delete()
 
 
-@serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-             serializer='pickle')
+@serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def queue_scheduled_reports():
     for report_id in create_records_for_scheduled_reports():
         try:
