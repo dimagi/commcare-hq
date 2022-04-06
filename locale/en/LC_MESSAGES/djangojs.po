@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-31 00:37+0000\n"
+"POT-Creation-Date: 2022-04-06 19:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2863,7 +2863,7 @@ msgstr ""
 msgid "Switching project spaces..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:419
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:446
 msgid "Page <%-num%>"
 msgstr ""
 
@@ -3624,21 +3624,21 @@ msgstr ""
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:53
+#: corehq/apps/registration/static/registration/js/password.js:54
 msgid ""
 "<i class='fa fa-warning'></i>This password is automatically generated. "
 "Please copy it or create your own. It will not be shown again."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:57
+#: corehq/apps/registration/static/registration/js/password.js:58
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:59
+#: corehq/apps/registration/static/registration/js/password.js:60
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:61
+#: corehq/apps/registration/static/registration/js/password.js:62
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -4173,19 +4173,19 @@ msgstr ""
 msgid "Error determining number of matching users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:309
+#: corehq/apps/users/static/users/js/mobile_workers.js:310
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:311
+#: corehq/apps/users/static/users/js/mobile_workers.js:312
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:372
+#: corehq/apps/users/static/users/js/mobile_workers.js:373
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:393
+#: corehq/apps/users/static/users/js/mobile_workers.js:394
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
