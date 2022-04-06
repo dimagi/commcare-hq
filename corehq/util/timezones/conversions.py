@@ -1,9 +1,15 @@
+from datetime import datetime
+from datetime import tzinfo as TZInfo
+from typing import Optional
+
 from django.utils.encoding import smart_str
+
 import pytz
 
-from corehq.const import USER_DATETIME_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.dates import safe_strftime
+
+from corehq.const import SERVER_DATETIME_FORMAT, USER_DATETIME_FORMAT
+from corehq.util.soft_assert import soft_assert
 
 
 class _HQTime(object):
@@ -15,7 +21,7 @@ class _HQTime(object):
 
 class _HQTZTime(_HQTime):
 
-    def __init__(self, dt, tzinfo=None):
+    def __init__(self, dt: datetime, tzinfo: Optional[TZInfo] = None) -> None:
         if dt.tzinfo is None:
             assert tzinfo is not None
             tzinfo = _soft_assert_tz_not_string(tzinfo)
@@ -27,7 +33,7 @@ class _HQTZTime(_HQTime):
 
 class _HQUTCTime(_HQTime):
 
-    def __init__(self, dt):
+    def __init__(self, dt: datetime) -> None:
         assert dt.tzinfo is None
         self._datetime = dt
 
