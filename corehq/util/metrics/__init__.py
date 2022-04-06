@@ -188,8 +188,7 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     _enforce_prefix(name, 'commcare')
 
-    @periodic_task(serializer='pickle', queue='background_queue', run_every=run_every,
-                   acks_late=True, ignore_result=True)
+    @periodic_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
     @wraps(fn)
     def inner():
         from corehq.util.metrics import metrics_gauge
