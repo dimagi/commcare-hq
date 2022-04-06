@@ -197,7 +197,10 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
 
     def get_display_file(self, return_type=True):
         if self.attachment_id:
-            data = self.fetch_attachment(self.attachment_id, stream=True).read()
+            try:
+                data = self.fetch_attachment(self.attachment_id, stream=True).read()
+            except ResourceNotFound:
+                return None
             if return_type:
                 content_type = self.blobs[self.attachment_id].content_type
                 return data, content_type
