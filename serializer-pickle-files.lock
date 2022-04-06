@@ -16,6 +16,5 @@
 5	corehq/apps/userreports/tasks.py
 11	corehq/apps/users/tasks.py
 1	corehq/ex-submodules/casexml/apps/phone/tasks.py
-1	corehq/ex-submodules/phonelog/tasks.py
 1	corehq/util/decorators.py
 1	corehq/util/metrics/__init__.py
