@@ -191,14 +191,11 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        send_device_log_to_sumologic.delay(url, self.log_subreport(),
-                                           self._get_header('log', False))
-        send_device_log_to_sumologic.delay(url, self.user_error_subreport(),
-                                           self._get_header('user_error', False))
-        send_device_log_to_sumologic.delay(url, self.force_close_subreport(),
-                                           self._get_header('force_close', False))
+        send_device_log_to_sumologic.delay(url, self.log_subreport(), self._get_header('log'))
+        send_device_log_to_sumologic.delay(url, self.user_error_subreport(), self._get_header('user_error'))
+        send_device_log_to_sumologic.delay(url, self.force_close_subreport(), self._get_header('force_close'))
 
-    def _get_header(self, fmt, should_encode=True):
+    def _get_header(self, fmt):
         """
         https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
         """
@@ -211,9 +208,6 @@ class SumoLogicLog(object):
             environment = 'prod'
 
         header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
-
-        if should_encode:
-            return {b"X-Sumo-Category": header.encode('utf-8')}
         return {"X-Sumo-Category": header}
 
     def _fill_base_template(self, log):
