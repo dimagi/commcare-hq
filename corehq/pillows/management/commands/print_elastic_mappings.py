@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.pillows.mappings.tests.utils import fetch_elastic_mapping
+from corehq.pillows.mappings.utils import fetch_elastic_mapping
 
 from .utils import pprint
 
