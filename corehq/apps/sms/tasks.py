@@ -616,4 +616,4 @@ def queued_sms():
 
 
 metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(),
-    multiprocess_mode=MPM_MAX)
+                   multiprocess_mode=MPM_MAX)

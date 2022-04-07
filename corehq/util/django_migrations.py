@@ -178,3 +178,11 @@ def block_upgrade_for_removed_migration(commit_with_migration):
         sys.exit(1)
 
     return migrations.RunPython(show_message, reverse_code=migrations.RunPython.noop, elidable=True)
+
+
+def update_es_mapping(index_name):
+    """Calls update_es_mapping automatically, see that command for details"""
+    @skip_on_fresh_install
+    def update_es_mapping(*args, **kwargs):
+        call_command('update_es_mapping', index_name, noinput=True)
+    return migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
