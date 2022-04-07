@@ -109,7 +109,9 @@ class Command(BaseCommand):
         'migrate_dhis2repeater', 'migrate_formrepeater', 'migrate_userrepeater', 'migrate_fhirrepeater',
         'migrate_appstructurerepeater', 'migrate_caserepeater', 'migrate_caseexpressionrepeater',
         'migrate_dataregistrycaseupdaterepeater', 'migrate_dhis2entityrepeater', 'migrate_openmrsrepeater',
-        'migrate_locationrepeater', 'migrate_updatecaserepeater']
+        'migrate_locationrepeater', 'migrate_updatecaserepeater',
+        'migrate_beneficiaryregistrationrepeater',
+        'migrate_beneficiaryvaccinationrepeater']
 
         for cmd in all_commands:
             call_command(cmd, verify_only=verify_only, skip_verify=skip_verify)
