@@ -19,11 +19,15 @@ jobs:
         # > executes an arbitrary command and commits the changes to the new pull request
         uses: technote-space/create-pr-action@v2
         env:
-          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
+#          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
+          TRANSIFEX_TOKEN: foo/bar
         with:
           EXECUTE_COMMANDS: |
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
-            sed 's/^token =.*$/token = '"${TRANSIFEX_TOKEN}"'/' .transifexrc.example > ~/.transifexrc
+            sed 's/^token =.*$//' .transifexrc.example > ~/.transifexrc
+            printf 'token =' >> ~/.transifexrc
+            echo "${TRANSIFEX_TOKEN}" >> ~/.transifexrc
+            cat ~/.transifexrc
             ./scripts/update-translations.sh
           COMMIT_MESSAGE: |
             Update translations.
