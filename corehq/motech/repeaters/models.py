@@ -248,7 +248,7 @@ class RepeaterManager(models.Manager):
             return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=False)
 
     def by_domain(self, domain):
-        return list(self.get_queryset().filter(domain=domain))
+        return list(self.filter(domain=domain))
 
 
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
