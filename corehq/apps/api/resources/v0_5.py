@@ -222,11 +222,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def _update(self, bundle, user_change_logger=None):
         should_save = False
-        valid_keys = [
-            'phone_numbers', 'groups', 'email', 'password', 'user_data', 'first_name', 'last_name', 'language'
-        ]
         for key, value in bundle.data.items():
-            if key not in valid_keys:
+            if key not in CommCareUser.api_editable_keys:
                 raise BadRequest(f'Cannot update the key {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
