@@ -44,24 +44,24 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
-<partial>
-  <entry>
-    <form>some-xmlns</form>
-    <command id="m0-f0">
-      <text>
-        <locale id="forms.m0f0"/>
-      </text>
-    </command>
-    <instance id="casedb" src="jr://instance/casedb"/>
-    <session>
-      <datum id="case_id"
-             nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
-             value="./@case_id"
-             detail-select="m0_case_short"
-             detail-confirm="m0_case_long"/>
-    </session>
-  </entry>
-</partial>
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <datum id="case_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                         value="./@case_id"
+                         detail-select="m0_case_short"
+                         detail-confirm="m0_case_long"/>
+                </session>
+              </entry>
+            </partial>
             """,
             suite,
             "./entry",
