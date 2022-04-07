@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from collections import namedtuple
 import os
@@ -6,6 +7,8 @@ import tempfile
 import uuid
 
 import re
+from urllib.parse import urlencode, urlparse, parse_qs
+
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
@@ -283,3 +286,43 @@ def get_git_commit(base_dir):
         return out.strip().decode('ascii')
     except OSError:
         pass
+
+
+def update_redis_location_for_tests(settings_caches):
+    """Best effort attempt to specify a different Redis DB from the one configured in localsettings.
+    See https://github.com/jazzband/django-redis#configure-as-cache-backend for connection formats.
+    """
+    redis_connection = urlparse(settings_caches["default"]["LOCATION"])
+    if redis_connection.path:
+        redis_db = redis_connection.path.split("/")[-1]
+    elif redis_connection.query:
+        redis_db = parse_qs(redis_connection.query).get("db", None)
+        if redis_db:
+            redis_db = redis_db[0]
+    else:
+        return False
+
+    redis_db = int(redis_db) + 1
+
+    if redis_connection.path:
+        test_connection = redis_connection._replace(path=f"/{redis_db}").geturl()
+    else:
+        query_dict = parse_qs(redis_connection.query)
+        query_dict["db"] = redis_db
+        test_connection = redis_connection._replace(query=urlencode(query_dict)).geturl()
+
+    if not test_connection:
+        return
+
+    logging.info("Using '%s' connection for Redis", test_connection)
+    redis_cache = {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': test_connection,
+        'OPTIONS': {
+            'PARSER_CLASS': 'redis.connection.HiredisParser'
+        },
+    }
+
+    settings_caches["default"] = redis_cache
+    settings_caches["redis"] = redis_cache
+    return True
