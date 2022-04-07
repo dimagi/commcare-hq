@@ -395,6 +395,8 @@ class QueryData(XmlObject):
 
     key = StringField('@key')
     ref = XPathField('@ref')
+    nodeset = StringField('@nodeset')
+    exclude = StringField('@exclude')
 
 
 class StackQuery(StackDatum):
