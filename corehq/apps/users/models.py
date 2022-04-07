@@ -1609,10 +1609,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # with a location where location.location_type.has_user == True
     user_location_id = StringProperty()
 
-    api_editable_keys = [
-        'phone_numbers', 'groups', 'email', 'password', 'user_data', 'first_name', 'last_name', 'language'
-    ]
-
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships

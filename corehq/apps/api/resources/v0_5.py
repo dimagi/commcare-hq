@@ -104,6 +104,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+from ..const import COMMCARE_USER_API_EDITABLE_KEYS
 
 MOCK_BULK_USER_ES = None
 
@@ -223,7 +224,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
-            if key not in CommCareUser.api_editable_keys:
+            if key not in COMMCARE_USER_API_EDITABLE_KEYS:
                 raise BadRequest(f'Cannot update the key {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
