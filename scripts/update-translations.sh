@@ -41,10 +41,6 @@ then
 fi
 
 branch=$(git rev-parse --abbrev-ref HEAD)
-if [[ $branch != 'master' ]]
-then
-    abort "You must be on master to run this command."
-fi
 
 git fetch
 tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
