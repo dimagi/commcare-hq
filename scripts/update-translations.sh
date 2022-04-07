@@ -34,21 +34,6 @@ while getopts ":h-:" option; do
 done
 
 
-has_local_changes=`git diff-index HEAD` && true
-if [[ $has_local_changes ]]
-then
-    abort "You have uncommitted changes in your working tree."
-fi
-
-branch=$(git rev-parse --abbrev-ref HEAD)
-
-git fetch
-tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
-upstream_changes=`git rev-list HEAD...$tracking_branch --count`
-if [[ $upstream_changes > 0 ]]
-then
-    abort "There are changes upstream that you should pull with 'git pull' before running this command."
-fi
 
 if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
 then
@@ -86,11 +71,4 @@ set -e
 
 echo "Pushing updates to transifex."
 tx push -s -t
-
-has_local_changes=`git diff-index HEAD` && true
-if [[ ! $has_local_changes ]]
-then
-    abort "There are no changes....please investigate"
-fi
-
 echo "Translations updated successfully!"
