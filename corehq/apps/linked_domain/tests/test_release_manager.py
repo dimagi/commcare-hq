@@ -215,7 +215,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
         self.report.save()
         return self.report
 
-    def test_already_linked_report_is_pushed_without_privilege(self):
+    def test_already_linked_report_is_pushed(self):
         new_report = self._create_new_report()
         new_report.title = "Title"
         new_report.save()
@@ -230,40 +230,14 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = False
-            errors = manager._release_report(self.domain_link, model, 'test-user')
+        errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
         self.assertIsNotNone(downstream_report)
         self.assertEqual("Updated Title", downstream_report.title)
 
-    def test_already_linked_report_is_pushed_with_privilege(self):
-        new_report = self._create_new_report()
-        new_report.title = "Title"
-        new_report.save()
-        self.addCleanup(new_report.delete)
-        linked_report_info = create_linked_ucr(self.domain_link, new_report.get_id)
-        self.addCleanup(linked_report_info.report.delete)
-        # after creating the link, update the upstream report
-        new_report.title = "Updated Title"
-        new_report.save()
-        model = self._linked_data_view_model(
-            MODEL_REPORT, detail=ReportLinkDetail(report_id=new_report.get_id).to_json()
-        )
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = True
-            errors = manager._release_report(self.domain_link, model, 'test-user')
-        self.assertIsNone(errors)
-
-        downstream_report = get_downstream_report(self.linked_domain, new_report.get_id)
-        self.assertIsNotNone(downstream_report)
-        self.assertEqual("Updated Title", downstream_report.title)
-
-    def test_report_not_pushed_if_not_found_without_privilege(self):
+    def test_report_pushed_if_not_found(self):
         unpushed_report = self._create_new_report()
         self.addCleanup(unpushed_report.delete)
         model = self._linked_data_view_model(
@@ -272,23 +246,7 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = False
-            errors = manager._release_report(self.domain_link, model, 'test-user')
-        self.assertTrue('Could not find report. Please check that the report has been linked.' in errors)
-
-    def test_report_pushed_if_not_found_with_privilege_enabled(self):
-        unpushed_report = self._create_new_report()
-        self.addCleanup(unpushed_report.delete)
-        model = self._linked_data_view_model(
-            MODEL_REPORT,
-            detail=ReportLinkDetail(report_id=unpushed_report.get_id).to_json()
-        )
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = True
-            errors = manager._release_report(self.domain_link, model, 'test-user')
+        errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_report = get_downstream_report(self.linked_domain, unpushed_report.get_id)
