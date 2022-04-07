@@ -91,6 +91,11 @@ COUCH_DATABASES = {
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
+    # match production settings
+    'PARSER_CLASS': 'redis.connection.HiredisParser',
+    'REDIS_CLIENT_KWARGS': {
+        'health_check_interval': 15,
+    }
 }
 
 CACHES = {
