@@ -266,7 +266,7 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         keyword.save()
         return keyword
 
-    def test_already_linked_keyword_is_pushed_without_privilege(self):
+    def test_already_linked_keyword_is_pushed(self):
         keyword = self._create_new_keyword('keyword')
         self.addCleanup(keyword.delete)
         linked_keyword_id = create_linked_keyword(self.domain_link, keyword.id)
@@ -279,9 +279,7 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = False
-            errors = manager._release_keyword(self.domain_link, model, 'test-user')
+        errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
@@ -289,30 +287,7 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         self.assertIsNotNone(downstream_keyword)
         self.assertEqual("updated-keyword", downstream_keyword.keyword)
 
-    def test_already_linked_keyword_is_pushed_with_privilege(self):
-        keyword = self._create_new_keyword('keyword')
-        self.addCleanup(keyword.delete)
-        linked_keyword_id = create_linked_keyword(self.domain_link, keyword.id)
-        self.addCleanup(Keyword(id=linked_keyword_id).delete)
-        # after creating the link, update the upstream keyword
-        keyword.keyword = "updated-keyword"
-        keyword.save()
-        model = self._linked_data_view_model(
-            MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
-        )
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = True
-            errors = manager._release_keyword(self.domain_link, model, 'test-user')
-        self.assertIsNone(errors)
-
-        downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
-        self.addCleanup(downstream_keyword.delete)
-        self.assertIsNotNone(downstream_keyword)
-        self.assertEqual("updated-keyword", downstream_keyword.keyword)
-
-    def test_keyword_not_pushed_if_not_found_without_privilege(self):
+    def test_keyword_pushed_if_not_found(self):
         keyword = self._create_new_keyword('keyword')
         self.addCleanup(keyword.delete)
         model = self._linked_data_view_model(
@@ -321,23 +296,7 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
 
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = False
-            errors = manager._release_keyword(self.domain_link, model, 'test-user')
-        self.assertTrue('Could not find linked keyword. Please check the keyword has been linked.' in errors)
-
-    def test_keyword_pushed_if_not_found_with_privilege_enabled(self):
-        keyword = self._create_new_keyword('keyword')
-        self.addCleanup(keyword.delete)
-        model = self._linked_data_view_model(
-            MODEL_KEYWORD, detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json()
-        )
-
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
-            mock_access_check.return_value = True
-            errors = manager._release_keyword(self.domain_link, model, 'test-user')
+        errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
         downstream_keyword = get_downstream_keyword(self.linked_domain, keyword.id)
