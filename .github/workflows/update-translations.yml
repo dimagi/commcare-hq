@@ -22,8 +22,10 @@ jobs:
         uses: technote-space/create-pr-action@v2
         with:
           EXECUTE_COMMANDS: |
-            cp .transifexrc.example ~/.transifexrc
-            ls ~/.transifexrc
+            # copy .transifexrc.example to ~/.transifexrc, edited to include token
+            MY_SECRET=foo
+            sed 's/^token =.*$/token = '"${MY_SECRET}"'/' .transifexrc.example > ~/.transifexrc
+            cat ~/.transifexrc
             which tx
             ./scripts/update-translations.sh
           COMMIT_MESSAGE: |
