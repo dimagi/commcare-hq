@@ -1619,6 +1619,7 @@ class XForm(WrappedNode):
             return 'false()'
 
     def _create_casexml(self, form):
+        # jls: add instance
         actions = form.active_actions()
 
         form_opens_case = 'open_case' in actions
@@ -1819,6 +1820,7 @@ class XForm(WrappedNode):
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
     def _create_casexml_advanced(self, form):
+        # jls: add instance
         self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 

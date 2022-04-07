@@ -53,6 +53,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                   </text>
                 </command>
                 <instance id="casedb" src="jr://instance/casedb"/>
+                <instance id="selected_cases" src="jr://instance/selected_cases"/>
                 <session>
                   <datum id="case_id"
                          nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"

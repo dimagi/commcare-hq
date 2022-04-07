@@ -536,6 +536,7 @@ class EntriesHelper(object):
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
+    # jls: do anything with this? do data registries work with multi-select case lists?
     def get_data_registry_case_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
         the user selected is in the user's casedb so we have to get the data directly from HQ before
