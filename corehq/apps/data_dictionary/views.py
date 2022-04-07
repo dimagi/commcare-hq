@@ -58,8 +58,7 @@ data_dictionary_rebuild_rate_limiter = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
-    scope_length=1,
+    ).get_rate_limits(scope),
 )
 
 @login_and_domain_required

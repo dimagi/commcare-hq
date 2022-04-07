@@ -20,7 +20,7 @@ from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
 
-from casexml.apps.case.cleanup import claim_case, get_first_claim
+from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
@@ -139,21 +139,27 @@ def claim(request, domain):
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = unquote(request.POST.get('case_id', ''))
-    if not case_id:
+    case_ids = request.POST.getlist('case_id')
+
+    if not case_ids:
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if get_first_claim(domain, restore_user.user_id, case_id):
-            return HttpResponse(status=204)
+        case_ids_already_claimed = get_first_claims(domain, restore_user.user_id, case_ids)
+        case_ids_to_claim = {case for case in case_ids if case not in case_ids_already_claimed}
+    except CaseNotFound as err:
+        return HttpResponse(f'No cases claimed. Case IDs "{err}" not found',
+                            status=410)
 
+    for case_id in case_ids_to_claim:
         claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
-    except CaseNotFound:
-        return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                            status=410)
+
+    if set(case_ids) == case_ids_already_claimed:
+        return HttpResponse(status=204)
+
     return HttpResponse(status=201)
 
 
