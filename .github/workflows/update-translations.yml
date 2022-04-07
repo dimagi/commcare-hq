@@ -22,6 +22,7 @@ jobs:
           TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
         with:
           EXECUTE_COMMANDS: |
+            pip install --upgrade pip
             pip install -r requirements/requirements.txt
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
             grep -v '^token =' .transifexrc.example > ~/.transifexrc
