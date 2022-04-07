@@ -1,8 +1,6 @@
 from django import template
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.html import escape
-
-from couchdbkit import ResourceNotFound
 
 register = template.Library()
 

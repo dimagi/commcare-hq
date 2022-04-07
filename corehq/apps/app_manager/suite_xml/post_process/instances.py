@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from memoized import memoized
 
@@ -134,6 +134,7 @@ INSTANCE_KWARGS_BY_ID = {
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote'),
     'results': dict(id='results', src='jr://instance/remote'),
+    'selected_cases': dict(id='selected_cases', src='jr://instance/selected_cases'),
 }
 
 

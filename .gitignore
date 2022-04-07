@@ -71,6 +71,7 @@ node_modules/
 docker/data
 *.lock
 !migrations.lock
+!serializer-pickle-files.lock
 !yarn.lock
 fab/config.py
 extensions/

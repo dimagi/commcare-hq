@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
@@ -11,6 +11,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.users.dbaccessors import get_deleted_user_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.view_utils import is_ajax
 
 
 def require_permission_raw(permission_check,
@@ -47,7 +48,7 @@ def require_permission_raw(permission_check,
                 request.is_view_only = True
                 return view_func(request, domain, *args, **kwargs)
             else:
-                if request.is_ajax():
+                if is_ajax(request):
                     return HttpResponse(_("Sorry, you don't have permission to do this action!"), status=403)
                 raise PermissionDenied()
 

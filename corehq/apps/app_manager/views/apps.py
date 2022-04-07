@@ -12,7 +12,7 @@ from django.http import (
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 import urllib3

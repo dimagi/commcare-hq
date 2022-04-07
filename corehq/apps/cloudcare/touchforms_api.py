@@ -18,7 +18,6 @@ class BaseSessionDataHelper(object):
         """
         session_data = {
             'device_id': device_id,
-            'app_version': '2.0',
             'domain': self.domain,
         }
         session_data.update(get_user_contributions_to_touchforms_session(self.domain, self.couch_user))
@@ -89,6 +88,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
                 session_data[self.case_session_variable_name] = self.case_id
         if self.app:
             session_data["app_id"] = self.app.get_id
+            session_data["app_version"] = self.app.version
         return session_data
 
     @property

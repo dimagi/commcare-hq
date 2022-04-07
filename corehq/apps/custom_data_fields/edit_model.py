@@ -5,8 +5,8 @@ from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
@@ -170,13 +170,13 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('A label is required for each field.')}
+        error_messages={'required': gettext_lazy('A label is required for each field.')}
     )
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': ugettext_lazy('A property name is required for each field.'),
-            'invalid': ugettext_lazy('Properties must start with a letter and '
+            'required': gettext_lazy('A property name is required for each field.'),
+            'invalid': gettext_lazy('Properties must start with a letter and '
                          'consist only of letters, numbers, underscores or hyphens.'),
         }
     )
@@ -214,11 +214,11 @@ class CustomDataFieldsProfileForm(forms.Form):
     )
     name = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('A name is required for each profile.')}
+        error_messages={'required': gettext_lazy('A name is required for each profile.')}
     )
     fields = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('At least one field is required for each profile.')}
+        error_messages={'required': gettext_lazy('At least one field is required for each profile.')}
     )
 
     def clean_fields(self):

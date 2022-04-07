@@ -3,13 +3,18 @@ from itertools import groupby
 from operator import attrgetter
 
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import (
+    PROPERTY_TYPES,
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -133,7 +138,7 @@ def get_values_hints_dict(domain, case_type_name):
     if case_type:
         for prop in case_type.properties.all():
             if prop.data_type == 'date':
-                values_hints_dict[prop.name] = [ugettext('YYYY-MM-DD')]
+                values_hints_dict[prop.name] = [gettext('YYYY-MM-DD')]
             elif prop.data_type == 'select':
                 values_hints_dict[prop.name] = [av.allowed_value for av in prop.allowed_values.all()]
     return values_hints_dict
@@ -155,7 +160,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     Takes a case property to update and returns an error if there was one
     """
     if not name:
-        return ugettext('Case property must have a name')
+        return gettext('Case property must have a name')
 
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
@@ -196,7 +201,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.allowed_values.exclude(pk__in=obj_pks).delete()
 
     if err_cnt:
-        return ugettext('Unable to save valid values longer than {} characters').format(max_len)
+        return gettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
 @quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
@@ -229,3 +234,13 @@ def fields_to_validate(domain, case_type_name):
     }
     props = CaseProperty.objects.filter(**filter_kwargs)
     return {prop.name: prop for prop in props}
+
+
+@quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
+def get_gps_properties(domain, case_type):
+    # Used for CASE_SEARCH_SMART_TYPES
+    return set(CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type,
+        data_type=PROPERTY_TYPES.GPS.slug,
+    ).values_list('name', flat=True))

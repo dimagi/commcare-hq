@@ -1,6 +1,6 @@
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -29,7 +29,7 @@ class BaseSGTab(UITab):
 
 
 class SimpleCrispyFormSGExample(BaseSGTab):
-    title = ugettext_noop("Simple Crispy Form")
+    title = gettext_noop("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
 
     url_prefix_formats = ('/styleguide/docs/simple_crispy/',)
@@ -64,7 +64,7 @@ class SimpleCrispyFormSGExample(BaseSGTab):
 
 
 class SGExampleTab(BaseSGTab):
-    title = ugettext_noop("Style Guide")
+    title = gettext_noop("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
 
     url_prefix_formats = ('/styleguide/docs/',)

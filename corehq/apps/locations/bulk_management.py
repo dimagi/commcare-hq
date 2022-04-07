@@ -12,9 +12,8 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
-from django.utils.text import format_lazy
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from attr import attrib, attrs
 from memoized import memoized
@@ -317,11 +316,11 @@ class LocationExcelValidator(object):
         if actual != expected:
             missing = ", ".join(expected - actual)
             extra = ", ".join(actual - expected)
-            message = ugettext_lazy("'types' sheet should contain headers '{expected}'. {missing}{extra}")
+            message = gettext_lazy("'types' sheet should contain headers '{expected}'. {missing}{extra}")
             raise LocationExcelSheetError(message.format(
                 expected=", ".join(expected),
-                missing=ugettext_lazy("'{}' are missing. ").format(missing) if missing else '',
-                extra=ugettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
+                missing=gettext_lazy("'{}' are missing. ").format(missing) if missing else '',
+                extra=gettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
             ))
 
         type_data = [self._get_type_data(index, row)
@@ -337,13 +336,13 @@ class LocationExcelValidator(object):
                 if actual != expected:
                     missing = ", ".join(expected - actual)
                     extra = ", ".join(actual - expected)
-                    message = ugettext_lazy("Locations sheet with title '{name}' should contain exactly "
-                                            "'{expected}' as the sheet headers. {missing}{extra}")
+                    message = gettext_lazy("Locations sheet with title '{name}' should contain exactly "
+                                           "'{expected}' as the sheet headers. {missing}{extra}")
                     raise LocationExcelSheetError(message.format(
                         name=sheet_name,
                         expected=", ".join(expected),
-                        missing=ugettext_lazy("'{}' are missing. ").format(missing) if missing else '',
-                        extra=ugettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
+                        missing=gettext_lazy("'{}' are missing. ").format(missing) if missing else '',
+                        extra=gettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
                     ))
                 location_data.extend([
                     self._get_location_data(index, row, sheet_name)

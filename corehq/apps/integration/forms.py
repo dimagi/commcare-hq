@@ -1,6 +1,6 @@
 from django import forms
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Submit
@@ -105,9 +105,9 @@ class GaenOtpServerSettingsForm(forms.ModelForm):
     server_type = forms.CharField(
         label=_('GAEN Server Type'),
         widget=forms.Select(choices=[
-            ("", ugettext_lazy("Select server type")),
-            ('NEARFORM', ugettext_lazy('NearForm OTP Server')),
-            ('APHL', ugettext_lazy('APHL Exposure Notifications')),
+            ("", gettext_lazy("Select server type")),
+            ('NEARFORM', gettext_lazy('NearForm OTP Server')),
+            ('APHL', gettext_lazy('APHL Exposure Notifications')),
         ]),
     )
 
@@ -264,19 +264,19 @@ class HmacCalloutSettingsForm(forms.ModelForm):
 
 class SimprintsIntegrationForm(forms.Form):
     is_enabled = forms.BooleanField(
-        label=ugettext_noop("Enable Simprints Integration"),
+        label=gettext_noop("Enable Simprints Integration"),
         required=False
     )
     project_id = forms.CharField(
-        label=ugettext_noop("Project ID"),
+        label=gettext_noop("Project ID"),
         required=False,
     )
     user_id = forms.CharField(
-        label=ugettext_noop("User ID"),
+        label=gettext_noop("User ID"),
         required=False,
     )
     module_id = forms.CharField(
-        label=ugettext_noop("Module ID"),
+        label=gettext_noop("Module ID"),
         required=False,
     )
 
@@ -301,7 +301,7 @@ class SimprintsIntegrationForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', ugettext_lazy("Update"))
+                    Submit('submit', gettext_lazy("Update"))
                 )
             )
         )

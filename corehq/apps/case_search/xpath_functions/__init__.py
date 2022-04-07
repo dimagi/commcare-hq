@@ -1,10 +1,12 @@
 from .query_functions import not_, selected_all, selected_any
 from .subcase_functions import subcase
-from .value_functions import date
+from .value_functions import date, date_add, today
 
-# functions that transform a value
+# functions that transform or produce a value
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
+    'date_add': date_add,
+    'today': today,
 }
 
 

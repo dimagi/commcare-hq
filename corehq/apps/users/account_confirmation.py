@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 from corehq.apps.domain.utils import guess_domain_language
 from corehq.util.context_processors import commcare_hq_names

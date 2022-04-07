@@ -10,10 +10,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
@@ -68,7 +69,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
-from corehq.apps.linked_domain.util import is_linked_report
+from corehq.apps.linked_domain.util import is_linked_report, can_domain_access_release_management
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
@@ -112,7 +113,10 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static, RegistryReportConfiguration,
+    report_config_id_is_static,
+    RegistryReportConfiguration,
+    RegistryDataSourceConfiguration,
+    is_data_registry_report,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -152,7 +156,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import Permissions
-from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -195,15 +198,20 @@ def swallow_programming_errors(fn):
 
 @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
-    section_name = ugettext_lazy("Configurable Reports")
+    section_name = gettext_lazy("Configurable Reports")
 
     @property
     def main_context(self):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + RegistryReportConfiguration.by_domain(self.domain) + static_reports,
-            'data_sources': get_datasources_for_domain(self.domain, include_static=True)
+            'reports': (
+                ReportConfiguration.by_domain(self.domain)
+                + RegistryReportConfiguration.by_domain(self.domain)
+                + static_reports
+            ),
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True),
+            'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -220,11 +228,14 @@ class BaseUserConfigReportsView(BaseDomainView):
 
     def dispatch(self, *args, **kwargs):
         allow_access_to_ucrs = (
-            self.request.couch_user.has_permission(
+            hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
                 get_permission_name(Permissions.edit_ucrs)
             )
         )
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.section_name = gettext_lazy("Custom Web Reports")
+
         if allow_access_to_ucrs:
             return super().dispatch(*args, **kwargs)
         raise Http404()
@@ -233,7 +244,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
-    page_title = ugettext_lazy("Reports Home")
+    page_title = gettext_lazy("Reports Home")
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -262,7 +273,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.report_id
             ),
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     @property
@@ -276,7 +287,11 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def read_only(self):
         if self.report_id is not None:
             return (report_config_id_is_static(self.report_id)
-                    or is_linked_report(self.config))
+                    or is_linked_report(self.config)
+                    or (
+                        is_data_registry_report(self.config)
+                        and not toggles.DATA_REGISTRY_UCR.enabled(self.domain)
+            ))
         return False
 
     @property
@@ -300,12 +315,12 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
 class EditConfigReportView(BaseEditConfigReportView):
     urlname = 'edit_configurable_report'
-    page_title = ugettext_lazy("Edit Report")
+    page_title = gettext_lazy("Edit Report")
 
 
 class CreateConfigReportView(BaseEditConfigReportView):
     urlname = 'create_configurable_report'
-    page_title = ugettext_lazy("Create Report")
+    page_title = gettext_lazy("Create Report")
 
 
 class ReportBuilderView(BaseDomainView):
@@ -353,7 +368,7 @@ def paywall_home(domain):
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
-    page_title = ugettext_lazy('Subscribe')
+    page_title = gettext_lazy('Subscribe')
 
     @property
     def section_name(self):
@@ -372,7 +387,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/pricing.html"
     urlname = 'report_builder_paywall_pricing'
-    page_title = ugettext_lazy('Pricing')
+    page_title = gettext_lazy('Pricing')
 
     @property
     def page_context(self):
@@ -412,7 +427,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
-    page_title = ugettext_lazy('Create Report')
+    page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
     @property
@@ -484,7 +499,7 @@ class EditReportInBuilder(View):
 
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
-    page_title = ugettext_lazy("Configure Report")
+    page_title = gettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     report_title = '{}'
     existing_report = None
@@ -517,6 +532,12 @@ class ConfigureReport(ReportBuilderView):
                 self.app = Application.get(self.app_id)
                 self.source_type = self.request.GET['source_type']
 
+        if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
+            return self.render_error_response(
+                _("Creating or Editing Data Registry Reports are not enabled for this project."),
+                allow_delete=False
+            )
+
         if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
@@ -524,18 +545,23 @@ class ConfigureReport(ReportBuilderView):
                 self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
-            self.template_name = 'userreports/report_error.html'
-            if self.existing_report:
-                context = {'report_id': self.existing_report.get_id,
-                           'is_static': self.existing_report.is_static}
-            else:
-                context = {}
-            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            context.update(self.main_context)
-            return self.render_to_response(context)
+            return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
+    def render_error_response(self, message, allow_delete=None):
+        if self.existing_report:
+            context = {
+                'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
+            }
+        else:
+            context = {}
+        if allow_delete is not None:
+            context['allow_delete'] = allow_delete
+        context['error_message'] = message
+        context.update(self.main_context)
+        return render(self.request, 'userreports/report_error.html', context)
 
     @property
     def page_name(self):
@@ -644,7 +670,7 @@ class ConfigureReport(ReportBuilderView):
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
             ) if self.existing_report else {},
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     def _get_bound_form(self, report_data):
@@ -849,7 +875,9 @@ def delete_report(request, domain, report_id):
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
-        get_deleted_doc_type(ReportConfiguration)
+        get_deleted_doc_type(ReportConfiguration),
+        RegistryReportConfiguration.doc_type,
+        get_deleted_doc_type(RegistryReportConfiguration)
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -863,7 +891,7 @@ def undelete_report(request, domain, report_id):
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
-    page_title = ugettext_lazy("Import Report")
+    page_title = gettext_lazy("Import Report")
     template_name = "userreports/import_report.html"
     urlname = 'import_configurable_report'
 
@@ -908,13 +936,18 @@ def report_source_json(request, domain, report_id):
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/expression_debugger.html'
-    page_title = ugettext_lazy("Expression Debugger")
+    page_title = gettext_lazy("Expression Debugger")
 
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/data_source_debugger.html'
-    page_title = ugettext_lazy("Data Source Debugger")
+    page_title = gettext_lazy("Data Source Debugger")
+
+    def dispatch(self, *args, **kwargs):
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.page_title = gettext_lazy("Custom Web Report Source Debugger")
+        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required
@@ -1030,7 +1063,7 @@ def evaluate_data_source(request, domain):
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
     template_name = "userreports/data_source_from_app.html"
-    page_title = ugettext_lazy("Create Data Source from Application")
+    page_title = gettext_lazy("Create Data Source from Application")
 
     @property
     @memoized
@@ -1175,12 +1208,12 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
 class CreateDataSourceView(BaseEditDataSourceView):
     urlname = 'create_configurable_data_source'
-    page_title = ugettext_lazy("Create Data Source")
+    page_title = gettext_lazy("Create Data Source")
 
 
 class EditDataSourceView(BaseEditDataSourceView):
     urlname = 'edit_configurable_data_source'
-    page_title = ugettext_lazy("Edit Data Source")
+    page_title = gettext_lazy("Edit Data Source")
 
     @property
     def page_name(self):
@@ -1224,7 +1257,9 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def undelete_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
-        get_deleted_doc_type(DataSourceConfiguration)
+        get_deleted_doc_type(DataSourceConfiguration),
+        RegistryDataSourceConfiguration.doc_type,
+        get_deleted_doc_type(RegistryDataSourceConfiguration),
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -1330,7 +1365,7 @@ def data_source_json(request, domain, config_id):
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
     template_name = "userreports/preview_data.html"
-    page_title = ugettext_lazy("Preview Data Source")
+    page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
     def dispatch(self, request, *args, **kwargs):
@@ -1441,7 +1476,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             Format.XLS_2007,
         ]
         if params.format not in allowed_formats:
-            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            msg = gettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
@@ -1477,7 +1512,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = ugettext_lazy(
+            msg = gettext_lazy(
                 "There was a problem executing your query, "
                 "please make sure your parameters are valid."
             )
@@ -1520,7 +1555,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
     template_name = "userreports/summary_data_source.html"
-    page_title = ugettext_lazy("Data Source Summary")
+    page_title = gettext_lazy("Data Source Summary")
 
     @property
     def config_id(self):
@@ -1587,8 +1622,10 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         ]
 
     def configured_filter_summary(self):
-        return str(FilterFactory.from_spec(self.config.configured_filter,
-                                           context=self.config.get_factory_context()))
+        if self.config.configured_filter:
+            return str(FilterFactory.from_spec(self.config.configured_filter,
+                                            context=self.config.get_factory_context()))
+        return _("No filter defined")
 
     def _add_links_to_output(self, items):
         def make_link(match):

@@ -4,7 +4,7 @@ import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError

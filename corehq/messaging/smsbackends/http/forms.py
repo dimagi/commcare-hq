@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms.fields import BooleanField, ChoiceField
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from crispy_forms import layout as crispy
 
@@ -15,20 +15,20 @@ from .form_handling import form_clean_url
 
 class HttpBackendForm(BackendForm):
     url = TrimmedCharField(
-        label=ugettext_noop("URL"),
+        label=gettext_noop("URL"),
     )
     message_param = TrimmedCharField(
-        label=ugettext_noop("Message Parameter"),
+        label=gettext_noop("Message Parameter"),
     )
     number_param = TrimmedCharField(
-        label=ugettext_noop("Phone Number Parameter"),
+        label=gettext_noop("Phone Number Parameter"),
     )
     include_plus = BooleanField(
         required=False,
-        label=ugettext_noop("Include '+' in Phone Number"),
+        label=gettext_noop("Include '+' in Phone Number"),
     )
     method = ChoiceField(
-        label=ugettext_noop("HTTP Request Method"),
+        label=gettext_noop("HTTP Request Method"),
         choices=(
             ("GET", "GET"),
             ("POST", "POST")
@@ -36,7 +36,7 @@ class HttpBackendForm(BackendForm):
     )
     additional_params = RecordListField(
         input_name="additional_params",
-        label=ugettext_noop("Additional Parameters"),
+        label=gettext_noop("Additional Parameters"),
     )
 
     def __init__(self, *args, **kwargs):

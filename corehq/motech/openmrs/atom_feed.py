@@ -15,7 +15,7 @@ from typing import (
     Union,
 )
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import pytz
 from dateutil import parser as dateutil_parser

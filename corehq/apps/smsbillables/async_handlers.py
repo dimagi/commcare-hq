@@ -1,6 +1,6 @@
 import json
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler

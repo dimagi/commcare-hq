@@ -1,7 +1,7 @@
 import re
 
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.const import (
     SCHEDULE_DATE_CASE_OPENED,
@@ -23,7 +23,7 @@ from corehq.apps.app_manager.exceptions import (
 # but it should not miss any strings that do need interpolation.
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
-CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
+CASE_REFERENCE_VALIDATION_ERROR = gettext_lazy(
     "Your form uses an expression which references a case, but cases are not available. Please go to form "
     "settings and either remove the case reference or (1) make sure that the menu mode is set to display the "
     "menu first and then form, and (2) make sure that all forms in this case list update or close a case "
@@ -335,6 +335,8 @@ class CaseClaimXpath(object):
         self.session_var_name = session_var_name
 
     def default_relevant(self):
+        # Checks to see if the searched-for case already exists in the casedb:
+        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
 
@@ -396,6 +398,11 @@ class IndicatorXpath(InstanceXpath):
     @property
     def id(self):
         return self
+
+
+class SelectedCasesInstanceXpath(InstanceXpath):
+    id = "selected_cases"
+    path = "results/value"
 
 
 class CommCareSession(object):

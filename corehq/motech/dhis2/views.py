@@ -7,8 +7,8 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.generic.edit import BaseCreateView, BaseUpdateView
 
@@ -41,7 +41,7 @@ from .tasks import send_dataset
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'dataset_map_list_view'
-    page_title = ugettext_lazy("DHIS2 DataSet Maps")
+    page_title = gettext_lazy("DHIS2 DataSet Maps")
     template_name = 'dhis2/dataset_map_list.html'
 
     limit_text = _('DataSet Maps per page')
@@ -441,8 +441,8 @@ def config_dhis2_entity_repeater(request, domain, repeater_id):
 class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
     repeater_form_class = GenericRepeaterForm
-    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
-    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_title = gettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = gettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
     @property
     def page_url(self):
@@ -451,16 +451,16 @@ class AddDhis2RepeaterView(AddRepeaterView):
 
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
-    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
+    page_title = gettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
 class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
     urlname = 'new_dhis2_entity_repeater$'
     repeater_form_class = GenericRepeaterForm
-    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
-    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_title = gettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = gettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
 
 
 class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
     urlname = 'edit_dhis2_entity_repeater'
-    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
+    page_title = gettext_lazy("Edit DHIS2 Tracked Entity Repeater")

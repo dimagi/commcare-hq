@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 import requests
 
@@ -17,7 +17,7 @@ class TableauView(BaseProjectReportSectionView):
     template_name = 'reports/tableau_template.html'
 
     # Override BaseProjectReportSectionView, but it'll still link to reports home
-    section_name = ugettext_lazy("Tableau Reports")
+    section_name = gettext_lazy("Tableau Reports")
 
     @property
     def page_title(self):

@@ -1,25 +1,31 @@
+from collections import namedtuple
 from datetime import datetime
 
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.case_importer import exceptions
 
+property_type = namedtuple('property_type', 'slug display')
 
-PROPERTY_TYPE_CHOICES = (
-    ('date', _('Date')),
-    ('plain', _('Plain')),
-    ('number', _('Number')),
-    ('select', _('Multiple Choice')),
-    ('barcode', _('Barcode')),
-    ('gps', _('GPS')),
-    ('phone_number', _('Phone Number')),
-    ('password', _('Password')),
-    ('', 'No Type Currently Selected')
-)
+
+class PROPERTY_TYPES:
+    DATE = property_type('date', _('Date'))
+    PLAIN = property_type('plain', _('Plain'))
+    NUMBER = property_type('number', _('Number'))
+    SELECT = property_type('select', _('Multiple Choice'))
+    BARCODE = property_type('barcode', _('Barcode'))
+    GPS = property_type('gps', _('GPS'))
+    PHONE_NUMBER = property_type('phone_number', _('Phone Number'))
+    PASSWORD = property_type('password', _('Password'))
+    UNDEFINED = property_type('', _('No Type Currently Selected'))
+
+    @classmethod
+    def get_all(cls):
+        return [t for t in cls.__dict__.values() if isinstance(t, property_type)]
 
 
 class CaseType(models.Model):
@@ -63,7 +69,7 @@ class CaseProperty(models.Model):
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
-        choices=PROPERTY_TYPE_CHOICES,
+        choices=[(t.slug, t.display) for t in PROPERTY_TYPES.get_all()],
         max_length=20,
         default='',
         blank=True
@@ -94,8 +100,9 @@ class CaseProperty(models.Model):
             return prop
 
     def save(self, *args, **kwargs):
-        from .util import get_data_dict_props_by_case_type
+        from .util import get_data_dict_props_by_case_type, get_gps_properties
         get_data_dict_props_by_case_type.clear(self.case_type.domain)
+        get_gps_properties.clear(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).save(*args, **kwargs)
 
     def check_validity(self, value):

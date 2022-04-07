@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -361,7 +361,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm._create_casexml_2
+                    # see XForm._create_casexml
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(

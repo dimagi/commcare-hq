@@ -1810,6 +1810,24 @@ Round to the nearest whole number
        "format_string": "{0:.0f}"
    }
 
+
+Rich text formatting with Markdown
+''''''''''''''''''''''''''''''''''
+
+This can be used to do some rich text formatting, using [Markdown](https://www.markdownguide.org/).
+
+There is no configuration required, it will assume the input is valid, markdown-ready text.
+
+.. code:: json
+
+   {
+       "type": "markdown"
+   }
+
+**This transform works for report columns only.**
+Using it in a data source will add HTML markup, but it will not be displayed properly in HQ.
+
+
 Always round to 3 decimal places
 ''''''''''''''''''''''''''''''''
 

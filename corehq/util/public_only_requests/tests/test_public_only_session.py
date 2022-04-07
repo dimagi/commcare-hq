@@ -18,7 +18,7 @@ from functools import wraps
 import requests
 from testil import assert_raises, eq
 
-from corehq.motech.auth import make_session_public_only
+from corehq.util.public_only_requests.public_only_requests import make_session_public_only
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 
