@@ -11,6 +11,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
@@ -25,6 +26,7 @@ from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@es_test
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
