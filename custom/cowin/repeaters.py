@@ -31,6 +31,40 @@ class SQLBaseCOWINRepeater(SQLCaseRepeater):
         })
         return headers
 
+
+class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
+    payload_generator_classes = (BeneficiaryRegistrationPayloadGenerator,)
+    friendly_name = _("Register beneficiaries on COWIN")
+
+    def handle_response(self, response, repeat_record):
+        attempt = super().handle_response(response, repeat_record)
+        # successful response is always 200. 40x and 500 are errors
+        if response.status_code == 200:
+            cowin_api_data_registration_case = repeat_record.repeater.payload_doc(repeat_record)
+            person_case_id = cowin_api_data_registration_case.get_case_property("person_case_id")
+            # Ideally person case id should always be present
+            # Simply ignore cases that don't have that and don't try again
+            if person_case_id:
+                beneficiary_reference_id = response.json()['beneficiary_reference_id']
+                update_case(self.domain, person_case_id,
+                            case_properties={'cowin_beneficiary_reference_id': beneficiary_reference_id},
+                            device_id=__name__ + '.BeneficiaryRegistrationRepeater')
+        return attempt
+
+    def allowed_to_forward(self, case):
+        allowed = super().allowed_to_forward(case)
+        if allowed:
+            return (
+                not bool(case.get_case_property('cowin_beneficiary_reference_id'))
+                and case.get_case_property('api') == COWIN_API_DATA_REGISTRATION_IDENTIFIER
+            )
+        return allowed
+
 class BaseCOWINRepeater(CaseRepeater):
     class Meta:
         app_label = 'repeaters'
