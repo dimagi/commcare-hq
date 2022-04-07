@@ -38,11 +38,7 @@ from corehq.apps.linked_domain.ucr import (
     update_linked_ucr,
 )
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import (
-    pull_missing_multimedia_for_app_and_notify,
-    can_domain_access_release_management,
-)
-from corehq.apps.reminders.views import KeywordsListView
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
 from corehq.apps.sms.models import Keyword
 from corehq.apps.users.models import CouchUser
 
@@ -192,21 +188,7 @@ The following linked project spaces received content:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
                                  .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
-            if can_domain_access_release_management(self.upstream_domain):
-                linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
-            else:
-                return self._error_tuple(
-                    _('Could not find linked keyword in {domain}. '
-                      'Please check that the keyword has been linked from the '
-                      '<a href="{keyword_url}">Keyword Page</a>.').format(
-                        domain=domain_link.linked_domain,
-                        keyword_url=(
-                            get_url_base() + reverse(
-                                KeywordsListView.urlname, args=[domain_link.master_domain]
-                            ))
-                    ),
-                    _('Could not find linked keyword. Please check the keyword has been linked.'),
-                )
+            linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
 
         update_keyword(domain_link, linked_keyword_id)
         domain_link.update_last_pull(
