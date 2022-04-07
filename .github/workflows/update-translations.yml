@@ -1,0 +1,38 @@
+on: workflow_dispatch
+
+name: Update transifex translations
+jobs:
+  update_translations:
+    name: Update transifex translations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install transifex client
+        run: |
+          mkdir -p /home/runner/.local/bin
+          cd /home/runner/.local/bin
+          curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
+          sudo apt-get install -y gettext
+      - name: Run update-translations script
+        # From https://github.com/marketplace/actions/create-pr-action:
+        # > executes an arbitrary command and commits the changes to the new pull request
+        uses: technote-space/create-pr-action@v2
+        env:
+          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
+          UPDATE_TRANSLATIONS_SKIP_GIT: 1
+        with:
+          EXECUTE_COMMANDS: |
+            git submodule update --init --recursive > /dev/null 2>&1
+            pip install --upgrade pip > /dev/null 2>&1
+            # install requirements, excluding difficult to install ones
+            grep -Ev 'xmlsec|python3-saml' requirements/dev-requirements.txt > ../requirements.txt
+            pip install -r ../requirements.txt  > /dev/null 2>&1
+            # copy .transifexrc.example to ~/.transifexrc, edited to include token
+            grep -v '^token =' .transifexrc.example > ~/.transifexrc
+            echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
+            ./scripts/update-translations.sh
+          COMMIT_MESSAGE: |
+            Update translations.
+
+            [ci skip]
+          PR_BRANCH_NAME: 'update-translations'
+          PR_TITLE: 'Update Translations'
