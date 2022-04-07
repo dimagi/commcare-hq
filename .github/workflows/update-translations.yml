@@ -12,6 +12,7 @@ jobs:
       - name: Install transifex client
         run: |
           echo $PATH
+          mkdir -p /home/runner/.local/bin
           cd /home/runner/.local/bin
           curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
           cd -
