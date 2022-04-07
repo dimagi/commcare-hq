@@ -1,10 +1,14 @@
+from uuid import uuid4
 from django.test import TestCase
+from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
 
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeaters,
     get_all_repeater_docs,
 )
+from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeater
 
 from ..models import (
     Repeater,
@@ -40,6 +44,26 @@ class RepeaterProxyTests(TestCase):
     def tearDown(self):
         delete_all_repeaters()
         return super().tearDown()
+
+
+class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
+    def setUp(self):
+        super().setUp()
+        self.repeater_classes = [
+            SQLDhis2EntityRepeater, SQLCaseExpressionRepeater,
+            SQLCaseRepeater, SQLDataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
+        for r in self.repeater_classes:
+            mock_data = self.repeater_data
+            r(
+                domain=mock_data['domain'], connection_settings=self.conn, repeater_id=uuid4().hex
+            ).save(sync_to_couch=False)
+
+    def test_repeater_all_returns_correct_instance(self):
+        all_repeaters = SQLRepeater.objects.all()
+        self.assertEqual(
+            set([r.__class__.__name__ for r in all_repeaters]),
+            set([r.__name__ for r in self.repeater_classes])
+        )
 
 
 class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
