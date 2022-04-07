@@ -628,6 +628,7 @@ pillowtop
  0003_auto_20170411_1957
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
+ 0006_add_geopoint_to_case_search_index
 products
  0001_initial
 project_limits

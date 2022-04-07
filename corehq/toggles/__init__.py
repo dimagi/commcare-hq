@@ -945,6 +945,13 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
 )
 
+CASE_SEARCH_SMART_TYPES = StaticToggle(
+    'case_search_smart_types',
+    'USH: Intelligently index specific case properties using the data dictionary',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 WEB_USER_ACTIVITY_REPORT = StaticToggle(
     'web_user_activity_report',
     'USH: Enable Web User Activity Report',
