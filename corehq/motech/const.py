@@ -2,32 +2,6 @@ from django.utils.translation import gettext_lazy as _
 
 import attr
 
-from corehq.motech.dhis2.repeaters import (
-    SQLDhis2EntityRepeater,
-    SQLDhis2Repeater,
-)
-from corehq.motech.fhir.repeaters import SQLFHIRRepeater
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
-from corehq.motech.repeaters.expression.repeaters import (
-    SQLCaseExpressionRepeater,
-)
-from corehq.motech.repeaters.models import (
-    SQLAppStructureRepeater,
-    SQLCaseRepeater,
-    SQLCreateCaseRepeater,
-    SQLDataRegistryCaseUpdateRepeater,
-    SQLFormRepeater,
-    SQLLocationRepeater,
-    SQLReferCaseRepeater,
-    SQLShortFormRepeater,
-    SQLUpdateCaseRepeater,
-    SQLUserRepeater,
-)
-from custom.cowin.repeaters import (
-    SQLBeneficiaryRegistrationRepeater,
-    SQLBeneficiaryVaccinationRepeater,
-)
-
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
@@ -128,23 +102,3 @@ DIRECTIONS = (
     DIRECTION_EXPORT,
     DIRECTION_BOTH,
 )
-
-REPEATER_CLASS_MAP = {
-    'FormRepeater': SQLFormRepeater,
-    'CaseRepeater': SQLCaseRepeater,
-    'CreateCaseRepeater': SQLCreateCaseRepeater,
-    'UpdateCaseRepeater': SQLUpdateCaseRepeater,
-    'ReferCaseRepeater': SQLReferCaseRepeater,
-    'DataRegistryCaseUpdateRepeater': SQLDataRegistryCaseUpdateRepeater,
-    'ShortFormRepeater': SQLShortFormRepeater,
-    'AppStructureRepeater': SQLAppStructureRepeater,
-    'UserRepeater': SQLUserRepeater,
-    'LocationRepeater': SQLLocationRepeater,
-    'FHIRRepeater': SQLFHIRRepeater,
-    'OpenmrsRepeater': SQLOpenmrsRepeater,
-    'Dhis2Repeater': SQLDhis2Repeater,
-    'Dhis2EntityRepeater': SQLDhis2EntityRepeater,
-    'CaseExpressionRepeater': SQLCaseExpressionRepeater,
-    'BeneficiaryRegistrationRepeater': SQLBeneficiaryRegistrationRepeater,
-    'BeneficiaryVaccinationRepeater': SQLBeneficiaryVaccinationRepeater
-}
