@@ -20,6 +20,7 @@ jobs:
           EXECUTE_COMMANDS: |
             cp .transifexrc.example ~/.transifexrc
             ls ~/.transifexrc
+            echo $PATH
             PATH=".:$PATH" which tx
             #./scripts/update-translations.sh
           COMMIT_MESSAGE: |
