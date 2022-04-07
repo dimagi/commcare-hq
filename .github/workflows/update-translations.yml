@@ -18,10 +18,9 @@ jobs:
         uses: technote-space/create-pr-action@v2
         with:
           EXECUTE_COMMANDS: |
-            PATH=".:$PATH"
             cp .transifexrc.example ~/.transifexrc
             ls ~/.transifexrc
-            which tx
+            PATH=".:$PATH" which tx
             #./scripts/update-translations.sh
           COMMIT_MESSAGE: |
             Update translations.
