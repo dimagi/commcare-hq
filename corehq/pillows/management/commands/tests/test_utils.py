@@ -4,7 +4,9 @@ from textwrap import dedent
 from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import es_test
-from ..utils import pprint
+from corehq.pillows.mappings.utils import mapping_sort_key
+
+from ..utils import print_formatted
 
 
 @es_test
@@ -25,7 +27,7 @@ class TestMappingUtils(SimpleTestCase):
         "zulu": {"none": None},
     }
 
-    def test_pprint(self):
+    def test_print_formatted(self):
         expected = dedent("""\
         {
             "alpha": {
@@ -33,9 +35,6 @@ class TestMappingUtils(SimpleTestCase):
                 "one": 1,
                 "true": True,
                 "zero": 0
-            },
-            "zulu": {
-                "none": None
             },
             "properties": {
                 "@id": {
@@ -50,13 +49,43 @@ class TestMappingUtils(SimpleTestCase):
                 "item": {
                     "null": "__null__"
                 }
+            },
+            "zulu": {
+                "none": None
             }
         }""")
         result = StringIO()
-        pprint(self.mapping, stream=result)
-        self.assertEqual(result.getvalue(), expected)
+        print_formatted(self.mapping, stream=result)
+        self.assertEqual(expected, result.getvalue())
 
-    def test_pprint_with_namespace(self):
+    def test_print_formatted_with_namespace(self):
+        expected = dedent("""\
+        {
+            "alpha": {
+                "false": False,
+                "one": 1,
+                "true": True,
+                "zero": 0
+            },
+            "properties": {
+                "@id": {
+                    "type": "integer"
+                },
+                "examples": EXAMPLES,
+                "item": {
+                    "null": NULL
+                }
+            },
+            "zulu": {
+                "none": None
+            }
+        }""")
+        result = StringIO()
+        namespace = {"EXAMPLES": self.EXAMPLES, "NULL": self.NULL}
+        print_formatted(self.mapping, namespace, stream=result)
+        self.assertEqual(expected, result.getvalue())
+
+    def test_print_formatted_with_namespace_and_mapping_sort(self):
         expected = dedent("""\
         {
             "alpha": {
@@ -80,5 +109,10 @@ class TestMappingUtils(SimpleTestCase):
         }""")
         result = StringIO()
         namespace = {"EXAMPLES": self.EXAMPLES, "NULL": self.NULL}
-        pprint(self.mapping, namespace, stream=result)
-        self.assertEqual(result.getvalue(), expected)
+        print_formatted(
+            self.mapping,
+            namespace,
+            dict_sort_key=mapping_sort_key,
+            stream=result,
+        )
+        self.assertEqual(expected, result.getvalue())
