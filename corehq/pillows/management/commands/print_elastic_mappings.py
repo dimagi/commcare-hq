@@ -7,9 +7,12 @@ from django.core.management.base import BaseCommand
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.pillows.mappings.utils import fetch_elastic_mapping
+from corehq.pillows.mappings.utils import (
+    fetch_elastic_mapping,
+    mapping_sort_key,
+)
 
-from .utils import pprint
+from .utils import print_formatted
 
 MAPPING_SPECIAL_VALUES = {
     "DATE_FORMATS_ARR": DATE_FORMATS_ARR,
@@ -67,7 +70,12 @@ class Command(BaseCommand):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
                 mapping = ALL_TRANSFORMS[key](mapping)
-        pprint(mapping, namespace, stream=options["outfile"])
+        print_formatted(
+            mapping,
+            namespace,
+            dict_sort_key=mapping_sort_key,
+            stream=options["outfile"],
+        )
 
 
 def transform_multi_field(mapping, key=None):
