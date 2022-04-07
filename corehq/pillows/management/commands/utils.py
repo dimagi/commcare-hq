@@ -1,29 +1,34 @@
 import json
 import sys
 
-from corehq.pillows.mappings.utils import mapping_sort_key
 
-
-def print_formatted(obj, namespace={}, stream=sys.stdout, indent=4, separators=(',', ': ')):
+def print_formatted(obj, namespace={}, dict_sort_key=None, stream=sys.stdout,
+                    indent=4, separators=(',', ': ')):
     """Pretty-print an object. Like `json.dump()`, but output valid
     Python code rather than JSON. Designed for Elasticsearch mappings, but usage
     is not strictly confined to only those objects.
 
     :param obj: object to be 'printed'
-    :param namespace: (optional dict) see ElasticMappingEncoder `namespace` arg
+    :param namespace: (optional dict) see SortingPythonEncoder `namespace` arg
+    :param dict_sort_key: (optional) see SortingPythonEncoder `dict_sort_key`
     :param stream: (optional) file-like object where output is written,
                    default=`sys.stdout`
     :param indent: (int) see `json.dump`
     :param separators: (tuple) see `json.dump`
     """
-    encoder = ElasticMappingEncoder(namespace, indent=indent, separators=separators)
+    encoder = SortingPythonEncoder(
+        namespace,
+        dict_sort_key=dict_sort_key,
+        indent=indent,
+        separators=separators,
+    )
     for chunk in encoder.iterencode(obj):
         stream.write(chunk)
 
 
-class ElasticMappingEncoder(json.JSONEncoder):
-    """Encodes an Elastic mapping (nested python dict) as properly indented
-    python code.
+class SortingPythonEncoder(json.JSONEncoder):
+    """Encodes an nested python dict (or otherwise JSON-serializable objects) as
+    properly indented python code.
 
     A JSONEncoder which writes 'True', 'False' and 'None' instead of 'true',
     'false' and 'null'; with the extra ability to replace objects (provided via
@@ -33,7 +38,7 @@ class ElasticMappingEncoder(json.JSONEncoder):
     # Use tuple value because hash(True)==1 and hash(False)==0
     SCALARS = {s: (s, str(s)) for s in [True, False, None]}
 
-    def __init__(self, namespace={}, scalars=SCALARS, **kw):
+    def __init__(self, namespace={}, scalars=SCALARS, dict_sort_key=None, **kw):
         """
         :param namespace: (optional dict) replace output with literal name
                           (dict key) anywhere value (dict value) is found within
@@ -41,10 +46,12 @@ class ElasticMappingEncoder(json.JSONEncoder):
         :param scalars: (optional dict) collection of scalars to be replaced
                         with their python literal value. Format:
                         {<scalar>: (<scalar>, <literal_string>), ...}.
+        :param dict_sort_key: (optional) dict sorting key function.
         :param **kw: additional keyword arguments are passed to `JSONEncoder`
                      verbatim.
         """
         self.scalars = scalars
+        self.dict_sort_key = dict_sort_key
         self.by_name = {}
         self.by_value = {}
         for name, value in namespace.items():
@@ -87,7 +94,7 @@ class ElasticMappingEncoder(json.JSONEncoder):
             return [self.inject_proxies(v, reg) for v in obj]
         elif isinstance(obj, dict):
             injected = {}
-            for key, value in sorted(obj.items(), key=mapping_sort_key):
+            for key, value in sorted(obj.items(), key=self.dict_sort_key):
                 injected[key] = self.inject_proxies(value, reg)
             return injected
         else:

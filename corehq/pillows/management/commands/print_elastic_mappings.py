@@ -7,7 +7,10 @@ from django.core.management.base import BaseCommand
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.pillows.mappings.utils import fetch_elastic_mapping
+from corehq.pillows.mappings.utils import (
+    fetch_elastic_mapping,
+    mapping_sort_key,
+)
 
 from .utils import print_formatted
 
@@ -56,4 +59,9 @@ class Command(BaseCommand):
             mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
         else:
             mapping = index_info.mapping
-        print_formatted(mapping, namespace, stream=options["outfile"])
+        print_formatted(
+            mapping,
+            namespace,
+            dict_sort_key=mapping_sort_key,
+            stream=options["outfile"],
+        )
