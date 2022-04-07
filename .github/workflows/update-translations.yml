@@ -1,4 +1,8 @@
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - update-translations-workflow
 
 name: Update transifex translations
 jobs:
