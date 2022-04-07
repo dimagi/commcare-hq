@@ -287,6 +287,8 @@ def get_git_commit(base_dir):
 
 
 def update_redis_location_for_tests(settings_caches):
+    if not is_testing():
+        raise Exception("Attempt to update Redis settings outside of tests")
 
     for name, config in settings_caches.items():
         if not config.get("BACKEND", "").startswith("django_redis"):
