@@ -291,7 +291,23 @@ def update_redis_location_for_tests(settings_caches):
     """Best effort attempt to specify a different Redis DB from the one configured in localsettings.
     See https://github.com/jazzband/django-redis#configure-as-cache-backend for connection formats.
     """
-    redis_connection = urlparse(settings_caches["default"]["LOCATION"])
+    def _log_warning():
+        logging.warning("Unable to set Redis DB in '%s' cache for tests. Using main Redis DB.", name)
+
+    for name, config in settings_caches.items():
+        if not config.get("BACKEND", "").startswith("django_redis"):
+            continue
+
+        used_dbs = set()
+        try:
+            used_dbs.update(_update_redis_location_for_tests(config, used_dbs))
+        except Exception:
+            _log_warning()
+
+
+def _update_redis_location_for_tests(cache_config, used_dbs):
+    used_dbs = set(used_dbs)
+    redis_connection = urlparse(cache_config["LOCATION"])
     if redis_connection.path:
         redis_db = redis_connection.path.split("/")[-1]
     elif redis_connection.query:
@@ -299,9 +315,14 @@ def update_redis_location_for_tests(settings_caches):
         if redis_db:
             redis_db = redis_db[0]
     else:
-        return False
+        raise Exception("Unable to get DB from connection string")
 
-    redis_db = int(redis_db) + 1
+    redis_db = int(redis_db)
+    used_dbs.add(redis_db)
+    while redis_db not in used_dbs:
+        redis_db += 1
+
+    used_dbs.add(redis_db)
 
     if redis_connection.path:
         test_connection = redis_connection._replace(path=f"/{redis_db}").geturl()
@@ -310,18 +331,6 @@ def update_redis_location_for_tests(settings_caches):
         query_dict["db"] = redis_db
         test_connection = redis_connection._replace(query=urlencode(query_dict)).geturl()
 
-    if not test_connection:
-        return
-
     logging.info("Using '%s' connection for Redis", test_connection)
-    redis_cache = {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': test_connection,
-        'OPTIONS': {
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
-        },
-    }
-
-    settings_caches["default"] = redis_cache
-    settings_caches["redis"] = redis_cache
-    return True
+    cache_config["LOCATION"] = test_connection
+    return used_dbs
