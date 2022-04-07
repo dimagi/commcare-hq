@@ -174,14 +174,21 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.selections = selections;
         };
 
+        this.setSelectedValues = function (selectedValues) {
+            this.selectedValues = selectedValues;
+        };
+
         this.addSelection = function (selection) {
             if (!this.selections) {
                 this.selections = [];
             }
-
             // Selections only deal with strings, because formplayer will send them back as strings
-            this.selections.push(String(selection));
-
+            if (_.isArray(selection)) {
+                this.selections.push(String('use_selected_values'));
+                this.setSelectedValues(selection);
+            } else {
+                this.selections.push(String(selection));
+            }
             // clear out pagination and search when we navigate
             this.page = null;
             this.search = null;
@@ -279,6 +286,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
+            selectedValues: self.selectedValues,
         };
         return JSON.stringify(dict);
     };

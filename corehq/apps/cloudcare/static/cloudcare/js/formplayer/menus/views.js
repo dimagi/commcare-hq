@@ -429,8 +429,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             //do something
         },
 
-        continueAction: function (e) {
-            // TODO: implement function to send selectedCaseIds
+        continueAction: function () {
+            if (selectedCaseIds.length > 0) { // TODO: make button disabled if no cases selected
+                FormplayerFrontend.trigger("menu:select", selectedCaseIds);
+            }
         },
 
         templateContext: function () {
