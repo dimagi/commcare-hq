@@ -63,7 +63,6 @@ class.
 "Data Forwarding Records".
 
 """
-import sys
 import traceback
 import warnings
 from collections import OrderedDict
@@ -74,10 +73,10 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from jsonfield import JSONField
-from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
@@ -109,7 +108,11 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import CaseTransaction, CommCareCase, XFormInstance
+from corehq.form_processor.models import (
+    CaseTransaction,
+    CommCareCase,
+    XFormInstance,
+)
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -149,7 +152,7 @@ from .dbaccessors import (
     get_pending_repeat_record_count,
     get_success_repeat_record_count,
 )
-from .exceptions import RequestConnectionError
+from .exceptions import RequestConnectionError, UnknownRepeater
 from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
