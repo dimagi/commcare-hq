@@ -57,7 +57,6 @@ branches:
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
     - smh/remove-extra-spinner-icons # Steph Oct 6
-    - ml/remove-pickles-phonelog # Minha Oct 7
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - do/compare-case-properties # Dominic Feb 2
@@ -70,7 +69,6 @@ branches:
     - ad/user-history-excel-export # Addison March 28
     - dm/upgrade-architect # Daniel March 31
     - dm/django3-tests # Daniel March 31
-    - ce/fix-rate-limits
     - rc/obh-case-search-ui # Robert April 5
     - jm/elastic-mapping-util  # Joel Apr 6
 
