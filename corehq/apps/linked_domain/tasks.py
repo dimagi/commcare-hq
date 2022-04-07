@@ -44,7 +44,6 @@ from corehq.apps.linked_domain.util import (
 )
 from corehq.apps.reminders.views import KeywordsListView
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
 
 
@@ -167,24 +166,11 @@ The following linked project spaces received content:
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
 
         if not linked_report:
-            if can_domain_access_release_management(self.upstream_domain):
-                try:
-                    linked_report_info = create_linked_ucr(domain_link, report_id)
-                    linked_report = linked_report_info.report
-                except DomainLinkError as e:
-                    return self._error_tuple(str(e))
-            else:
-                report = ReportConfiguration.get(report_id)
-                if report.report_meta.created_by_builder:
-                    view = 'edit_report_in_builder'
-                else:
-                    view = 'edit_configurable_report'
-                url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
-                return self._error_tuple(
-                    _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
-                      + 'report.').format(url),
-                    text=_('Could not find report. Please check that the report has been linked.'),
-                )
+            try:
+                linked_report_info = create_linked_ucr(domain_link, report_id)
+                linked_report = linked_report_info.report
+            except DomainLinkError as e:
+                return self._error_tuple(str(e))
 
         # have no hit an error case, so update the ucr
         update_linked_ucr(domain_link, linked_report.get_id)
