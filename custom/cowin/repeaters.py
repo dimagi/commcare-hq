@@ -2,13 +2,34 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.hqcase.utils import update_case
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater, SQLCaseRepeater
 from custom.cowin.const import COWIN_API_DATA_REGISTRATION_IDENTIFIER, COWIN_API_DATA_VACCINATION_IDENTIFIER
 from custom.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
     BeneficiaryVaccinationPayloadGenerator,
 )
 
+
+class SQLBaseCOWINRepeater(SQLCaseRepeater):
+    class Meta:
+        proxy = True
+        app_label = 'repeaters'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return toggles.COWIN_INTEGRATION.enabled(domain)
+
+    def get_headers(self, repeat_record):
+        headers = super().get_headers(repeat_record)
+
+        headers.update({
+            'Accept-Language': 'en_US',
+            'User-Agent': '',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Api-Key': self.connection_settings.plaintext_password,
+        })
+        return headers
 
 class BaseCOWINRepeater(CaseRepeater):
     class Meta:
