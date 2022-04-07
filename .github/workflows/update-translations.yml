@@ -22,6 +22,7 @@ jobs:
           TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
         with:
           EXECUTE_COMMANDS: |
+            git submodule update --init --recursive
             pip install --upgrade pip
             # install requirements, excluding difficult to install ones
             grep -Ev 'xmlsec|python3-saml' requirements/dev-requirements.txt > ../requirements.txt
