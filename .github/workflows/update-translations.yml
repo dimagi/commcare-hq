@@ -3,6 +3,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+env:
+    TRANSIFEX_TOKEN: foo
+
 name: Update transifex translations
 jobs:
   update_translations:
@@ -23,8 +26,7 @@ jobs:
         with:
           EXECUTE_COMMANDS: |
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
-            MY_SECRET=foo
-            sed 's/^token =.*$/token = '"${MY_SECRET}"'/' .transifexrc.example > ~/.transifexrc
+            sed 's/^token =.*$/token = '"${TRANSIFEX_TOKEN}"'/' .transifexrc.example > ~/.transifexrc
             cat ~/.transifexrc
             which tx
             ./scripts/update-translations.sh
