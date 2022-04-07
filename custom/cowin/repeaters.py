@@ -65,6 +65,10 @@ class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
             )
         return allowed
 
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return BeneficiaryRegistrationRepeater
+
 
 class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
 
@@ -98,6 +102,10 @@ class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
                 and case.get_case_property('api') == COWIN_API_DATA_VACCINATION_IDENTIFIER
             )
         return allowed
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return BeneficiaryVaccinationRepeater
 
 
 class BaseCOWINRepeater(CaseRepeater):
@@ -149,6 +157,10 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
             )
         return allowed
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLBeneficiaryRegistrationRepeater
+
 
 class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
     payload_generator_classes = (BeneficiaryVaccinationPayloadGenerator,)
@@ -177,3 +189,7 @@ class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
                 and case.get_case_property('api') == COWIN_API_DATA_VACCINATION_IDENTIFIER
             )
         return allowed
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLBeneficiaryVaccinationRepeater
