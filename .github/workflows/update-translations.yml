@@ -20,7 +20,9 @@ jobs:
           EXECUTE_COMMANDS: |
             export PATH="/home/runner/work/commcare-hq/commcare-hq:$PATH"
             cp .transifexrc.example ~/.transifexrc
-            ./scripts/update-translations.sh
+            ls ~/.transifexrc
+            which tx
+            #./scripts/update-translations.sh
           COMMIT_MESSAGE: |
             Update translations.
 
