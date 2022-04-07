@@ -96,6 +96,7 @@ redis_cache = {
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
     },
+    # see `settingshelper.update_redis_location_for_tests`
     'TEST_LOCATION': 'redis://127.0.0.1:6379/1',
 }
 
