@@ -538,7 +538,7 @@ for these packages.
 
 ```sh
 $ npm --version
-6.14.4
+7.24.2
 $ node --version
 v14.19.1
 ```
