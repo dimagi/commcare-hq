@@ -73,5 +73,6 @@ branches:
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - es/gps-prop # Ethan Apr 7
     - jm/elastic-mapping-util  # Joel Apr 6
+    - dm/metrics-lookup # Daniel Apr 7
 
 submodules: { }
