@@ -24,7 +24,8 @@ jobs:
           EXECUTE_COMMANDS: |
             pip install --upgrade pip
             # install requirements, excluding difficult to install ones
-            pip install -r <(grep -Ev 'xmlsec|python3-saml' requirements/requirements.txt)
+            grep -Ev 'xmlsec|python3-saml' requirements/requirements.txt > ../requirements.txt
+            pip install -r ../requirements.txt
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
             grep -v '^token =' .transifexrc.example > ~/.transifexrc
             echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
