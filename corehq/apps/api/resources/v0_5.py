@@ -88,7 +88,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.apps.users.util import raw_username
+from corehq.apps.users.util import raw_username, normalize_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -223,9 +223,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def obj_create(self, bundle, **kwargs):
         try:
+            normalized_username = normalize_username(bundle.data['username'], domain=kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(str(e))
+
+        try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
-                username=bundle.data['username'].lower(),
+                username=normalized_username,
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,

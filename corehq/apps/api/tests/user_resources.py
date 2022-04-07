@@ -163,7 +163,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
         self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
-        self.assertEqual(user_back.username, "jdoe")
+        # tests username is normalized before saving
+        self.assertEqual(user_back.username, "jdoe@qwerty.commcarehq.org")
         self.assertEqual(user_back.first_name, "John")
         self.assertEqual(user_back.last_name, "Doe")
         self.assertEqual(user_back.email, "jdoe@example.org")
