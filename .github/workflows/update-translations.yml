@@ -23,11 +23,11 @@ jobs:
           TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
         with:
           EXECUTE_COMMANDS: |
-            git submodule update --init --recursive
-            pip install --upgrade pip
+            git submodule update --init --recursive > /dev/null 2>&1
+            pip install --upgrade pip > /dev/null 2>&1
             # install requirements, excluding difficult to install ones
             grep -Ev 'xmlsec|python3-saml' requirements/dev-requirements.txt > ../requirements.txt
-            pip install -r ../requirements.txt
+            pip install -r ../requirements.txt  > /dev/null 2>&1
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
             grep -v '^token =' .transifexrc.example > ~/.transifexrc
             echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
