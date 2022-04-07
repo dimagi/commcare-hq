@@ -11,7 +11,9 @@ jobs:
     steps:
       - name: Install transifex client
         run: |
+          cd /home/runner/.local/bin
           curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
+          cd -
       - name: Run update-translations script
         # From https://github.com/marketplace/actions/create-pr-action:
         # > executes an arbitrary command and commits the changes to the new pull request
@@ -20,9 +22,8 @@ jobs:
           EXECUTE_COMMANDS: |
             cp .transifexrc.example ~/.transifexrc
             ls ~/.transifexrc
-            echo $PATH
-            PATH=".:$PATH" which tx
-            #./scripts/update-translations.sh
+            which tx
+            ./scripts/update-translations.sh
           COMMIT_MESSAGE: |
             Update translations.
 
