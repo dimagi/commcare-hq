@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 
 from corehq.util.couch import get_document_or_404
 
-from corehq.apps.export.esaccessors import get_case_export_base_query
+from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
 from corehq.apps.oauth_integrations.models import GoogleApiToken
 
 from googleapiclient.discovery import build
@@ -90,3 +90,15 @@ def listify_data(query_results):
         data.append(list(row_values.values()))
 
     return data
+
+
+def get_export_data(export, domain):
+    if export.type == "case":
+        query = get_case_export_base_query(domain, export.case_type)
+    else:
+        query = get_form_export_base_query(domain, export.app_id, export.xlmns, include_errors=False)
+
+    for filter in export.get_filters():
+        query = query.filter(filter.to_es_filter())
+
+    return query.run()
