@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-06 19:23+0000\n"
+"POT-Creation-Date: 2022-04-07 22:12+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Sravan Reddy <sreddy@dimagi.com>, 2017\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -35827,10 +35827,8 @@ msgid "Filter {} not found!"
 msgstr "¡Filtro {} no encontrado!"
 
 #: corehq/apps/userreports/views.py:1628
-#, fuzzy
-#| msgid "No files uploaded"
 msgid "No filter defined"
-msgstr "No hay archivos cargados"
+msgstr ""
 
 #: corehq/apps/userreports/views.py:1671
 msgid ""
@@ -43092,10 +43090,3 @@ msgstr ""
 #: manage.py:151
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid ""
-#~ "Unable to validate the forms due to a server error. Please try again "
-#~ "later."
-#~ msgstr ""
-#~ "No fue posible validar los formularios debido a un error en el servidor. "
-#~ "Por favor intente de nuevo más tarde."

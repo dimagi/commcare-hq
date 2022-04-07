@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-06 19:24+0000\n"
+"POT-Creation-Date: 2022-04-07 22:13+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3566,7 +3566,6 @@ msgstr ""
 "Ocurrió un problema al comunicarnos con el servidor. Por favor inténtelo más "
 "tarde."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:94
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:95
 msgid "blank"
 msgstr ""
@@ -4645,6 +4644,10 @@ msgstr "Eliminar solicitud"
 #: corehq/apps/users/static/users/js/web_users.js:199
 msgid "Are you sure you want to delete this request?"
 msgstr "¿Está seguro que desea eliminar esta solicitud?"
+
+#: corehq/apps/users/static/users/js/web_users.js:208
+msgid "s email server"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users_list.js:41
 msgid "No users matched your search."
