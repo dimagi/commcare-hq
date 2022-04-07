@@ -75,5 +75,6 @@ branches:
     - dm/metrics-lookup # Daniel Apr 7
     - ml/all-in-one-offboarding # Minha April 7
     - es/slow-expand # Ethan Apr 7
+    - dm/fix-lookup-table-view # Daniel Apr 7
 
 submodules: { }
