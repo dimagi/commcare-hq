@@ -119,6 +119,7 @@ from django.conf import settings
 from sentry_sdk import add_breadcrumb
 
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
 from .metrics import (
@@ -313,8 +314,11 @@ def _get_metrics_provider():
         _global_setup()
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
-            provider = to_function(provider_path, failhard=True)()
-            providers.append(provider)
+            try:
+                provider = to_function(provider_path, failhard=True)()
+                providers.append(provider)
+            except Exception:
+                notify_exception(None, f"Cannot load {provider_path}")
 
         if not providers:
             metrics = DebugMetrics()
