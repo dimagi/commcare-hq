@@ -2,14 +2,12 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.template.defaultfilters import linebreaksbr
-from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from celery import chord
 from celery.task import task
 
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
