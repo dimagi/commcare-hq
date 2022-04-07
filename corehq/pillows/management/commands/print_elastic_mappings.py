@@ -9,7 +9,7 @@ from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.pillows.mappings.utils import fetch_elastic_mapping
 
-from .utils import pprint
+from .utils import print_formatted
 
 MAPPING_SPECIAL_VALUES = {
     "DATE_FORMATS_ARR": DATE_FORMATS_ARR,
@@ -56,4 +56,4 @@ class Command(BaseCommand):
             mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
         else:
             mapping = index_info.mapping
-        pprint(mapping, namespace, stream=options["outfile"])
+        print_formatted(mapping, namespace, stream=options["outfile"])

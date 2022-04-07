@@ -4,7 +4,7 @@ from textwrap import dedent
 from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import es_test
-from ..utils import pprint
+from ..utils import print_formatted
 
 
 @es_test
@@ -25,7 +25,7 @@ class TestMappingUtils(SimpleTestCase):
         "zulu": {"none": None},
     }
 
-    def test_pprint(self):
+    def test_print_formatted(self):
         expected = dedent("""\
         {
             "alpha": {
@@ -53,10 +53,10 @@ class TestMappingUtils(SimpleTestCase):
             }
         }""")
         result = StringIO()
-        pprint(self.mapping, stream=result)
+        print_formatted(self.mapping, stream=result)
         self.assertEqual(result.getvalue(), expected)
 
-    def test_pprint_with_namespace(self):
+    def test_print_formatted_with_namespace(self):
         expected = dedent("""\
         {
             "alpha": {
@@ -80,5 +80,5 @@ class TestMappingUtils(SimpleTestCase):
         }""")
         result = StringIO()
         namespace = {"EXAMPLES": self.EXAMPLES, "NULL": self.NULL}
-        pprint(self.mapping, namespace, stream=result)
+        print_formatted(self.mapping, namespace, stream=result)
         self.assertEqual(result.getvalue(), expected)

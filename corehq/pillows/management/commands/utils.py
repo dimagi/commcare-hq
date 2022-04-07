@@ -4,9 +4,10 @@ import sys
 from corehq.pillows.mappings.utils import mapping_sort_key
 
 
-def pprint(obj, namespace={}, stream=sys.stdout, indent=4, separators=(',', ': ')):
-    """Pretty-print an Elastic mapping. Like `json.dump()`, but output valid
-    Python code rather than JSON.
+def print_formatted(obj, namespace={}, stream=sys.stdout, indent=4, separators=(',', ': ')):
+    """Pretty-print an object. Like `json.dump()`, but output valid
+    Python code rather than JSON. Designed for Elasticsearch mappings, but usage
+    is not strictly confined to only those objects.
 
     :param obj: object to be 'printed'
     :param namespace: (optional dict) see ElasticMappingEncoder `namespace` arg
