@@ -1,0 +1,25 @@
+on: workflow_dispatch
+
+name: Update transifex translations
+jobs:
+  update_translations:
+    name: Update transifex translations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install transifex client
+        run: |
+          curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
+          cp .transifexrc.example ~/.transifexrc
+      - name: Run update-translations script
+        # From https://github.com/marketplace/actions/create-pr-action:
+        # > executes an arbitrary command and commits the changes to the new pull request
+        uses: technote-space/create-pr-action@v2
+        with:
+          EXECUTE_COMMANDS: |
+            ./scripts/update-translations.sh
+          COMMIT_MESSAGE: |
+            Update translations.
+
+            [ci skip]
+          PR_BRANCH_NAME: 'update-translations'
+          PR_TITLE: 'Update Translations'

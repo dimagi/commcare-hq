@@ -97,9 +97,4 @@ then
     abort "There are no changes....please investigate"
 fi
 
-echo "Committing and pushing changes"
-git add locale/ &&
-git commit --edit --message="Update translations." --message="[ci skip]" &&
-git push origin master
-
 echo "Translations updated successfully!"
