@@ -2228,7 +2228,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
-    title_label = StringProperty()
+    title_label = DictProperty()
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2236,6 +2236,17 @@ class CaseSearch(DocumentSchema):
     @property
     def case_session_var(self):
         return "search_case_id"
+
+    @classmethod
+    def wrap(cls, doc):
+        self = cls
+        translations = doc.get('translation')
+        title_labels = dict()
+        for lang in translations:
+            if "case.search.title" in lang.keys():
+                title_labels[lang] = lang["case.search.title"]
+        self.title_labels = title_labels
+        return super(CaseSearch, self).wrap(doc)
 
     def get_relevant(self, multi_select=False):
         if multi_select:
