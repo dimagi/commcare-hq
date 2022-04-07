@@ -12,7 +12,7 @@ jobs:
       - name: Install transifex client
         run: |
           curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
-#          source /home/runner/.bashrc
+          source /home/runner/.bashrc
       - name: Run update-translations script
         # From https://github.com/marketplace/actions/create-pr-action:
         # > executes an arbitrary command and commits the changes to the new pull request
