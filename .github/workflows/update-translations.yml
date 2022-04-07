@@ -24,9 +24,8 @@ jobs:
         with:
           EXECUTE_COMMANDS: |
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
-            sed 's/^token =.*$//' .transifexrc.example > ~/.transifexrc
-            printf 'token =' >> ~/.transifexrc
-            echo "${TRANSIFEX_TOKEN}" >> ~/.transifexrc
+            grep -v '^token =' .transifexrc.example > ~/.transifexrc
+            echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
             cat ~/.transifexrc
             ./scripts/update-translations.sh
           COMMIT_MESSAGE: |
