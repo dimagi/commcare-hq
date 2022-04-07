@@ -95,7 +95,8 @@ redis_cache = {
     'PARSER_CLASS': 'redis.connection.HiredisParser',
     'REDIS_CLIENT_KWARGS': {
         'health_check_interval': 15,
-    }
+    },
+    'TEST_LOCATION': 'redis://127.0.0.1:6379/1',
 }
 
 CACHES = {

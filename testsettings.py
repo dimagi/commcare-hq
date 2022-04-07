@@ -122,3 +122,5 @@ METRICS_PROVIDERS = [
 ES_SEARCH_TIMEOUT = 5
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+helper.update_redis_location_for_tests(CACHES)  # noqa: F405

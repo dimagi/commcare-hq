@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from collections import namedtuple
 import os
@@ -283,3 +284,21 @@ def get_git_commit(base_dir):
         return out.strip().decode('ascii')
     except OSError:
         pass
+
+
+def update_redis_location_for_tests(settings_caches):
+
+    for name, config in settings_caches.items():
+        if not config.get("BACKEND", "").startswith("django_redis"):
+            continue
+
+        test_location = config.get("TEST_LOCATION")
+        if not test_location:
+            logging.warning(
+                "Unable to set Redis DB in '%(name)s' cache for tests. Using '%(location)s'.\n"
+                "\tTo configure a separate Redis DB for tests add a 'TEST_LOCATION' to the"
+                " '%(name)s' cache configuration.", {"name": name, "location": config["LOCATION"]}
+            )
+
+        logging.info("Using '%s' connection for Redis", test_location)
+        config["LOCATION"] = test_location
