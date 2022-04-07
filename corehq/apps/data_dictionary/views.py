@@ -21,7 +21,7 @@ from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import (
-    PROPERTY_TYPE_CHOICES,
+    PROPERTY_TYPES,
     CaseProperty,
     CasePropertyAllowedValue,
     CaseType,
@@ -345,7 +345,9 @@ class DataDictionaryView(BaseProjectDataView):
                 'fhir_resource_types': SUPPORTED_FHIR_RESOURCE_TYPES,
             })
         main_context.update({
-            'question_types': [{'value': k, 'display': v} for k, v in PROPERTY_TYPE_CHOICES if k],
+            'question_types': [{'value': t.slug, 'display': t.display}
+                               for t in PROPERTY_TYPES.get_all()
+                               if t != PROPERTY_TYPES.UNDEFINED],
             'fhir_integration_enabled': fhir_integration_enabled,
         })
         return main_context
@@ -403,7 +405,7 @@ def _process_bulk_upload(bulk_file, domain):
     import_fhir_data = toggles.FHIR_INTEGRATION.enabled(domain)
     fhir_resource_type_by_case_type = {}
     expected_columns_in_prop_sheet = 5
-    data_type_map = {display_val: raw_val for raw_val, display_val in PROPERTY_TYPE_CHOICES}
+    data_type_map = {t.display: t.slug for t in PROPERTY_TYPES.get_all()}
 
     if import_fhir_data:
         expected_columns_in_prop_sheet = 7

@@ -24,7 +24,7 @@ from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
-from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.geopoint import GeoPoint
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -95,7 +95,7 @@ def transform_xform_for_elasticsearch(doc_dict):
         doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
 
         try:
-            geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+            geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
             doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
         except (KeyError, BadValueError):
             doc_ret['form']['meta']['geo_point'] = None
