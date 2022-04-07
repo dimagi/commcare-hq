@@ -14,6 +14,7 @@ jobs:
           mkdir -p /home/runner/.local/bin
           cd /home/runner/.local/bin
           curl -o- https://raw.githubusercontent.com/transifex/cli/master/install.sh | bash
+          sudo apt-get install -y gettext
       - name: Run update-translations script
         # From https://github.com/marketplace/actions/create-pr-action:
         # > executes an arbitrary command and commits the changes to the new pull request
