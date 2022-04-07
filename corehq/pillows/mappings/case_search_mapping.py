@@ -57,6 +57,9 @@ CASE_SEARCH_MAPPING = {
                     },
                     "null_value": "",
                     "type": "string"
+                },
+                "geopoint_value": {
+                    "type": "geo_point"
                 }
             }
         },
