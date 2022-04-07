@@ -18,7 +18,7 @@ jobs:
         uses: technote-space/create-pr-action@v2
         with:
           EXECUTE_COMMANDS: |
-            export PATH="/home/runner/work/commcare-hq/commcare-hq:$PATH"
+            PATH=".:$PATH"
             cp .transifexrc.example ~/.transifexrc
             ls ~/.transifexrc
             which tx
