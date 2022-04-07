@@ -7,7 +7,7 @@ from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import TestFileMixin
-from couchforms.datatypes import GeoPoint
+from couchforms.geopoint import GeoPoint
 
 
 @sharded
