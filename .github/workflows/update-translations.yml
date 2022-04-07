@@ -3,9 +3,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
-env:
-    TRANSIFEX_TOKEN: foo
-
 name: Update transifex translations
 jobs:
   update_translations:
@@ -21,6 +18,8 @@ jobs:
         # From https://github.com/marketplace/actions/create-pr-action:
         # > executes an arbitrary command and commits the changes to the new pull request
         uses: technote-space/create-pr-action@v2
+        env:
+          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
         with:
           EXECUTE_COMMANDS: |
             # copy .transifexrc.example to ~/.transifexrc, edited to include token
