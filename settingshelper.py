@@ -295,12 +295,11 @@ def update_redis_location_for_tests(settings_caches):
             continue
 
         test_location = config.get("TEST_LOCATION")
-        if not test_location:
+        if test_location:
+            config["LOCATION"] = test_location
+        else:
             logging.warning(
                 "Unable to set Redis DB in '%(name)s' cache for tests. Using '%(location)s'.\n"
                 "\tTo configure a separate Redis DB for tests add a 'TEST_LOCATION' to the"
                 " '%(name)s' cache configuration.", {"name": name, "location": config["LOCATION"]}
             )
-
-        logging.info("Using '%s' connection for Redis", test_location)
-        config["LOCATION"] = test_location
