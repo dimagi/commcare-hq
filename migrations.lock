@@ -910,6 +910,7 @@ sql_proxy_standby_accessors
 sso
  0001_initial
  0002_identityprovider_require_encrypted_assertions
+ 0003_oidc_onelogin_idp_update
 start_enterprise
  0001_initial
 stock
