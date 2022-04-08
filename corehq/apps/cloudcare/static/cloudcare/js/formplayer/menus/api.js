@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
-                    "selected_values": sessionStorage.selectedValues,
+                    "selected_values": params.selectedValues,
                 });
                 options.url = formplayerUrl + '/' + route;
 
@@ -150,6 +150,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
+        options.selectedValues = sessionStorage.selectedValues;
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
@@ -170,7 +171,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             // Caller expects a menu response, return a fake one
             return {abort: true};
         }
-        options.selectedValues = sessionStorage.selectedValues;
 
         // If an endpoint is provided, first claim any cases it references, then navigate
         return API.queryFormplayer(options, "get_endpoint");
@@ -179,6 +179,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.selectedValues = sessionStorage.selectedValues;
         return API.queryFormplayer(options, 'get_details');
     });
 

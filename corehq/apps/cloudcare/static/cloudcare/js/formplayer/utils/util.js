@@ -217,7 +217,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-                selectedValues: sessionStorage.selectedValues,
             }, this.queryData[sessionStorage.queryKey]);
             this.page = null;
             this.search = null;
@@ -236,7 +235,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
-            this.selectedValues = null;
         };
 
         this.onSubmit = function () {
@@ -244,7 +242,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
-            this.selectedValues = null;
         };
 
         this.spliceSelections = function (index) {
@@ -266,7 +263,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.sortIndex = null;
             this.queryData = null;
-            this.selectedValues = null;
         };
     };
 
