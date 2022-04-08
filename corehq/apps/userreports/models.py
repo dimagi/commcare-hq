@@ -1364,6 +1364,12 @@ class UCRExpression(models.Model):
         app_label = 'userreports'
         unique_together = ('name', 'domain')
 
+    def wrapped_definition(self, context):
+        if self.expression_type == UCR_NAMED_EXPRESSION:
+            return ExpressionFactory.from_spec(self.definition, context)
+        elif self.expression_type == UCR_NAMED_FILTER:
+            return FilterFactory.from_spec(self.definition, context)
+
 
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
