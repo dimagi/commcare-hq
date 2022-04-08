@@ -18,6 +18,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Display,
     Hint,
     Instance,
+    InstanceDatum,
     Itemset,
     PushFrame,
     QueryData,
@@ -219,7 +220,8 @@ class RemoteRequestFactory(object):
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
-        return [SessionDatum(
+        datum_cls = InstanceDatum if self.is_multi_select() else SessionDatum
+        return [datum_cls(
             id=self.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
