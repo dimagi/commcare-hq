@@ -237,6 +237,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
         },
+        initialize: function () {
+            this.parentView = this.options.parentView;
+        },
 
         className: "formplayer-request",
 
@@ -260,17 +263,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectRowAction: function (e) {
-            let prevSelectedCaseIdsLength = selectedCaseIds.length;
             if (e.target.checked) {
                 selectedCaseIds.push(this.model.get('id'));
-                updateContinueButtonText(prevSelectedCaseIdsLength, selectedCaseIds.length);
             } else {
                 const index = selectedCaseIds.indexOf(this.model.get('id'));
                 if (index > -1) {
                     selectedCaseIds.splice(index, 1);
                 }
-                updateContinueButtonText(prevSelectedCaseIdsLength, selectedCaseIds.length);
             }
+            this.parentView.updateContinueButtonText(selectedCaseIds.length);
         },
 
         templateContext: function () {
@@ -320,6 +321,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                parentView: this,
             };
         },
 
@@ -436,6 +438,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        updateContinueButtonText: function (newValue) {
+            document.getElementById('multi-select-btn-text').innerText = String(newValue);
+        },
+
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -471,11 +477,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
-
-    var updateContinueButtonText = function (prevValue, newValue) {
-        let currentText = document.getElementById('multi-select-continue-btn').innerText;
-        document.getElementById('multi-select-continue-btn').innerText = currentText.replace(String(prevValue), String(newValue));
-    };
 
     // this method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
@@ -775,7 +776,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
-        updateContinueButtonText: updateContinueButtonText,
         paginateOptions: paginateOptions,
         paginationGoPageNumber: paginationGoPageNumber,
     };
