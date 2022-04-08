@@ -4861,8 +4861,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         self = super(Application, cls).wrap(data)
 
         translations = data.get('translations')
-        labels = [{lang: translations.get(lang).get('case.search.title')}
-            for lang in translations]
+        labels = {lang: translations.get(lang).get('case.search.title') for lang in translations}
         for module in self.modules:
             print(module.name)
             if hasattr(module, 'search_config'):
