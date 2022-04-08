@@ -2237,17 +2237,6 @@ class CaseSearch(DocumentSchema):
     def case_session_var(self):
         return "search_case_id"
 
-    @classmethod
-    def wrap(cls, doc):
-        self = cls
-        translations = doc.get('translation')
-        title_labels = dict()
-        for lang in translations:
-            if "case.search.title" in lang.keys():
-                title_labels[lang] = lang["case.search.title"]
-        self.title_labels = title_labels
-        return super(CaseSearch, self).wrap(doc)
-
     def get_relevant(self, multi_select=False):
         if multi_select:
             return self.additional_relevant
@@ -4870,6 +4859,14 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
+
+        translations = data.get('translations')
+        labels = [{lang: translations.get(lang).get('case.search.title')}
+            for lang in translations]
+        for module in self.modules:
+            print(module.name)
+            if hasattr(module, 'search_config'):
+                setattr(module, 'search_config')['title_label'] = labels
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
