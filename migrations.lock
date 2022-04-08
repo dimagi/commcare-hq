@@ -629,6 +629,7 @@ pillowtop
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
+ 0007_elastic_v5_mapping_compatibility
 products
  0001_initial
 project_limits
