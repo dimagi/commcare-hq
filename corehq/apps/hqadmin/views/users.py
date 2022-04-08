@@ -39,6 +39,7 @@ from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
@@ -51,6 +52,7 @@ from corehq.apps.hqadmin.forms import (
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
+    UserPrivilegeManagementForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
@@ -415,34 +417,44 @@ class DisableUserView(FormView):
                         fields_changed={'is_active': self.user.is_active},
                         by_domain_required_for_log=False,
                         for_domain_required_for_log=False)
+
+        self.send_admins_email(verb, self.username, self.request.user.username, str(reset_password), reason)
+        self.send_user_email(self.user, reset_password, verb, reason)
+
+        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
+        return redirect(self.redirect_url)
+
+    @classmethod
+    def send_admins_email(cls, verb, usernames, reset_by, reset_password, reason):
         mail_admins(
             "User account {}".format(verb),
-            "The following user account has been {verb}: \n"
+            "The following user accounts have been {verb}: \n"
             "    Account: {username}\n"
             "    Reset by: {reset_by}\n"
             "    Password reset: {password_reset}\n"
             "    Reason: {reason}".format(
                 verb=verb,
-                username=self.username,
-                reset_by=self.request.user.username,
-                password_reset=str(reset_password),
+                username=usernames,
+                reset_by=reset_by,
+                password_reset=reset_password,
                 reason=reason,
             )
         )
+
+    @classmethod
+    def send_user_email(cls, user, reset_password, verb, reason):
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.user.get_email() if self.user else self.username,
+            user.email if user else user.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
-                'user': self.user,
+                'user': user,
                 'verb': verb,
-                'reason': form.cleaned_data['reason'],
+                'reason': reason,
             }),
         )
-
-        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect(self.redirect_url)
+        return
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -604,3 +616,78 @@ class AppBuildTimingsView(TemplateView):
 
         os.remove(fpath)
         return app.timing_context
+
+
+class UserPrivilegeManagement(UserAdministration):
+    urlname = 'user_privilege_management'
+    page_title = _("Remove accounting admin privilege, superuser status and login access")
+    template_name = 'hqadmin/superuser_management.html'
+
+    """
+    This view is meant only to revoke privileges.
+    To undo changes made here navigate to the individual pages for granting access.
+    """
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(UserPrivilegeManagement, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        # only staff can toggle is_staff
+        can_toggle_is_staff = self.request.user.is_staff
+        # render validation errors if rendered after POST
+        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        users = augmented_superusers()
+        for user in users:
+            user.is_accounting_admin = True if is_accounting_admin(user) else False
+        return {
+            'form': UserPrivilegeManagementForm(*args),
+            'users': users,
+            'offboarding': True,
+        }
+
+    def post(self, request, *args, **kwargs):
+        can_toggle_staff = request.user.is_staff
+        can_toggle_superuser = request.user.is_superuser
+        can_toggle_accounting_admin = is_accounting_admin(request.user)
+        form = UserPrivilegeManagementForm(can_toggle_staff, self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['users']
+            remove_staff = 'remove_staff' in form.cleaned_data['privileges']
+            remove_superuser = 'remove_superuser' in form.cleaned_data['privileges']
+            remove_accounting_admin = 'remove_accounting_admin' in form.cleaned_data['privileges']
+            disable_user = 'disable_user' in form.cleaned_data['privileges']
+            fields_changed = {}
+            users_disabled = []
+            reason = 'Offboarding'
+            for user in users:
+                if can_toggle_accounting_admin and is_accounting_admin(user) and remove_accounting_admin:
+                    from corehq.apps.accounting.views import ManageAccountingAdminsView
+                    ManageAccountingAdminsView.get_deleted_item_data(0, user=user)
+                    fields_changed['is_accounting_admin'] = False
+                if can_toggle_superuser and user.is_superuser and remove_superuser:
+                    user.is_superuser = False
+                    fields_changed['is_superuser'] = False
+                if can_toggle_staff and user.is_staff and remove_staff:
+                    user.is_staff = False
+                    fields_changed['is_staff'] = False
+                if user.is_active and disable_user:
+                    user.is_active = False
+                    fields_changed['is_active'] = False
+                    DisableUserView.send_user_email(user, False, 'disabled', reason)
+                    users_disabled.append(user.username)
+                if fields_changed:
+                    user.save()
+                    couch_user = CouchUser.from_django_user(user)
+                    #if user was disabled if needs a changed_message param
+                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
+                                    changed_by_user=self.request.couch_user,
+                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
+                                    by_domain_required_for_log=False,
+                                    for_domain_required_for_log=False)
+            if users_disabled:
+                DisableUserView.send_admins_email('disabled', ", ".join(users_disabled),
+                                                  self.request.user.username, 'False', reason)
+            messages.success(request, _("Successfully updated user status"))
+        return self.get(request, *args, **kwargs)
