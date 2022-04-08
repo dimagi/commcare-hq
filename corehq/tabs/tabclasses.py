@@ -894,7 +894,7 @@ class ProjectDataTab(UITab):
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
 
-        if toggles.EXPRESSION_REPEATER.enabled(self.domain):
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.views import UCRExpressionListView
             items.append(
                 [
