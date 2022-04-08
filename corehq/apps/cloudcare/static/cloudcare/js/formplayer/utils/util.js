@@ -174,10 +174,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.selections = selections;
         };
 
-        this.setSelectedValues = function (selectedValues) {
-            this.selectedValues = selectedValues;
-        };
-
         this.addSelection = function (selection) {
             if (!this.selections) {
                 this.selections = [];
@@ -185,7 +181,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             // Selections only deal with strings, because formplayer will send them back as strings
             if (_.isArray(selection)) {
                 this.selections.push(String('use_selected_values'));
-                this.setSelectedValues(selection);
             } else {
                 this.selections.push(String(selection));
             }
@@ -222,6 +217,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
+                selectedValues: sessionStorage.selectedValues,
             }, this.queryData[sessionStorage.queryKey]);
             this.page = null;
             this.search = null;
@@ -240,6 +236,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.selectedValues = null;
         };
 
         this.onSubmit = function () {
@@ -247,6 +244,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.selectedValues = null;
         };
 
         this.spliceSelections = function (index) {
@@ -268,6 +266,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.sortIndex = null;
             this.queryData = null;
+            this.selectedValues = null;
         };
     };
 
@@ -286,7 +285,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
-            selectedValues: self.selectedValues,
         };
         return JSON.stringify(dict);
     };

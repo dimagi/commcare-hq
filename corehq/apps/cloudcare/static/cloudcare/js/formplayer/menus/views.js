@@ -431,6 +431,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         continueAction: function () {
             if (selectedCaseIds.length > 0) { // TODO: make button disabled if no cases selected
+                sessionStorage.selectedValues = selectedCaseIds;
                 FormplayerFrontend.trigger("menu:select", selectedCaseIds);
             }
         },

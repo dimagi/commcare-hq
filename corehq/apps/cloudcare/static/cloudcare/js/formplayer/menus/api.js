@@ -133,6 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
+                    "selected_values": sessionStorage.selectedValues,
                 });
                 options.url = formplayerUrl + '/' + route;
 
@@ -169,6 +170,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
             // Caller expects a menu response, return a fake one
             return {abort: true};
         }
+        options.selectedValues = sessionStorage.selectedValues;
 
         // If an endpoint is provided, first claim any cases it references, then navigate
         return API.queryFormplayer(options, "get_endpoint");
