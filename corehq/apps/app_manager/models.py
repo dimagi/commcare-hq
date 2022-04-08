@@ -4861,10 +4861,11 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         self = super(Application, cls).wrap(data)
 
         translations = data.get('translations')
-        labels = {lang: translations.get(lang).get('case.search.title') for lang in translations}
+        label_dict = {lang: label.get('case.search.title')
+            for lang, label in translations.items() if label}
         for module in self.modules:
             if hasattr(module, 'search_config'):
-                setattr(getattr(module, 'search_config'), 'title label', labels)
+                setattr(getattr(module, 'search_config', 'title label', label_dict))
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
