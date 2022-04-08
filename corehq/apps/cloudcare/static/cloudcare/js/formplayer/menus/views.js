@@ -4,8 +4,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
-    var selectedCaseIds = [];
-
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -264,14 +262,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         selectRowAction: function (e) {
             if (e.target.checked) {
-                selectedCaseIds.push(this.model.get('id'));
+                this.parentView.selectedCaseIds.push(this.model.get('id'));
             } else {
-                const index = selectedCaseIds.indexOf(this.model.get('id'));
+                const index = this.parentView.selectedCaseIds.indexOf(this.model.get('id'));
                 if (index > -1) {
-                    selectedCaseIds.splice(index, 1);
+                    this.parentView.selectedCaseIds.splice(index, 1);
                 }
             }
-            this.parentView.updateContinueButtonText(selectedCaseIds.length);
+            this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
         },
 
         templateContext: function () {
@@ -329,6 +327,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
+            this.selectedCaseIds = [];
         },
 
         ui: {
@@ -432,9 +431,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         continueAction: function () {
-            if (selectedCaseIds.length > 0) { // TODO: make button disabled if no cases selected
-                sessionStorage.selectedValues = selectedCaseIds;
-                FormplayerFrontend.trigger("menu:select", selectedCaseIds);
+            if (this.selectedCaseIds.length > 0) { // TODO: make button disabled if no cases selected
+                sessionStorage.selectedValues = this.selectedCaseIds;
+                FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             }
         },
 
@@ -466,7 +465,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
                 actionButtonStyle: (isMultiSelectCaseList ? 'btn-default' : 'btn-success'),
-                selectedCaseIdsLength: selectedCaseIds.length,
+                selectedCaseIdsLength: this.selectedCaseIds.length,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
