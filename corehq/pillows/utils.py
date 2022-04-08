@@ -93,17 +93,3 @@ def get_all_expected_es_indices():
 def format_form_meta_for_es(form_metadata):
     form_metadata['appVersion'] = form_metadata['appVersion'].get('#text')
     return form_metadata
-
-
-def update_mapping_migration_op(index, quiet=True):
-
-    @skip_on_fresh_install
-    def update_elastic_mapping(*args, **kwargs):
-        argv = ["update_es_mapping", index]
-        if quiet:
-            argv.append("--quiet")
-        else:
-            print(f"\nupdating mapping for index: {index} ...")
-        return call_command(*argv, noinput=True)
-
-    return RunPython(update_elastic_mapping, reverse_code=RunPython.noop, elidable=True)

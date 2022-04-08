@@ -620,8 +620,6 @@ pillow_retry
  0007_remove_pillowerror_queued
  0008_index_cleanup
  0009_pillow_error_pk_to_bigint
-pillows
- 0001_elastic_v5_mapping_compatibility
 pillowtop
  0001_initial
  0002_djangopillowcheckpoint_sequence_format
@@ -629,6 +627,7 @@ pillowtop
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
+ 0007_elastic_v5_mapping_compatibility
 products
  0001_initial
 project_limits
