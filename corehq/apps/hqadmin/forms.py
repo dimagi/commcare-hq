@@ -3,6 +3,7 @@ import re
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from crispy_forms import layout as crispy
@@ -175,7 +176,7 @@ def clean_data(cleaned_data, invert=False):
                 "this site, please have the user registered first".format(username))
 
     if invert:
-        all_users = User.objects.filter(username__endswith="@dimagi.com", is_superuser=True)
+        all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
         users = [user for user in all_users if user not in users]
 
     cleaned_data['users'] = users
