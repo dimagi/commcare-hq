@@ -1,6 +1,3 @@
-from django.core.management import call_command
-from django.db.migrations import RunPython
-
 from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 
@@ -9,7 +6,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.const import ONE_DAY
 from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
-from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_TYPE = "system"
