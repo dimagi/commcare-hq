@@ -4,7 +4,7 @@
 
 # GENERAL PROCESS
 # From your commcare-hq directory with the virtualenv turned on and master
-# checked out to safely push your changes to scripts/staging.yaml
+# checked out to safely push your changes to scripts/staging.yml
 #     $ scripts/commit-staging --push
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
@@ -28,16 +28,16 @@
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
-#     add the branch `foo+bar` to staging.yaml and move branches foo and
+#     add the branch `foo+bar` to staging.yml and move branches foo and
 #     bar to right below it
 #
-#     Later on branch B gets merged into master and removed from staging.yaml.
+#     Later on branch B gets merged into master and removed from staging.yml.
 #     Perhaps the person who removes it also notices the A+B and does the
 #     following. Otherwise anyone who comes along and sees A+B but not both
 #     branches can feel free to assume the following need to be done.
 #       * Merge A+B into A. Since B is now gone, you want to merge the
 #         resolution into A, otherwise A will conflict with master.
-#       * Remove A+B from staging.yaml. It's no longer necessary since it's
+#       * Remove A+B from staging.yml. It's no longer necessary since it's
 #         now a subset of A.
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
