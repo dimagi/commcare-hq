@@ -23,6 +23,8 @@ from corehq.apps.export.views.edit import (
     EditNewCustomFormExportView,
     EditODataCaseFeedView,
     EditODataFormFeedView,
+    EditLiveGoogleSheetCaseView,
+    EditLiveGoogleSheetFormView,
 )
 from corehq.apps.export.views.incremental import (
     IncrementalExportView,
@@ -194,6 +196,12 @@ urlpatterns = [
     url(r"^custom/odata_form_feed/edit/(?P<export_id>[\w\-]+)/$",
         EditODataFormFeedView.as_view(),
         name=EditODataFormFeedView.urlname),
+    url(r"^custom/live_google_sheet_case/edit/(?P<export_id>[\w\-]+)/$",
+        EditLiveGoogleSheetCaseView.as_view(),
+        name=EditLiveGoogleSheetCaseView.urlname),
+    url(r"^custom/live_google_sheet_form/edit/(?P<export_id>[\w\-]+)/$",
+        EditLiveGoogleSheetFormView.as_view(),
+        name=EditLiveGoogleSheetFormView.urlname),
     url(r"^custom/case_feed/edit/(?P<export_id>[\w\-]+)/$",
         EditCaseFeedView.as_view(),
         name=EditCaseFeedView.urlname),

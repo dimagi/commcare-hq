@@ -1167,7 +1167,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
     def fmt_export_data(self, export):
         data = super(LiveGoogleSheetListHelper, self).fmt_export_data(export)
         data.update({
-            'isGoogleSheet': True,
+            'isLiveGoogleSheet': True,
         })
         if len(self.get_saved_exports()) >= self.live_google_sheets_limit:
             data['editUrl'] = '#IntegratedExportLimitReachedModal'
@@ -1179,6 +1179,12 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         if isinstance(export, FormExportInstance):
             return DownloadNewFormExportView
         return DownloadNewCaseExportView
+
+    def _edit_view(self, export):
+        from corehq.apps.export.views.edit import EditLiveGoogleSheetCaseView, EditLiveGoogleSheetFormView
+        if isinstance(export, FormExportInstance):
+            return EditLiveGoogleSheetFormView
+        return EditLiveGoogleSheetCaseView
 
 
 @location_safe
