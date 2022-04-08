@@ -73,5 +73,6 @@ branches:
     - ml/all-in-one-offboarding # Minha April 7
     - es/slow-expand # Ethan Apr 7
     - jm/elastic-mapping-transform-multifield  # Joel Apr 8
+    - bmb/sso-oidc-update-idp  # Biyeun Apr 8
 
 submodules: { }
