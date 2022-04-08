@@ -431,14 +431,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         continueAction: function () {
-            if (this.selectedCaseIds.length > 0) { // TODO: make button disabled if no cases selected
-                sessionStorage.selectedValues = this.selectedCaseIds;
-                FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
-            }
+            sessionStorage.selectedValues = this.selectedCaseIds;
+            FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         },
 
         updateContinueButtonText: function (newValue) {
             document.getElementById('multi-select-btn-text').innerText = String(newValue);
+            if (this.selectedCaseIds.length === 0) {
+                document.getElementById('multi-select-continue-btn').disabled = true;
+            } else {
+                document.getElementById('multi-select-continue-btn').disabled = false;
+            }
         },
 
         templateContext: function () {
