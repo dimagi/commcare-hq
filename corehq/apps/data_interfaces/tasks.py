@@ -157,6 +157,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     timeout=36 * 60 * 60,
     max_retries=0,
     queue='case_rule_queue',
+    serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
