@@ -66,7 +66,7 @@ class Command(BaseCommand):
             mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
         else:
             mapping = index_info.mapping
-        for key in iter(k.strip() for k in options["transforms"].split(",")):
+        for key in (k.strip() for k in options["transforms"].split(",")):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)
                 mapping = ALL_TRANSFORMS[key](mapping)
