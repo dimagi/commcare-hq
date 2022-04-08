@@ -71,10 +71,10 @@ branches:
     - dm/django3-tests # Daniel March 31
     - rc/obh-case-search-ui # Robert April 5
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
-    - jm/elastic-mapping-util  # Joel Apr 6
     - dm/metrics-lookup # Daniel Apr 7
     - ml/all-in-one-offboarding # Minha April 7
     - es/slow-expand # Ethan Apr 7
     - dm/fix-lookup-table-view # Daniel Apr 7
+    - jm/elastic-mapping-transform-multifield  # Joel Apr 8
 
 submodules: { }
