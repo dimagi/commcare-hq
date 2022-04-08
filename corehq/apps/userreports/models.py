@@ -59,6 +59,7 @@ from corehq.apps.userreports.const import (
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
@@ -384,7 +385,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 try:
                     named_expressions[name] = ExpressionFactory.from_spec(
                         expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={})
+                        FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
                     )
                     number_generated += 1
                     del named_expression_specs[name]
@@ -401,11 +402,17 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
-                for name, filter in self.named_filters.items()}
+        return {
+            name: FilterFactory.from_spec(
+                filter, FactoryContext(
+                    self.named_expression_objects, {}, domain=self.domain
+                )
+            )
+            for name, filter in self.named_filters.items()
+        }
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
 
     @property
     @memoized

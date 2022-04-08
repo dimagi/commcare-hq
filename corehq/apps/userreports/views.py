@@ -977,7 +977,7 @@ def evaluate_expression(request, domain):
             data_source = get_datasource_config(data_source_id, domain)[0]
             factory_context = data_source.get_factory_context()
         else:
-            factory_context = FactoryContext.empty()
+            factory_context = FactoryContext.empty(domain=domain)
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
