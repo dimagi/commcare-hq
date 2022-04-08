@@ -2094,6 +2094,13 @@ AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+SSO_OIDC_DEVELOPMENT = StaticToggle(
+    'sso_oidc_development',
+    'Development feature flag for SSO OIDC support',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
     'Allow limited fixtures to be available in case restore for SMS workflows.',
