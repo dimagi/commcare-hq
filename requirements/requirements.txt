@@ -233,7 +233,7 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.10
+jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
