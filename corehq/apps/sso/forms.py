@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
@@ -62,6 +62,16 @@ class CreateIdentityProviderForm(forms.Form):
         label=gettext_lazy("Billing Account Owner"),
         widget=forms.Select(choices=[]),
     )
+    protocol = forms.CharField(
+        label=gettext_lazy("Protocol"),
+        max_length=5,
+        widget=forms.Select(choices=IdentityProviderProtocol.CHOICES)
+    )
+    idp_type = forms.CharField(
+        label=gettext_lazy("Service"),
+        max_length=50,
+        widget=forms.Select(choices=[]),
+    )
     name = forms.CharField(
         label=gettext_lazy("Public Name"),
         help_text=gettext_lazy(
@@ -90,6 +100,17 @@ class CreateIdentityProviderForm(forms.Form):
                     css_class="input-xxlarge",
                     placeholder="Search for Billing Account"
                 ),
+                crispy.Field(
+                    'protocol',
+                    data_bind="value: protocol",
+                ),
+                crispy.Field(
+                    'idp_type',
+                    data_bind="value: idpType, "
+                              "options: availableIdpTypes, "
+                              "optionsValue: function (item) { return item[0]; }, "
+                              "optionsText: function (item) { return item[1]; }",
+                ),
                 'name',
                 'slug',
             ),
@@ -111,17 +132,31 @@ class CreateIdentityProviderForm(forms.Form):
             )
         return slug
 
+    def clean_idp_type(self):
+        idp_type = self.cleaned_data['idp_type']
+        protocol = self.cleaned_data['protocol']
+        valid_types = [t[0] for t in IdentityProviderProtocol.get_supported_types()[protocol]]
+        if idp_type not in valid_types:
+            raise forms.ValidationError(
+                _("This service does not support the selected protocol."),
+            )
+        return idp_type
+
     @transaction.atomic
     def create_identity_provider(self, admin_user):
         owner = BillingAccount.objects.get(id=self.cleaned_data['owner'])
+        protocol = self.cleaned_data['protocol']
         idp = IdentityProvider.objects.create(
             owner=owner,
             slug=self.cleaned_data['slug'],
             name=self.cleaned_data['name'],
             created_by=admin_user.username,
             last_modified_by=admin_user.username,
+            protocol=protocol,
+            idp_type=self.cleaned_data['idp_type'],
         )
-        idp.create_service_provider_certificate()
+        if protocol == IdentityProviderProtocol.SAML:
+            idp.create_service_provider_certificate()
         return idp
 
 
