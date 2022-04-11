@@ -545,7 +545,7 @@ class Entry(OrderedXmlObject, XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
     session_children = NodeListField('session/*', _wrap_session_datums)
-    local_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
     stack = NodeField('stack', Stack)
 
