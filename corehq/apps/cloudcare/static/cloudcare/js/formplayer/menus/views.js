@@ -438,9 +438,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         updateContinueButtonText: function (newValue) {
             document.getElementById('multi-select-btn-text').innerText = String(newValue);
             if (this.selectedCaseIds.length === 0) {
-                document.getElementById('multi-select-continue-btn').disabled = true;
+                this.ui.continueButton.prop("disabled", true);
             } else {
-                document.getElementById('multi-select-continue-btn').disabled = false;
+                this.ui.continueButton.prop("disabled", false);
             }
         },
 
