@@ -7,6 +7,7 @@
   8 corehq/apps/data_interfaces/tasks.py
   1 corehq/apps/dropbox/tasks.py
   1 corehq/apps/enterprise/tasks.py
+  1 corehq/apps/export/tasks.py
   2 corehq/apps/hqadmin/tasks.py
   2 corehq/apps/hqmedia/tasks.py
   3 corehq/apps/hqwebapp/tasks.py
