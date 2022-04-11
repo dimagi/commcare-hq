@@ -7,15 +7,12 @@ from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import case_property_query
 
+from .utils import confirm_args_count
+
 
 def not_(node, context):
     from corehq.apps.case_search.filter_dsl import build_filter_from_ast
-
-    if len(node.args) != 1:
-        raise XPathFunctionException(
-            _("The \"not\" function only accepts a single argument"),
-            serialize(node)
-        )
+    confirm_args_count(node, 1)
     return filters.NOT(build_filter_from_ast(node.args[0], context))
 
 
@@ -28,11 +25,8 @@ def selected_all(node, context):
 
 
 def _selected_query(node, context, operator):
-    if len(node.args) != 2:
-        raise XPathFunctionException(
-            _("The {name} function accepts exactly two arguments.").format(name=node.name),
-            serialize(node)
-        )
+    confirm_args_count(node, 2)
+
     property_name = node.args[0]
     if isinstance(property_name, Step):
         property_name = serialize(property_name)
