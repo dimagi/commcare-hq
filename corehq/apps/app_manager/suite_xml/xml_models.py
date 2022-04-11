@@ -98,7 +98,7 @@ class XPathEnum(TextXPath):
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2] # removes extra comma from last string
-            parts.append("), '\s+', ' ')")
+            parts.append("), '\\s+', ' ')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))
