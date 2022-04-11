@@ -375,6 +375,8 @@ class EditIdentityProviderAdminForm(forms.Form):
         }
         super().__init__(*args, **kwargs)
 
+        current_protocol_name = dict(IdentityProviderProtocol.CHOICES)[self.idp.protocol]
+
         if self.idp.protocol == IdentityProviderProtocol.SAML:
             sp_details_form = ServiceProviderDetailsForm(
                 identity_provider, show_help_block=False
@@ -386,6 +388,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(*sp_details_form.service_provider_fields),
                 crispy.Div(*sp_details_form.token_encryption_fields),
             )
+            protocol_notice = current_protocol_name
         else:
             rp_details_form = RelyingPartyDetailsForm(identity_provider)
             self.fields.update(rp_details_form.fields)
@@ -393,6 +396,13 @@ class EditIdentityProviderAdminForm(forms.Form):
                 _('Relying Party Settings'),
                 'slug',
                 crispy.Div(*rp_details_form.application_details_fields),
+            )
+            # todo remove when OIDC is active
+            protocol_notice = format_html(
+                "{}<p class='alert alert-warning'>"
+                "<strong>Please Note that OIDC support is still in development!</strong><br/> "
+                "Do not make any Identity Providers live on production.</p>",
+                current_protocol_name
             )
 
         from corehq.apps.accounting.views import ManageBillingAccountView
@@ -417,6 +427,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(
                     crispy.Fieldset(
                         _('Primary Configuration'),
+                        protocol_notice,
                         hqcrispy.B3TextField(
                             'owner',
                             format_html(
@@ -427,7 +438,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'protocol',
-                            dict(IdentityProviderProtocol.CHOICES)[self.idp.protocol]
+                            protocol_notice
                         ),
                         hqcrispy.B3TextField(
                             'idp_type',
