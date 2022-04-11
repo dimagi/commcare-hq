@@ -17,7 +17,10 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+)
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
@@ -160,8 +163,46 @@ class CreateIdentityProviderForm(forms.Form):
         return idp
 
 
+class RelyingPartyDetailsForm(forms.Form):
+    """This form is for display purposes and lists all the OpenID Connect
+    information that's required for the Relying Party"""
+    login_url = forms.CharField(
+        label=gettext_lazy("Login Url"),
+        required=False,
+    )
+    redirect_uris = forms.CharField(
+        label=gettext_lazy("Redirect URIs"),
+        required=False,
+    )
+    logout_redirect_uris = forms.CharField(
+        label=gettext_lazy("Post Logout Redirect URIs"),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        super().__init__(*args, **kwargs)
+
+    @property
+    def application_details_fields(self):
+        return [
+            hqcrispy.B3TextField(
+                'login_url',
+                url_helpers.get_oidc_login_url(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'redirect_uris',
+                url_helpers.get_oidc_auth_url(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'logout_redirect_uris',
+                url_helpers.get_oidc_logout_url(self.idp),
+            ),
+        ]
+
+
 class ServiceProviderDetailsForm(forms.Form):
-    """This form is for display purposes and lists all the
+    """This form is for display purposes and lists all the SAML 2.0
     required service provider information that's needed to link with an
     identity provider."""
     sp_entity_id = forms.CharField(
@@ -325,10 +366,25 @@ class EditIdentityProviderAdminForm(forms.Form):
         }
         super().__init__(*args, **kwargs)
 
-        sp_details_form = ServiceProviderDetailsForm(
-            identity_provider, show_help_block=False
-        )
-        self.fields.update(sp_details_form.fields)
+        if self.idp.protocol == IdentityProviderProtocol.SAML:
+            sp_details_form = ServiceProviderDetailsForm(
+                identity_provider, show_help_block=False
+            )
+            self.fields.update(sp_details_form.fields)
+            sp_or_rp_settings = crispy.Fieldset(
+                _('Service Provider Settings'),
+                'slug',
+                crispy.Div(*sp_details_form.service_provider_fields),
+                crispy.Div(*sp_details_form.token_encryption_fields),
+            )
+        else:
+            rp_details_form = RelyingPartyDetailsForm(identity_provider)
+            self.fields.update(rp_details_form.fields)
+            sp_or_rp_settings = crispy.Fieldset(
+                _('Relying Party Settings'),
+                'slug',
+                crispy.Div(*rp_details_form.application_details_fields),
+            )
 
         from corehq.apps.accounting.views import ManageBillingAccountView
         account_link = reverse(
@@ -370,12 +426,7 @@ class EditIdentityProviderAdminForm(forms.Form):
             ),
             crispy.Div(
                 crispy.Div(
-                    crispy.Fieldset(
-                        _('Service Provider Settings'),
-                        'slug',
-                        crispy.Div(*sp_details_form.service_provider_fields),
-                        crispy.Div(*sp_details_form.token_encryption_fields),
-                    ),
+                    sp_or_rp_settings,
                     css_class="panel-body"
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
