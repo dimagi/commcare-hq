@@ -179,7 +179,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        options.selectedValues = sessionStorage.selectedValues;
         return API.queryFormplayer(options, 'get_details');
     });
 
