@@ -20,6 +20,7 @@ from corehq.apps.sso import certificates
 from corehq.apps.sso.models import (
     IdentityProvider,
     IdentityProviderProtocol,
+    IdentityProviderType,
 )
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
@@ -319,6 +320,14 @@ class EditIdentityProviderAdminForm(forms.Form):
         label=gettext_lazy("Billing Account Owner"),
         required=False,
     )
+    protocol = forms.CharField(
+        label=gettext_lazy("Protocol"),
+        required=False,
+    )
+    idp_type = forms.CharField(
+        label=gettext_lazy("Service"),
+        required=False,
+    )
     slug = forms.CharField(
         label=gettext_lazy("Slug"),
         required=False,
@@ -415,6 +424,14 @@ class EditIdentityProviderAdminForm(forms.Form):
                                 account_link,
                                 identity_provider.owner.name
                             )
+                        ),
+                        hqcrispy.B3TextField(
+                            'protocol',
+                            dict(IdentityProviderProtocol.CHOICES)[self.idp.protocol]
+                        ),
+                        hqcrispy.B3TextField(
+                            'idp_type',
+                            dict(IdentityProviderType.CHOICES)[self.idp.idp_type]
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
