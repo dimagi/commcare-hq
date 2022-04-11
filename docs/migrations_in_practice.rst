@@ -71,13 +71,13 @@ Practical Considerations
 ------------------------
 
 **Handling new data** - There’s likely a code change that writes to the database
-in the new way going forward. It must be deployed after any requisite schema
+in the new way going forward. It cannot be deployed until any requisite schema
 changes have been implemented.
 
 **Migrating old data** - This will be handled via a django migration, a
 management command, or both. Typically, small/simple migrations are handled by a
 django migration and large/complex ones use a django migration that runs a
-management command. It must also be run after any schema changes.
+management command. It cannot run until any schema changes are deployed.
 
 **Dealing with the gap** - We generally can’t pause the servers, put everything
 to rights, then restart. Rather, we must ensure that we’re saving new data
@@ -337,7 +337,7 @@ If your migration is only relevant to environments that already have data in the
 old format, decorate it with ``@skip_on_fresh_install`` so that it is a noop for
 new environments.
 
-**Use ``run_once_off_migration``** - This encapsulates the common pattern of a
+**Use run_once_off_migration** - This encapsulates the common pattern of a
 migration that runs a management command (and tags it with
 ``@skip_on_fresh_install``). It also provides a path for removing the management
 command down the road while keeping the migration as a failsafe.
