@@ -328,6 +328,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
             this.selectedCaseIds = [];
+            this.data = options.collection.models;
         },
 
         ui: {
@@ -423,12 +424,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            if (e.target.checked) {
-                // add all rows to selected cases
-            } else {
-                // remove all rows from selected cases
+            var aa = document.getElementsByTagName("input");
+            for (var i = 0; i < aa.length; i++) {
+                if (aa[i].type === 'checkbox') {
+                    if (aa[i].checked === !e.target.checked) {
+                        aa[i].checked = e.target.checked;
+                    }
+                }
             }
-            //do something
+            if (e.target.checked) {
+                for (const value of this.data) {
+                    if (this.selectedCaseIds.indexOf(value.id) === -1) {
+                        this.selectedCaseIds.push(value.id);
+                    }
+                }
+            } else {
+                this.selectedCaseIds = [];
+            }
+            this.updateContinueButtonText(this.selectedCaseIds.length);
         },
 
         continueAction: function () {
