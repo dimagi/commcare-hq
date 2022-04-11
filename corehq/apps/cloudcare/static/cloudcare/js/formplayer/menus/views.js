@@ -357,6 +357,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.selectAllCheckbox': 'selectAllAction',
             'keypress @ui.selectAllCheckbox': 'selectAllAction',
             'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
         },
 
         caseListAction: function (e) {
@@ -467,7 +468,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
-                actionButtonStyle: (isMultiSelectCaseList ? 'btn-default' : 'btn-success'),
                 selectedCaseIdsLength: this.selectedCaseIds.length,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
