@@ -9,8 +9,8 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 @es_test(index=SMS_INDEX_INFO, setup_class=True)
 class TestUpdateEsMapping(SimpleTestCase):
-    """Guard against management command argument changes breaking the
-    `update_es_mapping` migration utility in the future."""
+    """Guard against future changes to the `update_es_mapping` management
+    command accidentally breaking this migration utility."""
 
     @classmethod
     def setUpClass(cls):
