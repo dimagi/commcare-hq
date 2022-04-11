@@ -2,10 +2,16 @@ from django.utils.translation import gettext as _
 
 from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
+from jsonobject.exceptions import BadValueError
+
+from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
-from corehq.apps.es.case_search import case_property_query
+from corehq.apps.es.case_search import (
+    case_property_geo_distance,
+    case_property_query,
+)
 
 from .utils import confirm_args_count
 
@@ -27,13 +33,34 @@ def selected_all(node, context):
 def _selected_query(node, context, operator):
     confirm_args_count(node, 2)
 
-    property_name = node.args[0]
-    if isinstance(property_name, Step):
-        property_name = serialize(property_name)
-    elif not isinstance(property_name, str):
-        raise XPathFunctionException(
-            _("The first argument to '{name}' must be a valid case property name").format(name=node.name),
-            serialize(node)
-        )
-    search_values = node.args[1]
+    property_name, search_values = node.args
+    property_name = _property_name_to_string(property_name, node)
     return case_property_query(property_name, search_values, fuzzy=context.fuzzy, multivalue_mode=operator)
+
+
+# TODO validate distance format
+def proximity(node, context):
+    confirm_args_count(node, 3)
+    property_name, coords, distance = node.args
+    property_name = _property_name_to_string(property_name, node)
+
+    try:
+        geo_point = GeoPoint.from_string(coords, flexible=True)
+    except BadValueError as e:
+        raise XPathFunctionException(
+            _(f"The second argument to '{node.name}' must be valid coordinates"),
+            serialize(node)
+        ) from e
+
+    return case_property_geo_distance(property_name, geo_point.latitude, geo_point.longitude, distance)
+
+
+def _property_name_to_string(value, node):
+    if isinstance(value, Step):
+        return serialize(value)
+    if isinstance(value, str):
+        return value
+    raise XPathFunctionException(
+        _(f"The first argument to '{node.name}' must be a valid case property name"),
+        serialize(node)
+    )

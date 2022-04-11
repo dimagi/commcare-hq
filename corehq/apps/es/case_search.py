@@ -284,8 +284,8 @@ def case_property_geo_distance(geopoint_property_name, lat, lon, distance):
             'geo_distance': {
                 'distance': distance,
                 f"{CASE_PROPERTIES_PATH}.geopoint_value": {
-                    'lat': lat,
-                    'lon': lon,
+                    'lat': float(lat),
+                    'lon': float(lon),
                 }
             }
         }

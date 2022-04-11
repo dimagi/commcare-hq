@@ -8,7 +8,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.filter_dsl import build_filter_from_ast, SearchFilterContext
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, case_property_geo_distance
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -638,6 +638,12 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
 
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+
+    def test_proximity_filter(self):
+        parsed = parse_xpath("proximity('coords', '42.4402967 -71.1453275', '1mi')")
+        expected_filter = case_property_geo_distance('coords', '42.4402967', '-71.1453275', '1mi')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
