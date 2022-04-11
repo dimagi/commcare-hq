@@ -4865,7 +4865,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             for lang, label in translations.items() if label}
         for module in self.modules:
             if hasattr(module, 'search_config'):
-                setattr(getattr(module, 'search_config', 'title label', label_dict))
+                setattr(getattr(module, 'search_config', 'title_label', label_dict))
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
