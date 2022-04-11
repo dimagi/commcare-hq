@@ -323,7 +323,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         label=gettext_lazy("Slug"),
         required=False,
         help_text=gettext_lazy(
-            "CAUTION: Changing this value will alter the SAML endpoint URLs "
+            "CAUTION: Changing this value will alter SSO endpoint URLs "
             "below and affect active SSO setups for the client!"
         ),
     )
