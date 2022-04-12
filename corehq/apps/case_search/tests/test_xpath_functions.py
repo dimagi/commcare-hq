@@ -25,6 +25,9 @@ INVALID_TEST_CASES = [(
 ), (
     'proximity("coords", "42.4402967 -71.1453275", 7, "smoots")',
     "is not a valid distance unit"
+), (
+    'proximity("coords", "42.4402967 -71.1453275", "eight", "miles")',
+    "The third argument to 'proximity' must be a number, got 'eight'"
 )]
 
 

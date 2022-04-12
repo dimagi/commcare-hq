@@ -52,6 +52,14 @@ def proximity(node, context):
             serialize(node)
         ) from e
 
+    try:
+        distance = float(distance)
+    except ValueError as e:
+        raise XPathFunctionException(
+            _(f"The third argument to '{node.name}' must be a number, got '{distance}'"),
+            serialize(node)
+        ) from e
+
     if unit not in DISTANCE_UNITS:
         raise XPathFunctionException(
             _(f"'{unit}' is not a valid distance unit. Expected one of {', '.join(DISTANCE_UNITS)}"),
