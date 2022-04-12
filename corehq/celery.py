@@ -5,7 +5,6 @@ import os
 
 import django
 from django.core.checks import run_checks
-from django.core.exceptions import AppRegistryNotReady
 
 from manage import init_hq_python_path, run_patches
 
@@ -15,9 +14,6 @@ run_patches()
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
 django.setup()  # calls corehq.apps.celery.Config.ready()
-try:
-    run_checks()
-except AppRegistryNotReady:
-    pass
+run_checks()
 
 from corehq.apps.celery import app  # noqa: E402, F401
