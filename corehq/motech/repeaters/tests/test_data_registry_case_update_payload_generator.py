@@ -147,6 +147,18 @@ def test_generator_update_create_index_to_host():
             "1": {"host": IndexAttrs("parent_type", "case2", "extension")}})
 
 
+def test_generator_update_create_index_custom_identifier():
+    builder = IntentCaseBuilder().create_index("case2", "parent_type", "extension", "parent")
+
+    def _get_case(case_id, domain=None):
+        assert case_id == "case2"
+        return Mock(domain=TARGET_DOMAIN, type="parent_type")
+
+    with patch.object(CommCareCase.objects, 'get_case', new=_get_case):
+        _test_payload_generator(intent_case=builder.get_case(), expected_indices={
+            "1": {"parent": IndexAttrs("parent_type", "case2", "extension")}})
+
+
 def test_generator_update_create_index_not_found():
     builder = IntentCaseBuilder().create_index("case2", "parent_type", "child")
 
@@ -475,12 +487,14 @@ class IntentCaseBuilder:
         })
         return self
 
-    def create_index(self, case_id, case_type, relationship="child"):
+    def create_index(self, case_id, case_type, relationship="child", identifier=None):
         self.props.update({
             "target_index_create_case_id": case_id,
             "target_index_create_case_type": case_type,
             "target_index_create_relationship": relationship,
         })
+        if identifier is not None:
+            self.props["target_index_create_identifier"] = identifier
         return self
 
     def remove_index(self, case_id, identifier, relationship=None):

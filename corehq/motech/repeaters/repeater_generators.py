@@ -382,6 +382,7 @@ class CaseUpdateConfig:
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        "index_create_identifier": "target_index_create_identifier",
         # index remove
         "index_remove_case_id": "target_index_remove_case_id",
         "index_remove_identifier": "target_index_remove_identifier",
@@ -412,6 +413,7 @@ class CaseUpdateConfig:
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
+    index_create_identifier = attr.ib()
     index_remove_case_id = attr.ib()
     index_remove_identifier = attr.ib()
     index_remove_relationship = attr.ib()
@@ -432,13 +434,14 @@ class CaseUpdateConfig:
             kwargs["index_create_relationship"] = "child"
         if "index_remove_relationship" not in kwargs:
             kwargs["index_remove_relationship"] = "child"
+        if kwargs.get("index_create_identifier") is None:
+            kwargs["index_create_identifier"] = (
+                "parent" if kwargs["index_create_relationship"] == "child" else "host"
+            )
+
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
-
-    @property
-    def index_create_identifier(self):
-        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
