@@ -433,8 +433,6 @@ class CaseUpdateConfig:
 
         if kwargs.get("index_create_relationship") is None:
             kwargs["index_create_relationship"] = "child"
-        if kwargs.get("index_remove_relationship") is None:
-            kwargs["index_remove_relationship"] = "child"
         if kwargs.get("index_create_identifier") is None:
             kwargs["index_create_identifier"] = (
                 "parent" if kwargs["index_create_relationship"] == "child" else "host"

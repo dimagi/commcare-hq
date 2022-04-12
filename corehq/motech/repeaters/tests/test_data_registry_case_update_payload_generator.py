@@ -501,8 +501,9 @@ class IntentCaseBuilder:
         self.props.update({
             "target_index_remove_case_id": case_id,
             "target_index_remove_identifier": identifier,
-            "target_index_remove_relationship": relationship,
         })
+        if relationship is not None:
+            self.props["target_index_remove_relationship"] = relationship
         return self
 
     def include_props(self, include):
