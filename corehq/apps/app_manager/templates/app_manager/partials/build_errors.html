@@ -161,6 +161,18 @@
                 uses both smart links and Parent Child Selection. These two
                 features are not compatible.
               {% endblocktrans %}
+            {% case "smart links multi select" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses both smart links and a multi-select case list. These two
+                features are not compatible.
+              {% endblocktrans %}
+            {% case "data registry multi select" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                loads a case from a data registry and uses a multi-select case list.
+                These two features are not compatible.
+              {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
