@@ -193,3 +193,53 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
             'type': 'multi select select parent first',
             'module': {'id': 1, 'unique_id': 'another_module', 'name': {'en': 'another module'}}
         }, self.factory.app.validate_app())
+
+    @flag_enabled('NON_PARENT_MENU_SELECTION')
+    def test_select_parent_first_other(self):
+        self.other_module.parent_select.active = True
+        self.other_module.parent_select.module_id = self.module.unique_id
+        self.other_module.parent_select.relationship = None
+
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <datum id="case_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                         value="./@case_id"
+                         detail-select="m0_case_short"
+                         detail-confirm="m0_case_long"/>
+                </session>
+              </entry>
+              <entry>
+                <command id="m1-f0">
+                  <text>
+                    <locale id="forms.m1f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <datum id="case_id_person"
+                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                         value="./@case_id"
+                         detail-select="m0_case_short"/>
+                  <instance-datum id="case_id"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m1_case_short"
+                                  detail-confirm="m1_case_long"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
+        )
