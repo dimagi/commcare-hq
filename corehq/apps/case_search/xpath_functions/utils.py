@@ -9,6 +9,6 @@ def confirm_args_count(node, expected):
     actual = len(node.args)
     if actual != expected:
         raise XPathFunctionException(
-            _(f'The "{node.name}" function accepts exactly {expected} arguments, got {actual}'),
+            _(f"The '{node.name}' function accepts exactly {expected} arguments, got {actual}"),
             serialize(node)
         )
