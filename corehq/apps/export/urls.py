@@ -73,7 +73,7 @@ from corehq.apps.export.views.utils import (
     GenerateSchemaFromAllBuildsView,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
-from corehq.apps.oauth_integrations.views.google import redirect_oauth_view, call_back_view
+from corehq.apps.oauth_integrations.views.google import google_sheet_oauth_redirect
 
 urlpatterns = [
     # Export list views
@@ -250,9 +250,6 @@ urlpatterns = [
 
     # OAuth redirect views
     url(r"^google_sheets_oauth/redirect/$",
-        redirect_oauth_view,
+        google_sheet_oauth_redirect,
         name="google_sheet_oauth_redirect"),
-    url(r"^google_sheets_oauth/callback/$",
-        call_back_view,
-        name="google_sheet_oauth_callback"),
 ]

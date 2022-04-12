@@ -216,7 +216,7 @@ hqDefine("export/js/export_list", [
         };
 
         self.openRequestedSheet = function () {
-            window.open(self.url, '_blank').focus();
+            window.open(self.url(), '_blank').focus();
         };
 
         return self;

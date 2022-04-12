@@ -79,26 +79,39 @@ def create_spreadsheet(spreadsheet_data, user):
     return sheets_file
 
 
-def listify_data(query_results):
+def create_table(documents, config):
+    ROW_DICT_INDEX = 0
     data = []
-    for row_number, document in enumerate(query_results):
-        row_values = document.get("case_json")
-
-        if(row_number == 0):
-            headers = list(row_values.keys())
-            data.append(headers)
-        data.append(list(row_values.values()))
+    for table in config.tables:
+        for row_number, document in enumerate(documents):
+            row_dict = table.get_rows(
+                document,
+                document.get('_id'),
+                split_columns=config.split_multiselects,
+                transform_dates=config.transform_dates,
+                as_json=True,
+            )
+            if(row_number == 0):
+                table_headers = list(row_dict[ROW_DICT_INDEX].keys())
+                data.append(table_headers)
+            table_values = list(row_dict[ROW_DICT_INDEX].values())
+            data.append(table_values)
 
     return data
+
+
+def chunkify_data(data, chunk_size):
+    return [data[x: x + chunk_size] for x in range(0, len(data), chunk_size)]
 
 
 def get_export_data(export, domain):
     if export.type == "case":
         query = get_case_export_base_query(domain, export.case_type)
     else:
-        query = get_form_export_base_query(domain, export.app_id, export.xlmns, include_errors=False)
+        query = get_form_export_base_query(domain, export.app_id, export.xmlns, include_errors=False)
 
     for filter in export.get_filters():
         query = query.filter(filter.to_es_filter())
 
-    return query.run()
+    query = query.run()
+    return query.hits

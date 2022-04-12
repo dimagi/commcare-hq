@@ -54,7 +54,13 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
-from corehq.apps.oauth_integrations.utils import create_spreadsheet, get_export_data, get_token
+from corehq.apps.oauth_integrations.utils import (
+    chunkify_data,
+    create_spreadsheet,
+    get_export_data,
+    get_token,
+    create_table,
+)
 from couchexport.models import IntegrationFormat
 
 
@@ -205,6 +211,8 @@ class BaseExportView(BaseProjectDataView):
                 "Number of additional nodes": num_nodes,
             })
 
+        export.save()
+
         if export.export_format == IntegrationFormat.LIVE_GOOGLE_SHEETS:
             if get_token(request.user) is None:
                 from corehq.apps.export.views.list import LiveGoogleSheetListView
@@ -215,14 +223,18 @@ class BaseExportView(BaseProjectDataView):
                 return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=[self.domain]))
 
             export_data = get_export_data(export, self.domain)
-            google_sheet = create_spreadsheet(export_data, request.couch_user)
+
+            data_table = create_table(export_data, export)
+            google_sheet = create_spreadsheet(
+                chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
+                request.user
+            )
             new_schedule = LiveGoogleSheetSchedule(
-                export_config_id=export,
+                export_config_id=export._id,
                 google_sheet_id=google_sheet["spreadsheetId"]
             )
             new_schedule.save()
 
-        export.save()
         messages.success(
             request,
             format_html(_("Export <strong>{}</strong> saved."), export.name)

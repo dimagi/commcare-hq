@@ -247,9 +247,9 @@ class ExportListHelper(object):
 
     def _get_google_sheet_url(self, export):
         try:
-            live_google_sheet_schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export)
+            live_google_sheet_schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export.get_id)
             google_sheet_id = live_google_sheet_schedule.google_sheet_id
-            google_sheet_url = "https://spreadsheets.google.com/feeds/worksheets/{}".format(google_sheet_id)
+            google_sheet_url = f"https://docs.google.com/spreadsheets/d/{google_sheet_id}"
             return google_sheet_url
         except LiveGoogleSheetSchedule.DoesNotExist:
             return None
@@ -936,7 +936,7 @@ def submit_app_data_drilldown_form(request, domain):
             cls = CreateGoogleSheetCaseView
         else:
             export_tag = create_form.cleaned_data['form']
-            cls - CreateGoogleSheetFormView
+            cls = CreateGoogleSheetFormView
     elif is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
@@ -1162,7 +1162,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
         return _("Select Model Type")
 
     def _should_appear_in_list(self, export):
-        return export['export_format'] == IntegrationFormat.LIVE_GOOGLE_SHEET
+        return export['export_format'] == IntegrationFormat.LIVE_GOOGLE_SHEETS
 
     def fmt_export_data(self, export):
         data = super(LiveGoogleSheetListHelper, self).fmt_export_data(export)

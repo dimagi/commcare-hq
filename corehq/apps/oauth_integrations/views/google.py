@@ -18,7 +18,8 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.exceptions import RefreshError
 
 
-def redirect_oauth_view(request, domain):
+def google_sheet_oauth_redirect(request, domain):
+    request.session["domain"] = domain
     redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
     token = get_token(request.user)
 
@@ -27,17 +28,12 @@ def redirect_oauth_view(request, domain):
     else:
         credentials = load_credentials(token.token)
         try:
-            token.token = stringify_credentials(refresh_credentials(credentials))
-            token.save()
+            credentials.refresh(Request())
         # When we lose access to a user's refresh token, we get this refresh error.
         # This will simply have them log into google sheets again to give us another refresh token
         except RefreshError:
             return HttpResponseRedirect(get_url_from_google(redirect_uri))
         return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=(domain,)))
-
-
-def refresh_credentials(credentials, user):
-    return credentials.refresh(Request())
 
 
 def get_url_from_google(redirect_uri):
@@ -52,7 +48,8 @@ def get_url_from_google(redirect_uri):
     return auth_tuple[INDEX_URL]
 
 
-def call_back_view(request, domain):
+def google_sheet_oauth_callback(request):
+    domain = request.session["domain"]
     redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
 
     try:
