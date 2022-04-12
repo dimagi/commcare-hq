@@ -54,11 +54,11 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                 </command>
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <session>
-                  <datum id="case_id"
-                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
-                         value="./@case_id"
-                         detail-select="m0_case_short"
-                         detail-confirm="m0_case_long"/>
+                  <instance-datum id="case_id"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"/>
                 </session>
               </entry>
             </partial>

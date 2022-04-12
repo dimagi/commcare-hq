@@ -384,6 +384,10 @@ class SessionDatum(IdNode, OrderedXmlObject):
     autoselect = BooleanField('@autoselect')
 
 
+class InstanceDatum(SessionDatum):
+    ROOT_NAME = 'instance-datum'
+
+
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
@@ -525,6 +529,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
 def _wrap_session_datums(datum):
     return {
         'datum': SessionDatum,
+        'instance-datum': InstanceDatum,
         'query': RemoteRequestQuery
     }[datum.tag](datum)
 
@@ -540,11 +545,11 @@ class Entry(OrderedXmlObject, XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
     session_children = NodeListField('session/*', _wrap_session_datums)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
     stack = NodeField('stack', Stack)
 
     assertions = NodeListField('assertions/assert', Assertion)
-
 
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
@@ -596,6 +601,7 @@ class RemoteRequestSession(OrderedXmlObject, XmlObject):
 
     queries = NodeListField('query', RemoteRequestQuery)
     data = NodeListField('datum', SessionDatum)
+    instance_data = NodeListField('instance-datum', InstanceDatum)
 
 
 class RemoteRequest(OrderedXmlObject, XmlObject):
