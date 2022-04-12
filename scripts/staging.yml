@@ -66,7 +66,6 @@ branches:
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
-    - dm/django3-tests # Daniel March 31
     - rc/obh-case-search-ui # Robert April 5
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - ml/all-in-one-offboarding # Minha April 7
