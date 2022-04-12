@@ -120,3 +120,63 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./detail[@id='m0_search_short']/action",
         )
+
+
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
+@patch_validate_xform()
+@patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
+class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
+    def setUp(self):
+        self.factory = AppFactory(domain="multiple-referrals")
+        self.app_id = uuid4().hex
+        self.factory.app._id = self.app_id
+        self.module, form = self.factory.new_basic_module('basic', 'person')
+        self.factory.form_requires_case(form, 'person')
+        self.module.assign_references()
+
+        self.other_module, form = self.factory.new_basic_module('another', 'person')
+        self.factory.form_requires_case(form, 'person')
+        self.other_module.case_details.short.multi_select = True
+        self.other_module.assign_references()
+
+    def test_select_parent_first_none(self):
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <datum id="case_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                         value="./@case_id"
+                         detail-select="m0_case_short"
+                         detail-confirm="m0_case_long"/>
+                </session>
+              </entry>
+              <entry>
+                <command id="m1-f0">
+                  <text>
+                    <locale id="forms.m1f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="case_id"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m1_case_short"
+                                  detail-confirm="m1_case_long"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
+        )
