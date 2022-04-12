@@ -390,11 +390,11 @@ class DetailContributor(SectionContributor):
     def _get_auto_launch_expression(module, in_search):
         allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
         auto_launch_expression = "false()"
-        if allow_auto_launch:
+        if allow_auto_launch and module.search_config.auto_launch:
             if module.is_multi_select():
                 # AUTO_LAUNCH_EXPRESSION is incompatible with multi select case lists - See USH-1870
                 auto_launch_expression = "true()"
-            elif module.search_config.auto_launch:
+            else:
                 auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
         return auto_launch_expression
 
