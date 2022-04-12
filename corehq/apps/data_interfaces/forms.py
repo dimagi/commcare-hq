@@ -550,7 +550,6 @@ class CaseRuleCriteriaForm(forms.Form):
                     'property_value': property_value,
                     'match_type': match_type,
                 })
-
         return result
 
     def clean_filter_on_closed_parent(self):
@@ -791,3 +790,64 @@ class CaseRuleActionsForm(forms.Form):
                 action = CaseRuleAction(rule=rule)
                 action.definition = definition
                 action.save()
+
+
+class DedupeCaseFilterForm(CaseRuleCriteriaForm):
+
+    prefix = 'case-filter'
+
+    case_type = forms.ChoiceField(
+        label=gettext_lazy("Case Type"),
+        required=False,
+    )
+
+    @property
+    def fieldset_help_text(self):
+        return _("The rule will be applied to all cases that match all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return True
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False
+
+    def __init__(self, domain, *args, **kwargs):
+        super(DedupeCaseFilterForm, self).__init__(domain, *args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                _("Cases Filter") if self.show_fieldset_title else "",
+                HTML(
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                ),
+                hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
+                hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
+                hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
+                hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
+                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
+                Div(data_bind="template: {name: 'case-filters'}"),
+                css_id="rule-criteria-panel",
+            ),
+        )
+        self.case_type_helper = None
+
+    def clean_filter_on_server_modified(self):
+        return False
+
+    def clean_server_modified_boundary(self):
+        return None
+
+    def clean_custom_match_definitions(self):
+        return []

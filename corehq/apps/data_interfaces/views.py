@@ -46,6 +46,7 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleCriteriaForm,
     CaseUpdateRuleForm,
     UpdateCaseGroupForm,
+    DedupeCaseFilterForm,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -963,6 +964,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     def page_context(self):
         context = super().page_context
         context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
+        context['criteria_form'] = self.case_filter_form
         return context
 
     def get_context_data(self, **kwargs):
@@ -989,6 +991,12 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
         errors.extend(self.validate_rule_params(request.domain, rule_params))
+
+        cases_filter_form = DedupeCaseFilterForm(request.domain, request.POST)
+
+        if not cases_filter_form.is_valid():
+            errors.extend(cases_filter_form.errors)
+
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))
@@ -1005,12 +1013,17 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
                 CaseDeduplicationActionDefinition,
                 **action_params
             )
+            # Todo: Add filter criteria to rule
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
         )
+
+    @property
+    def case_filter_form(self):
+        return DedupeCaseFilterForm(self.domain, rule=None, is_system_admin=True)
 
     def parse_params(self, request):
         rule_params = {

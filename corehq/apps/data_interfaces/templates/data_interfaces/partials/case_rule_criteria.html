@@ -18,7 +18,9 @@
       {% endfor %}
     </div>
   {% endif %}
-  {% crispy criteria_form criteria_form.case_type_helper %}
+  {% if criteria_form.case_type_helper %}
+    {% crispy criteria_form criteria_form.case_type_helper %}
+  {% endif %}
   <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
   <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
     <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
