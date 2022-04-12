@@ -96,6 +96,6 @@ def check_state(request):
 
 def get_token_from_google(request, flow):
     authorization_response = request.build_absolute_uri()
-    flow.fetch_token(authorization_response)
+    flow.fetch_token(authorization_response=authorization_response)
     credentials = flow.credentials
     return stringify_credentials(credentials)
