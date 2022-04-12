@@ -162,5 +162,19 @@ def regexp(field, regex):
     }
 
 
+def geo_distance(field, geopoint, distance):
+    """Filters cases to those within a certain distance of the provided geopoint
+
+    Distance should be a string like "10km" or "3mi". For options, see:
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/api-conventions.html#distance-units
+    """
+    return {
+        'geo_distance': {
+            field: geopoint.lat_lon,
+            'distance': distance,
+        }
+    }
+
+
 range_query = range_filter
 date_range = date_range

@@ -52,7 +52,7 @@ def proximity(node, context):
             serialize(node)
         ) from e
 
-    return case_property_geo_distance(property_name, geo_point.latitude, geo_point.longitude, distance)
+    return case_property_geo_distance(property_name, geo_point, distance)
 
 
 def _property_name_to_string(value, node):

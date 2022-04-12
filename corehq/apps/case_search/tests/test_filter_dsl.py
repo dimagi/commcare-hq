@@ -4,6 +4,7 @@ from eulxml.xpath import parse as parse_xpath
 from freezegun import freeze_time
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from couchforms.geopoint import GeoPoint
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.exceptions import CaseFilterError
@@ -643,7 +644,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     def test_proximity_filter(self):
         parsed = parse_xpath("proximity('coords', '42.4402967 -71.1453275', '1mi')")
-        expected_filter = case_property_geo_distance('coords', '42.4402967', '-71.1453275', '1mi')
+        expected_filter = case_property_geo_distance('coords', GeoPoint(42.4402967, -71.1453275), '1mi')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
