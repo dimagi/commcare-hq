@@ -69,8 +69,6 @@ branches:
     - rc/obh-case-search-ui # Robert April 5
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - jm/elastic-mapping-transform-multifield  # Joel Apr 8
-    - bmb/sso-oidc-update-idp  # Biyeun Apr 8
-    - jls/instance-datum # Jenny April 11
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - fr/ucr-registry-linked  # Farid April 12
 
