@@ -15,8 +15,8 @@ class GeoPoint:
     def lat_lon(self):
         """Suitable to send to an elasticsearch geo_point field"""
         return {
-            'lat': self.latitude,
-            'lon': self.longitude
+            'lat': float(self.latitude),
+            'lon': float(self.longitude),
         }
 
     @classmethod
