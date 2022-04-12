@@ -12,16 +12,19 @@ INVALID_TEST_CASES = [(
     "The 'not' function accepts exactly 1 arguments, got 2"
 ), (
     'proximity(7)',
-    "The 'proximity' function accepts exactly 3 arguments, got 1"
+    "The 'proximity' function accepts exactly 4 arguments, got 1"
 ), (
-    'proximity(7, "42.4402967 -71.1453275", "1mi")',
+    'proximity(7, "42.4402967 -71.1453275", 1, "miles")',
     "The first argument to 'proximity' must be a valid case property name"
 ), (
-    'proximity("coords", 42.4402967, "1mi")',
+    'proximity("coords", 42.4402967, 1, "miles")',
     "The second argument to 'proximity' must be valid coordinates"
 ), (
-    'proximity("coords", "42.4402967", "1mi")',
+    'proximity("coords", "42.4402967", 1, "miles")',
     "The second argument to 'proximity' must be valid coordinates"
+), (
+    'proximity("coords", "42.4402967 -71.1453275", 7, "smoots")',
+    "is not a valid distance unit"
 )]
 
 

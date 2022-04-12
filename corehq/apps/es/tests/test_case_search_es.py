@@ -578,6 +578,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             {'_id': 'c4', 'coords': "-33.8373 151.225"},
         ])
         res = CaseSearchES().domain(self.domain).set_query(
-            case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), '1000km'),
+            case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])

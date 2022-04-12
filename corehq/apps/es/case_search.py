@@ -272,10 +272,10 @@ def case_property_missing(case_property_name):
     )
 
 
-def case_property_geo_distance(geopoint_property_name, geopoint, distance):
+def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
     return _base_property_query(
         geopoint_property_name,
-        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, distance)
+        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, **kwargs)
     )
 
 

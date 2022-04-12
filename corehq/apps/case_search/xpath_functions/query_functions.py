@@ -8,6 +8,7 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
+from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.es.case_search import (
     case_property_geo_distance,
     case_property_query,
@@ -38,10 +39,9 @@ def _selected_query(node, context, operator):
     return case_property_query(property_name, search_values, fuzzy=context.fuzzy, multivalue_mode=operator)
 
 
-# TODO validate distance format
 def proximity(node, context):
-    confirm_args_count(node, 3)
-    property_name, coords, distance = node.args
+    confirm_args_count(node, 4)
+    property_name, coords, distance, unit = node.args
     property_name = _property_name_to_string(property_name, node)
 
     try:
@@ -52,7 +52,13 @@ def proximity(node, context):
             serialize(node)
         ) from e
 
-    return case_property_geo_distance(property_name, geo_point, distance)
+    if unit not in DISTANCE_UNITS:
+        raise XPathFunctionException(
+            _(f"'{unit}' is not a valid distance unit. Expected one of {', '.join(DISTANCE_UNITS)}"),
+            serialize(node)
+        )
+
+    return case_property_geo_distance(property_name, geo_point, **{unit: distance})
 
 
 def _property_name_to_string(value, node):

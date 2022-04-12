@@ -19,6 +19,9 @@ MUST_NOT = "must_not"
 SHOULD = "should"
 BOOL = "bool"
 
+DISTANCE_UNITS = ["miles", "yards", "feet", "inch", "kilometers", "meters",
+                  "centimeters", "millimeters", "nauticalmiles"]
+
 
 def BOOL_CLAUSE(query, **kwargs):
     return _CLAUSE(BOOL, query, **kwargs)
@@ -162,16 +165,20 @@ def regexp(field, regex):
     }
 
 
-def geo_distance(field, geopoint, distance):
+def geo_distance(field, geopoint, **kwargs):
     """Filters cases to those within a certain distance of the provided geopoint
 
-    Distance should be a string like "10km" or "3mi". For options, see:
-    https://www.elastic.co/guide/en/elasticsearch/reference/current/api-conventions.html#distance-units
+        eg: geo_distance('gps_location', GeoPoint(-33.1, 151.8), kilometers=100)
     """
+    if len(kwargs) != 1 or not all(k in DISTANCE_UNITS for k in kwargs):
+        raise ValueError("'geo_distance' requires exactly one distance kwarg, "
+                         f"options are {', '.join(DISTANCE_UNITS)}")
+    unit, distance = kwargs.popitem()
+
     return {
         'geo_distance': {
             field: geopoint.lat_lon,
-            'distance': distance,
+            'distance': f"{distance}{unit}",
         }
     }
 
