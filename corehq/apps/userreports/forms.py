@@ -12,23 +12,24 @@ class UCRExpressionForm(forms.ModelForm):
     class Meta:
         model = UCRExpression
         fields = [
-            "id",
             "name",
             "expression_type",
+            "description",
             "definition",
         ]
 
     def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = request.domain
-        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())
-        self.fields['definition'] = JsonField(initial={"new_expression_name": "value"})
+        self.fields['description'] = forms.CharField(required=False)
+        self.fields['definition'] = JsonField(initial={"type": "property_name", "property_name": "name"})
         self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Expression'),
                 crispy.Field('name'),
                 crispy.Field('expression_type'),
+                crispy.Field('description'),
                 crispy.Field('definition'),
             )
         )
@@ -40,3 +41,12 @@ class UCRExpressionForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)
+
+
+class UCRExpressionUpdateForm(UCRExpressionForm):
+    class Meta(UCRExpressionForm.Meta):
+        fields = UCRExpressionForm.Meta.fields + ['id']
+
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(request, *args, **kwargs)
+        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())

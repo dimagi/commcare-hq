@@ -28,7 +28,7 @@ from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.userreports.forms import UCRExpressionForm
+from corehq.apps.userreports.forms import UCRExpressionForm, UCRExpressionUpdateForm
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -1714,6 +1714,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
         return [
             _("Name"),
             _("Type"),
+            _("Description"),
             _("Definition"),
             _("Actions"),
         ]
@@ -1735,6 +1736,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'id': expression.id,
             'name': expression.name,
             'type': expression.expression_type,
+            'description': expression.description,
             'definition': self._truncate_value(json.dumps(expression.definition)),
             'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
         }
@@ -1754,7 +1756,6 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 
     def get_create_item_data(self, create_form):
         try:
-            pass
             new_expression = create_form.save()
         except IntegrityError:
             return {'error': _(f"UCR Expression with name \"{create_form.cleaned_data['name']}\" already exists.")}
@@ -1769,8 +1770,8 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
                 id=self.request.POST.get("id"), domain=self.domain
             )
         if self.request.method == "POST" and self.action == "update":
-            return UCRExpressionForm(self.request, self.request.POST, instance=instance)
-        return UCRExpressionForm(self.request, instance=instance)
+            return UCRExpressionUpdateForm(self.request, self.request.POST, instance=instance)
+        return UCRExpressionUpdateForm(self.request, instance=instance)
 
     def get_updated_item_data(self, update_form):
         updated_expression = update_form.save()
