@@ -430,9 +430,10 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
-        if "index_create_relationship" not in kwargs:
+
+        if kwargs.get("index_create_relationship") is None:
             kwargs["index_create_relationship"] = "child"
-        if "index_remove_relationship" not in kwargs:
+        if kwargs.get("index_remove_relationship") is None:
             kwargs["index_remove_relationship"] = "child"
         if kwargs.get("index_create_identifier") is None:
             kwargs["index_create_identifier"] = (
