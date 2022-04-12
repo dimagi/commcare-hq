@@ -50,37 +50,6 @@ are as many db files as there are users, i.e. tens of thousands. Each file has i
 down from the source of truth, but always just a little bit out of date if anyone's updated it after their last
 sync.
 
-Navigation and replaying of sessions
-++++++++++++++++++++++++++++++++++++
-User activity in CommCare is oriented around navigating to and then submitting forms. User actions are represented
-as a series of "selections" that begin at the app's initial list of menus and eventually end in form entry.
-
-Selections can be:
-
-* An integer index. This is used for lists of menus and/or forms and represents the position of the selected item.
-* A case id. This indicates that the user selected the given case.
-* The keyword ``action`` and an integer index, such as ``action 0``. This represents the user selecting an action on a detail screen. The index represents the position of the action in the detail's list of actions.
-
-For example, the selections ``[1, 'abc123', 0]`` indicate that a user selected the second visible menu, then selected case
-``abc123``, then selected the first visible menu (or form). Note that formplayer determines whether a given
-selection is an index, case id, or action based not on the selection itself but on its understanding of the app
-structure and the pieces of data needed to proceed to reach a form.
-
-Navigation requests from web apps include a ``selections`` parameter, an array of selections made. Each
-request contains the full set of selections, so the example above might map to the following requests:
-
-* ``navigate_menu_start`` to view the first screen, a list of menus
-* ``navigate_menu`` with selections ``[1]`` to select the first menu, which leads to a case list
-* ``get_details`` with selections ``[1]`` to select a case and show its details
-* ``navigate_menu`` with selections ``[1, 'abc123']`` to confirm the case selection, which leads to a list of forms
-* ``navigate_menu`` with selections ``[1, 'abc123', 0]`` to select the first form
-* ``submit-all`` to submit the form when complete, which sends the user back to the first list of menus
-
-Because formplayer is a RESTful service, each of these individual request plays through all of the given
-selections, even those that were already completed earlier. If an early selection contained an expensive operation,
-that operation can slow down requests for the rest of the session. Selections that cause side effects will cause
-them repeatedly.
-
 Request routing
 +++++++++++++++
 Each user is tied by a ``formplayer_session`` cookie directly to a machine. The cookie is just a routing hint that
@@ -134,3 +103,37 @@ that formplayer performance drops sharply when you go from running on
 machines with 64G RAM and 30G java heap to machines with 128G RAM and (still) 30G java heap. So for the time being
 our understanding is that the max machine size is 64G RAM to run formplayer on. This, of course, limits our ability
 to mitigate the many-machines load imbalance problem.
+
+Navigation
+^^^^^^^^^^
+
+Replaying sessions
+++++++++++++++++++
+User activity in CommCare is oriented around navigating to and then submitting forms. User actions are represented
+as a series of "selections" that begin at the app's initial list of menus and eventually end in form entry.
+
+Selections can be:
+
+* An integer index. This is used for lists of menus and/or forms and represents the position of the selected item.
+* A case id. This indicates that the user selected the given case.
+* The keyword ``action`` and an integer index, such as ``action 0``. This represents the user selecting an action on a detail screen. The index represents the position of the action in the detail's list of actions.
+
+For example, the selections ``[1, 'abc123', 0]`` indicate that a user selected the second visible menu, then selected case
+``abc123``, then selected the first visible menu (or form). Note that formplayer determines whether a given
+selection is an index, case id, or action based not on the selection itself but on its understanding of the app
+structure and the pieces of data needed to proceed to reach a form.
+
+Navigation requests from web apps include a ``selections`` parameter, an array of selections made. Each
+request contains the full set of selections, so the example above might map to the following requests:
+
+* ``navigate_menu_start`` to view the first screen, a list of menus
+* ``navigate_menu`` with selections ``[1]`` to select the first menu, which leads to a case list
+* ``get_details`` with selections ``[1]`` to select a case and show its details
+* ``navigate_menu`` with selections ``[1, 'abc123']`` to confirm the case selection, which leads to a list of forms
+* ``navigate_menu`` with selections ``[1, 'abc123', 0]`` to select the first form
+* ``submit-all`` to submit the form when complete, which sends the user back to the first list of menus
+
+Because formplayer is a RESTful service, each of these individual request plays through all of the given
+selections, even those that were already completed earlier. If an early selection contained an expensive operation,
+that operation can slow down requests for the rest of the session. Selections that cause side effects will cause
+them repeatedly.
