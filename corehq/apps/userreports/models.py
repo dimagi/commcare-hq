@@ -1357,11 +1357,12 @@ class InvalidUCRData(models.Model):
 
 class UCRExpression(models.Model):
     """
-    A single UCR expression, filter, named expression or named filter that can
+    A single UCR named expression or named filter that can
     be shared amongst features that use these
     """
     name = models.CharField(max_length=255, null=False)
     domain = models.CharField(max_length=255, null=False, db_index=True)
+    description = models.TextField(blank=True, null=True)
     expression_type = models.CharField(
         max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
     )
