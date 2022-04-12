@@ -424,14 +424,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            var aa = document.getElementsByTagName("input");
-            for (var i = 0; i < aa.length; i++) {
-                if (aa[i].type === 'checkbox') {
-                    if (aa[i].checked === !e.target.checked) {
-                        aa[i].checked = e.target.checked;
-                    }
+            this.children.each(function (childView) {
+                let checkbox = childView.ui.selectRow[0]
+                if (checkbox.checked === !e.target.checked) {
+                    checkbox.checked = e.target.checked;
                 }
-            }
+            });
             if (e.target.checked) {
                 for (const value of this.data) {
                     if (this.selectedCaseIds.indexOf(value.id) === -1) {
