@@ -379,14 +379,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
+        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
         while named_expression_specs:
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    named_expressions[name] = ExpressionFactory.from_spec(
-                        expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
-                    )
+                    factory_context.named_expressions = named_expressions
+                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]
                 except BadSpecError as bad_spec_error:
@@ -402,12 +401,9 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
+        factory_context = FactoryContext(self.named_expression_objects, {}, domain=self.domain)
         return {
-            name: FilterFactory.from_spec(
-                filter, FactoryContext(
-                    self.named_expression_objects, {}, domain=self.domain
-                )
-            )
+            name: FilterFactory.from_spec(filter, factory_context)
             for name, filter in self.named_filters.items()
         }
 
