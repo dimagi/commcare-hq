@@ -29,16 +29,16 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.factory = AppFactory(domain="multiple-referrals")
         self.app_id = uuid4().hex
         self.factory.app._id = self.app_id
-        module, form = self.factory.new_basic_module('basic', 'person')
+        self.module, form = self.factory.new_basic_module('basic', 'person')
         self.factory.form_requires_case(form, 'person')
         form.xmlns = "some-xmlns"
 
-        module.case_details.short.multi_select = True
-        module.search_config = CaseSearch(
+        self.module.case_details.short.multi_select = True
+        self.module.search_config = CaseSearch(
             search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
         )
-        module.assign_references()
+        self.module.assign_references()
 
     def test_multi_select_case_list(self):
         suite = self.factory.app.create_suite()
@@ -70,4 +70,53 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             self.get_xml('multi_select_case_list').decode('utf-8').format(app_id=self.factory.app._id),
             suite,
             "./remote-request",
+        )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_multi_select_case_list_auto_launch(self):
+        self.module.search_config.auto_launch = True
+        suite = self.factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action auto_launch="true()" redo_last="false">
+                <display>
+                  <text>
+                    <locale id="case_search.m0"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            suite,
+            "./detail[@id='m0_case_short']/action",
+        )
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action auto_launch="false()" redo_last="true">
+                <display>
+                  <text>
+                    <locale id="case_search.m0.again"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            suite,
+            "./detail[@id='m0_search_short']/action",
         )
