@@ -180,3 +180,16 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./entry",
         )
+
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
+    def test_select_parent_first_parent_not_allowed(self, *args):
+        self.other_module.parent_select.active = True
+        self.other_module.parent_select.module_id = self.module.unique_id
+        self.other_module.parent_select.relationship = 'parent'
+
+        self.assertIn({
+            'type': 'multi select select parent first',
+            'module': {'id': 1, 'unique_id': 'another_module', 'name': {'en': 'another module'}}
+        }, self.factory.app.validate_app())
