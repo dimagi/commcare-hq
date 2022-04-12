@@ -92,7 +92,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """.format(
+        """.format(  # noqa: #501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,
@@ -157,7 +157,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """
+        """  # noqa: #501
         # check correct suite is generated
         self.assertXmlPartialEqual(
             icon_mapping_spec,
@@ -217,7 +217,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 </text>
               </template>
             </partial>
-        """.format(
+        """.format(  # noqa: #501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,
