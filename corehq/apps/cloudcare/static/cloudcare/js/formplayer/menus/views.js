@@ -437,7 +437,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     }
                 }
             } else {
-                this.selectedCaseIds = [];
+                for (const value of this.data) {
+                    let index = this.selectedCaseIds.indexOf(value.id)
+                    if (index !== -1) {
+                        this.selectedCaseIds.splice(index, 1);
+                    }
+                }
             }
             this.updateContinueButtonText(this.selectedCaseIds.length);
         },
