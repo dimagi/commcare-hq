@@ -438,7 +438,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             } else {
                 for (const value of this.data) {
-                    let index = this.selectedCaseIds.indexOf(value.id)
+                    let index = this.selectedCaseIds.indexOf(value.id);
                     if (index !== -1) {
                         this.selectedCaseIds.splice(index, 1);
                     }
