@@ -120,5 +120,3 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./detail[@id='m0_search_short']/action",
         )
-
-        self.module.search_config.auto_launch = False
