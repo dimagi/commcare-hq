@@ -157,8 +157,14 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    if set(case_ids) == case_ids_already_claimed:
-        return HttpResponse(status=204)
+    if not case_ids_to_claim:
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        synclog = get_properly_wrapped_sync_log(request.last_sync_token)
+        missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+        cases_already_on_phone = not(bool(missing_case_ids_on_phone))
+        if cases_already_on_phone:
+            # No claim or sync needed if the cases are already on the device.
+            return HttpResponse(status=204)
 
     return HttpResponse(status=201)
 
