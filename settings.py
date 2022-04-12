@@ -1478,8 +1478,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
