@@ -115,10 +115,6 @@ def run_patches():
 
     patch_jsonfield()
 
-    import django
-    _setup_once.setup = django.setup
-    django.setup = _setup_once
-
 
 def patch_jsonfield():
     """Patch the ``to_python`` method of JSONField
@@ -145,13 +141,6 @@ def patch_jsonfield():
         from django.contrib.postgres.fields.jsonb import JSONField
         import django.db.models
         django.db.models.JSONField = JSONField
-
-
-# HACK monkey-patch django setup to prevent second setup by django_nose
-def _setup_once(*args, **kw):
-    if not hasattr(_setup_once, "done"):
-        _setup_once.done = True
-        _setup_once.setup(*args, **kw)
 
 
 def set_default_settings_path(argv):
