@@ -38,7 +38,7 @@ def google_sheet_oauth_redirect(request, domain):
 
 def get_url_from_google(redirect_uri):
     INDEX_URL = 0
-    config = settings.GOOGLE_OATH_CONFIG
+    config = settings.GOOGLE_OAUTH_CONFIG
     config['redirect_uris'] = redirect_uri
 
     flow = Flow.from_client_config(
@@ -57,7 +57,7 @@ def google_sheet_oauth_callback(request):
 
     try:
         check_state(request)
-        config = settings.GOOGLE_OATH_CONFIG
+        config = settings.GOOGLE_OAUTH_CONFIG
         config['redirect_uris'] = redirect_uri
 
         flow = Flow.from_client_config(

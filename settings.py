@@ -1108,7 +1108,7 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 
 # Config settings for the google oauth handshake to get a user token
 # Google Cloud Platform secret settings config file
-GOOGLE_OATH_CONFIG = {}
+GOOGLE_OAUTH_CONFIG = {}
 
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
