@@ -23,7 +23,7 @@ from .util import patch_validate_xform
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
-    file_path = ('data', 'suite')
+    file_path = ('data', 'suite', 'multi_select_case_list')
 
     def setUp(self):
         self.factory = AppFactory(domain="multiple-referrals")
@@ -67,7 +67,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
         self.assertXmlPartialEqual(
-            self.get_xml('multi_select_case_list').decode('utf-8').format(app_id=self.factory.app._id),
+            self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
             suite,
             "./remote-request",
         )
