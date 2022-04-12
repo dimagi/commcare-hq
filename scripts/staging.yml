@@ -71,5 +71,6 @@ branches:
     - jm/elastic-mapping-transform-multifield  # Joel Apr 8
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - fr/ucr-registry-linked  # Farid April 12
+    - dm/celery  # Daniel Apr 12
 
 submodules: { }
