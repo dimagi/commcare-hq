@@ -2421,6 +2421,11 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def get_app(self):
         return self._parent
 
+    def is_multi_select(self):
+        if hasattr(self, 'case_details'):
+            return self.case_details.short.multi_select
+        return False
+
     def default_name(self, app=None):
         if not app:
             app = self.get_app()

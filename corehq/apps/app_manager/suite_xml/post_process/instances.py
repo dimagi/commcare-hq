@@ -37,7 +37,7 @@ class EntryInstances(PostProcessor):
         detail_ids = set()
         xpaths = set()
 
-        for datum in entry.datums:
+        for datum in entry.all_datums:
             detail_ids.add(datum.detail_confirm)
             detail_ids.add(datum.detail_select)
             detail_ids.add(datum.detail_inline)

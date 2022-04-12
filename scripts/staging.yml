@@ -4,7 +4,7 @@
 
 # GENERAL PROCESS
 # From your commcare-hq directory with the virtualenv turned on and master
-# checked out to safely push your changes to scripts/staging.yaml
+# checked out to safely push your changes to scripts/staging.yml
 #     $ scripts/commit-staging --push
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
@@ -28,16 +28,16 @@
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
-#     add the branch `foo+bar` to staging.yaml and move branches foo and
+#     add the branch `foo+bar` to staging.yml and move branches foo and
 #     bar to right below it
 #
-#     Later on branch B gets merged into master and removed from staging.yaml.
+#     Later on branch B gets merged into master and removed from staging.yml.
 #     Perhaps the person who removes it also notices the A+B and does the
 #     following. Otherwise anyone who comes along and sees A+B but not both
 #     branches can feel free to assume the following need to be done.
 #       * Merge A+B into A. Since B is now gone, you want to merge the
 #         resolution into A, otherwise A will conflict with master.
-#       * Remove A+B from staging.yaml. It's no longer necessary since it's
+#       * Remove A+B from staging.yml. It's no longer necessary since it's
 #         now a subset of A.
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
@@ -62,17 +62,14 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     #- jm/elastic-client-adapter  # Joel Mar 1
-    - ap/sql-case-repeater # Amit March 23
+    # - ap/sql-case-repeater # Amit March 23
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
     - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
-    - dm/django3-tests # Daniel March 31
     - rc/obh-case-search-ui # Robert April 5
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
-    - ml/all-in-one-offboarding # Minha April 7
-    - es/slow-expand # Ethan Apr 7
     - jm/elastic-mapping-transform-multifield  # Joel Apr 8
-    - bmb/sso-oidc-update-idp  # Biyeun Apr 8
+    - smh/multi-select-contiune-workflow # Steph/Jenny April 11
+    - fr/ucr-registry-linked  # Farid April 12
 
 submodules: { }

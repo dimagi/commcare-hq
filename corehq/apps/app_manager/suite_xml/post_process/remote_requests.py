@@ -18,6 +18,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Display,
     Hint,
     Instance,
+    InstanceDatum,
     Itemset,
     PushFrame,
     QueryData,
@@ -82,7 +83,7 @@ class RemoteRequestFactory(object):
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        if self.is_multi_select():
+        if self.module.is_multi_select():
             self.case_session_var = "selected_cases"
         else:
             self.case_session_var = self.module.search_config.case_session_var
@@ -110,7 +111,7 @@ class RemoteRequestFactory(object):
 
     def build_case_id_query_data(self):
         data = QueryData(key='case_id')
-        if self.is_multi_select():
+        if self.module.is_multi_select():
             data.ref = "."
             data.nodeset = self._get_multi_select_nodeset()
             data.exclude = self._get_multi_select_exclude()
@@ -118,11 +119,8 @@ class RemoteRequestFactory(object):
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
 
-    def is_multi_select(self):
-        return self.module.case_details.short.multi_select
-
     def _get_multi_select_xpaths(self):
-        if not self.is_multi_select():
+        if not self.module.is_multi_select():
             return set()
         return {
             self._get_multi_select_nodeset(),
@@ -136,7 +134,7 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.is_multi_select())
+        return self.module.search_config.get_relevant(self.module.is_multi_select())
 
     def build_command(self):
         return Command(
@@ -219,7 +217,8 @@ class RemoteRequestFactory(object):
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
-        return [SessionDatum(
+        datum_cls = InstanceDatum if self.module.is_multi_select() else SessionDatum
+        return [datum_cls(
             id=self.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
@@ -381,7 +380,7 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         self.case_session_var = case_session_var
 
     def get_post_relevant(self):
-        if not self.is_multi_select():
+        if not self.module.is_multi_select():
             return CaseClaimXpath(self.case_session_var).default_relevant()
 
     def build_command(self):
