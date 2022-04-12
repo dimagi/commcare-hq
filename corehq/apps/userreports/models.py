@@ -1355,6 +1355,20 @@ class InvalidUCRData(models.Model):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
 
 
+class UCRExpressionManager(models.Manager):
+    def get_filters_for_domain(self, domain):
+        return {
+            f.name: f.wrapped_definition(domain)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+        }
+
+    def get_expressions_for_domain(self, domain):
+        return {
+            f.name: f.wrapped_definition(domain)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+        }
+
+
 class UCRExpression(models.Model):
     """
     A single UCR named expression or named filter that can
@@ -1367,6 +1381,8 @@ class UCRExpression(models.Model):
         max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
     )
     definition = models.JSONField(null=True)
+
+    objects = UCRExpressionManager()
 
     class Meta:
         app_label = 'userreports'
