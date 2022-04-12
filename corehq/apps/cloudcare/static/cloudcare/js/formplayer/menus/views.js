@@ -425,7 +425,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         selectAllAction: function (e) {
             this.children.each(function (childView) {
-                let checkbox = childView.ui.selectRow[0]
+                let checkbox = childView.ui.selectRow[0];
                 if (checkbox.checked === !e.target.checked) {
                     checkbox.checked = e.target.checked;
                 }
