@@ -204,6 +204,7 @@ ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
+    'corehq.apps.celery.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
