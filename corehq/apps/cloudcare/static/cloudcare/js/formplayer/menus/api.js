@@ -133,6 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
+                    "selected_values": params.selectedValues,
                 });
                 options.url = formplayerUrl + '/' + route;
 
@@ -149,6 +150,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
+        options.selectedValues = sessionStorage.selectedValues;
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
