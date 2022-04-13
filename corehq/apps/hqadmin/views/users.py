@@ -426,44 +426,34 @@ class DisableUserView(FormView):
                         fields_changed={'is_active': self.user.is_active},
                         by_domain_required_for_log=False,
                         for_domain_required_for_log=False)
-
-        self.send_admins_email(verb, self.username, self.request.user.username, str(reset_password), reason)
-        self.send_user_email(self.user, reset_password, verb, reason)
-
-        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect(self.redirect_url)
-
-    @classmethod
-    def send_admins_email(cls, verb, usernames, reset_by, reset_password, reason):
         mail_admins(
             "User account {}".format(verb),
-            "The following user accounts have been {verb}: \n"
+            "The following user account has been {verb}: \n"
             "    Account: {username}\n"
             "    Reset by: {reset_by}\n"
             "    Password reset: {password_reset}\n"
             "    Reason: {reason}".format(
                 verb=verb,
-                username=usernames,
-                reset_by=reset_by,
-                password_reset=reset_password,
+                username=self.username,
+                reset_by=self.request.user.username,
+                password_reset=str(reset_password),
                 reason=reason,
             )
         )
-
-    @classmethod
-    def send_user_email(cls, user, reset_password, verb, reason):
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            user.email if user else user.username,
+            self.user.email if self.user else self.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
-                'user': user,
+                'user': self.user,
                 'verb': verb,
-                'reason': reason,
+                'reason': form.cleaned_data['reason'],
             }),
         )
-        return
+
+        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
+        return redirect(self.redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
