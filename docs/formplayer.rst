@@ -252,7 +252,7 @@ From the case list, the user takes a case search action. This presents them with
 domain and sends an XML document back with the results. Formplayer displays these results as a case list, an
 ``EntityScreen``. When the user selects and then confirms a case, formplayer sends a POST request to HQ. This
 request, configured as part of the app, creates an extension case for the selected case. When this request returns,
-formplayer than syncs, causing the selected case to be added to the user's casedb. CommCare then "rewinds" to the
+formplayer syncs, causing the selected case to be added to the user's casedb. CommCare then "rewinds" to the
 case list where the user started, selecting the case they claimed and moving them on to the next form or menu,
 using a mark/rewind mechanism discussed
 `elsewhere <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_.
