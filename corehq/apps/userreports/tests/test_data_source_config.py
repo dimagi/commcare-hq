@@ -6,14 +6,16 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from unittest.mock import MagicMock, patch
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
+from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
 
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, UCRExpression
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_doc_and_indicators,
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.test_utils import flag_enabled
 
 
 class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
@@ -710,3 +712,121 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)
+
+
+class TestDBExpressions(TestCase):
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_named_db_expression(self):
+        self.indicator_configuration = DataSourceConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'DataSourceConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_expressions': {
+                'pregnant': {
+                    'type': 'property_name',
+                    'property_name': 'pregnant',
+                }
+            },
+            'named_filters': {},
+            'configured_filter': {},
+            'configured_indicators': [
+                {
+                    "type": "expression",
+                    "column_id": "laugh_sound",
+                    "datatype": "string",
+                    "expression": {
+                        'type': 'named',
+                        'name': 'laugh_sound_db'  # note not in the named_expressions list above
+                    }
+                }
+            ]
+        })
+
+        UCRExpression.objects.create(
+            name='laugh_sound_db',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'conditional',
+                'test': {
+                    'type': 'boolean_expression',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'is_evil',
+                    },
+                    'operator': 'eq',
+                    'property_value': True,
+                },
+                'expression_if_true': "mwa-ha-ha",
+                'expression_if_false': "hehe",
+            },
+        )
+
+        for evil_status, laugh in ((True, 'mwa-ha-ha'), (False, 'hehe')):
+            [values] = self.indicator_configuration.get_all_values({
+                'doc_type': 'CommCareCase',
+                'domain': 'test',
+                'pregnant': 'yes',
+                'is_evil': evil_status
+            })
+            i = 2
+            self.assertEqual('laugh_sound', values[i].column.id)
+            self.assertEqual(laugh, values[i].value)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_named_db_filter(self):
+        self.indicator_configuration = DataSourceConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'DataSourceConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_expressions': {
+                'on_a_date': {
+                    'type': 'property_name',
+                    'property_name': 'on_date',
+                }
+            },
+            'named_filters': {
+                'pregnant': {
+                    'type': 'property_match',
+                    'property_name': 'mother_state',
+                    'property_value': 'pregnant',
+                }
+            },
+            'configured_filter': {
+                'type': 'and',
+                'filters': [
+                    {
+                        'type': 'named',
+                        'name': 'pregnant',
+                    },
+                    {
+                        'type': 'named',
+                        'name': 'age_db',  # Note that this isn't in the list of `named_filters` above
+                    }
+                ]
+            },
+            'configured_indicators': []
+        })
+        UCRExpression.objects.create(
+            name='age_db',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'property_match',
+                'property_name': 'age',
+                'property_value': 34,
+            },
+        )
+
+        self.assertTrue(self.indicator_configuration.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'age': 34,
+        }))
