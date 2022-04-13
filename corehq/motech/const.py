@@ -1,6 +1,6 @@
-import attr
 from django.utils.translation import gettext_lazy as _
 
+import attr
 
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
