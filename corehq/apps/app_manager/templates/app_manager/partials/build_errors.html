@@ -288,6 +288,16 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses parent case selection but doesn't have a parent case list specified.
               {% endblocktrans %}
+            {% case "multi select select parent first" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses parent case selection and a multi-select case list.
+              {% endblocktrans %}
+              {% if request|toggle_enabled:"NON_PARENT_MENU_SELECTION" %}
+                {% trans "Multi-select case lists can only use 'other' parent child selection." %}
+              {% else %}
+                {% trans "These two features are not compatible." %}
+              {% endif %}
             {% case "parent cycle" %}
               {% blocktrans %}
                 The app's parent child case selection graph contains a cycle.

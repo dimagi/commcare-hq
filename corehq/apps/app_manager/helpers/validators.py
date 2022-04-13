@@ -373,6 +373,13 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
+        if self.module.is_multi_select():
+            if self.module.parent_select.active and self.module.parent_select.relationship == 'parent':
+                errors.append({
+                    'type': 'multi select select parent first',
+                    'module': self.get_module_info(),
+                })
+
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
                 errors.append({
