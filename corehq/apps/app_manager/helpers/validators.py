@@ -39,6 +39,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_loads_registry_case,
     module_uses_smart_links,
     split_path,
     xpath_references_case,
@@ -389,6 +390,18 @@ class ModuleBaseValidator(object):
             if self.module.parent_select.active:
                 errors.append({
                     'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+
+        if module_loads_registry_case(self.module):
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'data registry multi select',
                     'module': self.get_module_info(),
                 })
 
