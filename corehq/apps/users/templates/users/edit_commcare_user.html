@@ -90,6 +90,11 @@
       <div class="tab-pane" id="user-permanent">
         <div class="panel-body">
           <div class="form form-horizontal">
+
+            {% if form_user_update.loadtest_users_enabled %}
+            {% crispy form_user_update.action_form %}
+            {% endif %}
+
             <fieldset>
               <legend>{% trans 'Force Full Refresh on next Mobile Sync' %}</legend>
               <form action="{% url "force_user_412" domain couch_user.user_id %}" method="post">
