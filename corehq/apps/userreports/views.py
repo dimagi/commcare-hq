@@ -8,6 +8,7 @@ from collections import OrderedDict, namedtuple
 
 from django.conf import settings
 from django.contrib import messages
+from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.shortcuts import render
@@ -26,6 +27,8 @@ from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.userreports.forms import UCRExpressionForm, UCRExpressionUpdateForm
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -55,7 +58,11 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import api_auth_with_scope, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import (
+    api_auth_with_scope,
+    domain_admin_required,
+    login_and_domain_required,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
@@ -67,9 +74,13 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
-from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
-from corehq.apps.linked_domain.util import is_linked_report, can_domain_access_release_management
+from corehq.apps.linked_domain.ucr import (
+    create_linked_ucr,
+    linked_downstream_reports_by_domain,
+)
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
@@ -78,8 +89,8 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
-    DATA_SOURCE_TYPE_RAW,
     DATA_SOURCE_TYPE_CASE,
+    DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -108,15 +119,14 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
+    RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
+    UCRExpression,
     get_datasource_config,
     get_report_config,
     id_is_static,
     report_config_id_is_static,
-    RegistryReportConfiguration,
-    RegistryDataSourceConfiguration,
-    is_data_registry_report,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -133,7 +143,10 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
+from corehq.apps.userreports.reports.view import (
+    ConfigurableReportView,
+    delete_report_config,
+)
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -148,13 +161,16 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
-    get_referring_apps,
     get_indicator_adapter,
+    get_referring_apps,
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
 )
-from corehq.apps.users.decorators import get_permission_name, require_permission
+from corehq.apps.users.decorators import (
+    get_permission_name,
+    require_permission,
+)
 from corehq.apps.users.models import Permissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
@@ -961,7 +977,7 @@ def evaluate_expression(request, domain):
             data_source = get_datasource_config(data_source_id, domain)[0]
             factory_context = data_source.get_factory_context()
         else:
-            factory_context = FactoryContext.empty()
+            factory_context = FactoryContext.empty(domain=domain)
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
@@ -1675,3 +1691,91 @@ def copy_report(request, domain):
     return HttpResponseRedirect(
         reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
     )
+
+
+class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
+    page_title = _("UCR Expressions")
+    urlname = "ucr_expressions"
+    template_name = "userreports/ucr_expressions.html"
+
+    @property
+    def base_query(self):
+        return UCRExpression.objects.filter(domain=self.domain)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("Type"),
+            _("Description"),
+            _("Definition"),
+            _("Actions"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for expression in self.base_query.all():
+            yield {
+                "itemData": self._item_data(expression),
+                "template": "base-ucr-statement-template",
+            }
+
+    def _item_data(self, expression):
+        return {
+            'id': expression.id,
+            'name': expression.name,
+            'type': expression.expression_type,
+            'description': expression.description,
+            'definition': self._truncate_value(json.dumps(expression.definition)),
+            'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
+        }
+
+    def _truncate_value(self, value):
+        MAX_VALUE_LENGTH = 24
+        if len(value) > MAX_VALUE_LENGTH:
+            value = f"{value[:MAX_VALUE_LENGTH]}…"
+        return value
+
+    create_item_form_class = "form form-horizontal"
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return UCRExpressionForm(self.request, self.request.POST)
+        return UCRExpressionForm(self.request)
+
+    def get_create_item_data(self, create_form):
+        try:
+            new_expression = create_form.save()
+        except IntegrityError:
+            return {'error': _(f"UCR Expression with name \"{create_form.cleaned_data['name']}\" already exists.")}
+        return {
+            "itemData": self._item_data(new_expression),
+            "template": "base-ucr-statement-template",
+        }
+
+    def get_update_form(self, instance=None):
+        if instance is None:
+            instance = UCRExpression.objects.get(
+                id=self.request.POST.get("id"), domain=self.domain
+            )
+        if self.request.method == "POST" and self.action == "update":
+            return UCRExpressionUpdateForm(self.request, self.request.POST, instance=instance)
+        return UCRExpressionUpdateForm(self.request, instance=instance)
+
+    def get_updated_item_data(self, update_form):
+        updated_expression = update_form.save()
+        return {
+            "itemData": self._item_data(updated_expression),
+            "template": "base-ucr-statement-template",
+        }
