@@ -137,7 +137,7 @@ The end goal of a session is to complete a form. This implies:
 * The flow of a CommCare session is always structured to ensure that a user has "collected" all of the data that a certain form needs before allowing the user to enter that form.
 
 The session is implemented by the class `CommCareSession <https://github.com/dimagi/commcare-core/blob/master/src/main/java/org/commcare/session/CommCareSession.java>`_,
-with ts data stored in ``CommCareSession.collectedDatums``. The session also keeps track of the current menu or form id, in ``CommCaseSession.currentCmd``.
+with its data stored in ``CommCareSession.collectedDatums``. The session also keeps track of the current menu or form id, in ``CommCaseSession.currentCmd``.
 `CommCareSession.getNeededData <https://github.com/dimagi/commcare-core/blob/d791a58880cfe22e4d23b7deaef12a0cb1e4aeee/src/main/java/org/commcare/session/CommCareSession.java#L193-L217>`_
 determines what information is needed next, based on the current command on the data needed by entries associated
 with that command, and ``MenuSessionRunnerService`` (see below) uses that need to determine what screen to show.
