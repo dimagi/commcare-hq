@@ -4864,8 +4864,8 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         label_dict = {lang: label.get('case.search.title')
             for lang, label in translations.items() if label}
         for module in self.modules:
-            search_config = getattr(module, 'search_config')
-            if search_config:
+            if hasattr(module, 'search_config'):
+                search_config = getattr(module, 'search_config')
                 default_label_dict = getattr(search_config, 'title_label')
                 combined_label_dict = self._get_label_dict(data, default_label_dict, label_dict)
                 setattr(search_config, 'title_label', combined_label_dict)
