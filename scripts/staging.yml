@@ -62,7 +62,6 @@ branches:
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     #- jm/elastic-client-adapter  # Joel Mar 1
-    # - ap/sql-case-repeater # Amit March 23
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
@@ -72,5 +71,7 @@ branches:
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - fr/ucr-registry-linked  # Farid April 12
     - dm/celery  # Daniel Apr 12
+    - ap/sql-case-repeater # Amit March 23
+
 
 submodules: { }
