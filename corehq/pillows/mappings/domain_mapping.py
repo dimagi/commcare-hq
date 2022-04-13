@@ -28,12 +28,16 @@ DOMAIN_MAPPING = {
         },
         "author": {
             "fields": {
+                "author": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "cached_properties": {
             "dynamic": False,
@@ -255,31 +259,42 @@ DOMAIN_MAPPING = {
             "properties": {
                 "city": {
                     "fields": {
+                        "city": {
+                            "index": "analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "countries": {
                     "fields": {
+                        "countries": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "description": {
                     "fields": {
+                        "description": {
+                            "index": "analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "doc_type": {
                     "index": "not_analyzed",
@@ -293,9 +308,13 @@ DOMAIN_MAPPING = {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "region": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 }
             }
         },
@@ -324,12 +343,16 @@ DOMAIN_MAPPING = {
             "properties": {
                 "area": {
                     "fields": {
+                        "area": {
+                            "index": "analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "can_use_data": {
                     "type": "boolean"
@@ -361,9 +384,13 @@ DOMAIN_MAPPING = {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "initiative": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "notes": {
                     "type": "string"
@@ -373,18 +400,26 @@ DOMAIN_MAPPING = {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "organization_name": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "phone_model": {
                     "fields": {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "phone_model": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "platform": {
                     "type": "string"
@@ -409,9 +444,13 @@ DOMAIN_MAPPING = {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "sub_area": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "using_adm": {
                     "type": "boolean"
@@ -424,9 +463,13 @@ DOMAIN_MAPPING = {
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "workshop_region": {
+                            "index": "analyzed",
+                            "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 }
             }
         },
@@ -479,9 +522,13 @@ DOMAIN_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "name": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "organization": {
             "type": "string"
@@ -510,9 +557,13 @@ DOMAIN_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "short_description": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "sms_case_registration_enabled": {
             "type": "boolean"
@@ -553,9 +604,13 @@ DOMAIN_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "title": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "use_sql_backend": {
             "type": "boolean"
