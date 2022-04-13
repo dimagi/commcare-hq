@@ -95,70 +95,50 @@ class SuperuserManagementForm(forms.Form):
         )
 
 
-class UserPrivilegeManagementForm(forms.Form):
+class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma seperated email addresses",
         widget=forms.Textarea()
-    )
-    privileges = forms.MultipleChoiceField(
-        choices=[
-            ('remove_staff', 'Remove as developer'),
-        ],
-        widget=forms.CheckboxSelectMultiple(),
-        required=False,
     )
     invert_apply = forms.BooleanField(
         label="Invert",
         initial=False,
         required=False,
         help_text=(
-            "Apply changes to dimagi.com accounts NOT in the given list. "
-            "By default, it will apply to only accounts in the list ."
+            "Get dimagi.com accounts not included in the above, comma-separated list."
         )
     )
 
     def clean(self):
         invert = self.cleaned_data.get('invert_apply', False)
-        return clean_data(self.cleaned_data, invert=invert)
+        return clean_data(self.cleaned_data, invert=invert, get_list=True)
 
-    def __init__(self, can_toggle_is_staff, *args, **kwargs):
-        super(UserPrivilegeManagementForm, self).__init__(*args, **kwargs)
-
-        if can_toggle_is_staff:
-            self.fields['privileges'].choices.append(
-                ('remove_superuser', 'Remove superuser status')
-            )
-            self.fields['privileges'].choices.append(
-                ('remove_accounting_admin', 'Remove accounting admin privilege')
-            )
-            self.fields['privileges'].choices.append(
-                ('disable_user', 'Disable account')
-            )
-
+    def __init__(self, *args, **kwargs):
+        super(OffboardingUserListForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'csv_email_list',
-            'privileges',
             'invert_apply',
             FormActions(
                 crispy.Submit(
                     'superuser_management',
-                    'Update privileges'
+                    'Get Users'
                 )
             )
         )
 
 
-def clean_data(cleaned_data, invert=False):
+def clean_data(cleaned_data, invert=False, get_list=False):
     from email.utils import parseaddr
     from django.contrib.auth.models import User
     csv_email_list = cleaned_data.get('csv_email_list', '')
     csv_email_list = csv_email_list.split(',')
     csv_email_list = [parseaddr(em)[1] for em in csv_email_list]
-    if len(csv_email_list) > 10:
+
+    if not get_list and len(csv_email_list) > 10:
         raise forms.ValidationError(
             "This command is intended to grant superuser access to few users at a time. "
             "If you trying to update permissions for large number of users consider doing it via Django Admin"
