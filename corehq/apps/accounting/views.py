@@ -1202,10 +1202,8 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
             'template': 'accounting-admin-new',
         }
 
-    @classmethod
-    def get_deleted_item_data(cls, item_id, user=None):
-        if user is None:
-            user = User.objects.get(id=item_id)
+    def get_deleted_item_data(self, item_id):
+        user = User.objects.get(id=item_id)
         ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
         grant_to_remove = Grant.objects.filter(
             from_role=user.prbac_role.role,
@@ -1213,7 +1211,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
         )
         grant_to_remove.delete()
         return {
-            'deletedItem': cls._fmt_admin_data(user),
+            'deletedItem': self._fmt_admin_data(user),
             'template': 'accounting-admin-removed',
         }
 
