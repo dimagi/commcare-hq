@@ -3,12 +3,14 @@ from uuid import uuid4
 
 from django.test import Client, TestCase
 from django.urls import reverse
+from custom.covid.tests.test_prime_restore import make_synclog
 
 from flaky import flaky
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -32,6 +34,8 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled
+
+from unittest.mock import patch
 
 DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
@@ -86,11 +90,19 @@ class CaseClaimEndpointTests(TestCase):
         self.client = Client()
         self.client.login(username=USERNAME, password=PASSWORD)
         self.url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        self.synclog = SyncLogSQL.objects.bulk_create([
+            make_synclog(domain=self.domain, user='u1', request_user=None, is_formplayer=True, date='2022-04-12')
+        ])[0]
+        self.synclog.doc['case_ids_on_phone'] = [self.case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            self.synclog.save()
+
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
+        SyncLogSQL.objects.all().delete()
         cache = get_redis_default_cache()
         cache.clear()
 
@@ -116,7 +128,8 @@ class CaseClaimEndpointTests(TestCase):
         response = self.client.post(self.url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 201)
         # Dup claim
-        response = self.client.post(self.url, {'case_id': self.case_id})
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
 
     def test_duplicate_user_claim(self):
@@ -129,7 +142,8 @@ class CaseClaimEndpointTests(TestCase):
         # Dup claim
         client2 = Client()
         client2.login(username=USERNAME, password=PASSWORD)
-        response = client2.post(self.url, {'case_id': self.case_id})
+        response = client2.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
 
     def test_multiple_case_claim(self):
