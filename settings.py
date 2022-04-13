@@ -1047,6 +1047,8 @@ RULE_UPDATE_HOUR = 0
 
 DEFAULT_ODATA_FEED_LIMIT = 25
 
+DEFAULT_GSHEET_LIMIT = 20
+
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match
 CUSTOM_LANDING_TEMPLATE = {
@@ -1106,6 +1108,10 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 COMMCARE_EXTENSIONS = []
 
 IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OAUTH_CONFIG = {}
 
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
@@ -2083,9 +2089,9 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
-# Config settings for the google oauth handshake to get a user token
-# Google Cloud Platform secret settings config file
-GOOGLE_OATH_CONFIG = {}
+#Google Sheet Integration testing variable
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 # Scopes to give read/write access to the code that generates the spreadsheets
 GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
@@ -2093,3 +2099,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+DEFAULT_GSHEET_CHUNK_SIZE = 20000
