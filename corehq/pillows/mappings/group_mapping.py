@@ -22,21 +22,29 @@ GROUP_MAPPING = {
         },
         "domain": {
             "fields": {
+                "domain": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "name": {
             "fields": {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "name": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "path": {
             "type": "string"

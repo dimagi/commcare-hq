@@ -185,12 +185,16 @@ REPORT_CASE_MAPPING = {
         },
         "domain": {
             "fields": {
+                "domain": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "export_tag": {
             "type": "string"
@@ -200,9 +204,13 @@ REPORT_CASE_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "external_id": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "indices": {
             "dynamic": True,
@@ -238,9 +246,13 @@ REPORT_CASE_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "name": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "opened_by": {
             "type": "string"
@@ -265,9 +277,13 @@ REPORT_CASE_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "type": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "user_id": {
             "type": "string"

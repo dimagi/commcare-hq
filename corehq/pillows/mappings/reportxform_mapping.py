@@ -138,6 +138,10 @@ REPORT_XFORM_MAPPING = {
         },
         "domain": {
             "fields": {
+                "domain": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     # exact is full text string match - hyphens get parsed in standard
                     # analyzer
@@ -146,7 +150,7 @@ REPORT_XFORM_MAPPING = {
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "external_blobs": {
             "dynamic": False,
@@ -224,9 +228,13 @@ REPORT_XFORM_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "xmlns": {
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         }
     }
 }

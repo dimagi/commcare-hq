@@ -24,12 +24,16 @@ USER_MAPPING = {
         },
         "__group_names": {
             "fields": {
+                "__group_names": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "analytics_enabled": {
             "type": "boolean"
@@ -42,12 +46,16 @@ USER_MAPPING = {
         },
         "base_username": {
             "fields": {
+                "base_username": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "created_on": {
             "format": DATE_FORMATS_STRING,
@@ -119,12 +127,16 @@ USER_MAPPING = {
         },
         "domain": {
             "fields": {
+                "domain": {
+                    "index": "analyzed",
+                    "type": "string"
+                },
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         },
         "domain_membership": {
             "dynamic": False,
@@ -136,12 +148,16 @@ USER_MAPPING = {
                 },
                 "domain": {
                     "fields": {
+                        "domain": {
+                            "index": "analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "is_admin": {
                     "type": "boolean"
@@ -171,12 +187,16 @@ USER_MAPPING = {
                 },
                 "domain": {
                     "fields": {
+                        "domain": {
+                            "index": "analyzed",
+                            "type": "string"
+                        },
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
                         }
                     },
-                    "type": "string"
+                    "type": "multi_field"
                 },
                 "is_admin": {
                     "type": "boolean"
@@ -465,15 +485,19 @@ USER_MAPPING = {
             "type": "string"
         },
         "username": {
-            "analyzer": "standard",
             "fields": {
                 "exact": {
                     "include_in_all": False,
                     "index": "not_analyzed",
                     "type": "string"
+                },
+                "username": {
+                    "analyzer": "standard",
+                    "index": "analyzed",
+                    "type": "string"
                 }
             },
-            "type": "string"
+            "type": "multi_field"
         }
     }
 }

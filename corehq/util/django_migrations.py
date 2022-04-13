@@ -180,18 +180,9 @@ def block_upgrade_for_removed_migration(commit_with_migration):
     return migrations.RunPython(show_message, reverse_code=migrations.RunPython.noop, elidable=True)
 
 
-def update_es_mapping(index_name, quiet=False):
-    """Returns a django migration Operation which calls the `update_es_mapping`
-    management command to update the mapping on an Elastic index.
-
-    :param index_name: name of the target index for mapping updates
-    :param quiet: (optional) suppress non-error management command output"""
+def update_es_mapping(index_name):
+    """Calls update_es_mapping automatically, see that command for details"""
     @skip_on_fresh_install
     def update_es_mapping(*args, **kwargs):
-        argv = ["update_es_mapping", index_name]
-        if quiet:
-            argv.append("--quiet")
-        else:
-            print(f"\nupdating mapping for index: {index_name} ...")
-        return call_command(*argv, noinput=True)
+        call_command('update_es_mapping', index_name, noinput=True)
     return migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
