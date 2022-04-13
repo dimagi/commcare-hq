@@ -1,4 +1,4 @@
-from .query_functions import not_, selected_all, selected_any
+from .query_functions import proximity, not_, selected_all, selected_any
 from .subcase_functions import subcase
 from .value_functions import date, date_add, today
 
@@ -17,4 +17,5 @@ XPATH_QUERY_FUNCTIONS = {
     'selected': selected_any,  # selected and selected_any function identically.
     'selected-any': selected_any,
     'selected-all': selected_all,
+    'proximity': proximity,
 }

@@ -12,16 +12,14 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.domain.models import Domain
 
+from .utils import confirm_args_count
+
 
 def date(node, context):
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
     assert node.name == 'date'
-    if len(node.args) != 1:
-        raise XPathFunctionException(
-            _("The \"date\" function only accepts a single argument"),
-            serialize(node)
-        )
+    confirm_args_count(node, 1)
     arg = node.args[0]
 
     arg = unwrap_value(arg, context)
@@ -54,11 +52,8 @@ def _value_to_date(node, value):
 
 def today(node, context):
     assert node.name == 'today'
-    if len(node.args) != 0:
-        raise XPathFunctionException(
-            _("The \"today\" function does not accept any arguments"),
-            serialize(node)
-        )
+
+    confirm_args_count(node, 0)
 
     domain_obj = Domain.get_by_name(context.domain)
     timezone = domain_obj.get_default_timezone() if domain_obj else pytz.UTC
@@ -69,11 +64,8 @@ def date_add(node, context):
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
     assert node.name == 'date_add'
-    if len(node.args) != 3:
-        raise XPathFunctionException(
-            _("The \"date_add\" function expects three arguments, got {count}").format(count=len(node.args)),
-            serialize(node)
-        )
+
+    confirm_args_count(node, 3)
 
     date_arg = unwrap_value(node.args[0], context)
     date_value = _value_to_date(node, date_arg)

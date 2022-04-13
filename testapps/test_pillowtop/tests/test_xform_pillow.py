@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
@@ -261,7 +260,7 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         doc_ret = transform_xform_for_elasticsearch(doc_dict)
-        self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': Decimal('42.7'), 'lon': Decimal('-21')})
+        self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': 42.7, 'lon': -21})
 
     def test_transform_xform_for_elasticsearch_location_missing(self):
         doc_dict = {
