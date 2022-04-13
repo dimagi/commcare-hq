@@ -22,6 +22,8 @@ from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
+from casexml.apps.phone.exceptions import MissingSyncLog
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -157,14 +159,16 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    if not case_ids_to_claim:
-        from casexml.apps.phone.models import get_properly_wrapped_sync_log
-        synclog = get_properly_wrapped_sync_log(request.last_sync_token)
-        missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
-        cases_already_on_phone = not(bool(missing_case_ids_on_phone))
-        if cases_already_on_phone:
-            # No claim or sync needed if the cases are already on the device.
-            return HttpResponse(status=204)
+    def phone_holds_all_cases(request):
+        try:
+            synclog = get_properly_wrapped_sync_log(request.last_sync_token)
+            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+            return not(bool(missing_case_ids_on_phone))
+        except MissingSyncLog as err:
+            print(err)
+
+    if not case_ids_to_claim and phone_holds_all_cases(request):
+        return HttpResponse(status=204)
 
     return HttpResponse(status=201)
 
