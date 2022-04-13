@@ -123,7 +123,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None):
+                 notification_emails=None, parent_toggles=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -143,12 +143,19 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+        self.parent_toggles = parent_toggles or []
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
         self.notification_emails = notification_emails
+
+        for dependency in self.parent_toggles:
+            if not set(self.namespaces) & set(dependency.namespaces):
+                raise Exception(
+                    "Namespaces of dependent toggles must overlap with dependency:"
+                    f" {self.slug}, {dependency.slug}")
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
@@ -203,6 +210,10 @@ class StaticToggle(object):
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        if namespace not in self.namespaces:
+            return False
+
         return set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
@@ -635,7 +646,7 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
-    'Allow external android callouts to search the caselist',
+    'Allow external android callouts to search the case list',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
@@ -730,6 +741,17 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/GTDArchive/User+Configurable+Reporting',
+)
+
+UCR_UPDATED_NAMING = StaticToggle(
+    'ucr_updated_naming',
+    'Show updated naming of UCRS',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Displays updated UCR naming if the feature flag is enabled."
+        "This is a temporary flag which would be removed when the updated naming is agreed upon by all divisons."
+    )
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -837,6 +859,17 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+USH_CASE_LIST_MULTI_SELECT = StaticToggle(
+    'ush_case_list_multi_select',
+    'USH: Allow selecting multiple cases from the case list',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',
+    description="""
+    Allows user to select multiple cases and load them all into the form.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -847,7 +880,8 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     USH Specific toggle to support several different case search/claim workflows in web apps:
     "search first", "see more", and "skip to default case search results", Geocoder
     and other options in Webapps Case Search.
-    """
+    """,
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -909,6 +943,13 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     description='Domains that have undergone migration for Explore Case Data and have a '
     'CaseSearch elasticsearch index created.\n\n'
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
+)
+
+CASE_SEARCH_SMART_TYPES = StaticToggle(
+    'case_search_smart_types',
+    'USH: Intelligently index specific case properties using the data dictionary',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 WEB_USER_ACTIVITY_REPORT = StaticToggle(
@@ -1069,6 +1110,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -1328,7 +1370,8 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_USER]
+    namespaces=[NAMESPACE_USER],
+    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1555,11 +1598,11 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking project spaces (successor to linked apps)',
-    TAG_SAAS_CONDITIONAL,
+    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+        "Replaced by Enterprise Release Management (release_management privilege)."
     ),
     help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
 )
@@ -1899,15 +1942,6 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
-    'data_registry_case_update_repeater',
-    'USH: Allow data registry repeater to be setup to update cases in other domains',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
-)
-
-
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'USH: Enable usage of AWS Connect Dialer',
@@ -1974,7 +2008,8 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """,
-    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts"
+    help_link="https://confluence.dimagi.com/display/saas/One+Phone+Number+-+Multiple+Contacts",
+    parent_toggles=[INBOUND_SMS_LENIENCY]
 )
 
 CHANGE_FORM_LANGUAGE = StaticToggle(
@@ -2059,6 +2094,13 @@ AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+SSO_OIDC_DEVELOPMENT = StaticToggle(
+    'sso_oidc_development',
+    'Development feature flag for SSO OIDC support',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
     'fixtures_in_case_restore',
     'Allow limited fixtures to be available in case restore for SMS workflows.',
@@ -2133,7 +2175,25 @@ DATA_REGISTRY = StaticToggle(
     'USH: Enable Data Registries for sharing data between project spaces',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://docs.google.com/document/d/1h1chIrRkDtnPVQzFJHuB7JbZq8S4HNQf2dBA8z_MCkg/edit",
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry",
+)
+
+DATA_REGISTRY_UCR = StaticToggle(
+    'data_registry_ucr',
+    'USH: Enable the creation of Custom Web Reports backed by Data Registries',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-CrossDomainReports",
+    parent_toggles=[DATA_REGISTRY]
+)
+
+DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
+    'data_registry_case_update_repeater',
+    'USH: Allow data registry repeater to be setup to update cases in other domains',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/USH/Data+Registry+Case+Update+Repeater",
+    parent_toggles=[DATA_REGISTRY]
 )
 
 CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(

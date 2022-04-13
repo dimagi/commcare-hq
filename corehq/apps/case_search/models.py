@@ -4,7 +4,7 @@ import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -93,7 +93,6 @@ class SearchCriteria:
         disallowed_parameters = [
             CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
             'owner_id',
-            CASE_SEARCH_XPATH_QUERY_KEY,
         ]
 
         if self.key in disallowed_parameters or self.is_daterange:
@@ -154,7 +153,6 @@ def extract_search_request_config(request_dict):
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
     }
-
     criteria = criteria_dict_to_criteria_list(params)
     return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
 

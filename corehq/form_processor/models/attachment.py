@@ -104,17 +104,7 @@ class Attachment(IsImageMixin):
         """
         if isinstance(self.raw_content, (bytes, str)):
             return BytesIO(self.content)
-        fileobj = self.raw_content.open()
-
-        # TODO remove when Django 1 is no longer supported
-        if fileobj is None:
-            assert not isinstance(self.raw_content, BlobMeta), repr(self)
-            # work around Django 1.11 bug, fixed in 2.0
-            # https://github.com/django/django/blob/1.11.15/django/core/files/base.py#L131-L137
-            # https://github.com/django/django/blob/2.0/django/core/files/base.py#L128
-            return self.raw_content
-
-        return fileobj
+        return self.raw_content.open()
 
     @memoized
     def content_md5(self):

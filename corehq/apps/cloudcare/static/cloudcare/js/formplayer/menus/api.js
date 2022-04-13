@@ -124,7 +124,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
-                    "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,

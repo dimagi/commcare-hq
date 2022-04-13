@@ -1,7 +1,7 @@
 from django.urls import NoReverseMatch, reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views import View
 
 from memoized import memoized
@@ -28,7 +28,7 @@ def _compare_submissions(x, y):
 
 
 class SubmissionErrorReport(DeploymentsReport):
-    name = ugettext_noop("Raw Forms, Errors & Duplicates")
+    name = gettext_noop("Raw Forms, Errors & Duplicates")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False

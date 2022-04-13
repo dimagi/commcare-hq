@@ -10,21 +10,21 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
 from django.forms.fields import ChoiceField
 from django.forms.forms import Form
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 
 class TelerivetBackendForm(BackendForm):
     api_key = TrimmedCharField(
-        label=ugettext_lazy("API Key"),
+        label=gettext_lazy("API Key"),
     )
     project_id = TrimmedCharField(
-        label=ugettext_lazy("Project ID"),
+        label=gettext_lazy("Project ID"),
     )
     phone_id = TrimmedCharField(
-        label=ugettext_lazy("Phone ID"),
+        label=gettext_lazy("Phone ID"),
     )
     webhook_secret = TrimmedCharField(
-        label=ugettext_lazy("Webhook Secret"),
+        label=gettext_lazy("Webhook Secret"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -57,15 +57,15 @@ class TelerivetBackendForm(BackendForm):
 
 class TelerivetOutgoingSMSForm(Form):
     api_key = TrimmedCharField(
-        label=ugettext_lazy("API Key"),
+        label=gettext_lazy("API Key"),
         required=True
     )
     project_id = TrimmedCharField(
-        label=ugettext_lazy("Project ID"),
+        label=gettext_lazy("Project ID"),
         required=True
     )
     phone_id = TrimmedCharField(
-        label=ugettext_lazy("Phone ID"),
+        label=gettext_lazy("Phone ID"),
         required=True
     )
 
@@ -126,7 +126,7 @@ class TelerivetOutgoingSMSForm(Form):
 class TelerivetPhoneNumberForm(Form):
     test_phone_number = TrimmedCharField(
         required=True,
-        label=ugettext_lazy("+ (Country Code) Phone Number")
+        label=gettext_lazy("+ (Country Code) Phone Number")
     )
 
     def __init__(self, *args, **kwargs):
@@ -177,16 +177,16 @@ class FinalizeGatewaySetupForm(Form):
     NO = 'N'
 
     YES_NO_CHOICES = (
-        (YES, ugettext_lazy("Yes")),
-        (NO, ugettext_lazy("No")),
+        (YES, gettext_lazy("Yes")),
+        (NO, gettext_lazy("No")),
     )
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=True
     )
     set_as_default = ChoiceField(
-        label=ugettext_lazy("Set as default gateway"),
+        label=gettext_lazy("Set as default gateway"),
         choices=YES_NO_CHOICES,
         required=True
     )

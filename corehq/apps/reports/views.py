@@ -26,8 +26,8 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import get_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -215,7 +215,7 @@ def can_view_attachments(request):
 
 
 class BaseProjectReportSectionView(BaseDomainView):
-    section_name = ugettext_lazy("Project Reports")
+    section_name = gettext_lazy("Project Reports")
 
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
@@ -233,7 +233,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = ugettext_noop("My Saved Reports")
+    page_title = gettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
@@ -544,10 +544,11 @@ class AddSavedReportConfigView(View):
 
 @login_and_domain_required
 @datespan_default
+@require_POST
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.GET)
+    form = EmailReportForm(request.POST)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
@@ -820,7 +821,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = str(err)
-                messages.error(request, ugettext_lazy(kwargs['error']))
+                messages.error(request, gettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
@@ -852,8 +853,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
-    not_found_error = ugettext_noop('Could not find the requested Scheduled Report')
-    broken_link_error = ugettext_noop('Invalid unsubscribe link')
+    not_found_error = gettext_noop('Could not find the requested Scheduled Report')
+    broken_link_error = gettext_noop('Invalid unsubscribe link')
     report = None
 
     def get(self, request, *args, **kwargs):
@@ -865,16 +866,16 @@ class ReportNotificationUnsubscribeView(TemplateView):
                 if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
                     raise ValidationError(self.broken_link_error)
                 if email not in self.report.all_recipient_emails:
-                    raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
+                    raise ValidationError(gettext_noop('This email address has already been unsubscribed.'))
             except ResourceNotFound:
                 kwargs['error'] = self.not_found_error
             except ValidationError as err:
                 kwargs['error'] = err.message
 
         if 'error' in kwargs:
-            messages.error(request, ugettext_lazy(kwargs['error']))
+            messages.error(request, gettext_lazy(kwargs['error']))
         elif 'success' in kwargs:
-            messages.success(request, ugettext_lazy(kwargs['success']))
+            messages.success(request, gettext_lazy(kwargs['success']))
 
         return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
 
@@ -898,7 +899,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
             else:
                 self.report.delete()
 
-            kwargs['success'] = ugettext_noop('Successfully unsubscribed from report notification.')
+            kwargs['success'] = gettext_noop('Successfully unsubscribed from report notification.')
         except ResourceNotFound:
             kwargs['error'] = self.not_found_error
         except ValidationError as err:
@@ -1144,7 +1145,7 @@ def safely_get_case(request, domain, case_id):
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
     template_name = "reports/reportdata/case_data.html"
-    page_title = ugettext_lazy("Case Data")
+    page_title = gettext_lazy("Case Data")
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
@@ -1385,7 +1386,7 @@ def download_case_history(request, domain, case_id):
 class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
-    page_title = ugettext_lazy("Case Attachments")
+    page_title = gettext_lazy("Case Attachments")
     http_method_names = ['get']
 
     @method_decorator(login_and_domain_required)
@@ -1462,7 +1463,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, **case_block_kwargs).as_text()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1642,10 +1643,10 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     instance_history = []
     if instance.history:
         form_operations = {
-            'archive': ugettext_lazy('Archive'),
-            'unarchive': ugettext_lazy('Un-Archive'),
-            'edit': ugettext_lazy('Edit'),
-            'uuid_data_fix': ugettext_lazy('Duplicate ID fix')
+            'archive': gettext_lazy('Archive'),
+            'unarchive': gettext_lazy('Un-Archive'),
+            'edit': gettext_lazy('Edit'),
+            'uuid_data_fix': gettext_lazy('Duplicate ID fix')
         }
         for operation in instance.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
@@ -1852,7 +1853,7 @@ def safely_get_form(request, domain, instance_id):
 @location_safe
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
-    page_title = ugettext_lazy("Untitled Form")
+    page_title = gettext_lazy("Untitled Form")
     template_name = "reports/reportdata/form_data.html"
     http_method_names = ['get']
 
@@ -1904,9 +1905,9 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@login_and_domain_required
 @require_form_view_permission
 @location_safe
-@login_and_domain_required
 def view_form_attachment(request, domain, instance_id, attachment_id):
     # Open form attachment in browser
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
@@ -2350,7 +2351,7 @@ def project_health_user_details(request, domain, user_id):
 
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
-    page_title = ugettext_lazy('Tableau Server Config')
+    page_title = gettext_lazy('Tableau Server Config')
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
@@ -2381,11 +2382,11 @@ class TableauServerView(BaseProjectReportSectionView):
         if self.tableau_server_form.is_valid():
             self.tableau_server_form.save()
             messages.success(
-                request, ugettext_lazy("Tableau Server Settings Updated")
+                request, gettext_lazy("Tableau Server Settings Updated")
             )
         else:
             messages.error(
-                request, ugettext_lazy("Could not update Tableau Server Settings")
+                request, gettext_lazy("Could not update Tableau Server Settings")
             )
         return self.get(request, *args, **kwargs)
 

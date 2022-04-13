@@ -1,5 +1,5 @@
 from django.urls import NoReverseMatch
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 

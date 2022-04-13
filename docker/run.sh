@@ -135,7 +135,9 @@ function run_tests {
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta

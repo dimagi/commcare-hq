@@ -33,7 +33,7 @@ class ConfigurableReportTestMixin(object):
     @classmethod
     def _new_case(cls, properties):
         id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=id,
             case_type=cls.case_type,

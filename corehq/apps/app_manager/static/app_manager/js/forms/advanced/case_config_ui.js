@@ -7,7 +7,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
             loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
             openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction,
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+            initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
         var DEFAULT_CONDITION = function (type) {
             return {
@@ -18,7 +18,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             };
         };
 
-        var caseConfig = function (params) {
+        var CaseConfig = function (params) {
             var self = {};
             self.makePopover = function () {
                 $('.property-description').closest('.read-only').popover({
@@ -61,8 +61,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         },
                         dataType: 'json',
                         success: function (data) {
-                            var app_manager = hqImport('app_manager/js/app_manager');
-                            app_manager.updateDOM(data.update);
+                            hqImport('app_manager/js/app_manager').updateDOM(data.update);
                             self.setPropertiesMap(data.propertiesMap);
                             self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
                         },
@@ -104,9 +103,9 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 return modes;
             };
 
-            self.case_supports_products = function (case_type) {
+            self.case_supports_products = function (caseType) {
                 for (var i = 0; i < self.moduleCaseTypes.length; i++) {
-                    if (self.moduleCaseTypes[i].case_type === case_type &&
+                    if (self.moduleCaseTypes[i].case_type === caseType &&
                         self.moduleCaseTypes[i].module_type === 'AdvancedModule') {
                         return true;
                     }
@@ -282,13 +281,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
                 var preload = caseConfigUtils.preloadDictToArray(a.preload, caseConfig);
-                var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
+                var caseProperties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
                 a.preload = [];
                 a.case_properties = [];
                 var action = loadUpdateAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
-                _(case_properties).each(function (p) {
+                _(caseProperties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
@@ -315,18 +314,18 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
 
             self.open_cases = ko.observableArray(_(params.actions.open_cases).map(function (a) {
-                var required_properties = [{
+                var requiredProperties = [{
                     key: 'name',
                     path: a.name_update.question_path,
                     required: true,
                     save_only_if_edited: a.name_update.update_mode === 'edit',
                 }];
-                var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
+                var caseProperties = caseConfigUtils.propertyDictToArray(requiredProperties, a.case_properties, caseConfig);
                 a.case_properties = [];
                 var action = openCaseAction.wrap(a, caseConfig);
                 // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
                 // before it is defined
-                _(case_properties).each(function (p) {
+                _(caseProperties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
 
@@ -386,11 +385,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 var index;
                 if (action.value === 'load' || action.value === 'auto_select' || action.value === 'load_case_from_fixture') {
                     index = self.load_update_cases().length;
-                    var tag_prefix = action.value === 'auto_select' ? 'auto' : '',
-                        action_data = {
+                    var tagPrefix = action.value === 'auto_select' ? 'auto' : '',
+                        actionData = {
                             case_type: caseConfig.caseType,
                             details_module: null,
-                            case_tag: tag_prefix + 'load_' + caseConfig.caseType + index,
+                            case_tag: tagPrefix + 'load_' + caseConfig.caseType + index,
                             case_index: {
                                 tag: '',
                                 reference_id: 'parent',
@@ -405,13 +404,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             load_case_from_fixture: null,
                         };
                     if (action.value === 'auto_select') {
-                        action_data.auto_select = {
+                        actionData.auto_select = {
                             mode: '',
                             value_source: '',
                             value_key: '',
                         };
                     } else if (action.value === 'load_case_from_fixture') {
-                        action_data.load_case_from_fixture = {
+                        actionData.load_case_from_fixture = {
                             fixture_nodeset: '',
                             fixture_tag: '',
                             fixture_variable: '',
@@ -422,7 +421,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             arbitrary_datum_function: '',
                         };
                     }
-                    self.load_update_cases.push(loadUpdateAction.wrap(action_data, self.caseConfig));
+                    self.load_update_cases.push(loadUpdateAction.wrap(actionData, self.caseConfig));
                     self.caseConfig.applyAccordion('load', index);
                 } else if (action.value === 'open') {
                     index = self.open_cases().length;
@@ -449,8 +448,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 if (action.actionType === 'open') {
                     self.open_cases.remove(action);
                 } else if (action.actionType === 'load') {
-                    var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(action),
-                        potential_child;
+                    var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(action);
                     self.load_update_cases.remove(action);
 
                     // remove references to deleted action in subsequent load actions
@@ -474,16 +472,16 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             return self;
         };
 
-        if (initial_page_data('has_form_source')) {
-            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
+        if (initialPageData.get('has_form_source')) {
+            var caseConfig = CaseConfig(_.extend({}, initialPageData.get("case_config_options"), {
                 home: $('#case-config-ko'),
-                requires: ko.observable(initial_page_data("form_requires")),
+                requires: ko.observable(initialPageData.get("form_requires")),
             }));
             caseConfig.init();
 
-            if (initial_page_data("schedule_options")) {
+            if (initialPageData.get("schedule_options")) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initial_page_data("schedule_options"), {
+                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initialPageData.get("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));
                 visitScheduler.init();

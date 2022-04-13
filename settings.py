@@ -179,6 +179,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+MINIMUM_ZXCVBN_SCORE = 2
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -200,6 +201,7 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
     'django.contrib.admin',
@@ -212,7 +214,6 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -874,6 +875,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -2088,3 +2090,5 @@ GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14

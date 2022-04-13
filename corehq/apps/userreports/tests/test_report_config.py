@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
@@ -21,6 +22,7 @@ from corehq.apps.userreports.tests.utils import (
 )
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class ReportConfigurationTest(SimpleTestCase):
 
     def setUp(self):

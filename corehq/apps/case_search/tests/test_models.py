@@ -88,7 +88,6 @@ def _make_request_dict(params):
 @generate_cases([
     (CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, ["a", "b"]),
     ("owner_id", ["a", "b"]),
-    (CASE_SEARCH_XPATH_QUERY_KEY, ["a", "b"]),
     ("date", ["a", "__range__2022-01-01__2022-02-01"]),
     ("date", "__range__2022-01-01__2022"),
     ("parent/foo", ["a", "b"])

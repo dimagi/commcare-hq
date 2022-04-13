@@ -562,14 +562,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -650,14 +650,14 @@ class ReuseEvaluationContextTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -738,14 +738,14 @@ class AsyncIndicatorTest(TestCase):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -783,14 +783,14 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
@@ -844,14 +844,14 @@ class AsyncIndicatorTest(TestCase):
         for i in range(3):
             form, cases = post_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -916,7 +916,7 @@ def _save_sql_case(doc):
     with drop_connected_signals(sql_case_post_save):
         form, cases = post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],

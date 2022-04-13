@@ -37,6 +37,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     owner_id = jsonobject.StringProperty()
     properties = jsonobject.DictProperty(validators=[is_simple_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex)
+    close = jsonobject.BooleanProperty(default=False)
     _is_case_creation = False
 
     _allow_dynamic_properties = False
@@ -68,6 +69,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             owner_id=_if_specified(self.owner_id),
             create=self._is_case_creation,
             update=dict(self.properties),
+            close=self.close,
             index={
                 name: IndexAttrs(index.case_type, index.case_id, index.relationship)
                 for name, index in self.indices.items()

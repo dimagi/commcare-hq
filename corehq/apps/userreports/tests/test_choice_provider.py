@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from functools import partial
 
 from django.test import SimpleTestCase, TestCase
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from unittest import mock
 
@@ -384,8 +384,8 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         cls.location = cls.locations['Massachusetts']
         cls.docs = [cls.group, cls.mobile_worker, cls.web_user, cls.location]
         cls.choices = [
-            SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')),
-                             "[{}]".format(ugettext('Show All'))),
+            SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')),
+                             "[{}]".format(gettext('Show All'))),
             SearchableChoice(cls.group.get_id, cls.group.name, [cls.group.name]),
             SearchableChoice(cls.mobile_worker.get_id, cls.mobile_worker.raw_username,
                              [cls.mobile_worker.username]),

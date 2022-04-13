@@ -33,25 +33,27 @@ while getopts ":h-:" option; do
     esac
 done
 
-
-has_local_changes=`git diff-index HEAD` && true
-if [[ $has_local_changes ]]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT}" ]
 then
-    abort "You have uncommitted changes in your working tree."
-fi
+    has_local_changes=`git diff-index HEAD` && true
+    if [[ $has_local_changes ]]
+    then
+        abort "You have uncommitted changes in your working tree."
+    fi
 
-branch=$(git rev-parse --abbrev-ref HEAD)
-if [[ $branch != 'master' ]]
-then
-    abort "You must be on master to run this command."
-fi
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch != 'master' ]]
+    then
+        abort "You must be on master to run this command."
+    fi
 
-git fetch
-tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
-upstream_changes=`git rev-list HEAD...$tracking_branch --count`
-if [[ $upstream_changes > 0 ]]
-then
-    abort "There are changes upstream that you should pull with 'git pull' before running this command."
+    git fetch
+    tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+    upstream_changes=`git rev-list HEAD...$tracking_branch --count`
+    if [[ $upstream_changes > 0 ]]
+    then
+        abort "There are changes upstream that you should pull with 'git pull' before running this command."
+    fi
 fi
 
 if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
@@ -91,15 +93,18 @@ set -e
 echo "Pushing updates to transifex."
 tx push -s -t
 
-has_local_changes=`git diff-index HEAD` && true
-if [[ ! $has_local_changes ]]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT}" ]
 then
-    abort "There are no changes....please investigate"
-fi
+    has_local_changes=`git diff-index HEAD` && true
+    if [[ ! $has_local_changes ]]
+    then
+        abort "There are no changes....please investigate"
+    fi
 
-echo "Committing and pushing changes"
-git add locale/ &&
-git commit --edit --message="Update translations." --message="[ci skip]" &&
-git push origin master
+    echo "Committing and pushing changes"
+    git add locale/ &&
+    git commit --edit --message="Update translations." --message="[ci skip]" &&
+    git push origin master
+fi
 
 echo "Translations updated successfully!"

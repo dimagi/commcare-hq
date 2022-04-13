@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_error, notify_exception

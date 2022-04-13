@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from django.apps import apps
 from django.conf import settings
+from django.core.management import call_command
 
 from unittest import mock
 from nose.tools import nottest
@@ -29,6 +30,21 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
+
+
+def bootstrap_accounting():
+    from ..bootstrap.config.enterprise import BOOTSTRAP_CONFIG as enterprise_config
+    from ..bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
+    from ..bootstrap.config.resellers_and_managed_hosting import BOOTSTRAP_CONFIG as resellers_config
+    from ..bootstrap.config.user_buckets_jan_2017 import BOOTSTRAP_CONFIG as self_service_config
+    from ..bootstrap.config.new_plans_dec_2019 import BOOTSTRAP_CONFIG as new_plans_dec_2019
+    call_command('cchq_prbac_bootstrap')
+    pricing_config = self_service_config
+    pricing_config.update(enterprise_config)
+    pricing_config.update(report_builder_config)
+    pricing_config.update(resellers_config)
+    pricing_config.update(new_plans_dec_2019)
+    ensure_plans(pricing_config, verbose=True, apps=apps)
 
 
 @unit_testing_only

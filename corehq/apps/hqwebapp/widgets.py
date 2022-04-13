@@ -4,10 +4,10 @@ import json
 from django import forms
 from django.forms.utils import flatatt
 from django.forms.widgets import CheckboxInput, Input
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html, conditional_escape
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from dimagi.utils.dates import DateSpan
 
@@ -26,13 +26,13 @@ class BootstrapCheckboxInput(CheckboxInput):
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
             result = self.check_test(value)
-        except: # Silently catch exceptions
+        except Exception:  # Silently catch exceptions
             result = False
         if result:
             final_attrs['checked'] = 'checked'
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_text(value)
+            final_attrs['value'] = force_str(value)
         return format_html(
             '<label class="checkbox"><input{} /> {}</label>',
             mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
@@ -101,11 +101,11 @@ class DateRangePickerWidget(Input):
         LAST_30_DAYS = 'last_30_days'
 
     range_labels = {
-        Range.LAST_7: ugettext_noop('Last 7 Days'),
-        Range.LAST_MONTH: ugettext_noop('Last Month'),
-        Range.LAST_30_DAYS: ugettext_noop('Last 30 Days'),
+        Range.LAST_7: gettext_noop('Last 7 Days'),
+        Range.LAST_MONTH: gettext_noop('Last Month'),
+        Range.LAST_30_DAYS: gettext_noop('Last 30 Days'),
     }
-    separator = ugettext_noop(' to ')
+    separator = gettext_noop(' to ')
 
     def __init__(self, attrs=None, default_datespan=None):
         self.default_datespan = default_datespan

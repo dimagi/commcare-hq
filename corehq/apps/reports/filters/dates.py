@@ -1,8 +1,8 @@
 import datetime
 import json
 
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from dimagi.utils.dates import DateSpan, add_months
 
@@ -17,7 +17,7 @@ class DatespanFilter(BaseReportFilter):
         @datespan_in_request
     """
     template = "reports/filters/datespan.html"
-    label = ugettext_lazy("Date Range")
+    label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
     default_days = 30
@@ -60,7 +60,7 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     but is hidden since datespan should be fixed to last month
     """
     template = "reports/filters/month_datespan.html"
-    label = ugettext_lazy("Date Range")
+    label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
     is_editable = False
@@ -80,7 +80,7 @@ class SingleDateFilter(BaseReportFilter):
     A filter that returns a single date
     """
     template = "reports/filters/date_selector.html"
-    label = ugettext_lazy("Date")
+    label = gettext_lazy("Date")
     slug = "date"
 
     @property

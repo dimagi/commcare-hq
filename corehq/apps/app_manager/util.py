@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.db.models import Max
 from django.http import Http404
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit import ResourceNotFound
@@ -492,7 +492,7 @@ def _app_callout_templates():
     """
     path = os.path.join(
         os.path.dirname(__file__),
-        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yml'
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:

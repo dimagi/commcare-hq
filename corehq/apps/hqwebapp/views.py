@@ -39,8 +39,8 @@ from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -104,6 +104,7 @@ from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
+from corehq.util.public_only_requests.public_only_requests import get_public_only_session
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -947,11 +948,11 @@ class CRUDPaginatedViewMixin(object):
     """
     DEFAULT_LIMIT = 10
 
-    limit_text = ugettext_noop("items per page")
-    empty_notification = ugettext_noop("You have no items.")
-    loading_message = ugettext_noop("Loading...")
-    deleted_items_header = ugettext_noop("Deleted Items:")
-    new_items_header = ugettext_noop("New Items:")
+    limit_text = gettext_noop("items per page")
+    empty_notification = gettext_noop("You have no items.")
+    loading_message = gettext_noop("Loading...")
+    deleted_items_header = gettext_noop("Deleted Items:")
+    new_items_header = gettext_noop("New Items:")
 
     def _safe_escape(self, expression, default):
         try:
@@ -1237,7 +1238,7 @@ def osdd(request, template='osdd.xml'):
 
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
-    page_title = ugettext_noop("Maintenance Alerts")
+    page_title = gettext_noop("Maintenance Alerts")
     template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
@@ -1334,7 +1335,8 @@ def log_email_event(request, secret):
         # confirmation, where we need to access the subscribe URL to confirm we
         # are able to receive messages at this endpoint
         subscribe_url = request_json['SubscribeURL']
-        requests.get(subscribe_url)
+        session = get_public_only_session(domain_name='n/a', src="log_email_event")
+        session.get(subscribe_url)
         return HttpResponse()
 
     message = json.loads(request_json['Message'])

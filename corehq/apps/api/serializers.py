@@ -3,7 +3,7 @@
 from io import BytesIO
 
 # Django & Tastypie imports
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 # External imports
 import defusedxml.lxml as lxml
@@ -90,7 +90,7 @@ class CommCareCaseSerializer(Serializer):
                 if isinstance(simple_data, str):
                     element.text = simple_data
                 else:
-                    element.text = force_text(simple_data)
+                    element.text = force_str(simple_data)
 
         return element
 

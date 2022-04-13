@@ -8,8 +8,9 @@ from corehq.apps.linked_domain.util import (
     is_available_upstream_domain,
     is_domain_available_to_link,
     user_has_admin_access_in_all_domains,
+    can_domain_access_release_management,
 )
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.quickcache import quickcache
 
 
@@ -53,69 +54,55 @@ def get_actions_in_domain_link_history(link):
     ))
 
 
-def get_available_domains_to_link(upstream_domain_name, user, billing_account=None):
+def get_available_domains_to_link(upstream_domain, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
-    version is available to anyone who can obtain access (the wild west)
-    :param upstream_domain_name: potential upstream domain candidate
+    :param upstream_domain: name of upstream domain candidate
     :param user: user object
-    :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_account(upstream_domain_name, user, billing_account)
-    elif toggles.LINKED_DOMAINS.enabled(upstream_domain_name):
-        return get_available_domains_to_link_for_user(upstream_domain_name, user)
+    if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(upstream_domain, LITE_RELEASE_MANAGEMENT):
+        return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=True)
 
+    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
+    if toggles.LINKED_DOMAINS.enabled(upstream_domain):
+        return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=False)
     return []
 
 
-def get_available_domains_to_link_for_account(upstream_domain_name, user, account):
+def get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin):
     """
-    Finds available domains to link based on domains associated with the provided account
-    """
-    domains = account.get_domains() if account else []
-    return list({domain for domain in domains
-                 if is_domain_available_to_link(upstream_domain_name, domain, user)})
-
-
-def get_available_domains_to_link_for_user(upstream_domain_name, user):
-    """
-    Finds available domains to link based on domains that the provided user is active in
+    Finds available domains to link based on domains that the provided user is active or an admin in
     """
     domains = [d.name for d in Domain.active_for_user(user)]
     return list({domain for domain in domains if is_domain_available_to_link(
-        upstream_domain_name, domain, user, should_enforce_admin=False)})
+        upstream_domain_name, domain, user, should_enforce_admin=should_enforce_admin)})
 
 
-def get_available_upstream_domains(downstream_domain, user, billing_account=None):
+def get_available_upstream_domains(downstream_domain, user):
     """
     This supports both the old feature flagged version of linked projects and the GAed version
-    The GAed version is only available to enterprise customers and only usable by admins, but the feature flagged
-    version is available to anyone who can obtain access
-    :param downstream_domain: potential upstream domain candidate
+    :param downstream_domain: name of downstream domain in potential links
     :param user: user object
-    :param billing_account: optional parameter to limit available domains to within an enterprise account
     :return: list of domain names available to link as downstream projects
     """
-    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_account(downstream_domain, user, billing_account)
-    elif toggles.LINKED_DOMAINS.enabled(downstream_domain):
-        return get_available_upstream_domains_for_user(downstream_domain, user)
+    if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
+            domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
 
+    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
+    if toggles.LINKED_DOMAINS.enabled(downstream_domain):
+        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
     return []
 
 
-def get_available_upstream_domains_for_account(downstream_domain, user, account):
-    domains = account.get_domains() if account else []
-    return list({d for d in domains if is_available_upstream_domain(d, downstream_domain, user)})
-
-
-def get_available_upstream_domains_for_user(domain_name, user):
+def get_available_upstream_domains_for_user(domain_name, user, should_enforce_admin):
     domains = [d.name for d in Domain.active_for_user(user)]
-    return list({domain for domain in domains
-                 if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=False)})
+    return list({
+        domain for domain in domains
+        if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=should_enforce_admin)
+    })
 
 
 def get_accessible_downstream_domains(upstream_domain_name, user):
@@ -124,7 +111,7 @@ def get_accessible_downstream_domains(upstream_domain_name, user):
     NOTE: if the RELEASE_MANAGEMENT privilege is enabled, ensure user has admin access
     """
     downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
-    if domain_has_privilege(upstream_domain_name, RELEASE_MANAGEMENT):
+    if can_domain_access_release_management(upstream_domain_name):
         return [domain for domain in downstream_domains
                 if user_has_admin_access_in_all_domains(user, [upstream_domain_name, domain])]
     return downstream_domains

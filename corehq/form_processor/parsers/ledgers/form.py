@@ -4,7 +4,7 @@ from decimal import Decimal
 import logging
 
 import iso8601
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId

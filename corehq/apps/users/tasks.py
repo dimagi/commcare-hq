@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -17,9 +17,10 @@ from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -190,7 +191,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     indexes_referencing_deleted_cases = \
         CommCareCaseIndex.objects.get_all_reverse_indices_info(domain, list(case_ids))
     case_updates = [
-        CaseBlock.deprecated_init(
+        CaseBlock(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
@@ -311,53 +312,37 @@ def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
         CouchUser, UserReportingMetadataStaging
     )
+    lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
+    process_reporting_metadata_lock = get_redis_lock(
+        lock_key,
+        timeout=60 * 60, # one hour
+        name=lock_key,
+    )
+    if not process_reporting_metadata_lock.acquire(blocking=False):
+        metrics_counter("commcare.process_reporting_metadata.locked_out")
+        return
 
-    start = datetime.utcnow()
+    try:
+        start = datetime.utcnow()
 
-    with transaction.atomic():
-        records = (
-            UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-        )[:100]
-        for record in records:
-            user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            try:
-                record.process_record(user)
-            except ResourceConflict:
-                # https://sentry.io/organizations/dimagi/issues/1479516073/
-                user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                record.process_record(user)
-            record.delete()
+        for i in range(20):
+            with transaction.atomic():
+                records = (
+                    UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+                )[:5]
+                for record in records:
+                    user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                    try:
+                        record.process_record(user)
+                    except ResourceConflict:
+                        # https://sentry.io/organizations/dimagi/issues/1479516073/
+                        user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                        record.process_record(user)
+                    record.delete()
+    finally:
+        process_reporting_metadata_lock.release()
 
     duration = datetime.utcnow() - start
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
-
-
-@periodic_task(run_every=crontab(minute='*/10'), queue='background_queue')
-def gauge_pending_user_confirmations():
-    metric_name = 'commcare.pending_user_confirmations'
-    from corehq.apps.users.models import Invitation
-    for stats in (Invitation.objects.filter(is_accepted=False).all()
-                  .values('domain').annotate(Count('domain'))):
-        metrics_gauge(
-            metric_name, stats['domain__count'], tags={
-                'domain': stats['domain'],
-                'user_type': 'web',
-            },
-            multiprocess_mode=MPM_MAX
-        )
-
-    from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
-    for doc in Domain.get_all(include_docs=False):
-        domain_name = doc['key']
-        users = get_inactive_commcare_users_in_domain(domain_name)
-        num_unconfirmed = sum(1 for u in users if not u.is_account_confirmed)
-        if num_unconfirmed:
-            metrics_gauge(
-                metric_name, num_unconfirmed, tags={
-                    'domain': domain_name,
-                    'user_type': 'mobile',
-                },
-                multiprocess_mode=MPM_MAX
-            )

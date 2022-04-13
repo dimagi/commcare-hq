@@ -250,3 +250,95 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             expected,
             validate_query=False
         )
+
+    def test_multi_xpath_query(self):
+        criteria = OrderedDict([
+            ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),
+        ])
+        expected = {
+                    "query": {
+                        "bool": {
+                            "filter": [
+                                {"terms": {"domain.exact": [DOMAIN]}},
+                                {"terms": {"type.exact": ["case_type"]}},
+                                {"term": {"closed": False}},
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.key.exact": "name"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.value.exact": "Frodo Baggins"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "must": {
+                                                    "match_all": {}
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.key.exact": "home"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.value.exact": "Hobbiton"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "must": {
+                                                    "match_all": {}
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "match_all": {}
+                                }
+                            ],
+                            "must": {
+                                "match_all": {}
+                            }
+                        }
+                    },
+                    "sort": [
+                        "_score",
+                        "_doc"
+                    ],
+                    "size": CASE_SEARCH_MAX_RESULTS
+                }
+        self.checkQuery(
+            get_case_search_query(DOMAIN, ['case_type'], criteria),
+            expected,
+            validate_query=False
+        )

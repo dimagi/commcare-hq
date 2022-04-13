@@ -5,7 +5,7 @@ from collections import namedtuple
 from datetime import date, timedelta
 
 from django.utils.text import slugify
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from text_unidecode import unidecode
 

@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 from dimagi.utils.chunked import chunked
+from corehq import toggles
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.es import UserES, filters
 from corehq.apps.users.util import bulk_auto_deactivate_commcare_users
@@ -95,3 +96,24 @@ class EnterpriseMobileWorkerSettings(models.Model):
         user_ids = [u['_id'] for u in user_query.run().hits]
         for chunked_ids in chunked(user_ids, 100):
             bulk_auto_deactivate_commcare_users(chunked_ids, domain)
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain'])
+    def is_domain_using_custom_deactivation(cls, domain):
+        if not toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(
+            domain, namespace=toggles.NAMESPACE_DOMAIN
+        ):
+            return False
+        account = BillingAccount.get_account_by_domain(domain)
+        try:
+            emw_settings = cls.objects.get(account=account)
+            return emw_settings.allow_custom_deactivation
+        except cls.DoesNotExist:
+            return False
+
+    @classmethod
+    def clear_domain_caches(cls, domain):
+        cls.is_domain_using_custom_deactivation.clear(
+            cls,
+            domain
+        )

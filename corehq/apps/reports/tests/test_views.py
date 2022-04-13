@@ -76,6 +76,11 @@ class TestEmailReport(TestCase):
         with self.assertRaises(Http404):
             self.email_report(report_name='worker_activity')
 
+    def test_disallowed_request_get_method(self):
+        self.request = self._create_request(method='get')
+        response = self.email_report()
+        self.assertEqual(response.status_code, 405)
+
 # ################ Helpers / Setup
     def email_report(self, domain=None, report_name='worker_activity'):
         domain = domain or self.domain
@@ -115,15 +120,17 @@ class TestEmailReport(TestCase):
 
         super().tearDown()
 
-    def _create_request(self, params=None):
+    def _create_request(self, params=None, method='post'):
         if params is None:
             params = {'send_to_owner': True}
 
-        params = urlencode(params)
+        url = f'/a/{self.domain}/emailReport'
 
-        base_url = f'/a/{self.domain}/emailReport'
-        url = f'{base_url}?{params}'
-        request = RequestFactory().get(url)
+        if method == 'get':
+            request = RequestFactory().get(url, params)
+        else:
+            request = RequestFactory().post(url, params)
+
         request.user = self.user
         return request
 

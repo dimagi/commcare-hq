@@ -125,7 +125,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id='',  # this should cause the submission to error
             case_type='person',
@@ -176,7 +176,7 @@ class EditFormTest(TestCase, TestFileMixin):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -194,7 +194,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([form_id], case.xform_ids)
 
         # submit a new form with a different case update
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -214,7 +214,7 @@ class EditFormTest(TestCase, TestFileMixin):
     def test_second_edit_fails(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -222,7 +222,7 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # submit an edit form with a bad case update (for example a bad ID)
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id='',
             case_type='person',
@@ -240,7 +240,7 @@ class EditFormTest(TestCase, TestFileMixin):
         owner_id = uuid.uuid4().hex
 
         # create a case
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -254,7 +254,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         edit_date = datetime.utcnow()
         # set some property value
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             date_modified=edit_date,
@@ -270,7 +270,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
         # submit a second (new) form updating the value
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             update={
@@ -285,7 +285,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
         # deprecate the middle edit
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case_id,
             date_modified=edit_date,  # need to use the previous edit date for action sort comparisons
@@ -310,7 +310,7 @@ class EditFormTest(TestCase, TestFileMixin):
         xmlns1 = 'http://commcarehq.org/xmlns1'
         xmlns2 = 'http://commcarehq.org/xmlns2'
 
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case1_id,
             case_type='person',
@@ -321,7 +321,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(form_id, xform.form_id)
 
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=case2_id,
             case_type='goat',

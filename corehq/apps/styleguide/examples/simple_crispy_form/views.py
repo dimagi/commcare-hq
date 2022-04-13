@@ -2,8 +2,8 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -15,7 +15,7 @@ from corehq.apps.styleguide.examples.simple_crispy_form.forms import (
 
 
 class BaseSimpleCrispyFormSectionView(BaseSectionPageView):
-    section_name = ugettext_noop("Simple Crispy Form Example")
+    section_name = gettext_noop("Simple Crispy Form Example")
 
     def section_url(self):
         return reverse(DefaultSimpleCrispyFormSectionView.urlname)
@@ -40,7 +40,7 @@ class DefaultSimpleCrispyFormSectionView(BaseSimpleCrispyFormSectionView):
 class SimpleCrispyFormView(BaseSimpleCrispyFormSectionView):
     """This shows example usage for crispy forms in an HQ template view.
     """
-    page_title = ugettext_noop("Register a New User")
+    page_title = gettext_noop("Register a New User")
     urlname = 'ex_simple_crispy_forms'
     template_name = 'styleguide/examples/simple_crispy_form/base.html'
 

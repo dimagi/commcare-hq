@@ -7,8 +7,8 @@ from django.db.utils import DataError
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -36,7 +36,7 @@ def default_commtrack_url(domain):
 
 
 class BaseCommTrackManageView(BaseDomainView):
-    section_name = ugettext_noop("Setup")
+    section_name = gettext_noop("Setup")
 
     @property
     def section_url(self):
@@ -54,7 +54,7 @@ class BaseCommTrackManageView(BaseDomainView):
 
 class CommTrackSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_settings'
-    page_title = ugettext_noop("Advanced Settings")
+    page_title = gettext_noop("Advanced Settings")
     template_name = 'domain/admin/commtrack_settings.html'
 
     @property
@@ -154,7 +154,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'
-    page_title = ugettext_noop("Consumption")
+    page_title = gettext_noop("Consumption")
 
     @property
     @memoized
@@ -181,7 +181,7 @@ class DefaultConsumptionView(BaseCommTrackManageView):
 
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
-    page_title = ugettext_noop("SMS")
+    page_title = gettext_noop("SMS")
     template_name = 'domain/admin/sms_settings.html'
 
     @property

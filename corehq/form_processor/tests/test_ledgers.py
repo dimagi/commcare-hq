@@ -158,7 +158,7 @@ class LedgerTests(TestCase):
     def test_ledger_update_with_case_update(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         submit_case_blocks([
-            CaseBlock.deprecated_init(case_id=self.case.case_id, update={'a': "1"}).as_text(),
+            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_text(),
             get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
             DOMAIN
         )
@@ -221,7 +221,7 @@ class LedgerTests(TestCase):
         self.assertTrue(transactions[1].is_ledger_transaction)
 
         submit_case_blocks([
-            CaseBlock.deprecated_init(case_id=self.case.case_id).as_text()],
+            CaseBlock(case_id=self.case.case_id).as_text()],
             DOMAIN,
             form_id=form_id
         )

@@ -27,10 +27,9 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.safestring import SafeBytes
 from django.utils.translation import override
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 import qrcode
 from couchdbkit import ResourceNotFound
@@ -1182,7 +1181,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding='utf-8'))
+                    validate_xform(etree.tostring(form.xml, encoding='utf-8'))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -2068,6 +2067,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Custom variables to add into the <variables /> node
     custom_variables = StringProperty(exclude_if_none=True)
 
+    # Allow selection of mutiple cases. Only applies to 'short' details
+    multi_select = BooleanProperty(default=False)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
@@ -2168,12 +2170,6 @@ class Itemset(DocumentSchema):
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)
 
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
-        (data, dirty) = wrap_itemset(data)
-        return super().wrap(data)
-
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2223,8 +2219,7 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty(exclude_if_none=True)
+    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -2241,15 +2236,15 @@ class CaseSearch(DocumentSchema):
     def case_session_var(self):
         return "search_case_id"
 
-    def get_relevant(self):
-        relevant = self.additional_relevant or ""
-        if self.default_relevant:
-            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
-            if relevant:
-                relevant = f"({default_condition}) and ({relevant})"
-            else:
-                relevant = default_condition
-        return relevant
+    def get_relevant(self, multi_select=False):
+        if multi_select:
+            return self.additional_relevant
+
+        # Single select case lists are irrelevant if the selected case is already in the casedb
+        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        if self.additional_relevant:
+            return f"({default_condition}) and ({self.additional_relevant})"
+        return default_condition
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2425,6 +2420,11 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
     def get_app(self):
         return self._parent
+
+    def is_multi_select(self):
+        if hasattr(self, 'case_details'):
+            return self.case_details.short.multi_select
+        return False
 
     def default_name(self, app=None):
         if not app:
@@ -2698,6 +2698,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
+
 
 class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -2954,7 +2958,7 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
-            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+            options = [(self.shadow_parent_form_id, gettext_lazy("Unknown, please change"))] + options
         return options
 
     @staticmethod
@@ -3288,6 +3292,10 @@ class AdvancedModule(ModuleBase):
         """Return True if this module has any forms that use the usercase.
         """
         return self._uses_case_type(USERCASE_TYPE)
+
+    @property
+    def additional_case_types(self):
+        return self.search_config.additional_case_types
 
     @property
     def phase_anchors(self):
@@ -3836,6 +3844,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return None
         return self.source_module.case_type
+
+    @property
+    def additional_case_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.additional_case_types
 
     @property
     def requires(self):
@@ -4479,7 +4493,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                     for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
-                    name: (contents if isinstance(contents, (bytes, SafeBytes)) else contents.encode('utf-8'))
+                    name: (contents if isinstance(contents, bytes) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()
@@ -4942,9 +4956,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, form, build_profile_id=None):
-        return form.validate_form().render_xform(build_profile_id)
-
     @time_method()
     def set_form_versions(self):
         """
@@ -4960,27 +4971,28 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         force_new_version = self.build_profiles != latest_build.build_profiles
         for form_stuff in self.get_forms(bare=False):
             filename = 'files/%s' % self.get_form_filename(**form_stuff)
-            form = form_stuff["form"]
+            current_form = form_stuff["form"]
             if not force_new_version:
                 try:
-                    previous_form = latest_build.get_form(form.unique_id)
+                    previous_form = latest_build.get_form(current_form.unique_id)
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = latest_build.fetch_attachment(filename)
                 except (ResourceNotFound, FormNotFoundException):
-                    form.version = None
+                    current_form.version = None
                 else:
                     previous_hash = _hash(previous_source)
 
-                    # hack - temporarily set my version to the previous version
-                    # so that that's not treated as the diff
-                    previous_form_version = previous_form.get_version()
-                    form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form))
-                    if previous_hash != my_hash:
-                        form.version = None
+                    # set form version to previous version, and only update if content has changed
+                    current_form.version = previous_form.get_version()
+                    current_form = current_form.validate_form()
+                    current_hash = _hash(current_form.render_xform())
+                    if previous_hash != current_hash:
+                        current_form.version = None
+                        # clear cache since render_xform was called with a mutated form set to the previous version
+                        current_form.render_xform.reset_cache(current_form)
             else:
-                form.version = None
+                current_form.version = None
 
     @time_method()
     def set_media_versions(self):
@@ -5222,10 +5234,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
+                    files[filename] = form.render_xform(build_profile_id=build_profile_id)
                 except XFormException as e:
                     raise XFormException(_('Error in form "{}": {}').format(trans(form.name), e))
         return files

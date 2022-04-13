@@ -12,7 +12,7 @@ from django.http import (
 )
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 import urllib3
@@ -177,7 +177,7 @@ def get_app_view_context(request, app):
     This provides the context to render commcare settings on Edit Application Settings page
 
     This is where additional app or domain specific context can be added to any individual
-    commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
+    commcare-setting defined in commcare-app-settings.yml or commcare-profile-settings.yml
     """
     context = {}
 

@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterable
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from jsonobject.containers import JsonDict
 from memoized import memoized

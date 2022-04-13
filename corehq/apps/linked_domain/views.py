@@ -4,15 +4,14 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from django.views import View
 
 from couchdbkit import ResourceNotFound
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
-from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.accounting.utils import domain_has_privilege
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -57,9 +56,12 @@ from corehq.apps.linked_domain.decorators import (
     require_linked_domain,
 )
 from corehq.apps.linked_domain.exceptions import (
+    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
+    DomainLinkNotFound,
+    NoDownstreamDomainsProvided,
     UnsupportedActionError,
 )
 from corehq.apps.linked_domain.local_accessors import (
@@ -91,6 +93,7 @@ from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app,
     server_to_user_time,
     user_has_admin_access_in_all_domains,
+    can_domain_access_release_management,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -112,7 +115,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, WebUser
-from corehq.privileges import RELEASE_MANAGEMENT
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -258,8 +261,8 @@ def pull_missing_multimedia(request, domain, app_id):
     if async_update:
         pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email, force)
         messages.success(request,
-                         ugettext('Your request has been submitted. '
-                                  'We will notify you via email once completed.'))
+                         gettext('Your request has been submitted. '
+                                 'We will notify you via email once completed.'))
     else:
         app = get_app(domain, app_id)
         pull_missing_multimedia_for_app(app, force=force)
@@ -269,7 +272,7 @@ def pull_missing_multimedia(request, domain, app_id):
 @method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Linked Project Spaces")
+    page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
 
     @use_multiselect
@@ -279,8 +282,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         """
-        This view services both domains that are master domains and domains that are linked domains
-        (and legacy domains that are both).
+        This view services both domains that are upstream, downstream, and legacy domains that are both
         """
         timezone = get_timezone_for_request()
         upstream_link = get_upstream_domain_link(self.domain)
@@ -302,16 +304,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             is_superuser=is_superuser
         )
 
-        account = BillingAccount.get_account_by_domain(self.request.domain)
-        available_domains_to_link = get_available_domains_to_link(self.request.domain,
-                                                                  self.request.couch_user,
-                                                                  billing_account=account)
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
 
         upstream_domain_urls = []
-        upstream_domains = get_available_upstream_domains(self.request.domain,
-                                                          self.request.couch_user,
-                                                          billing_account=account)
-        for domain in upstream_domains:
+        for domain in get_available_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         if upstream_link and upstream_link.is_remote:
@@ -322,9 +318,9 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
-            'is_superuser': is_superuser,
+            'has_release_management_privilege': can_domain_access_release_management(self.domain),
             'view_data': {
+                'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
                 'available_domains': available_domains_to_link,
@@ -333,6 +329,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
+                'has_full_access': can_domain_access_release_management(self.domain, include_lite_version=False),
             },
         }
 
@@ -385,6 +382,28 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
+        error_message = ''
+        try:
+            validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
+        except NoDownstreamDomainsProvided:
+            error_message = gettext("No downstream project spaces were selected. Please contact support.")
+        except DomainLinkNotFound:
+            error_message = gettext(
+                "Links between one or more project spaces do not exist. Please contact support."
+            )
+        except AttemptedPushViolatesConstraints:
+            formatted_domains = ', '.join(in_data['linked_domains'])
+            error_message = gettext('''
+                The attempted push from {} to {} is disallowed. Please contact support.
+            '''.format(self.domain, formatted_domains))
+            notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
+        finally:
+            if error_message:
+                return {
+                    'success': False,
+                    'message': error_message,
+                }
+
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
 
@@ -396,7 +415,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         return {
             'success': True,
-            'message': ugettext('''
+            'message': gettext('''
                 Your release has begun. You will receive an email when it is complete.
                 Until then, to avoid linked domains receiving inconsistent content, please
                 avoid editing any of the data contained in the release.
@@ -435,21 +454,52 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 def link_domains(couch_user, upstream_domain, downstream_domain):
     if not domain_exists(downstream_domain):
-        error = ugettext("The project space {} does not exist. Verify that the name is correct, and that the "
-                         "domain has not been deleted.").format(downstream_domain)
+        error = gettext("The project space {} does not exist. Verify that the name is correct, and that the "
+                        "domain has not been deleted.").format(downstream_domain)
         raise DomainDoesNotExist(error)
 
     if get_active_domain_link(upstream_domain, downstream_domain):
-        error = ugettext(
+        error = gettext(
             "The project space {} is already a downstream project space of {}."
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
     if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = ugettext("You must be an admin in both project spaces to create a link.")
+        error = gettext("You must be an admin in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
+
+
+def validate_push(user, domain, downstream_domains):
+    if not downstream_domains:
+        raise NoDownstreamDomainsProvided
+
+    try:
+        domain_links = [
+            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
+        ]
+    except DomainLink.DoesNotExist:
+        raise DomainLinkNotFound
+
+    validate_push_for_user(user, domain_links)
+
+
+def validate_push_for_user(user, domain_links):
+    if user.is_superuser:
+        return
+
+    if len(domain_links) == 1:
+        # pushing to one domain is fine regardless of access status
+        return
+
+    limited_access_links = list(filter(lambda link: not link.has_full_access(), domain_links))
+
+    if not limited_access_links:
+        # all links are full access
+        return
+
+    raise AttemptedPushViolatesConstraints
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
@@ -557,7 +607,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
         name = LINKED_MODELS_MAP[record.model]
         if record.model == MODEL_APP:
             detail = record.wrapped_detail
-            app_name = ugettext_lazy('Unknown App')
+            app_name = gettext_lazy('Unknown App')
             if detail:
                 app_names = self.linked_app_names(self.selected_link.linked_domain)
                 app_name = app_names.get(detail.app_id, detail.app_id)
@@ -565,7 +615,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_FIXTURE:
             detail = record.wrapped_detail
-            tag = ugettext_lazy('Unknown')
+            tag = gettext_lazy('Unknown')
             if detail:
                 data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
                 if data_type:
@@ -574,7 +624,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_REPORT:
             detail = record.wrapped_detail
-            report_name = ugettext_lazy('Unknown Report')
+            report_name = gettext_lazy('Unknown Report')
             if detail:
                 try:
                     report_name = ReportConfiguration.get(detail.report_id).title
@@ -584,7 +634,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
         if record.model == MODEL_KEYWORD:
             detail = record.wrapped_detail
-            keyword_name = ugettext_lazy('Unknown Keyword')
+            keyword_name = gettext_lazy('Unknown Keyword')
             if detail:
                 try:
                     keyword_name = Keyword.objects.get(id=detail.keyword_id).keyword
@@ -598,10 +648,10 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def headers(self):
         tzname = self.timezone.localize(datetime.utcnow()).tzname()
         columns = [
-            DataTablesColumn(ugettext('Link')),
-            DataTablesColumn(ugettext('Date ({})'.format(tzname))),
-            DataTablesColumn(ugettext('Data Model')),
-            DataTablesColumn(ugettext('User')),
+            DataTablesColumn(gettext('Link')),
+            DataTablesColumn(gettext('Date ({})'.format(tzname))),
+            DataTablesColumn(gettext('Data Model')),
+            DataTablesColumn(gettext('User')),
         ]
 
         return DataTablesHeader(*columns)

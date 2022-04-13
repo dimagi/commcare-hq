@@ -3,8 +3,10 @@ from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
@@ -78,6 +80,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         allowed_headers.add('domain')
+
+    if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
+        allowed_headers.add('deactivate_after')
 
     illegal_headers = headers - allowed_headers
 
@@ -446,6 +451,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
     ret = {"errors": [], "rows": []}
     current = 0
+    update_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+        upload_domain
+    )
 
     for row in user_specs:
         if update_progress:
@@ -486,6 +494,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         web_user_username = row.get('web_user')
         phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
 
+        deactivate_after = row.get('deactivate_after', None) if update_deactivate_after_date else None
+        if isinstance(deactivate_after, datetime):
+            deactivate_after = deactivate_after.strftime("%m-%Y")
+            row['deactivate_after'] = deactivate_after
+
         try:
             password = str(password) if password else None
 
@@ -518,6 +531,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
             commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
 
+            if update_deactivate_after_date:
+                commcare_user_importer.update_deactivate_after(deactivate_after)
+
             if language:
                 commcare_user_importer.update_language(language)
             if email:
@@ -545,7 +561,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             log = commcare_user_importer.save_log()
 
             if web_user_username:
-                check_can_upload_web_users(upload_user)
+                check_can_upload_web_users(domain, upload_user)
                 web_user = CouchUser.get_by_username(web_user_username)
                 if web_user:
                     web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
@@ -688,7 +704,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
             remove = spec_value_to_boolean_or_none(row, 'remove')
             check_user_role(username, role)
             role_qualified_id = domain_info.roles_by_name[role]
-            check_can_upload_web_users(upload_user)
+            check_can_upload_web_users(domain, upload_user)
 
             user = CouchUser.get_by_username(username, strict=True)
             if user:
@@ -773,8 +789,8 @@ def check_user_role(username, role):
             "a role").format(username=username))
 
 
-def check_can_upload_web_users(upload_user):
-    if not upload_user.can_edit_web_users():
+def check_can_upload_web_users(domain, upload_user):
+    if not upload_user.can_edit_web_users(domain):
         raise UserUploadError(_(
             "Only users with the edit web users permission can upload web users"
         ))

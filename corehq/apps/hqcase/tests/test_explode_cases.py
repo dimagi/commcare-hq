@@ -47,7 +47,7 @@ class ExplodeCasesDbTest(TestCase):
         super(ExplodeCasesDbTest, cls).tearDownClass()
 
     def test_simple(self):
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             user_id=self.user_id,
@@ -65,7 +65,7 @@ class ExplodeCasesDbTest(TestCase):
             self.assertEqual(self.user_id, case.owner_id)
 
     def test_skip_usercase(self):
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             user_id=self.user_id,
@@ -85,7 +85,7 @@ class ExplodeCasesDbTest(TestCase):
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'
-        parent_block = CaseBlock.deprecated_init(
+        parent_block = CaseBlock(
             create=True,
             case_id=parent_id,
             user_id=self.user_id,
@@ -94,7 +94,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_text()
 
         child_id = uuid.uuid4().hex
-        child_block = CaseBlock.deprecated_init(
+        child_block = CaseBlock(
             create=True,
             case_id=child_id,
             user_id=self.user_id,

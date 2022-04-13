@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -29,7 +30,9 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.tests.util.xml import parse_normalize
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
@@ -366,6 +369,34 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite,
             "./remote-request[2]"
         )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_additional_types(self, *args):
+        another_case_type = "another_case_type"
+        self.module.search_config.additional_case_types = [another_case_type]
+        suite_xml = self.app.create_suite()
+        suite = parse_normalize(suite_xml, to_string=False)
+        self.assertEqual(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][@status='open']{}".format(
+                RESULTS_INSTANCE,
+                RESULTS_INSTANCE,
+                self.module.case_type,
+                another_case_type,
+                EXCLUDE_RELATED_CASES_FILTER
+            ),
+            suite.xpath("./entry[2]/session/datum/@nodeset")[0]
+        )
+        for query_index in range(1, 3):
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                  <data key="case_type" ref="'case'"/>
+                  <data key="case_type" ref="'another_case_type'"/>
+                </partial>
+                """,
+                suite_xml,
+                f"./entry[2]/session/query[{query_index}]/data[@key='case_type']"
+            )
 
 
 @patch_get_xform_resource_overrides()

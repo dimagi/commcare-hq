@@ -9,20 +9,19 @@ from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
+from jsonpath_ng.ext import parser
 from memoized import memoized
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
-from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -49,9 +48,11 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -60,12 +61,13 @@ from corehq.apps.userreports.const import (
     VALID_REFERENCED_DOC_TYPES,
 )
 from corehq.apps.userreports.dbaccessors import (
-    get_datasources_for_domain,
-    get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain,
     get_all_registry_data_source_ids,
-    get_registry_data_sources_by_domain, get_registry_report_configs_for_domain,
+    get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
+    get_number_of_report_configs_by_data_source,
+    get_registry_data_sources_by_domain,
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -77,6 +79,10 @@ from corehq.apps.userreports.exceptions import (
     ValidationError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.extension_points import (
+    static_ucr_data_source_paths,
+    static_ucr_report_paths,
+)
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -91,7 +97,8 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, wrap_report_config_by_type,
+    get_indicator_adapter,
+    wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -126,7 +133,7 @@ class DataSourceActionLog(models.Model):
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
     ), db_index=True, null=False)
-    migration_diffs = JSONField(null=True, blank=True)
+    migration_diffs = models.JSONField(null=True, blank=True)
 
     # True for actions that were skipped because the data source
     # was marked with ``disable_destructive_rebuild``
@@ -529,6 +536,19 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def data_domains(self):
         return [self.domain]
 
+    def _verify_contains_allowed_expressions(self):
+        """
+        Raise BadSpecError if any disallowed expression is present in datasource
+        """
+        disallowed_expressions = AllowedUCRExpressionSettings.disallowed_ucr_expressions(self.domain)
+        if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
+            raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
+        doubtful_keys = dict(indicators=self.configured_indicators, expressions=self.named_expressions)
+        for expr in disallowed_expressions:
+            results = parser.parse(f"$..[*][?type={expr}]").find(doubtful_keys)
+            if results:
+                raise BadSpecError(_(f'{expr} is not allowed for domain {self.domain}'))
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -546,7 +566,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
-
+        self._verify_contains_allowed_expressions()
         self.parsed_expression
         self.pk_columns
 
@@ -887,6 +907,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     def validate(self, required=True):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
             duplicate_items = set(
@@ -933,6 +954,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     def is_static(self):
         return report_config_id_is_static(self._id)
+
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -1384,7 +1406,6 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
 
 
-
 def id_is_static(data_source_id):
     if data_source_id is None:
         return False
@@ -1401,6 +1422,13 @@ def report_config_id_is_static(config_id):
     return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+    )
+
+
+def is_data_registry_report(report_config):
+    return (
+        isinstance(report_config, RegistryReportConfiguration)
+        or report_config.config.meta.build.registry_slug
     )
 
 
@@ -1486,7 +1514,7 @@ class ReportComparisonException(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     exception = models.TextField()
     notes = models.TextField(blank=True)
 
@@ -1496,10 +1524,10 @@ class ReportComparisonDiff(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
-    control = JSONField()
-    candidate = JSONField()
-    diff = JSONField()
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
+    control = models.JSONField()
+    candidate = models.JSONField()
+    diff = models.JSONField()
     notes = models.TextField(blank=True)
 
 
@@ -1508,6 +1536,6 @@ class ReportComparisonTiming(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

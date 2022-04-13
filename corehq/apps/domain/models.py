@@ -11,7 +11,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -261,22 +261,6 @@ class CaseDisplaySettings(DocumentSchema):
         verbose_name="Mapping of form xmlns to definitions of properties "
                      "to display for individual forms")
 
-    # todo: case list
-
-
-class DynamicReportConfig(DocumentSchema):
-    """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty()  # fully-qualified path to template report class
-    name = StringProperty()  # report display name in sidebar
-    kwargs = DictProperty()  # arbitrary settings to configure report
-    previewers_only = BooleanProperty()
-
-
-class DynamicReportSet(DocumentSchema):
-    """a set of dynamic reports grouped under a section header in the sidebar"""
-    section_title = StringProperty()
-    reports = SchemaListProperty(DynamicReportConfig)
-
 
 LOGO_ATTACHMENT = 'logo.png'
 
@@ -330,7 +314,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
-    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -438,13 +421,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     internal = SchemaProperty(InternalProperties)
 
-    dynamic_reports = SchemaListProperty(DynamicReportSet)
-
     # extra user specified properties
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
-    launch_date = DateTimeProperty
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
@@ -457,8 +437,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     disable_mobile_login_lockout = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
-
-    report_whitelist = StringListProperty()
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
@@ -1093,6 +1071,12 @@ class AllowedUCRExpressionSettings(models.Model):
                 'allowed_ucr_expressions': expressions
             }
         )
+
+    @classmethod
+    def disallowed_ucr_expressions(cls, domain_name):
+        allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        return restricted_expressions - allowed_expressions_for_domain
 
 
 class ProjectLimitType():

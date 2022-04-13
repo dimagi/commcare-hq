@@ -1,3 +1,3 @@
 from django.dispatch import Signal
 
-location_edited = Signal(providing_args=['loc', 'moved'])
+location_edited = Signal()  # providing args: loc, moved

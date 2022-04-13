@@ -7,8 +7,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -34,7 +34,7 @@ from corehq.form_processor.models import CommCareCase
 
 class BiometricIntegrationView(BaseAdminProjectSettingsView):
     urlname = 'biometric_integration'
-    page_title = ugettext_lazy("Biometric Integration")
+    page_title = gettext_lazy("Biometric Integration")
     template_name = 'integration/biometric.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
@@ -160,7 +160,7 @@ def get_post_data_for_otp(request, domain):
 
 class DialerSettingsView(BaseProjectSettingsView):
     urlname = 'dialer_settings_view'
-    page_title = ugettext_lazy('Dialer Settings')
+    page_title = gettext_lazy('Dialer Settings')
     template_name = 'integration/dialer_settings.html'
 
     @method_decorator(toggles.WIDGET_DIALER.required_decorator())
@@ -191,11 +191,11 @@ class DialerSettingsView(BaseProjectSettingsView):
         if self.dialer_settings_form.is_valid():
             self.dialer_settings_form.save()
             messages.success(
-                request, ugettext_lazy("Dialer Settings Updated")
+                request, gettext_lazy("Dialer Settings Updated")
             )
         else:
             messages.error(
-                request, ugettext_lazy("Could not update Dialer Settings")
+                request, gettext_lazy("Could not update Dialer Settings")
             )
         return self.get(request, *args, **kwargs)
 
@@ -203,7 +203,7 @@ class DialerSettingsView(BaseProjectSettingsView):
 @method_decorator(toggles.GAEN_OTP_SERVER.required_decorator(), name='dispatch')
 class GaenOtpServerSettingsView(BaseProjectSettingsView):
     urlname = 'gaen_otp_server_settings_view'
-    page_title = ugettext_lazy('GAEN OTP Server Config')
+    page_title = gettext_lazy('GAEN OTP Server Config')
     template_name = 'integration/gaen_otp_server_settings.html'
 
     @property
@@ -230,11 +230,11 @@ class GaenOtpServerSettingsView(BaseProjectSettingsView):
         if self.gaen_otp_server_settings_form.is_valid():
             self.gaen_otp_server_settings_form.save()
             messages.success(
-                request, ugettext_lazy("GAEN OTP Server Settings Updated")
+                request, gettext_lazy("GAEN OTP Server Settings Updated")
             )
         else:
             messages.error(
-                request, ugettext_lazy("Could not update GAEN OTP Server Settings")
+                request, gettext_lazy("Could not update GAEN OTP Server Settings")
             )
         return self.get(request, *args, **kwargs)
 
@@ -242,7 +242,7 @@ class GaenOtpServerSettingsView(BaseProjectSettingsView):
 @method_decorator(toggles.HMAC_CALLOUT.required_decorator(), name='dispatch')
 class HmacCalloutSettingsView(BaseProjectSettingsView):
     urlname = 'hmac_callout_settings_view'
-    page_title = ugettext_lazy('Signed Callout Settings')
+    page_title = gettext_lazy('Signed Callout Settings')
     template_name = 'integration/hmac_callout_settings.html'
 
     @property
@@ -269,10 +269,10 @@ class HmacCalloutSettingsView(BaseProjectSettingsView):
         if self.hmac_callout_settings_form.is_valid():
             self.hmac_callout_settings_form.save()
             messages.success(
-                request, ugettext_lazy("Callout Settings Updated")
+                request, gettext_lazy("Callout Settings Updated")
             )
         else:
             messages.error(
-                request, ugettext_lazy("Could not update Callout Settings")
+                request, gettext_lazy("Could not update Callout Settings")
             )
         return self.get(request, *args, **kwargs)

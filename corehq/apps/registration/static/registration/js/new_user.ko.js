@@ -165,7 +165,7 @@ hqDefine('registration/js/new_user.ko', [
         self.passwordDelayed = ko.pureComputed(self.password)
             .extend(_rateLimit)
             .extend({
-                zxcvbnPassword: 2,
+                zxcvbnPassword: initialPageData.get('minimumZxcvbnScore'),
             });
 
 
