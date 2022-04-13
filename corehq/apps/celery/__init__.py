@@ -6,8 +6,9 @@ class Config(AppConfig):
     """Configure global Celery app as part of Django setup"""
     name = 'corehq.apps.celery'
 
-    def ready(self):
+    def __init__(self, *args, **kw):
         _init_celery_app()
+        super().__init__(*args, **kw)
 
 
 def _init_celery_app():
@@ -16,3 +17,4 @@ def _init_celery_app():
     app = Celery()
     app.config_from_object('django.conf:settings', namespace='CELERY')
     app.autodiscover_tasks()
+    app.set_default()
