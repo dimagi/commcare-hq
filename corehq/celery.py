@@ -13,7 +13,7 @@ run_patches()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-django.setup()  # calls corehq.apps.celery.Config.ready()
+django.setup()  # corehq.apps.celery.Config creates the app
 run_checks()
 
 from corehq.apps.celery import app  # noqa: E402, F401

@@ -30,7 +30,7 @@ def _get_current_app():
     return app
 
 
-# Monkey patch Celery. The app is initialized in
+# Monkey patch Celery. The app will be initialized in
 # corehq.apps.celery._init_celery_app during Django setup.
 os.environ.setdefault("C_STRICT_APP", "1")
 from celery import _state  # noqa: E402
