@@ -72,7 +72,7 @@ branches:
     - fr/ucr-registry-linked  # Farid April 12
     - dm/celery  # Daniel Apr 12
     - ap/sql-case-repeater # Amit March 23
-    #- ml/all-in-one-offboarding # Minha April 13
+    - ml/all-in-one-offboarding # Minha April 13
 
 
 submodules: { }
