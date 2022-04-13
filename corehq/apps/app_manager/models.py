@@ -2228,7 +2228,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
-    title_label = DictProperty()
+    title_label = DictProperty(default={'en': 'Case Claim'})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -4864,8 +4864,11 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         label_dict = {lang: label.get('case.search.title')
             for lang, label in translations.items() if label}
         for module in self.modules:
-            if hasattr(module, 'search_config'):
-                setattr(getattr(module, 'search_config'), 'title_label', label_dict)
+            search_config = getattr(module, 'search_config')
+            if search_config:
+                default_label_dict = getattr(search_config, 'title_label')
+                combined_label_dict = self._get_label_dict(data, default_label_dict, label_dict)
+                setattr(search_config, 'title_label', combined_label_dict)
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
@@ -4877,6 +4880,16 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             self.multimedia_map = {}
 
         return self
+
+    # combines title_label values and translation_title_label values into one dict
+    def _get_label_dict(self, data, default_dict, translated_dict):
+        label_dict = dict()
+        for lang in data.get('langs'):
+            if lang in default_dict.keys():
+                label_dict[lang] = default_dict[lang]
+            elif lang in translated_dict.keys():
+                label_dict[lang] = translated_dict[lang]
+        return label_dict
 
     def save(self, *args, **kwargs):
         super(Application, self).save(*args, **kwargs)
