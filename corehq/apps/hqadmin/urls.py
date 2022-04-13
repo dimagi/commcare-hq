@@ -26,7 +26,7 @@ from corehq.apps.hqadmin.views.users import (
     DisableTwoFactorView,
     DisableUserView,
     SuperuserManagement,
-    UserPrivilegeManagement,
+    OffboardingUserList,
     WebUserDataView,
     superuser_table,
     web_user_lookup,
@@ -45,7 +45,7 @@ urlpatterns = [
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
-    url(r'^user_privilege_management/$', UserPrivilegeManagement.as_view(), name=UserPrivilegeManagement.urlname),
+    url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
     url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),

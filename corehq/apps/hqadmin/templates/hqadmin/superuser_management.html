@@ -9,7 +9,7 @@
       <p class="help-block">
         {% if offboarding %}
           {% blocktrans %}
-            Please type comma-separated email addresses of users to revoke privileges/access.
+            Please type comma-separated email addresses of users you want to offboard.
           {% endblocktrans %}
         {% else %}
           {% blocktrans %}
@@ -22,10 +22,12 @@
   </div>
   <div class="row">
     <div class="col-xs-12">
-      <h2>All superusers and staff users</h2>
-
-      <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
-
+      {% if not offboarding %}
+        <h2>All superusers and staff users</h2>
+        <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
+      {% else %}
+        <h2> {{ table_title }}</h2>
+      {% endif %}
       <table class="table">
         <tr>
           <th>Username</th>
