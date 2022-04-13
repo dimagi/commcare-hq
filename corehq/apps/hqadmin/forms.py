@@ -146,8 +146,9 @@ def clean_data(cleaned_data, invert=False, get_list=False):
 
     users = []
     for username in csv_email_list:
-        if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-            raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
+        if not get_list:
+            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
+                raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
         try:
             users.append(User.objects.get(username=username))
         except User.DoesNotExist:
