@@ -71,7 +71,7 @@ branches:
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - fr/ucr-registry-linked  # Farid April 12
     - dm/celery  # Daniel Apr 12
-    # - ap/sql-case-repeater # Amit March 23
+    - ap/sql-case-repeater # Amit March 23
 
 
 submodules: { }
