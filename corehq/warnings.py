@@ -17,6 +17,7 @@ def configure_deprecation_whitelist():
     whitelist("couchdbkit.schema.properties", "'collections.abc'")
     whitelist("kombu.utils.functional", "'collections.abc'")
     whitelist("nose.importer", "the imp module is deprecated")
+    whitelist("nose.util", "inspect.getargspec() is deprecated")
 
     # warnings that can be resolved with HQ code changes
     whitelist("", "property_match are deprecated. Use boolean_expression instead.")
