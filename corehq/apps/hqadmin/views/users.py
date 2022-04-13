@@ -52,7 +52,7 @@ from corehq.apps.hqadmin.forms import (
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
-    UserPrivilegeManagementForm,
+    OffboardingUserListForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
@@ -135,16 +135,25 @@ def superuser_table(request):
     return response
 
 
-def augmented_superusers():
-    return _augment_users_with_two_factor_enabled(User.objects.filter(
-        Q(is_superuser=True) | Q(is_staff=True)
-    ))
+def augmented_superusers(users=None, include_accounting_admin=False):
+    if not users:
+        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
+    augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_accounting_admin:
+        return _augment_users_with_accounting_admin(augmented_users)
+    return augmented_users
 
 
 def _augment_users_with_two_factor_enabled(users):
     """Annotate a User queryset with a two_factor_enabled field"""
     for user in users:
         user.two_factor_enabled = bool(default_device(user))
+    return users
+
+
+def _augment_users_with_accounting_admin(users):
+    for user in users:
+        user.is_accounting_admin = is_accounting_admin(user)
     return users
 
 
@@ -618,76 +627,33 @@ class AppBuildTimingsView(TemplateView):
         return app.timing_context
 
 
-class UserPrivilegeManagement(UserAdministration):
-    urlname = 'user_privilege_management'
-    page_title = _("Remove accounting admin privilege, superuser status and login access")
+class OffboardingUserList(UserAdministration):
+    urlname = 'get_offboarding_list'
+    page_title = _("Get users to offboard")
     template_name = 'hqadmin/superuser_management.html'
-
-    """
-    This view is meant only to revoke privileges.
-    To undo changes made here navigate to the individual pages for granting access.
-    """
+    users = []
+    table_title = ""
 
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
-        return super(UserPrivilegeManagement, self).dispatch(*args, **kwargs)
+        return super(OffboardingUserList, self).dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
-        # only staff can toggle is_staff
-        can_toggle_is_staff = self.request.user.is_staff
-        # render validation errors if rendered after POST
-        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
-        users = augmented_superusers()
-        for user in users:
-            user.is_accounting_admin = True if is_accounting_admin(user) else False
+        args = [self.request.POST] if self.request.POST else []
+        if not self.users:
+            self.users = augmented_superusers(include_accounting_admin=True)
         return {
-            'form': UserPrivilegeManagementForm(*args),
-            'users': users,
+            'form': OffboardingUserListForm(*args),
+            'users': self.users,
             'offboarding': True,
+            'table_title': "All superusers and staff users" if not self.table_title else self.table_title
         }
 
     def post(self, request, *args, **kwargs):
-        can_toggle_staff = request.user.is_staff
-        can_toggle_superuser = request.user.is_superuser
-        can_toggle_accounting_admin = is_accounting_admin(request.user)
-        form = UserPrivilegeManagementForm(can_toggle_staff, self.request.POST)
+        form = OffboardingUserListForm(self.request.POST)
         if form.is_valid():
             users = form.cleaned_data['users']
-            remove_staff = 'remove_staff' in form.cleaned_data['privileges']
-            remove_superuser = 'remove_superuser' in form.cleaned_data['privileges']
-            remove_accounting_admin = 'remove_accounting_admin' in form.cleaned_data['privileges']
-            disable_user = 'disable_user' in form.cleaned_data['privileges']
-            fields_changed = {}
-            users_disabled = []
-            reason = 'Offboarding'
-            for user in users:
-                if can_toggle_accounting_admin and is_accounting_admin(user) and remove_accounting_admin:
-                    from corehq.apps.accounting.views import ManageAccountingAdminsView
-                    ManageAccountingAdminsView.get_deleted_item_data(0, user=user)
-                    fields_changed['is_accounting_admin'] = False
-                if can_toggle_superuser and user.is_superuser and remove_superuser:
-                    user.is_superuser = False
-                    fields_changed['is_superuser'] = False
-                if can_toggle_staff and user.is_staff and remove_staff:
-                    user.is_staff = False
-                    fields_changed['is_staff'] = False
-                if user.is_active and disable_user:
-                    user.is_active = False
-                    fields_changed['is_active'] = False
-                    DisableUserView.send_user_email(user, False, 'disabled', reason)
-                    users_disabled.append(user.username)
-                if fields_changed:
-                    user.save()
-                    couch_user = CouchUser.from_django_user(user)
-                    #if user was disabled if needs a changed_message param
-                    log_user_change(by_domain=None, for_domain=None, couch_user=couch_user,
-                                    changed_by_user=self.request.couch_user,
-                                    changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
-                                    by_domain_required_for_log=False,
-                                    for_domain_required_for_log=False)
-            if users_disabled:
-                DisableUserView.send_admins_email('disabled', ", ".join(users_disabled),
-                                                  self.request.user.username, 'False', reason)
-            messages.success(request, _("Successfully updated user status"))
+            self.users = augmented_superusers(users=users, include_accounting_admin=True)
+            self.table_title = "Users that need their privileges revoked/account disabled"
         return self.get(request, *args, **kwargs)
