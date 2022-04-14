@@ -1626,7 +1626,8 @@ class XForm(WrappedNode):
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
         module = form.get_module()
-        is_registry_case = _module_loads_registry_case(module) and not form_opens_case
+        block_case_management = _module_loads_registry_case(module) and not form_opens_case
+        block_case_management = block_case_management or form.get_module().is_multi_select()
         delegation_case_block = None
         if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
@@ -1675,10 +1676,10 @@ class XForm(WrappedNode):
                         {'external_id': actions['open_case'].external_id},
                         save_only_if_edited=self.save_only_if_edited
                     )
-            elif not is_registry_case:
+            elif not block_case_management:
                 case_block.bind_case_id(case_id_xpath)
 
-            if 'update_case' in actions and not is_registry_case:
+            if 'update_case' in actions and not block_case_management:
                 self._add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
@@ -1687,7 +1688,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-            if 'close_case' in actions and not is_registry_case:
+            if 'close_case' in actions and not block_case_management:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
@@ -1698,7 +1699,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-        if 'subcases' in actions and not is_registry_case:
+        if 'subcases' in actions and not block_case_management:
             subcases = actions['subcases']
 
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
