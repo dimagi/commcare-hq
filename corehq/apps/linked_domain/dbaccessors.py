@@ -1,6 +1,5 @@
 from django.db.models.expressions import RawSQL
 
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
@@ -56,52 +55,44 @@ def get_actions_in_domain_link_history(link):
 
 def get_available_domains_to_link(upstream_domain, user):
     """
-    This supports both the old feature flagged version of linked projects and the GAed version
     :param upstream_domain: name of upstream domain candidate
     :param user: user object
     :return: list of domain names available to link as downstream projects
     """
     if domain_has_privilege(upstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(upstream_domain, LITE_RELEASE_MANAGEMENT):
-        return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=True)
+        return get_available_domains_to_link_for_user(upstream_domain, user)
 
-    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
-    if toggles.LINKED_DOMAINS.enabled(upstream_domain):
-        return get_available_domains_to_link_for_user(upstream_domain, user, should_enforce_admin=False)
     return []
 
 
-def get_available_domains_to_link_for_user(upstream_domain_name, user, should_enforce_admin):
+def get_available_domains_to_link_for_user(upstream_domain_name, user):
     """
     Finds available domains to link based on domains that the provided user is active or an admin in
     """
     domains = [d.name for d in Domain.active_for_user(user)]
     return list({domain for domain in domains if is_domain_available_to_link(
-        upstream_domain_name, domain, user, should_enforce_admin=should_enforce_admin)})
+        upstream_domain_name, domain, user)})
 
 
 def get_available_upstream_domains(downstream_domain, user):
     """
-    This supports both the old feature flagged version of linked projects and the GAed version
     :param downstream_domain: name of downstream domain in potential links
     :param user: user object
-    :return: list of domain names available to link as downstream projects
+    :return: list of existing upstream domain names available to link with the downstream_domain
     """
     if domain_has_privilege(downstream_domain, RELEASE_MANAGEMENT) or \
             domain_has_privilege(downstream_domain, LITE_RELEASE_MANAGEMENT):
-        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=True)
+        return get_available_upstream_domains_for_user(downstream_domain, user)
 
-    # DEPRECATED: acting as a fallback for now. Will remove once all domains are migrated off of this flag
-    if toggles.LINKED_DOMAINS.enabled(downstream_domain):
-        return get_available_upstream_domains_for_user(downstream_domain, user, should_enforce_admin=False)
     return []
 
 
-def get_available_upstream_domains_for_user(domain_name, user, should_enforce_admin):
+def get_available_upstream_domains_for_user(domain_name, user):
     domains = [d.name for d in Domain.active_for_user(user)]
     return list({
         domain for domain in domains
-        if is_available_upstream_domain(domain, domain_name, user, should_enforce_admin=should_enforce_admin)
+        if is_available_upstream_domain(domain, domain_name, user)
     })
 
 

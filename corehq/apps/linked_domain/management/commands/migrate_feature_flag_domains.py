@@ -5,7 +5,6 @@ from django.core.management import BaseCommand
 
 from django_prbac.models import Grant, Role
 
-from corehq import toggles
 from corehq.apps.accounting.management.commands.change_role_for_software_plan_version import (
     change_role_for_software_plan_version,
 )
@@ -49,7 +48,7 @@ class Command(BaseCommand):
         privilege_role_slug = 'release_management'
         active_roles = _get_active_roles()
         roles_to_update, versions_to_update, plans_to_create = _get_migration_info(
-            active_roles, toggles.LINKED_DOMAINS.slug, privilege_role_slug
+            active_roles, 'linked_domains', privilege_role_slug
         )
         _update_roles_in_place(roles_to_update, privilege_role_slug, dry_run=dry_run)
         _update_versions_in_place(versions_to_update, privilege_role_slug, dry_run=dry_run)
