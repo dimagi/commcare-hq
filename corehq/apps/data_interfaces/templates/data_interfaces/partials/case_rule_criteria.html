@@ -46,6 +46,9 @@
             <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
             <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
           {% endif %}
+          {% if form.allow_locations_filter %}
+            <li data-bind="click: function() { addFilter('locations-filter'); }"><a>{% trans "Location" %}</a></li>
+          {% endif %}
           {% if form.allow_parent_case_references %}
             <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
           {% endif %}
@@ -199,5 +202,21 @@
     <label class="col-xs-1 control-label">
       <span class="label label-primary">Requires System Admin</span>
     </label>
+  </div>
+</script>
+
+{# Template for location filter #}
+
+<script type="text/html" id="locations-filter">
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Case belongs to location" %}</label>
+    <div class="controls col-xs-4">
+      <select class="select form-control" data-bind="value: location_id">
+        {% for location in form.user_locations %}
+          <option value="{{ location.location_id }}">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
 </script>

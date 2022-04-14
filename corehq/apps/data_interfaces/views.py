@@ -1023,7 +1023,11 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
     @property
     def case_filter_form(self):
-        return DedupeCaseFilterForm(self.domain, rule=None, is_system_admin=True)
+        return DedupeCaseFilterForm(
+            self.domain,
+            rule=None,
+            couch_user=self.request.couch_user,
+        )
 
     def parse_params(self, request):
         rule_params = {

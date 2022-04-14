@@ -90,6 +90,18 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return result;
         });
 
+        self.locationFilterDefinition = ko.computed(function () {
+            var result = [];
+            $.each(self.criteria(), function (index, value) {
+                if (value.koTemplateId === 'locations-filter') {
+                    result.push({
+                        location_id: value.location_id() || ''
+                    });
+                }
+            });
+            return JSON.stringify(result);
+        });
+
         self.getKoTemplateId = function (obj) {
             return obj.koTemplateId;
         };
@@ -128,6 +140,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             } else if (caseFilterId === 'parent-closed-filter') {
                 if (!self.filterAlreadyAdded(caseFilterId)) {
                     self.criteria.push(closedParentDefinition(caseFilterId));
+                }
+            } else if (caseFilterId == 'locations-filter') {
+                if (!self.filterAlreadyAdded('locations-filter')) {
+                    self.criteria.push(locationDefinition(caseFilterId));
                 }
             } else if (caseFilterId === 'custom-filter') {
                 self.criteria.push(customMatchDefinition(caseFilterId));
@@ -183,6 +199,13 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 obj.name(value.name);
                 self.criteria.push(obj);
             });
+
+            if (initial.location_match_definition) {
+                obj = locationDefinition('locations-filter');
+                obj.name(value.name);
+                obj.location_id(value.location_id)
+                self.criteria.push(obj);
+            }
 
             if (initial.filter_on_closed_parent !== 'false') {
                 // check for not false in order to help prevent accidents in the future
@@ -246,6 +269,17 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         self.name = ko.observable();
         return self;
     };
+
+    var locationDefinition = function (koTemplateId) {
+        'use strict';
+        var self = {};
+        self.koTemplateId = koTemplateId;
+
+        // This model matches the Django model with the same name
+        self.location_id = ko.observable();
+        self.name = ko.observable();
+        return self;
+    }
 
     var closedParentDefinition = function (koTemplateId) {
         'use strict';
