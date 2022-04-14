@@ -29,6 +29,10 @@ from corehq.motech.const import (
 )
 
 
+FromDataTypeToDataTypePair = tuple[Optional[str], Optional[str]]
+SerializerFunc = Callable[[Any], Any]
+
+
 def to_boolean(value: Any) -> bool:
     """
     Converts truthy and falsey values, including falsey strings, to
@@ -45,21 +49,21 @@ def to_boolean(value: Any) -> bool:
     return bool(value)
 
 
-def to_decimal(value):
+def to_decimal(value: Any) -> Optional[float]:
     try:
         return float(value)
     except (TypeError, ValueError):
         return None
 
 
-def to_integer(value):
+def to_integer(value: Any) -> Optional[int]:
     try:
         return int(value)
     except (TypeError, ValueError):
         return None
 
 
-def to_text(value):
+def to_text(value: Any) -> str:
     if value is None:
         return ''
     if not isinstance(value, str):
@@ -67,7 +71,7 @@ def to_text(value):
     return value
 
 
-def to_date_str(value):
+def to_date_str(value: Any) -> Optional[str]:
     """
     Drop the time and timezone to export date-only values
 
@@ -81,9 +85,10 @@ def to_date_str(value):
         value = dateutil_parser.parse(value)
     if isinstance(value, (datetime.date, datetime.datetime)):
         return value.strftime('%Y-%m-%d')
+    return None
 
 
-def to_datetime_str(value):
+def to_datetime_str(value: Any) -> Optional[str]:
     """
     Append midnight to a date
 
@@ -99,10 +104,10 @@ def to_datetime_str(value):
         value = datetime.datetime(value.year, value.month, value.day)
     if isinstance(value, datetime.datetime):
         return value.isoformat(timespec='milliseconds')
+    return None
 
 
-serializers: dict[tuple[Optional[str], Optional[str]], Callable] = {
-    # (from_data_type, to_data_type): function
+serializers: dict[FromDataTypeToDataTypePair, SerializerFunc] = {
     (None, COMMCARE_DATA_TYPE_BOOLEAN): to_boolean,
     (None, COMMCARE_DATA_TYPE_DECIMAL): to_decimal,
     (None, COMMCARE_DATA_TYPE_INTEGER): to_integer,
