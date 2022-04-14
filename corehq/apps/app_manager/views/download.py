@@ -147,65 +147,6 @@ def download_xform(request, domain, app_id, module_id, form_id):
         return response
 
 
-@safe_cached_download
-def download_jad(request, domain, app_id):
-    """
-    See ApplicationBase.create_jadjar_from_build_files
-
-    """
-    app = request.app
-    if not app.copy_of:
-        app.set_media_versions()
-    jad, _ = app.create_jadjar_from_build_files()
-    try:
-        response = HttpResponse(jad)
-    except Exception:
-        messages.error(request, BAD_BUILD_MESSAGE)
-        return back_to_main(request, domain, app_id=app_id)
-    set_file_download(response, "CommCare.jad")
-    response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
-    response["Content-Length"] = len(jad)
-    return response
-
-
-@safe_cached_download
-def download_jar(request, domain, app_id):
-    """
-    See ApplicationBase.create_jadjar_from_build_files
-
-    This is the only view that will actually be called
-    in the process of downloading a complete CommCare.jar
-    build (i.e. over the air to a phone).
-
-    """
-    response = HttpResponse(content_type="application/java-archive")
-    app = request.app
-    if not app.copy_of:
-        app.set_media_versions()
-    _, jar = app.create_jadjar_from_build_files()
-    set_file_download(response, 'CommCare.jar')
-    response['Content-Length'] = len(jar)
-    try:
-        response.write(jar)
-    except Exception:
-        messages.error(request, BAD_BUILD_MESSAGE)
-        return back_to_main(request, domain, app_id=app_id)
-    return response
-
-
-@safe_cached_download
-def download_raw_jar(request, domain, app_id):
-    """
-    See ApplicationBase.fetch_jar
-
-    """
-    response = HttpResponse(
-        request.app.fetch_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
-
-
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
