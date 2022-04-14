@@ -80,6 +80,7 @@ def reset_deduplicate_rule(rule):
 def backfill_deduplicate_rule(domain, rule):
     from corehq.apps.data_interfaces.models import (
         AutomaticUpdateRule,
+        CaseDeduplicationActionDefinition,
         DomainCaseRuleRun,
     )
 
@@ -94,7 +95,10 @@ def backfill_deduplicate_rule(domain, rule):
             status=DomainCaseRuleRun.STATUS_RUNNING,
             case_type=rule.case_type,
         )
-        case_iterator = AutomaticUpdateRule.iter_cases(domain, rule.case_type)
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        case_iterator = AutomaticUpdateRule.iter_cases(
+            domain, rule.case_type, include_closed=action.include_closed
+        )
         iter_cases_and_run_rules(
             domain,
             case_iterator,
