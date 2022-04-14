@@ -194,7 +194,7 @@ class ExportWriter(object):
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
                 name = str(name)
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
+            return re.sub(r"[\n]", '', re.sub(r"[\[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)
