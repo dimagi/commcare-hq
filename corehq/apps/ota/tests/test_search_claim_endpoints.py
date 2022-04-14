@@ -1,5 +1,5 @@
 import re
-from uuid import uuid4
+from uuid import uuid1, uuid4
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -131,19 +131,39 @@ class CaseClaimEndpointTests(TestCase):
             HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
 
-    def test_duplicate_user_claim(self):
+    def test_duplicate_claim_with_missing_synclog_id(self):
         """
-        Server should not allow the same user to claim the same case more than once
+        Claiming a case a second time with a non-existent synclog ID should result in a 201 not a 204
         """
         # First claim
         response = self.client.post(self.url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 201)
         # Dup claim
-        client2 = Client()
-        client2.login(username=USERNAME, password=PASSWORD)
-        response = client2.post(self.url, {'case_id': self.case_id},
-            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
-        self.assertEqual(response.status_code, 204)
+        random_id = uuid1()
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=random_id)
+        self.assertEqual(response.status_code, 201)
+
+    def test_duplicate_claim_with_new_synclog_id(self):
+        """
+        Claiming a case a second time but with a different synclog ID should result in a 201 not a 204
+        """
+        # First claim
+        response = self.client.post(self.url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 201)
+
+        # Create a second synclog, mimicing the use of a 2nd device that doesn't have the original case
+        second_synclog = SyncLogSQL.objects.bulk_create([
+            make_synclog(domain=self.domain, user='u1', request_user=None, is_formplayer=True, date='2022-04-12')
+        ])[0]
+        second_synclog.doc['case_ids_on_phone'] = [self.additional_case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            second_synclog.save()
+
+        # Dup claim, with new sync log
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=second_synclog.synclog_id)
+        self.assertEqual(response.status_code, 201)
 
     def test_multiple_case_claim(self):
         """
