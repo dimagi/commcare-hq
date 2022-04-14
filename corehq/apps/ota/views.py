@@ -163,9 +163,9 @@ def claim(request, domain):
         try:
             synclog = get_properly_wrapped_sync_log(request.last_sync_token)
             missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
-            return not(bool(missing_case_ids_on_phone))
-        except MissingSyncLog as err:
-            print(err)
+            return not missing_case_ids_on_phone
+        except MissingSyncLog:
+            return False
 
     if not case_ids_to_claim and phone_holds_all_cases(request):
         return HttpResponse(status=204)

@@ -102,7 +102,6 @@ class CaseClaimEndpointTests(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         self.user.delete(self.domain.name, deleted_by=None)
         self.domain.delete()
-        SyncLogSQL.objects.all().delete()
         cache = get_redis_default_cache()
         cache.clear()
 
