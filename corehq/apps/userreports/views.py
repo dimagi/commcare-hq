@@ -80,7 +80,7 @@ from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
     linked_downstream_reports_by_domain,
 )
-from corehq.apps.linked_domain.util import is_linked_report
+from corehq.apps.linked_domain.util import can_domain_access_release_management, is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
