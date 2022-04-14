@@ -51,3 +51,17 @@ jobs:
     - name: Stop containers
       if: always()
       run: scripts/docker down
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          architecture: x64
+      - name: Install mypy
+        run: pip install mypy
+      - name: Run mypy
+        run: mypy --install-types --non-interactive @mypy_typed_modules.txt
