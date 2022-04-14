@@ -277,7 +277,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                isMultiSelect: false, // TODO: add logic
+                isMultiSelect: this.options.parentView.options.isMultiSelect,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -448,7 +448,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-            var isMultiSelectCaseList = false; // TODO: create logic
+            var isMultiSelectCaseList = this.options.isMultiSelect;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
