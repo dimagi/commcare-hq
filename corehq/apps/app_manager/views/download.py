@@ -258,17 +258,6 @@ def download_file(request, domain, app_id, path):
                 add_odk_profile_after_build(request.app)
                 request.app.save()
                 return download_file(request, domain, app_id, path)
-            elif path in ('CommCare.jad', 'CommCare.jar'):
-                if not request.app.build_spec.supports_j2me():
-                    raise Http404()
-                request.app.create_jadjar_from_build_files(save=True)
-                try:
-                    request.app.save(increment_version=False)
-                except ResourceConflict:
-                    # Likely that somebody tried to download the jad and jar
-                    # files for the first time simultaneously.
-                    pass
-                return download_file(request, domain, app_id, path)
             else:
                 try:
                     resolve_path(path)
