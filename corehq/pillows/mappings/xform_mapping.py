@@ -50,10 +50,6 @@ XFORM_MAPPING = {
         },
         "domain": {
             "fields": {
-                "domain": {
-                    "index": "analyzed",
-                    "type": "string"
-                },
                 "exact": {
                     # exact is full text string match - hyphens get parsed in standard
                     # analyzer
@@ -62,7 +58,7 @@ XFORM_MAPPING = {
                     "type": "string"
                 }
             },
-            "type": "multi_field"
+            "type": "string"
         },
         "external_blobs": {
             "dynamic": False,
@@ -207,13 +203,9 @@ XFORM_MAPPING = {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
-                },
-                "xmlns": {
-                    "index": "analyzed",
-                    "type": "string"
                 }
             },
-            "type": "multi_field"
+            "type": "string"
         }
     }
 }
