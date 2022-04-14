@@ -55,13 +55,18 @@
     </div>
     <% } %>
 
-    <% if (actions) { %>
+    <% if (actions || isMultiSelect) { %>
     <div class="case-list-actions">
-      <% _.each(actions, function(action, index) { %>
-      <div class="case-list-action-button btn-group formplayer-request">
-        <button type="button" class="btn btn-success btn-lg" data-index="<%- index %>"><%- action.text %></button>
-      </div>
-      <% }) %>
+      <% if (isMultiSelect) { %>
+      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} (<span id="multi-select-btn-text"><%- selectedCaseIdsLength %></span>)</button>
+      <% } %>
+      <% if (actions) { %>
+        <% _.each(actions, function(action, index) { %>
+        <div class="case-list-action-button btn-group formplayer-request">
+          <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+        </div>
+        <% }) %>
+      <% } %>
     </div>
     <% } %>
 
