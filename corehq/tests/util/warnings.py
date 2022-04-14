@@ -64,7 +64,7 @@ class filter_warnings(TestContextDecorator):
     `warnings.filterwarnings()`.
 
     Usage:
-
+    ```py
         with filter_warnings("default", "heya") as log:
             warnings.warn("heya")  # warning will be captured
             warnings.warn("yow")   # warning will not be captured
@@ -82,6 +82,7 @@ class filter_warnings(TestContextDecorator):
             def test_thing():
                 warnings.warn("heya")  # warning will be captured
                 warnings.warn("yow")   # warning will not be captured
+    ```
     """
 
     def __init__(self, action, message="", category=Warning, module="", lineno=0, append=False):
