@@ -329,9 +329,10 @@ class ConstantValue(ValueSource):
     value_data_type: str = COMMCARE_DATA_TYPE_TEXT
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ConstantValue):
+            return NotImplemented
         return (
-            super().__eq__(other)
-            and self.value == other.value
+            self.value == other.value
             and self.value_data_type == other.value_data_type
         )
 
