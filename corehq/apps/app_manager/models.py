@@ -4710,11 +4710,9 @@ class SavedAppBuild(ApplicationBase):
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'menu_item_label': menu_item_label,
-            'jar_path': '',
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
             'include_media': not is_remote_app(self),
-            'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
                 if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else None

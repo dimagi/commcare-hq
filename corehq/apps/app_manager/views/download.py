@@ -386,7 +386,6 @@ def download_index(request, domain, app_id):
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
-        'supports_j2me': request.app.build_spec.supports_j2me(),
         'build_profiles': build_profiles,
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
