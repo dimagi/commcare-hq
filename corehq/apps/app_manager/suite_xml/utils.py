@@ -15,7 +15,12 @@ def get_select_chain(app, module, include_self=True):
 
 
 def get_select_chain_with_sessions(app, module, include_self=True):
-    select_chain = [(module, 'case_id')] if include_self else []
+    select_chain = []
+    if include_self:
+        if module.is_multi_select():
+            select_chain.append((module, 'selected_cases'))
+        else:
+            select_chain.append((module, 'case_id'))
     current_module = module
     case_type = module.case_type
     i = len(select_chain)
@@ -29,7 +34,10 @@ def get_select_chain_with_sessions(app, module, include_self=True):
         if is_other_relation and case_type == parent_module.case_type:
             session_var = 'case_id_' + case_type
         else:
-            session_var = ('parent_' * i or 'case_') + 'id'
+            if current_module.is_multi_select():
+                session_var = ('parent_' * i) + 'selected_cases'
+            else:
+                session_var = ('parent_' * i or 'case_') + 'id'
         if parent_module in [m for (m, _) in select_chain]:
             raise SuiteValidationError("Circular reference in case hierarchy")
         select_chain.append((parent_module, session_var))
