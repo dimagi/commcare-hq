@@ -54,7 +54,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                 </command>
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <session>
-                  <instance-datum id="case_id"
+                  <instance-datum id="selected_cases"
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m0_case_short"
@@ -168,7 +168,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                 </command>
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <session>
-                  <instance-datum id="case_id"
+                  <instance-datum id="selected_cases"
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
@@ -231,7 +231,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                          nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                          value="./@case_id"
                          detail-select="m0_case_short"/>
-                  <instance-datum id="case_id"
+                  <instance-datum id="selected_cases"
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
