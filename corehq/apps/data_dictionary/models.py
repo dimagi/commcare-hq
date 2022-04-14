@@ -9,24 +9,6 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.case_importer import exceptions
 
-property_type = namedtuple('property_type', 'slug display')
-
-
-class PROPERTY_TYPES:
-    DATE = property_type('date', _('Date'))
-    PLAIN = property_type('plain', _('Plain'))
-    NUMBER = property_type('number', _('Number'))
-    SELECT = property_type('select', _('Multiple Choice'))
-    BARCODE = property_type('barcode', _('Barcode'))
-    GPS = property_type('gps', _('GPS'))
-    PHONE_NUMBER = property_type('phone_number', _('Phone Number'))
-    PASSWORD = property_type('password', _('Password'))
-    UNDEFINED = property_type('', _('No Type Currently Selected'))
-
-    @classmethod
-    def get_all(cls):
-        return [t for t in cls.__dict__.values() if isinstance(t, property_type)]
-
 
 class CaseType(models.Model):
     domain = models.CharField(max_length=255, default=None)
@@ -59,6 +41,18 @@ class CaseType(models.Model):
 
 
 class CaseProperty(models.Model):
+
+    class DataType(models.TextChoices):
+        DATE = 'date', _('Date')
+        PLAIN = 'plain', _('Plain')
+        NUMBER = 'number', _('Number')
+        SELECT = 'select', _('Multiple Choice')
+        BARCODE = 'barcode', _('Barcode')
+        GPS = 'gps', _('GPS')
+        PHONE_NUMBER = 'phone_number', _('Phone Number')
+        PASSWORD = 'password', _('Password')
+        UNDEFINED = '', _('No Type Currently Selected')
+
     case_type = models.ForeignKey(
         CaseType,
         on_delete=models.CASCADE,
@@ -69,10 +63,10 @@ class CaseProperty(models.Model):
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
-        choices=[(t.slug, t.display) for t in PROPERTY_TYPES.get_all()],
+        choices=DataType.choices,
         max_length=20,
-        default='',
-        blank=True
+        default=DataType.UNDEFINED,
+        blank=True,
     )
     group = models.TextField(default='', blank=True)
 
