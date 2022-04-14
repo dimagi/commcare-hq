@@ -1,16 +1,29 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import (
+    Any,
+    Generator,
+    NoReturn,
+    Optional,
+    Protocol,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import attr
 from jsonobject.containers import JsonDict
-from jsonpath_ng.ext.parser import parse as parse_jsonpath
+from schema import And
 from schema import Optional as SchemaOptional
-from schema import And, Or, Schema, SchemaError
+from schema import Or, Schema, SchemaError
 
 from couchforms.const import TAG_FORM, TAG_META
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models.cases import CommCareCase, CommCareCaseIndex
 from corehq.motech.const import (  # noqa: F401
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
@@ -22,37 +35,48 @@ from corehq.motech.const import (  # noqa: F401
     DIRECTION_IMPORT,
     DIRECTIONS,
 )
+from jsonpath_ng.ext.parser import parse as parse_jsonpath
 
 from .exceptions import ConfigurationError, JsonpathError
 from .serializers import serializers
 from .utils import simplify_list
 
+T = TypeVar('T')
+ValueSourceConfig = Union[dict[str, Any], JsonDict]
 
-@attr.s
+
+class CaseProto(Protocol):
+    domain: str
+    case_id: str
+    owner_id: Optional[str]
+    modified_by: Optional[str]
+
+
+@dataclass
 class CaseTriggerInfo:
-    domain = attr.ib()
-    case_id = attr.ib()
-    type = attr.ib(default=None)
-    name = attr.ib(default=None)
-    owner_id = attr.ib(default=None)
-    modified_by = attr.ib(default=None)
-    updates = attr.ib(factory=dict)
-    created = attr.ib(default=None)
-    closed = attr.ib(default=None)
-    extra_fields = attr.ib(factory=dict)
-    form_question_values = attr.ib(factory=dict)
+    domain: str
+    case_id: str
+    type: Optional[str] = None
+    name: Optional[str] = None
+    owner_id: Optional[str] = None
+    modified_by: Optional[str] = None
+    updates: dict[str, Any] = field(default_factory=dict)
+    created: Optional[bool] = None
+    closed: Optional[bool] = None
+    extra_fields: dict[str, Any] = field(default_factory=dict)
+    form_question_values: dict[str, Any] = field(default_factory=dict)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.name:
             return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
         return f"<CaseTriggerInfo {self.case_id}>"
 
 
-def recurse_subclasses(cls):
-    return (
-        cls.__subclasses__()
-        + [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
-    )
+def recurse_subclasses(cls: Type[T]) -> list[Type[T]]:
+    return cls.__subclasses__() + [
+        subsub for sub in cls.__subclasses__()
+        for subsub in recurse_subclasses(sub)
+    ]
 
 
 @attr.s(auto_attribs=True, kw_only=True)
@@ -80,13 +104,13 @@ class ValueSource:
     #         "blue": "000000ff",
     #       }
     #     }
-    value_map: Optional[dict] = None
+    value_map: Optional[dict[Any, Any]] = None
 
     # Used for importing a value from a JSON document.
     jsonpath: Optional[str] = None
 
     @classmethod
-    def wrap(cls, data: dict):
+    def wrap(cls, data: dict[str, Any]) -> ValueSource:
         """
         Allows us to duck-type JsonObject, and useful for doing
         pre-instantiation transforms / dropping unwanted attributes.
@@ -95,7 +119,7 @@ class ValueSource:
         return cls(**data)
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         args = ({
             SchemaOptional("doc_type"): str,
             SchemaOptional("external_data_type"): str,
@@ -107,11 +131,11 @@ class ValueSource:
         return args, {}
 
     @property
-    def can_import(self):
+    def can_import(self) -> bool:
         return not self.direction or self.direction == DIRECTION_IMPORT
 
     @property
-    def can_export(self):
+    def can_export(self) -> bool:
         return not self.direction or self.direction == DIRECTION_EXPORT
 
     def get_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
@@ -122,14 +146,14 @@ class ValueSource:
         value = self.get_commcare_value(case_trigger_info)
         return self.serialize(value)
 
-    def get_import_value(self, external_data):
+    def get_import_value(self, external_data: dict[str, Any]) -> Any:
         external_value = self.get_external_value(external_data)
         return self.deserialize(external_value)
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         raise NotImplementedError
 
-    def get_external_value(self, external_data):
+    def get_external_value(self, external_data: dict[str, Any]) -> Any:
         if self.jsonpath is None:
             raise ConfigurationError(f"{self} is not configured to navigate "
                                      "external data")
@@ -141,7 +165,11 @@ class ValueSource:
         values = [m.value for m in matches]
         return simplify_list(values)
 
-    def set_external_value(self, external_data: dict, info: CaseTriggerInfo):
+    def set_external_value(
+        self,
+        external_data: dict[str, Any],
+        info: CaseTriggerInfo,
+    ) -> None:
         """
         Builds ``external_data`` by reference.
 
@@ -206,7 +234,7 @@ class CaseProperty(ValueSource):
     case_property: str
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"case_property": And(str, len)})
         return (schema, *other_args), kwargs
@@ -251,10 +279,10 @@ class FormQuestion(ValueSource):
     form_question: str
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({"form_question": str})
-        return (schema, *other_args), kwargs
+        return tuple([schema] + other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         return case_trigger_info.form_question_values.get(
@@ -300,7 +328,7 @@ class ConstantValue(ValueSource):
     value: str
     value_data_type: str = COMMCARE_DATA_TYPE_TEXT
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return (
             super().__eq__(other)
             and self.value == other.value
@@ -308,13 +336,13 @@ class ConstantValue(ValueSource):
         )
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({
             "value": object,
             SchemaOptional("value_data_type"): str,
         })
-        return (schema, *other_args), kwargs
+        return tuple([schema] + other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         serializer = (
@@ -323,7 +351,7 @@ class ConstantValue(ValueSource):
         )
         return serializer(self.value) if serializer else self.value
 
-    def get_external_value(self, external_data):
+    def get_external_value(self, external_data: dict[str, Any]) -> Any:
         serializer = (
             serializers.get((self.value_data_type, self.external_data_type))
             or serializers.get((None, self.external_data_type))
@@ -362,13 +390,13 @@ class CaseOwnerAncestorLocationField(ValueSource):
     case_owner_ancestor_location_field: str
 
     @classmethod
-    def wrap(cls, data):
+    def wrap(cls, data: dict[str, Any]) -> CaseOwnerAncestorLocationField:
         if "location_field" in data:
             data["case_owner_ancestor_location_field"] = data.pop("location_field")
-        return super().wrap(data)
+        return cast(CaseOwnerAncestorLocationField, super().wrap(data))
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.pop(SchemaOptional("doc_type"))
         old_style = schema.copy()
@@ -382,7 +410,7 @@ class CaseOwnerAncestorLocationField(ValueSource):
             "case_owner_ancestor_location_field": str,
         })
         schema = Or(old_style, new_style)
-        return (schema, *other_args), kwargs
+        return tuple([schema] + other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
         location = get_case_location(case_trigger_info)
@@ -410,13 +438,13 @@ class FormUserAncestorLocationField(ValueSource):
     form_user_ancestor_location_field: str
 
     @classmethod
-    def wrap(cls, data):
+    def wrap(cls, data: dict[str, Any]) -> FormUserAncestorLocationField:
         if "location_field" in data:
             data["form_user_ancestor_location_field"] = data.pop("location_field")
-        return super().wrap(data)
+        return cast(FormUserAncestorLocationField, super().wrap(data))
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.pop(SchemaOptional("doc_type"))
         old_style = schema.copy()
@@ -430,10 +458,10 @@ class FormUserAncestorLocationField(ValueSource):
             "form_user_ancestor_location_field": str,
         })
         schema = Or(old_style, new_style)
-        return (schema, *other_args), kwargs
+        return tuple([schema] + other_args), kwargs
 
     def get_commcare_value(self, case_trigger_info: CaseTriggerInfo) -> Any:
-        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+        user_id = cast(str, case_trigger_info.form_question_values.get('/metadata/userID'))
         location = get_owner_location(case_trigger_info.domain, user_id)
         if location:
             return get_ancestor_location_metadata_value(
@@ -453,7 +481,7 @@ class SupercaseValueSource(ValueSource):
 
     Evaluates nested ValueSource config, allowing for recursion.
     """
-    supercase_value_source: dict
+    supercase_value_source: dict[str, Any]
 
     # Optional filters for indices
     identifier: Optional[str] = None
@@ -462,7 +490,7 @@ class SupercaseValueSource(ValueSource):
     relationship: Optional[str] = None
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({
             'supercase_value_source': And(dict, len),
@@ -472,7 +500,7 @@ class SupercaseValueSource(ValueSource):
         })
         return (schema, *other_args), kwargs
 
-    def get_commcare_value(self, info):
+    def get_commcare_value(self, info: CaseTriggerInfo) -> Any:
         values = []
         for supercase_info in self._iter_supercase_info(info):
             value_source = as_value_source(self.supercase_value_source)
@@ -480,20 +508,27 @@ class SupercaseValueSource(ValueSource):
             values.append(value)
         return values
 
-    def get_import_value(self, external_data):
+    def get_import_value(self, external_data: dict[str, Any]) -> NoReturn:
         # OpenMRS Atom feed and FHIR API must build case blocks for
         # related cases for this to be implemented
         raise NotImplementedError
 
-    def set_external_value(self, external_data, info):
+    def set_external_value(
+        self,
+        external_data: dict[str, Any],
+        info: CaseTriggerInfo,
+    ) -> None:
         for i, supercase_info in enumerate(self._iter_supercase_info(info)):
             value_source = as_value_source(self.supercase_value_source)
             _subs_counters(value_source, i)
             value_source.set_external_value(external_data, supercase_info)
 
-    def _iter_supercase_info(self, info: CaseTriggerInfo):
+    def _iter_supercase_info(
+        self,
+        info: CaseTriggerInfo
+    ) -> Generator[CaseTriggerInfo, None, None]:
 
-        def filter_index(idx):
+        def filter_index(idx: CommCareCaseIndex) -> bool:
             return (
                 (not self.identifier or idx.identifier == self.identifier)
                 and (not self.referenced_type or idx.referenced_type == self.referenced_type)
@@ -517,12 +552,12 @@ class SubcaseValueSource(ValueSource):
 
     Evaluates nested ValueSource config, allowing for recursion.
     """
-    subcase_value_source: dict
-    case_types: Optional[List[str]] = None
+    subcase_value_source: dict[str, Any]
+    case_types: Optional[list[str]] = None
     is_closed: Optional[bool] = None
 
     @classmethod
-    def get_schema_params(cls) -> Tuple[Tuple, Dict]:
+    def get_schema_params(cls) -> tuple[tuple[Any, ...], dict[str, Any]]:
         (schema, *other_args), kwargs = super().get_schema_params()
         schema.update({
             'subcase_value_source': And(dict, len),
@@ -539,18 +574,25 @@ class SubcaseValueSource(ValueSource):
             values.append(value)
         return values
 
-    def get_import_value(self, external_data):
+    def get_import_value(self, external_data: dict[str, Any]) -> Any:
         # OpenMRS Atom feed and FHIR API must build case blocks for
         # related cases for this to be implemented
         raise NotImplementedError
 
-    def set_external_value(self, external_data, info):
+    def set_external_value(
+        self,
+        external_data: dict[str, Any],
+        info: CaseTriggerInfo,
+    ) -> None:
         for i, subcase_info in enumerate(self._iter_subcase_info(info)):
             value_source = as_value_source(self.subcase_value_source)
             _subs_counters(value_source, i)
             value_source.set_external_value(external_data, subcase_info)
 
-    def _iter_subcase_info(self, info: CaseTriggerInfo):
+    def _iter_subcase_info(
+        self,
+        info: CaseTriggerInfo,
+    ) -> Generator[CaseTriggerInfo, None, None]:
         subcases = CommCareCase.objects.get_reverse_indexed_cases(
             info.domain,
             [info.case_id],
@@ -565,10 +607,11 @@ class SubcaseValueSource(ValueSource):
 
 
 def as_value_source(
-    value_source_config: Union[dict, JsonDict],
+    value_source_config: ValueSourceConfig,
 ) -> ValueSource:
     if isinstance(value_source_config, JsonDict):
-        value_source_config = dict(value_source_config)  # JsonDict fails assertion in Schema.validate()
+        # Cast as dict because JsonDict fails assertion in Schema.validate()
+        value_source_config = dict(value_source_config)
     for subclass in recurse_subclasses(ValueSource):
         try:
             args, kwargs = subclass.get_schema_params()
@@ -582,7 +625,7 @@ def as_value_source(
 
 
 def get_value(
-    value_source_config: JsonDict,
+    value_source_config: ValueSourceConfig,
     case_trigger_info: CaseTriggerInfo
 ) -> Any:
     """
@@ -594,8 +637,9 @@ def get_value(
 
 
 def get_import_value(
-    value_source_config: JsonDict,
-    external_data: dict,  # This may change if/when we support non-JSON APIs
+    value_source_config: ValueSourceConfig,
+    # Assumes that external data is serializable as dict[str, Any]:
+    external_data: dict[str, Any],
 ) -> Any:
     """
     Returns the external value referred to by the value source
@@ -605,7 +649,10 @@ def get_import_value(
     return value_source.get_import_value(external_data)
 
 
-def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:
+def deserialize(
+    value_source_config: ValueSourceConfig,
+    external_value: Any,
+) -> Any:
     """
     Converts the value's external data type or format to its data
     type or format for CommCare, if necessary, otherwise returns the
@@ -615,7 +662,7 @@ def deserialize(value_source_config: JsonDict, external_value: Any) -> Any:
     return value_source.deserialize(external_value)
 
 
-def get_form_question_values(form_json):
+def get_form_question_values(form_json: dict[str, Any]) -> dict[str, Any]:
     """
     Given form JSON, returns question-value pairs, where questions are
     formatted "/data/foo/bar".
@@ -626,30 +673,12 @@ def get_form_question_values(form_json):
     {'/data/foo/bar': 'baz'}
 
     """
-    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
-
-    def _recurse_form_questions(form_dict, path, result_):
-        for key, value in form_dict.items():
-            if key in _reserved_keys:
-                continue
-            new_path = path + [key]
-            if isinstance(value, list):
-                # Repeat group
-                for v in value:
-                    assert isinstance(v, dict)
-                    _recurse_form_questions(v, new_path, result_)
-            elif isinstance(value, dict):
-                # Group
-                _recurse_form_questions(value, new_path, result_)
-            else:
-                # key is a question and value is its answer
-                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
-                result_[question] = value
-
-    result = {}
-    _recurse_form_questions(form_json[TAG_FORM], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json[TAG_FORM]" but not
-    # necessarily. If this causes problems we may need a more reliable way to get to it.
+    result: dict[str, Any] = {}
+    # "/data" is just convention, hopefully familiar from form builder.
+    # The form's data will usually be immediately under
+    # "form_json[TAG_FORM]" but not necessarily. If this causes problems
+    # we may need a more reliable way to get to it.
+    _recurse_form_questions(form_json[TAG_FORM], [b'/data'], result)
 
     metadata = {}
     if '@xmlns' in form_json[TAG_FORM]:
@@ -663,7 +692,34 @@ def get_form_question_values(form_json):
     return result
 
 
-def get_ancestor_location_metadata_value(location, metadata_key):
+def _recurse_form_questions(
+    form_dict: dict[str, Any],
+    path: list[Union[str, bytes]],
+    result: dict[str, Any],  # Recursively builds `result` by reference.
+) -> None:
+    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+    for key, value in form_dict.items():
+        if key in _reserved_keys:
+            continue
+        new_path = path + [key]
+        if isinstance(value, list):
+            # Repeat group
+            for v in value:
+                assert isinstance(v, dict)
+                _recurse_form_questions(v, new_path, result)
+        elif isinstance(value, dict):
+            # Group
+            _recurse_form_questions(value, new_path, result)
+        else:
+            # key is a question and value is its answer
+            question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
+            result[question] = value
+
+
+def get_ancestor_location_metadata_value(
+    location: SQLLocation,
+    metadata_key: str,
+) -> Any:
     assert isinstance(location, SQLLocation), type(location)
     for location in reversed(location.get_ancestors(include_self=True)):
         if location.metadata.get(metadata_key):
@@ -671,7 +727,7 @@ def get_ancestor_location_metadata_value(location, metadata_key):
     return None
 
 
-def get_case_location(case):
+def get_case_location(case: CaseProto) -> Optional[SQLLocation]:
     """
     If the owner of the case is a location, return it. Otherwise return
     the owner's primary location. If the case owner does not have a
@@ -680,7 +736,7 @@ def get_case_location(case):
     return get_owner_location(case.domain, get_owner_id(case))
 
 
-def get_owner_location(domain, owner_id):
+def get_owner_location(domain: str, owner_id: str) -> Optional[SQLLocation]:
     owner = get_wrapped_owner(owner_id)
     if not owner:
         return None
@@ -690,7 +746,10 @@ def get_owner_location(domain, owner_id):
     return SQLLocation.by_location_id(location_id) if location_id else None
 
 
-def get_case_trigger_info_for_case(case, value_source_configs):
+def get_case_trigger_info_for_case(
+    case: CommCareCase,
+    value_source_configs: list[dict[str, Any]],
+) -> CaseTriggerInfo:
     case_properties = [c['case_property'] for c in value_source_configs
                        if 'case_property' in c]
     extra_fields = {p: case.get_case_property(p) for p in case_properties}
@@ -705,7 +764,10 @@ def get_case_trigger_info_for_case(case, value_source_configs):
     )
 
 
-def _subs_counters(value_source, counter0):
+def _subs_counters(
+    value_source: ValueSource,
+    counter0: Optional[int],
+) -> None:
     """
     Substitutes "{counter0}" and "{counter1}" in value_source.jsonpath.
 
