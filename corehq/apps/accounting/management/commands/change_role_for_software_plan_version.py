@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from django.core.management import BaseCommand
 
@@ -21,17 +22,21 @@ class PlanVersionAndRoleMismatch(Exception):
     pass
 
 
-def change_role_for_software_plan_version(old_role, new_role, limit_to_plan_version_id=None, dry_run=False):
+def change_role_for_software_plan_version(
+    old_role: str,
+    new_role: str,
+    limit_to_plan_version_id: Optional[str] = None,
+    dry_run: bool = False,
+) -> list[str]:
     """
-    We typically do not support modifying SoftwarePlanVersions directly, and instead encourage creating a new one.
-    This command should only be used when it seems appropriate. The most typical use case would be when it is
-    desirable to delete the Role(slug=old_role) object entirely, and using this command to ensure no software
-    plan versions reference that old role.
-    :param old_role: slug for role to search for
-    :param new_role: slug for role that new software plan version should reference
-    :param limit_to_plan_version_id: limit change to a specific plan version id
-    :param dry_run: if False, will make changes to the DB
-    :return: a list of plan names that were modified
+    We typically do not support modifying SoftwarePlanVersions directly,
+    and instead encourage creating a new one. This command should only
+    be used when it seems appropriate. The most typical use case would
+    be when it is desirable to delete the Role(slug=old_role) object
+    entirely, and using this command to ensure no software plan versions
+    reference that old role.
+
+    Returns a list of plan names that were modified
     """
     dry_run_tag = '[DRY_RUN]' if dry_run else ''
 
@@ -79,7 +84,7 @@ class Command(BaseCommand):
             changed_plans = change_role_for_software_plan_version(
                 old_role,
                 new_role,
-                dry_run=kwargs.get('dry_run'),
+                dry_run=bool(kwargs.get('dry_run')),
             )
         except OldRoleDoesNotExist:
             logger.error(f"Old role slug {old_role} does not exist.")

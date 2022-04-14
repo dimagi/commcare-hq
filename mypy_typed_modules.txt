@@ -1,3 +1,4 @@
 -mcorehq.motech.value_source
 -mcorehq.motech.serializers
 -mcorehq.util.metrics
+-mcorehq.apps.accounting.management.commands.change_role_for_software_plan_version
