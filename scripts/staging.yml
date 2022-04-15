@@ -73,7 +73,7 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - gh/erm/remove-linked-domain-ff # Graham April 14
     - jls/update-dialer-url # Jenny April 14
-    - jls/content-security-policy # Jenny April 15
+    #- jls/content-security-policy # Jenny April 15
     - smh/multi-select-checkbox-clearing-fix # Steph April 15
     - smh/multi-select-case-detail-workflow # Steph April 15
 
