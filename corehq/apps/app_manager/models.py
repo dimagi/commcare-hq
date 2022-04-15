@@ -4861,10 +4861,10 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         self = super(Application, cls).wrap(data)
 
         translations = data.get('translations')
-        label_dict = {lang: label.get('case.search.title')
-            for lang, label in translations.items() if label}
         for module in self.modules:
             if hasattr(module, 'search_config'):
+                label_dict = {lang: label.get('case.search.title')
+                    for lang, label in translations.items() if label}
                 search_config = getattr(module, 'search_config')
                 default_label_dict = getattr(search_config, 'title_label')
                 label_dict.update(default_label_dict)
