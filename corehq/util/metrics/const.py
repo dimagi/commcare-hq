@@ -1,17 +1,33 @@
+from typing import Literal
+
 import settings
 
-ALERT_ERROR = 'error'
-ALERT_WARNING = 'warning'
-ALERT_INFO = 'info'
-ALERT_SUCCESS = 'success'
+AlertStr = Literal[
+    'error',
+    'warning',
+    'info',
+    'success',
+]
+ALERT_ERROR: AlertStr = 'error'
+ALERT_WARNING: AlertStr = 'warning'
+ALERT_INFO: AlertStr = 'info'
+ALERT_SUCCESS: AlertStr = 'success'
 
 COMMON_TAGS = {'environment': settings.SERVER_ENVIRONMENT}
 
 TAG_UNKNOWN = '<unknown>'
 
-# Prometheus multiprocess_mode options
-MPM_ALL = 'all'
-MPM_LIVEALL = 'liveall'
-MPM_LIVESUM = 'livesum'
-MPM_MAX = 'max'
-MPM_MIN = 'min'
+# See PrometheusMetrics._gauge for documentation. This is only passed to
+# PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
+PrometheusMultiprocessModeStr = Literal[
+    'all',
+    'liveall',
+    'livesum',
+    'max',
+    'min',
+]
+MPM_ALL: PrometheusMultiprocessModeStr = 'all'
+MPM_LIVEALL: PrometheusMultiprocessModeStr = 'liveall'
+MPM_LIVESUM: PrometheusMultiprocessModeStr = 'livesum'
+MPM_MAX: PrometheusMultiprocessModeStr = 'max'
+MPM_MIN: PrometheusMultiprocessModeStr = 'min'

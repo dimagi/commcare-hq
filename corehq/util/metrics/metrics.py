@@ -3,15 +3,20 @@ import logging
 import re
 from abc import abstractmethod
 from collections import namedtuple
-from typing import List, Dict
+from collections.abc import Sequence
+from typing import Any, Dict, List, Protocol, Optional
 
-from corehq.util.metrics.const import ALERT_INFO
 from prometheus_client.utils import INF
+
+from corehq.util.metrics.const import ALERT_INFO, AlertStr
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
 METRIC_TAG_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 RESERVED_METRIC_TAG_NAME_RE = re.compile(r'^__.*$')
 RESERVED_METRIC_TAG_NAMES = ['quantile', 'le']
+DEFAULT_BUCKETS: Sequence[Any] = (
+    .005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, INF
+)
 
 
 metrics_logger = logging.getLogger('commcare.metrics')
@@ -34,9 +39,6 @@ def _validate_tag_names(tag_names):
         if l in RESERVED_METRIC_TAG_NAMES:
             raise ValueError('Reserved metric tag name: ' + l)
     return tag_names
-
-
-DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, INF)
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
@@ -104,6 +106,30 @@ class Sample(namedtuple('Sample', ['type', 'name', 'tags', 'value'])):
         ])
 
 
+class MetricsProto(Protocol):
+    def counter(*args, **kwargs):
+        ...
+
+    def gauge(*args, **kwargs):
+        ...
+
+    def histogram(*args, **kwargs):
+        ...
+
+    def push_metrics(self) -> Any:
+        ...
+
+    def create_event(
+        self,
+        title: str,
+        text: str,
+        alert_type: AlertStr = ...,
+        tags: Optional[Dict[str, str]] = ...,
+        aggregation_key: Optional[str] = ...,
+    ) -> None:
+        ...
+
+
 class DebugMetrics:
     def __init__(self, capture=False):
         self._capture = capture
@@ -124,8 +150,14 @@ class DebugMetrics:
     def push_metrics(self):
         pass
 
-    def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: Dict[str, str] = None, aggregation_key: str = None):
+    def create_event(
+        self,
+        title: str,
+        text: str,
+        alert_type: AlertStr = ALERT_INFO,
+        tags: Optional[dict[str, str]] = None,
+        aggregation_key: Optional[str] = None
+    ) -> None:
         _validate_tag_names(tags)
         metrics_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
