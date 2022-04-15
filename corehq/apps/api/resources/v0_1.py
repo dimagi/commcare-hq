@@ -31,6 +31,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
     default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
     email = fields.CharField(attribute='email')
     phone_numbers = fields.ListField(attribute='phone_numbers')
+    language = fields.CharField(attribute='language', null=True)
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']

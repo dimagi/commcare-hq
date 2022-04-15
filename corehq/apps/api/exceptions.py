@@ -4,4 +4,4 @@ class InvalidUpdateRequest(Exception):
         self.illegal_fields = illegal_fields
 
     def __str__(self):
-        return f'Cannot update the key(s) {",".join(self.illegal_fields)}.'
+        return f'Cannot update the key(s) {", ".join(self.illegal_fields)}.'

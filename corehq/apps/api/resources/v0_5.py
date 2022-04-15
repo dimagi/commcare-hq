@@ -365,8 +365,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         Raises an InvalidUpdateRequest exception that contains a list of illegal fields
         """
         editable_fields = {name for name, obj in self.fields.items() if not obj.readonly}
+        # not ideal, but can't specify a password field in the resource that gets excluded from get_list
+        exceptions = {'password'}
+        valid_fields = set(list(editable_fields) + list(exceptions))
         fields_to_update = set(bundle.data.keys())
-        illegal_fields = fields_to_update.difference(editable_fields)
+        illegal_fields = fields_to_update.difference(valid_fields)
 
         if illegal_fields:
             raise InvalidUpdateRequest(illegal_fields)
