@@ -21,6 +21,9 @@ def configure_deprecation_whitelist():
     # warnings that can be resolved with HQ code changes
     whitelist("corehq.util.validation", "metaschema specified by $schema was not found")
 
+    # other, resolution not obvious
+    whitelist("unittest.case", "TestResult has no addExpectedFailure method", RuntimeWarning)
+
 
 def whitelist(module, message, category=DeprecationWarning):
     """Whitelist warnings with matching criteria
