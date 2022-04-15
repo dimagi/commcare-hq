@@ -141,7 +141,9 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
+CSP_FRAME_ANCESTORS = ("'self'", "https://dimagi-demo.my.connect.aws")
 MIDDLEWARE = [
+    'csp.middleware.CSPMiddleware',
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
