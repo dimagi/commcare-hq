@@ -39,6 +39,7 @@ from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
@@ -51,6 +52,7 @@ from corehq.apps.hqadmin.forms import (
     DisableTwoFactorForm,
     DisableUserForm,
     SuperuserManagementForm,
+    OffboardingUserListForm,
 )
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
@@ -133,16 +135,25 @@ def superuser_table(request):
     return response
 
 
-def augmented_superusers():
-    return _augment_users_with_two_factor_enabled(User.objects.filter(
-        Q(is_superuser=True) | Q(is_staff=True)
-    ))
+def augmented_superusers(users=None, include_accounting_admin=False):
+    if not users:
+        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
+    augmented_users = _augment_users_with_two_factor_enabled(users)
+    if include_accounting_admin:
+        return _augment_users_with_accounting_admin(augmented_users)
+    return augmented_users
 
 
 def _augment_users_with_two_factor_enabled(users):
     """Annotate a User queryset with a two_factor_enabled field"""
     for user in users:
         user.two_factor_enabled = bool(default_device(user))
+    return users
+
+
+def _augment_users_with_accounting_admin(users):
+    for user in users:
+        user.is_accounting_admin = is_accounting_admin(user)
     return users
 
 
@@ -431,7 +442,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.user.get_email() if self.user else self.username,
+            self.user.email if self.user else self.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -604,3 +615,35 @@ class AppBuildTimingsView(TemplateView):
 
         os.remove(fpath)
         return app.timing_context
+
+
+class OffboardingUserList(UserAdministration):
+    urlname = 'get_offboarding_list'
+    page_title = _("Get users to offboard")
+    template_name = 'hqadmin/superuser_management.html'
+    users = []
+    table_title = ""
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(OffboardingUserList, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        args = [self.request.POST] if self.request.POST else []
+        if not self.users:
+            self.users = augmented_superusers(include_accounting_admin=True)
+        return {
+            'form': OffboardingUserListForm(*args),
+            'users': self.users,
+            'offboarding': True,
+            'table_title': "All superusers and staff users" if not self.table_title else self.table_title
+        }
+
+    def post(self, request, *args, **kwargs):
+        form = OffboardingUserListForm(self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['users']
+            self.users = augmented_superusers(users=users, include_accounting_admin=True)
+            self.table_title = "Users that need their privileges revoked/account disabled"
+        return self.get(request, *args, **kwargs)
