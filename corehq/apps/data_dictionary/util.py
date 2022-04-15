@@ -10,7 +10,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import (
-    PROPERTY_TYPES,
     CaseProperty,
     CasePropertyAllowedValue,
     CaseType,
@@ -242,5 +241,5 @@ def get_gps_properties(domain, case_type):
     return set(CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type,
-        data_type=PROPERTY_TYPES.GPS.slug,
+        data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))
