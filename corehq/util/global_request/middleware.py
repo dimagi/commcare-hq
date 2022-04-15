@@ -13,5 +13,5 @@ class GlobalRequestMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         set_request(None)
-        response['Content-Security-Policy'] = "'self' https://dimagi-demo.my.connect.aws/"
+        #response['Content-Security-Policy'] = "'self' https://dimagi-demo.my.connect.aws/"
         return response
