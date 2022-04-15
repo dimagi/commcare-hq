@@ -48,7 +48,7 @@ class TestSendToHubspot(TestCase):
         _send_hubspot_form_request.assert_called_once()
         hubspot_id, form_id, data = _send_hubspot_form_request.call_args[0]
         self.assertEqual(form_id, HUBSPOT_SIGNUP_FORM_ID)
-        self.assertDictContainsSubset(buyer_props, data)
+        self.assertEqual(data['buyer_persona'], 'Old-Timey Prospector')
 
     @classmethod
     def setUpClass(cls):

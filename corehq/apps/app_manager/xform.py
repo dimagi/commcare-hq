@@ -630,7 +630,7 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(domain, source):
+def validate_xform(source):
     if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
@@ -1402,12 +1402,12 @@ class XForm(WrappedNode):
 
     def add_case_and_meta(self, form):
         form.get_app().assert_app_v2()
-        self._create_casexml_2(form)
+        self._create_casexml(form)
         self._add_usercase(form)
         self._add_meta_2(form)
 
     def add_case_and_meta_advanced(self, form):
-        self._create_casexml_2_advanced(form)
+        self._create_casexml_advanced(form)
         self._add_meta_2(form)
 
     def already_has_meta(self):
@@ -1618,7 +1618,7 @@ class XForm(WrappedNode):
         else:
             return 'false()'
 
-    def _create_casexml_2(self, form):
+    def _create_casexml(self, form):
         actions = form.active_actions()
 
         form_opens_case = 'open_case' in actions
@@ -1818,7 +1818,7 @@ class XForm(WrappedNode):
         )
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
-    def _create_casexml_2_advanced(self, form):
+    def _create_casexml_advanced(self, form):
         self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 

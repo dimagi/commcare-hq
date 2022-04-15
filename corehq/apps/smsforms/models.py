@@ -2,7 +2,6 @@ import uuid
 from collections import namedtuple
 from datetime import timedelta
 
-from django.contrib.postgres.fields import JSONField
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
@@ -86,7 +85,7 @@ class SQLXFormsSession(models.Model):
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
     # A reminder in this context just sends the current question of an open survey to the contact
     # in order to remind them to answer it. This can be empty list if no reminders are desired.
-    reminder_intervals = JSONField(default=list)
+    reminder_intervals = models.JSONField(default=list)
 
     # A zero-based index pointing to the entry in reminder_intervals which represents the
     # currently scheduled reminder.

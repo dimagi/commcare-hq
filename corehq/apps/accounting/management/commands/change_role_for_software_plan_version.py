@@ -29,6 +29,7 @@ def change_role_for_software_plan_version(old_role, new_role, limit_to_plan_vers
     plan versions reference that old role.
     :param old_role: slug for role to search for
     :param new_role: slug for role that new software plan version should reference
+    :param limit_to_plan_version_id: limit change to a specific plan version id
     :param dry_run: if False, will make changes to the DB
     :return: a list of plan names that were modified
     """
@@ -48,7 +49,7 @@ def change_role_for_software_plan_version(old_role, new_role, limit_to_plan_vers
             raise PlanVersionAndRoleMismatch
         versions = [version]
     else:
-        versions = SoftwarePlanVersion.objects.filter(role__slug=old_role, is_active=True)
+        versions = SoftwarePlanVersion.objects.filter(role__slug=old_role)
 
     changed_plans = set()
     for software_plan_version in versions:

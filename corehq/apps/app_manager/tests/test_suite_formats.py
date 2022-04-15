@@ -92,7 +92,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """.format(
+        """.format(  # noqa: #501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,
@@ -146,7 +146,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template>
             <text>
-              <xpath function="replace(join(' ', if(selected(if(gender = 'male', 'boy', 'girl'), 'boy'), $kboy, ''), if(selected(if(gender = 'male', 'boy', 'girl'), 'girl'), $kgirl, '')), '\s+', ' ')">
+              <xpath function="replace(join(' ', if(selected(if(gender = 'male', 'boy', 'girl'), 'boy'), $kboy, ''), if(selected(if(gender = 'male', 'boy', 'girl'), 'girl'), $kgirl, '')), '\\s+', ' ')">
                 <variable name="kboy">
                   <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
                 </variable>
@@ -157,7 +157,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """
+        """  # noqa: #501
         # check correct suite is generated
         self.assertXmlPartialEqual(
             icon_mapping_spec,
@@ -217,7 +217,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 </text>
               </template>
             </partial>
-        """.format(
+        """.format(  # noqa: #501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,

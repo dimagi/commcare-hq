@@ -54,7 +54,7 @@ created as part of this action.
 
 The ability to edit linked data on a downstream domain depends on the data type. For example, applications are
 read-only on downstream domains, with a few settings (controlled by
-[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml#L97))
+[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yml#L97))
 that may be edited and will retain their
 values even when the app is updated. Reports cannot be edited at all. Other data, such as user roles, can typically
 be edited on the downstream domain, but any edits will be overwritten the next time that data type is

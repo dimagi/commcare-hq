@@ -52,6 +52,11 @@ class TagTest(SimpleTestCase):
         expected_template = self._get_file('rendered', '{}.html'.format(filename))
         expected = self._render_template(expected_template)
 
+        # Removed when Django 2.x is no longer supported
+        import django
+        if django.VERSION[0] < 3:
+            expected = expected.replace("&#x27;", "&#39;")
+
         self.assertEqual(
             self._normalize_whitespace(actual),
             self._normalize_whitespace(expected),

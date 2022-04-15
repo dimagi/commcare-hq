@@ -335,6 +335,8 @@ class CaseClaimXpath(object):
         self.session_var_name = session_var_name
 
     def default_relevant(self):
+        # Checks to see if the searched-for case already exists in the casedb:
+        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
 
@@ -396,6 +398,11 @@ class IndicatorXpath(InstanceXpath):
     @property
     def id(self):
         return self
+
+
+class SelectedCasesInstanceXpath(InstanceXpath):
+    id = "selected_cases"
+    path = "results/value"
 
 
 class CommCareSession(object):

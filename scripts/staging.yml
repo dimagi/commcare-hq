@@ -4,7 +4,7 @@
 
 # GENERAL PROCESS
 # From your commcare-hq directory with the virtualenv turned on and master
-# checked out to safely push your changes to scripts/staging.yaml
+# checked out to safely push your changes to scripts/staging.yml
 #     $ scripts/commit-staging --push
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
@@ -28,16 +28,16 @@
 #       $ git pull origin bar
 #     try to resolve conflict
 #       $ git push origin foo+bar
-#     add the branch `foo+bar` to staging.yaml and move branches foo and
+#     add the branch `foo+bar` to staging.yml and move branches foo and
 #     bar to right below it
 #
-#     Later on branch B gets merged into master and removed from staging.yaml.
+#     Later on branch B gets merged into master and removed from staging.yml.
 #     Perhaps the person who removes it also notices the A+B and does the
 #     following. Otherwise anyone who comes along and sees A+B but not both
 #     branches can feel free to assume the following need to be done.
 #       * Merge A+B into A. Since B is now gone, you want to merge the
 #         resolution into A, otherwise A will conflict with master.
-#       * Remove A+B from staging.yaml. It's no longer necessary since it's
+#       * Remove A+B from staging.yml. It's no longer necessary since it's
 #         now a subset of A.
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
@@ -57,28 +57,25 @@ branches:
     - ce/bulk-case-search # Cal July 6
     #- sr/memoized-toggle # Sravan July 26
     - smh/remove-extra-spinner-icons # Steph Oct 6
-    - ml/remove-pickles-phonelog # Minha Oct 7
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - gh/mrm/base # Graham Feb 8
-    - gh/form-version-bug # Graham Feb 15
-    - ml/check-for-historical-xss # Minha Mar 3
-    - ad/DSF-curly-braces-interpolation-syntax # Addison Mar 7
-    - jm/elastic-client-adapter  # Joel Mar 1
-    - ml/sumologic-on-staging-check # Minha Mar 10
-    - ml/case-sharing-feature-discoverability # Minha March 17
-    - ap/sql-case-repeater # Amit March 23
+    #- jm/elastic-client-adapter  # Joel Mar 1
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - rp/gsheet/create-livegooglesheetview-edit-classes # Rynhard March 23
-    - bmb/upgrade-minimist  # Biyeun March 23
-    - nh/loadtest_users_postmigration  # Norman March 24
-    - gh/erm/consolidate-enterprise-roles # Graham March 24
-    - gh/erm/add-release-management-to-enterprise-plans # Graham March 24
-    - gh/erm/migration-for-feature-flag # Graham March 24
-    - gh/revert-remove-report-pickling # Graham March 27
-    - ap/ucr-custom-text # Amit March 28
-    - jls/case-claim-http-codes # Jenny March 28
+    - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
+    - rc/obh-case-search-ui # Robert April 5
+    - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
+    - smh/multi-select-contiune-workflow # Steph/Jenny April 11
+    - jls/multiple-referrals-wip # Jenny April 14
+    - fr/ucr-registry-linked  # Farid April 12
+    - ap/sql-case-repeater # Amit March 23
+    - ml/all-in-one-offboarding # Minha April 13
+    - gh/erm/remove-linked-domain-ff # Graham April 14
+    - jls/update-dialer-url # Jenny April 14
+    - smh/multi-select-checkbox-clearing-fix # Steph April 15
+    - smh/multi-select-case-detail-workflow # Steph April 15
+
+
 submodules: { }

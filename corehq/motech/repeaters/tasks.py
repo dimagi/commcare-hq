@@ -202,7 +202,7 @@ def _process_repeat_record(repeat_record):
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
 
-repeaters_overdue = metrics_gauge_task(
+metrics_gauge_task(
     'commcare.repeaters.overdue',
     get_overdue_repeat_record_count,
     run_every=crontab(),  # every minute
