@@ -21,6 +21,7 @@ django-celery-results
 django-compressor
 django-countries
 django-crispy-forms
+django-csp
 django-cte
 django-formtools
 django-logentry-admin
