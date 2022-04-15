@@ -65,7 +65,6 @@ branches:
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - nh/loadtest_users_postmigration  # Norman March 25
     - ad/user-history-excel-export # Addison March 28
-    - rc/obh-case-search-ui # Robert April 5
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - jls/multiple-referrals-wip # Jenny April 14
