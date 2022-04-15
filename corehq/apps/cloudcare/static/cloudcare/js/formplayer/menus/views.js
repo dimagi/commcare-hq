@@ -366,6 +366,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.updateCheckboxes();
                 this.selectedCaseIdsLength = this.selectedCaseIds.length;
                 sessionStorage.selectedValues = [];
+                this.ui.continueButton.prop("disabled", this.selectedCaseIds.length === 0);
             }
         },
 
