@@ -137,12 +137,20 @@ class RemoteRequestFactory(object):
         return self.module.search_config.get_relevant(self.module.is_multi_select())
 
     def build_command(self):
-        return Command(
-            id=id_strings.search_command(self.module),
-            display=Display(
-                text=Text(locale_id=id_strings.case_search_locale(self.module)),
-            ),
-        )
+        if self.app.enable_case_search_title_translation:
+            return Command(
+                id=id_strings.search_command(self.module),
+                display=Display(
+                    text=Text(locale_id=id_strings.case_search_title_tranlsation(self.module)),
+                ),
+            )
+        else:
+            return Command(
+                id=id_strings.search_command(self.module),
+                display=Display(
+                    text=Text(locale_id=id_strings.case_search_locale(self.module)),
+                ),
+            )
 
     def build_instances(self):
         prompt_select_instances = [

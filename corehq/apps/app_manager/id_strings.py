@@ -259,6 +259,11 @@ def case_search_again_audio_locale(module):
     return "case_search.m{module.id}.again.audio".format(module=module)
 
 
+@pattern('case_search.m%d.title')
+def case_search_title_translation(module):
+    return "case_search.m{module.id}.title".format(module=module)
+
+
 @pattern('search_command.m%d')
 def search_command(module):
     return "search_command.m{module.id}".format(module=module)
