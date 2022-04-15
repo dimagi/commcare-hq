@@ -380,8 +380,10 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         self.case_session_var = case_session_var
 
     def get_post_relevant(self):
-        if not self.module.is_multi_select():
-            return CaseClaimXpath(self.case_session_var).default_relevant()
+        xpath = CaseClaimXpath(self.case_session_var)
+        if self.module.is_multi_select():
+            return xpath.multi_select_relevant()
+        return xpath.default_relevant()
 
     def build_command(self):
         return Command(
