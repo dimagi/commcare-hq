@@ -69,6 +69,7 @@ branches:
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
     - jls/multiple-referrals-wip # Jenny April 14
+    - jls/update-multi-select-relevancy # Jenny April 15
     - fr/ucr-registry-linked  # Farid April 12
     - ap/sql-case-repeater # Amit March 23
     - ml/all-in-one-offboarding # Minha April 13
