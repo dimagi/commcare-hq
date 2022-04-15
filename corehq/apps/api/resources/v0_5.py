@@ -104,7 +104,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..const import COMMCARE_USER_API_EDITABLE_KEYS
+from ..exceptions import InvalidUpdateRequest
 
 MOCK_BULK_USER_ES = None
 
@@ -224,8 +224,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
-            if key not in COMMCARE_USER_API_EDITABLE_KEYS:
-                raise BadRequest(f'Cannot update the key {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -314,10 +312,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
-            # username cannot be updated
-            bundle.data.pop('username', None)
             # password was just set
             bundle.data.pop('password', None)
+
+            try:
+                self._validate_update(bundle)
+            except InvalidUpdateRequest as e:
+                for field in e.illegal_fields:
+                    bundle.data.pop(field, None)
+
             self._update(bundle)
             bundle.obj.save()
         except Exception:
@@ -334,6 +337,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
+        try:
+            self._validate_update(bundle)
+        except InvalidUpdateRequest as e:
+            raise BadRequest(str(e))
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         user_change_logger = self._get_user_change_logger(bundle)
@@ -351,6 +358,18 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
+    def _validate_update(self, bundle):
+        """
+        Ensures only non-readonly fields specified on the UserResource/CommCareUserResource are updated
+        Raises an InvalidUpdateRequest exception that contains a list of illegal fields
+        """
+        editable_fields = {name for name, obj in self.fields.items() if not obj.readonly}
+        fields_to_update = set(bundle.data.keys())
+        illegal_fields = fields_to_update.difference(editable_fields)
+
+        if illegal_fields:
+            raise InvalidUpdateRequest(illegal_fields)
 
 
 class WebUserResource(v0_1.WebUserResource):
