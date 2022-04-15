@@ -109,27 +109,40 @@ Other Notes
 
 * All metrics must use the prefix 'commcare.'
 """
+from collections.abc import Sequence
 from contextlib import ContextDecorator
 from functools import wraps
-from typing import Iterable, Callable, Dict
-
-from celery.task import periodic_task
+from typing import Any, Callable, Optional
 
 from django.conf import settings
+
+from celery.task import periodic_task
 from sentry_sdk import add_breadcrumb
 
-from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
-from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
+
+from corehq.util.timer import TimingContext
+
+from .const import (
+    ALERT_INFO,
+    COMMON_TAGS,
+    MPM_ALL,
+    AlertStr,
+    PrometheusMultiprocessModeStr,
+)
 from .metrics import (
+    DEFAULT_BUCKETS,
     DebugMetrics,
     DelegatedMetrics,
-    DEFAULT_BUCKETS,
     _enforce_prefix,
-    metrics_logger
+    metrics_logger, MetricsProto,
 )
-from .utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS, bucket_value
+from .utils import (
+    DAY_SCALE_TIME_BUCKETS,
+    bucket_value,
+    make_buckets_from_timedeltas,
+)
 
 __all__ = [
     'metrics_counter',
@@ -144,26 +157,39 @@ __all__ = [
 ]
 
 
-def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
+TimerCallback = Callable[[float], Any]
+
+
+def metrics_counter(
+    name: str,
+    value: float = 1.0,
+    tags: Optional[dict[str, str]] = None,
+    documentation: str = '',
+) -> None:
     provider = _get_metrics_provider()
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
-                  multiprocess_mode: str = MPM_ALL):
-    """
-    kwargs:
-        multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
-            to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
-    """
+def metrics_gauge(
+    name: str,
+    value: float,
+    tags: Optional[dict[str, str]] = None,
+    documentation: str = '',
+    multiprocess_mode: PrometheusMultiprocessModeStr = MPM_ALL,
+) -> None:
     provider = _get_metrics_provider()
     provider.gauge(name, value, tags=tags, documentation=documentation, multiprocess_mode=multiprocess_mode)
 
 
 def metrics_histogram(
-        name: str, value: float,
-        bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-        tags: Dict[str, str] = None, documentation: str = ''):
+    name: str,
+    value: float,
+    bucket_tag: str,
+    buckets: Sequence[Any] = DEFAULT_BUCKETS,
+    bucket_unit: str = '',
+    tags: Optional[dict[str, str]] = None,
+    documentation: str = '',
+) -> None:
     provider = _get_metrics_provider()
     provider.histogram(
         name, value, bucket_tag,
@@ -197,8 +223,13 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     return inner
 
 
-def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
-                         tags: Dict[str, str] = None, aggregation_key: str = None):
+def create_metrics_event(
+    title: str,
+    text: str,
+    alert_type: AlertStr = ALERT_INFO,
+    tags: Optional[dict[str, str]] = None,
+    aggregation_key: Optional[str] = None,
+) -> None:
     """
     Send an event record to the monitoring provider.
 
@@ -206,7 +237,7 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
 
     :param title: Title of the event
     :param text: Event body
-    :param alert_type: Event type. One of 'success', 'info', 'warning', 'error'
+    :param alert_type: Event type.
     :param tags: Event tags
     :param aggregation_key: Key to use to group multiple events
     """
@@ -217,8 +248,13 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
         metrics_logger.exception('Error creating metrics event', e)
 
 
-def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
-                            bucket_tag: str = 'duration', callback: Callable = None):
+def metrics_histogram_timer(
+    metric: str,
+    timing_buckets: Sequence[int],
+    tags: Optional[dict[str, str]] = None,
+    bucket_tag: str = 'duration',
+    callback: Optional[TimerCallback] = None,
+) -> TimingContext:
     """
     Create a context manager that times and reports to the metric providers as a histogram
 
@@ -241,7 +277,7 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
     :param timing_buckets: sequence of numbers representing time thresholds, in seconds
     :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
     :param callback: a callable which will be called when exiting the context manager with a single argument
-                     of the timer duratio
+                     of the timer duration
     :return: A context manager that will perform the specified timing
              and send the specified metric
 
@@ -267,7 +303,7 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
             level="info",
         )
 
-    timer.stop = new_stop
+    timer.stop = new_stop  # type: ignore[assignment]
     return timer
 
 
@@ -304,7 +340,7 @@ def push_metrics():
     provider.push_metrics()
 
 
-_metrics = []
+_metrics: list[MetricsProto] = []
 
 
 def _get_metrics_provider():
@@ -318,13 +354,14 @@ def _get_metrics_provider():
             except Exception:
                 notify_exception(None, f"Cannot load {provider_path}")
 
+        metrics_: MetricsProto
         if not providers:
-            metrics = DebugMetrics()
+            metrics_ = DebugMetrics()
         elif len(providers) > 1:
-            metrics = DelegatedMetrics(providers)
+            metrics_ = DelegatedMetrics(providers)
         else:
-            metrics = providers[0]
-        _metrics.append(metrics)
+            metrics_ = providers[0]
+        _metrics.append(metrics_)
     return _metrics[-1]
 
 

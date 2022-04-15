@@ -1,2 +1,3 @@
 -mcorehq.motech.value_source
 -mcorehq.motech.serializers
+-mcorehq.util.metrics
