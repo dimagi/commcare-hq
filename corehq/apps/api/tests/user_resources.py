@@ -202,7 +202,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "Cannot update the key(s) id, username."}'
+            '{"error": "Cannot update the key(s) username, id."}'
         )
 
     def test_cannot_update_unspecfied_key(self):
