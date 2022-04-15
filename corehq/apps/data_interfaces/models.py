@@ -875,7 +875,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             if case_id == case.case_id:
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
-                xmlns=AUTO_UPDATE_XMLNS)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
@@ -888,7 +888,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
 
         if close_case or properties:
             result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
-                xmlns=AUTO_UPDATE_XMLNS)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
 
             rule.log_submission(result[0].form_id)
 
