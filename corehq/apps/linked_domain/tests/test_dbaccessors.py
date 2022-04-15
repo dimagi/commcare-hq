@@ -7,7 +7,6 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_available_upstream_domains,
 )
 from corehq.privileges import LITE_RELEASE_MANAGEMENT, RELEASE_MANAGEMENT
-from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.users.models.CouchUser')
@@ -25,7 +24,7 @@ class TestGetAvailableUpstreamDomains(SimpleTestCase):
         self.mock_available_user_domains = user_patcher.start()
         self.addCleanup(user_patcher.stop)
 
-    def test_returns_empty_if_no_privilege_or_feature_flag(self, mock_user):
+    def test_returns_empty_if_no_privilege(self, mock_user):
         self.mock_domain_has_privilege.return_value = False
 
         upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
@@ -38,7 +37,7 @@ class TestGetAvailableUpstreamDomains(SimpleTestCase):
 
         upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
 
-        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=True)
+        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user)
         self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
 
     def test_returns_domains_for_user_if_lite_release_management_privilege(self, mock_user):
@@ -47,17 +46,7 @@ class TestGetAvailableUpstreamDomains(SimpleTestCase):
 
         upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
 
-        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=True)
-        self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
-
-    @flag_enabled("LINKED_DOMAINS")
-    def test_returns_domains_for_user_if_linked_domains_flag(self, mock_user):
-        self.mock_domain_has_privilege.return_value = False
-        self.mock_available_user_domains.return_value = self.expected_domains
-
-        upstream_domains = get_available_upstream_domains('downstream-1', mock_user)
-
-        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user, should_enforce_admin=False)
+        self.mock_available_user_domains.assert_called_with('downstream-1', mock_user)
         self.assertSetEqual(set(upstream_domains), set(self.expected_domains))
 
 
@@ -76,8 +65,7 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
         self.mock_available_user_domains = user_patcher.start()
         self.addCleanup(user_patcher.stop)
 
-
-    def test_returns_empty_if_no_privilege_or_feature_flag(self, mock_user):
+    def test_returns_empty_if_no_privilege(self, mock_user):
         self.mock_domain_has_privilege.return_value = False
 
         domains = get_available_domains_to_link('upstream', mock_user)
@@ -90,7 +78,7 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
 
         domains = get_available_domains_to_link('upstream', mock_user)
 
-        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=True)
+        self.mock_available_user_domains.assert_called_with('upstream', mock_user)
         self.assertSetEqual(set(domains), set(self.expected_domains))
 
     def test_returns_domains_for_user_if_lite_release_management_privilege(self, mock_user):
@@ -99,15 +87,5 @@ class TestGetAvailableDomainsToLink(SimpleTestCase):
 
         domains = get_available_domains_to_link('upstream', mock_user)
 
-        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=True)
-        self.assertSetEqual(set(domains), set(self.expected_domains))
-
-    @flag_enabled("LINKED_DOMAINS")
-    def test_returns_domains_for_user_for_linked_domains_flag(self, mock_user):
-        self.mock_domain_has_privilege.return_value = False
-        self.mock_available_user_domains.return_value = self.expected_domains
-
-        domains = get_available_domains_to_link('upstream', mock_user)
-
-        self.mock_available_user_domains.assert_called_with('upstream', mock_user, should_enforce_admin=False)
+        self.mock_available_user_domains.assert_called_with('upstream', mock_user)
         self.assertSetEqual(set(domains), set(self.expected_domains))
