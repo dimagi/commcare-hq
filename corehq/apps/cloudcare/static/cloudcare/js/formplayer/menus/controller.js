@@ -72,14 +72,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    var selectDetail = function (caseId, detailIndex, isPersistent) {
+    var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
         var urlObject = Util.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {
-            showDetail(detailResponse, detailIndex, caseId);
+            showDetail(detailResponse, detailIndex, caseId, isMultiSelect);
         }).fail(function () {
             FormplayerFrontend.trigger('navigateHome');
         });
@@ -117,8 +117,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         FormplayerFrontend.regions.getRegion('persistentCaseTile').show(detailView.render());
     };
 
-    var showDetail = function (model, detailTabIndex, caseId) {
-        var isMultiSelect = false; // TODO: add logic
+    var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
