@@ -141,7 +141,7 @@ class RemoteRequestFactory(object):
             return Command(
                 id=id_strings.search_command(self.module),
                 display=Display(
-                    text=Text(locale_id=id_strings.case_search_title_tranlsation(self.module)),
+                    text=Text(locale_id=id_strings.case_search_title_tranlsation(self.app, self.module)),
                 ),
             )
         else:

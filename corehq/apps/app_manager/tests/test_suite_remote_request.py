@@ -772,3 +772,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_case_search_title_translation(self, *args):
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = ""
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/command[id='']")
