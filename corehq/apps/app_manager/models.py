@@ -2238,11 +2238,8 @@ class CaseSearch(DocumentSchema):
         return "search_case_id"
 
     def get_relevant(self, multi_select=False):
-        if multi_select:
-            return self.additional_relevant
-
-        # Single select case lists are irrelevant if the selected case is already in the casedb
-        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        xpath = CaseClaimXpath(self.case_session_var)
+        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition

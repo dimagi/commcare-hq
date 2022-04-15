@@ -198,10 +198,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_search_config_relevant_multi_select(self, *args):
         config = CaseSearch()
 
-        self.assertEqual(config.get_relevant(multi_select=True), None)
+        self.assertEqual(config.get_relevant(multi_select=True), "$case_id != ''")
 
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(multi_select=True), "double(now()) mod 2 = 0")
+        self.assertEqual(config.get_relevant(multi_select=True), "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
