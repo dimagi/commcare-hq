@@ -225,9 +225,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "tr",
         template: _.template($("#case-view-item-template").html() || ""),
 
+        ui: {
+            selectRow: "#select-row-checkbox",
+        },
+
         events: {
             "click": "rowClick",
             "keydown": "rowKeyAction",
+            'click @ui.selectRow': 'selectRowAction',
+            'keypress @ui.selectRow': 'selectRowAction',
+        },
+        initialize: function () {
+            this.parentView = this.options.parentView;
         },
 
         className: "formplayer-request",
@@ -251,12 +260,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        selectRowAction: function (e) {
+            if (e.target.checked) {
+                this.parentView.selectedCaseIds.push(this.model.get('id'));
+            } else {
+                const index = this.parentView.selectedCaseIds.indexOf(this.model.get('id'));
+                if (index > -1) {
+                    this.parentView.selectedCaseIds.splice(index, 1);
+                }
+            }
+            this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
+        },
+
         templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                isMultiSelect: false, // TODO: add logic
+                isMultiSelect: this.options.parentView.options.isMultiSelect,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -298,6 +319,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                parentView: this,
             };
         },
 
@@ -305,6 +327,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
+            this.selectedCaseIds = [];
         },
 
         ui: {
@@ -318,7 +341,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
             selectAllCheckbox: "#select-all-checkbox",
-            selectRow: "#select-row-checkbox",
+            continueButton: "#multi-select-continue-btn",
         },
 
         events: {
@@ -333,8 +356,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.paginators': 'paginateKeyAction',
             'click @ui.selectAllCheckbox': 'selectAllAction',
             'keypress @ui.selectAllCheckbox': 'selectAllAction',
-            'click @ui.selectRow': 'selectRowAction',
-            'keypress @ui.selectRow': 'selectRowAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
         },
 
         caseListAction: function (e) {
@@ -407,17 +430,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
             //do something
         },
-        selectRowAction: function (e) {
-            if (e.target.checked) {
-                // add to list of selected cases
+
+        continueAction: function () {
+            sessionStorage.selectedValues = this.selectedCaseIds;
+            FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
+        },
+
+        updateContinueButtonText: function (newValue) {
+            document.getElementById('multi-select-btn-text').innerText = String(newValue);
+            if (this.selectedCaseIds.length === 0) {
+                this.ui.continueButton.prop("disabled", true);
             } else {
-                // remove from list of selected cases
+                this.ui.continueButton.prop("disabled", false);
             }
         },
 
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            var isMultiSelectCaseList = this.options.isMultiSelect;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -436,7 +467,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: false, // TODO: create logic
+                isMultiSelect: isMultiSelectCaseList,
+                selectedCaseIdsLength: this.selectedCaseIds.length,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
