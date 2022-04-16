@@ -457,9 +457,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         updateCheckboxes: function () {
+            var self = this;
             if (this.isMultiSelect) {
                 this.children.each(function (childView) {
-                    if (childView.parentView.selectedCaseIds.indexOf(childView.model.id) !== -1) {
+                    if (self.selectedCaseIds.indexOf(childView.model.id) !== -1) {
                         let checkbox = childView.ui.selectRow[0];
                         checkbox.checked = true;
                     }
