@@ -12,12 +12,30 @@ def configure_warnings(is_testing):
 
 
 def configure_deprecation_whitelist():
+    from django.utils.deprecation import RemovedInDjango41Warning
+    from sqlalchemy.exc import SAWarning
+
+    config_apps = "|".join(re.escape(app) for app in [
+        "captcha",
+        "django_celery_results",
+        "oauth2_provider",
+        "statici18n",
+        "two_factor",
+    ])
+    default_config_message = re.compile(fr"'.*({config_apps})' defines default_app_config")
+
     # warnings that may be resolved with a library upgrade
+    whitelist("captcha.fields", "ugettext_lazy() is deprecated")
     whitelist("celery", "'collections.abc'")
     whitelist("couchdbkit.schema.properties", "'collections.abc'")
+    whitelist("django.apps", default_config_message, RemovedInDjango41Warning)
+    whitelist("django_celery_results", "ugettext_lazy() is deprecated")
+    whitelist("django_otp.plugins", "django.conf.urls.url() is deprecated")
     whitelist("kombu.utils.functional", "'collections.abc'")
+    whitelist("logentry_admin.admin", "ugettext_lazy() is deprecated")
     whitelist("nose.importer", "the imp module is deprecated")
     whitelist("nose.util", "inspect.getargspec() is deprecated")
+    whitelist("tastypie", "django.conf.urls.url() is deprecated")
 
     # warnings that can be resolved with HQ code changes
     whitelist("", "property_match are deprecated. Use boolean_expression instead.")
@@ -41,10 +59,14 @@ def whitelist(module, message, category=DeprecationWarning):
 
         export CCHQ_WHITELISTED_WARNINGS=default
     """
-    msg = r".*" + re.escape(message)
+    if message:
+        if isinstance(message, str):
+            message = r".*" + re.escape(message)
+        else:
+            message = message.pattern
     default_action = os.environ.get("PYTHONWARNINGS", "ignore")
     action = os.environ.get("CCHQ_WHITELISTED_WARNINGS", default_action)
-    warnings.filterwarnings(action, msg, category, re.escape(module))
+    warnings.filterwarnings(action, message, category, re.escape(module))
 
 
 def augment_warning_messages():
