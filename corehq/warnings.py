@@ -21,5 +21,20 @@ def configure_deprecation_whitelist():
 
 
 def whitelist(module, message, category=DeprecationWarning):
+    """Whitelist warnings with matching criteria
+
+    Similar to `warnings.filterwarnings` except `re.escape` `module`
+    and `message`, and match `message` anywhere in the deprecation
+    warning message.
+
+    The warning action can be controlled with the environment variable
+    `CCHQ_WHITELISTED_WARNINGS`. If that is not set, it falls back to
+    the value of `PYTHONWARNINGS`, and if that is not set, 'ignore'.For
+    example, to show warnings that would otherwise be ignored:
+
+        export CCHQ_WHITELISTED_WARNINGS=default
+    """
     msg = r".*" + re.escape(message)
-    warnings.filterwarnings("default", msg, category, re.escape(module))
+    default_action = os.environ.get("PYTHONWARNINGS", "ignore")
+    action = os.environ.get("CCHQ_WHITELISTED_WARNINGS", default_action)
+    warnings.filterwarnings(action, msg, category, re.escape(module))
