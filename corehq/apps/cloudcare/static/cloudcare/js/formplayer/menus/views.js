@@ -364,7 +364,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (sessionStorage.selectedValues && sessionStorage.selectedValues.length !== 0) {
                 this.selectedCaseIds = sessionStorage.selectedValues.split(',');
                 this.updateCheckboxes();
-                this.selectedCaseIdsLength = this.selectedCaseIds.length;
                 sessionStorage.selectedValues = [];
                 this.ui.continueButton.prop("disabled", this.selectedCaseIds.length === 0);
             }
@@ -491,7 +490,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
-                selectedCaseIdsLength: this.selectedCaseIds.length,
+                selectedCaseIds: this.selectedCaseIds,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
