@@ -36,6 +36,7 @@ def configure_deprecation_whitelist():
     whitelist("nose.importer", "the imp module is deprecated")
     whitelist("nose.util", "inspect.getargspec() is deprecated")
     whitelist("tastypie", "django.conf.urls.url() is deprecated")
+    whitelist("tastypie", "request.is_ajax() is deprecated")
 
     # warnings that can be resolved with HQ code changes
     whitelist("", "property_match are deprecated. Use boolean_expression instead.")
