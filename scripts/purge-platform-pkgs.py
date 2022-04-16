@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""Strip unwanted packages out of pip-compiled requirements txt files.
+
+TODO:
+- support packages with multiple via's
+- accept purge package details via --package argument instead of global dict
+"""
 import argparse
 import sys
 from collections import deque
@@ -27,7 +33,7 @@ def main(files, packages=PACKAGES_TO_PURGE):
 
 def purge_packages(lines, packages):
     """Iterates over a collection of requirements `lines`, yielding all lines
-    except those provided by `packages`.
+    except those matching `packages`.
 
     :param lines: iterable of requirement file lines
     :param packages: dictionary of packages to purge
