@@ -42,6 +42,8 @@ def purge_packages(lines, packages):
     ['django==3.2.1', ' # via -r base.in']
     >>> list(purge_packages(['dep==1.2.3', ' # via parent'], unwanted))
     []
+    >>> list(purge_packages(['dep==1.2.3', ' # via parent-sub'], unwanted))
+    ['dep==1.2.3', ' # via parent-sub']
     >>> list(purge_packages(['dep==1.2.3', ' # via django'], unwanted))
     ['dep==1.2.3', ' # via django']
     >>> list(purge_packages(['django', ' # via -r base.in', 'dep==1.2.3', ' # via parent'], unwanted))
@@ -55,7 +57,7 @@ def purge_packages(lines, packages):
         name, delim, tail = line.partition("=")
         if delim and name in packages and stack:
             next_line = stack.popleft()  # pop the "via" line
-            if next_line.strip().startswith(f"# via {packages[name]}"):
+            if next_line.strip() == f"# via {packages[name]}":
                 continue  # skip both lines
             stack.insert(0, next_line)  # nope, put it back
         yield line
