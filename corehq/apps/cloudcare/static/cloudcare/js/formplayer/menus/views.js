@@ -328,7 +328,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
             this.selectedCaseIds = [];
-            this.data = options.collection.models;
         },
 
         ui: {
@@ -424,26 +423,24 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
+            var self = this;
             this.children.each(function (childView) {
-                let checkbox = childView.ui.selectRow[0];
-                if (checkbox.checked === !e.target.checked) {
-                    checkbox.checked = e.target.checked;
+                childView.ui.selectRow[0].checked = e.target.checked;
+                if (e.target.checked) {
+                    for (const value of childView.model.collection.models) {
+                        if (self.selectedCaseIds.indexOf(value.id) === -1) {
+                            self.selectedCaseIds.push(value.id);
+                        }
+                    }
+                } else {
+                    for (const value of childView.model.collection.models) {
+                        let index = self.selectedCaseIds.indexOf(value.id);
+                        if (index !== -1) {
+                            self.selectedCaseIds.splice(index, 1);
+                        }
+                    }
                 }
             });
-            if (e.target.checked) {
-                for (const value of this.data) {
-                    if (this.selectedCaseIds.indexOf(value.id) === -1) {
-                        this.selectedCaseIds.push(value.id);
-                    }
-                }
-            } else {
-                for (const value of this.data) {
-                    let index = this.selectedCaseIds.indexOf(value.id);
-                    if (index !== -1) {
-                        this.selectedCaseIds.splice(index, 1);
-                    }
-                }
-            }
             this.updateContinueButtonText(this.selectedCaseIds.length);
         },
 
