@@ -45,14 +45,7 @@ def configure_deprecation_whitelist():
     whitelist("corehq.util.validation", "metaschema specified by $schema was not found")
 
     # other, resolution not obvious
-    partial_indexes = "|".join(index for index in [
-        "accounting_subscription_active_subscriber",
-        "audit_access_couch_10d1b_idx",
-        "audit_nav_couch_875bc_idx",
-        "blobs_blobmeta_expires_64b92d",
-        "form_processor_commcarecasesql_supply_point_location",
-    ])
-    ignored_predicates = re.compile(fr"^Predicate of partial index ({partial_indexes}) ignored during reflection")
+    ignored_predicates = re.compile(r"^Predicate of partial index .* ignored during reflection")
     skipped_reflections = re.compile(
         "^Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key")
     whitelist("sqlalchemy.", ignored_predicates, SAWarning)
