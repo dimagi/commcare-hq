@@ -30,6 +30,7 @@ def configure_deprecation_whitelist():
     whitelist("couchdbkit.schema.properties", "'collections.abc'")
     whitelist("django.apps", default_config_message, RemovedInDjango41Warning)
     whitelist("django_celery_results", "ugettext_lazy() is deprecated")
+    whitelist("django_digest", "The 'warn' method is deprecated")
     whitelist("django_otp.plugins", "django.conf.urls.url() is deprecated")
     whitelist("kombu.utils.functional", "'collections.abc'")
     whitelist("logentry_admin.admin", "ugettext_lazy() is deprecated")
