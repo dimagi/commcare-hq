@@ -7,24 +7,36 @@
     <div class="col-xs-12">
       <h2>{{ current_page.title }}</h2>
       <p class="help-block">
-        {% blocktrans %}
-          Please type comma-separated email addresses of users to grant/revoke superuser privileges.
-        {% endblocktrans %}
+        {% if offboarding %}
+          {% blocktrans %}
+            Please type comma-separated email addresses of users you want to offboard.
+          {% endblocktrans %}
+        {% else %}
+          {% blocktrans %}
+            Please type comma-separated email addresses of users to grant/revoke superuser privileges.
+          {% endblocktrans %}
+        {% endif %}
       </p>
       {% crispy form %}
     </div>
   </div>
   <div class="row">
     <div class="col-xs-12">
-      <h2>All superusers and staff users</h2>
-
-      <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
-
+      {% if not offboarding %}
+        <h2>All superusers and staff users</h2>
+        <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
+      {% else %}
+        <h2> {{ table_title }}</h2>
+      {% endif %}
       <table class="table">
         <tr>
           <th>Username</th>
           <th>Developer</th>
           <th>Superuser</th>
+          {% if offboarding %}
+            <th>Accounting Admin</th>
+            <th>Active</th>
+          {% endif %}
           <th>Two Factor Enabled</th>
         </tr>
         {% for user in users %}
@@ -32,6 +44,10 @@
             <td>{{ user.username }}</td>
             <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
+            {% if offboarding %}
+              <td>{% if user.is_accounting_admin %}<i class="fa fa-check"></i>{% endif %}</td>
+              <td>{% if user.is_active %}<i class="fa fa-check"></i>{% endif %}</td>
+            {% endif %}
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
           </tr>
         {% endfor %}
