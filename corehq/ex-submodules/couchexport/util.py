@@ -46,13 +46,15 @@ def get_excel_format_value(value):
     # potential full date of any format
     if re.search(r"^\d+(/|-|\.)\d+(/|-|\.)\d+$", value):
         try:
-            # always use standard yyy-mm-dd format for excel
-            date_val = dateutil.parser.parse(value)
+            # always use standard yyyy-mm-dd format for excel
+            # set ignoretz to False to cause error on isoformat if invalid datetime
+            tzaware_date_val = parse_datetime(value, ignoretz=False)
             # Last chance at catching an errored date. If the date is invalid,
             # yet somehow passed the regex, it will fail at this line with a
             # ValueError:
-            date_val.isoformat()
-            return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, date_val)
+            tzaware_date_val.isoformat()
+            naive_date_val = parse_datetime(value)
+            return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, naive_date_val)
         except (ValueError, OverflowError):
             pass
 
@@ -73,7 +75,7 @@ def get_excel_format_value(value):
                 value.lower()):
         try:
             # always use standard yyy-mm-dd h:mm:ss format for excel
-            return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, dateutil.parser.parse(value))
+            return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, parse_datetime(value))
         except (ValueError, OverflowError):
             pass
 
@@ -81,8 +83,7 @@ def get_excel_format_value(value):
     if re.match(r"^\d{4}(-)\d{2}(-)\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$", value):
         try:
             # always use standard yyy-mm-dd h:mm:ss format for excel
-            return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME,
-                                    dateutil.parser.parse(value))
+            return ExcelFormatValue(numbers.FORMAT_DATE_DATETIME, parse_datetime(value))
         except (ValueError, OverflowError):
             pass
 
@@ -172,3 +173,8 @@ def get_legacy_excel_safe_value(value):
     else:
         value = ''
     return _dirty_chars.sub('?', value)
+
+
+def parse_datetime(val, ignoretz=True):
+    # openpyxl does not accept tz aware datetimes
+    return dateutil.parser.parse(val, ignoretz=ignoretz)
