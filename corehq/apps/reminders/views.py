@@ -1,6 +1,3 @@
-from collections import namedtuple
-
-from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
@@ -10,18 +7,10 @@ from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
-from dimagi.utils.logging import notify_exception
-
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.apps.linked_domain.keywords import create_linked_keyword
-from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
-from corehq.apps.linked_domain.util import can_domain_access_release_management
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
