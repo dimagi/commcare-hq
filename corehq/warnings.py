@@ -5,7 +5,7 @@ import warnings
 
 def configure_warnings(is_testing):
     if is_testing:
-        augment_warning_messages()
+        augment_warning_messages(is_testing)
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
     configure_deprecation_whitelist()
@@ -76,7 +76,7 @@ def whitelist(module, message, category=DeprecationWarning):
     warnings.filterwarnings(action, message, category, re.escape(module))
 
 
-def augment_warning_messages():
+def augment_warning_messages(is_testing):
     """Make it easier to find the module that triggered the warning
 
     Adds additional context to each warning message, which is useful
@@ -118,6 +118,9 @@ def augment_warning_messages():
             module = filename
         message += f"\nmodule: {module} line {lineno}"
 
+        if is_testing:
+            message += POSSIBLE_RESOLUTIONS
+
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
 
@@ -140,3 +143,22 @@ def augment_warning_messages():
 # Keep reference to orginal warn method so effects of
 # augment_warning_messages can be unpatched if need be.
 original_warn = warnings.warn
+
+
+POSSIBLE_RESOLUTIONS = """
+
+Possible resolutions:
+
+- Best: Eliminate the deprecated code path.
+
+- Worse: add a targeted whitelist item to `corehq.warnings`
+  `.configure_deprecation_whitelist()`. Whitelist items should target
+  the specific module or package that triggers the warning, and should
+  uniquely match the deprecation message so as not to hide other
+  deprecation warnings in the same module or package.
+
+- Last resort: if it is not possible to eliminate the deprecated code
+  path or to add a whitelist item that uniquely matches the deprecation
+  warning, use the `corehq.tests.util.warnings.filter_warnings()`
+  decorator to filter the specific warning in tests that trigger it.
+"""
