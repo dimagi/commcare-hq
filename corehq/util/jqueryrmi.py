@@ -10,6 +10,8 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 
+from corehq.util.view_utils import is_ajax
+
 
 def allow_remote_invocation(func, method='auto'):
     """
@@ -58,7 +60,7 @@ class JSONResponseMixin:
         return self._invoke_remote_method(request, args, kwargs, data)
 
     def _invoke_remote_method(self, request, args, kwargs, data=None):
-        if not request.is_ajax():
+        if not is_ajax(request):
             return self._dispatch_super(request, *args, **kwargs)
         remote_method = request.META.get('HTTP_DJNG_REMOTE_METHOD')
         handler = remote_method and getattr(self, remote_method, None)

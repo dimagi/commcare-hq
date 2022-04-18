@@ -25,6 +25,7 @@
 /corehq/util/datadog/lockmeter.py @millerdev
 /corehq/util/datadog/tests/test_lockmeter.py @millerdev
 /corehq/warehouse/ @calellowitz
+/corehq/warnings.py @millerdev
 
 /corehq/apps/accounting/ @dannyroberts @biyeun
 /corehq/apps/analytics/ @biyeun

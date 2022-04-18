@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.contrib.auth.views import (
     PasswordChangeDoneView,
     PasswordChangeView,
@@ -66,6 +66,7 @@ from corehq.apps.domain.views.settings import (
     EditMyProjectSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
+    ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
 )
@@ -186,6 +187,8 @@ domain_settings = [
         name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),
+        name=ManageDomainMobileWorkersView.urlname),
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
     url(r'^project_limits/$', ProjectLimitsView.as_view(), name=ProjectLimitsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),

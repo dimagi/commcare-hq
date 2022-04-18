@@ -64,12 +64,12 @@ class Log(models.Model):
     couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     phone_number = models.CharField(max_length=126, null=True, db_index=True)
     direction = models.CharField(max_length=1, null=True)
-    error = models.NullBooleanField(default=False)
+    error = models.BooleanField(null=True, default=False)
     system_error_message = models.TextField(null=True)
     system_phone_number = models.CharField(max_length=126, null=True)
     backend_api = models.CharField(max_length=126, null=True)
     backend_id = models.CharField(max_length=126, null=True)
-    billed = models.NullBooleanField(default=False)
+    billed = models.BooleanField(null=True, default=False)
 
     # Describes what kind of workflow this log was a part of
     workflow = models.CharField(max_length=126, null=True)
@@ -233,7 +233,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # from the gateway
     raw_text = models.TextField(null=True)
     datetime_to_process = models.DateTimeField(null=True, db_index=True)
-    processed = models.NullBooleanField(default=True, db_index=True)
+    processed = models.BooleanField(null=True, default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
@@ -246,7 +246,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # Set to True to send the message regardless of whether the destination
     # phone number has opted-out. Should only be used to send opt-out
     # replies or other info-related queries while opted-out.
-    ignore_opt_out = models.NullBooleanField(default=False)
+    ignore_opt_out = models.BooleanField(null=True, default=False)
 
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
@@ -258,11 +258,11 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
     # True if this was an inbound message that was an
     # invalid response to a survey question
-    invalid_survey_response = models.NullBooleanField(default=False)
+    invalid_survey_response = models.BooleanField(null=True, default=False)
 
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
-    fri_message_bank_lookup_completed = models.NullBooleanField(default=False)
+    fri_message_bank_lookup_completed = models.BooleanField(null=True, default=False)
     fri_message_bank_message_id = models.CharField(max_length=126, null=True)
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
@@ -608,7 +608,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     # when making calls to this number. Can be None to use domain/system
     # defaults.
     ivr_backend_id = models.CharField(max_length=126, null=True)
-    verified = models.NullBooleanField(default=False)
+    verified = models.BooleanField(null=True, default=False)
     contact_last_modified = models.DateTimeField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -2443,7 +2443,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     # will be closed and this Keyword will be invoked. If False, this Keyword will be
     # skipped and the form session handler will count the text as the next
     # answer in the open survey.
-    override_open_sessions = models.NullBooleanField()
+    override_open_sessions = models.BooleanField(null=True)
 
     # List of doc types representing the only types of contacts who should be
     # able to invoke this keyword. Empty list means anyone can invoke.
@@ -2553,7 +2553,7 @@ class KeywordAction(models.Model):
     # Set to True if the expected structured SMS format should name the values
     # being passed. For example the format "register name=joe age=20" would set
     # this to True, while the format "register joe 20" would set it to False.
-    use_named_args = models.NullBooleanField()
+    use_named_args = models.BooleanField(null=True)
 
     # Only used for action == ACTION_STRUCTURED_SMS
     # When use_named_args is True, this is a dictionary of {arg name (caps) : form question xpath}

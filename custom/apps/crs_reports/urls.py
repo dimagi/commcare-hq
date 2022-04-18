@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from custom.apps.crs_reports.views import crs_details_report, render_to_pdf
 

@@ -20,6 +20,7 @@ from textwrap import indent, wrap
 from time import sleep, time
 from unittest import SkipTest, TestCase
 
+from django.apps import apps
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
@@ -345,6 +346,22 @@ class capture_log_output(ContextDecorator):
 
     def get_output(self):
         return self.output.getvalue()
+
+
+def unregistered_django_model(model_class):
+    """Model class decorator that unregisters the model from Django
+
+    Apply to model classes in test modules to prevent the models from
+    being seen by other tests that check registered models. Examples
+    of tests that check registered models include
+    - corehq.apps.domain.tests.test_deletion_models:test_deletion_sql_models
+    - corehq.sql_db.tests.test_model_partitioning
+      :TestPartitionedModelsWithMultipleDBs
+      .test_models_are_located_in_correct_dbs('scheduling', False)
+    """
+    app_config = apps.get_app_config(model_class._meta.app_label)
+    del app_config.models[model_class.__name__.lower()]
+    return model_class
 
 
 def generate_cases(argsets, cls=None):

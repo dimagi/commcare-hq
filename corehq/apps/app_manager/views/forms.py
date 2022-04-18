@@ -638,7 +638,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
                 'module_id': module.id,
                 'name': clean_trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
-            } for module in app.modules]
+            } for module in app.get_modules()]
         }
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not

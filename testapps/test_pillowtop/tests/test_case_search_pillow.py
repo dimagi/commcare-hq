@@ -1,7 +1,9 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
-from unittest.mock import MagicMock, patch
+
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -12,6 +14,7 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
@@ -27,14 +30,14 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
 )
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
 @es_test
 class CaseSearchPillowTest(TestCase):
 
     domain = 'meereen'
+    case_type = 'my_case_type'
 
     def setUp(self):
         super(CaseSearchPillowTest, self).setUp()
@@ -117,17 +120,68 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
+    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    def test_geopoint_property(self):
+        CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
+        domains_needing_search_index.clear()
+        self._make_data_dictionary(gps_properties=['coords', 'short_coords', 'other_coords'])
+        case = self._make_case(case_properties={
+            'coords': '-33.8561 151.2152 0 0',
+            'short_coords': '-33.8561 151.2152',
+            'other_coords': '42 Wallaby Way',
+            'not_coords': '-33.8561 151.2152 0 0',
+        })
+        CaseSearchReindexerFactory(domain=self.domain).build().reindex()
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+
+        es_case = CaseSearchES().doc_id(case.case_id).run().hits[0]
+        self.assertEqual(
+            self._get_prop(es_case['case_properties'], 'coords'),
+            {
+                'key': 'coords',
+                'value': '-33.8561 151.2152 0 0',
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
+            },
+        )
+        self.assertEqual(
+            self._get_prop(es_case['case_properties'], 'short_coords'),
+            {
+                'key': 'short_coords',
+                'value': '-33.8561 151.2152',
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
+            },
+        )
+        self.assertEqual(
+            self._get_prop(es_case['case_properties'], 'other_coords'),
+            # The value here isn't a valid geopoint
+            {'key': 'other_coords', 'value': '42 Wallaby Way', 'geopoint_value': None},
+        )
+        self.assertEqual(
+            self._get_prop(es_case['case_properties'], 'not_coords'),
+            # This isn't a geopoint property in the data dictionary
+            {'key': 'not_coords', 'value': '-33.8561 151.2152 0 0'},
+        )
+
+    def _make_data_dictionary(self, gps_properties):
+        case_type = CaseType.objects.create(name=self.case_type, domain=self.domain)
+        for prop in gps_properties:
+            CaseProperty.objects.create(case_type=case_type, data_type="gps", name=prop)
+
+    @staticmethod
+    def _get_prop(case_properties, key):
+        return [prop for prop in case_properties if prop['key'] == key][0]
+
     def _make_case(self, domain=None, case_properties=None):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         if domain is None:
             domain = self.domain
-        case = create_and_save_a_case(domain, case_id, case_name, case_properties)
+        case = create_and_save_a_case(domain, case_id, case_name, case_properties, self.case_type)
         return case
 
     def _assert_case_in_es(self, domain, case):
-        # confirm change made it to elasticserach
+        # confirm change made it to elasticsearch
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
         results = CaseSearchES().run()
         self.assertEqual(1, results.total)

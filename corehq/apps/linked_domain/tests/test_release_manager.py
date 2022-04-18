@@ -179,7 +179,7 @@ class TestReleaseManager(BaseReleaseManagerTest):
 
 class TestReleaseApp(BaseReleaseManagerTest):
 
-    def test_app_not_pushed_if_not_found_with_toggle_disabled(self):
+    def test_app_not_pushed_if_not_found(self):
         unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
         unpushed_app.save()
         self.addCleanup(unpushed_app.delete)
@@ -188,17 +188,6 @@ class TestReleaseApp(BaseReleaseManagerTest):
 
         errors = manager._release_app(self.domain_link, model, manager.user)
 
-        self.assertTrue("Could not find app" in errors)
-
-    @flag_enabled('ERM_DEVELOPMENT')
-    def test_app_not_pushed_if_not_found_with_toggle_enabled(self):
-        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
-        unpushed_app.save()
-        self.addCleanup(unpushed_app.delete)
-        model = self._linked_data_view_model(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        errors = manager._release_app(self.domain_link, model, manager.user)
         self.assertTrue("Could not find app" in errors)
 
 
@@ -230,8 +219,8 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = False
             errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
@@ -254,8 +243,8 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = True
             errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
@@ -272,8 +261,8 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = False
             errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertTrue('Could not find report. Please check that the report has been linked.' in errors)
 
@@ -286,8 +275,8 @@ class TestReleaseReport(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = True
             errors = manager._release_report(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
@@ -321,8 +310,8 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = False
             errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
@@ -344,8 +333,8 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
         )
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = True
             errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 
@@ -363,8 +352,8 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
 
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = False
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = False
             errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertTrue('Could not find linked keyword. Please check the keyword has been linked.' in errors)
 
@@ -377,8 +366,8 @@ class TestReleaseKeyword(BaseReleaseManagerTest):
 
         manager = ReleaseManager(self.domain, self.user.username)
 
-        with patch('corehq.apps.linked_domain.tasks.domain_has_privilege') as mock_domain_has_privilege:
-            mock_domain_has_privilege.return_value = True
+        with patch('corehq.apps.linked_domain.tasks.can_domain_access_release_management') as mock_access_check:
+            mock_access_check.return_value = True
             errors = manager._release_keyword(self.domain_link, model, 'test-user')
         self.assertIsNone(errors)
 

@@ -21,4 +21,4 @@ xform_unarchived.connect(rebuild_form_cases)
 # the contract of this signal is that you should modify the form and cases in
 # place but NOT save them. this is so that we can avoid multiple redundant writes
 # to the database in a row. we may want to revisit this if it creates problems.
-cases_received = Signal(providing_args=["xform", "cases"])
+cases_received = Signal()  # providing args: xform, cases

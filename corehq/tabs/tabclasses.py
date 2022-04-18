@@ -1,3 +1,4 @@
+from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.conf import settings
 from django.http import Http404
@@ -9,6 +10,8 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
+
+from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
 from corehq.apps.users.decorators import get_permission_name
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -49,7 +52,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.linked_domain.util import can_access_release_management_feature
+from corehq.apps.linked_domain.util import can_user_access_release_management, can_domain_access_release_management
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -99,7 +102,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.motech.dhis2.views import DataSetMapListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, RELEASE_MANAGEMENT
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
@@ -176,8 +179,11 @@ class ProjectReportsTab(UITab):
         if is_ucr_toggle_enabled and has_ucr_permissions:
 
             from corehq.apps.userreports.views import UserConfigReportsHomeView
+            title = _(UserConfigReportsHomeView.section_name)
+            if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+                title = _("Custom Web Reports")
             tools.append({
-                'title': _(UserConfigReportsHomeView.section_name),
+                'title': title,
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
             })
@@ -1658,6 +1664,7 @@ class EnterpriseSettingsTab(UITab):
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
         enterprise_views = []
+        enterprise_user_management_views = []
 
         if has_privilege(self._request, privileges.PROJECT_ACCESS):
             enterprise_views.extend([
@@ -1680,7 +1687,7 @@ class EnterpriseSettingsTab(UITab):
                 ManageSSOEnterpriseView,
                 EditIdentityProviderEnterpriseView,
             )
-            enterprise_views.append({
+            manage_sso = {
                 'title': _(ManageSSOEnterpriseView.page_title),
                 'url': reverse(ManageSSOEnterpriseView.urlname, args=(self.domain,)),
                 'subpages': [
@@ -1689,7 +1696,11 @@ class EnterpriseSettingsTab(UITab):
                         'urlname': EditIdentityProviderEnterpriseView.urlname,
                     },
                 ],
-            })
+            }
+            if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+                enterprise_user_management_views.append(manage_sso)
+            else:
+                enterprise_views.append(manage_sso)
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
@@ -1701,8 +1712,13 @@ class EnterpriseSettingsTab(UITab):
                     'subpages': [],
                     'show_in_dropdown': False,
                 })
-
         items.append((_('Manage Enterprise'), enterprise_views))
+        if toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled_for_request(self._request):
+            enterprise_user_management_views.append({
+                'title': _(ManageEnterpriseMobileWorkersView.page_title),
+                'url': reverse(ManageEnterpriseMobileWorkersView.urlname, args=[self.domain]),
+            })
+            items.append((_("User Management"), enterprise_user_management_views))
 
         if BillingAccount.should_show_sms_billable_report(self.domain):
             items.extend(EnterpriseReportDispatcher.navigation_sections(
@@ -1812,9 +1828,10 @@ class ProjectSettingsTab(UITab):
         if feature_flag_items and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
-        release_management_items = _get_release_management_items(self.couch_user, self.domain)
+        release_management_title, release_management_items = _get_release_management_items(self.couch_user,
+                                                                                           self.domain)
         if release_management_items:
-            items.append((_('Enterprise Release Management'), release_management_items))
+            items.append((release_management_title, release_management_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1906,6 +1923,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         RecoveryMeasuresHistory,
+        ManageDomainMobileWorkersView,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
@@ -1933,6 +1951,13 @@ def _get_administration_section(domain):
             'title': _(ManageReleasesByLocation.page_title),
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
+
+    if (toggles.AUTO_DEACTIVATE_MOBILE_WORKERS.enabled(domain)
+            and not is_domain_enterprise(domain)):
+        administration.append(({
+            'title': _(ManageDomainMobileWorkersView.page_title),
+            'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
+        }))
 
     return administration
 
@@ -2061,10 +2086,10 @@ def _get_feature_flag_items(domain, couch_user):
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    # show ERM version of linked projects if domain has privilege
+    # DEPRECATED: only show this if the domain does not have release_management access
     can_access_linked_domains = (
         user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
-        and not domain_has_privilege(domain, RELEASE_MANAGEMENT)
+        and not can_domain_access_release_management(domain)
     )
     if can_access_linked_domains:
         feature_flag_items.append({
@@ -2093,19 +2118,27 @@ def _get_feature_flag_items(domain, couch_user):
 
 
 def _get_release_management_items(user, domain):
-    release_management_items = []
+    items = []
+    title = None
+    if not can_user_access_release_management(user, domain):
+        return title, items
 
-    if can_access_release_management_feature(user, domain):
-        release_management_items.append({
+    if domain_has_privilege(domain, privileges.RELEASE_MANAGEMENT):
+        title = _('Enterprise Release Management')
+    elif domain_has_privilege(domain, privileges.LITE_RELEASE_MANAGEMENT):
+        title = _('Multi-Environment Release Management')
+
+    if title:
+        items.append({
             'title': _('Linked Project Spaces'),
             'url': reverse('domain_links', args=[domain])
         })
-        release_management_items.append({
+        items.append({
             'title': _('Linked Project Space History'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
 
-    return release_management_items
+    return title, items
 
 
 class MySettingsTab(UITab):

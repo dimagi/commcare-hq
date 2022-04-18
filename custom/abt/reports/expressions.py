@@ -351,26 +351,26 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
     @property
     def _flagspec_filename(self):
         if self.domain == 'vectorlink-uganda':
-            return 'flagspecs_uganda.yaml'
+            return 'flagspecs_uganda.yml'
         else:
-            return 'flagspecs.yaml'
+            return 'flagspecs.yml'
 
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
-    _flagspec_filename = 'flagspecs_v2.yaml'
+    _flagspec_filename = 'flagspecs_v2.yml'
     comment_from_root = True
 
 
 class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2019')
-    _flagspec_filename = 'flagspecs_v2019.yaml'
+    _flagspec_filename = 'flagspecs_v2019.yml'
     comment_from_root = True
 
 
 class AbtSupervisorV2020ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2020')
-    _flagspec_filename = 'flagspecs_v2020.yaml'
+    _flagspec_filename = 'flagspecs_v2020.yml'
     comment_from_root = True
 
 

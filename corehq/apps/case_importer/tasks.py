@@ -64,7 +64,7 @@ def _alert_on_result(result, domain):
         send_abnormal_usage_alert.delay(alert)
 
 
-total_bytes = metrics_gauge_task(
+metrics_gauge_task(
     'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
     run_every=crontab(minute=0),
