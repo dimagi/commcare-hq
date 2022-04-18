@@ -52,11 +52,12 @@ WHITELIST = [
 
 
 def configure_warnings(is_testing):
-    if is_testing:
+    strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
+    if strict:
         augment_warning_messages(is_testing)
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
-    if is_testing or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
+    if strict or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
         for args in WHITELIST:
             whitelist(*args)
 
