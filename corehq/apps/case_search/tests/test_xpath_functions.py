@@ -11,23 +11,23 @@ INVALID_TEST_CASES = [(
     'not(1 < 3, 2 < 4)',
     "The 'not' function accepts exactly 1 arguments, got 2"
 ), (
-    'proximity(7)',
-    "The 'proximity' function accepts exactly 4 arguments, got 1"
+    'within-distance(7)',
+    "The 'within-distance' function accepts exactly 4 arguments, got 1"
 ), (
-    'proximity(7, "42.4402967 -71.1453275", 1, "miles")',
-    "The first argument to 'proximity' must be a valid case property name"
+    'within-distance(7, "42.4402967 -71.1453275", 1, "miles")',
+    "The first argument to 'within-distance' must be a valid case property name"
 ), (
-    'proximity("coords", 42.4402967, 1, "miles")',
-    "The second argument to 'proximity' must be valid coordinates"
+    'within-distance("coords", 42.4402967, 1, "miles")',
+    "The second argument to 'within-distance' must be valid coordinates"
 ), (
-    'proximity("coords", "42.4402967", 1, "miles")',
-    "The second argument to 'proximity' must be valid coordinates"
+    'within-distance("coords", "42.4402967", 1, "miles")',
+    "The second argument to 'within-distance' must be valid coordinates"
 ), (
-    'proximity("coords", "42.4402967 -71.1453275", 7, "smoots")',
+    'within-distance("coords", "42.4402967 -71.1453275", 7, "smoots")',
     "is not a valid distance unit"
 ), (
-    'proximity("coords", "42.4402967 -71.1453275", "eight", "miles")',
-    "The third argument to 'proximity' must be a number, got 'eight'"
+    'within-distance("coords", "42.4402967 -71.1453275", "eight", "miles")',
+    "The third argument to 'within-distance' must be a number, got 'eight'"
 )]
 
 
