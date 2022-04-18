@@ -179,7 +179,7 @@ class TestReleaseManager(BaseReleaseManagerTest):
 
 class TestReleaseApp(BaseReleaseManagerTest):
 
-    def test_app_not_pushed_if_not_found_with_toggle_disabled(self):
+    def test_app_not_pushed_if_not_found(self):
         unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
         unpushed_app.save()
         self.addCleanup(unpushed_app.delete)
@@ -188,17 +188,6 @@ class TestReleaseApp(BaseReleaseManagerTest):
 
         errors = manager._release_app(self.domain_link, model, manager.user)
 
-        self.assertTrue("Could not find app" in errors)
-
-    @flag_enabled('ERM_DEVELOPMENT')
-    def test_app_not_pushed_if_not_found_with_toggle_enabled(self):
-        unpushed_app = Application.new_app(self.domain, "Not Yet Pushed App")
-        unpushed_app.save()
-        self.addCleanup(unpushed_app.delete)
-        model = self._linked_data_view_model(MODEL_APP, detail=AppLinkDetail(app_id=unpushed_app._id).to_json())
-        manager = ReleaseManager(self.domain, self.user.username)
-
-        errors = manager._release_app(self.domain_link, model, manager.user)
         self.assertTrue("Could not find app" in errors)
 
 

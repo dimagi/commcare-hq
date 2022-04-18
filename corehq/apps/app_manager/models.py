@@ -2183,6 +2183,7 @@ class CaseSearchProperty(DocumentSchema):
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
+    exclude = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
@@ -2228,6 +2229,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
+    title_label = DictProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2237,11 +2239,8 @@ class CaseSearch(DocumentSchema):
         return "search_case_id"
 
     def get_relevant(self, multi_select=False):
-        if multi_select:
-            return self.additional_relevant
-
-        # Single select case lists are irrelevant if the selected case is already in the casedb
-        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        xpath = CaseClaimXpath(self.case_session_var)
+        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
@@ -4863,6 +4862,16 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
+
+        translations = data.get('translations')
+        for module in self.modules:
+            if hasattr(module, 'search_config'):
+                label_dict = {lang: label.get('case.search.title')
+                    for lang, label in translations.items() if label}
+                search_config = getattr(module, 'search_config')
+                default_label_dict = getattr(search_config, 'title_label')
+                label_dict.update(default_label_dict)
+                setattr(search_config, 'title_label', label_dict)
 
         # make sure all form versions are None on working copies
         if not self.copy_of:

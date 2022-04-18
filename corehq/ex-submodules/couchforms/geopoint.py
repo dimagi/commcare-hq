@@ -8,15 +8,15 @@ from jsonobject.exceptions import BadValueError
 class GeoPoint:
     latitude: Decimal
     longitude: Decimal
-    altitude: Decimal
-    accuracy: Decimal
+    altitude: Decimal = Decimal("NaN")
+    accuracy: Decimal = Decimal("NaN")
 
     @property
     def lat_lon(self):
         """Suitable to send to an elasticsearch geo_point field"""
         return {
-            'lat': self.latitude,
-            'lon': self.longitude
+            'lat': float(self.latitude),
+            'lon': float(self.longitude),
         }
 
     @classmethod
@@ -25,6 +25,7 @@ class GeoPoint:
         Construct GeoPoint object from string containing space-separated decimals.
 
         Expects 4 elements, unless flexible=True, in which case 2 works too
+        CommCare mobile GPS questions come back with 4 elements, Geocoder uses 2
         """
         try:
             latitude, longitude, altitude, accuracy = _extract_elements(input_string, flexible)

@@ -310,7 +310,7 @@ pillow==9.0.1
     # via
     #   -r base-requirements.in
     #   reportlab
-pip-tools==6.5.1
+pip-tools==6.6.0
     # via -r test-requirements.in
 ply==3.11
     # via

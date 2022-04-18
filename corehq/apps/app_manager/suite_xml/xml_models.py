@@ -11,6 +11,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
+
 class XPathField(StringField):
     """
     A string field that is supposed to contain an arbitrary xpath expression
@@ -97,8 +98,8 @@ class XPathEnum(TextXPath):
             parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
-            parts[-1] = parts[-1][:-2] # removes extra comma from last string
-            parts.append("), '\s+', ' ')")
+            parts[-1] = parts[-1][:-2]  # removes extra comma from last string
+            parts.append("), '\\s+', ' ')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))
@@ -128,7 +129,7 @@ class Text(XmlObject):
             <argument key=""/> <!------------ 0 or More. Arguments for the localized string. Key is optional. Arguments can support any child elements that <body> can. -->
         </locale>
     </text>
-    """
+    """  # noqa: E501
 
     ROOT_NAME = 'text'
 
@@ -506,6 +507,8 @@ class QueryPrompt(DisplayNode):
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
+    exclude = StringField('@exclude', required=False)
+
 
     itemset = NodeField('itemset', Itemset)
 

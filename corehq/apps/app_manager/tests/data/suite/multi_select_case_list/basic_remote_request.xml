@@ -1,6 +1,7 @@
 <partial>
   <remote-request>
-    <post url="https://www.example.com/a/multiple-referrals/phone/claim-case/">
+    <post url="https://www.example.com/a/multiple-referrals/phone/claim-case/"
+          relevant="$case_id != ''">
       <data key="case_id"
             nodeset="instance('selected_cases')/results/value"
             exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"

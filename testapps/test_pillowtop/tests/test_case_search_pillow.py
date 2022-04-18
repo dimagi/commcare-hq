@@ -140,7 +140,7 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'coords',
                 'value': '-33.8561 151.2152 0 0',
-                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(
@@ -148,7 +148,7 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'short_coords',
                 'value': '-33.8561 151.2152',
-                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(

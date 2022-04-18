@@ -299,6 +299,11 @@ insignificant.
 Best practices for data migrations in Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Consider codifying boundaries for your migration** - This is especially useful
+for large migrations that might require manual intervention or special handling
+on third party environments. See detailed instructions in the
+`Auto-Managed Migration Pattern <auto-managed-migration-pattern>`_ doc.
+
 **Don’t fetch all data at once** - Instead, use an iterator that streams data in
 chunks (note that django queryset’s ``.iter()`` method does not do this). Some
 models have their own performant getters, for others, consider
