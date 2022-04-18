@@ -11,13 +11,7 @@
 
   <div id="ko-linked-projects" class="ko-template">
     <!-- ko if: showGetStarted -->
-      {% if has_release_management_privilege %}
         {% include 'linked_domain/partials/get_started.html' %}
-      {% else %}
-        <div class="alert alert-info">
-          {% trans "This project has no links to other projects." %}
-        </div>
-      {% endif %}
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
       <!-- ko if: showMultipleTabs -->
