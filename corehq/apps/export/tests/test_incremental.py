@@ -179,19 +179,10 @@ class TestIncrementalExport(TestCase):
         self._test_sending(401, IncrementalExportStatus.FAILURE)
 
     def _test_sending(self, status_code, expected_status):
-        from corehq.tests.util.warnings import filter_warnings
         checkpoint = self.test_initial()
         with requests_mock.Mocker() as m:
             m.post('http://commcarehq.org/', status_code=status_code)
-
-            # TODO remove filter when warning is not triggered by
-            # corehq.motech.models.ConnectionSettings.get_auth_manager()
-            with filter_warnings(
-                "default",
-                "Non-string usernames will no longer be supported",
-                module="requests.auth",
-            ):
-                _send_incremental_export(self.incremental_export, checkpoint)
+            _send_incremental_export(self.incremental_export, checkpoint)
 
             checkpoint.refresh_from_db()
             self.assertEqual(checkpoint.status, expected_status)
