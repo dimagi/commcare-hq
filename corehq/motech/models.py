@@ -175,7 +175,7 @@ class ConnectionSettings(models.Model):
 
         # Auth types that require a username:
         if not isinstance(self.username, str):
-            raise ValueError(f'Auth type {self.auth_type!r} requires a username')
+            return AuthManager()
         if self.auth_type == BASIC_AUTH:
             return BasicAuthManager(
                 self.username,
