@@ -2079,13 +2079,6 @@ FHIR_INTEGRATION = StaticToggle(
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
 
-ERM_DEVELOPMENT = StaticToggle(
-    'erm_development',
-    'General purpose "enterprise release management" development flag',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
     'auto_deactivate_mobile_workers',
     'Development flag for auto-deactivation of mobile workers. To be replaced '
