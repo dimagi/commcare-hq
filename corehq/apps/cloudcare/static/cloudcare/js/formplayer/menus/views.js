@@ -423,12 +423,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            if (e.target.checked) {
-                // add all rows to selected cases
-            } else {
-                // remove all rows from selected cases
-            }
-            //do something
+            var self = this;
+            this.children.each(function (childView) {
+                childView.ui.selectRow[0].checked = e.target.checked;
+                if (e.target.checked) {
+                    for (const value of childView.model.collection.models) {
+                        if (self.selectedCaseIds.indexOf(value.id) === -1) {
+                            self.selectedCaseIds.push(value.id);
+                        }
+                    }
+                } else {
+                    for (const value of childView.model.collection.models) {
+                        let index = self.selectedCaseIds.indexOf(value.id);
+                        if (index !== -1) {
+                            self.selectedCaseIds.splice(index, 1);
+                        }
+                    }
+                }
+            });
+            this.updateContinueButtonText(this.selectedCaseIds.length);
         },
 
         continueAction: function () {
