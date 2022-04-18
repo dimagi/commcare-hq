@@ -29,7 +29,6 @@ WHITELIST = [
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("django_digest", "The 'warn' method is deprecated"),
     ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
     ("kombu.utils.functional", "'collections.abc'"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
