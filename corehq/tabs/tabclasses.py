@@ -893,6 +893,20 @@ class ProjectDataTab(UITab):
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
+
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.views import UCRExpressionListView
+            items.append(
+                [
+                    _("Data Manipulation"),
+                    [
+                        {
+                            "title": _("Filters and Expressions"),
+                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                    ]
+                ]
+            )
         return items
 
     @property
