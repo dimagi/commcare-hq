@@ -8,10 +8,20 @@ def configure_warnings(is_testing):
         augment_warning_messages(is_testing)
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
-    configure_deprecation_whitelist()
+    if is_testing or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
+        configure_deprecation_whitelist()
 
 
 def configure_deprecation_whitelist():
+    """Whitelist known deprecated code paths
+
+    Adding items here is a temporary workaround to prevent a warning
+    from causing tests to fail when the warning cannot be easily
+    avoided. There is a cost associated with adding items to this list
+    (the warnings module does a linear search through the list with
+    regex matching each time a warning is triggered), so it is best to
+    avoid it if possible.
+    """
     from django.utils.deprecation import RemovedInDjango41Warning
     from sqlalchemy.exc import SAWarning
 
