@@ -282,26 +282,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     def page_context(self):
         context = self.pagination_context
-        context['linked_domains'] = [
-            domain_link.linked_domain
-            for domain_link in get_linked_domains(self.domain)
-        ]
-        context['linkable_keywords'] = self._linkable_keywords()
-        context['has_release_management_privilege'] = can_domain_access_release_management(self.domain)
         return context
-
-    def _linkable_keywords(self):
-        LinkableKeyword = namedtuple('LinkableKeyword', 'keyword can_be_linked')
-        linkable_keywords = []
-        for keyword in self._all_keywords():
-            sends_to_usergroup = keyword.keywordaction_set.filter(
-                recipient=KeywordAction.RECIPIENT_USER_GROUP
-            ).count()
-            if sends_to_usergroup:
-                linkable_keywords.append(LinkableKeyword(keyword, False))
-            else:
-                linkable_keywords.append(LinkableKeyword(keyword, True))
-        return linkable_keywords
 
     @memoized
     def _all_keywords(self):
@@ -354,40 +335,3 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
-
-
-@domain_admin_required
-def link_keywords(request, domain):
-    from_domain = domain
-    to_domains = request.POST.getlist("to_domains")
-    keyword_ids = request.POST.getlist("keyword_ids")
-    successes = set()
-    failures = set()
-    for to_domain in to_domains:
-        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
-        for keyword_id in keyword_ids:
-            try:
-                linked_keyword_id = create_linked_keyword(domain_link, keyword_id)
-                domain_link.update_last_pull(
-                    'keyword',
-                    request.couch_user._id,
-                    model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
-                )
-                successes.add(to_domain)
-            except DomainLinkError as err:
-                failures.add(f"{to_domain}: {err}")
-                notify_exception(request, message=str(err))
-            except Exception as err:
-                failures.add(to_domain)
-                notify_exception(request, message=str(err))
-
-    if successes:
-        messages.success(
-            request,
-            _("Successfully linked and copied to {}. ").format(', '.join(successes)))
-    if failures:
-        messages.error(request, _("Errors occurred for {}.").format(', '.join(failures)))
-
-    return HttpResponseRedirect(
-        reverse(KeywordsListView.urlname, args=[from_domain])
-    )

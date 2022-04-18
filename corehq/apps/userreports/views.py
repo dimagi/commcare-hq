@@ -269,10 +269,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': get_referring_apps(self.domain, self.report_id),
-            'linked_report_domain_list': linked_downstream_reports_by_domain(
-                self.domain, self.report_id
-            ),
-            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     @property
@@ -662,10 +658,6 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_report_domain_list': linked_downstream_reports_by_domain(
-                self.domain, self.existing_report.get_id
-            ) if self.existing_report else {},
-            'has_release_management_privilege': can_domain_access_release_management(self.domain),
         }
 
     def _get_bound_form(self, report_data):
@@ -1635,36 +1627,3 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             i['readable_output'] = add_links(i.get('readable_output'))
             list.append(i)
         return list
-
-
-@domain_admin_required
-def copy_report(request, domain):
-    from_domain = domain
-    to_domains = request.POST.getlist("to_domains")
-    report_id = request.POST.get("report_id")
-    successes = []
-    failures = []
-    for to_domain in to_domains:
-        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
-        try:
-            link_info = create_linked_ucr(domain_link, report_id)
-            domain_link.update_last_pull(
-                'report',
-                request.couch_user._id,
-                model_detail=ReportLinkDetail(report_id=link_info.report.get_id).to_json(),
-            )
-            successes.append(to_domain)
-        except Exception as err:
-            failures.append(to_domain)
-            notify_exception(request, message=str(err))
-
-    if successes:
-        messages.success(
-            request,
-            _(f"Successfully linked and copied {link_info.report.title} to {', '.join(successes)}. "))
-    if failures:
-        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
-
-    return HttpResponseRedirect(
-        reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
-    )
