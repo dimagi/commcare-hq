@@ -1,13 +1,12 @@
 import datetime
 from decimal import Decimal
 
+from openpyxl.styles import numbers
 from testil import eq
 
-from dateutil.tz import tzoffset, tzlocal
-from openpyxl.styles import numbers
-
-from corehq.apps.export.const import MISSING_VALUE, EMPTY_VALUE
 from couchexport.util import get_excel_format_value
+
+from corehq.apps.export.const import EMPTY_VALUE, MISSING_VALUE
 
 
 def check(input, output, format, output_type):

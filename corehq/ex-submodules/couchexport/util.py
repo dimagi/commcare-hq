@@ -5,11 +5,12 @@ from decimal import Decimal
 import dateutil
 from openpyxl.styles import numbers
 
-from corehq.apps.export.const import MISSING_VALUE, EMPTY_VALUE
+from corehq.apps.export.const import EMPTY_VALUE, MISSING_VALUE
 
 _dirty_chars = re.compile(
     '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
 )
+
 
 def get_excel_format_value(value):
     from corehq.apps.export.models.new import ExcelFormatValue
