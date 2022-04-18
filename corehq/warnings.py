@@ -20,6 +20,8 @@ WHITELIST = [
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
     ("celery", "'collections.abc'"),
+    ("compressor.filters.base", "smart_text() is deprecated"),
+    ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
@@ -29,7 +31,6 @@ WHITELIST = [
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("django_digest", "The 'warn' method is deprecated"),
     ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
     ("kombu.utils.functional", "'collections.abc'"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
@@ -53,11 +54,12 @@ WHITELIST = [
 
 
 def configure_warnings(is_testing):
-    if is_testing:
-        augment_warning_messages(is_testing)
+    strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
+    if strict:
+        augment_warning_messages()
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
-    if is_testing or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
+    if strict or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
         for args in WHITELIST:
             whitelist(*args)
 
@@ -86,7 +88,7 @@ def whitelist(module, message, category=DeprecationWarning):
     warnings.filterwarnings(action, message, category, re.escape(module))
 
 
-def augment_warning_messages(is_testing):
+def augment_warning_messages():
     """Make it easier to find the module that triggered the warning
 
     Adds additional context to each warning message, which is useful
@@ -127,9 +129,7 @@ def augment_warning_messages(is_testing):
         else:
             module = filename
         message += f"\nmodule: {module} line {lineno}"
-
-        if is_testing:
-            message += POSSIBLE_RESOLUTIONS
+        message += POSSIBLE_RESOLUTIONS
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
