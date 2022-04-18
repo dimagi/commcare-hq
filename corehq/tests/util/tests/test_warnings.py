@@ -2,17 +2,19 @@ import warnings
 from difflib import unified_diff
 from functools import wraps
 from unittest import TestCase, TestResult, TestSuite
+from unittest.mock import patch
 
 from testil import Regex, assert_raises, eq
 
 from ..warnings import filter_warnings
+from corehq.warnings import original_warn
 
 
 def verify_same_filters_before_and_after(test):
     @wraps(test)
     def check():
         old_filters = list(warnings.filters)
-        with filter_warnings("error"):
+        with filter_warnings("error"), patch.object(warnings, "warn", original_warn):
             test()
             done = True
         assert done, "test did not return"
