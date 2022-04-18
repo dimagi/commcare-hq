@@ -1596,17 +1596,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
-LINKED_DOMAINS = StaticToggle(
-    'linked_domains',
-    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Replaced by Enterprise Release Management (release_management privilege)."
-    ),
-    help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
-)
-
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
