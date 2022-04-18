@@ -5,6 +5,8 @@ from unittest import TestCase
 
 from nose.tools import nottest
 
+from corehq.util.test_utils import unit_testing_only
+
 
 @nottest
 class TestContextDecorator:
@@ -85,6 +87,7 @@ class filter_warnings(TestContextDecorator):
     ```
     """
 
+    @unit_testing_only
     def __init__(self, action, message="", category=Warning, module="", lineno=0, append=False):
         self.filter = (action, message, category, module, lineno, append)
 
