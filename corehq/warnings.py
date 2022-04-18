@@ -15,6 +15,7 @@ def configure_deprecation_whitelist():
     from django.utils.deprecation import RemovedInDjango41Warning
     from sqlalchemy.exc import SAWarning
 
+    # warnings that may be resolved with a library upgrade
     config_apps = "|".join(re.escape(app) for app in [
         "captcha",
         "django_celery_results",
@@ -23,8 +24,6 @@ def configure_deprecation_whitelist():
         "two_factor",
     ])
     default_config_message = re.compile(fr"'.*({config_apps})' defines default_app_config")
-
-    # warnings that may be resolved with a library upgrade
     whitelist("captcha.fields", "ugettext_lazy() is deprecated")
     whitelist("celery", "'collections.abc'")
     whitelist("couchdbkit.schema.properties", "'collections.abc'")
