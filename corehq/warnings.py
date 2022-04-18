@@ -56,7 +56,7 @@ WHITELIST = [
 def configure_warnings(is_testing):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
-        augment_warning_messages(is_testing)
+        augment_warning_messages()
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
     if strict or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
@@ -88,7 +88,7 @@ def whitelist(module, message, category=DeprecationWarning):
     warnings.filterwarnings(action, message, category, re.escape(module))
 
 
-def augment_warning_messages(is_testing):
+def augment_warning_messages():
     """Make it easier to find the module that triggered the warning
 
     Adds additional context to each warning message, which is useful
@@ -129,9 +129,7 @@ def augment_warning_messages(is_testing):
         else:
             module = filename
         message += f"\nmodule: {module} line {lineno}"
-
-        if is_testing:
-            message += POSSIBLE_RESOLUTIONS
+        message += POSSIBLE_RESOLUTIONS
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
