@@ -797,6 +797,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
     }
 
