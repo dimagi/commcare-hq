@@ -179,21 +179,24 @@ def build_filter_from_ast(node, context):
                 serialize(node)
             )
 
-        case_property_name = serialize(node.left)
-        value = unwrap_value(node.right, context)
-        if node.op in [EQ, NEQ]:
+        return _comparison_raw(node.left, node.op, node.right, serialize(node))
+
+    def _comparison_raw(case_property_name_raw, op, value_raw, filter_expr):
+        case_property_name = serialize(case_property_name_raw)
+        value = unwrap_value(value_raw, context)
+        if op in [EQ, NEQ]:
             query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
-            if node.op == NEQ:
+            if op == NEQ:
                 query = filters.NOT(query)
             return query
         else:
             try:
-                return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
+                return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[op]: value})
             except (TypeError, ValueError):
                 raise CaseFilterError(
                     _("The right hand side of a comparison must be a number or date. "
                       "Dates must be surrounded in quotation marks"),
-                    serialize(node),
+                    filter_expr,
                 )
 
     def visit(node):
