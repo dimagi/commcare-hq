@@ -65,7 +65,7 @@ OPERATOR_MAPPING = {
     'and': filters.AND,
     'or': filters.OR,
 }
-COMPARISON_MAPPING = {
+RANGE_OP_MAPPING = {
     '>': 'gt',
     '>=': 'gte',
     '<': 'lt',
@@ -74,8 +74,9 @@ COMPARISON_MAPPING = {
 
 EQ = "="
 NEQ = "!="
+COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
 
-ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
+ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
 
 
 def build_filter_from_ast(node, context):
@@ -178,7 +179,7 @@ def build_filter_from_ast(node, context):
             return query
         else:
             try:
-                return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[op]: value})
+                return case_property_range_query(case_property_name, **{RANGE_OP_MAPPING[op]: value})
             except (TypeError, ValueError):
                 raise CaseFilterError(
                     _("The right hand side of a comparison must be a number or date. "
@@ -200,7 +201,7 @@ def build_filter_from_ast(node, context):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
-                    boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
+                    boolean_ops=", ".join(COMPARISON_OPERATORS),
                 ),
                 serialize(node)
             )
@@ -212,7 +213,7 @@ def build_filter_from_ast(node, context):
         if _is_subcase_count(node):
             return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
-        if node.op in list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]:
+        if node.op in COMPARISON_OPERATORS:
             # This node is a leaf
             return _comparison(node)
 
