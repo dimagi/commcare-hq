@@ -263,7 +263,7 @@ class RepeaterManager(models.Manager):
         return list(self.filter(domain=domain))
 
 
-class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
+class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy, metaclass=RepeaterMeta):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     format = models.CharField(max_length=64, null=True)
@@ -1698,7 +1698,10 @@ class RepeatRecord(Document):
         self.cancelled = True
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
-        from corehq.motech.repeaters.tasks import process_repeat_record, retry_process_repeat_record
+        from corehq.motech.repeaters.tasks import (
+            process_repeat_record,
+            retry_process_repeat_record,
+        )
 
         def is_ready():
             return self.next_check < datetime.utcnow()
