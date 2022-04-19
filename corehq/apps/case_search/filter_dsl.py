@@ -168,45 +168,33 @@ def build_filter_from_ast(node, context):
             serialize(node)
         )
 
-    def _equality(node):
-        """Returns the filter for an equality operation (=, !=)
+    def _comparison(node):
+        """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
 
         """
         acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
-        if isinstance(node.left, Step) and (
-                isinstance(node.right, acceptable_rhs_types)):
-            # This is a leaf node
-            case_property_name = serialize(node.left)
-            value = unwrap_value(node.right, context)
-            q = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
-
-            if node.op == '!=':
-                return filters.NOT(q)
-
-            return q
-
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-
-        raise CaseFilterError(
-            _("We didn't understand what you were trying to do with {}").format(serialize(node)),
-            serialize(node)
-        )
-
-    def _comparison(node):
-        """Returns the filter for a comparison operation (>, <, >=, <=)
-
-        """
-        try:
-            case_property_name = serialize(node.left)
-            value = unwrap_value(node.right, context)
-            return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
-        except (TypeError, ValueError):
+        if not isinstance(node.left, Step) or not isinstance(node.right, acceptable_rhs_types):
             raise CaseFilterError(
-                _("The right hand side of a comparison must be a number or date. "
-                  "Dates must be surrounded in quotation marks"),
-                serialize(node),
+                _("We didn't understand what you were trying to do with {}").format(serialize(node)),
+                serialize(node)
             )
+
+        case_property_name = serialize(node.left)
+        value = unwrap_value(node.right, context)
+        if node.op in [EQ, NEQ]:
+            query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
+            if node.op == NEQ:
+                query = filters.NOT(query)
+            return query
+        else:
+            try:
+                return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
+            except (TypeError, ValueError):
+                raise CaseFilterError(
+                    _("The right hand side of a comparison must be a number or date. "
+                      "Dates must be surrounded in quotation marks"),
+                    serialize(node),
+                )
 
     def visit(node):
 
@@ -234,11 +222,7 @@ def build_filter_from_ast(node, context):
         if _is_subcase_count(node):
             return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
-        if node.op in [EQ, NEQ]:
-            # This node is a leaf
-            return _equality(node)
-
-        if node.op in list(COMPARISON_MAPPING.keys()):
+        if node.op in list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]:
             # This node is a leaf
             return _comparison(node)
 
