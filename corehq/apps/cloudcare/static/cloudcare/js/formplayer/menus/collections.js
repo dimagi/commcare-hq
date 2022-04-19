@@ -36,6 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'titles',
             'useUniformUnits',
             'widthHints',
+            'multiSelect',
         ],
 
         commandProperties: [
