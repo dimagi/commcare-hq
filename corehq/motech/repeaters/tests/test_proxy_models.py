@@ -61,8 +61,8 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
     def test_repeater_all_returns_correct_instance(self):
         all_repeaters = SQLRepeater.objects.all()
         self.assertEqual(
-            set([r.__class__.__name__ for r in all_repeaters]),
-            set([r.__name__ for r in self.repeater_classes])
+            {r.__class__.__name__ for r in all_repeaters},
+            {r.__name__ for r in self.repeater_classes},
         )
 
 
