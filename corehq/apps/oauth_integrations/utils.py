@@ -56,35 +56,84 @@ def get_query_results(export_instance, domain, id):
     return results
 
 
-def create_spreadsheet(spreadsheet_data, user):
+def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spreadsheet_id=None):
     token = GoogleApiToken.objects.get(user=user)
     credentials = load_credentials(token.token)
 
     service = build(settings.GOOGLE_SHEETS_API_NAME, settings.GOOGLE_SHEETS_API_VERSION, credentials=credentials)
-    sheets_file = service.spreadsheets().create().execute()
-    spreadsheet_id = sheets_file['spreadsheetId']
-
-    for chunk in spreadsheet_data:
-        value_range_body = {
-            'majorDimension': 'ROWS',
-            'values': chunk
-        }
-        service.spreadsheets().values().append(
-            spreadsheetId=spreadsheet_id,
-            valueInputOption='USER_ENTERED',
-            body=value_range_body,
-            range='A1'
+    if spreadsheet_id is None:
+        spreadsheet_name = export_instance.name
+        sheets_file = service.spreadsheets().create(
+            body={
+                'properties': {
+                    'title': spreadsheet_name
+                }
+            }
         ).execute()
+        spreadsheet_id = sheets_file['spreadsheetId']
+    else:
+        sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        clear_spreadsheet(service, spreadsheet_id)
+
+    for worksheet_number, worksheet in enumerate(spreadsheet_data, start=1):
+        worksheet_name = f"Sheet{worksheet_number}"
+
+        if not check_worksheet_exists(sheets_file, worksheet_name):
+            create_empty_worksheet(service, worksheet_name, spreadsheet_id)
+
+        for chunk in worksheet:
+            value_range_body = {
+                'majorDimension': 'ROWS',
+                'values': chunk
+            }
+            service.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                valueInputOption='USER_ENTERED',
+                body=value_range_body,
+                range=f"{worksheet_name}!A1"
+            ).execute()
 
     return sheets_file
 
 
+def clear_spreadsheet(service, spreadsheet_id):
+    service.spreadsheets().values().clear(
+        spreadsheetId=spreadsheet_id,
+        range='A1'
+    )
+
+
+def create_empty_worksheet(service, worksheet_name, spreadsheet_id):
+    request_body = {
+        'requests': [{
+            'addSheet': {
+                'properties': {
+                    'title': worksheet_name
+                }
+            }
+        }]
+    }
+
+    return service.spreadsheets().batchUpdate(
+        spreadsheetId=spreadsheet_id,
+        body=request_body
+    ).execute()
+
+
+def check_worksheet_exists(sheets_file, worksheet_name):
+    for worksheet in sheets_file['sheets']:
+        if worksheet_name == worksheet['properties']['title']:
+            return True
+    return False
+
+
 def create_table(documents, config):
     ROW_DICT_INDEX = 0
-    data = []
-    for table in config.tables:
+    list_of_tables = []
+    for table_obj in config.tables:
+        table_list = []
         for row_number, document in enumerate(documents):
-            row_dict = table.get_rows(
+            row_dict = table_obj.get_rows(
                 document,
                 document.get('_id'),
                 split_columns=config.split_multiselects,
@@ -93,11 +142,11 @@ def create_table(documents, config):
             )
             if(row_number == 0):
                 table_headers = list(row_dict[ROW_DICT_INDEX].keys())
-                data.append(table_headers)
+                table_list.append(table_headers)
             table_values = list(row_dict[ROW_DICT_INDEX].values())
-            data.append(table_values)
-
-    return data
+            table_list.append(table_values)
+        list_of_tables.append(list(table_list))
+    return list_of_tables
 
 
 def chunkify_data(data, chunk_size):
