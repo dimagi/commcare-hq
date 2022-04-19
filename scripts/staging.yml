@@ -80,4 +80,5 @@ branches:
     - ad/change-referrer-policy # Addison April 18
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - bmb/upgrade-dompurify  # Biyeun Apr 19
+    - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
 submodules: { }
