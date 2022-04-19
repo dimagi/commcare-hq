@@ -3,57 +3,12 @@ from memoized import memoized
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import (
     PopulateSQLCommand,
 )
-from corehq.motech.dhis2.repeaters import (
-    SQLDhis2EntityRepeater,
-    SQLDhis2Repeater,
-)
-from corehq.motech.fhir.repeaters import SQLFHIRRepeater
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_all_repeater_docs,
     get_repeater_count_for_domains,
     get_repeaters_by_domain,
 )
-from corehq.motech.repeaters.expression.repeaters import (
-    SQLCaseExpressionRepeater,
-)
-from corehq.motech.repeaters.models import (
-    SQLAppStructureRepeater,
-    SQLCaseRepeater,
-    SQLCreateCaseRepeater,
-    SQLDataRegistryCaseUpdateRepeater,
-    SQLFormRepeater,
-    SQLLocationRepeater,
-    SQLReferCaseRepeater,
-    SQLShortFormRepeater,
-    SQLUpdateCaseRepeater,
-    SQLUserRepeater,
-)
-from custom.cowin.repeaters import (
-    SQLBeneficiaryRegistrationRepeater,
-    SQLBeneficiaryVaccinationRepeater,
-)
-
-REPEATER_CLASS_MAP = {
-    'FormRepeater': SQLFormRepeater,
-    'CaseRepeater': SQLCaseRepeater,
-    'CreateCaseRepeater': SQLCreateCaseRepeater,
-    'UpdateCaseRepeater': SQLUpdateCaseRepeater,
-    'ReferCaseRepeater': SQLReferCaseRepeater,
-    'DataRegistryCaseUpdateRepeater': SQLDataRegistryCaseUpdateRepeater,
-    'ShortFormRepeater': SQLShortFormRepeater,
-    'AppStructureRepeater': SQLAppStructureRepeater,
-    'UserRepeater': SQLUserRepeater,
-    'LocationRepeater': SQLLocationRepeater,
-    'FHIRRepeater': SQLFHIRRepeater,
-    'OpenmrsRepeater': SQLOpenmrsRepeater,
-    'Dhis2Repeater': SQLDhis2Repeater,
-    'Dhis2EntityRepeater': SQLDhis2EntityRepeater,
-    'CaseExpressionRepeater': SQLCaseExpressionRepeater,
-    'BeneficiaryRegistrationRepeater': SQLBeneficiaryRegistrationRepeater,
-    'BeneficiaryVaccinationRepeater': SQLBeneficiaryVaccinationRepeater
-}
 
 
 class RepeaterMigrationHelper(PopulateSQLCommand):

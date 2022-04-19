@@ -217,8 +217,6 @@ class RepeaterSuperProxy(models.Model):
     def __new__(cls, *args, **kwargs):
         repeater_class = cls
         try:
-            from corehq.motech.repeaters.utils import REPEATER_CLASS_MAP
-
             # get proxy name, either from kwargs or from args
             proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
             if proxy_class_name is None:
