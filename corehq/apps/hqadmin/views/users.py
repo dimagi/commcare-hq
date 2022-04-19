@@ -631,7 +631,7 @@ class OffboardingUserList(UserAdministration):
     @property
     def page_context(self):
         args = [self.request.POST] if self.request.POST else []
-        if not self.users:
+        if not self.users and not self.table_title:
             self.users = augmented_superusers(include_accounting_admin=True)
         return {
             'form': OffboardingUserListForm(*args),
@@ -644,6 +644,9 @@ class OffboardingUserList(UserAdministration):
         form = OffboardingUserListForm(self.request.POST)
         if form.is_valid():
             users = form.cleaned_data['users']
-            self.users = augmented_superusers(users=users, include_accounting_admin=True)
+            if users:
+                self.users = augmented_superusers(users=users, include_accounting_admin=True)
+            else:
+                self.users = users
             self.table_title = "Users that need their privileges revoked/account disabled"
         return self.get(request, *args, **kwargs)

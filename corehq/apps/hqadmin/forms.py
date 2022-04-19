@@ -57,7 +57,7 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma seperated email addresses",
+        label="Comma or new-line separated email addresses",
         widget=forms.Textarea()
     )
     privileges = forms.MultipleChoiceField(
@@ -135,7 +135,7 @@ def clean_data(cleaned_data, invert=False, get_list=False):
     from email.utils import parseaddr
     from django.contrib.auth.models import User
     csv_email_list = cleaned_data.get('csv_email_list', '')
-    csv_email_list = csv_email_list.split(',')
+    csv_email_list = re.split(',|\n', csv_email_list)
     csv_email_list = [parseaddr(em)[1] for em in csv_email_list]
 
     if not get_list and len(csv_email_list) > 10:
