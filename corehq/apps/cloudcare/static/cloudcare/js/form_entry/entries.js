@@ -923,7 +923,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'geo';
         self.map = null;
         self.control_width = Const.CONTROL_WIDTH;
-
+        var objectVar = {
+            wrappedVar: 10,
+            usedVar: 20,
+        }
+        var lonelyVar = objectVar.usedVar * 10;
         self.DEFAULT = {
             lat: 30,
             lon: 0,
