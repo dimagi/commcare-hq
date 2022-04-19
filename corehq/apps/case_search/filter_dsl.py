@@ -127,12 +127,11 @@ def build_filter_from_ast(node, context):
         """
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
-        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
 
-        es_query = CaseSearchES().domain(context.domain).xpath_query(
-            context.domain, new_query, fuzzy=context.fuzzy
-        )
+        es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
+        es_query = CaseSearchES().domain(context.domain).filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
+            new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
             raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
                 new_query
@@ -179,9 +178,9 @@ def build_filter_from_ast(node, context):
                 serialize(node)
             )
 
-        return _comparison_raw(node.left, node.op, node.right, serialize(node))
+        return _comparison_raw(node.left, node.op, node.right, node)
 
-    def _comparison_raw(case_property_name_raw, op, value_raw, filter_expr):
+    def _comparison_raw(case_property_name_raw, op, value_raw, node):
         case_property_name = serialize(case_property_name_raw)
         value = unwrap_value(value_raw, context)
         if op in [EQ, NEQ]:
@@ -196,7 +195,7 @@ def build_filter_from_ast(node, context):
                 raise CaseFilterError(
                     _("The right hand side of a comparison must be a number or date. "
                       "Dates must be surrounded in quotation marks"),
-                    filter_expr,
+                    serialize(node),
                 )
 
     def visit(node):
