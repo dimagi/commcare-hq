@@ -1588,17 +1588,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
-LINKED_DOMAINS = StaticToggle(
-    'linked_domains',
-    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Replaced by Enterprise Release Management (release_management privilege)."
-    ),
-    help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
-)
-
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
@@ -2135,6 +2124,13 @@ EXPRESSION_REPEATER = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
+)
+
+UCR_EXPRESSION_REGISTRY = StaticToggle(
+    'expression_registry',
+    'Store named UCR expressions and filters in the database to be referenced elsewhere',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 TURN_IO_BACKEND = StaticToggle(
