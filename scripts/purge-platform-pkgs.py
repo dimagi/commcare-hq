@@ -58,5 +58,6 @@ def rewrite_lines(file, lines):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("files", metavar="FILE", nargs="+", type=argparse.FileType("r"),
-        help="purge packages from compiled python requirements %(metavar)s(s)")
+        help="purge packages from compiled python requirements %(metavar)s(s), "
+        "use - to read from STDIN")
     main(parser.parse_args().files)
