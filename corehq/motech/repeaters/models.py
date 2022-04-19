@@ -72,6 +72,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models
+from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -185,6 +186,19 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code': status_code,
         'repeater_type': repeater_type,
     })
+
+
+REPEATER_CLASS_MAP = {}
+
+
+class RepeaterMeta(ModelBase):
+
+    def __new__(cls, name, bases, dct):
+        repeater_class = super().__new__(cls, name, bases, dct)
+        if name != "SQLRepeater":
+            assert name.startswith("SQL"), repeater_class
+            REPEATER_CLASS_MAP[repeater_class.__name__[3:]] = repeater_class
+        return repeater_class
 
 
 class RepeaterSuperProxy(models.Model):
