@@ -73,7 +73,7 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - jls/update-dialer-url # Jenny April 14
     - smh/multi-select-case-detail-workflow # Steph April 15
-    - smh/multi-select-clear-session-storage # Steph April 16
+#     - smh/multi-select-clear-session-storage # Steph April 16
     - revert-31042-gh/revert-openpyxl-upgrade # Graham April 18
     - ad/change-referrer-policy+rp/gsheet/create-livegooglesheetview # Addison April 18
     - ad/change-referrer-policy # Addison April 18
