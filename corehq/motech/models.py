@@ -52,6 +52,12 @@ class RequestLogEntry:
     response_body: str
 
 
+class ConnectionSoftDeleteManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 class ConnectionSettings(models.Model):
     """
     Stores the connection details of a remote API.
@@ -85,6 +91,10 @@ class ConnectionSettings(models.Model):
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
+    is_deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = ConnectionSoftDeleteManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -235,6 +245,10 @@ class ConnectionSettings(models.Model):
         # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         return kinds
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.save()
 
 
 class RequestLog(models.Model):
