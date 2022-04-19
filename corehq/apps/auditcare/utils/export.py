@@ -19,13 +19,9 @@ from ..models import AccessAudit, NavigationEventAudit
 
 
 def navigation_events_by_user(user, start_date=None, end_date=None):
-    params = {"user": user, "start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     query = NavigationEventAudit.objects.filter(user=user, **where)
-    return chain(
-        iter_couch_audit_events(params),
-        AuditWindowQuery(query),
-    )
+    return AuditWindowQuery(query)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
@@ -56,10 +52,8 @@ def get_users_for_domain(domain):
 
 
 def get_all_log_events(start_date=None, end_date=None):
-    params = {"start_date": start_date, "end_date": end_date}
     where = get_date_range_where(start_date, end_date)
     return chain(
-        iter_couch_audit_events(params),
         AuditWindowQuery(AccessAudit.objects.filter(**where)),
         AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
     )
