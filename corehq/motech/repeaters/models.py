@@ -216,19 +216,20 @@ class RepeaterSuperProxy(models.Model):
 
     def __new__(cls, *args, **kwargs):
         repeater_class = cls
-        try:
-            # get proxy name, either from kwargs or from args
-            proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
-            if proxy_class_name is None:
-                proxy_name_field_index = cls._meta.fields.index(
-                    cls._meta.get_field(cls.PROXY_FIELD_NAME))
+        # get proxy name, either from kwargs or from args
+        proxy_class_name = kwargs.get(cls.PROXY_FIELD_NAME)
+        if proxy_class_name is None:
+            proxy_name_field_index = cls._meta.fields.index(
+                cls._meta.get_field(cls.PROXY_FIELD_NAME))
+            try:
                 proxy_class_name = args[proxy_name_field_index]
+            except IndexError:
+                pass
+            else:
+                repeater_class = REPEATER_CLASS_MAP.get(proxy_class_name)
+                if repeater_class is None:
+                    raise UnknownRepeater(proxy_class_name)
 
-            repeater_class = REPEATER_CLASS_MAP.get(proxy_class_name)
-            if repeater_class is None:
-                raise UnknownRepeater(proxy_class_name)
-        except IndexError:
-            pass
         return super().__new__(repeater_class)
 
 
