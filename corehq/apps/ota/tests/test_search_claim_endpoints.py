@@ -3,7 +3,6 @@ from uuid import uuid1, uuid4
 
 from django.test import Client, TestCase
 from django.urls import reverse
-from custom.covid.tests.test_prime_restore import make_synclog
 
 from flaky import flaky
 
@@ -91,12 +90,18 @@ class CaseClaimEndpointTests(TestCase):
         self.client.login(username=USERNAME, password=PASSWORD)
         self.url = reverse('claim_case', kwargs={'domain': DOMAIN})
         self.synclog = SyncLogSQL.objects.bulk_create([
-            make_synclog(domain=self.domain, user='u1', request_user=None, is_formplayer=True, date='2022-04-12')
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
         ])[0]
         self.synclog.doc['case_ids_on_phone'] = [self.case_id]
         with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
             self.synclog.save()
 
+    @classmethod
+    def make_synclog(self, domain, user, date):
+        return SyncLogSQL(
+            domain=domain, user_id=user, request_user_id=None, is_formplayer=True, date=date,
+            case_count=None, auth_type=None, doc={}
+        )
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -154,7 +159,7 @@ class CaseClaimEndpointTests(TestCase):
 
         # Create a second synclog, mimicing the use of a 2nd device that doesn't have the original case
         second_synclog = SyncLogSQL.objects.bulk_create([
-            make_synclog(domain=self.domain, user='u1', request_user=None, is_formplayer=True, date='2022-04-12')
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
         ])[0]
         second_synclog.doc['case_ids_on_phone'] = [self.additional_case_id]
         with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
