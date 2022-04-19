@@ -327,7 +327,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedCaseIds = [];
+            this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
         },
 
         ui: {
@@ -358,6 +358,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.selectAllCheckbox': 'selectAllAction',
             'click @ui.continueButton': 'continueAction',
             'keypress @ui.continueButton': 'continueAction',
+        },
+
+        onRender: function () {
+            if (sessionStorage.selectedValues && sessionStorage.selectedValues.length !== 0) {
+                this.selectedCaseIds = sessionStorage.selectedValues.split(',');
+                this.updateCheckboxes();
+                sessionStorage.selectedValues = [];
+                this.ui.continueButton.prop("disabled", this.selectedCaseIds.length === 0);
+            }
         },
 
         caseListAction: function (e) {
@@ -392,6 +401,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             var casesPerPage = this.ui.casesPerPageLimit.val();
             FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
+            sessionStorage.selectedValues = this.selectedCaseIds;
         },
 
         paginationGoAction: function (e) {
@@ -458,6 +468,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
+        updateCheckboxes: function () {
+            var self = this;
+            if (this.isMultiSelect) {
+                this.children.each(function (childView) {
+                    if (self.selectedCaseIds.indexOf(childView.model.id) !== -1) {
+                        let checkbox = childView.ui.selectRow[0];
+                        checkbox.checked = true;
+                    }
+                });
+            }
+        },
+
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
@@ -481,7 +503,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: isMultiSelectCaseList,
-                selectedCaseIdsLength: this.selectedCaseIds.length,
+                selectedCaseIds: this.selectedCaseIds,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
