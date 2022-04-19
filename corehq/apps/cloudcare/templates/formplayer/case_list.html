@@ -26,7 +26,7 @@
         <thead>
         <tr>
           <% if (isMultiSelect) { %>
-          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/> {% trans "Select All" %} </th>
+          <th class="module-case-list-header checkbox-header"><input type="checkbox" id="select-all-checkbox"/></th>
           <% } %>
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
