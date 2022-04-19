@@ -237,7 +237,6 @@ def fields_to_validate(domain, case_type_name):
 
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
 def get_gps_properties(domain, case_type):
-    # Used for CASE_SEARCH_SMART_TYPES
     return set(CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type,
