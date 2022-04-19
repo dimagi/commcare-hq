@@ -658,6 +658,16 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
         return False
 
 
+class LocationMatchDefinition(CaseRuleCriteriaDefinition):
+
+    location_id = models.CharField(max_length=255)
+
+    def matches(self, case, now):
+        if case.location_id:
+            return case.location_id == self.location_id
+        return False
+
+
 class CaseRuleAction(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE, null=True)
