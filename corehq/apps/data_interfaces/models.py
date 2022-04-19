@@ -296,6 +296,7 @@ class AutomaticUpdateRule(models.Model):
             'match_property_definition',
             'custom_match_definition',
             'closed_parent_definition',
+            'location_filter_definition',
         ))
 
     @property
@@ -463,6 +464,7 @@ class CaseRuleCriteria(models.Model):
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
     custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE, null=True)
     closed_parent_definition = models.ForeignKey('ClosedParentDefinition', on_delete=models.CASCADE, null=True)
+    location_filter_definition = models.ForeignKey('LocationFilterDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -472,6 +474,8 @@ class CaseRuleCriteria(models.Model):
             return self.custom_match_definition
         elif self.closed_parent_definition_id:
             return self.closed_parent_definition
+        elif self.location_filter_definition:
+            return self.location_filter_definition
         else:
             raise ValueError("No available definition found")
 
@@ -480,6 +484,7 @@ class CaseRuleCriteria(models.Model):
         self.match_property_definition = None
         self.custom_match_definition = None
         self.closed_parent_definition = None
+        self.location_filter_definition = None
 
         if isinstance(value, MatchPropertyDefinition):
             self.match_property_definition = value
@@ -487,6 +492,8 @@ class CaseRuleCriteria(models.Model):
             self.custom_match_definition = value
         elif isinstance(value, ClosedParentDefinition):
             self.closed_parent_definition = value
+        elif isinstance(value, LocationFilterDefinition):
+            self.location_filter_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -658,7 +665,7 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
         return False
 
 
-class LocationMatchDefinition(CaseRuleCriteriaDefinition):
+class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
     location_id = models.CharField(max_length=255)
 

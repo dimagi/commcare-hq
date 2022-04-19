@@ -200,10 +200,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 self.criteria.push(obj);
             });
 
-            if (initial.location_match_definition) {
+            if (initial.location_filter_definition) {
                 obj = locationDefinition('locations-filter');
-                obj.name(value.name);
-                obj.location_id(value.location_id)
+                obj.name(initial.location_filter_definition.name);
+                obj.location_id(initial.location_filter_definition.location_id)
                 self.criteria.push(obj);
             }
 

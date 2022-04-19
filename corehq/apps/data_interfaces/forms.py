@@ -30,6 +30,7 @@ from corehq.apps.data_interfaces.models import (
     CustomMatchDefinition,
     MatchPropertyDefinition,
     UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
@@ -327,6 +328,14 @@ class CaseRuleCriteriaForm(forms.Form):
                 })
             elif isinstance(definition, ClosedParentDefinition):
                 initial['filter_on_closed_parent'] = 'true'
+            elif isinstance(definition, LocationFilterDefinition):
+                location_id = definition.location_id
+                location = SQLLocation.by_location_id(location_id)
+
+                initial['location_filter_definition'] = {
+                    'location_id': location_id,
+                    'name': location.name,
+                }
 
         initial['custom_match_definitions'] = json.dumps(custom_match_definitions)
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
@@ -585,14 +594,17 @@ class CaseRuleCriteriaForm(forms.Form):
         except (TypeError, ValueError):
             self._json_fail_hard()
 
-        return value[0]['location_id']
+        if value:
+            return value[0]
+        return ''
 
-    def save_criteria(self, rule):
+    def save_criteria(self, rule, save_meta=True):
         with transaction.atomic():
-            rule.case_type = self.cleaned_data['case_type']
-            rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
-            rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
-            rule.save()
+            if save_meta:
+                rule.case_type = self.cleaned_data['case_type']
+                rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
+                rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
+                rule.save()
 
             rule.delete_criteria()
 
@@ -618,6 +630,16 @@ class CaseRuleCriteriaForm(forms.Form):
 
             if self.cleaned_data['filter_on_closed_parent']:
                 definition = ClosedParentDefinition.objects.create()
+
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            if self.cleaned_data['location_filter_definition']:
+                definition_data = self.cleaned_data['location_filter_definition']
+                definition = LocationFilterDefinition.objects.create(
+                    location_id=definition_data['location_id'],
+                )
 
                 criteria = CaseRuleCriteria(rule=rule)
                 criteria.definition = definition
@@ -856,6 +878,10 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
     @property
     def allow_locations_filter(self):
         return True
+
+    @property
+    def allow_parent_case_references(self):
+        return False
 
     def __init__(self, domain, *args, **kwargs):
         couch_user = kwargs.get('couch_user', {})
