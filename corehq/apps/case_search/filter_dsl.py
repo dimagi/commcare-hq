@@ -125,9 +125,6 @@ def build_filter_from_ast(node, context):
     def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-
         es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
         es_query = CaseSearchES().domain(context.domain).filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
@@ -159,28 +156,19 @@ def build_filter_from_ast(node, context):
 
         return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
-    def _raise_step_RHS(node):
-        raise CaseFilterError(
-            _("You cannot reference a case property on the right side "
-              "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-              "quotation marks").format(serialize(node.right)),
-            serialize(node)
-        )
-
     def _comparison(node):
         """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
 
         """
-        acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
-        if not isinstance(node.left, Step) or not isinstance(node.right, acceptable_rhs_types):
+        return _comparison_raw(node.left, node.op, node.right, node)
+
+    def _comparison_raw(case_property_name_raw, op, value_raw, node):
+        if not isinstance(case_property_name_raw, Step):
             raise CaseFilterError(
                 _("We didn't understand what you were trying to do with {}").format(serialize(node)),
                 serialize(node)
             )
 
-        return _comparison_raw(node.left, node.op, node.right, node)
-
-    def _comparison_raw(case_property_name_raw, op, value_raw, node):
         case_property_name = serialize(case_property_name_raw)
         value = unwrap_value(value_raw, context)
         if op in [EQ, NEQ]:
