@@ -120,7 +120,7 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
-    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         domains_needing_search_index.clear()
