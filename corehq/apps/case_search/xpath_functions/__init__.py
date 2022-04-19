@@ -5,7 +5,7 @@ from .value_functions import date, date_add, today
 # functions that transform or produce a value
 XPATH_VALUE_FUNCTIONS = {
     'date': date,
-    'date_add': date_add,
+    'date-add': date_add,
     'today': today,
 }
 
