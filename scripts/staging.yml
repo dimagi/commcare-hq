@@ -80,4 +80,5 @@ branches:
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - bmb/upgrade-dompurify  # Biyeun Apr 19
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
+    - smh/multi-select-web-ui-formatting # Steph April 19
 submodules: { }
