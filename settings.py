@@ -204,6 +204,7 @@ ROOT_URLCONF = "urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
+    'corehq.apps.celery.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -291,7 +292,7 @@ HQ_APPS = (
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.app_manager',
+    'corehq.apps.app_manager.AppManagerAppConfig',
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
@@ -308,7 +309,7 @@ HQ_APPS = (
     'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.apps.oauth_integrations',
-    'corehq.messaging',
+    'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -341,7 +342,7 @@ HQ_APPS = (
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
-    'corehq.apps.data_interfaces',
+    'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -387,7 +388,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
-    'custom.cowin',
+    'custom.cowin.COWINAppConfig',
 
     'custom.ccqa',
 
@@ -1477,9 +1478,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',

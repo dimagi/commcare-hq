@@ -26,7 +26,7 @@ from sqlagg.columns import (
 )
 from sqlalchemy import bindparam
 
-from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.geopoint import GeoPoint
 from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -218,7 +218,7 @@ class LocationColumn(ReportColumn):
         for row in data:
             try:
                 row[column_name] = '{g.latitude} {g.longitude} {g.altitude} {g.accuracy}'.format(
-                    g=GeoPointProperty().wrap(row[column_name])
+                    g=GeoPoint.from_string(row[column_name])
                 )
             except BadValueError:
                 row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))

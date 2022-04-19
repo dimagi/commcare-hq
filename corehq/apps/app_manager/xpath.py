@@ -339,6 +339,10 @@ class CaseClaimXpath(object):
         # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
+    def multi_select_relevant(self):
+        # Verifies that there's at least one case that isn't yet owned by the user
+        return XPath("$case_id").neq(XPath.string(""))
+
 
 class LedgerdbXpath(XPath):
 
@@ -398,6 +402,11 @@ class IndicatorXpath(InstanceXpath):
     @property
     def id(self):
         return self
+
+
+class SelectedCasesInstanceXpath(InstanceXpath):
+    id = "selected_cases"
+    path = "results/value"
 
 
 class CommCareSession(object):

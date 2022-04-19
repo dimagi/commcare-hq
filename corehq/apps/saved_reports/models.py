@@ -47,6 +47,7 @@ from corehq.apps.reports.daterange import (
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
+    ReleaseManagementReportDispatcher,
 )
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from corehq.apps.reports.tasks import export_all_rows_task
@@ -197,7 +198,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            EnterpriseReportDispatcher
+            EnterpriseReportDispatcher,
+            ReleaseManagementReportDispatcher,
         ]
 
         for dispatcher in dispatchers:

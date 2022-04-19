@@ -131,16 +131,16 @@ class EmwfUtils(object):
         self.namespace_locations = namespace_locations
 
     def user_tuple(self, u):
-        user = util._report_user_dict(u)
-        uid = "u__%s" % user['user_id']
+        user = util._report_user(u)
+        uid = "u__%s" % user.user_id
         is_active = False
         if u['doc_type'] == 'WebUser':
-            name = "%s [Web User]" % user['username_in_report']
-        elif user['is_active']:
+            name = "%s [Web User]" % user.username_in_report
+        elif user.is_active:
             is_active = True
-            name = "%s [Active Mobile Worker]" % user['username_in_report']
+            name = "%s [Active Mobile Worker]" % user.username_in_report
         else:
-            name = "%s [Deactivated Mobile Worker]" % user['username_in_report']
+            name = "%s [Deactivated Mobile Worker]" % user.username_in_report
         return uid, name, is_active
 
     def reporting_group_tuple(self, g):
@@ -205,9 +205,9 @@ class EmwfUtils(object):
 class UsersUtils(EmwfUtils):
 
     def user_tuple(self, u):
-        user = util._report_user_dict(u)
-        uid = "%s" % user['user_id']
-        name = "%s" % user['username_in_report']
+        user = util._report_user(u)
+        uid = "%s" % user.user_id
+        name = "%s" % user.username_in_report
         return (uid, name)
 
 
@@ -469,13 +469,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 class EnterpriseUsersUtils(EmwfUtils):
 
     def user_tuple(self, user):
-        user_dict = util._report_user_dict(user)
-        uid = "u__%s" % user_dict['user_id']
+        user_obj = util._report_user(user)
+        uid = "u__%s" % user_obj.user_id
         is_active = False
-        report_username = user_dict['username_in_report']
+        report_username = user_obj.username_in_report
         if user['doc_type'] == 'WebUser':
             name = f"{report_username} [Web User]"
-        elif user_dict['is_active']:
+        elif user_obj.is_active:
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:

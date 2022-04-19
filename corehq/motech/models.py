@@ -163,7 +163,28 @@ class ConnectionSettings(models.Model):
         )
 
     def get_auth_manager(self):
+        # Auth types that don't require a username:
         if self.auth_type is None:
+            return AuthManager()
+        if self.auth_type == OAUTH1:
+            return OAuth1Manager(
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                api_endpoints=self._get_oauth1_api_endpoints(),
+                connection_settings=self,
+            )
+        if self.auth_type == OAUTH2_CLIENT:
+            return OAuth2ClientGrantManager(
+                self.url,
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
+                connection_settings=self,
+            )
+
+        # Auth types that require a username:
+        if not isinstance(self.username, str):
             return AuthManager()
         if self.auth_type == BASIC_AUTH:
             return BasicAuthManager(
@@ -174,13 +195,6 @@ class ConnectionSettings(models.Model):
             return DigestAuthManager(
                 self.username,
                 self.plaintext_password,
-            )
-        if self.auth_type == OAUTH1:
-            return OAuth1Manager(
-                client_id=self.client_id,
-                client_secret=self.plaintext_client_secret,
-                api_endpoints=self._get_oauth1_api_endpoints(),
-                connection_settings=self,
             )
         if self.auth_type == BEARER_AUTH:
             return BearerAuthManager(
@@ -199,15 +213,7 @@ class ConnectionSettings(models.Model):
                 pass_credentials_in_header=self.pass_credentials_in_header,
                 connection_settings=self,
             )
-        if self.auth_type == OAUTH2_CLIENT:
-            return OAuth2ClientGrantManager(
-                self.url,
-                client_id=self.client_id,
-                client_secret=self.plaintext_client_secret,
-                token_url=self.token_url,
-                refresh_url=self.refresh_url,
-                connection_settings=self,
-            )
+        raise ValueError(f'Unknown auth type {self.auth_type!r}')
 
     def _get_oauth1_api_endpoints(self):
         if self.api_auth_settings in dict(oauth1_api_endpoints):

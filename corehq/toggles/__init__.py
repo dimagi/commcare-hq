@@ -864,6 +864,7 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'USH: Allow selecting multiple cases from the case list',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',
     description="""
     Allows user to select multiple cases and load them all into the form.
     """
@@ -942,6 +943,13 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     description='Domains that have undergone migration for Explore Case Data and have a '
     'CaseSearch elasticsearch index created.\n\n'
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
+)
+
+CASE_SEARCH_SMART_TYPES = StaticToggle(
+    'case_search_smart_types',
+    'USH: Intelligently index specific case properties using the data dictionary',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 WEB_USER_ACTIVITY_REPORT = StaticToggle(
@@ -2071,19 +2079,19 @@ FHIR_INTEGRATION = StaticToggle(
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
 )
 
-ERM_DEVELOPMENT = StaticToggle(
-    'erm_development',
-    'General purpose "enterprise release management" development flag',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
     'auto_deactivate_mobile_workers',
     'Development flag for auto-deactivation of mobile workers. To be replaced '
     'by a privilege.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+SSO_OIDC_DEVELOPMENT = StaticToggle(
+    'sso_oidc_development',
+    'Development feature flag for SSO OIDC support',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(

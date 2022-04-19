@@ -427,8 +427,7 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
     return total_size
 
 
-def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
-    build = get_app_cached(domain, build_id)
+def get_multimedia_sizes_for_build(build, build_profile_id=None):
     assert build.copy_of, _("Size calculation available only for builds")
     build_profile = build.build_profiles.get(build_profile_id) if build_profile_id else None
     multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)

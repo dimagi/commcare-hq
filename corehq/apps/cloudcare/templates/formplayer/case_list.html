@@ -25,6 +25,9 @@
         <% if(!useTiles) { %>
         <thead>
         <tr>
+          <% if (isMultiSelect) { %>
+          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/> {% trans "Select All" %} </th>
+          <% } %>
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
           <% if (columnSortable(index)) { %>
@@ -71,6 +74,9 @@
 </script>
 
 <script type="text/template" id="case-view-item-template">
+  <% if (isMultiSelect) { %>
+  <td class="module-case-list-column-checkbox"><input type="checkbox" id="select-row-checkbox"/></td>
+  <% } %>
   <% _.each(data, function(datum, index) { %>
   <% if (!(styles[index].widthHint === 0)) { %>
   <% if (styles[index].displayFormat === 'Image') { %>

@@ -263,6 +263,9 @@ class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     def test_has_permission__default_yes__no_membership(self):
         self.assertTrue(self.user.has_permission('other', 'report_an_issue'))
 
+    def test_has_permission__default_yes__null_domain(self):
+        self.assertTrue(self.user.has_permission(None, 'report_an_issue'))
+
     @patch('corehq.apps.users.models.domain_restricts_superusers', return_value=True)
     def test_has_permission__default_no__domain_restricts_superusers(self, _mock):
         self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))

@@ -492,7 +492,7 @@ def _app_callout_templates():
     """
     path = os.path.join(
         os.path.dirname(__file__),
-        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yml'
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
