@@ -1,6 +1,6 @@
 /*global Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
+hqDefine("cloudcare/js/formplayer/menus/views", ['analytix/js/kissmetrix',], function (kissmetrics) {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
@@ -363,6 +363,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
+            kissmetrics.track.event("Accesiibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
@@ -376,6 +377,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+            kissmetrics.track.event("Accesiibility Tracking - Pagination Go To Page Interaction");
         },
 
         paginateKeyAction: function (e) {
@@ -418,6 +420,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+            if(this.options.currentPage === 0) {
+                kissmetrics.track.event("Accesiibility Tracking - Pagination First Page Loaded");
+            }
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
