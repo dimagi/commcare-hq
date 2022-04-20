@@ -28,7 +28,6 @@ SMS_MAPPING = {
             "type": "boolean"
         },
         "couch_recipient": {
-            "index": "not_analyzed",
             "type": "string"
         },
         "couch_recipient_doc_type": {

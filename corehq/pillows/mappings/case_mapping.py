@@ -78,7 +78,6 @@ CASE_MAPPING = {
             "type": "boolean"
         },
         "closed_by": {
-            "index": "not_analyzed",
             "type": "string"
         },
         "closed_on": {
@@ -177,7 +176,6 @@ CASE_MAPPING = {
             "type": "multi_field"
         },
         "opened_by": {
-            "index": "not_analyzed",
             "type": "string"
         },
         "opened_on": {
@@ -185,7 +183,6 @@ CASE_MAPPING = {
             "type": "date"
         },
         "owner_id": {
-            "index": "not_analyzed",
             "type": "string"
         },
         "owner_type": {

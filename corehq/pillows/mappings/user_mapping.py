@@ -65,62 +65,6 @@ USER_MAPPING = {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
-        "devices": {
-            "dynamic": False,
-            "type": "nested",
-            "properties": {
-                "app_meta": {
-                    "dynamic": False,
-                    "type": "nested",
-                    "properties": {
-                        "app_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        },
-                        "build_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        },
-                        "build_version": {
-                            "type": "integer"
-                        },
-                        "last_heartbeat": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_request": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_submission": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_sync": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "num_quarantined_forms": {
-                            "type": "integer"
-                        },
-                        "num_unsent_forms": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "commcare_version": {
-                    "type": "string"
-                },
-                "device_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
-                },
-                "last_used": {
-                    "format": DATE_FORMATS_STRING,
-                    "type": "date"
-                }
-            }
-        },
         "doc_type": {
             "index": "not_analyzed",
             "type": "string"
@@ -216,6 +160,9 @@ USER_MAPPING = {
                 }
             }
         },
+        "email_opt_out": {
+            "type": "boolean"
+        },
         "eulas": {
             "dynamic": False,
             "type": "object",
@@ -262,62 +209,6 @@ USER_MAPPING = {
         },
         "language": {
             "type": "string"
-        },
-        "last_device": {
-            "dynamic": False,
-            "type": "object",
-            "properties": {
-                "app_meta": {
-                    "dynamic": False,
-                    "type": "object",
-                    "properties": {
-                        "app_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        },
-                        "build_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        },
-                        "build_version": {
-                            "type": "integer"
-                        },
-                        "last_heartbeat": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_request": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_submission": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "last_sync": {
-                            "format": DATE_FORMATS_STRING,
-                            "type": "date"
-                        },
-                        "num_quarantined_forms": {
-                            "type": "integer"
-                        },
-                        "num_unsent_forms": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "commcare_version": {
-                    "type": "string"
-                },
-                "device_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
-                },
-                "last_used": {
-                    "format": DATE_FORMATS_STRING,
-                    "type": "date"
-                }
-            }
         },
         "last_login": {
             "format": DATE_FORMATS_STRING,
