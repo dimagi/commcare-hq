@@ -59,7 +59,6 @@ branches:
     - smh/remove-extra-spinner-icons # Steph Oct 6
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
-    - do/compare-case-properties # Dominic Feb 2
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     #- jm/elastic-client-adapter  # Joel Mar 1
     - nh/loadtest_users_postmigration  # Norman March 25
@@ -76,9 +75,9 @@ branches:
 #     - smh/multi-select-clear-session-storage # Steph April 16
     - revert-31042-gh/revert-openpyxl-upgrade # Graham April 18
     - ad/change-referrer-policy+rp/gsheet/create-livegooglesheetview # Addison April 18
-    - ad/change-referrer-policy # Addison April 18
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - bmb/upgrade-dompurify  # Biyeun Apr 19
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - smh/multi-select-web-ui-formatting # Steph April 19
+    - sk/remove-feature-phone-support  # Simon April 20
 submodules: { }
