@@ -34,6 +34,6 @@ class TestUpdateEsMapping(SimpleTestCase):
         """Ensure the management command succeeds"""
         call_command("update_es_mapping", self.index, noinput=True)
 
-    def test_update_es_mapping_quite(self):
+    def test_update_es_mapping_quiet(self):
         """Ensure the management command succeeds with --quiet"""
         call_command("update_es_mapping", self.index, "--quiet", noinput=True)
