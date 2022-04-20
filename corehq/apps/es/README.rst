@@ -44,13 +44,21 @@ outages while keeping both up-to-date.
 The least disruptive way to accomplish a multiplexing design is with an adapter
 layer that operates between the low-level third party Elasticsearch Python
 client library and high-level HQ components which need to read/write data in an
-Elasticsearch index. Conveniently, HQ already has the initial framework for this
-layer (the ``ElasticsearchInterface`` class), so the adapter layer is not a new
-concept. The reason the ``ElasticsearchInterface`` implementation cannot
-accommodate multiplexing is because it is not widely adopted for low-level
-Elasticsearch operations (e.g. index creation and configuration), and it does
-not sufficiently decouple low-level Elasticsearch document manipulation logic
-from the high-level HQ code that uses it.
+Elasticsearch index. HQ already has the initial framework for this layer (the
+``ElasticsearchInterface`` class), so the adapter layer is not a new concept.
+The reason that the ``ElasticsearchInterface`` implementation cannot be modified
+in-place to accommodate multiplexing is because it is the wrong level of
+abstraction. The ``ElasticsearchInterface`` abstraction layer was designed as an
+Elasticsearch **version** abstraction. It provides a common set of functions and
+methods so that the high-level HQ "consumer" that uses it can interact with
+Elasticsearch documents without knowing which Elasticsearch *version* is on the
+backend. It is below "index-level" logic, and does not implement index-specific
+functionality needed in order for some indexes to be handled differently than
+others (e.g. some indexes are indexed individually while others are
+multiplexed). The document adapter implementation is a **document** abstraction
+layer. It provides a common set of functions and methods to allow high-level HQ
+code to perform Elasticsearch operations at the document level, allowing unique
+adapters to handle their document operations differently from index to index.
 
 With a multiplexing adapter layer, reindexing an Elasticsearch index can be
 as few as four concise steps, none of which are time-critical in respect to each
@@ -78,6 +86,113 @@ This reindex procedure is inherently safe because:
 - Instructions for third party hosters can follow the same process that Dimagi
   uses, which guarantees that any possible problems encountered by a third party
   hoster are not outside the Dimagi main track.
+
+
+Design Details
+''''''''''''''
+
+Reindex Procedure Details
+'''''''''''''''''''''''''
+
+1. Configure multiplexing on an index.
+
+   - Configure the document adapter for the index with a "secondary index name".
+     This will cause the adapter to use multiplexing logic instead of a single
+     index.
+
+     **Note**: The multiplexing logic required for this operation is not yet
+     implemented. The multiplexing adapter will most likely delegate to two
+     document adapters configured for separate indexes. Suffice it to say that
+     when a secondary index is defined for an adapter, it effectively becomes a
+     multiplexing adapter (which to the consumer, is indistinguishable from a
+     "standard" adapter).
+
+   - *(Optional)* If the reindex involves other meta-index changes (shards,
+     mappings, etc), also update those configurations at this time.
+   - Add a migration which performs all cluster-level operations required for
+     the new (secondary) index. For example:
+
+     - creates the new index
+     - configures shards, replicas, etc for the index
+     - sets the index mapping
+
+   - Review, merge and deploy this change.  At Django startup, the new
+     (secondary) index will automatically and immediately begin receiving
+     document writes.
+
+2. Execute a management command to sync and verify the secondary index from the
+   primary.
+
+   **Note**: This command is not yet implemented.
+
+   This management command is idempotent and performs four operations in serial.
+   If any of the operations complete with unexpected results, the command will
+   abort with an error.
+
+   1. Executes a Elastic ``reindex`` request with parameters to populate the
+      secondary index from the primary, configured to not overwrite existing
+      documents in the target (secondary) index.
+   2. Polls the reindex task progress, blocking until complete.
+
+      **Note**: the reindex API also supports a "blocking" mode which may be
+      advantageous due to limitations in Elasticsearch 2.4's Task API. As such,
+      this step **2.** might be removed in favor of a blocking reindex during
+      the 2.4 --> 5.x upgrade.
+
+   3. Performs a cleanup operation on the secondary index to remove tombstone
+      documents.
+   4. Performs a verification pass to check integrity of the secondary index.
+
+      **Note**: An exact verification algorithm has not been designed, and
+      complex verification operations may be left out of the first
+      implementation. The reason it is outlined *in* this design is to identify
+      that verification is supported and would happen *at this point* in the
+      process. The initial implementation will at least implement
+      feature-equivalency with the previous process (i.e. ensure document counts
+      are equal between the two indexes), and tentatively an "equivalency check"
+      of document ``_id``'s (tentative because checking equality while the
+      multiplexer is running is a race condition).
+
+   Example command (not yet implemented):
+
+   .. code-block:: bash
+
+       ./manage.py elastic_sync_multiplexed ElasticBook
+
+3. Disable multiplexing for the index.
+
+   - Reconfigure the document adapter for the index by changing the "primary
+     index name" to the value of the "secondary index name" and remove the
+     secondary configuration (thus reverting the adapter back to a single-index
+     adapter).
+   - Add a migration that cleans up tombstone documents on the index.
+   - Review, merge and deploy this change.
+
+4. Execute a management command to delete the old index. Example:
+
+   .. code-block:: bash
+
+       ./manage.py prune_elastic_index ElasticBook
+
+An optional extra step can be added to the above process if it is desirable to
+swap the primary and secondary indexes in order to "live test" the new
+(secondary) index while keeping the old (primary) index up-to-date. This
+alternative workflow is identical to the above 4 steps in that it retains the
+same first two steps and the last two steps, but adds one more more intermediate
+step:
+
+1. Configure multiplexing on the index.
+2. Execute the management command to sync the secondary index.
+3. Perform a "primary/secondary swap" operation one or more times as desired.
+
+   - Reconfigure the adapter by swapping the "primary" and "secondary" index
+     names.
+   - Add a migration that cleans up tombstone documents on the "new primary"
+     index prior to startup.
+
+4. Disable multiplexing for the index.
+5. Discard the unused index.
+
 
 
 .. TODO: Future adapter documentation
