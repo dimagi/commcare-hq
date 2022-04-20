@@ -2,12 +2,13 @@ import json
 import re
 
 from django.http import Http404
-
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
+
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.utils import CaseSearchQueryBuilder
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.util.view_utils import BadRequest, json_error
@@ -64,7 +65,8 @@ class CaseSearchView(BaseDomainView):
             value = re.sub(param.get('regex', ''), '', param.get('value'))
             if '/' in param.get('key'):
                 query = '{} = "{}"'.format(param.get('key'), value)
-                search = search.xpath_query(self.domain, query, fuzzy=param.get('fuzzy'))
+                fuzzy_props = set(param.get('key').split('/')[-1:])
+                search = search.xpath_query(self.domain, query, fuzzy_props)
             else:
                 search = search.case_property_query(
                     param.get('key'),
@@ -74,7 +76,8 @@ class CaseSearchView(BaseDomainView):
                 )
 
         if xpath:
-            search = search.xpath_query(self.domain, xpath)
+            fuzzy_props = CaseSearchQueryBuilder(self.domain, [case_type])._fuzzy_properties
+            search = search.xpath_query(self.domain, xpath, fuzzy_props)
 
         include_profile = request.POST.get("include_profile", False)
         if include_profile:
