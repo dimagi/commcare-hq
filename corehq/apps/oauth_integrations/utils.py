@@ -6,10 +6,8 @@ from datetime import datetime
 
 from google.oauth2.credentials import Credentials
 
-from corehq.util.couch import get_document_or_404
-
 from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
-from corehq.apps.oauth_integrations.models import GoogleApiToken
+from corehq.apps.oauth_integrations.models import GoogleApiToken, LiveGoogleSheetSchedule
 
 from googleapiclient.discovery import build
 
@@ -47,13 +45,6 @@ def get_token(user):
         return GoogleApiToken.objects.get(user=user)
     except GoogleApiToken.DoesNotExist:
         return None
-
-
-def get_query_results(export_instance, domain, id):
-    export = get_document_or_404(export_instance, domain, id)
-    query = get_case_export_base_query(domain, export.case_type)
-    results = query.run()
-    return results
 
 
 def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spreadsheet_id=None):
@@ -164,3 +155,23 @@ def get_export_data(export, domain):
 
     query = query.run()
     return query.hits
+
+
+def get_live_google_sheet_schedule(export_config_id):
+    try:
+        schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export_config_id)
+        if schedule is not None:
+            return schedule
+        else:
+            return None
+    except LiveGoogleSheetSchedule.DoesNotExist:
+        return None
+
+
+def create_live_google_sheet_schedule(export_config_id, spreadsheet_id):
+    new_schedule = LiveGoogleSheetSchedule(
+        export_config_id=export_config_id,
+        google_sheet_id=spreadsheet_id
+    )
+    new_schedule.save()
+    return new_schedule

@@ -55,7 +55,9 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 from corehq.apps.oauth_integrations.utils import (
+    get_live_google_sheet_schedule,
     chunkify_data,
+    create_live_google_sheet_schedule,
     create_or_update_spreadsheet,
     get_export_data,
     get_token,
@@ -223,18 +225,23 @@ class BaseExportView(BaseProjectDataView):
                 return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=[self.domain]))
 
             export_data = get_export_data(export, self.domain)
-
             data_table = create_table(export_data, export)
-            google_sheet = create_or_update_spreadsheet(
-                chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
-                request.user,
-                export
-            )
-            new_schedule = LiveGoogleSheetSchedule(
-                export_config_id=export._id,
-                google_sheet_id=google_sheet["spreadsheetId"]
-            )
-            new_schedule.save()
+
+            schedule = get_live_google_sheet_schedule(export._id)
+            if schedule is None:
+                google_sheet = create_or_update_spreadsheet(
+                    chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
+                    request.user,
+                    export
+                )
+                schedule = create_live_google_sheet_schedule(export._id, google_sheet["spreadsheetId"])
+            else:
+                google_sheet = create_or_update_spreadsheet(
+                    chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
+                    request.user,
+                    export,
+                    schedule.google_sheet_id
+                )
 
         messages.success(
             request,
