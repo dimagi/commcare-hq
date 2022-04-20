@@ -125,27 +125,6 @@ def get_n_users_in_subscription(domain):
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
-def get_n_users_old_enterprise_count(domain):
-    from corehq.apps.accounting.models import Subscription
-    subscription = Subscription.get_active_subscription_by_domain(domain)
-    if subscription:
-        plan_version = subscription.plan_version
-        if plan_version.plan.is_customer_software_plan:
-            n_included_users = plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
-            # For now just give each domain that's part of an enterprise account
-            # access to nearly all of the throughput allocation.
-            # Really what we want is to limit enterprise accounts' submissions accross all
-            # their domains together, but right now what we care about
-            # is not unfairly limiting high-paying enterprise accounts.
-            n_domains = len(plan_version.subscription_set.filter(is_active=True))
-            # Heavily bias towards allowing high throughput
-            # 80% minimum, plus a fraction of 20% inversely proportional
-            # to the number of domains that share the throughput allocation.
-            return n_included_users * (.8 + .2 / n_domains)
-    return None
-
-
-@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
 def _get_account_name(domain):
     from corehq.apps.accounting.models import BillingAccount
     account = BillingAccount.get_account_by_domain(domain)
@@ -167,9 +146,6 @@ class PerUserRateDefinition(object):
             (domain_users, domain),
             (enterprise_users, _get_account_name(domain))
         ]
-        old_enterprise_calculation = get_n_users_old_enterprise_count(domain)
-        if old_enterprise_calculation is not None:
-            limit_pairs.append((old_enterprise_calculation, f'old_enterprise:{domain}'))
         limits = []
         for n_users, scope_key in limit_pairs:
             domain_limit = (
