@@ -5,6 +5,7 @@ from corehq.apps.case_search.models import FuzzyProperties, IgnorePatterns
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
 from corehq.apps.es.tests.utils import es_test
+from corehq.util.test_utils import softer_assert
 
 
 @es_test
@@ -177,6 +178,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c1', 'c3']
         )
 
+    @softer_assert("missing case search config")
     def test_selected_validate_property_name(self):
         with self.assertRaises(XPathFunctionException):
             get_case_search_query(
