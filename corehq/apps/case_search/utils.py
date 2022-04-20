@@ -212,11 +212,11 @@ class CaseSearchQueryBuilder:
             return self._get_daterange_query(criteria)
 
         value = self._remove_ignored_patterns(criteria.key, criteria.value)
-        fuzzy = criteria.key in self._fuzzy_properties
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
+            return build_filter_from_xpath(self.query_domains, query, self._fuzzy_properties)
         else:
+            fuzzy = criteria.key in self._fuzzy_properties
             return case_property_query(criteria.key, value, fuzzy=fuzzy)
 
     def _remove_ignored_patterns(self, case_property, value):
