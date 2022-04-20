@@ -83,7 +83,7 @@ class CaseSearchES(CaseES):
             clause
         )
 
-    def xpath_query(self, domain, xpath, fuzzy=False):
+    def xpath_query(self, domain, xpath, fuzzy_props=None):
         """Search for cases using an XPath predicate expression.
 
         Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
@@ -94,10 +94,12 @@ class CaseSearchES(CaseES):
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
 
-        If fuzzy is true, all equality checks will be treated as fuzzy.
+        :param domain: domain to search
+        :param xpath: xpath search expression
+        :param fuzzy_props: set of case properties that should have fuzzy matching applied
         """
         from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
+        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy_props))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
