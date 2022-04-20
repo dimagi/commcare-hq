@@ -1,6 +1,8 @@
 /*global Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views", ['analytix/js/kissmetrix'], function (kissmetrics) {
+hqDefine("cloudcare/js/formplayer/menus/views", [
+    'analytix/js/kissmetrix',
+], function (kissmetrics) {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
