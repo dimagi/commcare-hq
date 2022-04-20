@@ -67,7 +67,6 @@ branches:
     - jls/multiple-referrals-wip # Jenny April 14
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
     - fr/ucr-registry-linked  # Farid April 12
-    - gh/erm/remove-linked-domain-ff # Graham April 14
     - ap/sql-case-repeater # Amit March 23
     - ml/all-in-one-offboarding # Minha April 13
     - jls/update-dialer-url # Jenny April 14
