@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from django.utils.translation import gettext as _
 
@@ -33,7 +33,10 @@ from corehq.apps.es.case_search import (
 @dataclass
 class SearchFilterContext:
     domain: str
-    fuzzy: bool = False
+    fuzzy_props: set = field(default_factory=set)
+
+    def is_fuzzy(self, case_property):
+        return self.fuzzy_props and case_property in self.fuzzy_props
 
 
 def print_ast(node):
@@ -81,8 +84,6 @@ ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
 
 def build_filter_from_ast(node, context):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
-
-    If fuzzy is true, all equality operations will be treated as fuzzy.
     """
 
     def _walk_ancestor_cases(node):
@@ -173,7 +174,7 @@ def build_filter_from_ast(node, context):
         case_property_name = serialize(case_property_name_raw)
         value = unwrap_value(value_raw, context)
         if op in [EQ, NEQ]:
-            query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
+            query = case_property_query(case_property_name, value, fuzzy=context.is_fuzzy(case_property_name))
             if op == NEQ:
                 query = filters.NOT(query)
             return query
@@ -229,7 +230,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy=False):
+def build_filter_from_xpath(domain, xpath, fuzzy_props=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -238,7 +239,7 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "The operators we accept are: {}"
     )
 
-    context = SearchFilterContext(domain, fuzzy)
+    context = SearchFilterContext(domain, fuzzy_props)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

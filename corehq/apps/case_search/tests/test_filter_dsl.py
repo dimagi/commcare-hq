@@ -59,6 +59,69 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_simple_fuzzy_filter(self):
+        parsed = parse_xpath("name = 'farid'")
+
+        expected_filter = {
+            "bool": {
+                "should": [
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "farid",
+                                                "operator": "or",
+                                                "fuzziness": "AUTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "farid",
+                                                "operator": "or",
+                                                "fuzziness": "0"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
 
@@ -538,7 +601,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         # Note fuzzy is on for this one
-        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", fuzzy=True))
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"first_name"}))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
     def test_selected_all(self):

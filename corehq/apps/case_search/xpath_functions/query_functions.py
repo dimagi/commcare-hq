@@ -36,7 +36,8 @@ def _selected_query(node, context, operator):
 
     property_name, search_values = node.args
     property_name = _property_name_to_string(property_name, node)
-    return case_property_query(property_name, search_values, fuzzy=context.fuzzy, multivalue_mode=operator)
+    is_fuzzy = context.is_fuzzy(property_name)
+    return case_property_query(property_name, search_values, fuzzy=is_fuzzy, multivalue_mode=operator)
 
 
 def proximity(node, context):
