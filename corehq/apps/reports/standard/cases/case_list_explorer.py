@@ -68,6 +68,7 @@ class CaseListExplorer(CaseListReport):
         xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             try:
+                # fuzzy not supported in CLE
                 query = query.xpath_query(self.domain, xpath)
             except CaseFilterError as e:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")

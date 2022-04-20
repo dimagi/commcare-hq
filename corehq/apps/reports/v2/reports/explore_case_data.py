@@ -142,6 +142,7 @@ class ExploreCaseDataReport(BaseReport):
                 expressions.append(expression)
         if expressions:
             xpath_final = " and ".join(expressions)
+            # fuzzy not supported in CDE
             query = query.xpath_query(self.domain, xpath_final)
 
         # apply location restriction

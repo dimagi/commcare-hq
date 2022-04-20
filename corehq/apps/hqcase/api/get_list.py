@@ -139,6 +139,7 @@ def _get_filter(domain, key, val):
 
 def _get_xpath_filter(domain, xpath):
     try:
+        # fuzzy properties not supported via API
         return build_filter_from_xpath(domain, xpath)
     except CaseFilterError as e:
         raise UserError(f'Bad XPath: {e}')
