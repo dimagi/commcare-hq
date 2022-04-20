@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, TestCase
 
 from eulxml.xpath import parse as parse_xpath
@@ -121,6 +123,186 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_ancestor_filter(self):
+        parsed = parse_xpath("parent/name = 'farid'")
+
+        expected_filter = {
+            "nested": {
+                "path": "indices",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "terms": {
+                                                "indices.referenced_id": [
+                                                    "123"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "term": {
+                                                "indices.identifier": "parent"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        }
+
+        with patch("corehq.apps.case_search.filter_dsl._do_parent_lookup") as parent_lookup:
+            parent_lookup.return_value = ["123"]
+            built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+        domain_arg, parent_built_filter, raw_query = parent_lookup.call_args.args
+        self.assertEqual(domain_arg, "domain")
+        self.assertEqual(raw_query, 'name = "farid"')
+
+        expected_parent_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
+                                            }
+                                        },
+                                        {
+                                            "term": {
+                                                "case_properties.value.exact": "farid"
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        }
+        self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
+
+    def test_ancestor_fuzzy_filter(self):
+        parsed = parse_xpath("parent/name = 'farid'")
+
+        expected_filter = {
+            "nested": {
+                "path": "indices",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "terms": {
+                                                "indices.referenced_id": [
+                                                    "123"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "term": {
+                                                "indices.identifier": "parent"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        }
+
+        with patch("corehq.apps.case_search.filter_dsl._do_parent_lookup") as parent_lookup:
+            parent_lookup.return_value = ["123"]
+            built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
+
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+        domain_arg, parent_built_filter, raw_query = parent_lookup.call_args.args
+        self.assertEqual(domain_arg, "domain")
+        self.assertEqual(raw_query, 'name = "farid"')
+
+        expected_parent_filter = {
+            "bool": {
+                "should": [
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "farid",
+                                                "operator": "or",
+                                                "fuzziness": "AUTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "query": "farid",
+                                                "operator": "or",
+                                                "fuzziness": "0"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+        self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
 
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")

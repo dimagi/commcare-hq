@@ -128,15 +128,8 @@ def build_filter_from_ast(node, context):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
         es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
-        es_query = CaseSearchES().domain(context.domain).filter(es_filter)
-        if es_query.count() > MAX_RELATED_CASES:
-            new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
-            raise TooManyRelatedCasesError(
-                _("The related case lookup you are trying to perform would return too many cases"),
-                new_query
-            )
-
-        return es_query.scroll_ids()
+        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+        return _do_parent_lookup(context.domain, es_filter, new_query)
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
@@ -256,3 +249,15 @@ def build_filter_from_xpath(domain, xpath, fuzzy_props=None):
             bad_part = lex_token_error.groups()[1]
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
+
+
+def _do_parent_lookup(domain, es_filter, raw_query):
+    """Extracted function to support mocking in tests"""
+    es_query = CaseSearchES().domain(domain).filter(es_filter)
+    if es_query.count() > MAX_RELATED_CASES:
+        raise TooManyRelatedCasesError(
+            _("The related case lookup you are trying to perform would return too many cases"),
+            raw_query
+        )
+
+    return es_query.scroll_ids()
