@@ -64,12 +64,11 @@ branches:
     - nh/loadtest_users_postmigration  # Norman March 25
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
-    - jls/multiple-referrals-wip # Jenny April 14
+    - jls/multiple-referrals-block-case-management # Jenny April 14
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
     - fr/ucr-registry-linked  # Farid April 12
     - ap/sql-case-repeater # Amit March 23
     - ml/all-in-one-offboarding # Minha April 13
-    - jls/update-dialer-url # Jenny April 14
     - smh/multi-select-case-detail-workflow # Steph April 15
 #     - smh/multi-select-clear-session-storage # Steph April 16
     - revert-31042-gh/revert-openpyxl-upgrade # Graham April 18
