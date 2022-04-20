@@ -1,6 +1,6 @@
 /*global Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views", ['analytix/js/kissmetrix',], function (kissmetrics) {
+hqDefine("cloudcare/js/formplayer/menus/views", ['analytix/js/kissmetrix'], function (kissmetrics) {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
@@ -420,7 +420,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", ['analytix/js/kissmetrix',], fun
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-            if(this.options.currentPage === 0) {
+            if (this.options.currentPage === 0) {
                 kissmetrics.track.event("Accessibility Tracking - Pagination First Page Loaded");
             }
             return {
