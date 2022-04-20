@@ -169,10 +169,14 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value))
+                        search_es = search_es.filter(
+                            build_filter_from_xpath(self.query_domains, value, self.fuzzy_properties)
+                        )
                     return search_es
                 else:
-                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value))
+                    return search_es.filter(
+                        build_filter_from_xpath(self.query_domains, criteria.value, self.fuzzy_properties)
+                    )
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
