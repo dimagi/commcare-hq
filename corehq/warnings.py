@@ -45,6 +45,7 @@ WHITELIST = [
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
 
     # other, resolution not obvious
+    ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",

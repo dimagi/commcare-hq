@@ -63,7 +63,7 @@ def today(node, context):
 def date_add(node, context):
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
-    assert node.name == 'date_add'
+    assert node.name == 'date-add'
 
     confirm_args_count(node, 3)
 
@@ -74,7 +74,7 @@ def date_add(node, context):
     interval_types = ("days", "weeks", "months", "years")
     if interval_type not in interval_types:
         raise XPathFunctionException(
-            _("The \"date_add\" function expects the 'interval' argument to be one of {types}").format(
+            _("The \"date-add\" function expects the 'interval' argument to be one of {types}").format(
                 types=interval_types
             ),
             serialize(node)
@@ -86,19 +86,19 @@ def date_add(node, context):
             quantity = float(quantity)
         except (ValueError, TypeError):
             raise XPathFunctionException(
-                _("The \"date_add\" function expects the interval quantity to be a numeric value"),
+                _("The \"date-add\" function expects the interval quantity to be a numeric value"),
                 serialize(node)
             )
 
     if not isinstance(quantity, (int, float)):
         raise XPathFunctionException(
-            _("The \"date_add\" function expects the interval quantity to be a numeric value"),
+            _("The \"date-add\" function expects the interval quantity to be a numeric value"),
             serialize(node)
         )
 
     if interval_type in ("years", "months") and int(quantity) != quantity:
         raise XPathFunctionException(
-            _("Non-integer years and months are ambiguous and not supported by the \"date_add\" function"),
+            _("Non-integer years and months are ambiguous and not supported by the \"date-add\" function"),
             serialize(node)
         )
 

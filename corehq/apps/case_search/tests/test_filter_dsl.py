@@ -642,8 +642,8 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
-    def test_proximity_filter(self):
-        parsed = parse_xpath("proximity('coords', '42.4402967 -71.1453275', 1, 'miles')")
+    def test_within_distance_filter(self):
+        parsed = parse_xpath("within-distance(coords, '42.4402967 -71.1453275', 1, 'miles')")
         expected_filter = case_property_geo_distance('coords', GeoPoint(42.4402967, -71.1453275), miles=1.0)
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
