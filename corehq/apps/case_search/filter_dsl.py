@@ -134,8 +134,8 @@ def build_filter_from_ast(node, context):
 
         # fuzzy search can't be applied to parent searches since we don't know the parent case type
         es_filter = _comparison_raw(node.left.right, node.op, node.right, node, apply_fuzzy=False)
-        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
-        return _do_parent_lookup(context.domain, es_filter, new_query)
+        query_repr = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
+        return _do_parent_lookup(context.domain, es_filter, query_repr)
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
@@ -264,13 +264,13 @@ def build_filter_from_xpath(domain, xpath, fuzzy_props=None, fuzzy_props_by_case
         raise CaseFilterError(_("Malformed search query"), None)
 
 
-def _do_parent_lookup(domain, es_filter, raw_query):
+def _do_parent_lookup(domain, es_filter, query_repr):
     """Extracted function to support mocking in tests"""
     es_query = CaseSearchES().domain(domain).filter(es_filter)
     if es_query.count() > MAX_RELATED_CASES:
         raise TooManyRelatedCasesError(
             _("The related case lookup you are trying to perform would return too many cases"),
-            raw_query
+            query_repr
         )
 
     return es_query.scroll_ids()
