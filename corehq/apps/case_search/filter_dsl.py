@@ -65,7 +65,7 @@ OPERATOR_MAPPING = {
     'and': filters.AND,
     'or': filters.OR,
 }
-COMPARISON_MAPPING = {
+RANGE_OP_MAPPING = {
     '>': 'gt',
     '>=': 'gte',
     '<': 'lt',
@@ -74,8 +74,9 @@ COMPARISON_MAPPING = {
 
 EQ = "="
 NEQ = "!="
+COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
 
-ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
+ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
 
 
 def build_filter_from_ast(node, context):
@@ -125,14 +126,10 @@ def build_filter_from_ast(node, context):
     def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
-
-        es_query = CaseSearchES().domain(context.domain).xpath_query(
-            context.domain, new_query, fuzzy=context.fuzzy
-        )
+        es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
+        es_query = CaseSearchES().domain(context.domain).filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
+            new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
             raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
                 new_query
@@ -160,53 +157,35 @@ def build_filter_from_ast(node, context):
 
         return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
-    def _raise_step_RHS(node):
-        raise CaseFilterError(
-            _("You cannot reference a case property on the right side "
-              "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-              "quotation marks").format(serialize(node.right)),
-            serialize(node)
-        )
-
-    def _equality(node):
-        """Returns the filter for an equality operation (=, !=)
-
-        """
-        acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
-        if isinstance(node.left, Step) and (
-                isinstance(node.right, acceptable_rhs_types)):
-            # This is a leaf node
-            case_property_name = serialize(node.left)
-            value = unwrap_value(node.right, context)
-            q = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
-
-            if node.op == '!=':
-                return filters.NOT(q)
-
-            return q
-
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-
-        raise CaseFilterError(
-            _("We didn't understand what you were trying to do with {}").format(serialize(node)),
-            serialize(node)
-        )
-
     def _comparison(node):
-        """Returns the filter for a comparison operation (>, <, >=, <=)
+        """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
 
         """
-        try:
-            case_property_name = serialize(node.left)
-            value = unwrap_value(node.right, context)
-            return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
-        except (TypeError, ValueError):
+        return _comparison_raw(node.left, node.op, node.right, node)
+
+    def _comparison_raw(case_property_name_raw, op, value_raw, node):
+        if not isinstance(case_property_name_raw, Step):
             raise CaseFilterError(
-                _("The right hand side of a comparison must be a number or date. "
-                  "Dates must be surrounded in quotation marks"),
-                serialize(node),
+                _("We didn't understand what you were trying to do with {}").format(serialize(node)),
+                serialize(node)
             )
+
+        case_property_name = serialize(case_property_name_raw)
+        value = unwrap_value(value_raw, context)
+        if op in [EQ, NEQ]:
+            query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
+            if op == NEQ:
+                query = filters.NOT(query)
+            return query
+        else:
+            try:
+                return case_property_range_query(case_property_name, **{RANGE_OP_MAPPING[op]: value})
+            except (TypeError, ValueError):
+                raise CaseFilterError(
+                    _("The right hand side of a comparison must be a number or date. "
+                      "Dates must be surrounded in quotation marks"),
+                    serialize(node),
+                )
 
     def visit(node):
 
@@ -222,7 +201,7 @@ def build_filter_from_ast(node, context):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
-                    boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
+                    boolean_ops=", ".join(COMPARISON_OPERATORS),
                 ),
                 serialize(node)
             )
@@ -234,11 +213,7 @@ def build_filter_from_ast(node, context):
         if _is_subcase_count(node):
             return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
-        if node.op in [EQ, NEQ]:
-            # This node is a leaf
-            return _equality(node)
-
-        if node.op in list(COMPARISON_MAPPING.keys()):
+        if node.op in COMPARISON_OPERATORS:
             # This node is a leaf
             return _comparison(node)
 

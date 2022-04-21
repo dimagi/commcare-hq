@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-13 19:58+0000\n"
+"POT-Creation-Date: 2022-04-20 19:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -195,27 +195,27 @@ msgstr ""
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
 msgid "Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
 msgid "Mobile UCR Report"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
 msgid "Select a Report..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
 msgid "Lookup Table Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50397
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50814
@@ -224,11 +224,11 @@ msgstr ""
 msgid "Lookup Table"
 msgstr "Table de Recherche"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:132
 msgid "Select a Lookup Table..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:133
 msgid "Advanced Lookup Table Options"
 msgstr ""
 
@@ -3103,11 +3103,11 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:957
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:962
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:964
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:969
 msgid "Could not load map. Please try again later."
 msgstr ""
 
