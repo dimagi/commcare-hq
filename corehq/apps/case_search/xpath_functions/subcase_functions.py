@@ -72,15 +72,10 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     Only cases with `[>,=] case_count_gt` subcases will be returned.
     """
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
-    from corehq.apps.case_search.filter_dsl import (
-        MAX_RELATED_CASES,
-        build_filter_from_ast,
-    )
-
     if subcase_query.subcase_filter:
         # clone context without fuzzy props since we don't know the case type of the subcase
         subcase_context = context.clone()
-        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, subcase_context)
+        subcase_filter = _build_subcase_filter_from_ast(subcase_query.subcase_filter, subcase_context)
     else:
         subcase_filter = filters.match_all()
 
@@ -113,7 +108,12 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
             )
         )
     )
+    return _get_parent_case_ids(es_query, subcase_query)
 
+
+def _get_parent_case_ids(es_query, subcase_query):
+    """Separate function for mocking in tests"""
+    from corehq.apps.case_search.filter_dsl import MAX_RELATED_CASES
     if es_query.count() > MAX_RELATED_CASES:
         from ..exceptions import TooManyRelatedCasesError
         raise TooManyRelatedCasesError(
@@ -226,3 +226,9 @@ def _extract_subcase_query_parts(node):
         )
 
     return index_identifier, subcase_filter, count_op, case_count
+
+
+def _build_subcase_filter_from_ast(*args, **kwargs):
+    """Function for mocking in tests"""
+    from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+    return build_filter_from_ast(*args, **kwargs)

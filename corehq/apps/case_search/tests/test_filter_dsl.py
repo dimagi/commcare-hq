@@ -6,6 +6,7 @@ from eulxml.xpath import parse as parse_xpath
 from freezegun import freeze_time
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from corehq.apps.es import filters
 from couchforms.geopoint import GeoPoint
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -109,6 +110,32 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         expected_parent_filter = case_property_query("name", "farid", fuzzy=False)
         self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
+
+    def test_subcase_fuzzy_filter(self):
+        """Fuzzy filtering not applied to subcase queries"""
+        parsed = parse_xpath("subcase-exists('father', @case_type = 'child' and name='Margaery')")
+
+        def _build_mock_fn(expected_return):
+            """Calls the real function and tests the returned value"""
+            def _mock_build_filter_check_result(*args, **kwargs):
+                result = build_filter_from_ast(*args, **kwargs)
+                self.checkQuery(result, expected_return, is_raw_query=True)
+                return result
+
+            return _mock_build_filter_check_result
+
+        expected = filters.AND(
+            case_property_query("@case_type", "child"),
+            case_property_query("name", "Margaery"),
+        )
+        module_path = "corehq.apps.case_search.xpath_functions.subcase_functions"
+        with patch(f"{module_path}._build_subcase_filter_from_ast", new=_build_mock_fn(expected)), \
+             patch(f"{module_path}._get_parent_case_ids", return_value=["123"]):
+
+            built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
+
+        expected_filter = filters.doc_id(["123"])
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
