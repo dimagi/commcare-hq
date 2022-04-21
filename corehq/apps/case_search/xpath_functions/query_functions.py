@@ -40,7 +40,7 @@ def _selected_query(node, context, operator):
     return case_property_query(property_name, search_values, fuzzy=is_fuzzy, multivalue_mode=operator)
 
 
-def proximity(node, context):
+def within_distance(node, context):
     confirm_args_count(node, 4)
     property_name, coords, distance, unit = node.args
     property_name = _property_name_to_string(property_name, node)

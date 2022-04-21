@@ -2080,6 +2080,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 # Config settings for the google oauth handshake to get a user token
 # Google Cloud Platform secret settings config file
 GOOGLE_OATH_CONFIG = {}
