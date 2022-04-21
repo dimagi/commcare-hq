@@ -183,29 +183,6 @@ def get_sql_start_date():
     return row["event_date"] if row else datetime.utcnow()
 
 
-class CouchAuditEvent:
-    def __init__(self, doc):
-        self.__dict__ = doc
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.__dict__!r})"
-
-    @property
-    def domain(self):
-        return get_domain_from_url(self.path)
-
-    @property
-    def event_date(self):
-        datestr = self.__dict__["event_date"]
-        return string_to_datetime(datestr).replace(tzinfo=None)
-
-    @property
-    def path(self):
-        if self.doc_type == "NavigationEventAudit":
-            return self.request_path
-        return self.path_info
-
-
 def get_foreign_names(model):
     names = {f.name for f in model._meta.fields if isinstance(f, ForeignKey)}
     names.update(ForeignValue.get_names(model))
