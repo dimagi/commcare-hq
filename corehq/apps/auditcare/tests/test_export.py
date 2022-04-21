@@ -137,8 +137,7 @@ class TestNavigationEventsQueries(AuditcareTest):
         self.assertEqual({e.event_date for e in events}, set(self.event_dates[4:15]))
         self.assertEqual(len(events), 11)
 
-    @patch('corehq.apps.auditcare.utils.export.get_fixed_start_date_for_sql', return_value=datetime(2021, 2, 3))
-    def test_navigation_events_querying_couch_and_sql(self, mock):
+    def test_navigation_events_querying_couch_and_sql(self):
         couch_event_date = datetime(2021, 2, 1, 2)
         start = datetime(2021, 1, 31)
         end = datetime(2021, 2, 5)
