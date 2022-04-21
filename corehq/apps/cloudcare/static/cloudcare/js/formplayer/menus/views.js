@@ -1,11 +1,9 @@
 /*global Marionette */
 
-hqDefine("cloudcare/js/formplayer/menus/views", [
-    'analytix/js/kissmetrix',
-], function (kissmetrics) {
+hqDefine("cloudcare/js/formplayer/menus/views", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
-
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -422,9 +420,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-            if (this.options.currentPage === 0) {
-                kissmetrics.track.event("Accessibility Tracking - Pagination First Page Loaded");
-            }
+
+            $(function ()  {
+                var goButton = $("#pagination-go-button");
+                if(goButton.length) {
+                    kissmetrics.track.event("Accessibility Tracking - Pagination Page Loaded");
+                }
+            });
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -454,6 +456,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             };
         },
     });
+
+
 
     // this method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
