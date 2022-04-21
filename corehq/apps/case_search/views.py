@@ -65,8 +65,8 @@ class CaseSearchView(BaseDomainView):
             value = re.sub(param.get('regex', ''), '', param.get('value'))
             if '/' in param.get('key'):
                 query = '{} = "{}"'.format(param.get('key'), value)
-                fuzzy_props = set(param.get('key').split('/')[-1:])
-                search = search.xpath_query(self.domain, query, fuzzy_props)
+                # fuzzy not supported for ancestor queries
+                search = search.xpath_query(self.domain, query)
             else:
                 search = search.case_property_query(
                     param.get('key'),
