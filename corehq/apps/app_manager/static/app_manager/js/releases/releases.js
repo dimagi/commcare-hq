@@ -222,9 +222,6 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
 
-        self.reveal_java_download = function () {
-            return this.j2me_enabled();
-        };
         return self;
     }
 
