@@ -12,6 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
+from django.conf import settings
 from django.utils.dateparse import parse_date
 from memoized import memoized
 
@@ -135,7 +136,7 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    _index_name = "case_search_2018-05-29"
+    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
     type = ElasticCase.type
 
     @property

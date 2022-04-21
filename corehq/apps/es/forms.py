@@ -2,6 +2,8 @@
 FormES
 --------
 """
+from django.conf import settings
+
 from corehq.pillows.mappings.const import NULL_VALUE
 
 from . import filters
@@ -54,7 +56,7 @@ class FormES(HQESQuery):
 
 class ElasticForm(ElasticDocumentAdapter):
 
-    _index_name = "xforms_2016-07-07"
+    _index_name = getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07")
     type = "xform"
 
     @property
