@@ -1103,7 +1103,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
                         kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
-                            "Required": isRequired
+                            "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").change(function () {
@@ -1134,7 +1134,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     if (!hideLabel) {
                         let isRequired = entry.question.required() ? "Yes" : "No";
                         kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
-                            "Required": isRequired
+                            "Required": isRequired,
                         });
                         $(function () {
                             $(".q.form-group").change(function () {
