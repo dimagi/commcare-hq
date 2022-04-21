@@ -250,7 +250,7 @@ class CaseSearchQueryBuilder:
         fuzzy_by_case_type = self.fuzzy_properties_by_case_type
         fuzzy_props = set()
         for case_type in self.case_types:
-            fuzzy_props.add(fuzzy_by_case_type.get(case_type, []))
+            fuzzy_props.update(fuzzy_by_case_type.get(case_type, []))
         return fuzzy_props
 
     @cached_property
