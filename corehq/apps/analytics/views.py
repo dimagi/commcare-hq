@@ -3,8 +3,9 @@ import hmac
 import json
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from corehq.apps.analytics.tasks import (
@@ -57,3 +58,10 @@ class GreenhouseCandidateView(View):
                 pass
 
         return HttpResponse()
+
+
+@require_POST
+def submit_hubspot_cta_form(request):
+    return JsonResponse({
+        "success": True,
+    })
