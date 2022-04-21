@@ -10,8 +10,16 @@ from couchforms.geopoint import GeoPoint
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.filter_dsl import build_filter_from_ast, SearchFilterContext
-from corehq.apps.es.case_search import CaseSearchES, case_property_geo_distance
+from corehq.apps.case_search.filter_dsl import (
+    SearchFilterContext,
+    build_filter_from_ast,
+)
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_geo_distance,
+    case_property_query,
+    reverse_index_case_query,
+)
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -204,38 +212,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_ancestor_fuzzy_filter(self):
         parsed = parse_xpath("parent/name = 'farid'")
 
-        expected_filter = {
-            "nested": {
-                "path": "indices",
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "terms": {
-                                                "indices.referenced_id": [
-                                                    "123"
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "term": {
-                                                "indices.identifier": "parent"
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                }
-            }
-        }
+        expected_filter = reverse_index_case_query(["123"], "parent")
 
         with patch("corehq.apps.case_search.filter_dsl._do_parent_lookup") as parent_lookup:
             parent_lookup.return_value = ["123"]
@@ -246,62 +223,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(domain_arg, "domain")
         self.assertEqual(raw_query, 'name = "farid"')
 
-        expected_parent_filter = {
-            "bool": {
-                "should": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "match": {
-                                            "case_properties.value": {
-                                                "query": "farid",
-                                                "operator": "or",
-                                                "fuzziness": "AUTO"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "match": {
-                                            "case_properties.value": {
-                                                "query": "farid",
-                                                "operator": "or",
-                                                "fuzziness": "0"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                ]
-            }
-        }
+        expected_parent_filter = case_property_query("name", "farid", fuzzy=False)
         self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
 
     def test_not_filter(self):

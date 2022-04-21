@@ -78,7 +78,9 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     )
 
     if subcase_query.subcase_filter:
-        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, context)
+        # clone context without fuzzy props since we don't know the case type of the subcase
+        subcase_context = context.clone()
+        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, subcase_context)
     else:
         subcase_filter = filters.match_all()
 

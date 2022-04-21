@@ -38,6 +38,10 @@ class SearchFilterContext:
     def is_fuzzy(self, case_property):
         return self.fuzzy_props and case_property in self.fuzzy_props
 
+    def clone(self, with_fuzzy=False):
+        fuzzy_props = self.fuzzy_props if with_fuzzy else set()
+        return SearchFilterContext(self.domain, fuzzy_props)
+
 
 def print_ast(node):
     """Prints the AST provided by eulxml.xpath.parse
@@ -127,7 +131,9 @@ def build_filter_from_ast(node, context):
     def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
-        es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
+
+        # fuzzy search can't be applied to parent searches since we don't know the parent case type
+        es_filter = _comparison_raw(node.left.right, node.op, node.right, node, apply_fuzzy=False)
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
         return _do_parent_lookup(context.domain, es_filter, new_query)
 
@@ -157,7 +163,7 @@ def build_filter_from_ast(node, context):
         """
         return _comparison_raw(node.left, node.op, node.right, node)
 
-    def _comparison_raw(case_property_name_raw, op, value_raw, node):
+    def _comparison_raw(case_property_name_raw, op, value_raw, node, apply_fuzzy=True):
         if not isinstance(case_property_name_raw, Step):
             raise CaseFilterError(
                 _("We didn't understand what you were trying to do with {}").format(serialize(node)),
@@ -167,7 +173,8 @@ def build_filter_from_ast(node, context):
         case_property_name = serialize(case_property_name_raw)
         value = unwrap_value(value_raw, context)
         if op in [EQ, NEQ]:
-            query = case_property_query(case_property_name, value, fuzzy=context.is_fuzzy(case_property_name))
+            is_fuzzy = apply_fuzzy and context.is_fuzzy(case_property_name)
+            query = case_property_query(case_property_name, value, fuzzy=is_fuzzy)
             if op == NEQ:
                 query = filters.NOT(query)
             return query
