@@ -38,7 +38,7 @@ class TestViews(TestCase):
         self.assertEqual(response.url, "placeholder.com")
         self.assertEqual(creds.token, 'new_token')
 
-    @override_settings(GOOGLE_OATH_CONFIG={
+    @override_settings(GOOGLE_OAUTH_CONFIG={
         "web": {
             "client_id": "test_id",
             "project_id": "test_project_id",
@@ -60,7 +60,7 @@ class TestViews(TestCase):
 
         self.assertEqual(creds.token, "new_token")
 
-    @override_settings(GOOGLE_OATH_CONFIG={
+    @override_settings(GOOGLE_OAUTH_CONFIG={
         "web": {
             "client_id": "test_id",
             "project_id": "test_project_id",
