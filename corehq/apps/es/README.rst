@@ -159,7 +159,20 @@ Reindex Procedure Details
 
        ./manage.py elastic_sync_multiplexed ElasticBook
 
-3. Disable multiplexing for the index.
+3. Perform a primary/secondary "swap" operation one or more times as desired to
+   run a "live test" on the new (secondary) index while keeping the old
+   (primary) index up-to-date.
+
+   - Reconfigure the adapter by swapping the "primary" and "secondary" index
+     names.
+   - Add a migration that cleans up tombstone documents on the "new primary"
+     index prior to startup.
+
+   **Note**: In theory, this step can be optional (e.g. if the sync procedure
+   becomes sufficiently trusted in the future, or for "goldilox" indexes where
+   rebuilding from source is feasible but advantageous to avoid, etc).
+
+4. Disable multiplexing for the index.
 
    - Reconfigure the document adapter for the index by changing the "primary
      index name" to the value of the "secondary index name" and remove the
@@ -168,31 +181,11 @@ Reindex Procedure Details
    - Add a migration that cleans up tombstone documents on the index.
    - Review, merge and deploy this change.
 
-4. Execute a management command to delete the old index. Example:
+5. Execute a management command to delete the old index. Example:
 
    .. code-block:: bash
 
        ./manage.py prune_elastic_index ElasticBook
-
-An optional extra step can be added to the above process if it is desirable to
-swap the primary and secondary indexes in order to "live test" the new
-(secondary) index while keeping the old (primary) index up-to-date. This
-alternative workflow is identical to the above 4 steps in that it retains the
-same first two steps and the last two steps, but adds one more more intermediate
-step:
-
-1. Configure multiplexing on the index.
-2. Execute the management command to sync the secondary index.
-3. Perform a "primary/secondary swap" operation one or more times as desired.
-
-   - Reconfigure the adapter by swapping the "primary" and "secondary" index
-     names.
-   - Add a migration that cleans up tombstone documents on the "new primary"
-     index prior to startup.
-
-4. Disable multiplexing for the index.
-5. Discard the unused index.
-
 
 
 .. TODO: Future adapter documentation
