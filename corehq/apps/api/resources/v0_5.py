@@ -79,7 +79,7 @@ from corehq.apps.userreports.util import (
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
-    get_all_user_id_username_pairs_by_domain,
+    get_all_user_id_username_pairs_by_domain, user_exists,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -226,6 +226,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             normalized_username = normalize_username(bundle.data['username'], domain=kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(str(e))
+
+        if user_exists(normalized_username).exists:
+            raise BadRequest(f'Username {normalized_username} already exists.')
 
         try:
             bundle.obj = CommCareUser.create(
