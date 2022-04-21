@@ -147,12 +147,11 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit, *
             With a cloud setup:
                 commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
 
-                commcare-cloud <env> django-manage --release <release created by previous command>
-                    migrate_multi {app_name}
+                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi {app_name}
 
                 commcare-cloud <env> deploy commcare
 
-            With a local setup:
+            With a development setup:
                 git checkout {required_commit}
                 ./manage.py migrate {app_name}
 
@@ -160,12 +159,12 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit, *
             With a cloud setup:
                 commcare-cloud <env> django-manage migrate --fake {app_name} {migration_name}
 
-            With a local setup:
+            With a development setup:
                 ./manage.py migrate --fake {app_name} {migration_name}
-        """)
+        """)  # noqa: E501
         sys.exit(1)
 
-    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
+    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop)
 
 
 def block_upgrade_for_removed_migration(commit_with_migration):
