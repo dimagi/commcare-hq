@@ -118,7 +118,7 @@ Reindex Procedure Details
 
    - Review, merge and deploy this change.  At Django startup, the new
      (secondary) index will automatically and immediately begin receiving
-     document writes.
+     document writes. Document reads will always come from the primary index.
 
 2. Execute a management command to sync and verify the secondary index from the
    primary.
