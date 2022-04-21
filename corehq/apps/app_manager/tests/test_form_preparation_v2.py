@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     UpdateCaseAction, ConditionalCaseUpdate,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
 from corehq.util.test_utils import flag_enabled
@@ -724,3 +725,32 @@ class FormPreparationV2TestDataRegistry(SimpleTestCase, TestXmlMixin):
             update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
+
+
+class FormPreparationV2TestMultiSelect(SimpleTestCase, TestXmlMixin):
+    file_path = 'data', 'form_preparation_v2'
+
+    def setUp(self):
+        self.factory = AppFactory(domain="multiple-referrals")
+        self.factory.app.version = 5
+        self.module, self.form = self.factory.new_basic_module('basic', 'person')
+        self.form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+
+        self.module.case_details.short.multi_select = True
+
+    def test_open_case(self):
+        self.form.actions.open_case = OpenCaseAction(
+            name_update=ConditionalCaseUpdate(question_path="/data/question1"),
+        )
+        self.form.actions.open_case.condition.type = 'always'
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('multi_open_update_case'), self.form.render_xform())
+
+    def test_update_case(self):
+        self.factory.form_requires_case(self.form, 'person')
+        self.form.actions.update_case = UpdateCaseAction(
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')})
+        self.form.actions.update_case.condition.type = 'always'
+        self.assertXmlEqual(self.get_xml('multi_no_actions'), self.form.render_xform())
