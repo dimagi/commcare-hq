@@ -43,7 +43,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
 
     def test_get_all_yaml(self):
         with patch("corehq.apps.userreports.models.static_ucr_report_paths", return_value=[]), \
-             override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yaml')]):
+             override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yml')]):
             all = list(StaticReportConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all

@@ -2,7 +2,7 @@ import datetime
 import re
 from collections import Counter, defaultdict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.util.dates import get_previous_month_date_range, iso_string_to_date

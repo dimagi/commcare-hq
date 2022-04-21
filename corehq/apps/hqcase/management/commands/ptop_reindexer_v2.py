@@ -128,6 +128,7 @@ class Command(SubCommand):
             'traceback',
             'no_color',
             'force_color',
+            'skip_checks'
         ]:
             options.pop(option, None)
 

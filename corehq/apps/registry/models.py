@@ -1,6 +1,6 @@
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -72,7 +72,7 @@ class DataRegistry(models.Model):
     is_active = models.BooleanField(default=True)
 
     # [{"case_type": "X"}, {"case_type": "Y"}]
-    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
+    schema = models.JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -263,7 +263,7 @@ class RegistryAuditLog(models.Model):
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
     related_object_id = models.CharField(max_length=36)
     related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES, db_index=True)
-    detail = JSONField(null=True)
+    detail = models.JSONField(null=True)
 
     class Meta:
         indexes = [

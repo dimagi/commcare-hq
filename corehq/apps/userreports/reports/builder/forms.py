@@ -5,7 +5,7 @@ from collections import OrderedDict, namedtuple
 
 from django import forms
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -91,7 +91,7 @@ from corehq.toggles import (
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
     SHOW_IDS_IN_REPORT_BUILDER,
-    DATA_REGISTRY
+    DATA_REGISTRY_UCR
 )
 from dimagi.utils.couch.undo import undo_delete
 
@@ -983,7 +983,7 @@ class DataSourceForm(forms.Form):
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper(
             enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain),
-            enable_registry=(DATA_REGISTRY.enabled(self.domain)
+            enable_registry=(DATA_REGISTRY_UCR.enabled(self.domain)
                              and self.registry_permission_checker.can_view_some_data_registry_contents()),
             registry_permission_checker=self.registry_permission_checker
         )
@@ -1019,7 +1019,7 @@ class DataSourceForm(forms.Form):
         )
 
     def get_data_layout(self):
-        if not (DATA_REGISTRY.enabled(self.domain)
+        if not (DATA_REGISTRY_UCR.enabled(self.domain)
                 and self.registry_permission_checker.can_view_some_data_registry_contents()):
             return crispy.Fieldset(
                 _('Data'), *self.app_source_helper.get_crispy_fields(),

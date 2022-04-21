@@ -90,6 +90,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
+            exclude: false,
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -101,6 +102,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
+        self.exclude = ko.observable(options.exclude);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -152,7 +154,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
         ], saveButton);
         return self;
     };
@@ -179,7 +181,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
         'customRelatedCaseProperty',
     ];
@@ -260,7 +262,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
-                search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 data_registry: self.dataRegistry(),
@@ -332,6 +333,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
+                    exclude: searchProperties[i].exclude,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -370,6 +372,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
+                        exclude: p.exclude(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),

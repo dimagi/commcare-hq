@@ -12,6 +12,7 @@ hqDefine('users/js/edit_commcare_user', [
     'hqwebapp/js/widgets',
     'registration/js/password',
     'select2/dist/js/select2.full.min',
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -130,6 +131,16 @@ hqDefine('users/js/edit_commcare_user', [
     }).on("input", null, null, function () {
         $userInformationForm.find(":submit").prop("disabled", false);
     });
+
+    // Enable deactivate after calendar widget
+    let showDeactivateAfterDate = initialPageData.get('show_deactivate_after_date');
+    if (showDeactivateAfterDate) {
+        $('#id_deactivate_after_date').datetimepicker({
+            format: 'MM-y',
+        }).on('dp.change', function () {
+            $userInformationForm.trigger('change');
+        });
+    }
 
     /* Additional Information / custom user data */
     var $customDataFieldsForm = $(".custom-data-fieldset");

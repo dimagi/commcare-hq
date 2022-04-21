@@ -3,7 +3,7 @@ from typing import List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -157,6 +157,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     timeout=36 * 60 * 60,
     max_retries=0,
     queue='case_rule_queue',
+    serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)

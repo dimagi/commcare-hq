@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 
@@ -21,32 +21,32 @@ MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
 MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
 
 INDIVIDUAL_DATA_MODELS = [
-    (MODEL_APP, ugettext_lazy('Application')),
-    (MODEL_FIXTURE, ugettext_lazy('Lookup Table')),
-    (MODEL_REPORT, ugettext_lazy('Report')),
-    (MODEL_KEYWORD, ugettext_lazy('Keyword')),
+    (MODEL_APP, gettext_lazy('Application')),
+    (MODEL_FIXTURE, gettext_lazy('Lookup Table')),
+    (MODEL_REPORT, gettext_lazy('Report')),
+    (MODEL_KEYWORD, gettext_lazy('Keyword')),
 ]
 
 DOMAIN_LEVEL_DATA_MODELS = [
-    (MODEL_USER_DATA, ugettext_lazy('Custom User Data Fields')),
-    (MODEL_LOCATION_DATA, ugettext_lazy('Custom Location Data Fields')),
-    (MODEL_ROLES, ugettext_lazy('User Roles')),
-    (MODEL_PREVIEWS, ugettext_lazy('Feature Previews')),
-    (MODEL_AUTO_UPDATE_RULES, ugettext_lazy('Automatic Update Rules'))
+    (MODEL_USER_DATA, gettext_lazy('Custom User Data Fields')),
+    (MODEL_LOCATION_DATA, gettext_lazy('Custom Location Data Fields')),
+    (MODEL_ROLES, gettext_lazy('User Roles')),
+    (MODEL_PREVIEWS, gettext_lazy('Feature Previews')),
+    (MODEL_AUTO_UPDATE_RULES, gettext_lazy('Automatic Update Rules'))
 ]
 
 SUPERUSER_DATA_MODELS = [
-    (MODEL_FLAGS, ugettext_lazy('Feature Flags')),
+    (MODEL_FLAGS, gettext_lazy('Feature Flags')),
 ]
 
 FEATURE_FLAG_DATA_MODELS = [
-    (MODEL_CASE_SEARCH, ugettext_lazy('Case Search Settings')),
-    (MODEL_DATA_DICTIONARY, ugettext_lazy('Data Dictionary')),
-    (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
-    (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
-    (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
-    (MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS, ugettext_lazy('Tableau Server and Visualizations')),
-    (MODEL_PRODUCT_DATA, ugettext_lazy('Custom Product Data Fields')),
+    (MODEL_CASE_SEARCH, gettext_lazy('Case Search Settings')),
+    (MODEL_DATA_DICTIONARY, gettext_lazy('Data Dictionary')),
+    (MODEL_DIALER_SETTINGS, gettext_lazy('Dialer Settings')),
+    (MODEL_OTP_SETTINGS, gettext_lazy('OTP Pass-through Settings')),
+    (MODEL_HMAC_CALLOUT_SETTINGS, gettext_lazy('Signed Callout')),
+    (MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS, gettext_lazy('Tableau Server and Visualizations')),
+    (MODEL_PRODUCT_DATA, gettext_lazy('Custom Product Data Fields')),
 ]
 
 ALL_LINKED_MODELS = INDIVIDUAL_DATA_MODELS + DOMAIN_LEVEL_DATA_MODELS + FEATURE_FLAG_DATA_MODELS + \

@@ -6,8 +6,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
@@ -136,7 +136,7 @@ def validate_non_negative_days(value):
 
 
 class AddCaseGroupForm(forms.Form):
-    name = forms.CharField(required=True, label=ugettext_noop("Group Name"))
+    name = forms.CharField(required=True, label=gettext_noop("Group Name"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseGroupForm, self).__init__(*args, **kwargs)
@@ -203,7 +203,7 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
 
 
 class AddCaseToGroupForm(forms.Form):
-    case_identifier = forms.CharField(label=ugettext_noop("Case ID, External ID, or Phone Number"))
+    case_identifier = forms.CharField(label=gettext_noop("Case ID, External ID, or Phone Number"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseToGroupForm, self).__init__(*args, **kwargs)
@@ -228,7 +228,7 @@ class CaseUpdateRuleForm(forms.Form):
     prefix = "rule"
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=True,
     )
 
@@ -267,7 +267,7 @@ class CaseRuleCriteriaForm(forms.Form):
     prefix = "criteria"
 
     case_type = forms.ChoiceField(
-        label=ugettext_lazy("Case Type"),
+        label=gettext_lazy("Case Type"),
         required=True,
     )
 

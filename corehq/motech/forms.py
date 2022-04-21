@@ -3,14 +3,19 @@ import re
 from django import forms
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from email_validator import EmailNotValidError, validate_email
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.motech.const import AUTH_PRESETS, PASSWORD_PLACEHOLDER
+from corehq.motech.const import (
+    AUTH_PRESETS,
+    AUTH_TYPES,
+    AUTH_TYPES_REQUIRE_USERNAME,
+    PASSWORD_PLACEHOLDER,
+)
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
@@ -188,6 +193,19 @@ class ConnectionSettingsForm(forms.ModelForm):
             raise forms.ValidationError(_("Contains an invalid email address."))
         return emails
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data['auth_type'] in AUTH_TYPES_REQUIRE_USERNAME
+            and not cleaned_data['username']
+        ):
+            auth_type_name = dict(AUTH_TYPES)[cleaned_data['auth_type']]
+            err = forms.ValidationError(_("Auth type '{}' requires a username.")
+                                        .format(auth_type_name))
+            self.add_error('auth_type', err)
+            self.add_error('username', err)
+        return cleaned_data
+
     def clean_url(self):
         return self._clean_url(self.cleaned_data['url'])
 
@@ -199,7 +217,7 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def _clean_url(self, url):
         try:
-            validate_user_input_url_for_repeaters(url, domain=self.domain, src='save_config')
+            validate_user_input_url_for_repeaters(url, domain=self.domain, src='motech_save_config')
         except CannotResolveHost:
             # Catching and wrapping this error means that unreachable hosts do not cause the form to be invalid.
             # The reason this is important is because we want to accept configurations where the host has not

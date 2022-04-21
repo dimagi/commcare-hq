@@ -11,14 +11,15 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -56,7 +57,7 @@ from corehq.toggles.models import Toggle
 
 
 class BaseProjectSettingsView(BaseDomainView):
-    section_name = ugettext_lazy("Project Settings")
+    section_name = gettext_lazy("Project Settings")
     template_name = "settings/base_template.html"
 
     @property
@@ -118,7 +119,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
     urlname = 'domain_basic_info'
-    page_title = ugettext_lazy("Basic")
+    page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -209,7 +210,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
-    page_title = ugettext_lazy("My Timezone")
+    page_title = gettext_lazy("My Timezone")
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
@@ -268,7 +269,7 @@ def logo(request, domain):
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
-    page_title = ugettext_lazy("Privacy and Security")
+    page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -312,7 +313,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
 
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
-    page_title = ugettext_lazy('Case Search')
+    page_title = gettext_lazy('Case Search')
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
@@ -393,7 +394,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
 class FeaturePreviewsView(BaseAdminProjectSettingsView):
     urlname = 'feature_previews'
-    page_title = ugettext_lazy("Feature Previews")
+    page_title = gettext_lazy("Feature Previews")
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
@@ -485,7 +486,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 @method_decorator(domain_admin_required, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
-    page_title = ugettext_lazy("Recovery Measures History")
+    page_title = gettext_lazy("Recovery Measures History")
     template_name = 'domain/admin/recovery_measures_history.html'
 
     @property
@@ -503,3 +504,9 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
                 for app in all_apps
             ), key=lambda x: (-1 * len(x[1]), x[0])),
         }
+
+
+class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Manage Mobile Workers")
+    template_name = 'enterprise/manage_mobile_workers.html'
+    urlname = 'domain_manage_mobile_workers'

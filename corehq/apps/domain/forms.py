@@ -30,8 +30,8 @@ from django.utils.encoding import force_bytes, smart_str
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
@@ -143,7 +143,7 @@ class ProjectSettingsForm(forms.Form):
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy("Override project's timezone setting just for me.")
+            inline_label=gettext_lazy("Override project's timezone setting just for me.")
         )
     )
     user_timezone = TimeZoneChoiceField(
@@ -205,8 +205,8 @@ class ProjectSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = ugettext_lazy('The user being transferred to does not exist')
-    DOMAIN_MISMATCH = ugettext_lazy('Mismatch in domains when confirming')
+    USER_DNE = gettext_lazy('The user being transferred to does not exist')
+    DOMAIN_MISMATCH = gettext_lazy('Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
@@ -301,57 +301,57 @@ class DomainGlobalSettingsForm(forms.Form):
     CASES_ONLY_CHOICE = "cases_only"
 
     hr_name = forms.CharField(
-        label=ugettext_lazy("Project Name"),
-        help_text=ugettext_lazy("This name will appear in the upper right corner "
-                                "when you are in this project. Changing this name "
-                                "will not change the URL of the project.")
+        label=gettext_lazy("Project Name"),
+        help_text=gettext_lazy("This name will appear in the upper right corner "
+                               "when you are in this project. Changing this name "
+                               "will not change the URL of the project.")
     )
     project_description = forms.CharField(
-        label=ugettext_lazy("Project Description"),
+        label=gettext_lazy("Project Description"),
         widget=forms.Textarea,
         required=False,
         max_length=1000,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "Please provide a short description of your project (Max 1000 characters)."
         )
     )
-    default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
+    default_timezone = TimeZoneChoiceField(label=gettext_noop("Default Timezone"), initial="UTC")
 
     default_geocoder_location = Field(
-        widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
-        label=ugettext_noop("Default project location"),
+        widget=GeoCoderInput(attrs={'placeholder': gettext_lazy('Select a location')}),
+        label=gettext_noop("Default project location"),
         required=False,
-        help_text=ugettext_lazy("Please select your project's default location.")
+        help_text=gettext_lazy("Please select your project's default location.")
     )
 
     logo = ImageField(
-        label=ugettext_lazy("Custom Logo"),
+        label=gettext_lazy("Custom Logo"),
         required=False,
-        help_text=ugettext_lazy("Upload a custom image to display instead of the "
+        help_text=gettext_lazy("Upload a custom image to display instead of the "
                     "CommCare HQ logo.  It will be automatically resized to "
                     "a height of 32 pixels.")
     )
     delete_logo = BooleanField(
-        label=ugettext_lazy("Delete Logo"),
+        label=gettext_lazy("Delete Logo"),
         required=False,
-        help_text=ugettext_lazy("Delete your custom logo and use the standard one.")
+        help_text=gettext_lazy("Delete your custom logo and use the standard one.")
     )
     call_center_enabled = BooleanField(
-        label=ugettext_lazy("Call Center Application"),
+        label=gettext_lazy("Call Center Application"),
         required=False,
-        help_text=ugettext_lazy("Call Center mode is a CommCareHQ module for managing "
+        help_text=gettext_lazy("Call Center mode is a CommCareHQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
     )
     call_center_type = ChoiceField(
-        label=ugettext_lazy("Call Center Type"),
+        label=gettext_lazy("Call Center Type"),
         initial=CASES_AND_FIXTURES_CHOICE,
         choices=[
             (CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"),
             (CASES_ONLY_CHOICE, "Create just cases"),
         ],
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             """
             If "Create cases and indicators" is selected, each user will have a case associated with it,
             and fixtures will be synced containing indicators about each user. If "Create just cases"
@@ -361,22 +361,22 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
     )
     call_center_case_owner = Field(
-        widget=CallCenterOwnerWidget(attrs={'placeholder': ugettext_lazy('Select an Owner...')}),
-        label=ugettext_lazy("Call Center Case Owner"),
+        widget=CallCenterOwnerWidget(attrs={'placeholder': gettext_lazy('Select an Owner...')}),
+        label=gettext_lazy("Call Center Case Owner"),
         required=False,
-        help_text=ugettext_lazy("Select the person who will be listed as the owner "
+        help_text=gettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
     )
     call_center_case_type = CharField(
-        label=ugettext_lazy("Call Center Case Type"),
+        label=gettext_lazy("Call Center Case Type"),
         required=False,
-        help_text=ugettext_lazy("Enter the case type to be used for FLWs in call center apps")
+        help_text=gettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
     mobile_ucr_sync_interval = IntegerField(
-        label=ugettext_lazy("Default mobile report sync delay (hours)"),
+        label=gettext_lazy("Default mobile report sync delay (hours)"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             """
             Default time to wait between sending updated mobile report data to users.
             Can be overridden on a per user basis.
@@ -402,7 +402,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
             )
         )
-        self.fields['default_timezone'].label = ugettext_lazy('Default timezone')
+        self.fields['default_timezone'].label = gettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
             del self.fields['logo']
@@ -438,10 +438,10 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
-        if (cleaned_data.get('call_center_enabled') and
-                (not cleaned_data.get('call_center_case_type') or
-                 not cleaned_data.get('call_center_case_owner') or
-                 not cleaned_data.get('call_center_type'))):
+        if (cleaned_data.get('call_center_enabled')
+            and (not cleaned_data.get('call_center_case_type')
+                 or not cleaned_data.get('call_center_case_owner')
+                 or not cleaned_data.get('call_center_type'))):
             raise forms.ValidationError(_(
                 'You must choose a Call Center Type, Owner, and Case Type to use the call center application. '
                 'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
@@ -520,21 +520,22 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=ugettext_lazy("Web Apps should use"),
+        label=gettext_lazy("Web Apps should use"),
         initial=None,
         required=False,
         choices=(
-            ('stars', ugettext_lazy('Latest starred version')),
-            ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
+            ('stars', gettext_lazy('Latest starred version')),
+            ('nostars', gettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=ugettext_lazy("Choose whether Web Apps should use the latest starred build or highest numbered "
-                                "build in your application.")
+        help_text=gettext_lazy("Choose whether Web Apps should use the latest starred build or highest numbered "
+                               "build in your application.")
     )
 
     def __init__(self, *args, **kwargs):
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        if self.project.cloudcare_releases == 'default' or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+        if self.project.cloudcare_releases == 'default' \
+                or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
@@ -567,9 +568,9 @@ def tuple_of_copies(a_list, blank=True):
 
 class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
-        label=ugettext_lazy("Restrict Dimagi Staff Access"),
+        label=gettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "CommCare support staff sometimes require access "
             "to your project space to provide rapid, in-depth support. "
             "Checking this box will restrict the degree of support they "
@@ -585,9 +586,9 @@ class PrivacySecurityForm(forms.Form):
         )
     )
     secure_submissions = BooleanField(
-        label=ugettext_lazy("Secure submissions"),
+        label=gettext_lazy("Secure submissions"),
         required=False,
-        help_text=mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+        help_text=mark_safe_lazy(gettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -595,47 +596,47 @@ class PrivacySecurityForm(forms.Form):
             "Read more about secure submissions here</a>"))
     )
     secure_sessions = BooleanField(
-        label=ugettext_lazy("Shorten Inactivity Timeout"),
+        label=gettext_lazy("Shorten Inactivity Timeout"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be logged out after {} minutes "
-                                "of inactivity").format(settings.SECURE_TIMEOUT)
+        help_text=gettext_lazy("All web users on this project will be logged out after {} minutes "
+                               "of inactivity").format(settings.SECURE_TIMEOUT)
     )
     secure_sessions_timeout = IntegerField(
-        label=ugettext_lazy("Inactivity Timeout Length"),
+        label=gettext_lazy("Inactivity Timeout Length"),
         required=False,
-        help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has no effect "
-                                "unless inactivity timeout is on. Note that when this is updated, users may need "
-                                "to log out and back in for it to take effect.").format(settings.SECURE_TIMEOUT)
+        help_text=gettext_lazy("Override the default {}-minute length of the inactivity timeout. Has no effect "
+                               "unless inactivity timeout is on. Note that when this is updated, users may need "
+                               "to log out and back in for it to take effect.").format(settings.SECURE_TIMEOUT)
     )
     allow_domain_requests = BooleanField(
-        label=ugettext_lazy("Web user requests"),
+        label=gettext_lazy("Web user requests"),
         required=False,
-        help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
+        help_text=gettext_lazy("Allow unknown users to request web access to the domain."),
     )
     hipaa_compliant = BooleanField(
-        label=ugettext_lazy("HIPAA compliant"),
+        label=gettext_lazy("HIPAA compliant"),
         required=False,
     )
     two_factor_auth = BooleanField(
-        label=ugettext_lazy("Two Factor Authentication"),
+        label=gettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All users on this project will be required to enable two factor authentication")
+        help_text=gettext_lazy("All users on this project will be required to enable two factor authentication")
     )
     strong_mobile_passwords = BooleanField(
-        label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
+        label=gettext_lazy("Require Strong Passwords for Mobile Workers"),
         required=False,
-        help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
+        help_text=gettext_lazy("All mobile workers in this project will be required to have a strong password")
     )
     ga_opt_out = BooleanField(
-        label=ugettext_lazy("Disable Google Analytics"),
+        label=gettext_lazy("Disable Google Analytics"),
         required=False,
     )
     # Enabled by a specific feature flag:
     # https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints
     restrict_mobile_access = BooleanField(
-        label=ugettext_lazy("Restrict Mobile Endpoint Access"),
+        label=gettext_lazy("Restrict Mobile Endpoint Access"),
         required=False,
-        help_text=mark_safe_lazy(ugettext_lazy(
+        help_text=mark_safe_lazy(gettext_lazy(
             "When this setting is turned on, the Roles and Permissions page will display a new "
             "\"Mobile App Access\" option under \"Other Settings.\" With this permission disabled, "
             "the user account will be unable to login or sync from a mobile application, and will only "
@@ -644,9 +645,9 @@ class PrivacySecurityForm(forms.Form):
             "Read more about restricting mobile endpoint access here.</a>")),
     )
     disable_mobile_login_lockout = BooleanField(
-        label=ugettext_lazy("Disable Mobile Worker Lockout"),
+        label=gettext_lazy("Disable Mobile Worker Lockout"),
         required=False,
-        help_text=ugettext_lazy("Mobile Workers will never be locked out of their account, regardless"
+        help_text=gettext_lazy("Mobile Workers will never be locked out of their account, regardless"
             "of the number of failed attempts")
     )
 
@@ -919,43 +920,43 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         ),
     )
     use_custom_auto_case_update_hour = forms.ChoiceField(
-        label=ugettext_lazy("Choose specific time for custom auto case update rules to run"),
+        label=gettext_lazy("Choose specific time for custom auto case update rules to run"),
         required=True,
         choices=(
-            ('N', ugettext_lazy("No")),
-            ('Y', ugettext_lazy("Yes")),
+            ('N', gettext_lazy("No")),
+            ('Y', gettext_lazy("Yes")),
         ),
     )
     auto_case_update_hour = forms.IntegerField(
-        label=ugettext_lazy("Hour of the day, in UTC, for rules to run (0-23)"),
+        label=gettext_lazy("Hour of the day, in UTC, for rules to run (0-23)"),
         required=False,
         min_value=0,
         max_value=23,
     )
     use_custom_auto_case_update_limit = forms.ChoiceField(
-        label=ugettext_lazy("Set custom auto case update rule limits"),
+        label=gettext_lazy("Set custom auto case update rule limits"),
         required=True,
         choices=(
-            ('N', ugettext_lazy("No")),
-            ('Y', ugettext_lazy("Yes")),
+            ('N', gettext_lazy("No")),
+            ('Y', gettext_lazy("Yes")),
         ),
     )
     auto_case_update_limit = forms.IntegerField(
-        label=ugettext_lazy("Max allowed updates in a daily run"),
+        label=gettext_lazy("Max allowed updates in a daily run"),
         required=False,
         min_value=1000,
     )
     use_custom_odata_feed_limit = forms.ChoiceField(
-        label=ugettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
+        label=gettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
             settings.DEFAULT_ODATA_FEED_LIMIT),
         required=True,
         choices=(
-            ('N', ugettext_lazy("No")),
-            ('Y', ugettext_lazy("Yes")),
+            ('N', gettext_lazy("No")),
+            ('Y', gettext_lazy("Yes")),
         ),
     )
     odata_feed_limit = forms.IntegerField(
-        label=ugettext_lazy("Max allowed OData Feeds"),
+        label=gettext_lazy("Max allowed OData Feeds"),
         required=False,
         min_value=1,
     )
@@ -1217,15 +1218,15 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
+    email = forms.EmailField(label=gettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.RECAPTCHA_PRIVATE_KEY:
         captcha = ReCaptchaField(label="")
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
-                                 "registered?"),
-        'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
-                                  "password."),
+        'unknown': gettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
+                                "registered?"),
+        'unusable': gettext_lazy("The user account associated with this email address cannot reset the "
+                                 "password."),
     }
 
     def clean_email(self):
@@ -1325,7 +1326,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 class HQSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(
-        label=ugettext_lazy("New password"),
+        label=gettext_lazy("New password"),
         widget=forms.PasswordInput(attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
         help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')  # nosec: no user input
     )
@@ -1629,7 +1630,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1681,23 +1682,23 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
-    organization = forms.CharField(label=ugettext_lazy("Organization"))
+    contact_email = MultiCharField(label=gettext_lazy("Email To"), widget=forms.Select(choices=[]))
+    organization = forms.CharField(label=gettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
-    airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
-    device_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on devices:"))
+    airtime_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on airtime:"))
+    device_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on devices:"))
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
-    duration_of_project = forms.CharField(help_text=ugettext_lazy(
+    duration_of_project = forms.CharField(help_text=gettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
         "project, up to a maximum of 12 months at a time (at which point "
         "you need to reapply)."
     ))
-    domain = forms.CharField(label=ugettext_lazy("Project Space"))
+    domain = forms.CharField(label=gettext_lazy("Project Space"))
     dimagi_contact = forms.CharField(
-        help_text=ugettext_lazy("If you have already been in touch with someone from "
+        help_text=gettext_lazy("If you have already been in touch with someone from "
                     "Dimagi, please list their name."),
         required=False)
-    num_expected_users = forms.CharField(label=ugettext_lazy("Number of expected users"))
+    num_expected_users = forms.CharField(label=gettext_lazy("Number of expected users"))
 
     def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
@@ -1706,7 +1707,7 @@ class ProBonoForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            _('Pro-Bono Application'),
+                _('Pro-Bono Application'),
                 'contact_email',
                 'organization',
                 crispy.Div(
@@ -1751,8 +1752,7 @@ class ProBonoForm(forms.Form):
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
-                          "Contact: %s" % self.cleaned_data['contact_email']
-            )
+                          "Contact: %s" % self.cleaned_data['contact_email'])
 
 
 class InternalSubscriptionManagementForm(forms.Form):
@@ -1858,7 +1858,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             hqcrispy.FormActions(
                 crispy.Submit(
                     self.slug,
-                    ugettext_noop('Update'),
+                    gettext_noop('Update'),
                     css_class='disable-on-submit',
                 ),
             ),
@@ -1867,14 +1867,14 @@ class InternalSubscriptionManagementForm(forms.Form):
 
 class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     slug = 'dimagi_only_enterprise'
-    subscription_type = ugettext_noop('Test or Demo Project')
+    subscription_type = gettext_noop('Test or Demo Project')
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.HTML('<div class="alert alert-info">' + ugettext_noop(
+            crispy.HTML('<div class="alert alert-info">' + gettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
@@ -1919,15 +1919,15 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('Extended Trial')
+    subscription_type = gettext_noop('Extended Trial')
 
     organization_name = forms.CharField(
-        label=ugettext_noop('Organization Name'),
+        label=gettext_noop('Organization Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        label=ugettext_noop('Partner Contact Emails'),
+        label=gettext_noop('Partner Contact Emails'),
     )
 
     trial_length = forms.ChoiceField(
@@ -2005,7 +2005,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
 class ContractedPartnerForm(InternalSubscriptionManagementForm):
     slug = 'contracted_partner'
-    subscription_type = ugettext_noop('Contracted Partner')
+    subscription_type = gettext_noop('Contracted Partner')
 
     software_plan_edition = forms.ChoiceField(
         choices=(
@@ -2013,43 +2013,43 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             (SoftwarePlanEdition.PRO, SoftwarePlanEdition.PRO),
             (SoftwarePlanEdition.ADVANCED, SoftwarePlanEdition.ADVANCED),
         ),
-        label=ugettext_noop('Software Plan'),
+        label=gettext_noop('Software Plan'),
     )
 
     fogbugz_client_name = forms.CharField(
-        label=ugettext_noop('Fogbugz Client Name'),
+        label=gettext_noop('Fogbugz Client Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
     )
 
     emails = forms.CharField(
-        help_text=ugettext_noop(
+        help_text=gettext_noop(
             'This is who will receive invoices if the Client exceeds the user '
             'or SMS limits in their plan.'
         ),
-        label=ugettext_noop('Partner Contact Emails'),
+        label=gettext_noop('Partner Contact Emails'),
     )
 
     start_date = forms.DateField(
-        help_text=ugettext_noop('Date the project needs access to features.'),
-        label=ugettext_noop('Start Date'),
+        help_text=gettext_noop('Date the project needs access to features.'),
+        label=gettext_noop('Start Date'),
     )
 
     end_date = forms.DateField(
-        help_text=ugettext_noop(
+        help_text=gettext_noop(
             'Specify the End Date based on the Start Date plus number of '
             'months of software plan in the contract with the Client.'
         ),
-        label=ugettext_noop('End Date'),
+        label=gettext_noop('End Date'),
     )
 
     sms_credits = forms.DecimalField(
         initial=0,
-        label=ugettext_noop('SMS Credits'),
+        label=gettext_noop('SMS Credits'),
     )
 
     user_credits = forms.IntegerField(
         initial=0,
-        label=ugettext_noop('User Credits'),
+        label=gettext_noop('User Credits'),
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
@@ -2252,12 +2252,12 @@ INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS = [
 class SelectSubscriptionTypeForm(forms.Form):
     subscription_type = forms.ChoiceField(
         choices=[
-            ('', ugettext_noop('Select a subscription type...'))
+            ('', gettext_noop('Select a subscription type...'))
         ] + [
             (form.slug, form.subscription_type)
             for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
         ],
-        label=ugettext_noop('Subscription Type'),
+        label=gettext_noop('Subscription Type'),
         required=False,
     )
 
@@ -2286,16 +2286,16 @@ class SelectSubscriptionTypeForm(forms.Form):
 
 
 class ManageReleasesByLocationForm(forms.Form):
-    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
-    location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
-    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
-    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=False)
+    location_id = forms.CharField(label=gettext_lazy("Location"), widget=Select(choices=[]), required=False)
+    version = forms.IntegerField(label=gettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    status = forms.ChoiceField(label=gettext_lazy("Status"),
                                choices=(
-                                   ('', ugettext_lazy('Select Status')),
-                                   ('active', ugettext_lazy('Active')),
-                                   ('inactive', ugettext_lazy('Inactive'))),
+                                   ('', gettext_lazy('Select Status')),
+                                   ('active', gettext_lazy('Active')),
+                                   ('inactive', gettext_lazy('Inactive'))),
                                required=False,
-                               help_text=ugettext_lazy("Applicable for search only"))
+                               help_text=gettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -2315,9 +2315,9 @@ class ManageReleasesByLocationForm(forms.Form):
             crispy.Field('status', id='status-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
-                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
-                    Submit('submit', ugettext_lazy("Add New Restriction"))
+                    crispy.Button('search', gettext_lazy("Search"), data_bind="click: search"),
+                    crispy.Button('clear', gettext_lazy("Clear"), data_bind="click: clear"),
+                    Submit('submit', gettext_lazy("Add New Restriction"))
                 )
             )
         )
@@ -2371,8 +2371,8 @@ class ManageReleasesByLocationForm(forms.Form):
 
 
 class BaseManageReleasesByAppProfileForm(forms.Form):
-    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=gettext_lazy('Version'), required=False, widget=Select(choices=[]))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.request = request
@@ -2412,13 +2412,13 @@ class BaseManageReleasesByAppProfileForm(forms.Form):
 
 
 class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    app_build_profile_id = forms.ChoiceField(label=ugettext_lazy("Build Profile"), choices=(),
+    app_build_profile_id = forms.ChoiceField(label=gettext_lazy("Build Profile"), choices=(),
                                              required=False)
-    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+    status = forms.ChoiceField(label=gettext_lazy("Status"),
                                choices=(
-                                   ('', ugettext_lazy('Select Status')),
-                                   ('active', ugettext_lazy('Active')),
-                                   ('inactive', ugettext_lazy('Inactive'))),
+                                   ('', gettext_lazy('Select Status')),
+                                   ('active', gettext_lazy('Active')),
+                                   ('inactive', gettext_lazy('Inactive'))),
                                required=False)
 
     def __init__(self, request, domain, *args, **kwargs):
@@ -2439,14 +2439,14 @@ class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
     @staticmethod
     def _buttons():
         return [
-            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search",
+            crispy.Button('search', gettext_lazy("Search"), data_bind="click: search",
                           css_class='btn-primary'),
-            crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+            crispy.Button('clear', gettext_lazy("Clear"), data_bind="click: clear"),
         ]
 
 
 class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    build_profile_id = forms.CharField(label=ugettext_lazy('Build Profile'),
+    build_profile_id = forms.CharField(label=gettext_lazy('Build Profile'),
                                        required=True, widget=SelectMultiple(choices=[]),)
 
     def save(self):
@@ -2485,7 +2485,7 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
 
     @staticmethod
     def _buttons():
-        return [Submit('submit', ugettext_lazy("Add New Restriction"), css_class='btn-primary')]
+        return [Submit('submit', gettext_lazy("Add New Restriction"), css_class='btn-primary')]
 
     def clean(self):
         if self.cleaned_data.get('version'):

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
@@ -146,7 +146,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
-    name = ugettext_lazy('Case List')
+    name = gettext_lazy('Case List')
     slug = 'case_list'
 
     @classmethod

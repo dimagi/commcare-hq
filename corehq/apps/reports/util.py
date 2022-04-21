@@ -8,7 +8,7 @@ from importlib import import_module
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import pytz
 from memoized import memoized
@@ -111,7 +111,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
     if simplified:
-        return [_report_user_dict(user) for user in users]
+        return [_report_user(user) for user in users]
     return users
 
 
@@ -186,11 +186,11 @@ class SimplifiedUserInfo(
         return Group.by_user_id(self.user_id, False)
 
 
-def _report_user_dict(user):
+def _report_user(user):
     """
     Accepts a user object or a dict such as that returned from elasticsearch.
-    Make sure the following fields are available:
-    ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
+    Make sure the following fields (attributes) are available:
+    _id, username, first_name, last_name, doc_type, is_active
     """
     if not isinstance(user, dict):
         user_report_attrs = [
@@ -236,8 +236,8 @@ def get_simplified_users(user_es_query):
     matching users, sorted by username.
     """
     users = user_es_query.fields(SimplifiedUserInfo.ES_FIELDS).run().hits
-    users = list(map(_report_user_dict, users))
-    return sorted(users, key=lambda u: u['username_in_report'])
+    users = list(map(_report_user, users))
+    return sorted(users, key=lambda u: u.username_in_report)
 
 
 def format_datatables_data(text, sort_key, raw=None):

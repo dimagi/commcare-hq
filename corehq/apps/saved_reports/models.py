@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
@@ -47,6 +47,7 @@ from corehq.apps.reports.daterange import (
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
+    ReleaseManagementReportDispatcher,
 )
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from corehq.apps.reports.tasks import export_all_rows_task
@@ -197,7 +198,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            EnterpriseReportDispatcher
+            EnterpriseReportDispatcher,
+            ReleaseManagementReportDispatcher,
         ]
 
         for dispatcher in dispatchers:

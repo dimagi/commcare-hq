@@ -2,17 +2,14 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.template.defaultfilters import linebreaksbr
-from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery import chord
 from celery.task import task
 
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
 
 from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
@@ -39,14 +36,9 @@ from corehq.apps.linked_domain.ucr import (
     update_linked_ucr,
 )
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import (
-    pull_missing_multimedia_for_app_and_notify,
-)
-from corehq.apps.reminders.views import KeywordsListView
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
-from corehq.privileges import RELEASE_MANAGEMENT
 
 
 @task(queue='linked_domain_queue')
@@ -168,24 +160,11 @@ The following linked project spaces received content:
         linked_report = get_downstream_report(domain_link.linked_domain, report_id)
 
         if not linked_report:
-            if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
-                try:
-                    linked_report_info = create_linked_ucr(domain_link, report_id)
-                    linked_report = linked_report_info.report
-                except DomainLinkError as e:
-                    return self._error_tuple(str(e))
-            else:
-                report = ReportConfiguration.get(report_id)
-                if report.report_meta.created_by_builder:
-                    view = 'edit_report_in_builder'
-                else:
-                    view = 'edit_configurable_report'
-                url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
-                return self._error_tuple(
-                    _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
-                      + 'report.').format(url),
-                    text=_('Could not find report. Please check that the report has been linked.'),
-                )
+            try:
+                linked_report_info = create_linked_ucr(domain_link, report_id)
+                linked_report = linked_report_info.report
+            except DomainLinkError as e:
+                return self._error_tuple(str(e))
 
         # have no hit an error case, so update the ucr
         update_linked_ucr(domain_link, linked_report.get_id)
@@ -207,21 +186,7 @@ The following linked project spaces received content:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
                                  .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
-            if domain_has_privilege(self.upstream_domain, RELEASE_MANAGEMENT):
-                linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
-            else:
-                return self._error_tuple(
-                    _('Could not find linked keyword in {domain}. '
-                      'Please check that the keyword has been linked from the '
-                      '<a href="{keyword_url}">Keyword Page</a>.').format(
-                        domain=domain_link.linked_domain,
-                        keyword_url=(
-                            get_url_base() + reverse(
-                                KeywordsListView.urlname, args=[domain_link.master_domain]
-                            ))
-                    ),
-                    _('Could not find linked keyword. Please check the keyword has been linked.'),
-                )
+            linked_keyword_id = create_linked_keyword(domain_link, upstream_id)
 
         update_keyword(domain_link, linked_keyword_id)
         domain_link.update_last_pull(

@@ -2,8 +2,8 @@ from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
@@ -39,15 +39,15 @@ mark_safe_lazy = lazy(mark_safe, str)
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
     slug = "view_by"
-    label = ugettext_lazy("View by Users or Groups")
-    default_text = ugettext_lazy("Users")
-    options = [('groups', ugettext_lazy('Groups'))]
+    label = gettext_lazy("View by Users or Groups")
+    default_text = gettext_lazy("Users")
+    options = [('groups', gettext_lazy('Groups'))]
 
 
 class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
-    label = ugettext_lazy("User Type")
+    label = gettext_lazy("User Type")
     template = "reports/filters/filter_users.html"
 
     @property
@@ -65,8 +65,8 @@ class UserTypeFilter(BaseReportFilter):
 
 class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     slug = 'individual'
-    label = ugettext_lazy("Select Mobile Worker")
-    default_text = ugettext_lazy("All Mobile Workers")
+    label = gettext_lazy("Select Mobile Worker")
+    default_text = gettext_lazy("All Mobile Workers")
 
     @property
     def filter_context(self):
@@ -94,8 +94,8 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
-    label = ugettext_noop("Select Case Owner")
-    default_text = ugettext_noop("All Case Owners")
+    label = gettext_noop("Select Case Owner")
+    default_text = gettext_noop("All Case Owners")
 
     @property
     def options(self):
@@ -131,16 +131,16 @@ class EmwfUtils(object):
         self.namespace_locations = namespace_locations
 
     def user_tuple(self, u):
-        user = util._report_user_dict(u)
-        uid = "u__%s" % user['user_id']
+        user = util._report_user(u)
+        uid = "u__%s" % user.user_id
         is_active = False
         if u['doc_type'] == 'WebUser':
-            name = "%s [Web User]" % user['username_in_report']
-        elif user['is_active']:
+            name = "%s [Web User]" % user.username_in_report
+        elif user.is_active:
             is_active = True
-            name = "%s [Active Mobile Worker]" % user['username_in_report']
+            name = "%s [Active Mobile Worker]" % user.username_in_report
         else:
-            name = "%s [Deactivated Mobile Worker]" % user['username_in_report']
+            name = "%s [Deactivated Mobile Worker]" % user.username_in_report
         return uid, name, is_active
 
     def reporting_group_tuple(self, g):
@@ -205,9 +205,9 @@ class EmwfUtils(object):
 class UsersUtils(EmwfUtils):
 
     def user_tuple(self, u):
-        user = util._report_user_dict(u)
-        uid = "%s" % user['user_id']
-        name = "%s" % user['username_in_report']
+        user = util._report_user(u)
+        uid = "%s" % user.user_id
+        name = "%s" % user.username_in_report
         return (uid, name)
 
 
@@ -220,7 +220,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+    location_search_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
         'target="_blank">Advanced Search:</a> '
         'Put your location name in quotes to show only exact matches. To more '
@@ -229,12 +229,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     ))
 
     slug = "emw"
-    label = ugettext_lazy("User(s)")
+    label = gettext_lazy("User(s)")
     default_options = None
-    placeholder = ugettext_lazy("Add users and groups to filter this report.")
+    placeholder = gettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+    filter_help_inline = mark_safe_lazy(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
         ' target="_blank"> Filter Definitions</a>.'))
@@ -469,13 +469,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 class EnterpriseUsersUtils(EmwfUtils):
 
     def user_tuple(self, user):
-        user_dict = util._report_user_dict(user)
-        uid = "u__%s" % user_dict['user_id']
+        user_obj = util._report_user(user)
+        uid = "u__%s" % user_obj.user_id
         is_active = False
-        report_username = user_dict['username_in_report']
+        report_username = user_obj.username_in_report
         if user['doc_type'] == 'WebUser':
             name = f"{report_username} [Web User]"
-        elif user_dict['is_active']:
+        elif user_obj.is_active:
             is_active = True
             name = f"{report_username} [Active Mobile Worker in '{user['domain']}']"
         else:
@@ -525,15 +525,15 @@ class AffectedUserFilter(EnterpriseUserFilter):
 
 class ChangedByUserFilter(EnterpriseUserFilter):
     slug = "changed_by_user"
-    label = ugettext_lazy("Modified by User(s)")
+    label = gettext_lazy("Modified by User(s)")
 
     def get_default_selections(self):
         return [('t__6', _("[Web Users]"))]
 
 
 class UserPropertyFilter(BaseSingleOptionFilter):
-    label = ugettext_noop('Modified Property')
-    default_text = ugettext_noop('Select Property')
+    label = gettext_noop('Modified Property')
+    default_text = gettext_noop('Select Property')
     slug = 'user_property'
 
     @property
@@ -547,22 +547,22 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 class ChangeActionFilter(BaseMultipleOptionFilter):
     ALL = '0'
 
-    label = ugettext_noop('Action')
-    default_text = ugettext_noop('Select Action')
+    label = gettext_noop('Action')
+    default_text = gettext_noop('Select Action')
     slug = 'action'
 
     options = [
-        (ALL, ugettext_noop('All')),
-        (str(UserHistory.CREATE), ugettext_noop('Create')),
-        (str(UserHistory.UPDATE), ugettext_noop('Update')),
-        (str(UserHistory.DELETE), ugettext_noop('Delete')),
+        (ALL, gettext_noop('All')),
+        (str(UserHistory.CREATE), gettext_noop('Create')),
+        (str(UserHistory.UPDATE), gettext_noop('Update')),
+        (str(UserHistory.DELETE), gettext_noop('Delete')),
     ]
     default_options = ['0']
 
 
 class UserUploadRecordFilter(BaseSingleOptionFilter):
-    label = ugettext_noop('User Bulk Upload')
-    default_text = ugettext_noop('Select upload')
+    label = gettext_noop('User Bulk Upload')
+    default_text = gettext_noop('Select upload')
     slug = 'user_upload_record'
 
     @property

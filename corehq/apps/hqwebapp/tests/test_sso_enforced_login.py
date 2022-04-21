@@ -231,7 +231,7 @@ class TestEmailAuthenticationFormWithSso(TestCase):
             form.fields['username'].widget.attrs,
             {
                 'class': 'form-control',
-                'maxlength': '75',
+                'maxlength': 150,
             }
         )
         self.assertEqual(
@@ -240,3 +240,7 @@ class TestEmailAuthenticationFormWithSso(TestCase):
                 'class': 'form-control',
             }
         )
+
+    def test_form_username_max_length(self):
+        username = EmailAuthenticationForm().fields["username"]
+        self.assertEqual(username.max_length, username.widget.attrs["maxlength"])

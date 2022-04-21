@@ -22,7 +22,7 @@ def is_public_reports(view_kwargs, request):
 
 class UsersMiddleware(MiddlewareMixin):
 
-    def __init__(self, get_response=None):
+    def __init__(self, get_response):
         super(UsersMiddleware, self).__init__(get_response)
         # Normally we'd expect this class to be pulled out of the middleware list, too,
         # but in case someone forgets, this will stop this class from being used.
