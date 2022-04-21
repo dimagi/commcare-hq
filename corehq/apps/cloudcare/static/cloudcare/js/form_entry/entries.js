@@ -1101,13 +1101,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         hideLabel: hideLabel,
                     });
                     if (!hideLabel) {
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen");
-
-                        if (entry.question.required()) {
-                            kissmetrics.track.event("Accessibility Tracking - Tabular Question Required");
-                        }
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired
+                        });
                         $(function () {
-                            $(".q.form-group").change( function () {
+                            $(".q.form-group").change(function () {
                                 kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
@@ -1133,13 +1132,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         hideLabel: false,
                     });
                     if (!hideLabel) {
-                        kissmetrics.track.event("Accessibility Tracking - Tabular Multiple Choice Question Seen");
-
-                        if (entry.question.required()) {
-                            kissmetrics.track.event("Accessibility Tracking - Tabular Question Required");
-                        }
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired
+                        });
                         $(function () {
-                            $(".q.form-group").change( function () {
+                            $(".q.form-group").change(function () {
                                 kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
