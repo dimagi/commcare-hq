@@ -69,6 +69,17 @@ def within_distance(node, context):
     return case_property_geo_distance(property_name, geo_point, **{unit: distance})
 
 
+def fuzzy_match(node, context):
+    """fuzzy-match(alias, 'pinky')"""
+    from corehq.apps.case_search.dsl_utils import unwrap_value
+
+    confirm_args_count(node, 2)
+    property_name = _property_name_to_string(node.args[0], node)
+    value = unwrap_value(node.args[1], context)
+
+    return case_property_query(property_name, value, fuzzy=True)
+
+
 def _property_name_to_string(value, node):
     if isinstance(value, Step):
         return serialize(value)
