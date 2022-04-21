@@ -2,11 +2,9 @@
 DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
-import uuid
 import warnings
 
 from django.template.loader import render_to_string
-from django.utils.translation import gettext_noop
 
 import pytz
 
@@ -47,46 +45,6 @@ class ReportField(object):
         If your select field needs some context (for example, to set the default) you can set that up here.
         """
         pass
-
-
-class ReportSelectField(ReportField):
-    slug = "generic_select"
-    name = gettext_noop("Generic Select")
-    template = "reports/dont_use_fields/select_generic.html"
-    default_option = gettext_noop("Select Something...")
-    options = [dict(val="val", text="text")]
-    cssId = "generic_select_box"
-    cssClasses = "span4"
-    selected = None
-    hide_field = False
-    as_combo = False
-    placeholder = ''
-    help_text = ''
-
-    def __init__(self, *args, **kwargs):
-        super(ReportSelectField, self).__init__(*args, **kwargs)
-        # need to randomize cssId so knockout bindings won't clobber each other
-        # when multiple select controls on screen at once
-        nonce = uuid.uuid4().hex[-12:]
-        self.cssId = '%s-%s' % (self.cssId, nonce)
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug)
-
-    def update_context(self):
-        self.update_params()
-        self.context['hide_field'] = self.hide_field
-        self.context['help_text'] = self.help_text
-        self.context['select'] = dict(
-            options=self.options,
-            default=self.default_option,
-            cssId=self.cssId,
-            cssClasses=self.cssClasses,
-            label=self.name,
-            selected=self.selected,
-            use_combo_box=self.as_combo,
-            placeholder=self.placeholder,
-        )
 
 
 class BooleanField(ReportField):
