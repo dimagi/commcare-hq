@@ -169,20 +169,10 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(
-                            self.query_domains,
-                            value,
-                            self.fuzzy_properties,
-                            self.fuzzy_properties_by_case_type
-                        ))
+                        search_es = search_es.filter(self._build_filter_from_xpath(value))
                     return search_es
                 else:
-                    return search_es.filter(build_filter_from_xpath(
-                        self.query_domains,
-                        criteria.value,
-                        self.fuzzy_properties,
-                        self.fuzzy_properties_by_case_type
-                    ))
+                    return search_es.filter(self._build_filter_from_xpath(criteria.value))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -212,12 +202,7 @@ class CaseSearchQueryBuilder:
             return case_property_missing(criteria.key)
 
         if criteria.is_ancestor_query:
-            missing_filter = build_filter_from_xpath(
-                self.query_domains,
-                f'{criteria.key} = ""',
-                self.fuzzy_properties,
-                self.fuzzy_properties_by_case_type
-            )
+            missing_filter = self._build_filter_from_xpath(f'{criteria.key} = ""')
         else:
             missing_filter = case_property_missing(criteria.key)
         return filters.OR(self._get_query(criteria), missing_filter)
@@ -229,15 +214,18 @@ class CaseSearchQueryBuilder:
         value = self._remove_ignored_patterns(criteria.key, criteria.value)
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
-            return build_filter_from_xpath(
-                self.query_domains,
-                query,
-                self.fuzzy_properties,
-                self.fuzzy_properties_by_case_type
-            )
+            return self._build_filter_from_xpath(query)
         else:
             fuzzy = criteria.key in self.fuzzy_properties
             return case_property_query(criteria.key, value, fuzzy=fuzzy)
+
+    def _build_filter_from_xpath(self, query):
+        return build_filter_from_xpath(
+            self.query_domains,
+            query,
+            self.fuzzy_properties,
+            self.fuzzy_properties_by_case_type
+        )
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:
