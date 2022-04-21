@@ -296,12 +296,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             user_change_logger.add_changes({'user_data': bundle.obj.user_data})
                     except ValueError as e:
                         raise BadRequest(str(e))
-                else:
-                    # first_name, last_name, language
+                elif key in ['first_name', 'last_name', 'language']:
                     if user_change_logger and getattr(bundle.obj, key) != value:
                         user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
+                else:
+                    raise BadRequest(f'Attempted to update unknown key {key}.')
         return should_save
 
     def obj_create(self, bundle, **kwargs):
