@@ -20,6 +20,11 @@ def get_instance_string():
     return env
 
 
+def get_client_ip_from_request(request):
+    meta = get_meta(request)
+    return get_client_ip_from_meta(meta)
+
+
 def get_client_ip_from_meta(meta):
     x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
