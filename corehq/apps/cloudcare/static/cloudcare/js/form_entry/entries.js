@@ -1,5 +1,6 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -1099,6 +1100,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
+                    if (!hideLabel) {
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen");
+
+                        if (entry.question.required()) {
+                            kissmetrics.track.event("Accessibility Tracking - Tabular Question Required");
+                        }
+                        $(function () {
+                            $(".q.form-group").change( function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+
+                    }
                 } else {
                     entry = new SingleSelectEntry(question, {
                         receiveStyle: receiveStyle,
@@ -1118,6 +1132,18 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: false,
                     });
+                    if (!hideLabel) {
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Multiple Choice Question Seen");
+
+                        if (entry.question.required()) {
+                            kissmetrics.track.event("Accessibility Tracking - Tabular Question Required");
+                        }
+                        $(function () {
+                            $(".q.form-group").change( function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+                    }
                 } else if (hideLabel) {
                     entry = new MultiSelectEntry(question, {
                         hideLabel: true,
