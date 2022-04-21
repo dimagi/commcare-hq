@@ -9,7 +9,6 @@ import attr
 
 from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.domain.utils import get_domain_from_url
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
 
