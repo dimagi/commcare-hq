@@ -109,6 +109,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(domain_arg, "domain")
         self.assertEqual(raw_query, 'name = "farid"')
 
+        # fuzzy is False even though 'name' is a fuzzy prop
         expected_parent_filter = case_property_query("name", "farid", fuzzy=False)
         self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
 
@@ -127,13 +128,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         expected = filters.AND(
             case_property_query("@case_type", "child"),
+            # fuzzy is True here because the 'name' prop is configured as fuzzy for the 'child' case type
             case_property_query("name", "Margaery", fuzzy=True),
         )
         module_path = "corehq.apps.case_search.xpath_functions.subcase_functions"
         with patch(f"{module_path}._build_subcase_filter_from_ast", new=_build_mock_fn(expected)), \
              patch(f"{module_path}._get_parent_case_ids", return_value=["123"]):
 
-            context = SearchFilterContext("domain", {"name"}, {"child": {"name"}})
+            context = SearchFilterContext("domain", set(), {"child": {"name"}})
             built_filter = build_filter_from_ast(parsed, context)
 
         expected_filter = filters.doc_id(["123"])

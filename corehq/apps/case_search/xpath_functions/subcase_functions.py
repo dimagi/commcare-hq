@@ -232,6 +232,8 @@ def _extract_subcase_query_parts(node):
 
 
 def _get_case_types(filter_ast, context):
+    """Best effort attempt to get the case type for the subcase being queried.
+    This has some shortcomings as it does not deal with filters that are combined with 'or'"""
     from corehq.apps.case_search.dsl_utils import unwrap_value
 
     if not isinstance(filter_ast, BinaryExpression):
