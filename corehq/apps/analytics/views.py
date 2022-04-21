@@ -19,6 +19,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.analytics.utils import (
     get_meta,
     get_client_ip_from_request,
+    log_response,
 )
 
 
@@ -97,6 +98,7 @@ def submit_hubspot_cta_form(request):
         form_id=form_id
     )
     response = requests.post(url, data=form_data)
+    log_response('HS', form_data, response)
     response.raise_for_status()
 
     return JsonResponse({

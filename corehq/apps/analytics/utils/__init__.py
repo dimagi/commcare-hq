@@ -1,4 +1,11 @@
+import json
+import requests
+import logging
+
 from django.conf import settings
+
+logger = logging.getLogger('analytics')
+logger.setLevel('DEBUG')
 
 
 def get_meta(request):
@@ -32,3 +39,22 @@ def get_client_ip_from_meta(meta):
     else:
         ip = meta.get('REMOTE_ADDR')
     return ip
+
+
+def log_response(target, data, response):
+    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
+    try:
+        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
+    except Exception:
+        response_text = status_code
+
+    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
+        target=target,
+        data=json.dumps(data, indent=2, sort_keys=True),
+        response=response_text
+    )
+
+    if 400 <= status_code < 600:
+        logger.error(message)
+    else:
+        logger.debug(message)
