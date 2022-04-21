@@ -64,7 +64,6 @@ branches:
     - nh/loadtest_users_postmigration  # Norman March 25
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - smh/multi-select-contiune-workflow # Steph/Jenny April 11
-    - jls/multiple-referrals-block-case-management # Jenny April 14
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
     - fr/ucr-registry-linked  # Farid April 12
     - ap/sql-case-repeater # Amit March 23
