@@ -78,4 +78,5 @@ branches:
     - smh/multi-select-web-ui-formatting # Steph April 19
     - sk/remove-feature-phone-support  # Simon April 20
     - bmb/trial-signup-bug  # Biyeun April 21
+    - ml/dhis2-error-handling # Minha April 21
 submodules: { }
