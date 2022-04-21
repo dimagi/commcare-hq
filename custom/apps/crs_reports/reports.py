@@ -216,8 +216,7 @@ CUSTOM_REPORTS = (
     )),
 )
 
-QUESTION_TEMPLATES = (
-    (HBNCMotherReport.slug, [
+QUESTION_TEMPLATES = [
         { 'questions' :[
             {'case_property': 'section_a',
              'question': _('A. Ask Mother.')
@@ -305,5 +304,4 @@ QUESTION_TEMPLATES = (
             'question': _('Pus on umbilicus?'),
             }]
         }
-    ]),
-)
+]
