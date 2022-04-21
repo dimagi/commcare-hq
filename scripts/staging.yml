@@ -78,4 +78,5 @@ branches:
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - smh/multi-select-web-ui-formatting # Steph April 19
     - sk/remove-feature-phone-support  # Simon April 20
+    - bmb/trial-signup-bug  # Biyeun April 21
 submodules: { }
