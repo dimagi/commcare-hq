@@ -72,101 +72,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_simple_fuzzy_filter(self):
         parsed = parse_xpath("name = 'farid'")
 
-        expected_filter = {
-            "bool": {
-                "should": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "match": {
-                                            "case_properties.value": {
-                                                "query": "farid",
-                                                "operator": "or",
-                                                "fuzziness": "AUTO"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "match": {
-                                            "case_properties.value": {
-                                                "query": "farid",
-                                                "operator": "or",
-                                                "fuzziness": "0"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-
+        expected_filter = case_property_query("name", "farid", fuzzy=True)
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_ancestor_filter(self):
         parsed = parse_xpath("parent/name = 'farid'")
 
-        expected_filter = {
-            "nested": {
-                "path": "indices",
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "terms": {
-                                                "indices.referenced_id": [
-                                                    "123"
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "term": {
-                                                "indices.identifier": "parent"
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                }
-            }
-        }
+        expected_filter = reverse_index_case_query(["123"], "parent")
 
         with patch("corehq.apps.case_search.filter_dsl._do_parent_lookup") as parent_lookup:
             parent_lookup.return_value = ["123"]
@@ -177,36 +90,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(domain_arg, "domain")
         self.assertEqual(raw_query, 'name = "farid"')
 
-        expected_parent_filter = {
-            "nested": {
-                "path": "case_properties",
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "filter": (
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "name"
-                                            }
-                                        },
-                                        {
-                                            "term": {
-                                                "case_properties.value.exact": "farid"
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                }
-            }
-        }
+        expected_parent_filter = case_property_query("name", "farid", fuzzy=False)
         self.checkQuery(parent_built_filter, expected_parent_filter, is_raw_query=True)
 
     def test_ancestor_fuzzy_filter(self):
