@@ -423,7 +423,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             $(function ()  {
                 var goButton = $("#pagination-go-button");
-                if(goButton.length) {
+                if (goButton.length) {
                     kissmetrics.track.event("Accessibility Tracking - Pagination Page Loaded");
                 }
             });
