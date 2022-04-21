@@ -179,9 +179,17 @@ def import_patients_of_owner(requests, importer, domain_name, owner_id, location
         return
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
+        try:
+            patient_id = str(patient[importer.external_id_column])
+        except KeyError:
+            raise ConfigurationError(
+                f'Error importing patients for project space "{importer.domain}" '
+                f'from OpenMRS Importer "{importer}": External ID column '
+                f'"{importer.external_id_column}" not found in patient data.'
+            )
         case, error = importer_util.lookup_case(
             EXTERNAL_ID,
-            str(patient[importer.external_id_column]),
+            patient_id,
             domain_name,
             importer.case_type
         )
