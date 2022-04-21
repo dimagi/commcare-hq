@@ -6,13 +6,11 @@ from django.contrib.auth.models import User
 from django.db.models import ForeignKey, Min
 
 import attr
-from couchdbkit.ext.django.loading import get_db
 
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.domain.utils import get_domain_from_url
-from corehq.apps.users.models import WebUser, Invitation
+from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
 
 from ..models import AccessAudit, NavigationEventAudit
@@ -169,31 +167,6 @@ class AuditWindowQuery:
                 break
 
 
-def iter_couch_audit_events(params, chunksize=10000):
-    if not (params.get("start_date") or params.get("user")):
-        raise NotImplementedError("auditcare queries on Couch have not "
-            "been designed for unbounded queries")
-    if params.get("start_date"):
-        sql_start = get_sql_start_date()
-        if params["start_date"] > sql_start:
-            return
-    db = get_db("auditcare")
-    if "user" in params:
-        view_name = "auditcare/urlpath_by_user_date"
-    else:
-        view_name = "auditcare/all_events"
-    startkey, endkey = _get_couch_view_keys(**params)
-    doc_ids = {r["id"] for r in db.view(
-        view_name,
-        startkey=startkey,
-        endkey=endkey,
-        reduce=False,
-        include_docs=False,
-    )}
-    for doc in iter_docs(db, doc_ids, chunksize=chunksize):
-        yield CouchAuditEvent(doc)
-
-
 def get_sql_start_date():
     """Get the date of the first SQL auditcare record
 
@@ -231,24 +204,6 @@ class CouchAuditEvent:
         if self.doc_type == "NavigationEventAudit":
             return self.request_path
         return self.path_info
-
-
-def _get_couch_view_keys(user=None, start_date=None, end_date=None):
-    def date_key(date):
-        return [date.year, date.month, date.day]
-
-    startkey = [user] if user else []
-    if start_date:
-        startkey.extend(date_key(start_date))
-
-    endkey = [user] if user else []
-    if end_date:
-        end = end_date + timedelta(days=1)
-        endkey.extend(date_key(end))
-    else:
-        endkey.append({})
-
-    return startkey, endkey
 
 
 def get_foreign_names(model):
