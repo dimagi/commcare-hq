@@ -104,7 +104,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import InvalidUpdateRequest
 
 MOCK_BULK_USER_ES = None
 
@@ -197,6 +196,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
+    immutable_fields = ['id', 'username']
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -224,6 +224,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
+            if key in self.immutable_fields:
+                raise BadRequest(f'Cannot update a mobile user\'s {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -314,13 +316,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             )
             # password was just set
             bundle.data.pop('password', None)
-
-            try:
-                self._validate_update(bundle)
-            except InvalidUpdateRequest as e:
-                for field in e.illegal_fields:
-                    bundle.data.pop(field, None)
-
+            # do not call update with username key
+            bundle.data.pop('username', None)
             self._update(bundle)
             bundle.obj.save()
         except Exception:
@@ -337,10 +334,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        try:
-            self._validate_update(bundle)
-        except InvalidUpdateRequest as e:
-            raise BadRequest(str(e))
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         user_change_logger = self._get_user_change_logger(bundle)
@@ -358,21 +351,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
-
-    def _validate_update(self, bundle):
-        """
-        Ensures only non-readonly fields specified on the UserResource/CommCareUserResource are updated
-        Raises an InvalidUpdateRequest exception that contains a list of illegal fields
-        """
-        editable_fields = {name for name, obj in self.fields.items() if not obj.readonly}
-        # not ideal, but can't specify a password field in the resource that gets excluded from get_list
-        exceptions = {'password'}
-        valid_fields = set(list(editable_fields) + list(exceptions))
-        fields_to_update = set(bundle.data.keys())
-        illegal_fields = fields_to_update.difference(valid_fields)
-
-        if illegal_fields:
-            raise InvalidUpdateRequest(illegal_fields)
 
 
 class WebUserResource(v0_1.WebUserResource):

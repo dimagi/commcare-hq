@@ -25,13 +25,12 @@ TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
-    username = fields.CharField(attribute='username', readonly=True, unique=True)
+    username = fields.CharField(attribute='username', unique=True)
     first_name = fields.CharField(attribute='first_name', null=True)
     last_name = fields.CharField(attribute='last_name', null=True)
     default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
     email = fields.CharField(attribute='email')
     phone_numbers = fields.ListField(attribute='phone_numbers')
-    language = fields.CharField(attribute='language', null=True)
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']

@@ -940,7 +940,6 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'username': user.username,
                 'first_name': '',
                 'last_name': '',
-                'language': None,
                 'default_phone_number': None,
                 'user_data': {'commcare_project': self.domain},
                 'groups': [],

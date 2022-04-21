@@ -93,7 +93,6 @@ class TestCommCareUserResource(APIResourceTest):
             'groups': [],
             'id': backend_id,
             'last_name': '',
-            'language': None,
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
             'user_data': {'commcare_project': 'qwerty'},
@@ -120,7 +119,6 @@ class TestCommCareUserResource(APIResourceTest):
             'groups': [],
             'id': backend_id,
             'last_name': '',
-            'language': None,
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
             'user_data': {'commcare_project': 'qwerty'},
@@ -169,60 +167,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
-
-    def test_can_update_password(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "password": "new-password",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 200)
-
-    def test_cannot_update_readonly_field(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "id": "changed-id",
-            "username": "changed-test",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update the key(s) username, id."}'
-        )
-
-    def test_cannot_update_unspecfied_key(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "_id": "new-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update the key(s) _id."}'
-        )
 
     def test_update(self):
 
@@ -328,6 +272,44 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(
             response.content.decode('utf-8'),
             '{"error": "metadata properties conflict with profile: imaginary"}'
+        )
+
+    def test_cannot_update_id(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "id": "changed-id",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Cannot update a mobile user\'s id."}'
+        )
+
+    def test_cannot_update_username(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "username": "changed-test",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Cannot update a mobile user\'s username."}'
         )
 
 
