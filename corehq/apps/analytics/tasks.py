@@ -42,6 +42,7 @@ from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
     get_instance_string,
     get_meta,
+    get_client_ip_from_meta,
 )
 from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
@@ -237,15 +238,6 @@ def _get_user_hubspot_id(web_user, retry_num=0):
     return None
 
 
-def _get_client_ip(meta):
-    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = meta.get('REMOTE_ADDR')
-    return ip
-
-
 def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
@@ -263,7 +255,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if hubspot_id and hubspot_cookie:
         data = {
             'email': email if email else webuser.username,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": get_client_ip_from_meta(meta)}),
         }
         if webuser:
             data.update({

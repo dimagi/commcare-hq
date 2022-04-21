@@ -18,3 +18,12 @@ def get_instance_string():
     instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE', '')
     env = '' if instance == 'www' else instance + '_'
     return env
+
+
+def get_client_ip_from_meta(meta):
+    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = meta.get('REMOTE_ADDR')
+    return ip
