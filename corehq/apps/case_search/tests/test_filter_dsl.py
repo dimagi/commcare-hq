@@ -101,7 +101,8 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         with patch("corehq.apps.case_search.filter_dsl._do_parent_lookup") as parent_lookup:
             parent_lookup.return_value = ["123"]
-            built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
+            context = SearchFilterContext("domain", {"name"}, {"parent": {"name"}})
+            built_filter = build_filter_from_ast(parsed, context)
 
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
         domain_arg, parent_built_filter, raw_query = parent_lookup.call_args.args
@@ -126,13 +127,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         expected = filters.AND(
             case_property_query("@case_type", "child"),
-            case_property_query("name", "Margaery"),
+            case_property_query("name", "Margaery", fuzzy=True),
         )
         module_path = "corehq.apps.case_search.xpath_functions.subcase_functions"
         with patch(f"{module_path}._build_subcase_filter_from_ast", new=_build_mock_fn(expected)), \
              patch(f"{module_path}._get_parent_case_ids", return_value=["123"]):
 
-            built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", {"name"}))
+            context = SearchFilterContext("domain", {"name"}, {"child": {"name"}})
+            built_filter = build_filter_from_ast(parsed, context)
 
         expected_filter = filters.doc_id(["123"])
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)

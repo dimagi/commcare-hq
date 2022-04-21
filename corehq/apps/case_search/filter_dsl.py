@@ -1,16 +1,11 @@
+import itertools
 import re
 from dataclasses import dataclass, field
 
 from django.utils.translation import gettext as _
 
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import (
-    BinaryExpression,
-    FunctionCall,
-    Step,
-    UnaryExpression,
-    serialize,
-)
+from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step, serialize
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import (
@@ -18,9 +13,7 @@ from corehq.apps.case_search.exceptions import (
     TooManyRelatedCasesError,
     XPathFunctionException,
 )
-from corehq.apps.case_search.xpath_functions import (
-    XPATH_QUERY_FUNCTIONS,
-)
+from corehq.apps.case_search.xpath_functions import XPATH_QUERY_FUNCTIONS
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -34,13 +27,20 @@ from corehq.apps.es.case_search import (
 class SearchFilterContext:
     domain: str
     fuzzy_props: set = field(default_factory=set)
+    fuzzy_props_by_case_type: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.fuzzy_props = self.fuzzy_props or set()
+        self.fuzzy_props_by_case_type = self.fuzzy_props_by_case_type or {}
 
     def is_fuzzy(self, case_property):
-        return self.fuzzy_props and case_property in self.fuzzy_props
+        return case_property in self.fuzzy_props
 
-    def clone(self, with_fuzzy=False):
-        fuzzy_props = self.fuzzy_props if with_fuzzy else set()
-        return SearchFilterContext(self.domain, fuzzy_props)
+    def clone(self, for_case_types):
+        fuzzy_props = set(itertools.chain.from_iterable([
+            self.fuzzy_props_by_case_type.get(case_type, []) for case_type in for_case_types
+        ]))
+        return SearchFilterContext(self.domain, fuzzy_props, self.fuzzy_props_by_case_type)
 
 
 def print_ast(node):
@@ -230,16 +230,22 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy_props=None):
+def build_filter_from_xpath(domain, xpath, fuzzy_props=None, fuzzy_props_by_case_type=None):
     """Given an xpath expression this function will generate an Elasticsearch
-    filter"""
+    filter
+    :param domain: Domain performing the search
+    :param xpath: Case Search Query expression
+    :param fuzzy_props: Set of case properties that should have fuzzy matching applied in the current query
+    :param fuzzy_props_by_case_type: Dict mapping case type to case properties that should
+        have fuzzy matching applied. This is used for nested queries e.g. subcase queries
+    """
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
 
-    context = SearchFilterContext(domain, fuzzy_props)
+    context = SearchFilterContext(domain, fuzzy_props, fuzzy_props_by_case_type)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

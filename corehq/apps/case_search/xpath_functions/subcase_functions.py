@@ -1,3 +1,4 @@
+import itertools
 from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
@@ -5,6 +6,7 @@ from django.utils.translation import gettext as _
 from eulxml.xpath.ast import (
     BinaryExpression,
     FunctionCall,
+    Step,
     UnaryExpression,
     serialize,
 )
@@ -74,7 +76,8 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     # TODO: validate that the subcase filter doesn't contain any ancestor filtering
     if subcase_query.subcase_filter:
         # clone context without fuzzy props since we don't know the case type of the subcase
-        subcase_context = context.clone()
+        subcase_types = _get_case_types(subcase_query.subcase_filter, context)
+        subcase_context = context.clone(subcase_types)
         subcase_filter = _build_subcase_filter_from_ast(subcase_query.subcase_filter, subcase_context)
     else:
         subcase_filter = filters.match_all()
@@ -226,6 +229,21 @@ def _extract_subcase_query_parts(node):
         )
 
     return index_identifier, subcase_filter, count_op, case_count
+
+
+def _get_case_types(filter_ast, context):
+    from corehq.apps.case_search.dsl_utils import unwrap_value
+
+    if not isinstance(filter_ast, BinaryExpression):
+        return
+
+    left = filter_ast.left
+    if isinstance(left, Step) and serialize(left) == '@case_type':
+        return [unwrap_value(filter_ast.right, context)]
+
+    return list(itertools.chain.from_iterable(filter(None, [
+        _get_case_types(left, context), _get_case_types(filter_ast.right, context)
+    ])))
 
 
 def _build_subcase_filter_from_ast(*args, **kwargs):

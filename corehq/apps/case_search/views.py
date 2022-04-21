@@ -76,8 +76,10 @@ class CaseSearchView(BaseDomainView):
                 )
 
         if xpath:
-            fuzzy_props = CaseSearchQueryBuilder(self.domain, [case_type]).fuzzy_properties
-            search = search.xpath_query(self.domain, xpath, fuzzy_props)
+            builder = CaseSearchQueryBuilder(self.domain, [case_type])
+            search = search.xpath_query(
+                self.domain, xpath, builder.fuzzy_properties, builder.fuzzy_properties_by_case_type
+            )
 
         include_profile = request.POST.get("include_profile", False)
         if include_profile:

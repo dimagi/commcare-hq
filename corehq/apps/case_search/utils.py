@@ -169,14 +169,20 @@ class CaseSearchQueryBuilder:
             if not criteria.is_empty:
                 if criteria.has_multiple_terms:
                     for value in criteria.value:
-                        search_es = search_es.filter(
-                            build_filter_from_xpath(self.query_domains, value, self.fuzzy_properties)
-                        )
+                        search_es = search_es.filter(build_filter_from_xpath(
+                            self.query_domains,
+                            value,
+                            self.fuzzy_properties,
+                            self.fuzzy_properties_by_case_type
+                        ))
                     return search_es
                 else:
-                    return search_es.filter(
-                        build_filter_from_xpath(self.query_domains, criteria.value, self.fuzzy_properties)
-                    )
+                    return search_es.filter(build_filter_from_xpath(
+                        self.query_domains,
+                        criteria.value,
+                        self.fuzzy_properties,
+                        self.fuzzy_properties_by_case_type
+                    ))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -206,7 +212,12 @@ class CaseSearchQueryBuilder:
             return case_property_missing(criteria.key)
 
         if criteria.is_ancestor_query:
-            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""')
+            missing_filter = build_filter_from_xpath(
+                self.query_domains,
+                f'{criteria.key} = ""',
+                self.fuzzy_properties,
+                self.fuzzy_properties_by_case_type
+            )
         else:
             missing_filter = case_property_missing(criteria.key)
         return filters.OR(self._get_query(criteria), missing_filter)
@@ -218,7 +229,12 @@ class CaseSearchQueryBuilder:
         value = self._remove_ignored_patterns(criteria.key, criteria.value)
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
-            return build_filter_from_xpath(self.query_domains, query, self.fuzzy_properties)
+            return build_filter_from_xpath(
+                self.query_domains,
+                query,
+                self.fuzzy_properties,
+                self.fuzzy_properties_by_case_type
+            )
         else:
             fuzzy = criteria.key in self.fuzzy_properties
             return case_property_query(criteria.key, value, fuzzy=fuzzy)
@@ -243,12 +259,15 @@ class CaseSearchQueryBuilder:
 
     @cached_property
     def fuzzy_properties(self):
-        return [
-            prop for properties_config in
-            self.config.fuzzy_properties.filter(domain=self.request_domain,
-                                                case_type__in=self.case_types)
-            for prop in properties_config.properties
-        ]
+        fuzzy_by_case_type = self.fuzzy_properties_by_case_type
+        fuzzy_props = set()
+        for case_type in self.case_types:
+            fuzzy_props.add(fuzzy_by_case_type.get(case_type, []))
+        return fuzzy_props
+
+    @cached_property
+    def fuzzy_properties_by_case_type(self):
+        return self.config.fuzzy_properties_by_case_type()
 
 
 def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property):

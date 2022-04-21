@@ -242,6 +242,12 @@ class CaseSearchConfig(models.Model):
     def enabled_domains(cls):
         return cls.objects.filter(enabled=True).values_list('domain', flat=True)
 
+    def fuzzy_properties_by_case_type(self):
+        return {
+            properties_config.case_type: properties_config.properties
+            for properties_config in self.fuzzy_properties.all()
+        }
+
     def to_json(self):
         config = model_to_dict(self)
         config['fuzzy_properties'] = [

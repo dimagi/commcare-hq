@@ -1,8 +1,12 @@
 from eulxml.xpath import parse as parse_xpath
-from testil import eq, assert_raises
+from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.case_search.xpath_functions.subcase_functions import _parse_normalize_subcase_query
+from corehq.apps.case_search.filter_dsl import SearchFilterContext
+from corehq.apps.case_search.xpath_functions.subcase_functions import (
+    _get_case_types,
+    _parse_normalize_subcase_query,
+)
 
 
 def test_subcase_query_parsing():
@@ -122,4 +126,20 @@ def test_subcase_query_parsing_validations():
             "subcase-exists(3)",
             "'subcase-exists' error. Index identifier must be a string"
         ),
+    ]
+
+
+def test_get_case_types():
+    def _check(filter_, expected):
+        ast = parse_xpath(filter_)
+        result = _get_case_types(ast, SearchFilterContext(""))
+        eq(expected, result)
+
+    yield from [
+        (_check, "name = 'bob'", []),
+        (_check, "@case_type = 'case'", ["case"]),
+        (_check, "@case_type = date('2022-01-01')", ["2022-01-01"]),
+        (_check, "name = 'bob' and @case_type = 'case'", ["case"]),
+        (_check, "name = 'bob' and (@case_type = 'case' or @case_type = 'child')", ["case", "child"]),
+        (_check, "@case_type = 'case' and dob = today() and subcase('parent', @case_type = 'child')", ["case"]),
     ]
