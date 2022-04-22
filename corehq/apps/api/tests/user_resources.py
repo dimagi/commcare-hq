@@ -32,6 +32,7 @@ from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
+from corehq.util.test_utils import generate_cases
 
 from .utils import APIResourceTest
 
@@ -246,6 +247,25 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
+    def test_update_user_data(self):
+        initial_metadata = {'custom_data': "initial custom data"}
+        user = CommCareUser.create(
+            self.domain.name, "test-username", "qwer1234", None, None, metadata=initial_metadata
+        )
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "user_data": {
+                "custom_data": "updated custom data"
+            },
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 200, response.content)
+        modified = CommCareUser.get(user._id)
+        self.assertEqual(modified.metadata["custom_data"], "updated custom data")
+
     def test_update_profile_conflict(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
@@ -273,6 +293,29 @@ class TestCommCareUserResource(APIResourceTest):
             response.content.decode('utf-8'),
             '{"error": "metadata properties conflict with profile: imaginary"}'
         )
+
+
+@generate_cases([
+    ('email', 'initial@dimagi.com', 'updated@dimagi.com'),
+    ('first_name', 'Initial', 'Updated'),
+    ('last_name', 'Initial', 'Updated'),
+    ('language', 'en', 'eng'),
+    ('phone_numbers', ['50253311398'], ["50253311399"]),
+], TestCommCareUserResource)
+def test_update_individual_fields(self, field, initial_val, updated_val):
+    user = CommCareUser.create(self.domain.name, "test-username", "qwer1234", None, None)
+    setattr(user, field, initial_val)
+    self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+    user_json = {
+        field: updated_val
+    }
+    response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                               json.dumps(user_json),
+                                               content_type='application/json',
+                                               method='PUT')
+    self.assertEqual(response.status_code, 200, response.content)
+    modified = CommCareUser.get(user._id)
+    self.assertEqual(getattr(modified, field), updated_val)
 
 
 class TestWebUserResource(APIResourceTest):

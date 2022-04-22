@@ -293,6 +293,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             user_change_logger.add_changes({'user_data': bundle.obj.user_data})
                     except ValueError as e:
                         raise BadRequest(str(e))
+                    should_save = True
                 else:
                     # first_name, last_name, language
                     if user_change_logger and getattr(bundle.obj, key) != value:
