@@ -27,7 +27,7 @@ from corehq.apps.sso.async_handlers import (
     IdentityProviderAdminAsyncHandler,
     SSOExemptUsersAdminAsyncHandler,
 )
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 
 
 class IdentityProviderInterface(AddItemInterface):
@@ -119,6 +119,7 @@ class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMi
     def page_context(self):
         return {
             'create_idp_form': self.create_idp_form,
+            'idp_types_by_protocol': IdentityProviderProtocol.get_supported_types(),
         }
 
     @property

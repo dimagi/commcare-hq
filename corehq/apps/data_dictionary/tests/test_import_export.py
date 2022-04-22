@@ -80,7 +80,7 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
 
         }
         message_str = str(messages[0])
-        soup = BeautifulSoup(message_str)
+        soup = BeautifulSoup(message_str, features="lxml")
         received_errors = {elem.text for elem in soup.find_all('li')}
         self.assertEqual(expected_errors, received_errors)
 

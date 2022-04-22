@@ -136,9 +136,7 @@ To declare dependencies:
   and haven’t yet added them to the dependency list, do that.
 - Check the template’s parent template:
 
-   - If the parent has a ``requirejs_main``
-   module, the template you’re migrating should include a dependency on
-   that module.
+- If the parent has a ``requirejs_main`` module, the template you’re migrating should include a dependency on that module.
    - If the parent still has ``<script>`` tags, the template
    you’re migrating should include those as dependencies. It’s usually
    convenient to migrate the parent and any “sibling” templates at the same
@@ -280,7 +278,7 @@ locally:
 -  To mimic the entire build process locally:
 
    -  Collect static files: ``manage.py collectstatic --noinput`` This
-      is necessary if you’ve made any changes to ``requirejs.yaml`` or
+      is necessary if you’ve made any changes to ``requirejs.yml`` or
       ``requirejs_config.js``, since the build script pulls these files
       from ``staticfiles``, not ``corehq``.
    -  Compile translation files: ``manage.py compilejsi18n``

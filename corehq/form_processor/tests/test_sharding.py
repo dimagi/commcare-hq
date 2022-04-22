@@ -10,6 +10,7 @@ from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstance, CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, sharded
 from corehq.sql_db.config import plproxy_config
+from corehq.sql_db.tests.utils import ignore_databases_override_warning
 
 DOMAIN = 'sharding-test'
 
@@ -131,6 +132,7 @@ def _mock_databases():
 
 
 @sharded
+@ignore_databases_override_warning
 @override_settings(DATABASES=_mock_databases())
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):

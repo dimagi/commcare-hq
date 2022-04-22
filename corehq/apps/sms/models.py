@@ -1687,6 +1687,11 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     class ExpectedDomainLevelBackend(Exception):
         pass
 
+    def to_json(self):
+        from corehq.apps.sms.serializers import MobileBackendSerializer
+        data = MobileBackendSerializer(self).data
+        return data
+
     def __str__(self):
         if self.is_global:
             return "Global Backend '%s'" % self.name

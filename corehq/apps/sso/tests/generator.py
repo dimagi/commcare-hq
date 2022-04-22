@@ -71,7 +71,9 @@ def get_enterprise_plan():
 
 @unit_testing_only
 def create_request_session(request, use_sso=False):
-    SessionMiddleware().process_request(request)
+    def get_response(request):
+        raise AssertionError("should not get here")
+    SessionMiddleware(get_response).process_request(request)
     request.session.save()
     if use_sso:
         request.session['samlSessionIndex'] = '_7c84c96e-8774-4e64-893c-06f91d285100'

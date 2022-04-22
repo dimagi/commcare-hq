@@ -11,6 +11,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
+
 class XPathField(StringField):
     """
     A string field that is supposed to contain an arbitrary xpath expression
@@ -97,8 +98,8 @@ class XPathEnum(TextXPath):
             parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
-            parts[-1] = parts[-1][:-2] # removes extra comma from last string
-            parts.append("), '\s+', ' ')")
+            parts[-1] = parts[-1][:-2]  # removes extra comma from last string
+            parts.append("), '\\s+', ' ')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))
@@ -128,7 +129,7 @@ class Text(XmlObject):
             <argument key=""/> <!------------ 0 or More. Arguments for the localized string. Key is optional. Arguments can support any child elements that <body> can. -->
         </locale>
     </text>
-    """
+    """  # noqa: E501
 
     ROOT_NAME = 'text'
 
@@ -384,6 +385,10 @@ class SessionDatum(IdNode, OrderedXmlObject):
     autoselect = BooleanField('@autoselect')
 
 
+class InstanceDatum(SessionDatum):
+    ROOT_NAME = 'instance-datum'
+
+
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
@@ -395,6 +400,8 @@ class QueryData(XmlObject):
 
     key = StringField('@key')
     ref = XPathField('@ref')
+    nodeset = StringField('@nodeset')
+    exclude = StringField('@exclude')
 
 
 class StackQuery(StackDatum):
@@ -500,6 +507,8 @@ class QueryPrompt(DisplayNode):
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
+    exclude = StringField('@exclude', required=False)
+
 
     itemset = NodeField('itemset', Itemset)
 
@@ -523,6 +532,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
 def _wrap_session_datums(datum):
     return {
         'datum': SessionDatum,
+        'instance-datum': InstanceDatum,
         'query': RemoteRequestQuery
     }[datum.tag](datum)
 
@@ -538,11 +548,11 @@ class Entry(OrderedXmlObject, XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
     session_children = NodeListField('session/*', _wrap_session_datums)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
     stack = NodeField('stack', Stack)
 
     assertions = NodeListField('assertions/assert', Assertion)
-
 
     def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
@@ -594,6 +604,7 @@ class RemoteRequestSession(OrderedXmlObject, XmlObject):
 
     queries = NodeListField('query', RemoteRequestQuery)
     data = NodeListField('datum', SessionDatum)
+    instance_data = NodeListField('instance-datum', InstanceDatum)
 
 
 class RemoteRequest(OrderedXmlObject, XmlObject):

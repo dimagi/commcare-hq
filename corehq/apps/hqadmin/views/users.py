@@ -214,14 +214,14 @@ class AdminRestoreView(TemplateView):
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
-        create_case_type = filter(None, [case.find(
+        create_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}create/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
-        update_case_type = filter(None, [case.find(
+        ) for case in cases if len(case) and hasattr(case, "type")]
+        update_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}update/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
+        ) for case in cases if len(case) and hasattr(case, "type")]
         case_type_counts = dict(Counter([
             case.type for case in itertools.chain(create_case_type, update_case_type)
         ]))
