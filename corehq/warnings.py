@@ -60,17 +60,29 @@ def configure_warnings(is_testing):
         augment_warning_messages()
         if 'PYTHONWARNINGS' not in os.environ:
             warnings.simplefilter("error")
+    action = get_whitelist_action()
     if strict or "CCHQ_WHITELISTED_WARNINGS" in os.environ:
         for args in WHITELIST:
-            whitelist(*args)
+            whitelist(action, *args)
 
 
-def whitelist(module, message, category=DeprecationWarning):
+def whitelist(action, module, message, category=DeprecationWarning):
     """Whitelist warnings with matching criteria
 
     Similar to `warnings.filterwarnings` except `re.escape` `module`
     and `message`, and match `message` anywhere in the deprecation
     warning message.
+    """
+    if message:
+        if isinstance(message, str):
+            message = r".*" + re.escape(message)
+        else:
+            message = message.pattern
+    warnings.filterwarnings(action, message, category, re.escape(module))
+
+
+def get_whitelist_action():
+    """Get the action for whitelisted warnings
 
     The warning action can be controlled with the environment variable
     `CCHQ_WHITELISTED_WARNINGS`. If that is not set, it falls back to
@@ -79,16 +91,11 @@ def whitelist(module, message, category=DeprecationWarning):
 
         export CCHQ_WHITELISTED_WARNINGS=default
     """
-    if message:
-        if isinstance(message, str):
-            message = r".*" + re.escape(message)
-        else:
-            message = message.pattern
     default_action = os.environ.get("PYTHONWARNINGS", "ignore")
     action = os.environ.get("CCHQ_WHITELISTED_WARNINGS", default_action)
     if action not in ['default', 'always', 'ignore', 'module', 'once', 'error']:
         action = "ignore"  # happens when PYTHONWARNINGS has a complex value
-    warnings.filterwarnings(action, message, category, re.escape(module))
+    return action
 
 
 def augment_warning_messages():
