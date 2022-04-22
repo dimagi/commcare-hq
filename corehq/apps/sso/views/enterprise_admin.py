@@ -10,7 +10,9 @@ from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
-from corehq.apps.sso.forms import SSOEnterpriseSettingsForm
+from corehq.apps.sso.forms import (
+    SsoSamlEnterpriseSettingsForm,
+)
 from corehq.apps.sso.models import IdentityProvider
 
 
@@ -94,10 +96,10 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @memoized
     def edit_enterprise_idp_form(self):
         if self.request.method == 'POST':
-            return SSOEnterpriseSettingsForm(
+            return SsoSamlEnterpriseSettingsForm(
                 self.identity_provider, self.request.POST, self.request.FILES
             )
-        return SSOEnterpriseSettingsForm(self.identity_provider)
+        return SsoSamlEnterpriseSettingsForm(self.identity_provider)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

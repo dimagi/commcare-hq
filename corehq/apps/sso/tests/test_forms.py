@@ -8,7 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
     EditIdentityProviderAdminForm,
-    SSOEnterpriseSettingsForm,
+    SsoSamlEnterpriseSettingsForm,
 )
 from corehq.apps.sso.models import (
     IdentityProvider,
@@ -334,7 +334,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertTrue(idp.is_active)
 
 
-class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
+class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
 
     def setUp(self):
         super().setUp()
@@ -377,7 +377,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         """
         Test that if `is_active` is set to true, then related required fields
         raise ValidationErrors if left blank. Once the requirements are met and
-        SSOEnterpriseSettingsForm validates, ensure that
+        SsoSamlEnterpriseSettingsForm validates, ensure that
         update_identity_provider() updates the `is_active` field on
         the IdentityProvider as expected.
         """
@@ -387,7 +387,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             no_login_url=True,
             no_logout_url=True,
         )
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
 
         with self.assertRaises(forms.ValidationError):
@@ -438,7 +438,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         )
 
         self.assertFalse(self.idp.is_active)
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
         edit_sso_idp_form.cleaned_data = post_data
@@ -458,13 +458,13 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_that_validation_error_is_raised_when_certificate_file_is_bad(self):
         """
-        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        Ensure that SsoSamlEnterpriseSettingsForm raises a validation error
         when the certificate file contains bad data.
         """
         certificate_file = generator.get_bad_cert_file(b"bad cert")
         post_data = self._get_post_data(certificate=certificate_file)
 
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
         edit_sso_idp_form.cleaned_data = post_data
@@ -474,13 +474,13 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_that_validation_error_is_raised_when_certificate_is_expired(self):
         """
-        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        Ensure that SsoSamlEnterpriseSettingsForm raises a validation error
         when the certificate file contains an expired certificate.
         """
         certificate_file = generator.get_public_cert_file(expiration_in_seconds=0)
         post_data = self._get_post_data(certificate=certificate_file)
 
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
 
@@ -492,7 +492,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
     def test_last_modified_by_and_fields_update_when_not_active(self):
         """
         Ensure that fields properly update and that `last_modified_by` updates
-        as expected when SSOEnterpriseSettingsForm validates and
+        as expected when SsoSamlEnterpriseSettingsForm validates and
         update_identity_provider() is called.
         """
         email_domain = AuthenticatedEmailDomain.objects.create(
@@ -504,7 +504,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             email_domain=email_domain,
         )
         post_data = self._get_post_data()
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         self.assertTrue(edit_sso_idp_form.is_valid())
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
 
@@ -521,14 +521,14 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_require_encrypted_assertions_is_saved(self):
         """
-        Ensure that SSOEnterpriseSettingsForm updates the
+        Ensure that SsoSamlEnterpriseSettingsForm updates the
         `require_encrypted_assertions property` on the IdentityProvider.
         """
         post_data = self._get_post_data(
             require_encrypted_assertions=True,
         )
         self.assertFalse(self.idp.require_encrypted_assertions)
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         self.assertTrue(edit_sso_idp_form.is_valid())
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
         self.idp.refresh_from_db()
