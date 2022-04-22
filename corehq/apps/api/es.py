@@ -25,10 +25,9 @@ from corehq.elastic import (
     get_es_new,
     report_and_fail_on_shard_failures,
 )
-from corehq.pillows.base import VALUE_TAG, restore_property_dict
+from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
 from no_exceptions.exceptions import Http400
 
@@ -264,46 +263,6 @@ def report_term_filter(terms, mapping):
             if is_property and 'properties' in curr_mapping[sub_term]:
                 curr_mapping = curr_mapping[sub_term]['properties']
     return ret_terms
-
-
-class ReportFormESView(FormESView):
-    es_alias = REPORT_XFORM_ALIAS
-    doc_type = "XFormInstance"
-    model = ESXFormInstance
-
-    def run_query(self, es_query):
-        es_results = super(FormESView, self).run_query(es_query)
-        #hack, walk the results again, and if we have xmlns, populate human readable names
-        # Note that `get_unknown_form_name` does not require the request, which is also
-        # not necessarily available here. So `None` is passed here.
-        form_filter = FormsByApplicationFilter(None, domain=self.domain)
-
-        for res in es_results.get('hits', {}).get('hits', []):
-            if '_source' in res:
-                res_source = restore_property_dict(res['_source'])
-                res['_source'] = res_source
-                xmlns = res['_source'].get('xmlns', None)
-                name = None
-                if xmlns:
-                    name = form_filter.get_unknown_form_name(xmlns,
-                                                             app_id=res['_source'].get('app_id',
-                                                                                       None),
-                                                             none_if_not_found=True)
-                if not name:
-                    name = 'unknown'  # try to fix it below but this will be the default
-                    # fall back
-                    try:
-                        if res['_source']['form'].get('@name', None):
-                            name = res['_source']['form']['@name']
-                        else:
-                            backup = res['_source']['form'].get('#type', 'data')
-                            if backup != 'data':
-                                name = backup
-                    except (TypeError, KeyError):
-                        pass
-
-                res['_source']['es_readable_name'] = name
-        return es_results
 
 
 class ElasticAPIQuerySet(object):
