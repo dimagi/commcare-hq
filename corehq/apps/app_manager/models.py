@@ -3237,6 +3237,9 @@ class AdvancedModule(ModuleBase):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
 
+    def is_multi_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
