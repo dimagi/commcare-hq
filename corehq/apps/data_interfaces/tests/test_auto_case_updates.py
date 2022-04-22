@@ -449,11 +449,12 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, now))
             p.assert_called_once_with(case, now)
 
-    def test_multiple_criteria(self):
+    def test_multiple_criteria_ALL(self):
         rule = _create_empty_rule(self.domain)
 
         rule.filter_on_server_modified = True
         rule.server_modified_boundary = 10
+        rule.criteria_combination_operator = 'ALL'
         rule.save()
 
         rule.add_criteria(
@@ -506,6 +507,56 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
 
+    def test_multiple_criteria_ANY(self):
+        rule = _create_empty_rule(self.domain)
+
+        rule.filter_on_server_modified = True
+        rule.server_modified_boundary = 1
+        rule.criteria_combination_operator = 'ANY'
+        rule.save()
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='abc',
+            property_value='123',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='def',
+            property_value='456',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            case.server_modified_on = datetime(2022, 4, 1)
+            set_case_property_directly(case, 'abc', '123')
+            set_case_property_directly(case, 'def', '456')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))
+
+            case.server_modified_on = datetime(2017, 4, 1)
+            set_case_property_directly(case, 'abc', '123x')
+            set_case_property_directly(case, 'def', '456')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))  # Notice assert True instead
+
+            case.server_modified_on = datetime(2017, 4, 1)
+            set_case_property_directly(case, 'abc', '123')
+            set_case_property_directly(case, 'def', '456x')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
+
+            case.server_modified_on = datetime(2017, 4, 1)
+            set_case_property_directly(case, 'abc', '123x')
+            set_case_property_directly(case, 'def', '456x')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertFalse(rule.criteria_match(case, datetime(2017, 4, 15)))
 
 def set_case_property_directly(case, property_name, value):
     case.case_json[property_name] = value
