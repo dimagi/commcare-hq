@@ -277,6 +277,33 @@ class TestCommCareUserResource(APIResourceTest):
             '{"error": "metadata properties conflict with profile: imaginary"}'
         )
 
+    def test_update_fails(self):
+
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        group = Group({"name": "test"})
+        group.save()
+
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(group.delete)
+
+        user_json = {
+            "username": "updated-username",
+            "unknown_field": "new-value"
+        }
+
+        backend_id = user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "The request resulted in the following errors: Cannot update a mobile user\'s username. '
+            'Attempted to update unknown field unknown_field."}'
+        )
+
 
 class TestWebUserResource(APIResourceTest):
     """

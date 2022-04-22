@@ -261,7 +261,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
-            raise BadRequest(''.join(chain.from_iterable(errors)))
+            formatted_errors = ' '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
         bundle.obj.save()
         user_change_logger.save()
@@ -279,7 +280,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         errors = []
         for key, value in bundle.data.items():
             if key in cls.immutable_fields:
-                errors.append(f'Cannot update a mobile user\'s {key}.')
+                errors.append(_('Cannot update a mobile user\'s {}.').format(key))
+                continue
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -348,7 +350,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                 else:
-                    errors.append(f'Attempted to update unknown field {key}.')
+                    errors.append(_('Attempted to update unknown field {}.').format(key))
 
         return errors
 
