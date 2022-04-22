@@ -253,7 +253,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             });
         });
         kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
-            "Required": isRequired
+            "Required": isRequired,
         });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
         // subscribers.
