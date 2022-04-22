@@ -242,29 +242,6 @@ class FormESView(ESView):
         return es_results
 
 
-def report_term_filter(terms, mapping):
-    """convert terms to correct #value term queries based upon the mapping
-    does it match up with pre-defined stuff in the mapping?
-    """
-
-    ret_terms = []
-    for orig_term in terms:
-        curr_mapping = mapping.get('properties')
-        split_term = orig_term.split('.')
-        for ix, sub_term in enumerate(split_term, start=1):
-            is_property = sub_term in curr_mapping
-            if ix == len(split_term):
-                #it's the last one, and if it's still not in it, then append a value
-                if is_property:
-                    ret_term = orig_term
-                else:
-                    ret_term = '%s.%s' % (orig_term, VALUE_TAG)
-                ret_terms.append(ret_term)
-            if is_property and 'properties' in curr_mapping[sub_term]:
-                curr_mapping = curr_mapping[sub_term]['properties']
-    return ret_terms
-
-
 class ElasticAPIQuerySet(object):
     """
     An abstract representation of an elastic search query,
