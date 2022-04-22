@@ -3891,6 +3891,9 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return []
         return self.source_module.all_forms_require_a_case()
 
+    def is_multi_select(self):
+        return self.source_module.is_multi_select()
+
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
