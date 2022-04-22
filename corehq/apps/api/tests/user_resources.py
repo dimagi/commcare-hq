@@ -328,7 +328,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "Attempted to update unknown key _id."}'
+            '{"error": "Attempted to update unknown field _id."}'
         )
 
 
