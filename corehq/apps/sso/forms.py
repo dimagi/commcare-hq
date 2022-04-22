@@ -766,3 +766,80 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp
+
+
+class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
+    client_id = forms.CharField(
+        label=gettext_lazy("Client ID"),
+        required=False,
+    )
+    client_secret = forms.CharField(
+        label=gettext_lazy("Client Secret"),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        kwargs['initial'] = {
+            'is_active': identity_provider.is_active,
+            'entity_id': identity_provider.entity_id,
+            'client_id': identity_provider.client_id,
+            'client_secret': identity_provider.client_secret,
+        }
+        super().__init__(identity_provider, *args, **kwargs)
+
+        rp_details_form = RelyingPartyDetailsForm(identity_provider)
+        self.fields.update(rp_details_form.fields)
+
+        self.fields['entity_id'].label = _("Issuer URL")
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Application Details for {}').format(self.idp.service_name),
+                        _get_help_text(self.idp),
+                        crispy.Div(*rp_details_form.application_details_fields),
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('OpenID Provider Configuration'),
+                        'client_id',
+                        'client_secret',
+                        'entity_id',
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(*self.get_primary_fields()),
+        )
+
+    def clean_client_id(self):
+        is_active = bool(self.data.get('is_active'))
+        client_id = self.cleaned_data['client_id']
+        _check_required_when_active(is_active, client_id)
+        return client_id
+
+    def clean_client_secret(self):
+        is_active = bool(self.data.get('is_active'))
+        client_secret = self.cleaned_data['client_secret']
+        _check_required_when_active(is_active, client_secret)
+        return client_secret
+
+    def update_identity_provider(self, admin_user):
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.entity_id = self.cleaned_data['entity_id']
+        self.idp.client_id = self.cleaned_data['client_id']
+        self.idp.client_secret = self.cleaned_data['client_secret']
+
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
