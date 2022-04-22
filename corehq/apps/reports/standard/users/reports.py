@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -32,6 +33,7 @@ from corehq.apps.users.audit.change_messages import (
     TWO_FACTOR_FIELD,
     get_messages,
 )
+from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.users.models import UserHistory
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -40,7 +42,7 @@ from corehq.util.timezones.conversions import ServerTime
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport, PaginatedReportMixin):
     slug = 'user_history'
     name = gettext_lazy("User History")
-    section_name = gettext_lazy("User Management")
+    section_name = gettext_lazy("Users")
 
     exportable = True
     exportable_all = True
@@ -59,6 +61,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     description = gettext_lazy("History of user updates")
     ajax_pagination = True
     default_sort = {'changed_at': 'desc'}
+
+    @property
+    def default_report_url(self):
+        return reverse(DefaultProjectUserSettingsView.urlname, args=[self.domain])
 
     @classmethod
     def get_primary_properties(cls, domain):
