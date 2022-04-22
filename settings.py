@@ -292,7 +292,7 @@ HQ_APPS = (
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.app_manager',
+    'corehq.apps.app_manager.AppManagerAppConfig',
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
@@ -309,7 +309,7 @@ HQ_APPS = (
     'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.apps.oauth_integrations',
-    'corehq.messaging',
+    'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -342,7 +342,7 @@ HQ_APPS = (
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
-    'corehq.apps.data_interfaces',
+    'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -374,7 +374,6 @@ HQ_APPS = (
 
     # custom reports
     'custom.reports.mc',
-    'custom.apps.crs_reports',
     'custom.ucla',
 
     'custom.up_nrhm',
@@ -388,7 +387,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
-    'custom.cowin',
+    'custom.cowin.COWINAppConfig',
 
     'custom.ccqa',
 
@@ -1478,9 +1477,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
@@ -1555,7 +1551,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
 
     # custom reports
@@ -1940,18 +1935,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
-
-    'crs-remind': 'custom.apps.crs_reports',
 
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
@@ -2082,6 +2071,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # Config settings for the google oauth handshake to get a user token
 # Google Cloud Platform secret settings config file

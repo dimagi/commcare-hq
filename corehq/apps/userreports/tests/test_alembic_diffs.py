@@ -60,7 +60,7 @@ class TestAlembicDiffs(TestCase):
         self.transaction_context.__exit__(None, None, None)
 
     def test_table_filter(self):
-        migration_context = get_migration_context(self.engine, [self.table_name])
+        migration_context = get_migration_context(self.engine.connect(), [self.table_name])
         sqlalchemy.Table('new_table', self.metadata)
         raw_diffs = compare_metadata(migration_context, self.metadata)
         diffs = reformat_alembic_diffs(raw_diffs)
@@ -106,7 +106,10 @@ class TestAlembicDiffs(TestCase):
         })
 
     def _test_diffs(self, metadata, expected_diffs, table_names=None):
-        migration_context = get_migration_context(self.engine, table_names or [self.table_name, 'new_table'])
+        migration_context = get_migration_context(
+            self.engine.connect(),
+            table_names or [self.table_name, 'new_table']
+        )
         raw_diffs = compare_metadata(migration_context, metadata)
         diffs = reformat_alembic_diffs(raw_diffs)
         self.assertEqual(set(diffs), expected_diffs)

@@ -945,13 +945,6 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
 )
 
-CASE_SEARCH_SMART_TYPES = StaticToggle(
-    'case_search_smart_types',
-    'USH: Intelligently index specific case properties using the data dictionary',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 WEB_USER_ACTIVITY_REPORT = StaticToggle(
     'web_user_activity_report',
     'USH: Enable Web User Activity Report',
@@ -1596,17 +1589,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
 )
 
-LINKED_DOMAINS = StaticToggle(
-    'linked_domains',
-    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Replaced by Enterprise Release Management (release_management privilege)."
-    ),
-    help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
-)
-
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
@@ -2077,13 +2059,6 @@ FHIR_INTEGRATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/GS/FHIR+API+Documentation",
-)
-
-ERM_DEVELOPMENT = StaticToggle(
-    'erm_development',
-    'General purpose "enterprise release management" development flag',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 AUTO_DEACTIVATE_MOBILE_WORKERS = StaticToggle(
