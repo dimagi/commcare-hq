@@ -245,7 +245,16 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'address';
         self.broadcastTopics = [];
         self.editing = true;
-
+        let isRequired = self.question.required() ? "Yes" : "No";
+        $(function () {
+            let entry = $(`#${self.entryId}`);
+            entry.change(function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+            });
+        });
+        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+            "Required": isRequired
+        });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
         // subscribers.
         self.geocoderItemCallback = function (item) {
