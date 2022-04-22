@@ -312,6 +312,30 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
                         if change_messages:
                             user_change_logger.add_change_message({'phone_numbers': change_messages})
+                elif key == 'default_phone_number':
+                    old_phone_numbers = set(bundle.obj.phone_numbers)
+                    phone_number = bundle.data.get('default_phone_number')
+                    if not isinstance(phone_number, str):
+                        errors.append(_('Only a single value, not a list, can be set for default_phone_number.'))
+                        continue
+                    formatted_phone_number = strip_plus(phone_number)
+                    bundle.obj.set_default_phone_number(formatted_phone_number)
+
+                    if user_change_logger:
+                        (numbers_added, numbers_removed) = find_differences_in_list(
+                            target=list(phone_number),
+                            source=list(old_phone_numbers)
+                        )
+
+                        change_messages = {}
+                        if numbers_added:
+                            change_messages.update(
+                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
+                            )
+
+                        if change_messages:
+                            user_change_logger.add_change_message({'phone_numbers': change_messages})
+
                 elif key == 'groups':
                     group_ids = bundle.data.get("groups", [])
                     groups_updated = bundle.obj.set_groups(group_ids)

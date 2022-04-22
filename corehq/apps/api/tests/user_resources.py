@@ -670,6 +670,33 @@ class TestCommCareUserResourceUpdate(TestCase):
         modified = bundle.obj
         self.assertEqual(modified.language, 'up')
 
+    def test_update_default_phone_number(self):
+        self.user.phone_numbers = ['50253311398']
+        self.user.save()
+        self.assertEqual(self.user.default_phone_number, "50253311398")
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"default_phone_number": "50253311399"}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.phone_numbers, ["50253311399", "50253311398"])
+        self.assertEqual(modified.default_phone_number, "50253311399")
+
+    def test_update_default_phone_number_returns_error_if_multiple_values(self):
+        self.user.phone_numbers = ['50253311398']
+        self.user.save()
+        self.assertEqual(self.user.default_phone_number, "50253311398")
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"default_phone_number": ["50253311399"]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('Only a single value, not a list, can be set for default_phone_number.', errors)
+
     def test_update_phone_numbers(self):
         self.user.phone_numbers = ['50253311398']
         self.user.save()
@@ -683,6 +710,22 @@ class TestCommCareUserResourceUpdate(TestCase):
         self.assertFalse(errors)
         modified = bundle.obj
         self.assertEqual(modified.phone_numbers, ["50253311399", "50253311398"])
+        # NOTE: the default phone number is the first number provided in the array of numbers
+        self.assertEqual(modified.default_phone_number, "50253311399")
+
+    def test_update_phone_numbers_overwrites(self):
+        self.user.phone_numbers = ['50253311398']
+        self.user.save()
+        self.assertEqual(self.user.default_phone_number, "50253311398")
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"phone_numbers": ["50253311399"]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.phone_numbers, ["50253311399"])
         # NOTE: the default phone number is the first number provided in the array of numbers
         self.assertEqual(modified.default_phone_number, "50253311399")
 
