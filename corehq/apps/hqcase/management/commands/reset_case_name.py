@@ -8,7 +8,6 @@ from corehq.apps.hqcase.utils import (
     bulk_update_cases,
     get_last_non_blank_value,
 )
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
@@ -26,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, domain, case_type, *args, **options):
         perform_update = True
         query = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseES(for_export=True)
             .domain(domain)
             .case_type(case_type)
             .is_closed(False)
