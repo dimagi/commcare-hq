@@ -21,6 +21,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
     MatchPropertyDefinition,
     UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
@@ -49,11 +50,14 @@ def _save_case(domain, case):
     case.save(with_tracked_models=True)
 
 
-def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
+def _update_case(domain, case_id, server_modified_on, last_visit_date=None, owner_id=None):
     case = CommCareCase.objects.get_case(case_id, domain)
     case.server_modified_on = server_modified_on
     if last_visit_date:
         set_case_property_directly(case, 'last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
+    if owner_id:
+        case.owner_id = owner_id
+
     _save_case(domain, case)
 
 
@@ -505,6 +509,23 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             _save_case(self.domain, case)
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
+
+    def test_location_filter(self):
+        location_id = 'diagon_alley_id'
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            LocationFilterDefinition,
+            location_id=location_id,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
+
+            _update_case(self.domain, case.case_id, case.server_modified_on, owner_id=location_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
 
 def set_case_property_directly(case, property_name, value):
