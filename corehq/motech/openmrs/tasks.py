@@ -3,13 +3,16 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
+import re
 import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
+from django.utils.translation import gettext as _
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from django.conf import settings
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
@@ -105,7 +108,8 @@ def get_case_properties(patient, importer):
     the data types given in a column mapping.
     """
     name_columns = importer.name_columns.split(' ')
-    case_name = ' '.join([patient[column] for column in name_columns])
+    case_name = ' '.join([patient[column] or '' for column in name_columns])
+    case_name = clean_spaces(case_name) or _('<No name given>')
     errors = []
     fields_to_update = {}
     tz = importer.get_timezone()
@@ -353,3 +357,14 @@ def track_changes():
     domains = find_domains_with_toggle_enabled(toggles.OPENMRS_INTEGRATION)
     for domain in domains:
         poll_openmrs_atom_feeds.delay(domain)
+
+
+def clean_spaces(string):
+    """
+    Removes extra spaces between words, and start and end spaces.
+
+    >>> clean_spaces(' Alice   Apple')
+    'Alice Apple'
+    """
+    string = re.sub(' {2,}', ' ', string)
+    return string.strip()
