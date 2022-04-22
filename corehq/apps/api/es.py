@@ -24,9 +24,9 @@ from corehq.elastic import (
     get_es_new,
     report_and_fail_on_shard_failures,
 )
-from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
-from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
+from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS, CASE_ES_TYPE
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS, REPORT_CASE_ES_TYPE
+from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS, XFORM_ES_TYPE
 from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 from corehq.util.es.interface import ElasticsearchInterface
 
@@ -69,6 +69,7 @@ class ESView(View):
     #or, call this programmatically to avoid CSRF issues.
 
     es_alias = ""
+    es_type = None
     domain = ""
     es = None
     doc_type = None
@@ -119,7 +120,7 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            doc = self.es_interface.get_doc(self.es_alias, '_all', doc_id)
+            doc = self.es_interface.get_doc(self.es_alias, self.es_type, doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
@@ -143,6 +144,8 @@ class ESView(View):
             fields.append('domain')
             es_query['fields'] = fields
 
+        if es_type is None:
+            es_type = self.es_type
         try:
             es_results = self.es_interface.search(self.es_alias, es_type, body=es_query)
             report_and_fail_on_shard_failures(es_results)
@@ -181,7 +184,7 @@ class ESView(View):
         return es_results
 
     def count_query(self, es_query):
-        return self.es_interface.count(self.es_alias, None, es_query)
+        return self.es_interface.count(self.es_alias, self.es_type, es_query)
 
 
 class CaseESView(ESView):
@@ -192,18 +195,21 @@ class CaseESView(ESView):
     Which this should be the final say on ES access for Casedocs
     """
     es_alias = CASE_ES_ALIAS
+    es_type = CASE_ES_TYPE
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class ReportCaseESView(ESView):
     es_alias = REPORT_CASE_ES_ALIAS
+    es_type = REPORT_CASE_ES_TYPE
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class FormESView(ESView):
     es_alias = XFORM_ALIAS
+    es_type = XFORM_ES_TYPE
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
