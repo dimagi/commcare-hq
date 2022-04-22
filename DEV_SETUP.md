@@ -860,6 +860,60 @@ CCHQ_TESTING=1 ./manage.py dbshell
 CCHQ_TESTING=1 ./manage.py shell
 ```
 
+
+### Deprecation warnings
+
+Deprecation warnings are converted to errors when running tests unless the
+warning has been whitelisted (or unless `PYTHONWARNINGS` is set with a value
+that does not convert warnings to errors, more below). The warnings whitelist
+can be found in `corehq/warnings.py`.
+
+The `CCHQ_STRICT_WARNINGS` environment variable can be used to convert
+non-whitelisted deprecation warnings into errors for all management commands
+(in addition to when running tests). It is recommended to add this to your bash
+profile or wherever you set environment variables for your shell:
+
+```sh
+export CCHQ_STRICT_WARNINGS=1
+```
+
+If you don't want strict warnings, but do want to ignore (or perform some other
+action on) whitelisted warnings you can use the `CCHQ_WHITELISTED_WARNINGS`
+environment variable instead. `CCHQ_WHITELISTED_WARNINGS` accepts any of the
+[`PYTHONWARNINGS`](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS)
+action values (`ignore`, `default`, `error`, etc).
+
+```sh
+export CCHQ_WHITELISTED_WARNINGS=ignore
+```
+
+`CCHQ_WHITELISTED_WARNINGS=ignore` is implied when `CCHQ_STRICT_WARNINGS=1` is
+set.
+
+If `PYTHONWARNINGS` is set it may override the default behavior of converting
+warnings to errors. This allows additional local configuration of personal
+whitelist entries, for example. Ensure there is an "error" item as the first
+entry in the value to preserve the default behavior of converting warnings to
+errors. For example:
+
+```sh
+export PYTHONWARNINGS='
+error,
+ignore:Using or importing the ABCs::kombu.utils.functional,
+ignore:Using or importing the ABCs::celery.utils.text,
+ignore:the imp module is deprecated::celery.utils.imports,
+ignore:unclosed:ResourceWarning'
+```
+
+Personal whitelist items may also be added in localsettings.py. For example:
+
+```py
+from warnings import filterwarnings  # noqa: E402
+filterwarnings("ignore", "unclosed", ResourceWarning)
+del filterwarnings
+```
+
+
 ### Running tests by tag
 
 You can run all tests with a certain tag as follows:
