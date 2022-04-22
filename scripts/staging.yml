@@ -79,4 +79,5 @@ branches:
     - ml/dhis2-error-handling # Minha April 21
     - jm/elastic-client-adapter  # Joel April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
+    - smh/multi-select-qa-followup # Steph April 22
 submodules: { }
