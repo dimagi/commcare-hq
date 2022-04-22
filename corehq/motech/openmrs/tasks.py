@@ -199,6 +199,12 @@ def import_patients_of_owner(requests, importer, domain_name, owner_id, location
         elif error == LookupErrors.NotFound:
             case_block = get_addpatient_caseblock(patient, importer, owner_id)
             case_blocks.append(RowAndCase(i, case_block))
+        elif error == LookupErrors.MultipleResults:
+            raise ConfigurationError(
+                f'Error importing patients for project space "{importer.domain}" '
+                f'from OpenMRS Importer "{importer}": {importer.case_type}'
+                f'.{EXTERNAL_ID} "{patient_id}" is not unique.'
+            )
 
     submit_case_blocks(
         [cb.case.as_text() for cb in case_blocks],
