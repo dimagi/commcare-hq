@@ -10,7 +10,7 @@ from django.http import (
 )
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 import sys
 
 from casexml.apps.case.xform import close_extension_cases
@@ -18,7 +18,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
-from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
+from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
@@ -328,7 +328,7 @@ class SubmissionPost(object):
                             openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
-
+                        report_case_usage(self.domain, len(cases))
                         openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'

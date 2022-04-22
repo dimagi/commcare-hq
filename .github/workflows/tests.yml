@@ -34,14 +34,14 @@ jobs:
     - name: Docker login
       uses: docker/login-action@v1
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
+        username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
         NOSE_DIVIDED_WE_RUN: ${{ matrix.NOSE_DIVIDED_WE_RUN }}
         JS_SETUP: yes
-      run: scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
+      run: scripts/docker test --noinput --stop -v --divided-we-run=${{ matrix.NOSE_DIVIDED_WE_RUN }} --divide-depth=1 --with-timing --with-flaky --threshold=10 --max-test-time=29
     - name: "Codecov upload"
       uses: codecov/codecov-action@v2
       with:

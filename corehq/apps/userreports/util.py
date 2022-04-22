@@ -70,7 +70,14 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
-    return _can_edit_report(request, report) and not is_linked_report(report.spec)
+    from corehq.apps.userreports.models import is_data_registry_report
+    return (
+        _can_edit_report(request, report)
+        and not is_linked_report(report)
+        and (
+            not is_data_registry_report(report)
+            or toggles.DATA_REGISTRY_UCR.enabled_for_request(request)
+        ))
 
 
 def can_delete_report(request, report):
@@ -88,7 +95,7 @@ def _can_edit_report(request, report):
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
     add_on_priv = has_report_builder_add_on_privilege(request)
-    created_by_builder = report.spec.report_meta.created_by_builder
+    created_by_builder = report.report_meta.created_by_builder
 
     if created_by_builder:
         return report_builder_toggle or report_builder_beta_toggle or add_on_priv
@@ -282,7 +289,7 @@ def get_report_config_or_not_found(domain, config_id):
     try:
         doc = ReportConfiguration.get_db().get(config_id)
         config = wrap_report_config_by_type(doc)
-    except (ResourceNotFound, KeyError):
+    except (ResourceNotFound, KeyError, ReportConfigurationNotFoundError):
         raise DocumentNotFound()
 
     if config.domain != domain:

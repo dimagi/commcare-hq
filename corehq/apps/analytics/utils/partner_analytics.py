@@ -153,10 +153,7 @@ def send_partner_emails(year, month):
         writer = csv.writer(file_obj)
         writer.writerow(headers)
         for row in body:
-            writer.writerow([
-                val if isinstance(val, str) else bytes(val)
-                for val in row
-            ])
+            writer.writerow([_get_csv_value(val) for val in row])
         filename = '{partner}_analytics_{year}_{month}'.format(
             partner=contact.organization_name,
             year=year,
@@ -177,3 +174,13 @@ def send_partner_emails(year, month):
             text_content=render_to_string("analytics/email/partner_analytics_report.txt", context),
             file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
         )
+
+
+def _get_csv_value(value):
+    if isinstance(value, str):
+        return value
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        pass
+    return str(value)

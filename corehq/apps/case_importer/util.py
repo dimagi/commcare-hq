@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from celery import states
 from celery.exceptions import Ignore
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors
@@ -139,7 +139,7 @@ class WorksheetWrapper(object):
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
-    Attempt to find the case in CouchDB by the provided search_field and search_id.
+    Attempt to find the case by the provided search_field and search_id.
 
     Returns a tuple with case (if found) and an
     error code (if there was an error in lookup).

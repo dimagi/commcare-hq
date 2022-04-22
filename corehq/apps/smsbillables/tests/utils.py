@@ -1,6 +1,9 @@
 import uuid
 from datetime import datetime
 
+from django.apps import apps
+from django.conf import settings
+
 from corehq.apps.sms.models import OUTGOING, SMS
 
 short_text = "This is a test text message under 160 characters."
@@ -10,6 +13,37 @@ long_text = (
     "Or at least it will be. Thinking about kale. I like kale. Kale is "
     "a fantastic thing. Also bass music. I really like dat bass."
 )
+
+
+def bootstrap_smsbillables():
+    from ..management.commands.add_moz_zero_charge import add_moz_zero_charge
+    from ..management.commands.bootstrap_grapevine_gateway import bootstrap_grapevine_gateway
+    from ..management.commands.bootstrap_grapevine_gateway_update import bootstrap_grapevine_gateway_update
+    from ..management.commands.bootstrap_mach_gateway import bootstrap_mach_gateway
+    from ..management.commands.bootstrap_moz_gateway import bootstrap_moz_gateway
+    from ..management.commands.bootstrap_telerivet_gateway import bootstrap_telerivet_gateway
+    from ..management.commands.bootstrap_test_gateway import bootstrap_test_gateway
+    from ..management.commands.bootstrap_tropo_gateway import bootstrap_tropo_gateway
+    from ..management.commands.bootstrap_unicel_gateway import bootstrap_unicel_gateway
+    from ..management.commands.bootstrap_usage_fees import bootstrap_usage_fees
+    from ..management.commands.bootstrap_yo_gateway import bootstrap_yo_gateway
+
+    Currency = apps.get_model("accounting", "Currency")
+    Currency.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
+    Currency.objects.get_or_create(code='EUR')
+    Currency.objects.get_or_create(code='INR')
+
+    bootstrap_grapevine_gateway(apps)
+    bootstrap_mach_gateway(apps)
+    bootstrap_tropo_gateway(apps)
+    bootstrap_unicel_gateway(apps)
+    bootstrap_usage_fees(apps)
+    bootstrap_moz_gateway(apps)
+    bootstrap_test_gateway(apps)
+    bootstrap_telerivet_gateway(apps)
+    bootstrap_yo_gateway(apps)
+    add_moz_zero_charge(apps)
+    bootstrap_grapevine_gateway_update(apps)
 
 
 def get_fake_sms(domain, backend_api_id, backend_couch_id, text):

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -23,6 +24,8 @@ new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
 domain_url_re = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re)
+
+logger = logging.getLogger('domain')
 
 
 @memoized
@@ -124,3 +127,7 @@ def get_serializable_wire_invoice_general_credit(general_credit):
         }]
 
     return []
+
+
+def log_domain_changes(user, domain, new_obj, old_obj):
+    logger.info(f"{user} changed UCR permsissions {old_obj} to {new_obj} for domain {domain} ")

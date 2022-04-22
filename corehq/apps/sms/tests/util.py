@@ -130,7 +130,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return user
 
     def update_case_owner(self, case, owner):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case.case_id,
             case_type='participant',
@@ -140,7 +140,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
@@ -252,8 +252,11 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        return CommCareCase.objects.get_case_by_external_id(
+        case = CommCareCase.objects.get_case_by_external_id(
             self.domain, external_id, raise_multiple=True)
+        if case is None:
+            raise CommCareCase.DoesNotExist
+        return case
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEqual(case.get_case_property(prop), value)

@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
@@ -44,7 +45,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="phone",
                 case_type="phone",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -59,7 +60,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -77,7 +78,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -98,7 +99,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -114,13 +115,13 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             ),
             AdvancedOpenCaseAction(
                 case_tag="grandchild",
                 case_type="grandchild",
-                name_path="/data/children/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/children/question1"),
                 case_indices=[CaseIndex(tag="child")]
             )
         ]
@@ -228,7 +229,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             ],
             auto_launch=True,
             default_search=True,
-            default_relevant=False,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",

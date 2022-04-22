@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from psycopg2 import DatabaseError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
@@ -30,13 +30,15 @@ def send_datasets_for_all_domains():
             send_datasets.delay(domain)
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def send_datasets(domain_name, send_now=False, send_date=None):
-    if not send_date:
-        send_date = datetime.utcnow().date()
+    """
+    send_date is a string formatted as YYYY-MM-DD
+    """
+    date_to_send = datetime.strptime(send_date, '%Y-%m-%d') if send_date else datetime.utcnow().date()
     for dataset_map in SQLDataSetMap.objects.filter(domain=domain_name).all():
-        if send_now or should_send_on_date(dataset_map, send_date):
-            send_dataset(dataset_map, send_date)
+        if send_now or should_send_on_date(dataset_map, date_to_send):
+            send_dataset(dataset_map, date_to_send)
 
 
 def send_dataset(

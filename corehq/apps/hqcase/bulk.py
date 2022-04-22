@@ -1,23 +1,46 @@
-import time
+from dataclasses import dataclass
 from xml.etree import cElementTree as ElementTree
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
+from corehq.form_processor.models import CommCareCase
 
-from .utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
+from .utils import CASEBLOCK_CHUNKSIZE, SYSTEM_FORM_XMLNS, submit_case_blocks
+
+
+@dataclass(frozen=True)
+class SystemFormMeta:
+    user_id: str = SYSTEM_USER_ID
+    username: str = SYSTEM_USER_ID
+    device_id: str = SYSTEM_USER_ID
+    xmlns: str = SYSTEM_FORM_XMLNS
+
+    @classmethod
+    def for_script(cls, name, username=None):
+        user_kwargs = {}
+        if username:
+            user_id = username_to_user_id(username)
+            if not user_id:
+                raise Exception(f"User '{username}' not found")
+            user_kwargs = {
+                'user_id': user_id,
+                'username': username,
+            }
+
+        return cls(
+            device_id=name,
+            xmlns=f"http://commcarehq.org/script/{name.split('.')[-1]}",
+            **user_kwargs,
+        )
 
 
 class CaseBulkDB:
     """
     Context manager to facilitate making case changes in chunks.
-
-    Can optionally wait between each chunk to throttle the form submission rate.
     """
 
-    def __init__(self, domain, user_id, device_id, throttle_secs=None):
+    def __init__(self, domain, form_meta: SystemFormMeta = None):
         self.domain = domain
-        self.user_id = user_id
-        self.device_id = device_id
-        self.throttle_secs = throttle_secs or 0
+        self.form_meta = form_meta or SystemFormMeta()
 
     def __enter__(self):
         self.to_save = []
@@ -30,8 +53,6 @@ class CaseBulkDB:
         self.to_save.append(case_block)
         if len(self.to_save) >= CASEBLOCK_CHUNKSIZE:
             self.commit()
-            if self.throttle_secs:
-                time.sleep(self.throttle_secs)
 
     def commit(self):
         if self.to_save:
@@ -39,20 +60,32 @@ class CaseBulkDB:
                 ElementTree.tostring(case_block.as_xml(), encoding='utf-8').decode('utf-8')
                 for case_block in self.to_save
             ]
-            submit_case_blocks(case_blocks, self.domain, device_id=self.device_id, user_id=self.user_id)
+            submit_case_blocks(
+                case_blocks,
+                self.domain,
+                device_id=self.form_meta.device_id,
+                xmlns=self.form_meta.xmlns,
+                user_id=self.form_meta.user_id,
+                username=self.form_meta.username,
+            )
             self.to_save = []
 
 
-def update_cases(domain, update_fn, case_ids, user_id, device_id, throttle_secs=None):
+def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
     """
     Perform a large number of case updates in chunks
 
-    update_fn should be a function which accepts a case and returns a CaseBlock
+    update_fn should be a function which accepts a case and returns a list of CaseBlock objects
     if an update is to be performed, or None to skip the case.
+
+    Returns counts of number of updates made (not necessarily number of cases update).
     """
-    accessor = CaseAccessors(domain)
-    with CaseBulkDB(domain, user_id, device_id, throttle_secs) as bulk_db:
-        for case in accessor.iter_cases(case_ids):
-            case_block = update_fn(case)
-            if case_block:
-                bulk_db.save(case_block)
+    update_count = 0
+    with CaseBulkDB(domain, form_meta) as bulk_db:
+        for case in CommCareCase.objects.iter_cases(case_ids):
+            case_blocks = update_fn(case)
+            if case_blocks:
+                for case_block in case_blocks:
+                    bulk_db.save(case_block)
+                    update_count += 1
+    return update_count

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.db import DatabaseError, InternalError, transaction
 from django.db.models import Count, Min
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import (
@@ -79,7 +79,8 @@ def _build_indicators(config, document_store, relevant_ids):
             adapter.best_effort_save(doc)
 
 
-@serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20, queue=UCR_CELERY_QUEUE, ignore_result=True)
+@serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20,
+             queue=UCR_CELERY_QUEUE, ignore_result=True, serializer='pickle')
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None, domain=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
@@ -116,9 +117,8 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
 
 
 @serial_task(
-    '{indicator_config_id}', default_retry_delay=60 * 10,
-    timeout=3 * 60 * 60, max_retries=20,
-    queue=UCR_CELERY_QUEUE, ignore_result=True
+    '{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20,
+    queue=UCR_CELERY_QUEUE, ignore_result=True, serializer='pickle'
 )
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None, domain=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)

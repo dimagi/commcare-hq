@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from django.utils.datastructures import OrderedSet
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import (
     BooleanProperty,

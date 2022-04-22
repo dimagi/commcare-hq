@@ -1,6 +1,6 @@
 from django import forms
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -10,15 +10,15 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 
 class BasicCrispyForm(forms.Form):
     first_name = forms.CharField(
-        label=ugettext_lazy("First Name"),
+        label=gettext_lazy("First Name"),
     )
     favorite_color = forms.ChoiceField(
-        label=ugettext_lazy("Pick a Favorite Color"),
+        label=gettext_lazy("Pick a Favorite Color"),
         choices=(
-            ('red', ugettext_lazy("Red")),
-            ('green', ugettext_lazy("Green")),
-            ('blue', ugettext_lazy("Blue")),
-            ('purple', ugettext_lazy("Purple")),
+            ('red', gettext_lazy("Red")),
+            ('green', gettext_lazy("Green")),
+            ('blue', gettext_lazy("Blue")),
+            ('purple', gettext_lazy("Purple")),
         ),
     )
 
@@ -52,14 +52,14 @@ class BasicCrispyForm(forms.Form):
 
 class CheckboxesForm(forms.Form):
     send_email = forms.BooleanField(
-        label=ugettext_lazy("This checkbox is badly aligned"),
+        label=gettext_lazy("This checkbox is badly aligned"),
         required=False,
     )
     recipient = forms.CharField(
-        label=ugettext_lazy("Email recipient"),
+        label=gettext_lazy("Email recipient"),
     )
     send_to_self = forms.BooleanField(
-        label=ugettext_lazy("Also send to myself"),
+        label=gettext_lazy("Also send to myself"),
         required=False,
     )
 

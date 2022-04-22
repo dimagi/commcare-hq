@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any, Dict, List
 
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from requests import HTTPError
 from schema import Schema, SchemaError
@@ -460,7 +460,7 @@ def save_case_updates(domain, case_id, case_updates):
             kwargs[case_property] = value
         else:
             case_update[case_property] = value
-    case_block = CaseBlock.deprecated_init(
+    case_block = CaseBlock(
         case_id=case_id,
         create=False,
         update=case_update,

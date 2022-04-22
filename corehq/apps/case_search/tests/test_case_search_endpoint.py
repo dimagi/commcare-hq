@@ -1,8 +1,7 @@
 import uuid
+from unittest import mock
 
 from django.test import TestCase
-
-from unittest import mock
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -13,7 +12,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, SearchCriteria
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -72,18 +71,18 @@ class TestCaseSearchEndpoint(TestCase):
         super().tearDownClass()
 
     def test_basic(self):
-        res = get_case_search_results(self.domain, ['person'], {})
+        res = get_case_search_results(self.domain, ['person'], [])
         self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
             case.name for case in res
         ])
 
     def test_dynamic_property(self):
-        res = get_case_search_results(self.domain, ['person'], {'family': 'Ramos'})
+        res = get_case_search_results(self.domain, ['person'], [SearchCriteria('family', 'Ramos')])
         self.assertItemsEqual(["Jane"], [case.name for case in res])
 
     def test_app_aware_related_cases(self):
         with mock.patch('corehq.apps.case_search.utils.get_app_cached', new=lambda _, __: self.factory.app):
-            res = get_case_search_results(self.domain, ['person'], {}, app_id='fake_app_id')
+            res = get_case_search_results(self.domain, ['person'], [], app_id='fake_app_id')
         self.assertItemsEqual([
             (case.name, case.get_case_property(IS_RELATED_CASE)) for case in res
         ], [

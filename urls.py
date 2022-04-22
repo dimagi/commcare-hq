@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
@@ -156,6 +156,7 @@ urlpatterns = [
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
+    url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

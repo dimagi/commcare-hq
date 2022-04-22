@@ -315,7 +315,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'readable_forms', '{}.submission.json'.format(slug))
         result_file = os.path.join(
             os.path.dirname(__file__),
-            'readable_forms', '{}.py3.result.yaml'.format(slug))
+            'readable_forms', '{}.py3.result.yml'.format(slug))
         with open(xform_file) as f:
             xform = f.read()
         with open(submission_file) as f:

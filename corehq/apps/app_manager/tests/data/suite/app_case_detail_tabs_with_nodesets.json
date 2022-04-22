@@ -257,8 +257,14 @@
                         "update_case":{  
                             "doc_type":"UpdateCaseAction",
                             "update":{  
-                                "plays":"/data/plays",
-                                "artist":"/data/artist"
+                              "plays": {
+                                "question_path": "/data/plays",
+                                "update_mode": "always"
+                              },
+                              "artist": {
+                                "question_path": "/data/artist",
+                                "update_mode": "always"
+                              }
                             },
                             "condition":{  
                                 "answer":null,
@@ -406,8 +412,14 @@
                         "update_case":{  
                             "doc_type":"UpdateCaseAction",
                             "update":{  
-                                "plays":"/data/new_plays",
-                                "last_played":"/data/today"
+                              "plays": {
+                                "question_path": "/data/new_plays",
+                                "update_mode": "always"
+                              },
+                              "last_played": {
+                                "question_path": "/data/today",
+                                "update_mode": "always"
+                              }
                             },
                             "condition":{  
                                 "answer":null,

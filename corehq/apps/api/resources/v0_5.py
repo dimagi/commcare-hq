@@ -1,12 +1,13 @@
+import json
 from collections import namedtuple
 from itertools import chain
 
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop, gettext as _
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -20,8 +21,9 @@ from tastypie.utils import dict_strip_unicode_keys
 from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
     ODataFormSerializer,
@@ -61,10 +63,12 @@ from corehq.apps.reports.standard.cases.utils import (
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     StaticReportConfiguration,
-    report_config_id_is_static,
+    report_config_id_is_static, DataSourceConfiguration,
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -88,7 +92,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
-from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from . import (
@@ -745,6 +749,89 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         paginator_class = DoesNothingPaginator
 
 
+class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+    """
+    API resource for DataSourceConfigurations (UCR data sources)
+    """
+    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    display_name = fields.CharField(attribute="display_name", null=True)
+    configured_filter = fields.DictField(attribute="configured_filter", use_in='detail')
+    configured_indicators = fields.ListField(attribute="configured_indicators", use_in='detail')
+
+    def _ensure_toggle_enabled(self, request):
+        if not toggles.USER_CONFIGURABLE_REPORTS.enabled_for_request(request):
+            raise ImmediateHttpResponse(
+                add_cors_headers_to_response(
+                    HttpResponse(
+                        json.dumps({"error": _("You don't have permission to access this API")}),
+                        content_type="application/json",
+                        status=401,
+                    )
+                )
+            )
+
+    def obj_get(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        try:
+            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(str(e))
+        return data_source
+
+    def obj_get_list(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
+        domain = kwargs['domain']
+        return get_datasources_for_domain(domain)
+
+    def obj_update(self, bundle, **kwargs):
+        self._ensure_toggle_enabled(bundle.request)
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        try:
+            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(str(e))
+        allowed_update_fields = [
+            'display_name',
+            'configured_filter',
+            'configured_indicators',
+        ]
+        for key, value in bundle.data.items():
+            if key in allowed_update_fields:
+                data_source[key] = value
+        try:
+            data_source.validate()
+            data_source.save()
+        except BadSpecError as e:
+            raise ImmediateHttpResponse(
+                add_cors_headers_to_response(
+                    HttpResponse(
+                        json.dumps({"error": _("Invalid data source! Details: {details}").format(details=str(e))}),
+                        content_type="application/json",
+                        status=500,
+                    )
+                )
+            )
+        bundle.obj = data_source
+        return bundle
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj)._id,
+        }
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'ucr_data_source'
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'put']
+        always_return_data = True
+        paginator_class = DoesNothingPaginator
+        authentication = RequirePermissionAuthentication(Permissions.edit_ucrs)
+
+
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
@@ -949,7 +1036,7 @@ class ODataCaseResource(BaseODataResource):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
-                HttpForbidden(ugettext_noop(
+                HttpForbidden(gettext_noop(
                     "You do not have permission to view this feed."
                 ))
             )
@@ -987,7 +1074,7 @@ class ODataFormResource(BaseODataResource):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
         if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
             raise ImmediateHttpResponse(
-                HttpForbidden(ugettext_noop(
+                HttpForbidden(gettext_noop(
                     "You do not have permission to view this feed."
                 ))
             )

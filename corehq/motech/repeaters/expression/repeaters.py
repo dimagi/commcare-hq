@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -53,7 +53,7 @@ class BaseExpressionRepeater(Repeater):
 
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
-    friendly_name = _("Configurable Case Repeater")
+    friendly_name = _("Configurable Case Forwarder")
 
     @memoized
     def payload_doc(self, repeat_record):

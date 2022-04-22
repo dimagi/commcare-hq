@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
@@ -78,7 +78,7 @@ class KafkaPublishingTest(TestCase):
     def test_case_deletions(self):
         case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
         with self.process_case_changes:
-            CaseAccessors(self.domain).soft_delete_cases([case.case_id])
+            CommCareCase.objects.soft_delete_cases(self.domain, [case.case_id])
 
         self.assertEqual(1, len(self.processor.changes_seen))
         change_meta = self.processor.changes_seen[0].metadata

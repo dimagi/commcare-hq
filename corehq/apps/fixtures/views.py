@@ -15,8 +15,8 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
@@ -93,7 +93,7 @@ def _to_kwargs(req):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id):
+def update_tables(request, domain, data_type_id=None):
     """
     receives a JSON-update patch like following
     {
@@ -295,7 +295,7 @@ def fixtures_home(domain):
 
 
 class FixtureViewMixIn(object):
-    section_name = ugettext_noop("Lookup Tables")
+    section_name = gettext_noop("Lookup Tables")
 
     @property
     def section_url(self):
@@ -357,7 +357,7 @@ class UploadItemLists(TemplateView):
 
 class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
     urlname = 'fixture_upload_status'
-    page_title = ugettext_noop('Lookup Table Upload Status')
+    page_title = gettext_noop('Lookup Table Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context

@@ -5,7 +5,6 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -184,9 +183,9 @@ class OTARestoreWebUser(OTARestoreUser):
         return []
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureStatus
+        from corehq.apps.fixtures.models import UserLookupTableStatus
 
-        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+        return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
@@ -229,9 +228,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.get_case_sharing_groups()
 
     def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
 
-        return self._couch_user.fixture_status(UserFixtureType.LOCATION)
+        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
 
 class SyncLogAssertionError(AssertionError):
@@ -430,7 +429,7 @@ class SyncLogSQL(models.Model):
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
     previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
-    doc = JSONField()
+    doc = models.JSONField()
     log_format = models.CharField(
         max_length=10,
         choices=[

@@ -8,7 +8,7 @@ from io import BytesIO
 
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import magic
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound

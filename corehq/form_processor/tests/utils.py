@@ -1,11 +1,16 @@
 import logging
 from datetime import datetime
-from unittest.mock import patch
 from uuid import uuid4
+from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
-from django.utils.decorators import classproperty
+try:
+    from django.utils.functional import classproperty
+except ImportError:
+    # Django < 3.1 compatibility
+    from django.utils.decorators import classproperty
+
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest import skipIf, skipUnless
@@ -17,7 +22,13 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor, iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstance, CommCareCase, CaseTransaction, Attachment
+from corehq.form_processor.models import (
+    Attachment,
+    CaseTransaction,
+    CommCareCase,
+    CommCareCaseIndex,
+    XFormInstance,
+)
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only
 
@@ -300,33 +311,75 @@ def create_form_for_test(
     return form
 
 
-def create_case(case) -> CommCareCase:
+def create_case(
+    domain,
+    *,
+    form_id=None,
+    case_id=None,
+    case_type='',
+    user_id='user1',
+    save=False,
+    **case_args,
+):
+    """Create case and related models directly (not via form processor)
+
+    :param save: Save case if true. The default is false.
+    :return: CommCareCase
+    """
+    form_id = form_id or uuid4().hex
+    case_id = case_id or uuid4().hex
+    utcnow = datetime.utcnow()
+    case_args.setdefault("owner_id", user_id)
+    case_args.setdefault("opened_on", utcnow)
+    case_args.setdefault("modified_on", utcnow)
+    case_args.setdefault("modified_by", user_id)
+    received_on = case_args.setdefault("server_modified_on", utcnow)
     form = XFormInstance(
-        form_id=uuid4().hex,
-        xmlns='http://commcarehq.org/formdesigner/form-processor',
-        received_on=case.server_modified_on,
-        user_id=case.owner_id,
-        domain=case.domain,
+        form_id=form_id,
+        xmlns='http://openrosa.org/formdesigner/form-processor',
+        received_on=received_on,
+        user_id=user_id,
+        domain=domain
     )
-    transaction = CaseTransaction(
-        type=CaseTransaction.TYPE_FORM,
-        form_id=form.form_id,
-        case=case,
-        server_date=case.server_modified_on,
+    case = CommCareCase(
+        case_id=case_id,
+        domain=domain,
+        type=case_type,
+        **case_args
     )
-    with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
-        case.track_create(transaction)
-        processed_forms = ProcessedForms(form, [])
-        FormProcessorSQL.save_processed_models(processed_forms, [case])
-    return CommCareCase.objects.get_case(case.case_id)
-
-
-def create_case_with_index(case, index) -> CommCareCase:
-    case = create_case(case)
-    index.case = case
-    case.track_create(index)
-    case.save(with_tracked_models=True)
+    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
+    if save:
+        # disable publish to Kafka to avoid intermittent errors caused by
+        # the nexus of kafka's consumer thread and freeze_time
+        with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+            FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
+
+
+def create_case_with_index(
+    domain,
+    referenced_case_id,
+    identifier='parent',
+    referenced_type='mother',
+    relationship_id=CommCareCaseIndex.CHILD,
+    case_is_deleted=False,
+    case_type='child',
+    *,
+    save=False,
+):
+    case = create_case(domain, case_type=case_type)
+    case.deleted = case_is_deleted
+    index = CommCareCaseIndex(
+        case=case,
+        identifier=identifier,
+        referenced_type=referenced_type,
+        referenced_id=referenced_case_id,
+        relationship_id=relationship_id
+    )
+    case.track_create(index)
+    if save:
+        case.save(with_tracked_models=True)
+    return case, index
 
 
 def delete_all_xforms_and_cases(domain):

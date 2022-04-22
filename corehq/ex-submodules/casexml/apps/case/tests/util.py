@@ -67,6 +67,11 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
 
 @contextmanager
 def create_case(domain, case_type, **kwargs):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
     try:
         yield case

@@ -179,6 +179,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+MINIMUM_ZXCVBN_SCORE = 2
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -200,8 +201,10 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
+    'corehq.apps.celery.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -212,7 +215,6 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -290,7 +292,7 @@ HQ_APPS = (
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.app_manager',
+    'corehq.apps.app_manager.AppManagerAppConfig',
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
@@ -306,7 +308,8 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.messaging',
+    'corehq.apps.oauth_integrations',
+    'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -339,7 +342,7 @@ HQ_APPS = (
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
-    'corehq.apps.data_interfaces',
+    'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -385,7 +388,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
-    'custom.cowin',
+    'custom.cowin.COWINAppConfig',
 
     'custom.ccqa',
 
@@ -600,6 +603,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
+    "malt_generation_queue": 6 * 60 * 60,
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
@@ -753,7 +757,11 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
-    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'COVID_US_SET_ACTIVITY_COMPLETE_TODAY':
+        'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
+    'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
+        'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
 }
 
 ####### auditcare parameters #######
@@ -868,6 +876,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -1339,10 +1348,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'notify_exception': {
-            'level': 'ERROR',
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -1473,9 +1478,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
@@ -2077,3 +2079,16 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
+# Scopes to give read/write access to the code that generates the spreadsheets
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14

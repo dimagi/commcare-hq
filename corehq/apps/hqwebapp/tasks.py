@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab

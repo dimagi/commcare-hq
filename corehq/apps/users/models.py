@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -11,14 +11,14 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -47,7 +47,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
-from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.dates import (
+    force_to_datetime,
+    get_date_from_month_and_year_string,
+)
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
@@ -77,9 +80,9 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
+    bulk_auto_deactivate_commcare_users,
 )
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
 from corehq.util.dates import get_timestamp
@@ -301,16 +304,16 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
     # because these are in JSON and cannot be serialized
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,
     # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
-    APP_EDITOR = ugettext_noop("App Editor")
-    READ_ONLY = ugettext_noop("Read Only")
-    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
-    BILLING_ADMIN = ugettext_noop("Billing Admin")
+    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
+    APP_EDITOR = gettext_noop("App Editor")
+    READ_ONLY = gettext_noop("Read Only")
+    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
+    BILLING_ADMIN = gettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -439,6 +442,9 @@ class DomainMembership(Membership):
 class IsMemberOfMixin(DocumentSchema):
 
     def _is_member_of(self, domain, allow_enterprise):
+        if not domain:
+            return False
+
         if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
 
@@ -560,14 +566,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     @memoized
     def is_domain_admin(self, domain=None):
+        # this is a hack needed because we can't pass parameters from views
+        domain = domain or getattr(self, 'current_domain', None)
         if not domain:
-            # hack for template
-            if hasattr(self, 'current_domain'):
-                # this is a hack needed because we can't pass parameters from views
-                domain = self.current_domain
-            else:
-                return False  # no domain, no admin
-        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return False  # no domain, no admin
+        if self.is_global_admin() and not domain_restricts_superusers(domain):
             return True
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
@@ -583,19 +586,15 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
-        if not restrict_global_admin:
-            # is_admin is the same as having all the permissions set
-            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
-                return True
-            elif self.is_domain_admin(domain):
-                return True
+    def has_permission(self, domain, permission, data=None):
+        # is_admin is the same as having all the permissions set
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
+            return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
         if dm:
-            # an admin has access to all features by default, restrict that if needed
-            if dm.is_admin and restrict_global_admin:
-                return False
             return dm.has_permission(permission, data)
         return False
 
@@ -604,19 +603,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
         """
         Get the role object for this user
         """
-        if domain is None:
-            # default to current_domain for django templates
-            if hasattr(self, 'current_domain'):
-                domain = self.current_domain
-            else:
-                domain = None
+        # default to current_domain for django templates
+        domain = domain or getattr(self, 'current_domain', None)
 
         if checking_global_admin and self.is_global_admin():
             return StaticRole.domain_admin(domain)
         if self.is_member_of(domain, allow_enterprise):
-            return self.get_domain_membership(domain, allow_enterprise).role
-        else:
-            raise DomainMembershipError()
+            dm = self.get_domain_membership(domain, allow_enterprise)
+            if dm:
+                return dm.role
+        raise DomainMembershipError()
 
     def set_role(self, domain, role_qualified_id):
         """
@@ -636,13 +632,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         self.has_permission.reset_cache(self)
         self.get_role.reset_cache(self)
+        try:
+            self.is_domain_admin.reset_cache(self)
+        except AttributeError:
+            pass
+        DomainMembership.role.fget.reset_cache(dm)
 
     def role_label(self, domain=None):
+        domain = domain or getattr(self, 'current_domain', None)
         if not domain:
-            try:
-                domain = self.current_domain
-            except (AttributeError, KeyError):
-                return None
+            return None
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
@@ -1436,6 +1435,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     bulk_save = save_docs
 
     def save(self, fire_signals=True, **params):
+        # HEADS UP!
+        # When updating this method, please also ensure that your updates also
+        # carry over to bulk_auto_deactivate_commcare_users.
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
@@ -1451,9 +1453,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             super(CouchUser, self).save(**params)
 
         if fire_signals:
-            from .signals import couch_user_post_save
-            results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            self.fire_signals()
+
+    def fire_signals(self):
+        from .signals import couch_user_post_save
+        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1497,10 +1502,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return models
 
     def _get_viewable_report_slugs(self, domain):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
+        domain = domain or getattr(self, 'current_domain', None)
 
         if self.is_commcare_user():
             role = self.get_role(domain)
@@ -1544,10 +1546,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def _get_perm_check_fn(self, perm):
         def fn(domain=None, data=None):
-            try:
-                domain = domain or self.current_domain
-            except AttributeError:
-                domain = None
+            domain = domain or getattr(self, 'current_domain', None)
             return self.has_permission(domain, perm, data)
         return fn
 
@@ -1834,7 +1833,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         XFormInstance.objects.soft_undelete_forms(self.domain, deleted_form_ids)
 
         deleted_case_ids = self._get_deleted_case_ids()
-        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+        CommCareCase.objects.soft_undelete_cases(self.domain, deleted_case_ids)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
@@ -2021,7 +2020,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         :param location: may be a sql or couch location
         """
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
 
         if not location.location_id:
             raise AssertionError("You can't set an unsaved location")
@@ -2044,7 +2043,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             location.location_id
         })
 
-        self.update_fixture_status(UserFixtureType.LOCATION)
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
@@ -2064,7 +2063,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             If fall_back_to_next is True, primary location is not set to next but cleared.
             This option exists only to be backwards compatible when user can only have one location
         """
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
@@ -2084,7 +2083,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.pop_metadata('commcare_primary_case_sharing_id', None)
             self.location_id = None
             self.clear_location_delegates()
-            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.update_fixture_status(UserLookupTableType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
             if commit:
@@ -2110,10 +2109,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
-        from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.fixtures.models import UserLookupTableType
         try:
             self.assigned_location_ids.remove(location_id)
-            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.update_fixture_status(UserLookupTableType.LOCATION)
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
@@ -2207,7 +2206,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
@@ -2239,13 +2238,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         try:
             return self.fixture_statuses[fixture_type]
         except KeyError:
-            from corehq.apps.fixtures.models import UserFixtureStatus
-            return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+            from corehq.apps.fixtures.models import UserLookupTableStatus
+            return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
     def update_fixture_status(self, fixture_type):
-        from corehq.apps.fixtures.models import UserFixtureStatus
+        from corehq.apps.fixtures.models import UserLookupTableStatus
         now = datetime.utcnow()
-        user_fixture_sync, new = UserFixtureStatus.objects.get_or_create(
+        user_fixture_sync, new = UserLookupTableStatus.objects.get_or_create(
             user_id=self._id,
             fixture_type=fixture_type,
             defaults={'last_modified': now},
@@ -2329,12 +2328,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
 
 def update_fixture_status_for_users(user_ids, fixture_type):
-    from corehq.apps.fixtures.models import UserFixtureStatus
+    from corehq.apps.fixtures.models import UserLookupTableStatus
     from dimagi.utils.chunked import chunked
 
     now = datetime.utcnow()
     for ids in chunked(user_ids, 50):
-        (UserFixtureStatus.objects
+        (UserLookupTableStatus.objects
          .filter(user_id__in=ids,
                  fixture_type=fixture_type)
          .update(last_modified=now))
@@ -2344,10 +2343,10 @@ def update_fixture_status_for_users(user_ids, fixture_type):
 
 @quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
 def get_fixture_statuses(user_id):
-    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
-    last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
-                      for choice in UserFixtureType.CHOICES}
-    for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
+    from corehq.apps.fixtures.models import UserLookupTableType, UserLookupTableStatus
+    last_modifieds = {choice[0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED
+                      for choice in UserLookupTableType.CHOICES}
+    for fixture_status in UserLookupTableStatus.objects.filter(user_id=user_id):
         last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
     return last_modifieds
 
@@ -2851,7 +2850,7 @@ class UserReportingMetadataStaging(models.Model):
 
     # The following properties are null if a user has not submitted a form since their last sync
     xform_version = models.IntegerField(null=True)
-    form_meta = JSONField(null=True)  # This could be filtered to only the parts we need
+    form_meta = models.JSONField(null=True)  # This could be filtered to only the parts we need
     received_on = models.DateTimeField(null=True)
 
     # The following properties are null if a user has not synced since their last form submission
@@ -3076,7 +3075,7 @@ class UserHistory(models.Model):
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
     # JSON structured replacement for the deprecated text message field
-    change_messages = JSONField(default=dict)
+    change_messages = models.JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
@@ -3086,20 +3085,26 @@ class UserHistory(models.Model):
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
-    details = JSONField(default=dict)
+    details = models.JSONField(default=dict)
     # ToDo: remove blank=true post migration/reset of existing records since it will always be present
     # same as the deprecated details.changed_via
     # one of the USER_CHANGE_VIA_* constants
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [
             models.Index(fields=['by_domain']),
             models.Index(fields=['for_domain']),
         ]
+
+
+class DeactivateMobileWorkerTriggerUpdateMessage:
+    UPDATED = 'updated'
+    CREATED = 'created'
+    DELETED = 'deleted'
 
 
 class DeactivateMobileWorkerTrigger(models.Model):
@@ -3110,3 +3115,58 @@ class DeactivateMobileWorkerTrigger(models.Model):
     domain = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
     deactivate_after = models.DateField()
+
+    @classmethod
+    def deactivate_mobile_workers(cls, domain, date_deactivation):
+        """
+        This deactivates all CommCareUsers who have a matching
+        DeactivateMobileWorkerTrigger with deactivate_after
+        :param domain: String - domain name
+        :param date_deactivation: Date
+        """
+        trigger_query = cls.objects.filter(
+            domain=domain,
+            deactivate_after__lte=date_deactivation
+        )
+        user_ids = trigger_query.values_list('user_id', flat=True)
+        for chunked_ids in chunked(user_ids, 100):
+            bulk_auto_deactivate_commcare_users(chunked_ids, domain)
+            cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()
+
+    @classmethod
+    def update_trigger(cls, domain, user_id, deactivate_after):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not deactivate_after:
+            if existing_trigger.exists():
+                existing_trigger.delete()
+                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+            # noop
+            return
+        if isinstance(deactivate_after, str):
+            try:
+                deactivate_after = get_date_from_month_and_year_string(deactivate_after)
+            except ValueError:
+                raise ValueError("Deactivate After Date is not in MM-YYYY format")
+        if isinstance(deactivate_after, date):
+            if existing_trigger.exists():
+                trigger = existing_trigger.first()
+                if trigger.deactivate_after == deactivate_after:
+                    # don't update or record a message
+                    return
+                trigger.deactivate_after = deactivate_after
+                trigger.save()
+                return DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+            else:
+                cls.objects.create(
+                    domain=domain,
+                    user_id=user_id,
+                    deactivate_after=deactivate_after,
+                )
+                return DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+
+    @classmethod
+    def get_deactivate_after_date(cls, domain, user_id):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not existing_trigger.exists():
+            return None
+        return existing_trigger.first().deactivate_after

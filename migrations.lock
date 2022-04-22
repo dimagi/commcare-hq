@@ -79,6 +79,10 @@ accounting
  0057_add_sms_report_toggle
  0058_delete_linked_projects_role
  0059_add_lite_release_management_priv
+ 0060_add_loadtest_users_priv
+ 0061_remove_enterprise_v1
+ 0062_add_release_management_to_enterprise
+ 0063_replace_linked_projects_ff_with_erm
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -88,6 +92,7 @@ aggregate_ucrs
  0002_auto_20180827_1148
 analytics
  0001_initial
+ 0002_data_point_unique_constraint
 api
  0001_initial
  0002_alter_permissions
@@ -118,6 +123,7 @@ app_manager
  0018_migrate_case_search_labels
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
+ 0021_migrate_case_search_itemset_ids
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -137,6 +143,7 @@ auth
  0009_alter_user_last_name_max_length
  0010_alter_group_name_max_length
  0011_update_proxy_permissions
+ 0012_alter_user_first_name_max_length
 blobs
  0001_squashed_0009_domains
  0002_blobmeta
@@ -149,6 +156,8 @@ blobs
  0009_delete_blobexpiration
  0010_auto_20191023_0938
  0011_blobmeta_compressed
+ 0012_rename_indexes
+ 0013_drop_icds_cas_index
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -302,6 +311,7 @@ domain
  0008_use_livequery
  0009_restrict_mob_access_from_FF
  0010_projectlimit
+ 0011_alloweducrexpressionsettings
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -342,6 +352,7 @@ fixtures
  0001_initial
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
+ 0004_userlookuptablestatus
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -439,6 +450,8 @@ form_processor
  0091_auto_20190603_2023
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
+formplayer_api
+ 0001_drop_old_tables
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -545,11 +558,17 @@ notifications
  0005_domain_specific_notifications
  0006_add_billing_type
  0007_auto_20170704_1643
+ 0008_add_notification_types
 oauth2_provider
  0001_initial
  0002_auto_20190406_1805
  0003_auto_20201211_1314
  0004_auto_20200902_2022
+oauth_integrations
+ 0001_initial
+ 0002_livegooglesheetschedule
+ 0003_livegooglesheetrefreshstatus
+ 0004_auto_20220304_1139
 ota
  0001_initial
  0002_alter_db_index
@@ -608,6 +627,7 @@ pillowtop
  0003_auto_20170411_1957
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
+ 0006_add_geopoint_to_case_search_index
 products
  0001_initial
 project_limits
@@ -891,6 +911,7 @@ sql_proxy_standby_accessors
 sso
  0001_initial
  0002_identityprovider_require_encrypted_assertions
+ 0003_oidc_onelogin_idp_update
 start_enterprise
  0001_initial
 stock

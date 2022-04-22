@@ -25,7 +25,7 @@ from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
@@ -141,7 +141,7 @@ class ContentForm(Form):
     # The app id and form unique id of this form, separated by '|'
     app_and_form_unique_id = ChoiceField(
         required=False,
-        label=ugettext_lazy("Form"),
+        label=gettext_lazy("Form"),
     )
     survey_expiration_in_hours = IntegerField(
         required=False,
@@ -152,8 +152,8 @@ class ContentForm(Form):
     survey_reminder_intervals_enabled = ChoiceField(
         required=False,
         choices=(
-            ('N', ugettext_lazy("Disabled")),
-            ('Y', ugettext_lazy("Enabled")),
+            ('N', gettext_lazy("Disabled")),
+            ('Y', gettext_lazy("Enabled")),
         ),
     )
     survey_reminder_intervals = CharField(
@@ -162,16 +162,16 @@ class ContentForm(Form):
     )
     custom_sms_content_id = ChoiceField(
         required=False,
-        label=ugettext_lazy("Custom SMS Content"),
+        label=gettext_lazy("Custom SMS Content"),
         choices=[('', '')] + [(k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT.items()],
     )
     ivr_intervals = CharField(
         required=False,
-        label=ugettext_lazy("IVR Intervals"),
+        label=gettext_lazy("IVR Intervals"),
     )
     max_question_attempts = ChoiceField(
         required=False,
-        label=ugettext_lazy("Maximum Question Prompt Attempts"),
+        label=gettext_lazy("Maximum Question Prompt Attempts"),
         choices=(
             (1, "1"),
             (2, "2"),
@@ -182,7 +182,7 @@ class ContentForm(Form):
     )
     sms_callback_intervals = CharField(
         required=False,
-        label=ugettext_lazy("Intervals"),
+        label=gettext_lazy("Intervals"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -498,7 +498,7 @@ class CustomEventForm(ContentForm):
     # Corresponds to TimedEvent.time or RandomTimedEvent.time
     time = CharField(
         required=False,
-        label=ugettext_lazy("HH:MM"),
+        label=gettext_lazy("HH:MM"),
     )
 
     # Corresponds to RandomTimedEvent.window_length
@@ -956,55 +956,54 @@ class ScheduleForm(Form):
 
     send_frequency = ChoiceField(
         required=True,
-        label=ugettext_lazy('Send'),
+        label=gettext_lazy('Send'),
         choices=(
-            (SEND_IMMEDIATELY, ugettext_lazy('Immediately')),
-            (SEND_DAILY, ugettext_lazy('Daily')),
-            (SEND_WEEKLY, ugettext_lazy('Weekly')),
-            (SEND_MONTHLY, ugettext_lazy('Monthly')),
-            (SEND_CUSTOM_DAILY, ugettext_lazy('Custom Daily Schedule')),
-            (SEND_CUSTOM_IMMEDIATE, ugettext_lazy('Custom Immediate Schedule')),
+            (SEND_IMMEDIATELY, gettext_lazy('Immediately')),
+            (SEND_DAILY, gettext_lazy('Daily')),
+            (SEND_WEEKLY, gettext_lazy('Weekly')),
+            (SEND_MONTHLY, gettext_lazy('Monthly')),
+            (SEND_CUSTOM_DAILY, gettext_lazy('Custom Daily Schedule')),
+            (SEND_CUSTOM_IMMEDIATE, gettext_lazy('Custom Immediate Schedule')),
         )
     )
     active = ChoiceField(
         required=True,
-        label=ugettext_lazy('Status'),
+        label=gettext_lazy('Status'),
         choices=(
-            ('Y', ugettext_lazy("Active")),
-            ('N', ugettext_lazy("Inactive")),
+            ('Y', gettext_lazy("Active")),
+            ('N', gettext_lazy("Inactive")),
         ),
     )
     weekdays = MultipleChoiceField(
         required=False,
-        label=ugettext_lazy('On'),
+        label=gettext_lazy('On'),
         choices=(
-            ('6', ugettext_lazy('Sunday')),
-            ('0', ugettext_lazy('Monday')),
-            ('1', ugettext_lazy('Tuesday')),
-            ('2', ugettext_lazy('Wednesday')),
-            ('3', ugettext_lazy('Thursday')),
-            ('4', ugettext_lazy('Friday')),
-            ('5', ugettext_lazy('Saturday')),
+            ('6', gettext_lazy('Sunday')),
+            ('0', gettext_lazy('Monday')),
+            ('1', gettext_lazy('Tuesday')),
+            ('2', gettext_lazy('Wednesday')),
+            ('3', gettext_lazy('Thursday')),
+            ('4', gettext_lazy('Friday')),
+            ('5', gettext_lazy('Saturday')),
         ),
         widget=CheckboxSelectMultiple()
     )
     days_of_month = MultipleChoiceField(
         required=False,
-        label=ugettext_lazy('On Days'),
+        label=gettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
-            tuple((str(x), '') for x in range(-3, 0)) +
-            tuple((str(x), '') for x in range(1, 29))
+            tuple((str(x), '') for x in range(-3, 29) if x)
         )
     )
     send_time_type = ChoiceField(
         required=True,
         choices=(
-            (TimedSchedule.EVENT_SPECIFIC_TIME, ugettext_lazy("A specific time")),
-            (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
+            (TimedSchedule.EVENT_SPECIFIC_TIME, gettext_lazy("A specific time")),
+            (TimedSchedule.EVENT_RANDOM_TIME, gettext_lazy("A random time")),
         )
     )
-    send_time = CharField(required=False, label=ugettext_lazy("HH:MM"))
+    send_time = CharField(required=False, label=gettext_lazy("HH:MM"))
     window_length = IntegerField(
         required=False,
         min_value=1,
@@ -1019,9 +1018,9 @@ class ScheduleForm(Form):
         required=False,
         # The text for REPEAT_EVERY_1 gets set dynamically
         choices=(
-            (REPEAT_NO, ugettext_lazy('no')),
+            (REPEAT_NO, gettext_lazy('no')),
             (REPEAT_EVERY_1, ''),
-            (REPEAT_EVERY_N, ugettext_lazy('every')),
+            (REPEAT_EVERY_N, gettext_lazy('every')),
         ),
     )
     repeat_every = IntegerField(
@@ -1032,8 +1031,8 @@ class ScheduleForm(Form):
     stop_type = ChoiceField(
         required=False,
         choices=(
-            (STOP_AFTER_OCCURRENCES, ugettext_lazy('after')),
-            (STOP_NEVER, ugettext_lazy('never')),
+            (STOP_AFTER_OCCURRENCES, gettext_lazy('after')),
+            (STOP_NEVER, gettext_lazy('never')),
         )
     )
     occurrences = IntegerField(
@@ -1043,39 +1042,39 @@ class ScheduleForm(Form):
     )
     recipient_types = MultipleChoiceField(
         required=True,
-        label=ugettext_lazy('Recipient(s)'),
+        label=gettext_lazy('Recipient(s)'),
         choices=(
-            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, ugettext_lazy("Users")),
-            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, ugettext_lazy("User Groups")),
-            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, ugettext_lazy("User Organizations")),
-            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, ugettext_lazy("Case Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, gettext_lazy("Users")),
+            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, gettext_lazy("User Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, gettext_lazy("User Organizations")),
+            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, gettext_lazy("Case Groups")),
         )
     )
     user_recipients = RelaxedMultipleChoiceField(
         required=False,
-        label=ugettext_lazy("User Recipient(s)"),
+        label=gettext_lazy("User Recipient(s)"),
         widget=SelectMultiple(choices=[]),
     )
     user_group_recipients = RelaxedMultipleChoiceField(
         required=False,
-        label=ugettext_lazy("User Group Recipient(s)"),
+        label=gettext_lazy("User Group Recipient(s)"),
         widget=SelectMultiple(choices=[]),
     )
     user_organization_recipients = RelaxedMultipleChoiceField(
         required=False,
-        label=ugettext_lazy("User Organization Recipient(s)"),
+        label=gettext_lazy("User Organization Recipient(s)"),
         widget=SelectMultiple(choices=[]),
         help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     include_descendant_locations = BooleanField(
         required=False,
-        label=ugettext_lazy("Also send to users at organizations below the selected ones"),
+        label=gettext_lazy("Also send to users at organizations below the selected ones"),
     )
     restrict_location_types = ChoiceField(
         required=False,
         choices=(
-            ('N', ugettext_lazy("Users at all organization levels")),
-            ('Y', ugettext_lazy("Only users at the following organization levels")),
+            ('N', gettext_lazy("Users at all organization levels")),
+            ('Y', gettext_lazy("Only users at the following organization levels")),
         ),
     )
     location_types = RelaxedMultipleChoiceField(
@@ -1085,34 +1084,34 @@ class ScheduleForm(Form):
     )
     case_group_recipients = RelaxedMultipleChoiceField(
         required=False,
-        label=ugettext_lazy("Case Group Recipient(s)"),
+        label=gettext_lazy("Case Group Recipient(s)"),
         widget=SelectMultiple(choices=[]),
     )
     content = ChoiceField(
         required=True,
-        label=ugettext_lazy("What to send"),
+        label=gettext_lazy("What to send"),
         choices=(
-            (CONTENT_SMS, ugettext_lazy('SMS')),
-            (CONTENT_EMAIL, ugettext_lazy('Email')),
+            (CONTENT_SMS, gettext_lazy('SMS')),
+            (CONTENT_EMAIL, gettext_lazy('Email')),
         )
     )
     default_language_code = ChoiceField(
         required=True,
-        label=ugettext_lazy("Default Language"),
+        label=gettext_lazy("Default Language"),
     )
     submit_partially_completed_forms = BooleanField(
         required=False,
-        label=ugettext_lazy("When the survey session expires, submit a partially "
-                            "completed form if the survey is not completed"),
+        label=gettext_lazy("When the survey session expires, submit a partially "
+                           "completed form if the survey is not completed"),
     )
     include_case_updates_in_partial_submissions = BooleanField(
         required=False,
-        label=ugettext_lazy("Include case updates in partially completed submissions"),
+        label=gettext_lazy("Include case updates in partially completed submissions"),
     )
 
     use_utc_as_default_timezone = BooleanField(
         required=False,
-        label=ugettext_lazy("Interpret send times using GMT when recipient has no preferred time zone"),
+        label=gettext_lazy("Interpret send times using GMT when recipient has no preferred time zone"),
     )
 
     # The standalone_content_form should be an instance of ContentForm and is used
@@ -1128,19 +1127,19 @@ class ScheduleForm(Form):
     use_user_data_filter = ChoiceField(
         label='',
         choices=(
-            (NO, ugettext_lazy("No")),
-            (YES, ugettext_lazy("Yes")),
+            (NO, gettext_lazy("No")),
+            (YES, gettext_lazy("Yes")),
         ),
         required=False,
     )
 
     user_data_property_name = TrimmedCharField(
-        label=ugettext_lazy("User data filter: property name"),
+        label=gettext_lazy("User data filter: property name"),
         required=False,
     )
 
     user_data_property_value = TrimmedCharField(
-        label=ugettext_lazy("User data filter: property value"),
+        label=gettext_lazy("User data filter: property value"),
         required=False,
     )
 
@@ -2565,7 +2564,7 @@ class BroadcastForm(ScheduleForm):
 
     schedule_name = CharField(
         required=True,
-        label=ugettext_lazy("Broadcast Name"),
+        label=gettext_lazy("Broadcast Name"),
         max_length=1000,
     )
 
@@ -2715,9 +2714,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_date_type = ChoiceField(
         required=False,
         choices=(
-            (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property")),
-            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date")),
+            (START_DATE_RULE_TRIGGER, gettext_lazy("The first available time after the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, gettext_lazy("The date from case property")),
+            (START_DATE_SPECIFIC_DATE, gettext_lazy("A specific date")),
         )
     )
 
@@ -2729,9 +2728,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_offset_type = ChoiceField(
         required=False,
         choices=(
-            (START_OFFSET_ZERO, ugettext_lazy("Exactly on the start date")),
-            (START_OFFSET_NEGATIVE, ugettext_lazy("Before the start date by")),
-            (START_OFFSET_POSITIVE, ugettext_lazy("After the start date by")),
+            (START_OFFSET_ZERO, gettext_lazy("Exactly on the start date")),
+            (START_OFFSET_NEGATIVE, gettext_lazy("Before the start date by")),
+            (START_OFFSET_POSITIVE, gettext_lazy("After the start date by")),
         )
     )
 
@@ -2744,13 +2743,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_day_of_week = ChoiceField(
         required=False,
         choices=(
-            ('6', ugettext_lazy('The first Sunday that occurs on or after the start date')),
-            ('0', ugettext_lazy('The first Monday that occurs on or after the start date')),
-            ('1', ugettext_lazy('The first Tuesday that occurs on or after the start date')),
-            ('2', ugettext_lazy('The first Wednesday that occurs on or after the start date')),
-            ('3', ugettext_lazy('The first Thursday that occurs on or after the start date')),
-            ('4', ugettext_lazy('The first Friday that occurs on or after the start date')),
-            ('5', ugettext_lazy('The first Saturday that occurs on or after the start date')),
+            ('6', gettext_lazy('The first Sunday that occurs on or after the start date')),
+            ('0', gettext_lazy('The first Monday that occurs on or after the start date')),
+            ('1', gettext_lazy('The first Tuesday that occurs on or after the start date')),
+            ('2', gettext_lazy('The first Wednesday that occurs on or after the start date')),
+            ('3', gettext_lazy('The first Thursday that occurs on or after the start date')),
+            ('4', gettext_lazy('The first Friday that occurs on or after the start date')),
+            ('5', gettext_lazy('The first Saturday that occurs on or after the start date')),
         ),
     )
 
@@ -2773,8 +2772,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
-            (ScheduleForm.NO, ugettext_lazy("Disabled")),
-            (ScheduleForm.YES, ugettext_lazy("Restart schedule when this case property takes any new value: ")),
+            (ScheduleForm.NO, gettext_lazy("Disabled")),
+            (ScheduleForm.YES, gettext_lazy("Restart schedule when this case property takes any new value: ")),
         ),
     )
 
@@ -2790,7 +2789,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     # The app id and form unique id of a visit scheduler form, separated by '|'
     visit_scheduler_app_and_form_unique_id = CharField(
-        label=ugettext_lazy("Scheduler: Form"),
+        label=gettext_lazy("Scheduler: Form"),
         required=False,
         widget=Select(choices=[]),
     )
@@ -2802,39 +2801,39 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     visit_window_position = ChoiceField(
-        label=ugettext_lazy("Scheduler: Use"),
+        label=gettext_lazy("Scheduler: Use"),
         required=False,
         choices=(
-            (VISIT_WINDOW_START, ugettext_lazy("the first date in the visit window")),
-            (VISIT_WINDOW_DUE_DATE, ugettext_lazy("the due date of the visit")),
-            (VISIT_WINDOW_END, ugettext_lazy("the last date in the visit window")),
+            (VISIT_WINDOW_START, gettext_lazy("the first date in the visit window")),
+            (VISIT_WINDOW_DUE_DATE, gettext_lazy("the due date of the visit")),
+            (VISIT_WINDOW_END, gettext_lazy("the last date in the visit window")),
         ),
     )
 
     capture_custom_metadata_item = ChoiceField(
         label='',
         choices=(
-            (ScheduleForm.NO, ugettext_lazy("No")),
-            (ScheduleForm.YES, ugettext_lazy("Yes")),
+            (ScheduleForm.NO, gettext_lazy("No")),
+            (ScheduleForm.YES, gettext_lazy("Yes")),
         ),
         required=False,
     )
 
     custom_metadata_item_name = TrimmedCharField(
-        label=ugettext_lazy("Custom Data: Name"),
+        label=gettext_lazy("Custom Data: Name"),
         required=False,
     )
 
     custom_metadata_item_value = TrimmedCharField(
-        label=ugettext_lazy("Custom Data: Value"),
+        label=gettext_lazy("Custom Data: Value"),
         required=False,
     )
 
     stop_date_case_property_enabled = ChoiceField(
         required=True,
         choices=(
-            (ScheduleForm.NO, ugettext_lazy("No")),
-            (ScheduleForm.YES, ugettext_lazy("Yes")),
+            (ScheduleForm.NO, gettext_lazy("No")),
+            (ScheduleForm.YES, gettext_lazy("Yes")),
         ),
     )
 
@@ -3618,7 +3617,7 @@ class ConditionalAlertForm(Form):
     prefix = "conditional-alert"
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=True,
     )
 

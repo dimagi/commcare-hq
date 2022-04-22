@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from casexml.apps.case.mock import CaseFactory
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -22,7 +25,10 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import trap_extra_setup
-from custom.covid.rules.custom_actions import close_cases_assigned_to_checkin
+from custom.covid.rules.custom_actions import (
+    close_cases_assigned_to_checkin,
+    set_all_activity_complete_date_to_today,
+)
 from custom.covid.rules.custom_criteria import associated_usercase_closed
 
 
@@ -131,3 +137,42 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         self.assertEqual(
             other_patient_case.get_case_property("assigned_to_primary_checkin_case_id"), "123",
         )
+
+
+class AllActivityCompleteDateTest(BaseCaseRuleTest):
+    def setUp(self):
+        super().setUp()
+        self.domain_obj = create_domain(self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        super().tearDown()
+
+    def test_custom_action(self):
+        rule = create_empty_rule(
+            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type="circus",
+        )
+
+        case1 = CaseFactory(self.domain).create_case(
+            case_type="circus",
+            update={
+                "all_activity_complete_date": "2021-06-31",
+            },
+        )
+        case2 = CaseFactory(self.domain).create_case(
+            case_type="circus",
+            update={
+                "size": "big",
+            },
+        )
+
+        set_all_activity_complete_date_to_today(case1, rule)
+        set_all_activity_complete_date_to_today(case2, rule)
+
+        today = datetime.today().strftime(ISO_DATE_FORMAT)
+        case1 = CommCareCase.objects.get_case(case1.case_id)
+        case2 = CommCareCase.objects.get_case(case2.case_id)
+        self.assertEqual(case1.get_case_property("all_activity_complete_date"), "2021-06-31")
+        self.assertEqual(case2.get_case_property("all_activity_complete_date"), today)
+        self.assertFalse(case1.closed)
+        self.assertFalse(case2.closed)

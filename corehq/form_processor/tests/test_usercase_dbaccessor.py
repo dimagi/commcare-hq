@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 
-from .test_cases import _create_case as create_case
+from .utils import create_case
 
 
 class UsercaseAccessorsTests(TestCase):
@@ -26,6 +26,7 @@ class UsercaseAccessorsTests(TestCase):
             user_id=self.user._id,
             name="bar",
             external_id=self.user._id,
+            save=True,
         )
 
     def test_get_usercase(self):

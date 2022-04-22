@@ -7,11 +7,11 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import F
+from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
-from django.forms import CharField, IntegerField
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -79,6 +79,18 @@ BUSINESS_UNITS = [
     "DWA",
     "INC",
 ]
+
+# These are the UCR Expressions (Data Transformation Engine expressions) that are not currently
+# supported by SaaS. If any domain wants to use them them it can be
+# enabled from  Project Settings > Project Information Internal
+RESTRICTED_UCR_EXPRESSIONS = [
+    ('base_item_expression', 'Base Item Expressions'),
+    ('related_doc', 'Related Document Expressions')
+]
+
+
+def all_restricted_ucr_expressions():
+    return [exp[0] for exp in RESTRICTED_UCR_EXPRESSIONS]
 
 
 for lang in all_langs:
@@ -249,22 +261,6 @@ class CaseDisplaySettings(DocumentSchema):
         verbose_name="Mapping of form xmlns to definitions of properties "
                      "to display for individual forms")
 
-    # todo: case list
-
-
-class DynamicReportConfig(DocumentSchema):
-    """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty()  # fully-qualified path to template report class
-    name = StringProperty()  # report display name in sidebar
-    kwargs = DictProperty()  # arbitrary settings to configure report
-    previewers_only = BooleanProperty()
-
-
-class DynamicReportSet(DocumentSchema):
-    """a set of dynamic reports grouped under a section header in the sidebar"""
-    section_title = StringProperty()
-    reports = SchemaListProperty(DynamicReportConfig)
-
 
 LOGO_ATTACHMENT = 'logo.png'
 
@@ -318,7 +314,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
-    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -426,13 +421,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     internal = SchemaProperty(InternalProperties)
 
-    dynamic_reports = SchemaListProperty(DynamicReportSet)
-
     # extra user specified properties
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
-    launch_date = DateTimeProperty
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
@@ -445,8 +437,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     disable_mobile_login_lockout = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
-
-    report_whitelist = StringListProperty()
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
@@ -1045,6 +1035,48 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class AllowedUCRExpressionSettings(models.Model):
+    """
+    Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.
+    The expressions defined in RESTRICTED_UCR_EXPRESSIONS are not generally available yet.
+    But these expressions are enabled by default on every domain so that current flow does not change.
+    If any expression's usage is to be restricted on any domain
+    then the  Expressions should be explicitly removed from
+    Domain settings page on HQ.
+    """
+
+    domain = models.CharField(unique=True, max_length=256)
+    allowed_ucr_expressions = ArrayField(
+        models.CharField(max_length=32, choices=RESTRICTED_UCR_EXPRESSIONS),
+        default=all_restricted_ucr_expressions
+    )
+
+    @classmethod
+    @quickcache(['domain_name'])
+    def get_allowed_ucr_expressions(cls, domain_name):
+        try:
+            ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+            allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
+        except AllowedUCRExpressionSettings.DoesNotExist:
+            allowed_ucr_expressions = all_restricted_ucr_expressions()
+        return allowed_ucr_expressions
+
+    @classmethod
+    def save_allowed_ucr_expressions(cls, domain_name, expressions):
+        AllowedUCRExpressionSettings.objects.update_or_create(
+            domain=domain_name,
+            defaults={
+                'allowed_ucr_expressions': expressions
+            }
+        )
+
+    @classmethod
+    def disallowed_ucr_expressions(cls, domain_name):
+        allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        return restricted_expressions - allowed_expressions_for_domain
 
 
 class ProjectLimitType():

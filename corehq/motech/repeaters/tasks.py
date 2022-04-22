@@ -35,6 +35,7 @@ from .dbaccessors import (
     iterate_repeat_records_for_ids,
 )
 from .models import (
+    RepeatRecord,
     SQLRepeater,
     domain_can_forward,
     get_payload,
@@ -143,13 +144,21 @@ def check_repeaters_in_partition(partition):
         check_repeater_lock.release()
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeat_record(repeat_record):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeat_record(repeat_record_id):
+    """
+    NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
+    """
+    repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def retry_process_repeat_record(repeat_record):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def retry_process_repeat_record(repeat_record_id):
+    """
+    NOTE: Keep separate from process_repeat_record for monitoring purposes
+    """
+    repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
@@ -193,7 +202,7 @@ def _process_repeat_record(repeat_record):
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
 
-repeaters_overdue = metrics_gauge_task(
+metrics_gauge_task(
     'commcare.repeaters.overdue',
     get_overdue_repeat_record_count,
     run_every=crontab(),  # every minute
@@ -201,14 +210,15 @@ repeaters_overdue = metrics_gauge_task(
 )
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater: SQLRepeater):
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater(repeater_id: int):
     """
     Worker task to send SQLRepeatRecords in chronological order.
 
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.
     """
+    repeater = SQLRepeater.objects.get(id=repeater_id)
     with CriticalSection(
         [f'process-repeater-{repeater.repeater_id}'],
         fail_hard=False, block=False, timeout=5 * 60 * 60,

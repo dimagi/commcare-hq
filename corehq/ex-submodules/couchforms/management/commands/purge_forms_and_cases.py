@@ -5,7 +5,6 @@ from django.http import Http404
 
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
@@ -39,7 +38,6 @@ though deletion would be re-confirmed so dont panic
         self.case_ids = set()
         self.filtered_xform_ids, self.xform_ids = [], []
         self.xform_writer, self.case_writer = None, None
-        self.case_accessors = None
         self.domain, self.app_id, self.version_number, self.test_run = None, None, None, None
         self.version_mapping = dict()
 
@@ -48,7 +46,6 @@ though deletion would be re-confirmed so dont panic
         self.xform_writer.writerow(XFORM_HEADER)
         self.case_writer = csv.writer(open(CASE_FILE_NAME, 'w+b'))
         self.case_writer.writerow(CASE_HEADER)
-        self.case_accessors = CaseAccessors(self.domain)
 
     def ensure_prerequisites(self, domain, app_id, version_number, test_run):
         self.domain = domain
@@ -119,7 +116,7 @@ though deletion would be re-confirmed so dont panic
     def delete_forms_and_cases(self):
         print('Proceeding with deleting forms and cases')
         XFormInstance.objects.soft_delete_forms(self.domain, self.filtered_xform_ids)
-        self.case_accessors.soft_delete_cases(list(self.case_ids))
+        CommCareCase.objects.soft_delete_cases(self.domain, list(self.case_ids))
 
 
 def _print_form_details(xform, file_writer, app_version_built_with):

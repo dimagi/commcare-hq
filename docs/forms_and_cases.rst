@@ -6,9 +6,8 @@ generic functions and accessors to access and operate on the models.
 
 This document provides a basic guide for how to do that.
 
-Models
-------
-
++-------------------+
+| Models            |
 +===================+
 | CommCareCase      |
 +-------------------+
@@ -110,7 +109,6 @@ name in order to know which DB needs to be queried.
 
 For more details see:
 
-* :code:`corehq.form_processor.interfaces.dbaccessors.CaseAccessors`
 * :code:`corehq.form_processor.interfaces.dbaccessors.LedgerAccessors`
 
 

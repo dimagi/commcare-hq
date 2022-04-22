@@ -8,8 +8,8 @@ from django.core.validators import validate_email
 from django.template.loader import render_to_string
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
@@ -173,12 +173,12 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
-                        ugettext("Back"),
+                        gettext("Back"),
                         css_id="back-to-start-btn",
                         css_class="btn btn-default btn-lg hide",
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Next"),
+                        gettext("Next"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
@@ -208,12 +208,12 @@ class RegisterWebUserForm(forms.Form):
                         data_bind="checked: eulaConfirmed"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Back"),
+                        gettext("Back"),
                         css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Finish"),
+                        gettext("Finish"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
                                   "disable: disableNextStepTwo"
@@ -234,7 +234,7 @@ class RegisterWebUserForm(forms.Form):
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError(ugettext(
+            raise forms.ValidationError(gettext(
                 "%s is an invalid phone number." % phone_number
             ))
         return phone_number
@@ -248,7 +248,7 @@ class RegisterWebUserForm(forms.Form):
             duplicate.save()
         if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
             raise forms.ValidationError(
-                ugettext("Username already taken. Please try another.")
+                gettext("Username already taken. Please try another.")
             )
         return data
 
@@ -262,7 +262,7 @@ class RegisterWebUserForm(forms.Form):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError(ugettext(
+            raise forms.ValidationError(gettext(
                 "You must agree to our Terms of Service and Business Agreement "
                 "in order to register an account."
             ))
@@ -271,7 +271,7 @@ class RegisterWebUserForm(forms.Form):
     def clean_persona(self):
         data = self.cleaned_data['persona'].strip()
         if not data and settings.IS_SAAS_ENVIRONMENT:
-            raise forms.ValidationError(ugettext(
+            raise forms.ValidationError(gettext(
                 "Please specify how you plan to use CommCare so we know how to "
                 "best help you."
             ))
@@ -281,7 +281,7 @@ class RegisterWebUserForm(forms.Form):
         data = self.cleaned_data['persona_other'].strip().lower()
         persona = self.cleaned_data['persona'].strip()
         if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
-            raise forms.ValidationError(ugettext(
+            raise forms.ValidationError(gettext(
                 "Please specify how you plan to use CommCare so we know how to "
                 "best help you."
             ))
@@ -520,7 +520,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                ugettext("Information for new Web User"),
+                gettext("Information for new Web User"),
                 crispy.Field(
                     "email",
                     autocomplete="off",
@@ -538,8 +538,8 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    (ugettext("Add User") if is_add_user
-                     else ugettext("Send Invite")),
+                    (gettext("Add User") if is_add_user
+                     else gettext("Send Invite")),
                     type="submit",
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",

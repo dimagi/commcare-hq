@@ -14,7 +14,7 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -638,7 +638,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
                 'module_id': module.id,
                 'name': clean_trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
-            } for module in app.modules]
+            } for module in app.get_modules()]
         }
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not
@@ -797,6 +797,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
     }
 

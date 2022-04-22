@@ -1,10 +1,13 @@
+import re
+
 import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -31,16 +34,101 @@ UNSEARCHABLE_KEYS = (
 
 
 def _flatten_singleton_list(value):
-    return value[0] if value and len(value) == 1 else value
+    return value[0] if value and isinstance(value, list) and len(value) == 1 else value
 
 
-def _flatten_multi_value_dict_values(value):
-    return {k: _flatten_singleton_list(v) for k, v in value.items()}
+@attr.s(frozen=True)
+class SearchCriteria:
+    key = attr.ib()
+    value = attr.ib(converter=_flatten_singleton_list)
+
+    @property
+    def is_empty(self):
+        return not bool(self.value)
+
+    @property
+    def has_missing_filter(self):
+        if self.has_multiple_terms:
+            return bool([v for v in self.value if v == ''])
+        return self.value == ''
+
+    @property
+    def value_as_list(self):
+        assert not self.has_multiple_terms
+        return self.value.split(' ')
+
+    @property
+    def has_multiple_terms(self):
+        return isinstance(self.value, list)
+
+    @property
+    def is_daterange(self):
+        if self.has_multiple_terms:
+            return any([v.startswith('__range__') for v in self.value])
+        return self.value.startswith('__range__')
+
+    @property
+    def is_ancestor_query(self):
+        return '/' in self.key
+
+    def get_date_range(self):
+        """The format is __range__YYYY-MM-DD__YYYY-MM-DD"""
+        start, end = self.value.split('__')[2:]
+        return start, end
+
+    def clone_without_blanks(self):
+        return SearchCriteria(self.key, self._value_without_empty())
+
+    def _value_without_empty(self):
+        return _flatten_singleton_list([v for v in self.value if v != ''])
+
+    def validate(self):
+        self._validate_multiple_terms()
+        self._validate_daterange()
+
+    def _validate_multiple_terms(self):
+        if not self.has_multiple_terms:
+            return
+
+        disallowed_parameters = [
+            CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+            'owner_id',
+        ]
+
+        if self.key in disallowed_parameters or self.is_daterange:
+            raise CaseFilterError(
+                _("Multiple values are only supported for simple text and range searches"),
+                self.key
+            )
+
+        if self.is_ancestor_query:
+            non_missing = self.clone_without_blanks()
+            if non_missing.has_multiple_terms:
+                raise CaseFilterError(
+                    _("Multiple values are only supported for simple text and range searches"),
+                    self.key
+                )
+
+    def _validate_daterange(self):
+        if not self.is_daterange:
+            return
+
+        pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
+        match = pattern.match(self.value)
+        if not match:
+            raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+
+
+def criteria_dict_to_criteria_list(criteria_dict):
+    criteria = [SearchCriteria(k, v) for k, v in criteria_dict.items()]
+    for search_criteria in criteria:
+        search_criteria.validate()
+    return criteria
 
 
 @attr.s(frozen=True)
 class CaseSearchRequestConfig:
-    criteria = attr.ib(kw_only=True, converter=_flatten_multi_value_dict_values)
+    criteria = attr.ib(kw_only=True)
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
@@ -65,7 +153,8 @@ def extract_search_request_config(request_dict):
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
     }
-    return CaseSearchRequestConfig(criteria=params, **kwargs_from_params)
+    criteria = criteria_dict_to_criteria_list(params)
+    return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):

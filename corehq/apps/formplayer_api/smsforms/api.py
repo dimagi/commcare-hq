@@ -279,13 +279,14 @@ class FormplayerInterface:
     def get_raw_instance(self):
         """
         Gets the raw xml instance of the current session regardless of the state that we're in
-        (used for logging partially complete forms to couch when errors happen).
+        Used for submitting partially complete sms surveys when a session expires
+        XML returned in the response ignores irrelevant nodes
         """
 
         data = {
             "action": "get-instance",
             "session-id": self.session_id,
-            "domain": self.domain
+            "domain": self.domain,
         }
 
         response = _post_data(data, self.user_id)

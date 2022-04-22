@@ -6,7 +6,6 @@ from corehq.util.soft_assert.core import SoftAssert
 
 from casexml.apps.case.exceptions import ReconciliationError
 from casexml.apps.case.xml.parser import CaseUpdateAction, KNOWN_PROPERTIES
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import ProcessedForms

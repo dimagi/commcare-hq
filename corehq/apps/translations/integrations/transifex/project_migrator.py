@@ -4,7 +4,7 @@ import tempfile
 from collections import OrderedDict
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import polib
 from memoized import memoized

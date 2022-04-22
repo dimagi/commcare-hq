@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from corehq.motech.dhis2.views import (
     AddDhis2EntityRepeaterView,
@@ -14,6 +14,10 @@ from corehq.motech.openmrs.views import (
     EditOpenmrsRepeaterView,
     config_openmrs_repeater,
 )
+from corehq.motech.repeaters.expression.views import (
+    AddCaseExpressionRepeaterView,
+    EditCaseExpressionRepeaterView,
+)
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
     AddFormRepeaterView,
@@ -26,15 +30,12 @@ from corehq.motech.repeaters.views import (
     pause_repeater,
     resume_repeater,
 )
-from corehq.motech.repeaters.expression.views import (
-    AddCaseExpressionRepeaterView,
-    EditCaseExpressionRepeaterView,
-)
 from corehq.motech.views import (
     ConnectionSettingsDetailView,
     ConnectionSettingsListView,
     MotechLogDetailView,
     MotechLogListView,
+    motech_log_export_view,
     test_connection_settings,
 )
 
@@ -111,4 +112,6 @@ urlpatterns = [
 
     url(r'^logs/$', MotechLogListView.as_view(), name=MotechLogListView.urlname),
     url(r'^logs/(?P<pk>\d+)/$', MotechLogDetailView.as_view(), name=MotechLogDetailView.urlname),
+    url(r'^logs/remote_api_logs.csv$', motech_log_export_view,
+        name='motech_log_export_view'),
 ]

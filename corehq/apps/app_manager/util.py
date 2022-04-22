@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.db.models import Max
 from django.http import Http404
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit import ResourceNotFound
@@ -157,7 +157,7 @@ def save_xform(app, form, xml):
         return xform.render()
 
     try:
-        xform = XForm(xml)
+        xform = XForm(xml, domain=app.domain)
     except XFormException:
         pass
     else:
@@ -185,13 +185,13 @@ def save_xform(app, form, xml):
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
-            path = form.actions.open_case.name_path
+            path = form.actions.open_case.name_update.question_path
             if path:
                 name_questions = [q for q in questions if q['value'] == path]
                 if not len(name_questions):
                     path = None
             if not path and len(questions):
-                form.actions.open_case.name_path = questions[0]['value']
+                form.actions.open_case.name_update.question_path = questions[0]['value']
 
     return xml
 
@@ -492,7 +492,7 @@ def _app_callout_templates():
     """
     path = os.path.join(
         os.path.dirname(__file__),
-        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yml'
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
@@ -699,3 +699,23 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def wrap_transition_from_old_update_case_action(properties_dict):
+    """
+    This function assists wrap functions for changes to the FormActions and AdvancedFormActions models.
+    A modification of UpdateCaseAction to use a ConditionalCaseUpdate instead of a simple question path
+    was part of these changes. It also used as part of a follow-up migration.
+    """
+    if(properties_dict):
+        first_prop_value = list(properties_dict.values())[0]
+        # If the dict just holds question paths (strings) as values we want to translate the old
+        # type of UpdateCaseAction model to the new.
+        if isinstance(first_prop_value, str):
+            new_dict_values = {}
+            for case_property, question_path in properties_dict.items():
+                new_dict_values[case_property] = {
+                    'question_path': question_path
+                }
+            return new_dict_values
+    return properties_dict

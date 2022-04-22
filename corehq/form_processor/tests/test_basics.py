@@ -340,7 +340,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         user = create_restore_user(self.project.name)
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
-        case = CaseBlock.deprecated_init(
+        case = CaseBlock(
             create=True,
             case_id=case_id,
             user_id=user.user_id, owner_id=user.user_id, case_type='demo',
@@ -434,13 +434,13 @@ class FundamentalCaseTests(FundamentalBaseTests):
             form = get_simple_form_xml(form_id)
 
             form_1 = submit_and_fetch(form, DOMAIN, attachments)
-            self.assert_(not form_1.is_duplicate)
+            self.assertTrue(not form_1.is_duplicate)
             check_attachments(form_1, attachments)
 
             form_2 = submit_and_fetch(form, DOMAIN, attachments)
             form_1 = self.formdb.get_form(form_id)
-            self.assert_(not form_1.is_duplicate)
-            self.assert_(form_2.is_duplicate)
+            self.assertTrue(not form_1.is_duplicate)
+            self.assertTrue(form_2.is_duplicate)
             check_attachments(form_1, attachments)
             check_attachments(form_2, attachments)
 
@@ -455,7 +455,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
     def test_long_value_validation(self):
         case_id = uuid.uuid4().hex
-        case = CaseBlock.deprecated_init(
+        case = CaseBlock(
             create=True,
             case_id=case_id,
             user_id='user1',
@@ -478,7 +478,7 @@ def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)
     return post_case_blocks(
         [
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 create=create,
                 case_id=case_id,
                 **kwargs

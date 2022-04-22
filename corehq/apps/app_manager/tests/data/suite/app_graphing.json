@@ -611,8 +611,16 @@
                                    "doc_type": "FormActionCondition"
                                },
                                "case_properties": {
-                                   "y_num": "/data/y_q",
-                                   "x_num": "/data/x_q"
+                                  "y_num": {
+                                    "doc_type": "ConditionalCaseUpdate",
+                                    "question_path": "/data/y_q",
+                                    "update_mode": "always"
+                                  },
+                                  "x_num": {
+                                    "doc_type": "ConditionalCaseUpdate",
+                                    "question_path": "/data/x_q",
+                                    "update_mode": "always"
+                                  }
                                },
                                "case_type": "point_case",
                                "reference_id": null,

@@ -2,7 +2,7 @@ import datetime
 import re
 from collections import Counter, defaultdict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.util.dates import get_previous_month_date_range, iso_string_to_date
@@ -14,6 +14,7 @@ from custom.samveg.case_importer.exceptions import (
     OwnerNameMissingError,
     RequiredValueMissingError,
     UnexpectedFileError,
+    UnexpectedSkipCallValidatorValueError,
     UploadLimitReachedError,
 )
 from custom.samveg.case_importer.operations import BaseRowOperation
@@ -24,6 +25,8 @@ from custom.samveg.const import (
     RCH_REQUIRED_COLUMNS,
     REQUIRED_COLUMNS,
     ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
+    SKIP_CALL_VALIDATOR,
+    SKIP_CALL_VALIDATOR_YES,
     SNCU_BENEFICIARY_IDENTIFIER,
     SNCU_REQUIRED_COLUMNS,
 )
@@ -124,6 +127,15 @@ class CallValidator(BaseRowOperation):
     @classmethod
     def run(cls, row_num, raw_row, fields_to_update, import_context):
         error_messages = []
+        if raw_row.get(SKIP_CALL_VALIDATOR):
+            # skip the row
+            # add error message if the value isn't the only expected value
+            if raw_row.get(SKIP_CALL_VALIDATOR) != SKIP_CALL_VALIDATOR_YES:
+                error_messages.append(
+                    UnexpectedSkipCallValidatorValueError()
+                )
+            return fields_to_update, error_messages
+
         call_date = None
         call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
         if not call_value:

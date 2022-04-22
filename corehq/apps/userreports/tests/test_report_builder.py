@@ -2,7 +2,6 @@ from django.test import TestCase
 
 from unittest.mock import patch
 
-from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.shortcuts import create_user

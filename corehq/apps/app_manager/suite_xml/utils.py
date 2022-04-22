@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from lxml import etree
 
@@ -15,25 +15,36 @@ def get_select_chain(app, module, include_self=True):
 
 
 def get_select_chain_with_sessions(app, module, include_self=True):
-    select_chain = [(module, 'case_id')] if include_self else []
+    select_chain = []
+    if include_self:
+        if module.is_multi_select():
+            select_chain.append((module, 'selected_cases'))
+        else:
+            select_chain.append((module, 'case_id'))
     current_module = module
     case_type = module.case_type
     i = len(select_chain)
     while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
         is_other_relation = current_module.parent_select.relationship is None
-        current_module = app.get_module_by_unique_id(
+        parent_module = app.get_module_by_unique_id(
             current_module.parent_select.module_id,
             error=_("Case list used by parent child selection in '{}' not found").format(
                 current_module.default_name()),
         )
-        if is_other_relation and case_type == current_module.case_type:
+        if is_other_relation and case_type == parent_module.case_type:
             session_var = 'case_id_' + case_type
         else:
-            session_var = ('parent_' * i or 'case_') + 'id'
-        case_type = current_module.case_type
-        if current_module in [m for (m, _) in select_chain]:
+            if current_module.is_multi_select():
+                session_var = ('parent_' * i) + 'selected_cases'
+            else:
+                session_var = ('parent_' * i or 'case_') + 'id'
+        if parent_module in [m for (m, _) in select_chain]:
             raise SuiteValidationError("Circular reference in case hierarchy")
-        select_chain.append((current_module, session_var))
+        select_chain.append((parent_module, session_var))
+
+        # update vars for next loop
+        current_module = parent_module
+        case_type = parent_module.case_type
         i += 1
     return select_chain
 
@@ -99,7 +110,7 @@ def get_form_locale_id(form):
 
 
 def get_ordered_case_types_for_module(module):
-    return get_ordered_case_types(module.case_type, module.search_config.additional_case_types)
+    return get_ordered_case_types(module.case_type, module.additional_case_types)
 
 
 def get_ordered_case_types(case_type, additional_case_types=None):

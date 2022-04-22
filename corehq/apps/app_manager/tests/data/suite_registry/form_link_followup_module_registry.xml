@@ -6,6 +6,8 @@
                 <locale id="forms.m0f0"/>
             </text>
         </command>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <instance id="item-list:colors" src="jr://fixture/item-list:colors"/>
         <session>
           <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results" template="case" default_search="false">
             <data key="case_type" ref="'case'"/>
@@ -23,7 +25,7 @@
                   <locale id="search_property.m0.favorite_color"/>
                 </text>
               </display>
-              <itemset nodeset="instance('colors')/colors_list/colors">
+              <itemset nodeset="instance('item-list:colors')/colors_list/colors">
                 <label ref="name"/>
                 <value ref="value"/>
                 <sort ref="name"/>
@@ -38,8 +40,6 @@
             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
           </query>
         </session>
-        <instance id="colors" src="jr://fixture/item-list:colors"/>
-        <instance id="commcaresession" src="jr://instance/session"/>
         <stack>
           <create if="(today() - dob) &lt; 7">
             <command value="'m0'"/>

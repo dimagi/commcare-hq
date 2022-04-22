@@ -48,7 +48,7 @@ class TestSendToHubspot(TestCase):
         _send_hubspot_form_request.assert_called_once()
         hubspot_id, form_id, data = _send_hubspot_form_request.call_args[0]
         self.assertEqual(form_id, HUBSPOT_SIGNUP_FORM_ID)
-        self.assertDictContainsSubset(buyer_props, data)
+        self.assertEqual(data['buyer_persona'], 'Old-Timey Prospector')
 
     @classmethod
     def setUpClass(cls):
@@ -145,9 +145,9 @@ class TestBlockedHubspotData(TestCase):
         cls.blocked_commcare_user.save()
 
     def test_get_blocked_domains(self):
-        self.assertListEqual(
-            get_blocked_hubspot_domains(),
-            [self.blocked_domain.name, self.second_blocked_domain.name]
+        self.assertEqual(
+            set(get_blocked_hubspot_domains()),
+            {self.blocked_domain.name, self.second_blocked_domain.name}
         )
 
     def test_get_blocked_hubspot_accounts(self):

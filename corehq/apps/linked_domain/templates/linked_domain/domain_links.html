@@ -11,13 +11,7 @@
 
   <div id="ko-linked-projects" class="ko-template">
     <!-- ko if: showGetStarted -->
-      {% if has_release_management_privilege %}
         {% include 'linked_domain/partials/get_started.html' %}
-      {% else %}
-        <div class="alert alert-info">
-          {% trans "This project has no links to other projects." %}
-        </div>
-      {% endif %}
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
       <!-- ko if: showMultipleTabs -->
@@ -75,7 +69,7 @@
         <div class="modal-body">
           <div class="ko-model">
             <label >{% trans 'Project Space:' %}</label>
-            {% if is_superuser %}
+            {% if view_data.is_superuser %}
               <select class="form-control" data-bind="autocompleteSelect2: availableDomains, value: domainToAdd"></select>
             {% else %}
               <select class="form-control" data-bind="select2: availableDomains, value: domainToAdd"></select>

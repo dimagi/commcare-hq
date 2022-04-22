@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 from django.http import HttpResponseNotFound
 
 from tastypie.api import Api
@@ -73,6 +73,7 @@ API_LIST = (
         locations.v0_5.LocationTypeResource,
         v0_5.SimpleReportConfigurationResource,
         v0_5.ConfigurableReportDataResource,
+        v0_5.DataSourceConfigurationResource,
         DomainForms,
         DomainCases,
         DomainUsernames,

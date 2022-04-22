@@ -10,8 +10,10 @@ alembic==1.4.3
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
-architect==0.5.6
+architect==0.6.0
     # via -r base-requirements.in
+asgiref==3.5.0
+    # via django
 asttokens==2.0.5
     # via stack-data
 attrs==18.2.0
@@ -34,6 +36,8 @@ botocore==1.20.85
     # via
     #   boto3
     #   s3transfer
+cachetools==5.0.0
+    # via google-auth
 celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
     # via
     #   -r base-requirements.in
@@ -63,9 +67,7 @@ colorama==0.4.3
     #   sniffer
 commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
-concurrent-log-handler==0.9.12
-    # via -r base-requirements.in
-contextlib2==0.6.0.post1
+contextlib2==21.6.0
     # via
     #   git-build-branch
     #   schema
@@ -95,10 +97,9 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==2.2.27
+django==3.2.13
     # via
     #   -r base-requirements.in
-    #   django-angular
     #   django-appconf
     #   django-braces
     #   django-bulk-update
@@ -116,9 +117,7 @@ django==2.2.27
     #   django-user-agents
     #   djangorestframework
     #   jsonfield
-django-angular==2.2.4
-    # via -r base-requirements.in
-django-appconf==1.0.4
+django-appconf==1.0.5
     # via
     #   django-compressor
     #   django-statici18n
@@ -132,15 +131,15 @@ django-celery-results==1.0.4
     # via -r base-requirements.in
 django-compressor==2.4
     # via -r base-requirements.in
-django-countries==4.6
+django-countries==7.3.2
     # via -r base-requirements.in
 django-crispy-forms==1.10.0
     # via -r base-requirements.in
-django-cte==1.1.4
+django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
     # via -r dev-requirements.in
-django-formtools==2.1
+django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -154,8 +153,6 @@ django-otp==0.9.4
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-partial-index==0.6.0
-    # via -r base-requirements.in
 django-phonenumber-field==5.2.0
     # via
     #   -r base-requirements.in
@@ -166,19 +163,19 @@ django-recaptcha==2.0.6
     # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
-django-redis-sessions==0.6.1
+django-redis-sessions==0.6.2
     # via -r base-requirements.in
 django-statici18n==1.9.0
     # via -r base-requirements.in
-django-tastypie==0.14.3
+django-tastypie==0.14.4
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.13.1
+django-two-factor-auth==1.13.2
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
-django-websocket-redis==0.6.0
+django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.12.2
     # via -r base-requirements.in
@@ -205,7 +202,7 @@ ethiopian-date-converter==0.1.5
     # via -r base-requirements.in
 eulxml==1.1.3
     # via -r base-requirements.in
-executing==0.8.2
+executing==0.8.3
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
@@ -232,6 +229,24 @@ git-build-branch==0.1.13
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
+google-api-core==2.5.0
+    # via google-api-python-client
+google-api-python-client==2.32.0
+    # via -r base-requirements.in
+google-auth==2.6.0
+    # via
+    #   google-api-core
+    #   google-api-python-client
+    #   google-auth-httplib2
+    #   google-auth-oauthlib
+google-auth-httplib2==0.1.0
+    # via
+    #   -r base-requirements.in
+    #   google-api-python-client
+google-auth-oauthlib==0.4.6
+    # via -r base-requirements.in
+googleapis-common-protos==1.54.0
+    # via google-api-core
 greenlet==1.1.2
     # via
     #   -r base-requirements.in
@@ -243,19 +258,25 @@ hiredis==2.0.0
     # via -r base-requirements.in
 httpagentparser==1.9.0
     # via -r base-requirements.in
+httplib2==0.20.4
+    # via
+    #   google-api-python-client
+    #   google-auth-httplib2
 idna==2.10
     # via
     #   email-validator
     #   requests
 imagesize==1.2.0
     # via sphinx
+importlib-metadata==4.11.3
+    # via markdown
 intervaltree==3.1.0
     # via ddtrace
 ipython==8.0.1
     # via -r dev-requirements.in
 iso8601==0.1.13
     # via -r base-requirements.in
-isodate==0.6.0
+isodate==0.6.1
     # via python3-saml
 jdcal==1.4.1
     # via openpyxl
@@ -275,7 +296,7 @@ jsonfield==2.1.1
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==0.9.10
+jsonobject==2.0.0
     # via
     #   -r base-requirements.in
     #   git-build-branch
@@ -304,6 +325,8 @@ mako==1.1.3
     # via alembic
 mando==0.6.4
     # via radon
+markdown==3.3.6
+    # via -r base-requirements.in
 markupsafe==1.1.1
     # via
     #   jinja2
@@ -346,11 +369,11 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==9.0.0
+pillow==9.0.1
     # via
     #   -r base-requirements.in
     #   reportlab
-pip-tools==6.5.1
+pip-tools==6.6.0
     # via -r test-requirements.in
 platformdirs==2.4.1
     # via black
@@ -358,14 +381,17 @@ ply==3.11
     # via
     #   eulxml
     #   jsonpath-ng
-polib==1.1.0
+polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via ipython
 protobuf==3.15.0
-    # via ddtrace
+    # via
+    #   ddtrace
+    #   google-api-core
+    #   googleapis-common-protos
 psutil==5.8.0
     # via -r dev-requirements.in
 psycogreen==1.0.2
@@ -380,6 +406,12 @@ pure-eval==0.2.2
     # via stack-data
 py-kissmetrics==1.1.0
     # via -r base-requirements.in
+pyasn1==0.4.8
+    # via
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.2.8
+    # via google-auth
 pycodestyle==2.7.0
     # via flake8
 pycparser==2.20
@@ -390,9 +422,8 @@ pyflakes==2.3.1
     # via flake8
 pygithub==1.54.1
     # via -r base-requirements.in
-pygments==2.8.1
+pygments==2.11.2
     # via
-    #   -r base-requirements.in
     #   ipython
     #   sphinx
 pygooglechart==0.4.0
@@ -404,14 +435,16 @@ pyjwt==1.7.1
 pyopenssl==20.0.1
     # via -r sso-requirements.in
 pyparsing==2.4.7
-    # via packaging
+    # via
+    #   httplib2
+    #   packaging
 pyphonetics==0.5.3
     # via -r base-requirements.in
 pyrsistent==0.17.3
     # via jsonschema
 pysocks==1.7.1
     # via twilio
-python-dateutil==2.8.1
+python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
     #   alembic
@@ -468,6 +501,7 @@ requests==2.25.1
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
+    #   google-api-core
     #   pygithub
     #   requests-mock
     #   requests-oauthlib
@@ -478,15 +512,19 @@ requests==2.25.1
     #   twilio
 requests-mock==1.9.3
     # via -r test-requirements.in
-requests-oauthlib==1.3.0
-    # via -r base-requirements.in
+requests-oauthlib==1.3.1
+    # via
+    #   -r base-requirements.in
+    #   google-auth-oauthlib
 requests-toolbelt==0.9.1
     # via -r base-requirements.in
 rjsmin==1.1.0
     # via django-compressor
+rsa==4.8
+    # via google-auth
 s3transfer==0.4.2
     # via boto3
-schema==0.7.2
+schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==0.19.5
     # via -r base-requirements.in
@@ -503,6 +541,7 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
+    #   asttokens
     #   django-braces
     #   django-compressor
     #   django-oauth-toolkit
@@ -514,6 +553,8 @@ six==1.15.0
     #   eulxml
     #   fixture
     #   ghdiff
+    #   google-auth
+    #   google-auth-httplib2
     #   isodate
     #   jsonfield
     #   jsonobject
@@ -578,7 +619,7 @@ stack-data==0.1.4
     # via ipython
 stripe==2.54.0
     # via -r base-requirements.in
-suds-py3==1.4.4.1
+suds-py3==1.4.5.0
     # via -r base-requirements.in
 tenacity==6.2.0
     # via ddtrace
@@ -592,7 +633,7 @@ tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
     # via pep517
-tomli==2.0.0
+tomli==2.0.1
     # via black
 toposort==1.7
     # via -r base-requirements.in
@@ -606,12 +647,16 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==6.5.1
     # via -r base-requirements.in
-typing-extensions==4.0.1
-    # via black
+typing-extensions==4.1.1
+    # via
+    #   black
+    #   django-countries
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
     # via pyphonetics
+uritemplate==4.1.1
+    # via google-api-python-client
 urllib3==1.26.5
     # via
     #   botocore
@@ -628,7 +673,7 @@ wcwidth==0.2.5
     # via prompt-toolkit
 werkzeug==1.0.1
     # via -r base-requirements.in
-wheel==0.37.0
+wheel==0.37.1
     # via
     #   -r dev-requirements.in
     #   pip-tools
@@ -638,10 +683,12 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-xmlsec==1.3.11
+xmlsec==1.3.12
     # via python3-saml
 yapf==0.31.0
     # via -r dev-requirements.in
+zipp==3.7.0
+    # via importlib-metadata
 zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0

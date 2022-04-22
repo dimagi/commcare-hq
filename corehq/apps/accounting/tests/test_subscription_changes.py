@@ -392,7 +392,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             p1.assert_has_calls(
                 [
                     call(
-                        broadcast.schedule_id,
+                        broadcast.schedule_id.hex,
                         broadcast.recipients,
                         start_date_iso_string=json_format_date(broadcast.start_date)
                     )
@@ -404,7 +404,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p2.call_count, 2)
             p2.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients)
+                    call(broadcast.schedule_id.hex, broadcast.recipients)
                     for broadcast in (self.domain_1_sms_schedules[1], self.domain_1_survey_schedules[1])
                 ],
                 any_order=True
@@ -438,13 +438,13 @@ class DeactivateScheduleTest(TransactionTestCase):
 
             b = self.domain_1_survey_schedules[0]
             p1.assert_called_once_with(
-                b.schedule_id,
+                b.schedule_id.hex,
                 b.recipients,
                 start_date_iso_string=json_format_date(b.start_date)
             )
 
             b = self.domain_1_survey_schedules[1]
-            p2.assert_called_once_with(b.schedule_id, b.recipients)
+            p2.assert_called_once_with(b.schedule_id.hex, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
             p3.assert_called_once_with(rule)

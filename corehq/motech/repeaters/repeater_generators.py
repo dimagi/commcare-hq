@@ -7,7 +7,7 @@ from uuid import uuid4
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
@@ -382,6 +382,7 @@ class CaseUpdateConfig:
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        "index_create_identifier": "target_index_create_identifier",
         # index remove
         "index_remove_case_id": "target_index_remove_case_id",
         "index_remove_identifier": "target_index_remove_identifier",
@@ -397,7 +398,6 @@ class CaseUpdateConfig:
         "registry_slug",
         "domain",
         "case_id",
-        "case_type",
     ]
 
     intent_case = attr.ib()
@@ -413,6 +413,7 @@ class CaseUpdateConfig:
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
+    index_create_identifier = attr.ib()
     index_remove_case_id = attr.ib()
     index_remove_identifier = attr.ib()
     index_remove_relationship = attr.ib()
@@ -429,17 +430,17 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
-        if "index_create_relationship" not in kwargs:
+
+        if kwargs.get("index_create_relationship") is None:
             kwargs["index_create_relationship"] = "child"
-        if "index_remove_relationship" not in kwargs:
-            kwargs["index_remove_relationship"] = "child"
+        if kwargs.get("index_create_identifier") is None:
+            kwargs["index_create_identifier"] = (
+                "parent" if kwargs["index_create_relationship"] == "child" else "host"
+            )
+
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
-
-    @property
-    def index_create_identifier(self):
-        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
@@ -463,6 +464,8 @@ class CaseUpdateConfig:
         if self.create_case:
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+            if not self.case_type:
+                raise DataRegistryCaseUpdateError("'case_type' required when creating cases")
             kwargs = {
                 "create": True,
                 "case_type": self.case_type,
@@ -592,7 +595,7 @@ class CaseUpdateConfig:
         if for_create:
             raise DataRegistryCaseUpdateError(f"Unable to create case as it already exists: {case_id}")
 
-        if case.domain != domain or case.type != case_type:
+        if case.domain != domain or (case_type and case.type != case_type):
             raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
 
         return case

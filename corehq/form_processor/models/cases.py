@@ -186,6 +186,20 @@ class CommCareCaseManager(RequireDBManager):
             )
             return [row[0] for row in cursor]
 
+    def get_last_modified_dates(self, domain, case_ids):
+        """
+        Given a list of case IDs, return a dict where the ids are keys and the
+        values are the last server modified date of that case.
+        """
+        if not case_ids:
+            return []
+        with self.model.get_plproxy_cursor(readonly=True) as cursor:
+            cursor.execute(
+                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
+                [domain, case_ids]
+            )
+            return dict(cursor)
+
     def get_case_xform_ids(self, case_id):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
@@ -221,6 +235,36 @@ class CommCareCaseManager(RequireDBManager):
             )[0]
         except IndexError:
             return None
+
+    def soft_delete_cases(self, domain, case_ids, deletion_date=None, deletion_id=None):
+        from ..change_publishers import publish_case_deleted
+        assert isinstance(case_ids, list), type(case_ids)
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as deleted_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
+            )
+            deleted_count = sum(row[0] for row in cursor)
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return deleted_count
+
+    def soft_undelete_cases(self, domain, case_ids):
+        from ..change_publishers import publish_case_saved
+        assert isinstance(case_ids, list), type(case_ids)
+        with self.model.get_plproxy_cursor() as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as undeleted_count',
+                [domain, case_ids]
+            )
+            undeleted_count = sum(row[0] for row in cursor)
+        for case in self.iter_cases(case_ids, domain):
+            publish_case_saved(case)
+        return undeleted_count
 
     def hard_delete_cases(self, domain, case_ids):
         """Permanently delete cases in domain
@@ -1134,6 +1178,12 @@ class CaseTransactionManager(RequireDBManager):
                 'SELECT compare_server_client_case_transaction_order(%s, %s)',
                 [case_id, model.case_rebuild_types() | model.TYPE_CASE_CREATE])
             return cursor.fetchone()[0]
+
+    def exists_for_form(self, form_id):
+        for db_name in get_db_aliases_for_partitioned_query():
+            if self.using(db_name).filter(form_id=form_id).exists():
+                return True
+        return False
 
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):

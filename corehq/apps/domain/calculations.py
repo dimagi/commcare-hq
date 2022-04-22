@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dateutil.relativedelta import relativedelta
 

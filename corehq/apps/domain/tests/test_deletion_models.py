@@ -38,6 +38,7 @@ IGNORE_APPS = {
     'telerivet',
     'toggle_ui',
     'sso',
+    'oauth_integrations',
 }
 
 IGNORE_MODELS = {
@@ -53,7 +54,7 @@ IGNORE_MODELS = {
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
-    'fixtures.UserFixtureStatus',
+    'fixtures.UserLookupTableStatus',
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
