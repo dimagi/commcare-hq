@@ -130,6 +130,10 @@ class IdentityProvider(models.Model):
     def __str__(self):
         return f"{self.name} IdP [{self.idp_type}]"
 
+    @property
+    def service_name(self):
+        return dict(IdentityProviderType.CHOICES)[self.idp_type]
+
     def create_service_provider_certificate(self):
         sp_cert = ServiceProviderCertificate()
         self.sp_cert_public = sp_cert.public_key

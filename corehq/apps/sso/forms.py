@@ -59,6 +59,20 @@ def _check_required_when_active(is_active, value):
         )
 
 
+def _get_help_text(identity_provider):
+    help_link = get_documentation_url(identity_provider)
+    help_text = format_html(
+        _('<a href="{}">Please read this guide</a> on how to set up '
+          'CommCare HQ with {}.<br />You will need the following '
+          'information:'),
+        help_link,
+        identity_provider.service_name,
+    )
+    return crispy.HTML(
+        format_html('<p class="help-block">{}</p>', help_text)
+    )
+
+
 class CreateIdentityProviderForm(forms.Form):
     """This form initializes the essential fields of an IdentityProvider
     """
@@ -241,24 +255,21 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def service_provider_help_block(self):
-        help_link = get_documentation_url(self.idp)
-        help_text = format_html(
-            _('<a href="{}">Please read this guide</a> on how to set up '
-              'CommCare HQ with Azure AD.<br />You will need the following '
-              'information:'),
-            help_link
-        )
-        return crispy.HTML(
-            format_html('<p class="help-block">{}</p>', help_text)
-        )
+        return _get_help_text(self.idp)
 
     @property
     def token_encryption_help_block(self):
-        help_text = _(
-            'This is a high security feature  that ensures Assertions are '
-            'fully encrypted. This feature requires a Premium Azure AD '
-            'subscription. '
-        )
+        if self.idp.idp_type == IdentityProviderType.AZURE_AD:
+            help_text = _(
+                'This is a high security feature  that ensures Assertions are '
+                'fully encrypted. This feature requires a Premium Azure AD '
+                'subscription. '
+            )
+        else:
+            help_text = _(
+                'This feature may or may not be supported by your Identity Provider. '
+                'Please refer to their documentation.'
+            )
         return crispy.HTML(
             format_html('<p class="help-block">{}</p>', help_text)
         )
@@ -442,7 +453,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                         ),
                         hqcrispy.B3TextField(
                             'idp_type',
-                            dict(IdentityProviderType.CHOICES)[self.idp.idp_type]
+                            self.idp.service_name
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
@@ -637,6 +648,8 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
         self.fields.update(sp_details_form.fields)
 
+        self.fields['entity_id'].label = _("{} Identifier").format(self.idp.service_name)
+
         certificate_details = []
         if self.idp.idp_cert_public:
             self.fields['idp_cert_public'].label = _("Upload New Certificate (Base64)")
@@ -663,7 +676,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Basic SAML Configuration for Azure AD'),
+                        _('Basic SAML Configuration for {}').format(self.idp.service_name),
                         *sp_details_form.service_provider_fields
                     ),
                     css_class="panel-body"
@@ -673,7 +686,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
-                        _('Connection Details from Azure AD'),
+                        _('Connection Details from {}').format(self.idp.service_name),
                         'login_url',
                         'entity_id',
                         'logout_url',
