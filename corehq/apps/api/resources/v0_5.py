@@ -302,7 +302,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     setattr(bundle.obj, key, value)
                     should_save = True
                 else:
-                    raise BadRequest(f'Attempted to update unknown key {key}.')
+                    raise BadRequest(f'Attempted to update unknown field {key}.')
         return should_save
 
     def obj_create(self, bundle, **kwargs):
