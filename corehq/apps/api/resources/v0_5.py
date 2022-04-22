@@ -1,6 +1,5 @@
 import json
 from collections import namedtuple
-from itertools import chain
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
