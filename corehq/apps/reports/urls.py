@@ -1,7 +1,4 @@
-import logging
-
 from django.conf.urls import include, re_path as url
-from django.core.exceptions import ImproperlyConfigured
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
@@ -26,7 +23,6 @@ from .dispatcher import (
     UserManagementReportDispatcher,
 )
 from .filters import urls as filter_urls
-from .util import get_installed_custom_modules
 from .views import (
     AddSavedReportConfigView,
     CaseAttachmentsView,
@@ -167,16 +163,6 @@ urlpatterns = [
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
 ]
-
-for module in get_installed_custom_modules():
-    module_name = module.__name__.split('.')[-1]
-    try:
-        custom_report_urls += [
-             url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
-        ]
-    except ImproperlyConfigured:
-        logging.info("Module %s does not provide urls" % module_name)
-
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query
 # get filtered by the WAF
