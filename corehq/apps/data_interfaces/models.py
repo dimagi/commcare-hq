@@ -98,6 +98,17 @@ class AutomaticUpdateRule(models.Model):
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
 
+    # You can require ALL of the rule's criteria or just ANY of the them
+    CRITERIA_OPERATOR_CHOICES = [
+        ('ANY', 'Any'),
+        ('ALL', 'All')
+    ]
+    criteria_combination_operator = models.CharField(
+        max_length=3,
+        choices=CRITERIA_OPERATOR_CHOICES,
+        default='ALL',
+    )
+
     # For performance reasons, the server_modified_boundary is a
     # required part of the criteria and should be set to the minimum
     # number of days old that a case's server_modified_on date must be

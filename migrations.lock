@@ -158,6 +158,9 @@ blobs
  0011_blobmeta_compressed
  0012_rename_indexes
  0013_drop_icds_cas_index
+captcha
+ 0001_initial
+ 0002_delete_captchastore
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -279,6 +282,7 @@ data_interfaces
  0023_auto_20210914_1726
  0024_add_automaticupdaterule_upstream_id
  0025_domaincaserulerun_num_errors
+ 0026_automaticupdaterule_criteria_combination_operator
 dhis2
  0001_initial
  0002_auto_20170322_1323
