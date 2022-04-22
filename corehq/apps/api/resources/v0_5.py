@@ -196,6 +196,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
+    immutable_fields = ['id', 'username']
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -223,6 +224,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(self, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
+            if key in self.immutable_fields:
+                raise BadRequest(f'Cannot update a mobile user\'s {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -264,7 +267,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
                         user_change_logger.add_info(UserChangeMessage.groups_info(groups))
                     should_save = True
-                elif key in ['email', 'username']:
+                elif key == 'email':
                     lowercase_value = value.lower()
                     if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
                         user_change_logger.add_changes({key: lowercase_value})
@@ -294,12 +297,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     except ValueError as e:
                         raise BadRequest(str(e))
                     should_save = True
-                else:
-                    # first_name, last_name, language
+                elif key in ['first_name', 'last_name', 'language']:
                     if user_change_logger and getattr(bundle.obj, key) != value:
                         user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
                     should_save = True
+                else:
+                    raise BadRequest(f'Attempted to update unknown field {key}.')
         return should_save
 
     def obj_create(self, bundle, **kwargs):
@@ -312,7 +316,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
-            del bundle.data['password']
+            # password was just set
+            bundle.data.pop('password', None)
+            # do not call update with username key
+            bundle.data.pop('username', None)
             self._update(bundle)
             bundle.obj.save()
         except Exception:

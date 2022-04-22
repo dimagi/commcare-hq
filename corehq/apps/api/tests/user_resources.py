@@ -294,6 +294,63 @@ class TestCommCareUserResource(APIResourceTest):
             '{"error": "metadata properties conflict with profile: imaginary"}'
         )
 
+    def test_cannot_update_id(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "id": "changed-id",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Cannot update a mobile user\'s id."}'
+        )
+
+    def test_cannot_update_username(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "username": "changed-test",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Cannot update a mobile user\'s username."}'
+        )
+
+    def test_cannot_update_unknown_key(self):
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user_json = {
+            "_id": "changed-id",
+        }
+        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        unmodified_user = CommCareUser.get(user._id)
+        self.assertEqual(unmodified_user.username, 'test')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Attempted to update unknown field _id."}'
+        )
+
 
 @generate_cases([
     ('email', 'initial@dimagi.com', 'updated@dimagi.com'),

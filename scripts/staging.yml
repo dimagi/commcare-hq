@@ -80,4 +80,5 @@ branches:
     - bmb/trial-signup-bug  # Biyeun April 21
     - ml/dhis2-error-handling # Minha April 21
     - jm/elastic-client-adapter  # Joel April 21
+    - rp/gsheet/update-project-info-form # Rynhard April 22
 submodules: { }
