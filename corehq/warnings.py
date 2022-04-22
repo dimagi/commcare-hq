@@ -86,6 +86,8 @@ def whitelist(module, message, category=DeprecationWarning):
             message = message.pattern
     default_action = os.environ.get("PYTHONWARNINGS", "ignore")
     action = os.environ.get("CCHQ_WHITELISTED_WARNINGS", default_action)
+    if action not in ['default', 'always', 'ignore', 'module', 'once', 'error']:
+        action = "ignore"  # happens when PYTHONWARNINGS has a complex value
     warnings.filterwarnings(action, message, category, re.escape(module))
 
 
