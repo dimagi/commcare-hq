@@ -603,6 +603,9 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         _check_required_when_active(is_active, entity_id)
         return entity_id
 
+    def update_identity_provider(self, admin_user):
+        raise NotImplementedError("please implement update_identity_provider")
+
 
 class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     login_url = forms.CharField(
