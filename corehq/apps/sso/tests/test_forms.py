@@ -9,6 +9,7 @@ from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
     EditIdentityProviderAdminForm,
     SsoSamlEnterpriseSettingsForm,
+    SsoOidcEnterpriseSettingsForm,
 )
 from corehq.apps.sso.models import (
     IdentityProvider,
@@ -533,3 +534,132 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
         self.idp.refresh_from_db()
         self.assertTrue(self.idp.require_encrypted_assertions)
+
+
+class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
+
+    def setUp(self):
+        super().setUp()
+        self.idp = IdentityProvider.objects.create(
+            owner=self.account,
+            name='OneLogin for Vault Wax',
+            slug='vaultwax',
+            created_by='otheradmin@dimagi.com',
+            last_modified_by='otheradmin@dimagi.com',
+        )
+        self.idp.is_editable = True
+
+    def tearDown(self):
+        UserExemptFromSingleSignOn.objects.all().delete()
+        AuthenticatedEmailDomain.objects.all().delete()
+        IdentityProvider.objects.all().delete()
+        super().tearDown()
+
+    @staticmethod
+    def _get_post_data(no_entity_id=False, no_client_id=False, no_client_secret=False,
+                       is_active=False):
+        return {
+            'is_active': is_active,
+            'entity_id': '' if no_entity_id else 'https://test.org/oic',
+            'client_id': '' if no_client_id else 'vaultwax',
+            'client_secret': '' if no_client_secret else 'secret',
+        }
+
+    def test_is_active_triggers_form_validation_errors(self):
+        """
+        Test that if `is_active` is set to true, then related required fields
+        raise ValidationErrors if left blank.
+        """
+        post_data = self._get_post_data(
+            is_active=True,
+            no_entity_id=True,
+            no_client_id=True,
+            no_client_secret=True,
+        )
+        edit_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        edit_form.cleaned_data = post_data
+
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_is_active()
+
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_is_active()
+
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        # should not raise exception now
+        edit_form.clean_is_active()
+
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_entity_id()
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_client_id()
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_client_secret()
+        self.assertFalse(edit_form.is_valid())
+
+    def test_that_is_active_updates_successfully_when_requirements_are_met(self):
+        """
+        Ensure that update_identity_provider() updates the `is_active` field on
+        the IdentityProvider as expected when requirements are met.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+
+        post_data = self._get_post_data(
+            is_active=True,
+        )
+
+        self.assertFalse(self.idp.is_active)
+        edit_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        edit_form.cleaned_data = post_data
+        self.assertTrue(edit_form.is_valid())
+
+        edit_form.update_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(id=self.idp.id)
+        self.assertTrue(idp.is_editable)
+        self.assertTrue(idp.is_active)
+        self.assertEqual(idp.entity_id, post_data['entity_id'])
+        self.assertEqual(idp.client_id, post_data['client_id'])
+        self.assertEqual(idp.client_secret, post_data['client_secret'])
+
+    def test_last_modified_by_and_fields_update_when_not_active(self):
+        """
+        Ensure that fields properly update and that `last_modified_by` updates
+        as expected when SsoSamlEnterpriseSettingsForm validates and
+        update_identity_provider() is called.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        post_data = self._get_post_data()
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(id=self.idp.id)
+        self.assertTrue(idp.is_editable)
+        self.assertFalse(idp.is_active)
+        self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
+        self.assertNotEqual(idp.created_by, self.accounting_admin.username)
+        self.assertEqual(idp.entity_id, post_data['entity_id'])
+        self.assertEqual(idp.client_id, post_data['client_id'])
+        self.assertEqual(idp.client_secret, post_data['client_secret'])
