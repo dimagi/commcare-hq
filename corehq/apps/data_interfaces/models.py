@@ -670,8 +670,9 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
     location_id = models.CharField(max_length=255)
 
     def matches(self, case, now):
-        if case.location_id:
-            return case.location_id == self.location_id
+        if case.owner_id:
+            # Check cases that belong to a location
+            return case.owner_id == self.location_id
         return False
 
 
@@ -997,7 +998,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def when_case_matches(self, case, rule):
         domain = case.domain
         new_duplicate_case_ids = set(find_duplicate_case_ids(
-            domain, case, self.case_properties, self.include_closed, self.match_type
+            domain, case, self.case_properties, self.include_closed, self.match_type, case_filter_criteria=rule.memoized_criteria,
         ))
         # If the case being searched isn't in the case search index
         # (e.g. if this is a case create, and the pillows are racing each other.)
