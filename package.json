@@ -69,7 +69,7 @@
         "nprogress": "0.2.0",
         "nvd3": "1.1.10",
         "nvd3-1.8.6": "npm:nvd3#1.8.6",
-        "perfect-scrollbar": "1.5.0",
+        "perfect-scrollbar": "1.5.5",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
         "requirejs": "2.3.6",
         "select2": "4.1.0-rc.0",
