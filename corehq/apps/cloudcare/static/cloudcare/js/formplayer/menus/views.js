@@ -328,7 +328,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
             this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
-            this.isMultiSelect = options.isMultiSelect,
+            this.isMultiSelect = options.isMultiSelect;
         },
 
         ui: {
