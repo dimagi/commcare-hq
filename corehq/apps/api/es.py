@@ -6,9 +6,8 @@ import logging
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
+from no_exceptions.exceptions import Http400
 
-from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
@@ -16,8 +15,8 @@ from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
-from corehq.apps.es.forms import FormES
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import (
@@ -25,12 +24,11 @@ from corehq.elastic import (
     get_es_new,
     report_and_fail_on_shard_failures,
 )
-from corehq.pillows.base import VALUE_TAG, restore_property_dict
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS, CASE_ES_TYPE
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS, REPORT_CASE_ES_TYPE
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS, REPORT_XFORM_TYPE
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS, XFORM_ES_TYPE
-from no_exceptions.exceptions import Http400
+from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
+from corehq.util.es.interface import ElasticsearchInterface
 
 logger = logging.getLogger('es')
 
@@ -246,70 +244,6 @@ class FormESView(ESView):
 
                 res['_source']['es_readable_name'] = name
 
-        return es_results
-
-
-def report_term_filter(terms, mapping):
-    """convert terms to correct #value term queries based upon the mapping
-    does it match up with pre-defined stuff in the mapping?
-    """
-
-    ret_terms = []
-    for orig_term in terms:
-        curr_mapping = mapping.get('properties')
-        split_term = orig_term.split('.')
-        for ix, sub_term in enumerate(split_term, start=1):
-            is_property = sub_term in curr_mapping
-            if ix == len(split_term):
-                #it's the last one, and if it's still not in it, then append a value
-                if is_property:
-                    ret_term = orig_term
-                else:
-                    ret_term = '%s.%s' % (orig_term, VALUE_TAG)
-                ret_terms.append(ret_term)
-            if is_property and 'properties' in curr_mapping[sub_term]:
-                curr_mapping = curr_mapping[sub_term]['properties']
-    return ret_terms
-
-
-class ReportFormESView(FormESView):
-    es_alias = REPORT_XFORM_ALIAS
-    es_type = REPORT_XFORM_TYPE
-    doc_type = "XFormInstance"
-    model = ESXFormInstance
-
-    def run_query(self, es_query):
-        es_results = super(FormESView, self).run_query(es_query)
-        #hack, walk the results again, and if we have xmlns, populate human readable names
-        # Note that `get_unknown_form_name` does not require the request, which is also
-        # not necessarily available here. So `None` is passed here.
-        form_filter = FormsByApplicationFilter(None, domain=self.domain)
-
-        for res in es_results.get('hits', {}).get('hits', []):
-            if '_source' in res:
-                res_source = restore_property_dict(res['_source'])
-                res['_source'] = res_source
-                xmlns = res['_source'].get('xmlns', None)
-                name = None
-                if xmlns:
-                    name = form_filter.get_unknown_form_name(xmlns,
-                                                             app_id=res['_source'].get('app_id',
-                                                                                       None),
-                                                             none_if_not_found=True)
-                if not name:
-                    name = 'unknown'  # try to fix it below but this will be the default
-                    # fall back
-                    try:
-                        if res['_source']['form'].get('@name', None):
-                            name = res['_source']['form']['@name']
-                        else:
-                            backup = res['_source']['form'].get('#type', 'data')
-                            if backup != 'data':
-                                name = backup
-                    except (TypeError, KeyError):
-                        pass
-
-                res['_source']['es_readable_name'] = name
         return es_results
 
 

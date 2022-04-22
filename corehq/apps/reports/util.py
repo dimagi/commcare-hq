@@ -3,7 +3,6 @@ import math
 import warnings
 from collections import namedtuple
 from datetime import datetime
-from importlib import import_module
 
 from django.conf import settings
 from django.core.cache import cache
@@ -341,11 +340,6 @@ def datespan_from_beginning(domain_object, timezone):
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan
-
-
-def get_installed_custom_modules():
-
-    return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
 def get_null_empty_value_bindparam(field_slug):

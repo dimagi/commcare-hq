@@ -93,18 +93,6 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
         return default
 
 
-class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
-    label = gettext_noop("Select Case Owner")
-    default_text = gettext_noop("All Case Owners")
-
-    @property
-    def options(self):
-        options = [(group._id, "%s (Group)" % group.name) for group in Group.get_case_sharing_groups(self.domain)]
-        user_options = super(SelectCaseOwnerFilter, self).options
-        options.extend(user_options)
-        return options
-
-
 class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
     """
         This is a little field for use when a client really wants to filter by

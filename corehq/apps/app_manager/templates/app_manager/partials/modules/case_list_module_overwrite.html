@@ -73,6 +73,12 @@
                     {% trans "Search and claim options" %}
                   </label><br>
                 {% endif %}
+                {% if request|toggle_enabled:'USH_CASE_LIST_MULTI_SELECT' %}
+                  <label for="multi_select">
+                    <input type="checkbox" name="multi_select" id="multi_select"/>
+                    {% trans "Multi-Select Case List Options" %}
+                  </label><br>
+                {% endif %}
             </div>
           </div>
           {% endif %}

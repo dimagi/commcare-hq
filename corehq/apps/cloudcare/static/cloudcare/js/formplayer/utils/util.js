@@ -178,10 +178,12 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!this.selections) {
                 this.selections = [];
             }
-
             // Selections only deal with strings, because formplayer will send them back as strings
-            this.selections.push(String(selection));
-
+            if (_.isArray(selection)) {
+                this.selections.push(String('use_selected_values'));
+            } else {
+                this.selections.push(String(selection));
+            }
             // clear out pagination and search when we navigate
             this.page = null;
             this.search = null;
