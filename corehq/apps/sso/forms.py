@@ -542,6 +542,10 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Linked Email Domains"),
         required=False,
     )
+    entity_id = forms.CharField(
+        label=gettext_lazy("Entity ID"),
+        required=False,
+    )
 
     def __init__(self, identity_provider, *args, **kwargs):
         self.idp = identity_provider
@@ -582,12 +586,14 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             _check_is_editable_requirements(self.idp)
         return is_active
 
+    def clean_entity_id(self):
+        is_active = bool(self.data.get('is_active'))
+        entity_id = self.cleaned_data['entity_id']
+        _check_required_when_active(is_active, entity_id)
+        return entity_id
+
 
 class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
-    entity_id = forms.CharField(
-        label=gettext_lazy("Azure AD Identifier"),
-        required=False,
-    )
     login_url = forms.CharField(
         label=gettext_lazy("Login URL"),
         required=False,
@@ -692,12 +698,6 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             ),
             crispy.Div(*self.get_primary_fields()),
         )
-
-    def clean_entity_id(self):
-        is_active = bool(self.data.get('is_active'))
-        entity_id = self.cleaned_data['entity_id']
-        _check_required_when_active(is_active, entity_id)
-        return entity_id
 
     def clean_login_url(self):
         is_active = bool(self.data.get('is_active'))
