@@ -26,7 +26,7 @@
 
 {% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='shortScreen'%}
 
-{% if module.module_type != "advanced" %}
+{% if module.module_type != "shadow" and module.module_type != "advanced" %}
   {% include 'app_manager/partials/modules/case_list_multi_select.html' %}
 {% endif %}
 

@@ -72,6 +72,12 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./remote-request",
         )
 
+    @flag_enabled('APP_BUILDER_SHADOW_MODULES')
+    def test_shadow_modules(self):
+        shadow_module = self.factory.new_shadow_module('shadow', self.module, with_form=False)
+        self.assertTrue(shadow_module.is_multi_select())
+        del self.factory.app.modules[shadow_module.id]
+
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_multi_select_case_list_auto_launch(self):
         self.module.search_config.auto_launch = True

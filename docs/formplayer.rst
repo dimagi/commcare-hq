@@ -199,6 +199,9 @@ case list and the case detail confirmation. ``EntityScreen`` acts as a "host" sc
 ``CompoundScreenHost``. The ``EntityDetailSubscreen``, which handles the case detail, is not a full ``Screen`` but
 rather a ``Subscreen`` that updates its host, the entity screen, which is then in charge of updating the session.
 
+Case lists that allow for the selection of multiple entities have further special handling, described in
+`formplayer docs <https://github.com/dimagi/formplayer/wiki/Multi-Select-Case-Lists>`_.
+
 Selections
 ++++++++++
 User activity in CommCare is oriented around navigating to and then submitting forms. User actions are represented
