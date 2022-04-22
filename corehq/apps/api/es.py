@@ -6,9 +6,8 @@ import logging
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
+from no_exceptions.exceptions import Http400
 
-from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
@@ -16,8 +15,8 @@ from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
-from corehq.apps.es.forms import FormES
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import (
@@ -25,11 +24,11 @@ from corehq.elastic import (
     get_es_new,
     report_and_fail_on_shard_failures,
 )
-from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
-from no_exceptions.exceptions import Http400
+from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
+from corehq.util.es.interface import ElasticsearchInterface
 
 logger = logging.getLogger('es')
 
