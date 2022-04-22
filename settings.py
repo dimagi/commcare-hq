@@ -1935,9 +1935,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
