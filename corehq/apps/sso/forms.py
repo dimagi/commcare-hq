@@ -518,7 +518,7 @@ class EditIdentityProviderAdminForm(forms.Form):
         return self.idp
 
 
-class SSOEnterpriseSettingsForm(forms.Form):
+class BaseSsoEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
     name = forms.CharField(
@@ -542,6 +542,48 @@ class SSOEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Linked Email Domains"),
         required=False,
     )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        super().__init__(*args, **kwargs)
+
+    def get_primary_fields(self):
+        return [
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Single Sign-On Settings'),
+                        hqcrispy.B3TextField(
+                            'name',
+                            self.idp.name,
+                        ),
+                        hqcrispy.B3TextField(
+                            'linked_email_domains',
+                            ", ".join(self.idp.get_email_domains()),
+                        ),
+                        twbscrispy.PrependedText('is_active', ''),
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update Configuration"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            ),
+        ]
+
+    def clean_is_active(self):
+        is_active = self.cleaned_data['is_active']
+        if is_active:
+            _check_is_editable_requirements(self.idp)
+        return is_active
+
+
+class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     entity_id = forms.CharField(
         label=gettext_lazy("Azure AD Identifier"),
         required=False,
@@ -577,7 +619,6 @@ class SSOEnterpriseSettingsForm(forms.Form):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        self.idp = identity_provider
         kwargs['initial'] = {
             'is_active': identity_provider.is_active,
             'entity_id': identity_provider.entity_id,
@@ -585,7 +626,7 @@ class SSOEnterpriseSettingsForm(forms.Form):
             'logout_url': identity_provider.logout_url,
             'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
         }
-        super().__init__(*args, **kwargs)
+        super().__init__(identity_provider, *args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
         self.fields.update(sp_details_form.fields)
@@ -649,38 +690,8 @@ class SSOEnterpriseSettingsForm(forms.Form):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
-            crispy.Div(
-                crispy.Div(
-                    crispy.Fieldset(
-                        _('Single Sign-On Settings'),
-                        hqcrispy.B3TextField(
-                            'name',
-                            identity_provider.name,
-                        ),
-                        hqcrispy.B3TextField(
-                            'linked_email_domains',
-                            ", ".join(identity_provider.get_email_domains()),
-                        ),
-                        twbscrispy.PrependedText('is_active', ''),
-                    ),
-                    css_class="panel-body"
-                ),
-                css_class="panel panel-modern-gray panel-form-only"
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    gettext_lazy("Update Configuration"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                )
-            )
+            crispy.Div(*self.get_primary_fields()),
         )
-
-    def clean_is_active(self):
-        is_active = self.cleaned_data['is_active']
-        if is_active:
-            _check_is_editable_requirements(self.idp)
-        return is_active
 
     def clean_entity_id(self):
         is_active = bool(self.data.get('is_active'))
