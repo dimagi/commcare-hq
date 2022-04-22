@@ -221,10 +221,59 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle, user_change_logger=None):
+    def obj_create(self, bundle, **kwargs):
+        try:
+            bundle.obj = CommCareUser.create(
+                domain=kwargs['domain'],
+                username=bundle.data['username'].lower(),
+                password=bundle.data['password'],
+                created_by=bundle.request.couch_user,
+                created_via=USER_CHANGE_VIA_API,
+                email=bundle.data.get('email', '').lower(),
+            )
+            # password was just set
+            bundle.data.pop('password', None)
+            # do not call update with username key
+            bundle.data.pop('username', None)
+            self._update(bundle)
+            bundle.obj.save()
+        except Exception:
+            if bundle.obj._id:
+                bundle.obj.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                                  deleted_via=USER_CHANGE_VIA_API)
+            try:
+                django_user = bundle.obj.get_django_user()
+            except User.DoesNotExist:
+                pass
+            else:
+                django_user.delete()
+            raise
+        return bundle
+
+    def obj_update(self, bundle, **kwargs):
+        bundle.obj = CommCareUser.get(kwargs['pk'])
+        assert bundle.obj.domain == kwargs['domain']
+        user_change_logger = self._get_user_change_logger(bundle)
+        if self._update(bundle, user_change_logger):
+            assert bundle.obj.domain == kwargs['domain']
+            bundle.obj.save()
+            user_change_logger.save()
+            return bundle
+        else:
+            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
+
+    def obj_delete(self, bundle, **kwargs):
+        user = CommCareUser.get(kwargs['pk'])
+        if user:
+            user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
+                        deleted_via=USER_CHANGE_VIA_API)
+        return ImmediateHttpResponse(response=http.HttpAccepted())
+
+    @classmethod
+    def _update(cls, bundle, user_change_logger=None):
         should_save = False
         for key, value in bundle.data.items():
-            if key in self.immutable_fields:
+            if key in cls.immutable_fields:
                 raise BadRequest(f'Cannot update a mobile user\'s {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
@@ -281,7 +330,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(str(e))
+                            bundle.obj.errors.append(e.message)
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     if user_change_logger:
@@ -305,54 +354,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 else:
                     raise BadRequest(f'Attempted to update unknown field {key}.')
         return should_save
-
-    def obj_create(self, bundle, **kwargs):
-        try:
-            bundle.obj = CommCareUser.create(
-                domain=kwargs['domain'],
-                username=bundle.data['username'].lower(),
-                password=bundle.data['password'],
-                created_by=bundle.request.couch_user,
-                created_via=USER_CHANGE_VIA_API,
-                email=bundle.data.get('email', '').lower(),
-            )
-            # password was just set
-            bundle.data.pop('password', None)
-            # do not call update with username key
-            bundle.data.pop('username', None)
-            self._update(bundle)
-            bundle.obj.save()
-        except Exception:
-            if bundle.obj._id:
-                bundle.obj.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
-                                  deleted_via=USER_CHANGE_VIA_API)
-            try:
-                django_user = bundle.obj.get_django_user()
-            except User.DoesNotExist:
-                pass
-            else:
-                django_user.delete()
-            raise
-        return bundle
-
-    def obj_update(self, bundle, **kwargs):
-        bundle.obj = CommCareUser.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
-        user_change_logger = self._get_user_change_logger(bundle)
-        if self._update(bundle, user_change_logger):
-            assert bundle.obj.domain == kwargs['domain']
-            bundle.obj.save()
-            user_change_logger.save()
-            return bundle
-        else:
-            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
-
-    def obj_delete(self, bundle, **kwargs):
-        user = CommCareUser.get(kwargs['pk'])
-        if user:
-            user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
-                        deleted_via=USER_CHANGE_VIA_API)
-        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 
 class WebUserResource(v0_1.WebUserResource):
