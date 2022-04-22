@@ -268,6 +268,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 if (index > -1) {
                     this.parentView.selectedCaseIds.splice(index, 1);
                 }
+                this.parentView.ui.selectAllCheckbox[0].checked = false;
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
         },
