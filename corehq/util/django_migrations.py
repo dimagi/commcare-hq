@@ -117,7 +117,7 @@ def noop_migration():
     return RunPython(RunPython.noop, RunPython.noop)
 
 
-def prompt_for_historical_migration(app_name, migration_name, required_commit, *args, **kwargs):
+def prompt_for_historical_migration(app_name, migration_name, required_commit):
     """Returns a migration operation that will prompt the user to run a migration from a previous
     version of the code. Note that this operation is never intended to succeed, because the code
     needed for the migration no longer exists"""
@@ -139,7 +139,7 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit, *
         print("")
         print(f"""
         This migration cannot be run, as it depends on code that has since been removed.
-        To fix this, follow the instructions below to run this migration from a previous version of our code.
+        To fix this, follow the instructions below to run this migration from a previous version of the code.
         In order to prevent this in the future, we recommend running migrations at least once every 6 weeks.
         For reference, the current code has not run migrations for {get_days_since_last_migration()} days.
 
@@ -153,14 +153,14 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit, *
 
             With a development setup:
                 git checkout {required_commit}
-                ./manage.py migrate {app_name}
+                ./manage.py migrate_multi {app_name}
 
         If you are sure this migration is unnecessary, you can fake the migration:
             With a cloud setup:
-                commcare-cloud <env> django-manage migrate --fake {app_name} {migration_name}
+                commcare-cloud <env> django-manage migrate_multi --fake {app_name} {migration_name}
 
             With a development setup:
-                ./manage.py migrate --fake {app_name} {migration_name}
+                ./manage.py migrate_multi --fake {app_name} {migration_name}
         """)  # noqa: E501
         sys.exit(1)
 
