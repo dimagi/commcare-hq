@@ -702,3 +702,22 @@ class TestCommCareUserResourceUpdate(TestCase):
         self.assertFalse(errors)
         modified = bundle.obj
         self.assertEqual(modified.metadata["custom_data"], "updated custom data")
+
+    def test_update_groups(self):
+        self.user.set_groups([])
+        self.user.save()
+
+        group = Group({"name": "test"})
+        group.save()
+        self.addCleanup(group.delete)
+        self.addCleanup(self.user.set_groups, [])
+        self.addCleanup(self.user.save)
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"groups": [group._id]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.get_group_ids()[0], group._id)
