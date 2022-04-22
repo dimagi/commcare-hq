@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from memoized import memoized
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.serializers import (
@@ -106,6 +106,12 @@ def get_databases():
             SMS._meta.db_table,
             lambda id_: SMS.objects.get(couch_id=id_),
             'SMS',
+            lambda doc: doc.to_json()
+        ),
+        _SQLDb(
+            SQLMobileBackend._meta.db_table,
+            lambda id_: SQLMobileBackend.objects.get(couch_id=id_),
+            'SQLMobileBackend',
             lambda doc: doc.to_json()
         ),
     ]
