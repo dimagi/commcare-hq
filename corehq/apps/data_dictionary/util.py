@@ -10,7 +10,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import (
-    PROPERTY_TYPES,
     CaseProperty,
     CasePropertyAllowedValue,
     CaseType,
@@ -238,9 +237,8 @@ def fields_to_validate(domain, case_type_name):
 
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
 def get_gps_properties(domain, case_type):
-    # Used for CASE_SEARCH_SMART_TYPES
     return set(CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type,
-        data_type=PROPERTY_TYPES.GPS.slug,
+        data_type=CaseProperty.DataType.GPS,
     ).values_list('name', flat=True))

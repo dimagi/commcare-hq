@@ -17,7 +17,11 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+    IdentityProviderType,
+)
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
@@ -62,6 +66,16 @@ class CreateIdentityProviderForm(forms.Form):
         label=gettext_lazy("Billing Account Owner"),
         widget=forms.Select(choices=[]),
     )
+    protocol = forms.CharField(
+        label=gettext_lazy("Protocol"),
+        max_length=5,
+        widget=forms.Select(choices=IdentityProviderProtocol.CHOICES)
+    )
+    idp_type = forms.CharField(
+        label=gettext_lazy("Service"),
+        max_length=50,
+        widget=forms.Select(choices=[]),
+    )
     name = forms.CharField(
         label=gettext_lazy("Public Name"),
         help_text=gettext_lazy(
@@ -90,6 +104,17 @@ class CreateIdentityProviderForm(forms.Form):
                     css_class="input-xxlarge",
                     placeholder="Search for Billing Account"
                 ),
+                crispy.Field(
+                    'protocol',
+                    data_bind="value: protocol",
+                ),
+                crispy.Field(
+                    'idp_type',
+                    data_bind="value: idpType, "
+                              "options: availableIdpTypes, "
+                              "optionsValue: function (item) { return item[0]; }, "
+                              "optionsText: function (item) { return item[1]; }",
+                ),
                 'name',
                 'slug',
             ),
@@ -111,22 +136,74 @@ class CreateIdentityProviderForm(forms.Form):
             )
         return slug
 
+    def clean_idp_type(self):
+        idp_type = self.cleaned_data['idp_type']
+        protocol = self.cleaned_data['protocol']
+        valid_types = [t[0] for t in IdentityProviderProtocol.get_supported_types()[protocol]]
+        if idp_type not in valid_types:
+            raise forms.ValidationError(
+                _("This service does not support the selected protocol."),
+            )
+        return idp_type
+
     @transaction.atomic
     def create_identity_provider(self, admin_user):
         owner = BillingAccount.objects.get(id=self.cleaned_data['owner'])
+        protocol = self.cleaned_data['protocol']
         idp = IdentityProvider.objects.create(
             owner=owner,
             slug=self.cleaned_data['slug'],
             name=self.cleaned_data['name'],
             created_by=admin_user.username,
             last_modified_by=admin_user.username,
+            protocol=protocol,
+            idp_type=self.cleaned_data['idp_type'],
         )
-        idp.create_service_provider_certificate()
+        if protocol == IdentityProviderProtocol.SAML:
+            idp.create_service_provider_certificate()
         return idp
 
 
+class RelyingPartyDetailsForm(forms.Form):
+    """This form is for display purposes and lists all the OpenID Connect
+    information that's required for the Relying Party"""
+    login_url = forms.CharField(
+        label=gettext_lazy("Login Url"),
+        required=False,
+    )
+    redirect_uris = forms.CharField(
+        label=gettext_lazy("Redirect URIs"),
+        required=False,
+    )
+    logout_redirect_uris = forms.CharField(
+        label=gettext_lazy("Post Logout Redirect URIs"),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        self.idp = identity_provider
+        super().__init__(*args, **kwargs)
+
+    @property
+    def application_details_fields(self):
+        return [
+            hqcrispy.B3TextField(
+                'login_url',
+                url_helpers.get_oidc_login_url(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'redirect_uris',
+                url_helpers.get_oidc_auth_url(self.idp),
+            ),
+            hqcrispy.B3TextField(
+                'logout_redirect_uris',
+                url_helpers.get_oidc_logout_url(self.idp),
+            ),
+        ]
+
+
 class ServiceProviderDetailsForm(forms.Form):
-    """This form is for display purposes and lists all the
+    """This form is for display purposes and lists all the SAML 2.0
     required service provider information that's needed to link with an
     identity provider."""
     sp_entity_id = forms.CharField(
@@ -243,11 +320,19 @@ class EditIdentityProviderAdminForm(forms.Form):
         label=gettext_lazy("Billing Account Owner"),
         required=False,
     )
+    protocol = forms.CharField(
+        label=gettext_lazy("Protocol"),
+        required=False,
+    )
+    idp_type = forms.CharField(
+        label=gettext_lazy("Service"),
+        required=False,
+    )
     slug = forms.CharField(
         label=gettext_lazy("Slug"),
         required=False,
         help_text=gettext_lazy(
-            "CAUTION: Changing this value will alter the SAML endpoint URLs "
+            "CAUTION: Changing this value will alter SSO endpoint URLs "
             "below and affect active SSO setups for the client!"
         ),
     )
@@ -290,10 +375,35 @@ class EditIdentityProviderAdminForm(forms.Form):
         }
         super().__init__(*args, **kwargs)
 
-        sp_details_form = ServiceProviderDetailsForm(
-            identity_provider, show_help_block=False
-        )
-        self.fields.update(sp_details_form.fields)
+        current_protocol_name = dict(IdentityProviderProtocol.CHOICES)[self.idp.protocol]
+
+        if self.idp.protocol == IdentityProviderProtocol.SAML:
+            sp_details_form = ServiceProviderDetailsForm(
+                identity_provider, show_help_block=False
+            )
+            self.fields.update(sp_details_form.fields)
+            sp_or_rp_settings = crispy.Fieldset(
+                _('Service Provider Settings'),
+                'slug',
+                crispy.Div(*sp_details_form.service_provider_fields),
+                crispy.Div(*sp_details_form.token_encryption_fields),
+            )
+            protocol_notice = current_protocol_name
+        else:
+            rp_details_form = RelyingPartyDetailsForm(identity_provider)
+            self.fields.update(rp_details_form.fields)
+            sp_or_rp_settings = crispy.Fieldset(
+                _('Relying Party Settings'),
+                'slug',
+                crispy.Div(*rp_details_form.application_details_fields),
+            )
+            # todo remove when OIDC is active
+            protocol_notice = format_html(
+                "{}<p class='alert alert-warning'>"
+                "<strong>Please Note that OIDC support is still in development!</strong><br/> "
+                "Do not make any Identity Providers live on production.</p>",
+                current_protocol_name
+            )
 
         from corehq.apps.accounting.views import ManageBillingAccountView
         account_link = reverse(
@@ -317,6 +427,7 @@ class EditIdentityProviderAdminForm(forms.Form):
                 crispy.Div(
                     crispy.Fieldset(
                         _('Primary Configuration'),
+                        protocol_notice,
                         hqcrispy.B3TextField(
                             'owner',
                             format_html(
@@ -324,6 +435,14 @@ class EditIdentityProviderAdminForm(forms.Form):
                                 account_link,
                                 identity_provider.owner.name
                             )
+                        ),
+                        hqcrispy.B3TextField(
+                            'protocol',
+                            protocol_notice
+                        ),
+                        hqcrispy.B3TextField(
+                            'idp_type',
+                            dict(IdentityProviderType.CHOICES)[self.idp.idp_type]
                         ),
                         'name',
                         twbscrispy.PrependedText('is_editable', ''),
@@ -335,12 +454,7 @@ class EditIdentityProviderAdminForm(forms.Form):
             ),
             crispy.Div(
                 crispy.Div(
-                    crispy.Fieldset(
-                        _('Service Provider Settings'),
-                        'slug',
-                        crispy.Div(*sp_details_form.service_provider_fields),
-                        crispy.Div(*sp_details_form.token_encryption_fields),
-                    ),
+                    sp_or_rp_settings,
                     css_class="panel-body"
                 ),
                 css_class="panel panel-modern-gray panel-form-only"

@@ -210,17 +210,20 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
-        return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
+        return cls._iter_cases_from_postgres(
+            domain, case_type, boundary_date=boundary_date, db=db, include_closed=include_closed
+        )
 
     @classmethod
-    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
         q_expression = Q(
             domain=domain,
             type=case_type,
-            closed=False,
             deleted=False,
         )
+        if not include_closed:
+            q_expression = q_expression & Q(closed=False)
 
         if boundary_date:
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)

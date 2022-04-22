@@ -298,6 +298,8 @@ class RemoteRequestFactory(object):
                 )
             if prop.allow_blank_value:
                 kwargs['allow_blank_value'] = prop.allow_blank_value
+            if prop.exclude:
+                kwargs['exclude'] = "true()"
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
@@ -380,8 +382,10 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         self.case_session_var = case_session_var
 
     def get_post_relevant(self):
-        if not self.module.is_multi_select():
-            return CaseClaimXpath(self.case_session_var).default_relevant()
+        xpath = CaseClaimXpath(self.case_session_var)
+        if self.module.is_multi_select():
+            return xpath.multi_select_relevant()
+        return xpath.default_relevant()
 
     def build_command(self):
         return Command(

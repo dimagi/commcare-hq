@@ -1512,26 +1512,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
     @property
     def default_media_image(self):
         # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_image')
         return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
         # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_audio')
         return self.audio_by_language('')
-
-    def _assert_unexpected_default_media_call(self, media_attr):
-        assert media_attr in ('media_image', 'media_audio')
-        media = getattr(self, media_attr)
-        if isinstance(media, dict) and list(media) == ['default']:
-            from corehq.util.view_utils import get_request
-            request = get_request()
-            url = ''
-            if request:
-                url = request.META.get('HTTP_REFERER')
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
     def icon_by_language(self, lang, strict=False, build_profile_id=None):
         return self._get_media_by_language('media_image', lang, strict=strict, build_profile_id=build_profile_id)
@@ -2183,6 +2169,7 @@ class CaseSearchProperty(DocumentSchema):
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
+    exclude = BooleanProperty(default=False)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
@@ -2228,6 +2215,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
+    title_label = DictProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2237,11 +2225,8 @@ class CaseSearch(DocumentSchema):
         return "search_case_id"
 
     def get_relevant(self, multi_select=False):
-        if multi_select:
-            return self.additional_relevant
-
-        # Single select case lists are irrelevant if the selected case is already in the casedb
-        default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
+        xpath = CaseClaimXpath(self.case_session_var)
+        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
@@ -3252,6 +3237,9 @@ class AdvancedModule(ModuleBase):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
 
+    def is_multi_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
@@ -3905,6 +3893,9 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return []
         return self.source_module.all_forms_require_a_case()
+
+    def is_multi_select(self):
+        return self.source_module.is_multi_select()
 
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
@@ -4863,6 +4854,16 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
+
+        translations = data.get('translations')
+        for module in self.modules:
+            if hasattr(module, 'search_config'):
+                label_dict = {lang: label.get('case.search.title')
+                    for lang, label in translations.items() if label}
+                search_config = getattr(module, 'search_config')
+                default_label_dict = getattr(search_config, 'title_label')
+                label_dict.update(default_label_dict)
+                setattr(search_config, 'title_label', label_dict)
 
         # make sure all form versions are None on working copies
         if not self.copy_of:

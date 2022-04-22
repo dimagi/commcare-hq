@@ -272,23 +272,10 @@ def case_property_missing(case_property_name):
     )
 
 
-def case_property_geo_distance(geopoint_property_name, lat, lon, distance):
-    """Filters cases to those within a certain distance of the provided lat/lon
-
-    Distance should be a string like "10km" or "3mi". For options, see:
-    https://www.elastic.co/guide/en/elasticsearch/reference/current/api-conventions.html#distance-units
-    """
+def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
     return _base_property_query(
         geopoint_property_name,
-        {
-            'geo_distance': {
-                'distance': distance,
-                f"{CASE_PROPERTIES_PATH}.geopoint_value": {
-                    'lat': lat,
-                    'lon': lon,
-                }
-            }
-        }
+        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, **kwargs)
     )
 
 

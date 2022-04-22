@@ -33,7 +33,7 @@ while getopts ":h-:" option; do
     esac
 done
 
-if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT}" ]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT-}" ]
 then
     has_local_changes=`git diff-index HEAD` && true
     if [[ $has_local_changes ]]
@@ -93,7 +93,7 @@ set -e
 echo "Pushing updates to transifex."
 tx push -s -t
 
-if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT}" ]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT-}" ]
 then
     has_local_changes=`git diff-index HEAD` && true
     if [[ ! $has_local_changes ]]

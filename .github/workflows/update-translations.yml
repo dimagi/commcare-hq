@@ -49,3 +49,9 @@ jobs:
             Update translations
           title: 'Update Translations'
           labels: product/invisible
+          body: |
+            GitHub Actions automatically ran update-translations.sh and used [create-pull-request](https://github.com/peter-evans/create-pull-request) to open this pull request.
+
+            Please **close and reopen** this pull request to have tests run.<sup>†</sup>
+
+            <sup>†</sup> Workaround for [this GitHub Actions constraint](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow)

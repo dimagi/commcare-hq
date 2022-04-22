@@ -30,9 +30,9 @@ from corehq.pillows.mappings.case_search_mapping import (
 from corehq.toggles import (
     CASE_API_V0_6,
     CASE_LIST_EXPLORER,
-    CASE_SEARCH_SMART_TYPES,
     ECD_MIGRATED_DOMAINS,
     EXPLORE_CASE_DATA,
+    USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.es.interface import ElasticsearchInterface
@@ -107,7 +107,7 @@ def _get_case_properties(doc_dict):
     dynamic_properties = [_format_property(key, value, case_id)
                           for key, value in doc_dict['case_json'].items()]
 
-    if CASE_SEARCH_SMART_TYPES.enabled(domain):
+    if USH_CASE_CLAIM_UPDATES.enabled(domain):
         _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
     return base_case_properties + dynamic_properties

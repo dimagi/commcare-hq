@@ -1,5 +1,5 @@
 import re
-from uuid import uuid4
+from uuid import uuid1, uuid4
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -9,6 +9,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -32,6 +33,8 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled
+
+from unittest.mock import patch
 
 DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
@@ -86,6 +89,19 @@ class CaseClaimEndpointTests(TestCase):
         self.client = Client()
         self.client.login(username=USERNAME, password=PASSWORD)
         self.url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        self.synclog = SyncLogSQL.objects.bulk_create([
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
+        ])[0]
+        self.synclog.doc['case_ids_on_phone'] = [self.case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            self.synclog.save()
+
+    @classmethod
+    def make_synclog(self, domain, user, date):
+        return SyncLogSQL(
+            domain=domain, user_id=user, request_user_id=None, is_formplayer=True, date=date,
+            case_count=None, auth_type=None, doc={}
+        )
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -116,21 +132,43 @@ class CaseClaimEndpointTests(TestCase):
         response = self.client.post(self.url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 201)
         # Dup claim
-        response = self.client.post(self.url, {'case_id': self.case_id})
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
         self.assertEqual(response.status_code, 204)
 
-    def test_duplicate_user_claim(self):
+    def test_duplicate_claim_with_missing_synclog_id(self):
         """
-        Server should not allow the same user to claim the same case more than once
+        Claiming a case a second time with a non-existent synclog ID should result in a 201 not a 204
         """
         # First claim
         response = self.client.post(self.url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 201)
         # Dup claim
-        client2 = Client()
-        client2.login(username=USERNAME, password=PASSWORD)
-        response = client2.post(self.url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 204)
+        random_id = uuid1()
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=random_id)
+        self.assertEqual(response.status_code, 201)
+
+    def test_duplicate_claim_with_new_synclog_id(self):
+        """
+        Claiming a case a second time but with a different synclog ID should result in a 201 not a 204
+        """
+        # First claim
+        response = self.client.post(self.url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 201)
+
+        # Create a second synclog, mimicing the use of a 2nd device that doesn't have the original case
+        second_synclog = SyncLogSQL.objects.bulk_create([
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
+        ])[0]
+        second_synclog.doc['case_ids_on_phone'] = [self.additional_case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            second_synclog.save()
+
+        # Dup claim, with new sync log
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=second_synclog.synclog_id)
+        self.assertEqual(response.status_code, 201)
 
     def test_multiple_case_claim(self):
         """

@@ -120,7 +120,7 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         return get_topic_offset(topics.CASE_SQL)
 
-    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_geopoint_property(self):
         CaseSearchConfig.objects.get_or_create(pk=self.domain, enabled=True)
         domains_needing_search_index.clear()
@@ -140,7 +140,7 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'coords',
                 'value': '-33.8561 151.2152 0 0',
-                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(
@@ -148,7 +148,7 @@ class CaseSearchPillowTest(TestCase):
             {
                 'key': 'short_coords',
                 'value': '-33.8561 151.2152',
-                'geopoint_value': {'lat': '-33.8561', 'lon': '151.2152'},
+                'geopoint_value': {'lat': -33.8561, 'lon': 151.2152},
             },
         )
         self.assertEqual(

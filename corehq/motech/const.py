@@ -16,6 +16,12 @@ AUTH_TYPES = (
     (OAUTH2_PWD, "OAuth 2.0 Password Grant"),
     (OAUTH2_CLIENT, "OAuth 2.0 Client Grant"),
 )
+AUTH_TYPES_REQUIRE_USERNAME = (
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    BEARER_AUTH,
+    OAUTH2_PWD,
+)
 
 REQUEST_DELETE = "DELETE"
 REQUEST_POST = "POST"

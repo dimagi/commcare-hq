@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
+from couchforms.geopoint import GeoPoint
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
@@ -567,7 +568,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             )
         )
 
-    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
     def test_geopoint_query(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [
@@ -577,6 +578,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             {'_id': 'c4', 'coords': "-33.8373 151.225"},
         ])
         res = CaseSearchES().domain(self.domain).set_query(
-            case_property_geo_distance('coords', '-33.1', '151.8', '1000km'),
+            case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])

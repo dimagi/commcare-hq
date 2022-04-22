@@ -144,7 +144,7 @@ class BaseDumpLoadTest(TestCase):
                 receiver_path = receiver.__module__ + '.' + receiver.__name__
                 if receiver_path in whitelist_receivers:
                     continue
-                args = inspect.getargspec(receiver).args
+                args = inspect.signature(receiver).parameters
                 message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
                     receiver, model
                 )
