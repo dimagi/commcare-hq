@@ -254,13 +254,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         user_change_logger = self._get_user_change_logger(bundle)
-        if self._update(bundle, user_change_logger):
-            assert bundle.obj.domain == kwargs['domain']
-            bundle.obj.save()
-            user_change_logger.save()
-            return bundle
-        else:
-            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            raise BadRequest(''.join(chain.from_iterable(errors)))
+        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
 
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
@@ -271,10 +271,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     @classmethod
     def _update(cls, bundle, user_change_logger=None):
-        should_save = False
+        errors = []
         for key, value in bundle.data.items():
             if key in cls.immutable_fields:
-                raise BadRequest(f'Cannot update a mobile user\'s {key}.')
+                errors.append(f'Cannot update a mobile user\'s {key}.')
             if getattr(bundle.obj, key, None) != value:
                 if key == 'phone_numbers':
                     old_phone_numbers = set(bundle.obj.phone_numbers)
@@ -286,7 +286,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         bundle.obj.add_phone_number(formatted_phone_number)
                         if idx == 0:
                             bundle.obj.set_default_phone_number(formatted_phone_number)
-                        should_save = True
 
                     if user_change_logger:
                         (numbers_added, numbers_removed) = find_differences_in_list(
@@ -315,27 +314,21 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         if group_ids:
                             groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
                         user_change_logger.add_info(UserChangeMessage.groups_info(groups))
-                    should_save = True
                 elif key == 'email':
                     lowercase_value = value.lower()
                     if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
                         user_change_logger.add_changes({key: lowercase_value})
                     setattr(bundle.obj, key, lowercase_value)
-                    should_save = True
                 elif key == 'password':
                     domain = Domain.get_by_name(bundle.obj.domain)
                     if domain.strong_mobile_passwords:
                         try:
                             clean_password(bundle.data.get("password"))
                         except ValidationError as e:
-                            if not hasattr(bundle.obj, 'errors'):
-                                bundle.obj.errors = []
-                            bundle.obj.errors.append(e.message)
-                            return False
+                            errors.append(e.message)
                     bundle.obj.set_password(bundle.data.get("password"))
                     if user_change_logger:
                         user_change_logger.add_change_message(UserChangeMessage.password_reset())
-                    should_save = True
                 elif key == 'user_data':
                     try:
                         original_user_data = bundle.obj.metadata.copy()
@@ -345,15 +338,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             user_change_logger.add_changes({'user_data': bundle.obj.user_data})
                     except ValueError as e:
                         raise BadRequest(str(e))
-                    should_save = True
                 elif key in ['first_name', 'last_name', 'language']:
                     if user_change_logger and getattr(bundle.obj, key) != value:
                         user_change_logger.add_changes({key: value})
                     setattr(bundle.obj, key, value)
-                    should_save = True
                 else:
-                    raise BadRequest(f'Attempted to update unknown field {key}.')
-        return should_save
+                    errors.append(f'Attempted to update unknown field {key}.')
+
+        return errors
 
 
 class WebUserResource(v0_1.WebUserResource):
