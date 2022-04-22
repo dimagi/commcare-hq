@@ -2,7 +2,7 @@ import copy
 from unittest import mock
 from django.test import SimpleTestCase
 from django.conf import settings
-from corehq.pillows.base import restore_property_dict
+from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.utils import UNKNOWN_USER_TYPE
 
@@ -117,6 +117,29 @@ CONCEPT_XFORM = {
    ],
    "__retrieved_case_ids": ["test_case_123345"],
 }
+
+
+def restore_property_dict(report_dict_item):
+    """
+    Revert a converted/retrieved document from Report<index> and deconvert all its properties
+    back from {#value: <val>} to just <val>
+    """
+    restored = {}
+    if not isinstance(report_dict_item, dict):
+        return report_dict_item
+
+    for k, v in report_dict_item.items():
+        if isinstance(v, list):
+            restored[k] = [restore_property_dict(x) for x in v]
+        elif isinstance(v, dict):
+            if VALUE_TAG in v:
+                restored[k] = v[VALUE_TAG]
+            else:
+                restored[k] = restore_property_dict(v)
+        else:
+            restored[k] = v
+
+    return restored
 
 
 @mock.patch('corehq.pillows.xform.get_user_type', new=lambda user_id: UNKNOWN_USER_TYPE)
