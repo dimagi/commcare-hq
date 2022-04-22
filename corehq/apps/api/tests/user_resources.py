@@ -1,5 +1,4 @@
 import json
-from copy import deepcopy
 
 from django.test import TestCase
 from django.urls import reverse
@@ -7,7 +6,6 @@ from django.utils.http import urlencode
 
 from flaky import flaky
 from tastypie.bundle import Bundle
-from tastypie.exceptions import BadRequest
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
@@ -35,11 +33,10 @@ from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
-from corehq.util.test_utils import generate_cases
 
-from .utils import APIResourceTest
-from ..resources.v0_5 import CommCareUserResource
 from ...domain.shortcuts import create_domain
+from ..resources.v0_5 import CommCareUserResource
+from .utils import APIResourceTest
 
 
 @es_test

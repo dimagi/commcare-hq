@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import gettext_noop, gettext as _
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -66,9 +67,10 @@ from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
-    report_config_id_is_static, DataSourceConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -77,7 +79,10 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.userreports.util import get_configurable_and_static_reports, get_report_config_or_not_found
+from corehq.apps.userreports.util import (
+    get_configurable_and_static_reports,
+    get_report_config_or_not_found,
+)
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
