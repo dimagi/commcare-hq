@@ -83,6 +83,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
+from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -186,9 +187,6 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code': status_code,
         'repeater_type': repeater_type,
     })
-
-
-REPEATER_CLASS_MAP = {}
 
 
 class RepeaterMeta(ModelBase):
