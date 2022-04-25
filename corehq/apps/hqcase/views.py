@@ -11,7 +11,7 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.api.decorators import allow_cors
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.domain.decorators import (
     api_auth,
     require_superuser_or_contractor,
@@ -86,6 +86,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @require_permission(Permissions.access_api)
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
         return _handle_individual_get(request, case_id)
