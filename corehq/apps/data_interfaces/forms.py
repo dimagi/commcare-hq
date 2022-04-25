@@ -378,6 +378,10 @@ class CaseRuleCriteriaForm(forms.Form):
     def allow_locations_filter(self):
         return False
 
+    @property
+    def allow_custom_filter(self):
+        return True
+
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
             raise ValueError(_("Initial values are set by the form."))
@@ -887,6 +891,10 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
 
     @property
     def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_custom_filter(self):
         return False
 
     def __init__(self, domain, *args, **kwargs):

@@ -52,7 +52,7 @@
           {% if form.allow_parent_case_references %}
             <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
           {% endif %}
-          {% if form.is_system_admin %}
+          {% if form.is_system_admin and form.allow_custom_filter %}
             <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
           {% endif %}
         </ul>
