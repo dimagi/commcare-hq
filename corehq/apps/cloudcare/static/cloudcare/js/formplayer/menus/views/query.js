@@ -4,6 +4,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ",
         dateFormat = "YYYY-MM-DD";
@@ -119,7 +120,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var id = model.get('id'),
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
-
+            $(function () {
+                $field.on("change", function() {
+                    kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Seach");
+                });
+            });
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
@@ -384,6 +389,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initGeocoders: function () {
             var self = this;
+            $(function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Seach");
+            });
             _.each(self.collection.models, function (model, i) {
                 var $field = $($(".query-field")[i]);
 
