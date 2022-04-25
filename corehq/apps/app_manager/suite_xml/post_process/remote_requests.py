@@ -84,7 +84,8 @@ class RemoteRequestFactory(object):
         self.module = module
         self.detail_section_elements = detail_section_elements
         if self.module.is_multi_select():
-            self.case_session_var = "search_selected_cases"
+            # the instance is dynamic and its ID matches the datum ID
+            self.case_session_var = SearchSelectedCasesInstanceXpath.id
         else:
             self.case_session_var = self.module.search_config.case_session_var
 
