@@ -289,7 +289,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         user_json = {
             "username": "updated-username",
-            "unknown_field": "new-value"
+            "default_phone_number": 1234567890
         }
 
         backend_id = user._id
@@ -300,8 +300,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "The request resulted in the following errors: Cannot update a mobile user\'s username. '
-            'Attempted to update unknown field unknown_field."}'
+            '{"error": "The request resulted in the following errors: Attempted to update unknown field username. '
+            'default_phone_number must be a string."}'
         )
 
 
@@ -557,43 +557,15 @@ class TestCommCareUserResourceUpdate(TestCase):
         self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-    def test_update_id_returns_error(self):
+    def test_update_unknown_fields_returns_error(self):
         bundle = Bundle()
         bundle.obj = self.user
         bundle.data = {"id": 'updated-id'}
 
         errors = CommCareUserResource._update(bundle)
-        self.assertIn('Cannot update a mobile user\'s id.', errors)
+        self.assertIn('Attempted to update unknown field id.', errors)
 
-    def test_update_username_returns_error(self):
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"username": 'updated-username'}
-
-        errors = CommCareUserResource._update(bundle)
-        self.assertIn('Cannot update a mobile user\'s username.', errors)
-
-    def test_update_unknown_field_returns_error(self):
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"_id": 'updated-id'}
-
-        errors = CommCareUserResource._update(bundle)
-        self.assertIn('Attempted to update unknown field _id.', errors)
-
-    def test_update_password_without_strong_passwords_enforced(self):
-        self.domain_obj.strong_mobile_passwords = False
-        self.domain_obj.save()
-
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"password": 'abc123'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-
-    def test_update_password_fails_with_strong_passwords_enforced(self):
+    def test_update_password_with_weak_passwords_returns_error_if_strong_option_on(self):
         self.domain_obj.strong_mobile_passwords = True
         self.domain_obj.save()
 
@@ -606,85 +578,7 @@ class TestCommCareUserResourceUpdate(TestCase):
         expected_error_message = 'Password is not strong enough. Try making your password more complex.'
         self.assertIn(expected_error_message, errors)
 
-    def test_update_password_succeeds_with_strong_passwords_enforced(self):
-        self.domain_obj.strong_mobile_passwords = True
-        self.domain_obj.save()
-
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"password": 'a7d8fhjkdf8d'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-
-    def test_update_email(self):
-        self.user.email = 'initial@dimagi.com'
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"email": 'updated@dimagi.com'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.email, 'updated@dimagi.com')
-
-    def test_update_first_name(self):
-        self.user.first_name = 'Initial'
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"first_name": 'Updated'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.first_name, 'Updated')
-
-    def test_update_last_name(self):
-        self.user.last_name = 'Initial'
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"last_name": 'Updated'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.last_name, 'Updated')
-
-    def test_update_language(self):
-        self.user.language = 'in'
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"language": 'up'}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.language, 'up')
-
-    def test_update_default_phone_number(self):
-        self.user.phone_numbers = ['50253311398']
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"default_phone_number": "50253311399"}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.phone_numbers, ["50253311399", "50253311398"])
-        self.assertEqual(modified.default_phone_number, "50253311399")
-
-    def test_update_default_phone_number_returns_error_if_multiple_values(self):
+    def test_update_default_phone_number_returns_error_if_invalid_format(self):
         bundle = Bundle()
         bundle.obj = self.user
         bundle.data = {"default_phone_number": ["50253311399"]}
@@ -692,86 +586,3 @@ class TestCommCareUserResourceUpdate(TestCase):
         errors = CommCareUserResource._update(bundle)
 
         self.assertIn('default_phone_number must be a string.', errors)
-
-    def test_update_default_phone_number_returns_error_if_integer(self):
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"default_phone_number": 50253311399}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertIn('default_phone_number must be a string.', errors)
-
-    def test_update_phone_numbers(self):
-        self.user.phone_numbers = ['50253311398']
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"phone_numbers": ["50253311399", "50253311398"]}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.phone_numbers, ["50253311399", "50253311398"])
-
-    def test_update_phone_numbers_overwrites(self):
-        self.user.phone_numbers = ['50253311398']
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"phone_numbers": ["50253311399"]}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.phone_numbers, ["50253311399"])
-
-    def test_update_phone_numbers_updates_default_number(self):
-        self.user.set_default_phone_number('50253311398')
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"phone_numbers": ["50253311399"]}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.default_phone_number, "50253311399")
-
-    def test_update_user_data(self):
-        self.user.update_metadata({'custom_data': "initial custom data"})
-        self.user.save()
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {
-            "user_data": {
-                "custom_data": "updated custom data"
-            },
-        }
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.metadata["custom_data"], "updated custom data")
-
-    def test_update_groups(self):
-        self.user.set_groups([])
-        self.user.save()
-
-        group = Group({"name": "test"})
-        group.save()
-        self.addCleanup(group.delete)
-        self.addCleanup(self.user.set_groups, [])
-        self.addCleanup(self.user.save)
-        bundle = Bundle()
-        bundle.obj = self.user
-        bundle.data = {"groups": [group._id]}
-
-        errors = CommCareUserResource._update(bundle)
-
-        self.assertFalse(errors)
-        modified = bundle.obj
-        self.assertEqual(modified.get_group_ids()[0], group._id)
