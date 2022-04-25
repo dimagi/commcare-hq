@@ -95,12 +95,11 @@ class SearchCriteria:
             'owner_id',
         ]
 
-        if self.is_daterange:
-            if len(self.value) > 2:
-                raise CaseFilterError(
-                    _("Only one blank value plus one date range value are supprted"),
-                    self.key
-                )
+        if self.is_daterange and len(self.value) > 2:
+            raise CaseFilterError(
+                _("Only one blank value plus one date range value are supprted"),
+                self.key
+            )
 
         if self.key in disallowed_parameters:
             raise CaseFilterError(
