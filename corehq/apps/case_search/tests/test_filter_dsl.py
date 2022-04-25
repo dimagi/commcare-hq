@@ -8,8 +8,15 @@ from couchforms.geopoint import GeoPoint
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.filter_dsl import build_filter_from_ast, SearchFilterContext
-from corehq.apps.es.case_search import CaseSearchES, case_property_geo_distance
+from corehq.apps.case_search.filter_dsl import (
+    SearchFilterContext,
+    build_filter_from_ast,
+)
+from corehq.apps.es.case_search import (
+    CaseSearchES,
+    case_property_geo_distance,
+    case_property_query,
+)
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -642,12 +649,23 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
-    def test_proximity_filter(self):
-        parsed = parse_xpath("proximity('coords', '42.4402967 -71.1453275', 1, 'miles')")
-        expected_filter = case_property_geo_distance('coords', GeoPoint(42.4402967, -71.1453275), miles=1.0)
-        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+    def test_within_distance_filter(self):
+        self._test_xpath_query(
+            "within-distance(coords, '42.4402967 -71.1453275', 1, 'miles')",
+            case_property_geo_distance('coords', GeoPoint(42.4402967, -71.1453275), miles=1.0)
+        )
 
+    def test_fuzzy_match(self):
+        self._test_xpath_query(
+            "fuzzy-match(name, 'jimmy')",
+            case_property_query("name", "jimmy", fuzzy=True)
+        )
+
+    def _test_xpath_query(self, query_string, expected_filter, context=None):
+        parsed = parse_xpath(query_string)
+        context = context or SearchFilterContext("domain")
+        built_filter = build_filter_from_ast(parsed, context)
+        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
 @es_test
 class TestFilterDslLookups(ElasticTestMixin, TestCase):

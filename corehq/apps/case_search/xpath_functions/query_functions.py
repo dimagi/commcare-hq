@@ -39,7 +39,7 @@ def _selected_query(node, context, operator):
     return case_property_query(property_name, search_values, fuzzy=context.fuzzy, multivalue_mode=operator)
 
 
-def proximity(node, context):
+def within_distance(node, context):
     confirm_args_count(node, 4)
     property_name, coords, distance, unit = node.args
     property_name = _property_name_to_string(property_name, node)
@@ -67,6 +67,17 @@ def proximity(node, context):
         )
 
     return case_property_geo_distance(property_name, geo_point, **{unit: distance})
+
+
+def fuzzy_match(node, context):
+    """fuzzy-match(alias, 'pinky')"""
+    from corehq.apps.case_search.dsl_utils import unwrap_value
+
+    confirm_args_count(node, 2)
+    property_name = _property_name_to_string(node.args[0], node)
+    value = unwrap_value(node.args[1], context)
+
+    return case_property_query(property_name, value, fuzzy=True)
 
 
 def _property_name_to_string(value, node):

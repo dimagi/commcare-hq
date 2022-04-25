@@ -8,7 +8,6 @@ from corehq.project_limits.rate_limiter import RateLimiter, RateDefinition, \
 
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_subscription', lambda domain: 10)
-@patch('corehq.project_limits.rate_limiter.get_n_users_old_enterprise_count', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter._get_account_name', lambda domain: 'test')
 def test_rate_limit_interface():
     """
@@ -25,7 +24,6 @@ def test_rate_limit_interface():
 
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_subscription', lambda domain: 10)
-@patch('corehq.project_limits.rate_limiter.get_n_users_old_enterprise_count', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter._get_account_name', lambda domain: 'test')
 def test_get_window_of_first_exceeded_limit():
     per_user_rate_def = RateDefinition(per_second=10)
@@ -40,7 +38,6 @@ def test_get_window_of_first_exceeded_limit():
 
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_subscription', lambda domain: 10)
-@patch('corehq.project_limits.rate_limiter.get_n_users_old_enterprise_count', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter._get_account_name', lambda domain: 'test')
 def test_get_window_of_first_exceeded_limit_none():
     per_user_rate_def = RateDefinition(per_second=10)
@@ -55,7 +52,6 @@ def test_get_window_of_first_exceeded_limit_none():
 
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_subscription', lambda domain: 10)
-@patch('corehq.project_limits.rate_limiter.get_n_users_old_enterprise_count', lambda domain: 10)
 @patch('corehq.project_limits.rate_limiter._get_account_name', lambda domain: 'test')
 def test_get_window_of_first_exceeded_limit_priority():
     per_user_rate_def = RateDefinition(per_second=10, per_week=10)

@@ -568,7 +568,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             )
         )
 
-    @flag_enabled('CASE_SEARCH_SMART_TYPES')
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
     def test_geopoint_query(self, _):
         self._bootstrap_cases_in_es_for_domain(self.domain, [

@@ -142,7 +142,7 @@ def test_case_list_queries(self, querystring, expected):
     ("date_opened.start=2020-01-30", "'start' is not a valid type of date range."),
     ('xpath=gibberish',
      "Bad XPath: Your search query is required to have at least one boolean "
-     "operator (>, >=, <, <=, =, !=)"),
+     "operator (=, !=, >, >=, <, <=)"),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:

@@ -374,7 +374,6 @@ HQ_APPS = (
 
     # custom reports
     'custom.reports.mc',
-    'custom.apps.crs_reports',
     'custom.ucla',
 
     'custom.up_nrhm',
@@ -1552,7 +1551,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
 
     # custom reports
@@ -1937,18 +1935,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
-
-    'crs-remind': 'custom.apps.crs_reports',
 
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
@@ -2079,6 +2071,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # Config settings for the google oauth handshake to get a user token
 # Google Cloud Platform secret settings config file
