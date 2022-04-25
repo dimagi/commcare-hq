@@ -9,6 +9,7 @@ from unittest.mock import patch
 from testil import tempdir
 
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
+from corehq.apps.auditcare.utils.migration import get_sql_start_date
 
 from ..utils.export import (
     AuditWindowQuery,
@@ -16,7 +17,6 @@ from ..utils.export import (
     get_all_log_events,
     get_domain_first_access_times,
     get_foreign_names,
-    get_sql_start_date,
     navigation_events_by_user,
     write_export_from_all_log_events,
 )
