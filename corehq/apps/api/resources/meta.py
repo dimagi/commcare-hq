@@ -7,6 +7,12 @@ from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.api.serializers import CustomXMLSerializer
 from corehq.toggles import API_THROTTLE_WHITELIST
 
+def get_hq_throttle():
+    return HQThrottle(
+        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
+    )
+
 
 class HQThrottle(CacheDBThrottle):
 
@@ -43,7 +49,4 @@ class CustomResourceMeta(object):
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
     default_format = 'application/json'
-    throttle = HQThrottle(
-        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
-        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
-    )
+    throttle = get_hq_throttle()
