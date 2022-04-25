@@ -14,6 +14,7 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -34,7 +35,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
-from ...domain.shortcuts import create_domain
 from ..resources.v0_5 import CommCareUserResource
 from .utils import APIResourceTest
 
