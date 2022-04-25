@@ -582,7 +582,7 @@ def toggles_enabled_for_request(request):
 
     if hasattr(request, 'user'):
         toggles = toggles | toggles_enabled_for_user(request.user.username)
-        toggles = toggles | toggles_enabled_for_email(request.user.email or request.user.username)
+        toggles = toggles | toggles_enabled_for_email(getattr(request.user, 'email', request.user.username))
 
     return toggles
 
