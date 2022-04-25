@@ -111,12 +111,15 @@ Other Notes
 """
 from collections.abc import Sequence
 from contextlib import ContextDecorator
+from datetime import timedelta
 from functools import wraps
-from typing import Any, Callable, Optional
+from types import TracebackType
+from typing import Any, Callable, Optional, Union, Type, Literal
 
 from django.conf import settings
 
-from celery.task import periodic_task
+from celery.task import periodic_task, PeriodicTask
+from celery.schedules import crontab, schedule
 from sentry_sdk import add_breadcrumb
 
 from dimagi.utils.logging import notify_exception
@@ -128,8 +131,6 @@ from .const import (
     ALERT_INFO,
     COMMON_TAGS,
     MPM_ALL,
-    AlertStr,
-    PrometheusMultiprocessModeStr,
 )
 from .metrics import (
     DEFAULT_BUCKETS,
@@ -138,6 +139,7 @@ from .metrics import (
     _enforce_prefix,
     metrics_logger, MetricsProto,
 )
+from .typing import Tags, AlertStr, PrometheusMultiprocessModeStr
 from .utils import (
     DAY_SCALE_TIME_BUCKETS,
     bucket_value,
@@ -157,13 +159,10 @@ __all__ = [
 ]
 
 
-TimerCallback = Callable[[float], Any]
-
-
 def metrics_counter(
     name: str,
     value: float = 1.0,
-    tags: Optional[dict[str, str]] = None,
+    tags: Optional[Tags] = None,
     documentation: str = '',
 ) -> None:
     provider = _get_metrics_provider()
@@ -173,7 +172,7 @@ def metrics_counter(
 def metrics_gauge(
     name: str,
     value: float,
-    tags: Optional[dict[str, str]] = None,
+    tags: Optional[Tags] = None,
     documentation: str = '',
     multiprocess_mode: PrometheusMultiprocessModeStr = MPM_ALL,
 ) -> None:
@@ -187,7 +186,7 @@ def metrics_histogram(
     bucket_tag: str,
     buckets: Sequence[Any] = DEFAULT_BUCKETS,
     bucket_unit: str = '',
-    tags: Optional[dict[str, str]] = None,
+    tags: Optional[Tags] = None,
     documentation: str = '',
 ) -> None:
     provider = _get_metrics_provider()
@@ -197,7 +196,12 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
+def metrics_gauge_task(
+    name: str,
+    fn: Callable[[], Any],
+    run_every: Union[int, crontab, schedule, timedelta],
+    multiprocess_mode: PrometheusMultiprocessModeStr = MPM_ALL,
+) -> PeriodicTask:
     """
     Helper for easily registering gauges to run periodically
 
@@ -217,7 +221,7 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
 
     @periodic_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
     @wraps(fn)
-    def inner():
+    def inner() -> None:
         metrics_gauge(name, fn(), multiprocess_mode=multiprocess_mode)
 
     return inner
@@ -227,7 +231,7 @@ def create_metrics_event(
     title: str,
     text: str,
     alert_type: AlertStr = ALERT_INFO,
-    tags: Optional[dict[str, str]] = None,
+    tags: Optional[Tags] = None,
     aggregation_key: Optional[str] = None,
 ) -> None:
     """
@@ -248,10 +252,14 @@ def create_metrics_event(
         metrics_logger.exception('Error creating metrics event', e)
 
 
+# Optionally called by metrics_histogram_timer() with the timer duration
+TimerCallback = Callable[[float], Any]
+
+
 def metrics_histogram_timer(
     metric: str,
     timing_buckets: Sequence[int],
-    tags: Optional[dict[str, str]] = None,
+    tags: Optional[Tags] = None,
     bucket_tag: str = 'duration',
     callback: Optional[TimerCallback] = None,
 ) -> TimingContext:
@@ -285,7 +293,7 @@ def metrics_histogram_timer(
     timer = TimingContext()
     original_stop = timer.stop
 
-    def new_stop(name=None):
+    def new_stop(name: Optional[str] = None) -> None:
         original_stop(name)
         if callback:
             callback(timer.duration)
@@ -321,21 +329,33 @@ class metrics_track_errors(ContextDecorator):
             pass
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.succeeded_name = "commcare.{}.succeeded".format(name)
         self.failed_name = "commcare.{}.failed".format(name)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         pass
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Literal[False]:
         if not exc_type:
             metrics_counter(self.succeeded_name)
         else:
             metrics_counter(self.failed_name)
+        # "If an exception is supplied, and the method wishes to
+        # suppress the exception (i.e., prevent it from being
+        # propagated), it should return a true value. Otherwise, the
+        # exception will be processed normally upon exit from this
+        # method."
+        # https://docs.python.org/3/reference/datamodel.html#object.__exit__
+        return False
 
 
-def push_metrics():
+def push_metrics() -> None:
     provider = _get_metrics_provider()
     provider.push_metrics()
 
@@ -343,7 +363,7 @@ def push_metrics():
 _metrics: list[MetricsProto] = []
 
 
-def _get_metrics_provider():
+def _get_metrics_provider() -> MetricsProto:
     if not _metrics:
         _global_setup()
         providers = []
@@ -365,7 +385,7 @@ def _get_metrics_provider():
     return _metrics[-1]
 
 
-def _global_setup():
+def _global_setup() -> None:
     if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
         try:
             from ddtrace import tracer
