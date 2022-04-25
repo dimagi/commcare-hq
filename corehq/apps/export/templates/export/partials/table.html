@@ -52,7 +52,9 @@
       <th class="col-sm-1">
         {% if is_daily_saved_export %}
           {% trans "Edit Columns" %}
-        {% elif not is_odata and not is_live_google_sheet %}
+        {% elif is_live_google_sheet%}
+          {% trans 'Edit Feed' %}
+        {% elif not is_odata %}
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
