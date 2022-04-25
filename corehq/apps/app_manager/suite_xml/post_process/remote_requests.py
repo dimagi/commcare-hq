@@ -43,7 +43,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseIDXPath,
-    SelectedCasesInstanceXpath,
+    SearchSelectedCasesInstanceXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
@@ -84,7 +84,7 @@ class RemoteRequestFactory(object):
         self.module = module
         self.detail_section_elements = detail_section_elements
         if self.module.is_multi_select():
-            self.case_session_var = "selected_cases"
+            self.case_session_var = "search_selected_cases"
         else:
             self.case_session_var = self.module.search_config.case_session_var
 
@@ -128,7 +128,7 @@ class RemoteRequestFactory(object):
         }
 
     def _get_multi_select_nodeset(self):
-        return SelectedCasesInstanceXpath().instance()
+        return SearchSelectedCasesInstanceXpath().instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
