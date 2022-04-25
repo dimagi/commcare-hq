@@ -188,4 +188,5 @@ def _submit_case_updates(updates, domain, user, device_id):
         user_id=user.user_id,
         xmlns='http://commcarehq.org/case_api',
         device_id=device_id,
+        max_wait=15
     )
