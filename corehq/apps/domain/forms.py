@@ -963,15 +963,15 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         min_value=1,
     )
     use_custom_gsheet_limit = forms.ChoiceField(
-        label=ugettext_lazy("Set custom Google Sheet limit? Default is 20"),
+        label=gettext_lazy("Set custom Google Sheet limit? Default is 20"),
         required=True,
         choices=(
-            ('N', ugettext_lazy("No")),
-            ('Y', ugettext_lazy("Yes")),
+            ('N', gettext_lazy("No")),
+            ('Y', gettext_lazy("Yes")),
         )
     )
     gsheet_limit = forms.IntegerField(
-        label=ugettext_lazy("Max allowed Google Sheets per user"),
+        label=gettext_lazy("Max allowed Google Sheets per user"),
         required=False,
         min_value=1,
     )
@@ -1211,7 +1211,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
-        self.save_gsheet_limit(domain, self.cleaned_data['gsheet_limit', ProjectLimitType.LIVE_GOOGLE_SHEETS])
+        self.save_gsheet_limit(domain, self.cleaned_data['gsheet_limit'], ProjectLimitType.LIVE_GOOGLE_SHEETS)
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],

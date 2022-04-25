@@ -35,7 +35,6 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-<<<<<<< HEAD
 from corehq.apps.domain.models import (
     Domain,
     ProjectLimit,
@@ -43,9 +42,6 @@ from corehq.apps.domain.models import (
     TransferDomainRequest,
     AllowedUCRExpressionSettings
 )
-=======
-from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
->>>>>>> master
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
