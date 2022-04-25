@@ -166,22 +166,6 @@ class AuditWindowQuery:
                 break
 
 
-def get_sql_start_date():
-    """Get the date of the first SQL auditcare record
-
-    HACK this uses `NavigationEventAudit` since that model is likely to
-    have the record with the earliest timestamp.
-
-    NOTE this function assumes no SQL data has been archived, and that
-    all auditcare data in Couch will be obsolete and/or archived before
-    SQL data. It should be removed when the data in Couch is no longer
-    relevant.
-    """
-    manager = NavigationEventAudit.objects
-    row = manager.order_by("event_date").values("event_date")[:1].first()
-    return row["event_date"] if row else datetime.utcnow()
-
-
 def get_foreign_names(model):
     names = {f.name for f in model._meta.fields if isinstance(f, ForeignKey)}
     names.update(ForeignValue.get_names(model))
