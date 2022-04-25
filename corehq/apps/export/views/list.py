@@ -1191,7 +1191,7 @@ class LiveGoogleSheetListHelper(ExportListHelper):
 class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
     is_live_google_sheet = True
     urlname = 'list_live_google_sheets'
-    page_title = "Live Google Sheet Integration"
+    page_title = "Google Sheets Integration"
 
     @flag_enabled('GOOGLE_SHEETS_INTEGRATION')
     def dispatch(self, request, *args, **kwargs):
@@ -1201,12 +1201,14 @@ class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
     @property
     def lead_text(self):
         return format_html(_("""
-        Integrate your live CommCare data with Google Sheets.
+        Use this feature to integrate your CommCare data with Google Sheets.
         <a href=""
-       id="js-gsheet-track-learn-more"
-       target="_blank">
+            id="js-gsheet-track-learn-more"
+            target="_blank">
         Learn more.
         </a><br />
+        This feature allows 25 integration feeds. Need more? Please write to us at sales@dimagi.com.
+        <br />
         """))
 
     @property
