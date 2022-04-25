@@ -122,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 $field = $("#" + inputId);
             $(function () {
                 $field.on("change", function () {
-                    kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Seach");
+                    kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 });
             });
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
@@ -390,7 +390,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initGeocoders: function () {
             var self = this;
             $(function () {
-                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Seach");
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
             });
             _.each(self.collection.models, function (model, i) {
                 var $field = $($(".query-field")[i]);
