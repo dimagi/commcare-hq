@@ -248,7 +248,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         let isRequired = self.question.required() ? "Yes" : "No";
         $(function () {
             let entry = $(`#${self.entryId}`);
-            entry.change(function () {
+            entry.on("change", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
             });
         });
@@ -1120,7 +1120,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                             "Required": isRequired,
                         });
                         $(function () {
-                            $(".q.form-group").change(function () {
+                            $(".q.form-group").on("change", function () {
                                 kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
@@ -1151,7 +1151,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                             "Required": isRequired,
                         });
                         $(function () {
-                            $(".q.form-group").change(function () {
+                            $(".q.form-group").on("change", function () {
                                 kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
                             });
                         });
