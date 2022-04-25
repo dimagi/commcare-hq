@@ -121,7 +121,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
             $(function () {
-                $field.on("change", function() {
+                $field.on("change", function () {
                     kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Seach");
                 });
             });
