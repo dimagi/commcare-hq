@@ -95,7 +95,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         }
 
     def get_domain(self):
-        domain_match_regex = '(?<=a\/)(.*?)(?=\s*\/)'
+        domain_match_regex = r'(?<=a/)(.*?)(?=\s*/)'
         domain = re.search(domain_match_regex, self.request.META['HTTP_REFERER'])
         if domain:
             return domain.group(0)

@@ -538,16 +538,16 @@ for these packages.
 
 ```sh
 $ npm --version
-6.14.4
+7.24.2
 $ node --version
-v12.18.1
+v14.19.1
 ```
 
 On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v12 is
+easiest way to get onto the current nodejs v14 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 

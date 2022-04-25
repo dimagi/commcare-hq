@@ -14,6 +14,8 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     AuthenticatedEmailDomain,
     UserExemptFromSingleSignOn,
+    IdentityProviderType,
+    IdentityProviderProtocol,
 )
 from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import WebUser
@@ -48,32 +50,58 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         IdentityProvider.objects.all().delete()
         super().tearDownClass()
 
+    @staticmethod
+    def _get_post_data(owner, name, slug, idp_type=None, protocol=None):
+        return {
+            'owner': owner,
+            'name': name,
+            'slug': slug,
+            'idp_type': idp_type or IdentityProviderType.AZURE_AD,
+            'protocol': protocol or IdentityProviderProtocol.SAML,
+        }
+
     def test_bad_slug_is_invalid(self):
         """
         Ensure that a poorly formatted slug raises a ValidationError and the
         CreateIdentityProviderForm does not validate.
         """
-        post_data = {
-            'owner': self.account.id,
-            'name': 'test idp',
-            'slug': 'bad slug',
-        }
+        post_data = self._get_post_data(
+            self.account.id,
+            'test idp',
+            'bad slug',
+        )
         create_idp_form = CreateIdentityProviderForm(post_data)
         create_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
             create_idp_form.clean_slug()
         self.assertFalse(create_idp_form.is_valid())
 
-    def test_created_identity_provider(self):
+    def test_idp_type_and_protocol_mismatch(self):
+        """
+        Ensure that it's not possible to create an Identity Provider that has a mismatch
+        in protocol and type
+        """
+        post_data = self._get_post_data(
+            self.account.id,
+            'Azure AD for Vault Wax',
+            'vaultwax',
+            idp_type=IdentityProviderType.ONE_LOGIN
+        )
+        create_idp_form = CreateIdentityProviderForm(post_data)
+        create_idp_form.cleaned_data = post_data
+        with self.assertRaises(forms.ValidationError):
+            create_idp_form.clean_idp_type()
+
+    def test_created_saml_identity_provider(self):
         """
         Ensure that a valid CreateIdentityProviderForm successfully creates an
-        IdentityProvider.
+        IdentityProvider using SAML.
         """
-        post_data = {
-            'owner': self.account.id,
-            'name': 'Azure AD for Vault Wax',
-            'slug': 'vaultwax',
-        }
+        post_data = self._get_post_data(
+            self.account.id,
+            'Azure AD for Vault Wax',
+            'vaultwax',
+        )
         create_idp_form = CreateIdentityProviderForm(post_data)
         self.assertTrue(create_idp_form.is_valid())
         create_idp_form.create_identity_provider(self.accounting_admin)
@@ -85,6 +113,32 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         self.assertIsNotNone(idp.sp_cert_public)
         self.assertIsNotNone(idp.sp_cert_private)
         self.assertIsNotNone(idp.date_sp_cert_expiration)
+        self.assertEqual(idp.created_by, self.accounting_admin.username)
+        self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
+
+    def test_created_oidc_identity_provider(self):
+        """
+        Ensure that a valid CreateIdentityProviderform successfully creates an
+        IdentityProvider using OIDC
+        """
+        post_data = self._get_post_data(
+            self.account.id,
+            'One Login for Vault Wax',
+            'vaultwax',
+            idp_type=IdentityProviderType.ONE_LOGIN,
+            protocol=IdentityProviderProtocol.OIDC,
+        )
+        create_idp_form = CreateIdentityProviderForm(post_data)
+        self.assertTrue(create_idp_form.is_valid())
+        create_idp_form.create_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(owner=self.account)
+        self.assertEqual(idp.owner, self.account)
+        self.assertEqual(idp.slug, post_data['slug'])
+        self.assertEqual(idp.name, post_data['name'])
+        self.assertIsNone(idp.sp_cert_public)
+        self.assertIsNone(idp.sp_cert_private)
+        self.assertIsNone(idp.date_sp_cert_expiration)
         self.assertEqual(idp.created_by, self.accounting_admin.username)
         self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
 

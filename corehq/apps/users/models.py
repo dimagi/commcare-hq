@@ -588,7 +588,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_domain_admin(domain):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
             return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)

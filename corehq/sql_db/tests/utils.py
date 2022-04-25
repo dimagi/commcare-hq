@@ -8,7 +8,15 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.tests.util.warnings import filter_warnings
 from corehq.util.decorators import ContextDecorator
+
+
+ignore_databases_override_warning = filter_warnings(
+    "ignore",
+    "Overriding setting DATABASES can lead to unexpected behavior.",
+    UserWarning,
+)
 
 
 class temporary_database(ContextDecorator):

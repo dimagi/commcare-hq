@@ -11,9 +11,12 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
-from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids, _get_es_query
+from corehq.apps.data_interfaces.deduplication import (
+    backfill_deduplicate_rule,
+    find_duplicate_case_ids,
+    _get_es_query,
+)
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
     CaseDuplicate,
@@ -27,8 +30,11 @@ from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import flag_enabled, trap_extra_setup
-from corehq.util.test_utils import set_parent_case
+from corehq.util.test_utils import (
+    set_parent_case,
+    flag_enabled,
+    trap_extra_setup,
+)
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleCriteria,
@@ -36,7 +42,7 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
 )
 from corehq.apps.data_interfaces.utils import run_rules_for_case
-
+from corehq.apps.domain.shortcuts import create_domain
 
 
 @es_test
@@ -967,3 +973,69 @@ class TestDeduplicationRuleRuns(TestCase):
 
         self.assertEqual(refreshed_fake_cases[0].get_case_property('age'), '14')
         self.assertEqual(refreshed_fake_cases[1].get_case_property('age'), '14')
+
+
+@flag_enabled('CASE_DEDUPE')
+@es_test
+class DeduplicationBackfillTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+
+        cls.domain = 'naboo'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.case_type = 'people'
+        cls.factory = CaseFactory(cls.domain)
+
+        cls.case1 = cls.factory.create_case(
+            case_name="foo", case_type=cls.case_type, update={"age": 2}, close=True
+        )
+        cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+        cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+
+        for case in [cls.case1, cls.case2, cls.case3]:
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+        cls.domain_obj.delete()
+        return super().tearDownClass()
+
+    def _set_up_rule(self, include_closed):
+        self.rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, self.action = self.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["case_name", "age"],
+            include_closed=include_closed
+        )
+
+        self.action.save()
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+
+    def test_include_closed_finds_open_and_closed_cases(self):
+        self._set_up_rule(include_closed=True)
+
+        backfill_deduplicate_rule(self.domain, self.rule)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 3)
+
+    def test_finds_open_cases_only(self):
+        self._set_up_rule(include_closed=False)
+
+        backfill_deduplicate_rule(self.domain, self.rule)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)

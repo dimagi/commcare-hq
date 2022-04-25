@@ -29,7 +29,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
         if not line.strip():
             return
         for tag in DISALLOWED_REGEXES:
-            self.assertNotRegexpMatches(line.strip(), tag[0], '{}: {}'.format(tag[1], filename))
+            self.assertNotRegex(line.strip(), tag[0], '{}: {}'.format(tag[1], filename))
 
     @attr("slow")
     def test_compress_offline(self):

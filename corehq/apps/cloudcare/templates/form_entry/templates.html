@@ -53,7 +53,7 @@
       </div>
       <span class="ix"></span>
     </fieldset>
-      <div data-bind="if: showChildren()">
+      <div data-bind="visible: showChildren">
         <fieldset>
         <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
           <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children,

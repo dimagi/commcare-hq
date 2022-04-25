@@ -669,7 +669,7 @@ def _email_is_valid(email):
     try:
         validate_email(email)
     except EmailNotValidError as e:
-        logger.warn(str(e))
+        logger.warning(str(e))
         return False
 
     return True

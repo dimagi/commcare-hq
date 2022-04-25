@@ -100,13 +100,19 @@ class TestIncrementalExport(TestCase):
         )
         self.export_instance.save()
 
+        connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
+            name='test conn',
+            url='http://commcarehq.org',
+            auth_type=BASIC_AUTH,
+            username='user@example.com',
+            password='s3cr3t',
+        )
         self.incremental_export = IncrementalExport.objects.create(
             domain=self.domain,
             name='test_export',
             export_instance_id=self.export_instance.get_id,
-            connection_settings=ConnectionSettings.objects.create(
-                domain=self.domain, name='test conn', url='http://commcarehq.org', auth_type=BASIC_AUTH,
-            )
+            connection_settings=connection_settings,
         )
 
     def tearDown(self):
