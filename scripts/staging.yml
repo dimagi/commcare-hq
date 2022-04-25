@@ -71,7 +71,6 @@ branches:
     - smh/multi-select-clear-session-storage # Steph April 16
     - ad/change-referrer-policy+rp/gsheet/create-livegooglesheetview # Addison April 18
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - bmb/upgrade-dompurify  # Biyeun Apr 19
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - smh/multi-select-web-ui-formatting # Steph April 19
     - sk/remove-feature-phone-support  # Simon April 20
