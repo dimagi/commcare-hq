@@ -20,6 +20,7 @@ class DomainLinkAdmin(admin.ModelAdmin):
         'linked_domain',
         'master_domain',
         'last_pull',
+        'deleted',
     ]
     search_fields = ['linked_domain', 'master_domain']
     inlines = [
