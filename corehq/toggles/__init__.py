@@ -564,7 +564,7 @@ def toggles_enabled_for_user(username):
 
 
 @quickcache(["email"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
-def toggles_enabled_for_email(email):
+def toggles_enabled_for_email_domain(email):
     """Return set of toggle names that are enabled for the given email"""
     return {
         toggle_name
@@ -582,7 +582,7 @@ def toggles_enabled_for_request(request):
 
     if hasattr(request, 'user'):
         toggles = toggles | toggles_enabled_for_user(request.user.username)
-        toggles = toggles | toggles_enabled_for_email(getattr(request.user, 'email', request.user.username))
+        toggles = toggles | toggles_enabled_for_email_domain(getattr(request.user, 'email', request.user.username))
 
     return toggles
 
