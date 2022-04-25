@@ -218,5 +218,11 @@
         {% endfor %}
       </select>
     </div>
+    <div class="controls col-xs-4">
+      <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-4">
+        {% trans "Include cases from child locations" %}
+      </label>
+      <input type="checkbox" data-bind="checked: include_child_locations" name="include_child_locations" />
+    </div>
   </div>
 </script>

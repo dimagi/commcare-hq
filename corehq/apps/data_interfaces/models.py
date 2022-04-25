@@ -64,6 +64,8 @@ from corehq.sql_db.util import (
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
+from corehq.apps.locations.models import SQLLocation
+
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -668,11 +670,22 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
 class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
     location_id = models.CharField(max_length=255)
+    include_child_locations = models.BooleanField(default=False)
 
     def matches(self, case, now):
         if case.owner_id:
-            # Check cases that belong to a location
-            return case.owner_id == self.location_id
+            # Checks if case belongs to location (hierarchy)
+
+            if not self.include_child_locations:
+                return case.owner_id == self.location_id
+            else:
+                location = SQLLocation.by_location_id(self.location_id)
+
+                if not location:
+                    return False
+
+                return location.descendants_include_location(case.owner_id)
+
         return False
 
 

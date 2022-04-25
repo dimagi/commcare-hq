@@ -334,6 +334,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
                 initial['location_filter_definition'] = {
                     'location_id': location_id,
+                    'include_child_locations': definition.include_child_locations,
                     'name': location.name,
                 }
 
@@ -595,7 +596,11 @@ class CaseRuleCriteriaForm(forms.Form):
             self._json_fail_hard()
 
         if value:
-            return value[0]
+            location_def = value[0]
+            if not location_def['include_child_locations']:
+                location_def['include_child_locations'] = False
+
+            return location_def
         return ''
 
     def save_criteria(self, rule, save_meta=True):
@@ -639,6 +644,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 definition_data = self.cleaned_data['location_filter_definition']
                 definition = LocationFilterDefinition.objects.create(
                     location_id=definition_data['location_id'],
+                    include_child_locations=definition_data.get('include_child_locations', False),
                 )
 
                 criteria = CaseRuleCriteria(rule=rule)

@@ -1188,8 +1188,10 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
         with transaction.atomic():
             rule_modified = self._update_model_instance(self.rule, rule_params)
             action_modified = self._update_model_instance(self.dedupe_action, action_params)
+
+            # Is there a good way to check if the criteria has changed without
+            # going over each and every value?
             cases_filter_form.save_criteria(self.rule, save_meta=False)
-            # Add logic to determine if any criteria changed
             filter_criteria_updated = True
 
         if rule_modified or action_modified or filter_criteria_updated:

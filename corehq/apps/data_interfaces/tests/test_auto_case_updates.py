@@ -510,13 +510,14 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime(2017, 4, 15)))
 
-    def test_location_filter(self):
+    def test_location_filter_criteria_does_not_include_child_locations(self):
         location_id = 'diagon_alley_id'
-
+        # Create location and child; assign case to child
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(
             LocationFilterDefinition,
             location_id=location_id,
+            include_child_locations=False,
         )
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
@@ -525,6 +526,45 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             _update_case(self.domain, case.case_id, case.server_modified_on, owner_id=location_id)
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
+
+    def test_location_filter_criteria_does_include_child_locations(self):
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        from corehq.apps.domain.shortcuts import create_domain
+
+        _domain_obj = create_domain(self.domain)
+
+        location_type_provice = LocationType(domain=self.domain, name='Province')
+        location_type_provice.save()
+
+        location_type_city = LocationType(domain=self.domain, name='City', parent_type=location_type_provice)
+        location_type_city.save()
+
+        western_cape = SQLLocation.objects.create(
+            domain=self.domain,
+            name='Western Cape',
+            location_type=location_type_provice,
+        )
+
+        cape_town = SQLLocation.objects.create(
+            domain=self.domain,
+            name='Cape Town',
+            location_type=location_type_city,
+            parent=western_cape,
+        )
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            LocationFilterDefinition,
+            location_id=western_cape.location_id,
+            include_child_locations=True,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
+
+            _update_case(self.domain, case.case_id, case.server_modified_on, owner_id=cape_town.location_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
 

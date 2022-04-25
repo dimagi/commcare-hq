@@ -95,7 +95,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             $.each(self.criteria(), function (index, value) {
                 if (value.koTemplateId === 'locations-filter') {
                     result.push({
-                        location_id: value.location_id() || ''
+                        location_id: value.location_id() || '',
+                        include_child_locations: value.include_child_locations() || '',
                     });
                 }
             });
@@ -203,7 +204,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             if (initial.location_filter_definition) {
                 obj = locationDefinition('locations-filter');
                 obj.name(initial.location_filter_definition.name);
-                obj.location_id(initial.location_filter_definition.location_id)
+                obj.location_id(initial.location_filter_definition.location_id);
+                obj.include_child_locations(initial.location_filter_definition.include_child_locations);
                 self.criteria.push(obj);
             }
 
@@ -277,6 +279,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
 
         // This model matches the Django model with the same name
         self.location_id = ko.observable();
+        self.include_child_locations = ko.observable();
         self.name = ko.observable();
         return self;
     }
