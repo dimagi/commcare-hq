@@ -316,7 +316,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     old_phone_numbers = set(bundle.obj.phone_numbers)
                     phone_number = bundle.data.get('default_phone_number')
                     if not isinstance(phone_number, str):
-                        errors.append(_('Only a single value, not a list, can be set for default_phone_number.'))
+                        errors.append(_('{} must be a string.'.format(key)))
                         continue
                     formatted_phone_number = strip_plus(phone_number)
                     bundle.obj.set_default_phone_number(formatted_phone_number)

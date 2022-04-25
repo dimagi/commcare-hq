@@ -691,7 +691,16 @@ class TestCommCareUserResourceUpdate(TestCase):
 
         errors = CommCareUserResource._update(bundle)
 
-        self.assertIn('Only a single value, not a list, can be set for default_phone_number.', errors)
+        self.assertIn('default_phone_number must be a string.', errors)
+
+    def test_update_default_phone_number_returns_error_if_integer(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"default_phone_number": 50253311399}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('default_phone_number must be a string.', errors)
 
     def test_update_phone_numbers(self):
         self.user.phone_numbers = ['50253311398']
