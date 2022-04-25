@@ -153,6 +153,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         if (sessionStorage.selectedValues !== undefined) {
             options.selectedValues = sessionStorage.selectedValues.split(',');
             sessionStorage.removeItem("selectedValues");
+        } else if (
+            // handle missing selectedValue (when user presses 'back')
+            options.selections !== undefined && options.selections.at(-1) === "use_selected_values") {
+            options.selections.pop();
         }
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
