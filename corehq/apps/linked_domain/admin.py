@@ -29,6 +29,9 @@ class DomainLinkAdmin(admin.ModelAdmin):
         'delete', 'undelete'
     ]
 
+    def get_queryset(self, request):
+        return self.model.all_objects
+
     def delete(self, request, queryset):
         queryset.update(deleted=True)
     delete.short_description = "Mark selected items as deleted"
