@@ -563,6 +563,30 @@ def toggles_enabled_for_user(username):
     }
 
 
+@quickcache(["email"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def toggles_enabled_for_email(email):
+    """Return set of toggle names that are enabled for the given email"""
+    return {
+        toggle_name
+        for toggle_name, toggle in all_toggles_by_name().items()
+        if toggle.enabled(email, NAMESPACE_EMAIL_DOMAIN)
+    }
+
+
+def toggles_enabled_for_request(request):
+    """Return set of toggle names that are enabled for a particular request"""
+    toggles = set()
+
+    if hasattr(request, 'domain'):
+        toggles = toggles | toggles_enabled_for_domain(request.domain)
+
+    if hasattr(request, 'user'):
+        toggles = toggles | toggles_enabled_for_user(request.user.username)
+        toggles = toggles | toggles_enabled_for_email(request.user.email or request.user.username)
+
+    return toggles
+
+
 def _ensure_valid_namespaces(namespaces):
     if not namespaces:
         raise Exception('namespaces must be defined!')
