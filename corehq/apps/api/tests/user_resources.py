@@ -1,10 +1,11 @@
 import json
-from copy import deepcopy
 
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
@@ -13,6 +14,7 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -33,6 +35,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
+from ..resources.v0_5 import CommCareUserResource
 from .utils import APIResourceTest
 
 
@@ -274,61 +277,31 @@ class TestCommCareUserResource(APIResourceTest):
             '{"error": "metadata properties conflict with profile: imaginary"}'
         )
 
-    def test_cannot_update_id(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "id": "changed-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s id."}'
-        )
+    def test_update_fails(self):
 
-    def test_cannot_update_username(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "username": "changed-test",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s username."}'
-        )
+        group = Group({"name": "test"})
+        group.save()
 
-    def test_cannot_update_unknown_key(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(group.delete)
+
         user_json = {
-            "_id": "changed-id",
+            "username": "updated-username",
+            "unknown_field": "new-value"
         }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
+
+        backend_id = user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(user_json),
                                                    content_type='application/json',
                                                    method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "Attempted to update unknown field _id."}'
+            '{"error": "The request resulted in the following errors: Cannot update a mobile user\'s username. '
+            'Attempted to update unknown field unknown_field."}'
         )
 
 
@@ -568,3 +541,183 @@ class TestIdentityResource(APIResourceTest):
         self.assertEqual(data['first_name'], self.user.first_name)
         self.assertEqual(data['last_name'], self.user.last_name)
         self.assertEqual(data['email'], self.user.email)
+
+
+class TestCommCareUserResourceUpdate(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    def test_update_id_returns_error(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"id": 'updated-id'}
+
+        errors = CommCareUserResource._update(bundle)
+        self.assertIn('Cannot update a mobile user\'s id.', errors)
+
+    def test_update_username_returns_error(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"username": 'updated-username'}
+
+        errors = CommCareUserResource._update(bundle)
+        self.assertIn('Cannot update a mobile user\'s username.', errors)
+
+    def test_update_unknown_field_returns_error(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"_id": 'updated-id'}
+
+        errors = CommCareUserResource._update(bundle)
+        self.assertIn('Attempted to update unknown field _id.', errors)
+
+    def test_update_password_without_strong_passwords_enforced(self):
+        self.domain_obj.strong_mobile_passwords = False
+        self.domain_obj.save()
+
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"password": 'abc123'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+
+    def test_update_password_fails_with_strong_passwords_enforced(self):
+        self.domain_obj.strong_mobile_passwords = True
+        self.domain_obj.save()
+
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"password": 'abc123'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        expected_error_message = 'Password is not strong enough. Try making your password more complex.'
+        self.assertIn(expected_error_message, errors)
+
+    def test_update_password_succeeds_with_strong_passwords_enforced(self):
+        self.domain_obj.strong_mobile_passwords = True
+        self.domain_obj.save()
+
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"password": 'a7d8fhjkdf8d'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+
+    def test_update_email(self):
+        self.user.email = 'initial@dimagi.com'
+        self.user.save()
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"email": 'updated@dimagi.com'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.email, 'updated@dimagi.com')
+
+    def test_update_first_name(self):
+        self.user.first_name = 'Initial'
+        self.user.save()
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"first_name": 'Updated'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.first_name, 'Updated')
+
+    def test_update_last_name(self):
+        self.user.last_name = 'Initial'
+        self.user.save()
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"last_name": 'Updated'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.last_name, 'Updated')
+
+    def test_update_language(self):
+        self.user.language = 'in'
+        self.user.save()
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"language": 'up'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.language, 'up')
+
+    def test_update_phone_numbers(self):
+        self.user.phone_numbers = ['50253311398']
+        self.user.save()
+        self.assertEqual(self.user.default_phone_number, "50253311398")
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"phone_numbers": ["50253311399", "50253311398"]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.phone_numbers, ["50253311399", "50253311398"])
+        # NOTE: the default phone number is the first number provided in the array of numbers
+        self.assertEqual(modified.default_phone_number, "50253311399")
+
+    def test_update_user_data(self):
+        self.user.update_metadata({'custom_data': "initial custom data"})
+        self.user.save()
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {
+            "user_data": {
+                "custom_data": "updated custom data"
+            },
+        }
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.metadata["custom_data"], "updated custom data")
+
+    def test_update_groups(self):
+        self.user.set_groups([])
+        self.user.save()
+
+        group = Group({"name": "test"})
+        group.save()
+        self.addCleanup(group.delete)
+        self.addCleanup(self.user.set_groups, [])
+        self.addCleanup(self.user.save)
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"groups": [group._id]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertFalse(errors)
+        modified = bundle.obj
+        self.assertEqual(modified.get_group_ids()[0], group._id)
