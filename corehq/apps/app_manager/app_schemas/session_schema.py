@@ -2,6 +2,7 @@ from django.utils.text import slugify
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.suite_xml.xml_models import InstanceDatum
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import is_usercase_in_use
 
@@ -20,6 +21,15 @@ def get_session_schema(form):
 
     def _get_structure(datum, data_registry, source=None):
         id_source = f":{slugify(source)}" if source else ""
+        if isinstance(datum.datum, InstanceDatum):
+            return {
+                "reference": {
+                    "hashtag": f'#registry_case{id_source}' if data_registry else f"#case{id_source}",
+                    "source": "registry" if data_registry else "casedb",
+                    "subset": f"case{id_source}",
+                    "key": "@case_id",
+                },
+            }
         return {
             "reference": {
                 "hashtag": f'#registry_case{id_source}' if data_registry else f"#case{id_source}",
@@ -42,6 +52,8 @@ def get_session_schema(form):
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
+        #if isinstance(datum.datum, InstanceDatum):
+        #    continue
         module_id = datum.module_id
         module = app.get_module_by_unique_id(module_id) if module_id else None
         data_registry = module.search_config.data_registry if module else None

@@ -18,7 +18,11 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
 )
 from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
+from corehq.apps.app_manager.app_schemas.casedb_schema import (
+    get_casedb_schema,
+    get_multi_select_schema,
+    get_registry_schema,
+)
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
 )
@@ -191,15 +195,19 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
             data.append(get_casedb_schema(form))
         if form.requires_case() and module_loads_registry_case(form.get_module()):
             data.append(get_registry_schema(form))
+        if form.requires_case() and form.get_module().is_multi_select():
+            data.append(get_multi_select_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest(
             str(e) or _("There is an error in the case management of your application. "
             "Please fix the error to see case properties in this tree")
         )
+    '''
     except Exception as e:
         notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
+    '''
 
     data.extend(item_lists_by_domain(domain))
     kw = {}

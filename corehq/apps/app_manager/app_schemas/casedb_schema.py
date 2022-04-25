@@ -48,6 +48,24 @@ def get_casedb_schema(form):
     }
 
 
+def get_multi_select_schema(form):
+    app = form.get_app()
+    module = form.get_module()
+
+    subsets = []
+    if form.requires_case() and module.is_multi_select():
+        subsets.extend(_get_case_schema_subsets(app, module.case_type, hashtag='#multi_select/'))
+
+    return {
+        "id": "selected_cases",
+        "uri": "jr://instance/selected_casesx",
+        "name": "selected_casesy",
+        "path": "/results/casez",
+        "structure": {},
+        "subsets": subsets,
+    }
+
+
 def get_registry_schema(form):
     """Get registry database schema definition for vellum to display as an external data source.
 
