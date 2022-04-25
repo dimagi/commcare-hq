@@ -1,7 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from corehq.apps.api.exceptions import InvalidFormatException
+from corehq.apps.api.exceptions import (
+    InvalidFormatException,
+    UnknownFieldException,
+)
 from corehq.apps.api.user_updates import update
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -109,6 +112,10 @@ class TestUpdateUserMethods(TestCase):
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id])
         self.assertEqual(self.user.get_group_ids()[0], group._id)
+
+    def test_update_unknown_field_raises_exception(self):
+        with self.assertRaises(UnknownFieldException):
+            update(self.user, 'username', 'new-username')
 
 
 class TestUpdateUserMethodsLogChanges(TestCase):

@@ -1,6 +1,9 @@
 from dimagi.utils.couch.bulk import get_docs
 
-from corehq.apps.api.exceptions import InvalidFormatException
+from corehq.apps.api.exceptions import (
+    InvalidFormatException,
+    UnknownFieldException,
+)
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -29,6 +32,9 @@ def update(user, field, value, user_change_logger=None):
         'phone_numbers': _update_phone_numbers,
         'user_data': _update_user_data,
     }.get(field)
+
+    if not update_fn:
+        raise UnknownFieldException
 
     update_fn(user, value, user_change_logger)
 
