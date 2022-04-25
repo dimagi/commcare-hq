@@ -37,13 +37,10 @@ class RepeaterTestCase(TestCase):
         self.next_check_str = "2022-01-12 11:04:15"
         self.last_checked = datetime.strptime(self.last_checked_str, self.date_format)
         self.next_check = datetime.strptime(self.next_check_str, self.date_format)
-        self.sql_repeater = SQLRepeater.objects.create(
-            domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
-            connection_settings=conn,
-            last_attempt_at=self.last_checked,
-            next_attempt_at=self.next_check,
-        )
+        self.sql_repeater = SQLRepeater.objects.get(repeater_id=self.repeater.get_id)
+        self.sql_repeater.next_attempt_at = self.next_check
+        self.sql_repeater.last_attempt_at = self.last_checked
+        self.sql_repeater.save()
 
     def tearDown(self):
         self.repeater.delete()
