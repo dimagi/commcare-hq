@@ -332,8 +332,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             change_messages.update(
                                 UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
                             )
-
-                        if change_messages:
                             user_change_logger.add_change_message({'phone_numbers': change_messages})
 
                 elif key == 'groups':
