@@ -226,7 +226,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            selectRow: "#select-row-checkbox",
+            selectRow: ".select-row-checkbox",
         },
 
         events: {
@@ -248,7 +248,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         rowClick: function (e) {
-            if (!(e.target.className === 'module-case-list-column-checkbox' || e.target.id === 'select-row-checkbox')) {
+            if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
                 e.preventDefault();
                 FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.parentView.options.isMultiSelect);
             }
@@ -271,6 +271,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.parentView.ui.selectAllCheckbox[0].checked = false;
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
+            this.parentView.reconcileSelectAll();
+        },
+
+        isChecked: function () {
+            return this.ui.selectRow[0].checked;
         },
 
         templateContext: function () {
@@ -456,6 +461,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             });
             this.updateContinueButtonText(this.selectedCaseIds.length);
+        },
+
+        reconcileSelectAll: function () {
+            var allSelected = true;
+            this.children.each(function (childView) {
+                allSelected = allSelected && childView.isChecked();
+            });
+            this.ui.selectAllCheckbox[0].checked = allSelected;
         },
 
         continueAction: function () {
