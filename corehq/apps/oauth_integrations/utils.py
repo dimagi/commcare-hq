@@ -91,7 +91,7 @@ def clear_spreadsheet(service, spreadsheet_id):
     service.spreadsheets().values().clear(
         spreadsheetId=spreadsheet_id,
         range='A1'
-    )
+    ).execute()
 
 
 def create_empty_worksheet(service, worksheet_name, spreadsheet_id):
