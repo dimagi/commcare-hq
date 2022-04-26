@@ -268,6 +268,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 if (index > -1) {
                     this.parentView.selectedCaseIds.splice(index, 1);
                 }
+                this.parentView.ui.selectAllCheckbox[0].checked = false;
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
         },
@@ -328,6 +329,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
             this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
+            this.isMultiSelect = options.isMultiSelect;
         },
 
         ui: {
@@ -483,7 +485,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-            var isMultiSelectCaseList = this.options.isMultiSelect;
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -502,7 +503,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: isMultiSelectCaseList,
+                isMultiSelect: this.isMultiSelect,
                 selectedCaseIds: this.selectedCaseIds,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
