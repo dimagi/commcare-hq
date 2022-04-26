@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import List, Dict
 
 from datadog import api
@@ -12,12 +13,17 @@ from datadog.dogstatsd.base import DogStatsd
 datadog_logger = logging.getLogger('datadog')
 
 
+def _sanitize_value(tag_value: str):
+    # valid characters for tag values from https://docs.datadoghq.com/getting_started/tagging/#defining-tags
+    return re.sub(r'[^a-zA-Z0-9_:./-]+', '_', tag_value.lower())
+
+
 def _format_tags(tag_values: Dict[str, str]):
     if not tag_values:
         return None
 
     return [
-        f'{name}:{value}' for name, value in tag_values.items()
+        f'{name}:{_sanitize_value(value)}' for name, value in tag_values.items()
     ]
 
 
