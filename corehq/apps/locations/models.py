@@ -16,6 +16,7 @@ from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.quickcache import quickcache
 
 
 class LocationTypeManager(models.Manager):
@@ -424,6 +425,7 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
+    @quickcache(['self.location_id', 'include_self'], timeout=30 * 60)
     def get_descendants(self, include_self=False, **kwargs):
         if include_self:
             where = Q(domain=self.domain, id=self.id)
@@ -647,6 +649,13 @@ class SQLLocation(AdjListModel):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
 
+    def descendants_include_location(self, location_id):
+        return (
+            self.get_descendants(include_self=True)
+            .filter(location_id=location_id)
+            .exists()
+        )
+
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
@@ -664,6 +673,7 @@ class SQLLocation(AdjListModel):
         self._path = value
 
     @classmethod
+    @quickcache(['location_id'], timeout=30 * 60)
     def by_location_id(cls, location_id):
         try:
             return cls.objects.get(location_id=location_id)
