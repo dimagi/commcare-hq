@@ -6,7 +6,7 @@
 #
 alembic==1.4.3
     # via -r base-requirements.in
-amqp==2.6.1
+amqp==5.1.1
     # via kombu
 architect==0.6.0
     # via -r base-requirements.in
@@ -18,8 +18,8 @@ attrs==18.2.0
     #   jsonschema
 beautifulsoup4==4.10.0
     # via -r test-requirements.in
-billiard==3.5.0.4
-    # via -r base-requirements.in
+billiard==3.6.4.0
+    # via celery
 boto3==1.17.85
     # via -r base-requirements.in
 botocore==1.20.85
@@ -28,7 +28,7 @@ botocore==1.20.85
     #   s3transfer
 cachetools==5.0.0
     # via google-auth
-celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
+celery==5.2.6
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -44,8 +44,19 @@ chardet==3.0.4
     # via
     #   ghdiff
     #   requests
-click==7.1.2
-    # via pip-tools
+click==8.1.2
+    # via
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+    #   pip-tools
+click-didyoumean==0.3.0
+    # via celery
+click-plugins==1.1.1
+    # via celery
+click-repl==0.2.0
+    # via celery
 cloudant==2.14.0
     # via jsonobject-couchdbkit
 colorama==0.4.4
@@ -108,7 +119,7 @@ django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0
     # via -r base-requirements.in
-django-celery-results==1.0.4
+django-celery-results==2.3.1
     # via -r base-requirements.in
 django-compressor==2.4
     # via -r base-requirements.in
@@ -124,7 +135,7 @@ django-formtools==2.3
     #   django-two-factor-auth
 django-logentry-admin==1.0.6
     # via -r base-requirements.in
-django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
+https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/releases/django_nose-1.4.6.1-py2.py3-none-any.whl
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
@@ -154,7 +165,7 @@ django-two-factor-auth==1.13.2
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
-django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
+https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.12.2
     # via -r base-requirements.in
@@ -255,7 +266,7 @@ jsonobject==2.0.0
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -263,8 +274,8 @@ jwcrypto==0.8
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
-kombu==4.2.2.post1
-    # via -r base-requirements.in
+kombu==5.2.4
+    # via celery
 laboratory==0.2.0
     # via -r base-requirements.in
 lxml==4.7.1
@@ -318,6 +329,8 @@ polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.7.1
     # via -r base-requirements.in
+prompt-toolkit==3.0.29
+    # via click-repl
 protobuf==3.15.0
     # via
     #   ddtrace
@@ -377,9 +390,10 @@ python-mimeparse==1.6.0
     # via django-tastypie
 python3-saml==1.12.0
     # via -r sso-requirements.in
-pytz==2020.1
+pytz==2022.1
     # via
     #   -r base-requirements.in
+    #   celery
     #   django
     #   twilio
 pyyaml==5.4.1
@@ -439,7 +453,7 @@ sentry-sdk==0.19.5
     # via -r base-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
-simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -448,6 +462,7 @@ simplejson==3.17.2
 six==1.15.0
     # via
     #   -r base-requirements.in
+    #   click-repl
     #   django-braces
     #   django-compressor
     #   django-oauth-toolkit
@@ -537,8 +552,13 @@ urllib3==1.26.5
     #   sentry-sdk
 user-agents==2.2.0
     # via django-user-agents
-vine==1.3.0
-    # via amqp
+vine==5.0.0
+    # via
+    #   amqp
+    #   celery
+    #   kombu
+wcwidth==0.2.5
+    # via prompt-toolkit
 werkzeug==1.0.1
     # via -r base-requirements.in
 wheel==0.37.0
@@ -553,9 +573,9 @@ xmlsec==1.3.12
     # via python3-saml
 zipp==3.7.0
     # via importlib-metadata
-zope-event==4.5.0
+zope.event==4.5.0
     # via gevent
-zope-interface==5.4.0
+zope.interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -568,5 +588,5 @@ setuptools==50.3.0
     #   gunicorn
     #   jsonschema
     #   pip-tools
-    #   zope-event
-    #   zope-interface
+    #   zope.event
+    #   zope.interface
