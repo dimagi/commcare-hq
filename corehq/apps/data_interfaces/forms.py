@@ -432,10 +432,13 @@ class CaseRuleCriteriaForm(forms.Form):
         if self.couch_user is None:
             return []
 
-        domain_membership = next(
-            (membership for membership in self.couch_user.domain_memberships if membership.domain == self.domain)
-        )
-        user_locations = SQLLocation.objects.get_locations_and_children(domain_membership.assigned_location_ids)
+        if self.couch_user.is_domain_admin(self.domain):
+            user_locations = SQLLocation.active_objects.filter(domain=self.domain)
+        else:
+            domain_membership = next(
+                (membership for membership in self.couch_user.domain_memberships if membership.domain == self.domain)
+            )
+            user_locations = SQLLocation.objects.get_locations_and_children(domain_membership.assigned_location_ids)
 
         return [
             {'location_id': location.location_id, 'name': location.name}
