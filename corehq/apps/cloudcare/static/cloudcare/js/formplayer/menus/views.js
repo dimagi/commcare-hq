@@ -270,6 +270,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 }
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
+            this.parentView.reconcileSelectAll();
+        },
+
+        isChecked: function() {
+            return this.ui.selectRow[0].checked;
         },
 
         templateContext: function () {
@@ -429,6 +434,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 // remove all rows from selected cases
             }
             //do something
+        },
+
+        reconcileSelectAll: function (e) {
+            var allSelected = true;
+            this.children.each(function (childView) {
+                allSelected = allSelected && childView.isChecked();
+            });
+            this.ui.selectAllCheckbox[0].checked = allSelected;
         },
 
         continueAction: function () {
