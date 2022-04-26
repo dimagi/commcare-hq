@@ -115,9 +115,10 @@ def _update_user_data(user, user_data, user_change_logger):
 
 
 def _simple_update(user, key, value, user_change_logger):
-    if user_change_logger and getattr(user, key) != value:
-        user_change_logger.add_changes({key: value})
-    setattr(user, key, value)
+    if getattr(user, key) != value:
+        setattr(user, key, value)
+        if user_change_logger:
+            user_change_logger.add_changes({key: value})
 
 
 def _log_phone_number_change(new_phone_numbers, old_phone_numbers, user_change_logger):
