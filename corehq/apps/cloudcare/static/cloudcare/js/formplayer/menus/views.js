@@ -273,7 +273,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.parentView.reconcileSelectAll();
         },
 
-        isChecked: function() {
+        isChecked: function () {
             return this.ui.selectRow[0].checked;
         },
 
@@ -436,7 +436,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             //do something
         },
 
-        reconcileSelectAll: function (e) {
+        reconcileSelectAll: function () {
             var allSelected = true;
             this.children.each(function (childView) {
                 allSelected = allSelected && childView.isChecked();
