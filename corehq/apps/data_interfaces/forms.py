@@ -436,9 +436,12 @@ class CaseRuleCriteriaForm(forms.Form):
             user_locations = SQLLocation.active_objects.filter(domain=self.domain)
         else:
             domain_membership = next(
-                (membership for membership in self.couch_user.domain_memberships if membership.domain == self.domain)
+                (membership
+                 for membership in self.couch_user.domain_memberships
+                 if membership.domain == self.domain)
             )
-            user_locations = SQLLocation.objects.get_locations_and_children(domain_membership.assigned_location_ids)
+            user_locations = (SQLLocation.objects.
+                get_locations_and_children(domain_membership.assigned_location_ids))
 
         return [
             {'location_id': location.location_id, 'name': location.name}
@@ -871,10 +874,6 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
     @property
     def fieldset_help_text(self):
         return _("The rule will be applied to all cases that match all filter criteria below.")
-
-    @property
-    def allow_parent_case_references(self):
-        return True
 
     @property
     def allow_case_modified_filter(self):

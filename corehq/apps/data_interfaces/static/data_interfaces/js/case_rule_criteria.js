@@ -142,7 +142,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 if (!self.filterAlreadyAdded(caseFilterId)) {
                     self.criteria.push(closedParentDefinition(caseFilterId));
                 }
-            } else if (caseFilterId == 'locations-filter') {
+            } else if (caseFilterId === 'locations-filter') {
                 if (!self.filterAlreadyAdded('locations-filter')) {
                     self.criteria.push(locationDefinition(caseFilterId));
                 }
@@ -282,7 +282,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         self.include_child_locations = ko.observable();
         self.name = ko.observable();
         return self;
-    }
+    };
 
     var closedParentDefinition = function (koTemplateId) {
         'use strict';

@@ -532,7 +532,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.domain.shortcuts import create_domain
 
-        _domain_obj = create_domain(self.domain)
+        create_domain(self.domain)
 
         location_type_provice = LocationType(domain=self.domain, name='Province')
         location_type_provice.save()

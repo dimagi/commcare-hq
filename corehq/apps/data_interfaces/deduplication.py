@@ -4,8 +4,8 @@ from django.utils.text import slugify
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
-from corehq.apps.es import CaseES, queries
-from corehq.apps.es.case_search import CaseSearchES, case_property_missing
+from corehq.apps.es import queries
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
