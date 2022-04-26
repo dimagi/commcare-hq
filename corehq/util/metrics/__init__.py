@@ -147,15 +147,17 @@ from .utils import (
 )
 
 __all__ = [
+    'DAY_SCALE_TIME_BUCKETS',
+    'DebugMetrics',
+    'DelegatedMetrics',
+    'bucket_value',
+    'create_metrics_event',
+    'make_buckets_from_timedeltas',
     'metrics_counter',
     'metrics_gauge',
-    'metrics_histogram',
     'metrics_gauge_task',
-    'create_metrics_event',
-    'metrics_histogram_timer',
-    'make_buckets_from_timedeltas',
-    'DAY_SCALE_TIME_BUCKETS',
-    'bucket_value',
+    'metrics_histogram',
+    'metrics_histogram_timer'
 ]
 
 
