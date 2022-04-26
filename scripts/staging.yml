@@ -79,6 +79,5 @@ branches:
     - jm/elastic-client-adapter  # Joel April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - smh/multi-select-qa-followup # Steph April 22
-    - sk/unique-datum-id-for-remote-requests # Simon April 25
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
 submodules: { }
