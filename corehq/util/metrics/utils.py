@@ -1,12 +1,13 @@
 import re
+from collections.abc import Sequence
 from datetime import timedelta
 
-from django.conf import settings
+from .typing import Bucket, MetricValue
 
 WILDCARD = '*'
 
 
-def sanitize_url(url):
+def sanitize_url(url: str) -> str:
     # Normalize all domain names
     url = re.sub(r'/a/[0-9a-z-]+', '/a/{}'.format(WILDCARD), url)
 
@@ -22,7 +23,7 @@ def sanitize_url(url):
     return url
 
 
-def get_url_group(url):
+def get_url_group(url: str) -> str:
     default = 'other'
     if url.startswith('/a/' + WILDCARD):
         parts = url.split('/')
@@ -31,7 +32,7 @@ def get_url_group(url):
     return default
 
 
-def make_buckets_from_timedeltas(*timedeltas):
+def make_buckets_from_timedeltas(*timedeltas: timedelta) -> list[float]:
     return [td.total_seconds() for td in timedeltas]
 
 
@@ -46,7 +47,11 @@ DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
 )
 
 
-def bucket_value(value, buckets, unit=''):
+def bucket_value(
+    value: MetricValue,
+    buckets: Sequence[Bucket],
+    unit: str = '',
+) -> str:
     """Get value bucket for the given value
 
     Bucket values because datadog's histogram is too limited

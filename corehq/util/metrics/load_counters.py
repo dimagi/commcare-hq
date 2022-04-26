@@ -1,7 +1,20 @@
 from functools import partial
+from typing import Any, Callable, Optional, Type
+
+from django.db.models import Model
+
+from .typing import MetricValue, TagValues
+
+LoadCounter = Callable[[MetricValue], None]
+LoadCounterGetter = Callable[[str, str, Optional[TagValues]], LoadCounter]
 
 
-def load_counter(load_type, source, domain_name, extra_tags=None):
+def load_counter(
+    load_type: str,
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     """Make a function to track load by counting touched items
 
     :param load_type: Load type (`"case"`, `"form"`, `"sms"`). Use one
@@ -18,63 +31,91 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
     tags['domain'] = domain_name
     metric = "commcare.load.%s" % load_type
 
-    def track_load(value=1):
+    def track_load(value: MetricValue = 1) -> None:
         metrics_counter(metric, value, tags=tags)
 
     return track_load
 
 
-def case_load_counter(*args, **kw):
+def case_load_counter(
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     # grep: commcare.load.case
-    return load_counter("case", *args, **kw)
+    return load_counter("case", source, domain_name, extra_tags)
 
 
-def form_load_counter(*args, **kw):
+def form_load_counter(
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     # grep: commcare.load.form
-    return load_counter("form", *args, **kw)
+    return load_counter("form", source, domain_name, extra_tags)
 
 
-def ledger_load_counter(*args, **kw):
+def ledger_load_counter(
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     """Make a ledger transaction load counter function
 
     Each item counted is a ledger transaction (not a ledger value).
     """
     # grep: commcare.load.ledger
-    return load_counter("ledger", *args, **kw)
+    return load_counter("ledger", source, domain_name, extra_tags)
 
 
-def sms_load_counter(*args, **kw):
+def sms_load_counter(
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     """Make a messaging load counter function
 
     This is used to count all kinds of messaging load, including email
     (not strictly SMS).
     """
     # grep: commcare.load.sms
-    return load_counter("sms", *args, **kw)
+    return load_counter("sms", source, domain_name, extra_tags)
 
 
-def ucr_load_counter(engine_id, *args, **kw):
+def ucr_load_counter(
+    engine_id: str,
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     """Make a UCR load counter function
 
     This is used to count all kinds of UCR load
     """
     # grep: commcare.load.ucr
-    return load_counter("ucr.{}".format(engine_id), *args, **kw)
+    return load_counter(f"ucr.{engine_id}", source, domain_name, extra_tags)
 
 
-def schedule_load_counter(*args, **kw):
+def schedule_load_counter(
+    source: str,
+    domain_name: str,
+    extra_tags: Optional[TagValues] = None,
+) -> LoadCounter:
     """Make a schedule load counter function
 
     This is used to count load from ScheduleInstances
     """
     # grep: commcare.load.schedule
-    return load_counter("schedule", *args, **kw)
+    return load_counter("schedule", source, domain_name, extra_tags)
 
 
-def load_counter_for_model(model):
+def load_counter_for_model(model: Type[Model]) -> LoadCounterGetter:
     from corehq.form_processor.models import CommCareCase, XFormInstance
     from corehq.messaging.scheduling.scheduling_partitioned.models import (
-        AlertScheduleInstance, TimedScheduleInstance, CaseTimedScheduleInstance, CaseAlertScheduleInstance
+        AlertScheduleInstance,
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+        TimedScheduleInstance,
     )
     return {
         CommCareCase: case_load_counter,
