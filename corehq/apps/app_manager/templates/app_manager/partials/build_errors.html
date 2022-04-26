@@ -305,7 +305,7 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses parent case selection and a multi-select case list.
               {% endblocktrans %}
-              {% if request|toggle_enabled:"NON_PARENT_MENU_SELECTION" %}
+              {% if "NON_PARENT_MENU_SELECTION" in toggles %}
                 {% trans "Multi-select case lists can only use 'other' parent child selection." %}
               {% else %}
                 {% trans "These two features are not compatible." %}
@@ -360,14 +360,14 @@
             {% case "path error" %}
               {% if error.path %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in form {% include "app_manager/partials/form_error_message.html" %}
                 references a question that no longer exists: "{{ error.path }}". It is likely that
                 this question has been renamed or deleted. Please update or delete this question
                 reference before you make a new version.
               {% else %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
                 is missing a question.
                 Please choose a question from the dropdown next to the case property.
