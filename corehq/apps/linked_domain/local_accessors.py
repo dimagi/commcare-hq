@@ -46,7 +46,8 @@ def get_enabled_toggles_and_previews(domain):
 
 
 def get_enabled_toggles(domain):
-    return list(toggles.toggles_dict(domain=domain))
+    enabled = toggles.toggles_enabled_for_domain(domain)
+    return {slug: True for slug in toggles.toggles_names_to_slugs(enabled)}
 
 
 def get_enabled_previews(domain):

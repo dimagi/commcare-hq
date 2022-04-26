@@ -516,31 +516,21 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     return result
 
 
-def toggles_dict(username=None, domain=None):
-    """
-    Loads all toggles into a dictionary for use in JS
-
-    (only enabled toggles are included)
-    """
-    by_name = all_toggles_by_name()
-    enabled = set()
-    if username:
-        enabled |= toggles_enabled_for_user(username)
-    if domain:
-        enabled |= toggles_enabled_for_domain(domain)
-    return {by_name[name].slug: True for name in enabled if name in by_name}
-
-
-def toggle_values_by_name(username, domain):
+def toggle_values_by_name(request):
     """
     Loads all toggles into a dictionary for use in JS
     """
-    all_enabled = toggles_enabled_for_user(username) | toggles_enabled_for_domain(domain)
+    all_enabled = toggles_enabled_for_request(request)
 
     return {
         toggle_name: toggle_name in all_enabled
         for toggle_name in all_toggles_by_name().keys()
     }
+
+
+def toggles_names_to_slugs(names):
+    by_name = all_toggles_by_name()
+    return [by_name[name].slug for name in names if name in by_name]
 
 
 @quickcache(["domain"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
