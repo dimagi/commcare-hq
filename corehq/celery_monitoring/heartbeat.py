@@ -1,4 +1,5 @@
 import datetime
+from celery import shared_task
 
 # from celery.task import periodic_task
 from django.conf import settings
@@ -124,5 +125,5 @@ class Heartbeat(object):
 
         heartbeat.__name__ = str(self.periodic_task_name)
 
-        heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue, ignore_result=True)(heartbeat)
+        heartbeat = shared_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue, ignore_result=True)(heartbeat)
         return heartbeat
