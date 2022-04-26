@@ -5,15 +5,62 @@ from django.utils.text import slugify
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import CaseES, queries
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
-def find_duplicate_case_ids(domain, case, case_properties, include_closed=False, match_type="ALL"):
-    es = CaseSearchES().domain(domain).size(DUPLICATE_LIMIT).case_type(case.type)
+def _get_es_query(domain, case, case_filter_criteria=[]):
+    # Import here to avoid circular import error
+    from corehq.apps.data_interfaces.models import (
+        MatchPropertyDefinition,
+        LocationFilterDefinition
+    )
+
+    query = CaseSearchES().domain(domain).size(DUPLICATE_LIMIT).case_type(case.type)
+
+    def apply_criterion_to_query(query_, definition):
+        if isinstance(definition, MatchPropertyDefinition):
+            match_type = definition.match_type
+
+            if match_type == MatchPropertyDefinition.MATCH_HAS_NO_VALUE:
+                query_ = query_.case_property_has_no_value(definition.property_name)
+            elif match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
+                query_ = query_.case_property_has_value(definition.property_name)
+            elif match_type == MatchPropertyDefinition.MATCH_EQUAL:
+                query_ = query_.case_property_query(
+                    definition.property_name,
+                    definition.property_value,
+                    queries.MUST,
+                )
+            elif match_type == MatchPropertyDefinition.MATCH_NOT_EQUAL:
+                query_ = query_.case_property_query(
+                    definition.property_name,
+                    definition.property_value,
+                    queries.MUST_NOT,
+                )
+        elif isinstance(definition, LocationFilterDefinition):
+            query_ = query_.owner(definition.location_id)
+
+        return query_
+
+    for criterion in case_filter_criteria:
+        query = apply_criterion_to_query(query, criterion.definition)
+
+    return query
+
+
+def find_duplicate_case_ids(
+    domain,
+    case,
+    case_properties,
+    include_closed=False,
+    match_type="ALL",
+    case_filter_criteria=[]
+):
+    es = _get_es_query(domain, case, case_filter_criteria=case_filter_criteria)
 
     if not include_closed:
         es = es.is_closed(False)
