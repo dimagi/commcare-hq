@@ -7,6 +7,7 @@ from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.api.serializers import CustomXMLSerializer
 from corehq.toggles import API_THROTTLE_WHITELIST
 
+
 def get_hq_throttle():
     return HQThrottle(
         throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
