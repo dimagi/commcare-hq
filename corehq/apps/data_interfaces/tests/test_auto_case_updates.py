@@ -454,7 +454,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
         rule.filter_on_server_modified = True
         rule.server_modified_boundary = 10
-        rule.criteria_combination_operator = 'ALL'
+        # Default criteria_operator = 'ALL'
         rule.save()
 
         rule.add_criteria(
@@ -512,7 +512,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
         rule.filter_on_server_modified = True
         rule.server_modified_boundary = 1
-        rule.criteria_combination_operator = 'ANY'
+        rule.criteria_operator = 'ANY'
         rule.save()
 
         rule.add_criteria(
