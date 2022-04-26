@@ -1,3 +1,1 @@
--mcorehq.util.metrics
--mcorehq.util.metrics.metrics
--mcorehq.util.metrics.datadog
+corehq/util/metrics

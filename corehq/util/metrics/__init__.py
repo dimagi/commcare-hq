@@ -139,7 +139,7 @@ from .metrics import (
     _enforce_prefix,
     metrics_logger, MetricsProto,
 )
-from .typing import AlertStr, PrometheusMultiprocessModeStr, TagValues
+from .typing import AlertStr, Bucket, PrometheusMultiprocessModeStr, TagValues
 from .utils import (
     DAY_SCALE_TIME_BUCKETS,
     bucket_value,
@@ -258,7 +258,7 @@ TimerCallback = Callable[[float], Any]
 
 def metrics_histogram_timer(
     metric: str,
-    timing_buckets: Sequence[int],
+    timing_buckets: Sequence[Bucket],
     tags: Optional[TagValues] = None,
     bucket_tag: str = 'duration',
     callback: Optional[TimerCallback] = None,
