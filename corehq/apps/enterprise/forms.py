@@ -225,3 +225,89 @@ class EnterpriseSettingsForm(forms.Form):
             )
             self.export_settings.save()
         return True
+
+
+class EnterpriseManageMobileWorkersForm(forms.Form):
+    enable_auto_deactivation = forms.BooleanField(
+        label=gettext_lazy("Auto-Deactivation by Inactivity"),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Automatically deactivate Mobile Workers who have not "
+                "submitted a form within the Inactivity Period below."
+            ),
+        ),
+        required=False,
+    )
+    inactivity_period = forms.ChoiceField(
+        label=gettext_lazy("Inactivity Period"),
+        required=False,
+        initial=90,
+        choices=(
+            (30, gettext_lazy("30 days")),
+            (60, gettext_lazy("60 days")),
+            (90, gettext_lazy("90 days")),
+            (120, gettext_lazy("120 days")),
+            (150, gettext_lazy("150 days")),
+            (180, gettext_lazy("180 days")),
+        ),
+        help_text=gettext_lazy(
+            "Mobile workers who have not submitted a form after these many "
+            "days will be considered inactive."
+        ),
+    )
+    allow_custom_deactivation = forms.BooleanField(
+        label=gettext_lazy("Auto-Deactivation by Month"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Allow auto-deactivation of Mobile Workers after "
+                "a specific month."
+            ),
+        ),
+        help_text=gettext_lazy(
+            "When this is enabled, an option to select a month and "
+            "year for deactivating a Mobile Worker will be present when "
+            "creating that Mobile Worker."
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.emw_settings = kwargs.pop('emw_settings', None)
+        self.domain = kwargs.pop('domain', None)
+        kwargs['initial'] = {
+            "enable_auto_deactivation": self.emw_settings.enable_auto_deactivation,
+            "inactivity_period": self.emw_settings.inactivity_period,
+            "allow_custom_deactivation": self.emw_settings.allow_custom_deactivation,
+        }
+
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'emw-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Manage Mobile Workers"),
+                PrependedText('enable_auto_deactivation', ''),
+                crispy.Div(
+                    crispy.Field('inactivity_period'),
+                ),
+                PrependedText('allow_custom_deactivation', ''),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def update_settings(self):
+        self.emw_settings.enable_auto_deactivation = self.cleaned_data['enable_auto_deactivation']
+        self.emw_settings.inactivity_period = self.cleaned_data['inactivity_period']
+        self.emw_settings.allow_custom_deactivation = self.cleaned_data['allow_custom_deactivation']
+        self.emw_settings.save()
+        for domain in self.emw_settings.account.get_domains():
+            self.emw_settings.clear_domain_caches(domain)

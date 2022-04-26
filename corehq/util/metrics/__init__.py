@@ -119,6 +119,7 @@ from django.conf import settings
 from sentry_sdk import add_breadcrumb
 
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
 from .metrics import (
@@ -188,12 +189,11 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     _enforce_prefix(name, 'commcare')
 
-    @periodic_task(serializer='pickle', queue='background_queue', run_every=run_every,
-                   acks_late=True, ignore_result=True)
+    @periodic_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
     @wraps(fn)
-    def inner(*args, **kwargs):
+    def inner():
         from corehq.util.metrics import metrics_gauge
-        metrics_gauge(name, fn(*args, **kwargs), multiprocess_mode=multiprocess_mode)
+        metrics_gauge(name, fn(), multiprocess_mode=multiprocess_mode)
 
     return inner
 
@@ -313,8 +313,11 @@ def _get_metrics_provider():
         _global_setup()
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
-            provider = to_function(provider_path)()
-            providers.append(provider)
+            try:
+                provider = to_function(provider_path, failhard=True)()
+                providers.append(provider)
+            except Exception:
+                notify_exception(None, f"Cannot load {provider_path}")
 
         if not providers:
             metrics = DebugMetrics()

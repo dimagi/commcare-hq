@@ -5,7 +5,6 @@ from django.conf import settings
 from memoized import memoized
 
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 
 from corehq.apps.domain.models import Domain
 
@@ -83,7 +82,7 @@ class AsyncSignupRequest(models.Model):
     atypical_user = models.BooleanField(default=False)
     persona = models.CharField(max_length=128, null=True, blank=True)
     persona_other = models.TextField(null=True, blank=True)
-    additional_hubspot_data = JSONField(null=True, blank=True)
+    additional_hubspot_data = models.JSONField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     @classmethod

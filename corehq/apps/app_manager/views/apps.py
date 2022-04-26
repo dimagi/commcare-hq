@@ -177,7 +177,7 @@ def get_app_view_context(request, app):
     This provides the context to render commcare settings on Edit Application Settings page
 
     This is where additional app or domain specific context can be added to any individual
-    commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
+    commcare-setting defined in commcare-app-settings.yml or commcare-profile-settings.yml
     """
     context = {}
 

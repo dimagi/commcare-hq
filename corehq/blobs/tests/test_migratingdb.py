@@ -1,6 +1,5 @@
 from io import BytesIO
-
-from testil import replattr
+from unittest.mock import patch
 
 import corehq.blobs.migratingdb as mod
 from corehq.blobs.tests.util import (
@@ -38,7 +37,7 @@ class TestMigratingBlobDB(get_base_class()):
         content.seek(0)
         self.db.copy_blob(content, key=meta.key)
         self.assertEndsWith(self.fsdb.get_path(key=meta.key), "/" + meta.key)
-        with replattr(self.fsdb, "get", blow_up, sigcheck=False):
+        with patch.object(self.fsdb, "get", blow_up):
             with self.assertRaises(Boom):
                 self.fsdb.get(meta=meta)
             with self.db.get(meta=meta) as fh:

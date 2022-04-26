@@ -53,7 +53,7 @@ class Command(BaseCommand):
     FIELD_TYPE_DATETIME = 'models.DateTimeField'
     FIELD_TYPE_DECIMAL = 'models.DecimalField'
     FIELD_TYPE_STRING = 'models.CharField'
-    FIELD_TYPE_JSON = 'JSONField'
+    FIELD_TYPE_JSON = 'models.JSONField'
     FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
     FIELD_TYPE_UNKNOWN = 'unknown_type'
@@ -289,7 +289,6 @@ class Command(BaseCommand):
         db_table = self.django_app.lower() + "_" + self.class_name.replace("_", "").lower()
         sql_model = render_tempate(
             "sql_model.j2",
-            import_json=self.FIELD_TYPE_JSON in self.field_types.values(),
             class_name=self.class_name,
             migration_field_names=migration_field_names,
             suggested_fields=suggested_fields,

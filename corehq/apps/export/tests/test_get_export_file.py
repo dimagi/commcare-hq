@@ -934,7 +934,7 @@ class ExportTest(SimpleTestCase):
 
             with export_file as export:
                 wb = load_workbook(export)
-                self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
+                self.assertEqual(wb.sheetnames, ["Export1-My table", "Export2-My table"])
 
                 for sheet in expected.keys():
                     for cell in expected[sheet].keys():

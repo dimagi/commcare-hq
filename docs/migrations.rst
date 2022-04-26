@@ -91,5 +91,6 @@ to ensure we can rebuild the view without issue.
 Migration Patterns and Best Practices
 -------------------------------------
 
+- :ref:`migrations-in-practice`
 - :ref:`auto-managed-migration-pattern`
 - :ref:`couch-to-sql-model-migration`

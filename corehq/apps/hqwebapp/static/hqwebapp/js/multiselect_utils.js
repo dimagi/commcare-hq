@@ -24,9 +24,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
-    var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
+    var _renderAction = function (buttonId, buttonClass, buttonIcon, text, disabled = false) {
         var action = _.template(
-            '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>">' +
+            '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
             '</button>'
         );
@@ -35,6 +35,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             actionButtonClass: buttonClass,
             actionButtonIcon: buttonIcon,
             actionButtonText: text,
+            actionDisabled: disabled,
         });
     };
 
@@ -53,11 +54,22 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
+    /**
+     * Given an element, configures multiselect functionality based on the multiselect.js library
+     * @param {object} properties - a key-value object that expects the following optional keys:
+     * selectableHeaderTitle -  String title for items yet to be selected. Defaults to "Items".
+     * selectedHeaderTitle - String for selected items title. Defaults to "Selected items".
+     * searchItemTitle - String for search bar placeholder title. Defaults to "Search items".
+     * willSelectAllListener - Function to call before the multiselect processes the Add All action.
+     * disableModifyAllActions - Boolean value to enable/disable Add All and Remove All buttons. Defaults to false.
+     */
     multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
-        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle']);
+        assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle', 'willSelectAllListener', 'disableModifyAllActions']);
         var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
         var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
         var searchItemTitle = properties.searchItemTitle || gettext("Search items");
+        var willSelectAllListener = properties.willSelectAllListener;
+        var disableModifyAllActions = properties['disableModifyAllActions'] || false;
 
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
             baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
@@ -69,12 +81,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         $element.multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All")),
+                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
                 _renderSearch(searchSelectableId, searchItemTitle)
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
-                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All")),
+                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
                 _renderSearch(searchSelectedId, searchItemTitle)
             ),
             afterInit: function () {
@@ -96,7 +108,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         if (that.search_left.val().length > 0) {
                             $('#' + selectAllId).addClass('disabled').prop('disabled', true);
                         } else {
-                            $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
+                            if (!disableModifyAllActions) {
+                                $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
+                            }
                         }
                     });
 
@@ -111,7 +125,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     // disable remove all functionality so that user is not confused
                         if (that.search_right.val().length > 0) {
                             $('#' + removeAllId).addClass('disabled').prop('disabled', true);
-                        } else {
+                        } else if (!disableModifyAllActions) {
                             $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                         }
                     });
@@ -120,19 +134,26 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 this.search_left.cache();
                 // remove search option so that user doesn't get confused
                 this.search_right.val('').search('');
-                $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
+                if (!disableModifyAllActions) {
+                    $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
+                }
                 this.search_right.cache();
             },
             afterDeselect: function () {
                 // remove search option so that user doesn't get confused
                 this.search_left.val('').search('');
-                $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
+                if (!disableModifyAllActions) {
+                    $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
+                }
                 this.search_left.cache();
                 this.search_right.cache();
             },
         });
 
         $('#' + selectAllId).click(function () {
+            if (willSelectAllListener) {
+                willSelectAllListener();
+            }
             $element.multiSelect('select_all');
             return false;
         });
@@ -142,33 +163,44 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
+    multiselect_utils.rebuildMultiselect = function (elementOrId, multiselectProperties) {
+        var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId);
+        // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
+        $element.multiSelect('destroy');
+        multiselect_utils.createFullMultiselectWidget(elementOrId, multiselectProperties);
+    };
+
     /*
      * A custom binding for setting multiselect properties and additional knockout bindings
      * The only dynamic part of this binding are the options
      * For a list of configurable multiselect properties, see http://loudev.com/ under Options
+     * properties - a dictionary of properties used by the multiselect element (see createFullMultiselectWidget above)
+     * options - an observable array of option elements (only supports array of strings)
+     * didUpdateListener - method to invoke when the multiselect updates
      */
     ko.bindingHandlers.multiselect = {
         init: function (element, valueAccessor) {
             var model = valueAccessor();
-            assertProperties.assert(model, [], ['properties', 'options']);
+            assertProperties.assert(model, [], ['properties', 'options', 'didUpdateListener']);
             multiselect_utils.createFullMultiselectWidget(element, model.properties);
 
             if (model.options) {
-                // add the `options` binding to the element, valueAccessor() should return an observable
-                // NOTE: apply bindings after the multiselect has been setup
+                // apply bindings after the multiselect has been setup
                 ko.applyBindingsToNode(element, {options: model.options});
             }
         },
         update: function (element, valueAccessor) {
             var model = valueAccessor();
+            assertProperties.assert(model, [], ['properties', 'options', 'didUpdateListener']);
             if (model.options) {
                 // have to access the observable to get the `update` method to fire on changes to options
                 ko.unwrap(model.options());
             }
 
-            // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
-            $(element).multiSelect('destroy');
-            multiselect_utils.createFullMultiselectWidget(element, model.properties);
+            multiselect_utils.rebuildMultiselect(element, model.properties);
+            if (model.didUpdateListener) {
+                model.didUpdateListener();
+            }
         },
     };
 

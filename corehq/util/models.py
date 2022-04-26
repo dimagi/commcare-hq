@@ -2,7 +2,7 @@ import datetime
 from collections import namedtuple
 from functools import lru_cache
 
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.utils.functional import cached_property
 from django.db import models
 
@@ -177,7 +177,7 @@ class TransientBounceEmail(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     email = models.EmailField(db_index=True)
     timestamp = models.DateTimeField(db_index=True)
-    headers = JSONField(blank=True, null=True)
+    headers = models.JSONField(blank=True, null=True)
 
     @classmethod
     def get_expired_query(cls):
@@ -207,7 +207,7 @@ class PermanentBounceMeta(models.Model):
         max_length=20,
         choices=BounceSubType.CHOICES
     )
-    headers = JSONField(blank=True, null=True)
+    headers = models.JSONField(blank=True, null=True)
     reason = models.TextField(blank=True, null=True)
     destination = ArrayField(models.EmailField(), default=list, blank=True, null=True)
 
@@ -216,7 +216,7 @@ class ComplaintBounceMeta(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     bounced_email = models.ForeignKey(BouncedEmail, on_delete=models.PROTECT)
     timestamp = models.DateTimeField()
-    headers = JSONField(blank=True, null=True)
+    headers = models.JSONField(blank=True, null=True)
     feedback_type = models.CharField(max_length=50, blank=True, null=True)
     sub_type = models.CharField(max_length=50, blank=True, null=True)
     destination = ArrayField(models.EmailField(), default=list, blank=True, null=True)
