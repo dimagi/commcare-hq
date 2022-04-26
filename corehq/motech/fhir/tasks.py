@@ -3,7 +3,8 @@ from typing import Generator, List
 from uuid import uuid4
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery import shared_task
+# from celery.task import periodic_task
 from django.conf import settings
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
@@ -33,7 +34,8 @@ ParentInfo = namedtuple(
 )
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour=5, minute=5),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -46,7 +48,8 @@ def run_daily_importers():
         run_importer.delay(importer_id)
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour=5, minute=5, day_of_week=6),  # Saturday
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -59,7 +62,8 @@ def run_weekly_importers():
         run_importer.delay(importer_id)
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour=5, minute=5, day_of_month=1),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -72,7 +76,7 @@ def run_monthly_importers():
         run_importer.delay(importer_id)
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def run_importer(importer_id):
     """
     Poll remote API and import resources as CommCare cases.

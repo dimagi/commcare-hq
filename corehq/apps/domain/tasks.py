@@ -1,8 +1,9 @@
+from celery import shared_task
 from django.conf import settings
 from django.template.loader import render_to_string
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -49,7 +50,8 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue',
 )

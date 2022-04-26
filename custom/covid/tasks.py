@@ -1,8 +1,9 @@
 from datetime import datetime
+from celery import shared_task
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
@@ -33,7 +34,8 @@ MIN_CASE_COUNT = 1000
 TASK_WINDOW_CUTOFF_HOUR = 11
 
 
-@periodic_task(run_every=crontab(minute=0, hour=8), queue='ush_background_tasks')
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=8), queue='ush_background_tasks')
 def prime_formplayer_dbs():
     domains = PRIME_FORMPLAYER_DBS.get_enabled_domains()
     date_window = datetime.utcnow() - relativedelta(hours=SYNC_WINDOW_HOURS)

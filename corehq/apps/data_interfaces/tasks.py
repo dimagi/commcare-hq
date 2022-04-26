@@ -6,7 +6,8 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
@@ -79,13 +80,13 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
     backfill_deduplicate_rule(domain, rule)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
 
 
-@task(serializer='pickle', ignore_result=True)
+@shared_task(serializer='pickle', ignore_result=True)
 def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
     results = add_cases_to_case_group(
         domain,
@@ -96,7 +97,7 @@ def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
     cache.set(upload_id, results, ONE_HOUR)
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)
@@ -108,7 +109,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     return response
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     serializer='pickle',
     run_every=crontab(hour='*', minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
@@ -133,7 +135,7 @@ def run_case_update_rules(now=None):
                 run_case_update_rules_for_domain.delay(domain, now)
 
 
-@task(serializer='pickle', queue='case_rule_queue')
+@shared_task(serializer='pickle', queue='case_rule_queue')
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
 
@@ -172,7 +174,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
             AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
 
 
-@task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
+@shared_task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_on_save(case):
     key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
     with CriticalSection([key]):
@@ -187,14 +189,15 @@ def run_case_update_rules_on_save(case):
             run_rules_for_case(case, rules, now)
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue='case_rule_queue', ignore_result=True)
+# periodic task
+@shared_task(run_every=crontab(hour=0, minute=0), queue='case_rule_queue', ignore_result=True)
 def delete_old_rule_submission_logs():
     start = datetime.utcnow()
     max_age = start - timedelta(days=90)
     CaseRuleSubmission.objects.filter(created_on__lt=max_age).delete()
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def task_operate_on_payloads(
     record_ids: List[str],
     domain: str,
@@ -205,7 +208,7 @@ def task_operate_on_payloads(
                                task=task_operate_on_payloads)
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def task_generate_ids_and_operate_on_payloads(
     payload_id: Optional[str],
     repeater_id: Optional[str],

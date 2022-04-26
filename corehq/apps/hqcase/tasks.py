@@ -2,7 +2,7 @@ import uuid
 from collections import defaultdict
 from copy import copy
 
-from celery.task import task
+from celery import shared_task
 from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs
@@ -19,7 +19,7 @@ from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
-@task
+@shared_task
 def explode_case_task(domain, user_id, factor):
     return explode_cases(domain, user_id, factor, explode_case_task)
 
@@ -105,7 +105,7 @@ def topological_sort_case_blocks(cases):
     return toposort_flatten(tree)
 
 
-@task
+@shared_task
 def delete_exploded_case_task(domain, explosion_id):
     return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 

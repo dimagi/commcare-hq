@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
+from celery import shared_task
 
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from celery.schedules import crontab
 
 from corehq.blobs.models import BlobMeta
@@ -12,7 +13,8 @@ from corehq.util.metrics import metrics_counter
 log = logging.getLogger(__name__)
 
 
-@periodic_task(run_every=crontab(minute=0, hour='0,12'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour='0,12'))
 def delete_expired_blobs():
     run_again = False
     bytes_deleted = 0

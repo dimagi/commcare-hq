@@ -7,7 +7,8 @@ from django.utils.translation import gettext as _
 
 import six
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
 
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
@@ -54,7 +55,7 @@ def send_delayed_report(report_id):
         send_report.delay(report_id)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@shared_task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
 
@@ -68,12 +69,13 @@ def send_report(notification_id):
         pass
 
 
-@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
+@shared_task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
 def send_report_throttled(notification_id):
     send_report(notification_id)
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -81,7 +83,8 @@ def initiate_queue_scheduled_reports():
     queue_scheduled_reports()
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour="5", minute="0", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -101,7 +104,7 @@ def queue_scheduled_reports():
             pass
 
 
-@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+@shared_task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                       request_data, once, cleaned_data):
     """

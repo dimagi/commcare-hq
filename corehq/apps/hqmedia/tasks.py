@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.logging import notify_exception
@@ -27,7 +27,7 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
@@ -120,7 +120,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.save()
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):

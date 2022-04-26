@@ -1,8 +1,9 @@
 import datetime
 import logging
+from celery import shared_task
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
@@ -15,7 +16,8 @@ log = logging.getLogger(__name__)
 IDP_CERT_EXPIRES_REMINDER_DAYS = [30, 15, 7, 3, 1, 0]
 
 
-@periodic_task(run_every=crontab(minute=0, hour=22), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=22), acks_late=True)
 def renew_service_provider_x509_certificates():
     """
     This task renews the x509 Service Provider certificates one week before
@@ -30,7 +32,8 @@ def renew_service_provider_x509_certificates():
         idp.renew_service_provider_certificate()
 
 
-@periodic_task(run_every=crontab(minute=0, hour=22), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=22), acks_late=True)
 def create_rollover_service_provider_x509_certificates():
     """
     This task creates a rollover x509 Service Provider certificate two
@@ -45,7 +48,8 @@ def create_rollover_service_provider_x509_certificates():
         idp.create_rollover_service_provider_certificate()
 
 
-@periodic_task(run_every=crontab(minute=0, hour=22), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=22), acks_late=True)
 def idp_cert_expires_reminder():
     """
     Sends reminder emails for IdP certificates expiring N days from today.

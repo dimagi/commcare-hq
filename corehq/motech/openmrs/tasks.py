@@ -12,7 +12,8 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
@@ -252,7 +253,7 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_with_importer.delay(importer.to_json())
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
@@ -322,7 +323,8 @@ def is_valid_owner(owner_id):
     return True
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(minute=4, hour=4),
     queue='background_queue'
 )
@@ -334,7 +336,7 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         errors = []
@@ -360,7 +362,8 @@ def poll_openmrs_atom_feeds(domain_name):
                 assert False, errors
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(**OPENMRS_ATOM_FEED_POLL_INTERVAL),
     queue='background_queue'
 )

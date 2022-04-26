@@ -5,7 +5,7 @@ from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery import chord
-from celery.task import task
+from celery import shared_task
 
 from dimagi.utils.logging import notify_exception
 
@@ -41,12 +41,12 @@ from corehq.apps.sms.models import Keyword
 from corehq.apps.users.models import CouchUser
 
 
-@task(queue='linked_domain_queue')
+@shared_task(queue='linked_domain_queue')
 def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None, force=False):
     pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force)
 
 
-@task(queue='linked_domain_queue')
+@shared_task(queue='linked_domain_queue')
 def push_models(upstream_domain, models, downstream_domains, build_apps, username):
     ReleaseManager(upstream_domain, username).release(models, downstream_domains, build_apps)
 
@@ -204,7 +204,7 @@ The following linked project spaces received content:
         return (html, text)
 
 
-@task(queue='linked_domain_queue')
+@shared_task(queue='linked_domain_queue')
 def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False):
     manager = ReleaseManager(upstream_domain, username)
 
@@ -243,7 +243,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
     return manager.results()
 
 
-@task(queue='linked_domain_queue')
+@shared_task(queue='linked_domain_queue')
 def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
     manager = ReleaseManager(upstream_domain, username)
 

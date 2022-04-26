@@ -1,5 +1,6 @@
+from celery import shared_task
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from django.conf import settings
 
 from corehq.util.metrics import metrics_gauge
@@ -7,7 +8,8 @@ from corehq.util.metrics.const import MPM_MAX, MPM_MIN
 from pillowtop.utils import get_all_pillows_json
 
 
-@periodic_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
+# periodic task
+@shared_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
 def pillow_datadog_metrics():
     def _is_couch(pillow):
         # text is couch, json is kafka

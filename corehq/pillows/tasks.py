@@ -1,7 +1,8 @@
 from datetime import timedelta
+from celery import shared_task
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import CardinalityAggregation
@@ -14,7 +15,8 @@ from corehq.util.metrics.const import MPM_MAX
 from corehq.util.quickcache import quickcache
 
 
-@periodic_task(run_every=timedelta(minutes=10))
+# periodic task
+@shared_task(run_every=timedelta(minutes=10))
 @quickcache([], timeout=9 * 60)  # Protect from many runs after recovering from a backlog
 def send_unknown_user_type_stats():
     metrics_gauge('commcare.fix_user_types.unknown_user_count',
@@ -25,7 +27,8 @@ def send_unknown_user_type_stats():
                   multiprocess_mode=MPM_MAX)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0))
 def fix_user_types():
     unknown_user_ids = _get_unknown_user_type_user_ids()
     for user_id in unknown_user_ids:

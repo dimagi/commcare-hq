@@ -4,7 +4,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from celery import shared_task
 
 from corehq.apps.dropbox.utils import upload_to_dropbox
 from corehq.apps.users.models import CouchUser
@@ -14,7 +14,7 @@ from dropbox import Dropbox
 from dropbox.sharing import RequestedVisibility, SharedLinkSettings
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def upload(dropbox_helper_id, access_token, size, max_retries):
     from .models import DropboxUploadHelper
     helper = DropboxUploadHelper.objects.get(id=dropbox_helper_id)

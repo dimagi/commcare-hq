@@ -46,7 +46,8 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
-from celery.task.control import revoke as revoke_celery_task
+# TODO: Find alternative for this fn in celery 5
+#from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -394,7 +395,7 @@ class SubmissionPost(object):
         task_id = async_restore_task_id_cache.get_value()
 
         if task_id is not None:
-            revoke_celery_task(task_id)
+            # revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
 
     @tracer.wrap(name='submission.save_models')

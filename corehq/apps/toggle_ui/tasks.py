@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 
 import pytz
-from celery.task import task
+from celery import shared_task
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
@@ -26,7 +26,7 @@ from soil import DownloadBase
 from soil.util import expose_blob_download
 
 
-@task(bind=True)
+@shared_task(bind=True)
 def generate_toggle_csv_download(self, tag, download_id, username):
     toggles = _get_toggles_with_tag(tag)
     total = _get_toggle_item_count(toggles)

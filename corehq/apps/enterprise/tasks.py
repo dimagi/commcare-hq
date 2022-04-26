@@ -6,7 +6,7 @@ import uuid
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from celery import shared_task
 
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.util.metrics import metrics_gauge
@@ -24,7 +24,7 @@ from corehq.const import ONE_DAY
 from corehq.util.view_utils import absolute_reverse
 
 
-@task(serializer='pickle', queue="email_queue")
+@shared_task(serializer='pickle', queue="email_queue")
 def email_enterprise_report(domain, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
@@ -52,7 +52,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.get_email(), body)
 
 
-@task
+@shared_task
 def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
     try:
         config = EnterprisePermissions.objects.get(id=config_id)
@@ -67,7 +67,7 @@ def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
             get_enterprise_links_for_dropdown.clear(user)
 
 
-@task()
+@shared_task()
 def auto_deactivate_mobile_workers():
     time_started = datetime.datetime.utcnow()
     date_deactivation = datetime.date.today()

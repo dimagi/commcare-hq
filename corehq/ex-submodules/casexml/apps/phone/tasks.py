@@ -5,7 +5,8 @@ from django.db import connections, router
 
 from celery import current_task, current_app
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery import shared_task
+# from celery.task import periodic_task
 from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.models import SyncLogSQL
@@ -20,7 +21,7 @@ ASYNC_RESTORE_SENT = "SENT"
 SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
-@task(serializer='pickle', queue=ASYNC_RESTORE_QUEUE)
+@shared_task(serializer='pickle', queue=ASYNC_RESTORE_QUEUE)
 def get_async_restore_payload(restore_config, domain=None, username=None):
     """
     Process an async restore
@@ -66,7 +67,8 @@ def update_celery_state(sender=None, headers=None, **kwargs):
     backend.store_result(headers['id'], None, ASYNC_RESTORE_SENT)
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )

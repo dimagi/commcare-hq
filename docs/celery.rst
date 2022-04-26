@@ -16,8 +16,9 @@ This ensures that ``autodiscover_tasks`` can find the task and register it with 
 
 These tasks should be decorated with one of the following:
 
-1. ``@task`` defines a task that is called manually (with ``task_function_name.delay`` in code)
-2. ``@periodic_task`` defines a task that is called at some interval (specified by ``crontab`` in the decorator)
+1. ``@shared_task`` defines a task that is called manually (with ``task_function_name.delay`` in code)
+2. ``# periodic task
+@shared_task`` defines a task that is called at some interval (specified by ``crontab`` in the decorator)
 3. ``@serial_task`` defines a task that should only ever have one job running at one time
 
 
@@ -79,7 +80,7 @@ To use soil:
     from soil.progress import update_task_state
     from soil.util import expose_cached_download
 
-    @task
+    @shared_task
     def my_cool_task():
         DownloadBase.set_progress(my_cool_task, 0, 100)
 
@@ -110,7 +111,7 @@ the exception will be caught by celery and ``task.result`` will return the excep
     from soil.progress import update_task_state
     from soil.util import expose_cached_download
 
-    @task
+    @shared_task
     def my_cool_task():
         try:
             # do some stuff
@@ -133,7 +134,7 @@ If calling with ``CELERY_TASKS_ALWAYS_EAGER = True`` (i.e. a dev environment), t
     from soil.progress import update_task_state
     from soil.util import expose_cached_download
 
-    @task
+    @shared_task
     def my_cool_task():
         # do some stuff
         raise SomeError("my uncool error")

@@ -1,10 +1,11 @@
 from collections import defaultdict
 from datetime import date
+from celery import shared_task
 
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -13,7 +14,8 @@ from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFeeCriteria
 from corehq.util.log import send_HTML_email
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=13, minute=0), queue='background_queue', acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(day_of_month='1', hour=13, minute=0), queue='background_queue', acks_late=True)
 def send_gateway_fee_report_out():
     backend_api_ids = SmsGatewayFeeCriteria.objects.values_list('backend_api_id', flat=True).distinct()
     first_day_previous_month = add_months_to_date(date.today(), -1)

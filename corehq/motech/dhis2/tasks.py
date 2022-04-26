@@ -3,7 +3,8 @@ from datetime import datetime
 from psycopg2 import DatabaseError
 from django.utils.translation import gettext_lazy as _
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery import shared_task
+# from celery.task import periodic_task
 
 from corehq.motech.utils import pformat_json
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
@@ -19,7 +20,8 @@ from corehq.privileges import DATA_FORWARDING
 from corehq.apps.domain.models import Domain
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(minute=3, hour=3),
     queue='background_queue'
 )
@@ -30,7 +32,7 @@ def send_datasets_for_all_domains():
             send_datasets.delay(domain)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def send_datasets(domain_name, send_now=False, send_date=None):
     """
     send_date is a string formatted as YYYY-MM-DD

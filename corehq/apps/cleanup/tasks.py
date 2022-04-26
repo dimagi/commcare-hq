@@ -6,7 +6,8 @@ from django.core.management import call_command
 from django.db import connections
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
+from celery import shared_task
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
@@ -19,12 +20,14 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def clear_expired_sessions():
     call_command('clearsessions')
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
     case_count_by_missing_domain = {}
     for domain in _get_missing_domains():
@@ -45,7 +48,8 @@ def check_for_sql_cases_without_existing_domain():
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_forms_without_existing_domain():
     form_count_by_missing_domain = {}
     for domain in _get_missing_domains():
@@ -66,7 +70,8 @@ def check_for_sql_forms_without_existing_domain():
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_elasticsearch_data_without_existing_domain():
     issue_found = False
     for domain_name in _get_missing_domains():
@@ -86,7 +91,8 @@ def check_for_elasticsearch_data_without_existing_domain():
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_ucr_tables_without_existing_domain():
     all_domain_names = Domain.get_all_names()
 

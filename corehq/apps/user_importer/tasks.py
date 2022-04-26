@@ -1,7 +1,7 @@
 import functools
 
 from celery.exceptions import TimeoutError
-from celery.task import task
+from celery import shared_task
 
 from django.db import DEFAULT_DB_ALIAS
 
@@ -17,21 +17,21 @@ from corehq.apps.user_importer.models import UserUploadRecord
 USER_UPLOAD_CHUNK_SIZE = 1000
 
 
-@task(bind=True)
+@shared_task(bind=True)
 def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_id,
                             upload_record_id, is_web_upload):
     return import_users(domain, user_specs, group_specs, upload_user_id,
                         upload_record_id, is_web_upload, self)
 
 
-@task(queue='ush_background_tasks', bind=True)
+@shared_task(queue='ush_background_tasks', bind=True)
 def parallel_import_task(self, domain, user_specs, group_specs, upload_user_id,
                          upload_record_id, is_web_user_upload=False):
     return import_users(domain, user_specs, group_specs, upload_user_id,
                         upload_record_id, is_web_user_upload, self)
 
 
-@task(queue='ush_background_tasks')
+@shared_task(queue='ush_background_tasks')
 def parallel_user_import(domain, user_specs, upload_user_id):
     task = parallel_user_import
     total = len(user_specs)

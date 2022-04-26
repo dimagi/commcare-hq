@@ -7,8 +7,9 @@ from django.urls import reverse
 from django.utils.translation import gettext
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
 
+from celery import shared_task
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -19,7 +20,8 @@ from corehq.apps.registration.models import (
 from corehq.apps.users.models import WebUser
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(minute=0),  # execute once every hour
     queue='background_queue',
 )
@@ -60,7 +62,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-@task(queue="email_queue")
+@shared_task(queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {
@@ -86,7 +88,8 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name, firs
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour=5),  # execute once every day
     queue='background_queue',
 )

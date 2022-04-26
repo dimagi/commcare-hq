@@ -13,8 +13,8 @@ from django.template.loader import render_to_string
 
 import attr
 from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
+from celery import shared_task
+# from celery.task.base import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
@@ -36,7 +36,8 @@ from .utils import check_for_rewind
 _soft_assert_superusers = soft_assert(notify_admins=True)
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def check_pillows_for_rewind():
     for pillow in get_couch_pillow_instances():
         checkpoint = pillow.checkpoint
@@ -52,7 +53,8 @@ def check_pillows_for_rewind():
             )
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def create_historical_checkpoints():
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
@@ -60,6 +62,7 @@ def create_historical_checkpoints():
     HistoricalPillowCheckpoint.objects.filter(date_updated__lt=thirty_days_ago).delete()
 
 
+# periodic task
 @periodic_task_when_true(settings.IS_DIMAGI_ENVIRONMENT, run_every=crontab(minute=0),
                          queue='background_queue')
 def check_non_dimagi_superusers():
@@ -72,7 +75,7 @@ def check_non_dimagi_superusers():
         notify_error(message=message)
 
 
-@task(serializer='pickle', queue="email_queue")
+@shared_task(serializer='pickle', queue="email_queue")
 def send_mass_emails(email_for_requesting_user, real_email, subject, html, text):
 
     if real_email:
@@ -135,7 +138,7 @@ class AbnormalUsageAlert(object):
     message = attr.ib()
 
 
-@task(serializer='pickle', queue="email_queue")
+@shared_task(serializer='pickle', queue="email_queue")
 def send_abnormal_usage_alert(alert):
     """ Sends an alert to #support and email to let support know when a domain is doing something weird
 
@@ -167,7 +170,8 @@ def _mass_email_attachment(name, rows):
     return attachment
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="*/5"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="*/5"))
 def track_es_doc_counts():
     es = get_es_new()
     stats = es.indices.stats(level='shards', metric='docs')
@@ -183,7 +187,8 @@ def track_es_doc_counts():
                     metrics_gauge('commcare.elasticsearch.shards.docs.deleted', i['docs']['deleted'], tags)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="0"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="0", hour="0"))
 def track_pg_limits():
     for db in settings.DATABASES:
         with connections[db].cursor() as cursor:
@@ -203,17 +208,20 @@ def track_pg_limits():
                 metrics_gauge('commcare.postgres.sequence.current_value', current_value, {'table': table, 'database': db})
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
 def reconcile_es_cases():
     _reconcile_es_data('case', 'commcare.elasticsearch.stale_cases', 'reconcile_es_cases')
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="0", hour="4"))
 def reconcile_es_forms():
     _reconcile_es_data('form', 'commcare.elasticsearch.stale_forms', 'reconcile_es_forms')
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
 def count_es_forms_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)
@@ -230,7 +238,8 @@ def count_es_forms_past_window():
     )
 
 
-@periodic_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
+# periodic task
+@shared_task(queue='background_queue', run_every=crontab(minute="0", hour="6"))
 def count_es_cases_past_window():
     today = date.today()
     two_days_ago = today - timedelta(days=2)

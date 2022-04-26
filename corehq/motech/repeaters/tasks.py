@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
@@ -57,7 +58,8 @@ logging = get_task_logger(__name__)
 DELETE_CHUNK_SIZE = 5000
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(hour=6, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -76,7 +78,8 @@ def delete_old_request_logs():
             return
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=CHECK_REPEATERS_INTERVAL,
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -99,7 +102,7 @@ def _iterate_repeat_records_for_partition(start, partition, total_partitions):
         yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
-@task(queue=settings.CELERY_PERIODIC_QUEUE)
+@shared_task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition):
     """
     The CHECK_REPEATERS_PARTITION_COUNT constant dictates the total number of partitions
@@ -144,7 +147,7 @@ def check_repeaters_in_partition(partition):
         check_repeater_lock.release()
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record_id):
     """
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
@@ -153,7 +156,7 @@ def process_repeat_record(repeat_record_id):
     _process_repeat_record(repeat_record)
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def retry_process_repeat_record(repeat_record_id):
     """
     NOTE: Keep separate from process_repeat_record for monitoring purposes
@@ -210,7 +213,7 @@ metrics_gauge_task(
 )
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(repeater_id: int):
     """
     Worker task to send SQLRepeatRecords in chronological order.

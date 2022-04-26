@@ -4,6 +4,7 @@ import math
 import os
 import time
 from datetime import date, datetime, timedelta
+from celery import shared_task
 
 from django.conf import settings
 
@@ -15,7 +16,7 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 import tinys3
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
@@ -488,7 +489,8 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
@@ -864,7 +866,8 @@ def get_subscription_properties_by_user(couch_user):
     }
 
 
-@periodic_task(run_every=crontab(minute="0", hour="7"), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(minute="0", hour="7"), queue='background_queue')
 def cleanup_blocked_hubspot_contacts():
     """
     Remove any data stored about users from blocked domains and email domains
@@ -887,7 +890,8 @@ def cleanup_blocked_hubspot_contacts():
     )
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=3, minute=0), queue='background_queue', acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(day_of_month='1', hour=3, minute=0), queue='background_queue', acks_late=True)
 def generate_partner_reports():
     """
     Generates analytics reports for partners that have requested tracking on

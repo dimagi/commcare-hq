@@ -1,8 +1,9 @@
 import time
 from datetime import timedelta
+from celery import shared_task
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from django.conf import settings
 
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
@@ -33,7 +34,8 @@ def reprocess_submission(submssion_stub_id):
             })
 
 
-@periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+# periodic task
+@shared_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def _reprocess_archive_stubs():
     reprocess_archive_stubs.delay()
 

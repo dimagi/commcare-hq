@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from celery import shared_task
 
 from corehq.apps.products.bulk import import_products
 from corehq.util.workbook_json.excel_importer import (
@@ -9,7 +9,7 @@ from corehq.util.workbook_json.excel_importer import (
 )
 
 
-@task
+@shared_task
 def import_products_async(domain, file_ref_id):
     try:
         importer = SingleExcelImporter(import_products_async, file_ref_id)

@@ -1,6 +1,6 @@
 import datetime
 
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from django.conf import settings
 from django.core.cache import cache
 
@@ -108,7 +108,8 @@ class Heartbeat(object):
 
     def make_periodic_task(self):
         """
-        Create a heartbeat @periodic_task specifically for self.queue
+        Create a heartbeat # periodic task
+@shared_task specifically for self.queue
 
         This is called on python startup so should avoid network calls
         and anything else slow.

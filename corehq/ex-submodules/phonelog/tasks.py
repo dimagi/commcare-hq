@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery import shared_task
+# from celery.task import periodic_task
 from django.conf import settings
 from django.db import connection
 from requests import Session
@@ -12,7 +13,8 @@ from corehq.util.celery_utils import no_result_task
 from phonelog.models import ForceCloseEntry, UserEntry, UserErrorEntry
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def purge_old_device_report_entries():
     max_age = datetime.utcnow() - timedelta(days=settings.DAYS_TO_KEEP_DEVICE_LOGS)
     with connection.cursor() as cursor:

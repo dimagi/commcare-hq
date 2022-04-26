@@ -4,7 +4,9 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
+
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
@@ -42,7 +44,8 @@ EXPIRE_TIME = ONE_DAY
 _calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
 
 
-@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     domains_to_update = DomainES().filter(
         get_domains_to_update_es_filter()
@@ -52,7 +55,7 @@ def update_calculated_properties():
         update_calculated_properties_for_domains.delay(chunk)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def update_calculated_properties_for_domains(domains):
     """
     :param domains: list of {'name': <name>, '_id': <id>} entries
@@ -84,7 +87,8 @@ def update_calculated_properties_for_domains(domains):
     datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
 
-@periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
+# periodic task
+@shared_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
     all_stats = all_domain_stats()
 
@@ -147,7 +151,8 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     query = AppES().is_build(False).values_list('_id', 'domain', scroll=True)
     for doc_id, domain in query:
@@ -158,7 +163,7 @@ def apps_update_calculated_properties():
         send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
-@task(serializer='pickle', ignore_result=True)
+@shared_task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
@@ -208,7 +213,7 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def build_form_multimedia_zipfile(
         domain,
         export_id,
@@ -226,7 +231,7 @@ def build_form_multimedia_zipfile(
 
 
 # ToDo: Remove post build_form_multimedia_zipfile rollout
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
         export_id,

@@ -15,7 +15,7 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery import shared_task
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
@@ -252,7 +252,8 @@ def warn_subscriptions_without_domain():
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -267,7 +268,7 @@ def update_subscriptions():
     check_credit_line_balances.delay()
 
 
-@task
+@shared_task
 def check_credit_line_balances():
     for credit_line in CreditLine.objects.all():
         expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
@@ -351,7 +352,8 @@ def generate_invoices_based_on_date(invoice_date):
         _invoicing_complete_soft_assert(False, "Invoicing is complete!")
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices():
     """
     Generates all invoices for the past month.
@@ -422,7 +424,8 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -432,7 +435,8 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -472,7 +476,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@shared_task(ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 amount,
@@ -510,7 +514,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@shared_task(ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
     context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
 
@@ -526,7 +530,7 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@shared_task(queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice_id):
     context = get_context_to_send_autopay_failed_email(invoice_id)
 
@@ -546,7 +550,8 @@ def send_autopay_failed(invoice_id):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -641,13 +646,15 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates():
     app_id = settings.OPEN_EXCHANGE_RATES_API_ID
     if app_id:
@@ -672,7 +679,8 @@ def update_exchange_rates():
 
 
 # Email this out on the first day and first hour of each month
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
 def send_credits_on_hq_report():
     if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
         'production',
@@ -686,12 +694,13 @@ def send_credits_on_hq_report():
             yesterday.isoformat()))
 
 
-@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_downgrade_process():
     downgrade_eligible_domains()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@shared_task(queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -710,7 +719,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@shared_task(queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:
@@ -729,7 +738,8 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -802,7 +812,8 @@ def send_prepaid_credits_export():
     )
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+# periodic task
+@shared_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains(today=None):
     today = today or datetime.date.today()
     for domain in Domain.get_all_names():

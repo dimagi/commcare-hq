@@ -8,7 +8,8 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+# from celery.task import periodic_task
+from celery import shared_task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
@@ -63,7 +64,8 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
         )
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     # Run on the 5th day of every quarter
     run_every=crontab(day_of_month=5, month_of_year='1,4,7,10',
                       hour=22, minute=30),
@@ -73,7 +75,7 @@ def update_facility_cases_from_dhis2_data_elements():
     _update_facility_cases_from_dhis2_data_elements.delay()
 
 
-@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+@shared_task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
 def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
     if not domain_exists(DOMAIN):
         return

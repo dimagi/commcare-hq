@@ -1,5 +1,6 @@
+from celery import shared_task
 from celery.schedules import crontab
-from celery.task import periodic_task
+# from celery.task import periodic_task
 from django.conf import settings
 from django.db.models import Count
 
@@ -8,7 +9,8 @@ from corehq.util.metrics.const import MPM_MAX
 from pillow_retry.models import PillowError
 
 
-@periodic_task(
+# periodic task
+@shared_task(
     run_every=crontab(minute="*/15"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )

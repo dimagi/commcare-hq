@@ -8,7 +8,9 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery import shared_task
+#from celery.task import periodic_task
+
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
@@ -38,7 +40,7 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
         )
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, from_email, recipient_list,
                     messaging_event_id=None, domain=None):
@@ -120,7 +122,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
@@ -168,7 +170,7 @@ def send_html_email_async(self, subject, recipient, html_content,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def mail_admins_async(self, subject, message, fail_silently=False, connection=None,
                       html_message=None):
@@ -186,7 +188,8 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
         self.retry(exc=e)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def process_bounced_emails():
     if settings.RETURN_PATH_EMAIL and settings.RETURN_PATH_EMAIL_PASSWORD:
         try:
@@ -204,7 +207,8 @@ def process_bounced_emails():
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=2), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=2), queue='background_queue')
 def alert_bounced_system_emails():
     bounced_system_emails = get_bounced_system_emails()
     if bounced_system_emails:
@@ -221,7 +225,8 @@ def alert_bounced_system_emails():
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
 def clean_expired_transient_emails():
     try:
         TransientBounceEmail.delete_expired_bounces()
@@ -245,7 +250,8 @@ metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_a
                    run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=4))
+# periodic task
+@shared_task(run_every=crontab(minute=0, hour=4))
 def clear_expired_oauth_tokens():
     # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
     call_command('cleartokens')

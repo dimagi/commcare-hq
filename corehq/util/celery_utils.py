@@ -4,9 +4,9 @@ from time import sleep, time
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery import shared_task
 from django.conf import settings
-import kombu.five
+# import kombu.five
 
 
 def no_result_task(*args, **kwargs):
@@ -27,7 +27,7 @@ def no_result_task(*args, **kwargs):
     kwargs['backend'] = DisabledBackend(current_app)
 
     def wrapper(fcn):
-        return task(*args, **kwargs)(fcn)
+        return shared_task(*args, **kwargs)(fcn)
 
     return wrapper
 
@@ -211,7 +211,7 @@ def deserialize_run_every_setting(run_every_setting):
 
 def periodic_task_when_true(boolean, *args, **kwargs):
     if boolean:
-        return periodic_task(*args, **kwargs)
+        return shared_task(*args, **kwargs)
     else:
         return lambda fn: fn
 

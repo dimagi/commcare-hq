@@ -112,8 +112,9 @@ Other Notes
 from contextlib import ContextDecorator
 from functools import wraps
 from typing import Iterable, Callable, Dict
+from celery import shared_task
 
-from celery.task import periodic_task
+# from celery.task import periodic_task
 
 from django.conf import settings
 from sentry_sdk import add_breadcrumb
@@ -189,7 +190,8 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     _enforce_prefix(name, 'commcare')
 
-    @periodic_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
+    # periodic task
+    @shared_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
     @wraps(fn)
     def inner():
         from corehq.util.metrics import metrics_gauge

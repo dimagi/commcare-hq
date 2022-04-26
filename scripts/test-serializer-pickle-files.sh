@@ -11,8 +11,8 @@ git --no-pager diff
 git update-index -q --refresh
 if ! git diff-index --quiet HEAD --; then
     # Changes
-    log_fail "Did you add a new usage of @task(serializer='pickle')? Please use the default serializer (json) instead."
-    log_fail 'If you removed @task(serializer='pickle') usages, make sure to run `make serializer-pickle-files.lock`'
+    log_fail "Did you add a new usage of @shared_task(serializer='pickle')? Please use the default serializer (json) instead."
+    log_fail 'If you removed @shared_task(serializer='pickle') usages, make sure to run `make serializer-pickle-files.lock`'
     log_fail 'and commit `serializer-pickle-files.lock`'
     git checkout serializer-pickle-files.lock  # clean up
     exit 1
