@@ -279,7 +279,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             except InvalidFormatException as e:
                 errors.append(_('{} must be a {}.'.format(key, e.expected_type)))
             except UnknownFieldException:
-                errors.append(_('Attempted to update unknown field {}.').format(key))
+                errors.append(_("Attempted to update unknown field '{}'.").format(key))
             except ValidationError as e:
                 errors.append(e.message)
 

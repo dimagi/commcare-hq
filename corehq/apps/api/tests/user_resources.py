@@ -300,8 +300,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "The request resulted in the following errors: Attempted to update unknown field username. '
-            'default_phone_number must be a string."}'
+            "{\"error\": \"The request resulted in the following errors: Attempted to update unknown field "
+            "'username'. default_phone_number must be a string.\"}"
         )
 
 
@@ -563,7 +563,7 @@ class TestCommCareUserResourceUpdate(TestCase):
         bundle.data = {"id": 'updated-id'}
 
         errors = CommCareUserResource._update(bundle)
-        self.assertIn('Attempted to update unknown field id.', errors)
+        self.assertIn("Attempted to update unknown field 'id'.", errors)
 
     def test_update_password_with_weak_passwords_returns_error_if_strong_option_on(self):
         self.domain_obj.strong_mobile_passwords = True
