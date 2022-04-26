@@ -294,9 +294,9 @@ def convert_transactions_to_blocks(E, transactions):
     balances, transfers = process_transactions(E, transactions)
 
     stock_blocks = []
-    if transfers:
+    if transfers is not None:
         stock_blocks.append(transfers)
-    if balances:
+    if balances is not None:
         stock_blocks.append(balances)
 
     return stock_blocks

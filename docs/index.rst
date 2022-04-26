@@ -131,13 +131,10 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     toggles
-    migrations
-    couch_to_sql_models
     commtrack
     elasticsearch
     es_query
     middleware
-    migration_command_pattern
     nfs
     forms_and_cases
     couchdb
@@ -146,6 +143,15 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     metrics
     extensions
     custom
+
+.. toctree::
+    :caption: Migrations
+    :maxdepth: 1
+
+    migrations-in-practice
+    migration_command_pattern
+    migrations
+    couch_to_sql_models
 
 .. toctree::
     :caption: Architecture Decisions

@@ -68,6 +68,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
+from corehq.util.view_utils import is_ajax
 
 
 class DownloadExportViewHelper(object):
@@ -157,7 +158,7 @@ class BaseDownloadExportView(BaseProjectDataView):
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if not request.is_ajax():
+        if not is_ajax(request):
             context = self.get_context_data(**kwargs)
             return self.render_to_response(context)
         return super(BaseDownloadExportView, self).post(request, *args, **kwargs)
@@ -234,7 +235,7 @@ class BaseDownloadExportView(BaseProjectDataView):
         if (
             self.request.method == 'POST'
             and 'export_list' in self.request.POST
-            and not self.request.is_ajax()
+            and not is_ajax(self.request)
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
             exports = [self.view_helper.get_export(e['id']) for e in raw_export_list]
@@ -455,7 +456,7 @@ def prepare_form_multimedia(request, domain):
     download.set_task(build_form_multimedia_zipfile.delay(
         domain=domain,
         export_id=export.get_id,
-        es_filters=[f.to_es_filter() for f in filters],
+        es_filters=filters,
         download_id=download.download_id,
         owner_id=request.couch_user.get_id,
     ))

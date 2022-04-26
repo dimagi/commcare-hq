@@ -165,7 +165,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
-            default_relevant=True,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
@@ -188,20 +187,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # reset to newly wrapped module
         self.module = self.app.modules[0]
 
-    def test_search_config_model(self, *args):
+    def test_search_config_relevant(self, *args):
         config = CaseSearch()
 
-        config.default_relevant = True
         self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
-        config.default_relevant = False
-        self.assertEqual(config.get_relevant(), "")
+        config.additional_relevant = "double(now()) mod 2 = 0"
+        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+
+    def test_search_config_relevant_multi_select(self, *args):
+        config = CaseSearch()
+
+        self.assertEqual(config.get_relevant(multi_select=True), "$case_id != ''")
 
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(), "double(now()) mod 2 = 0")
-
-        config.default_relevant = True
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+        self.assertEqual(config.get_relevant(multi_select=True), "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
@@ -763,6 +763,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt key="name" allow_blank_value="true">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_exclude_from_search(self, *args):
+        self.module.search_config.properties[0].exclude = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" exclude="true()">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

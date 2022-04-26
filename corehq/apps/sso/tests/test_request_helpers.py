@@ -141,7 +141,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
         generator.create_request_session(self.request, use_sso=True)
-        MessageMiddleware().process_request(self.request)  # add support for messages
+        MessageMiddleware(self.fail).process_request(self.request)  # add support for messages
         self.request.user = self.user
 
     def tearDown(self):

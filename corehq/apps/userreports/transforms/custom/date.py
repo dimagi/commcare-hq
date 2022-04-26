@@ -41,6 +41,9 @@ def get_ethiopian_to_gregorian(date_string):
     if not date_string:
         return ''
 
+    if not isinstance(date_string, str):
+        return ''
+
     try:
         year, month, day = split_date_string(date_string)
     except ValueError:

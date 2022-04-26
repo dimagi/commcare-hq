@@ -153,6 +153,10 @@ class ConnectionSettings(models.Model):
         )
 
     def get_auth_manager(self):
+        # FIXME this may construct an auth manager with a null username.
+        # This can result in an auth header with a username of "None",
+        # which is almost certainly not correct. Basic and Digest auth
+        # are affected, and possibly others.
         if self.auth_type is None:
             return AuthManager()
         if self.auth_type == BASIC_AUTH:

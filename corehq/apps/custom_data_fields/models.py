@@ -1,7 +1,6 @@
 import re
 
 from django.core.exceptions import ValidationError
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
@@ -44,7 +43,7 @@ class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
     label = models.CharField(max_length=255)
-    choices = JSONField(default=list, null=True)
+    choices = models.JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
     regex_msg = models.CharField(max_length=255, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
@@ -157,7 +156,7 @@ class CustomDataFieldsDefinition(models.Model):
 
 class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
-    fields = JSONField(default=dict, null=True)
+    fields = models.JSONField(default=dict, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
 
     @property

@@ -49,7 +49,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             self.assertTrue(example.is_static)
 
     def test_is_static_positive_yaml(self):
-        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yaml')]):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yml')]):
             example = list(StaticDataSourceConfiguration.all())[0]
             self.assertTrue(example.is_static)
 

@@ -229,7 +229,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             ],
             auto_launch=True,
             default_search=True,
-            default_relevant=False,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",

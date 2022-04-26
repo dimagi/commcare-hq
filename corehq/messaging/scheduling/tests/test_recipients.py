@@ -35,10 +35,14 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
-    ScheduleInstance,
+    ScheduleInstance as AbstractScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
-from corehq.util.test_utils import create_test_case, set_parent_case
+from corehq.util.test_utils import (
+    create_test_case,
+    set_parent_case,
+    unregistered_django_model,
+)
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -844,3 +848,8 @@ class SchedulingRecipientTest(TestCase):
         self.assertPhoneEntryCount(3)
         self.assertPhoneEntryCount(1, only_count_two_way=True)
         self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user), '23456')
+
+
+@unregistered_django_model
+class ScheduleInstance(AbstractScheduleInstance):
+    pass
