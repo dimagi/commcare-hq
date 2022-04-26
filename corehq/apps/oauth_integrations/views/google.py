@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from corehq.apps.export.views.list import LiveGoogleSheetListView
 
 from corehq.apps.oauth_integrations.models import GoogleApiToken
 from corehq.apps.oauth_integrations.utils import (
@@ -17,7 +18,8 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.exceptions import RefreshError
 
 
-def redirect_oauth_view(request, domain):
+def google_sheet_oauth_redirect(request, domain):
+    request.session["domain"] = domain
     redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
     token = get_token(request.user)
 
@@ -26,24 +28,21 @@ def redirect_oauth_view(request, domain):
     else:
         credentials = load_credentials(token.token)
         try:
-            token.token = stringify_credentials(refresh_credentials(credentials))
-            token.save()
+            credentials.refresh(Request())
         # When we lose access to a user's refresh token, we get this refresh error.
         # This will simply have them log into google sheets again to give us another refresh token
         except RefreshError:
             return HttpResponseRedirect(get_url_from_google(redirect_uri))
-        #replace with google sheet view
-        return HttpResponseRedirect("placeholder.com")
-
-
-def refresh_credentials(credentials, user):
-    return credentials.refresh(Request())
+        return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=(domain,)))
 
 
 def get_url_from_google(redirect_uri):
     INDEX_URL = 0
+    config = settings.GOOGLE_OAUTH_CONFIG
+    config['redirect_uris'] = redirect_uri
+
     flow = Flow.from_client_config(
-        settings.GOOGLE_OATH_CONFIG,
+        config,
         settings.GOOGLE_OAUTH_SCOPES,
         redirect_uri=redirect_uri
     )
@@ -52,14 +51,17 @@ def get_url_from_google(redirect_uri):
     return auth_tuple[INDEX_URL]
 
 
-def call_back_view(request, domain):
+def google_sheet_oauth_callback(request):
+    domain = request.session["domain"]
     redirect_uri = request.build_absolute_uri(reverse("google_sheet_oauth_callback"))
 
     try:
         check_state(request)
+        config = settings.GOOGLE_OAUTH_CONFIG
+        config['redirect_uris'] = redirect_uri
 
         flow = Flow.from_client_config(
-            settings.GOOGLE_OATH_CONFIG,
+            config,
             settings.GOOGLE_OAUTH_SCOPES,
             redirect_uri=redirect_uri
         )
@@ -82,8 +84,7 @@ def call_back_view(request, domain):
     except InvalidLoginException:
         messages.error(request, _("Something went wrong when trying to sign you in to Google. Please try again."))
 
-    #replace with google sheet view
-    return HttpResponseRedirect("placeholder.com")
+    return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=(domain,)))
 
 
 def check_state(request):
@@ -95,6 +96,6 @@ def check_state(request):
 
 def get_token_from_google(request, flow):
     authorization_response = request.build_absolute_uri()
-    flow.fetch_token(authorization_response)
+    flow.fetch_token(authorization_response=authorization_response)
     credentials = flow.credentials
     return stringify_credentials(credentials)
