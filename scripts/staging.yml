@@ -81,4 +81,5 @@ branches:
     - smh/multi-select-qa-followup # Steph April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/toggles-in-build-errors # Jenny April 26
+    - jls/shadow-guard # Jenny April 26
 submodules: { }
