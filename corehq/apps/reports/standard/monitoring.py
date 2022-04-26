@@ -1497,10 +1497,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return user_dict
 
     def get_users_by_mobile_workers(self):
-        from corehq.apps.reports.util import _report_user_dict
         user_dict = {}
         for mw in self.mobile_worker_ids:
-            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+            user_dict[mw] = util._report_user(CommCareUser.get_by_user_id(mw))
 
         return user_dict
 
@@ -1521,7 +1520,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
-            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
+            ret = [util._report_user(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
             all_users = flatten_list(list(self.users_by_group.values()))
@@ -1896,7 +1895,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         from corehq.elastic import iter_es_docs_from_query
         user_iterator = iter_es_docs_from_query(user_es_query)
         for user_chunk in chunked(user_iterator, chunk_size):
-            users = [util._report_user_dict(user) for user in user_chunk]
+            users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)

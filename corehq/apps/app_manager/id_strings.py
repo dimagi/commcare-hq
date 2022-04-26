@@ -86,10 +86,10 @@ def _referral_detail_title_locale():
 
 
 @pattern('m%d.%s.title')
-def detail_title_locale(app, detail_type):
+def detail_title_locale(app, module, detail_type):
     if detail_type.startswith('case') or detail_type.startswith('search'):
         if app.enable_case_search_title_translation:
-            return case_search_locale()
+            return case_search_locale(module)
         return _case_detail_title_locale()
     elif detail_type.startswith('referral'):
         return _referral_detail_title_locale()
@@ -261,11 +261,6 @@ def case_search_again_audio_locale(module):
     return "case_search.m{module.id}.again.audio".format(module=module)
 
 
-@pattern('case_search.m%d.title')
-def case_search_title_translation(module):
-    return "case_search.m{module.id}.title".format(module=module)
-
-
 @pattern('search_command.m%d')
 def search_command(module):
     return "search_command.m{module.id}".format(module=module)
@@ -421,6 +416,11 @@ def case_list_icon_locale(module):
 @pattern('case_lists.m%d.audio')
 def case_list_audio_locale(module):
     return "case_lists.m{module.id}.audio".format(module=module)
+
+
+@pattern('case_search.m%d.inputs')
+def case_search_title_translation(module):
+    return "case_search.m{module.id}.inputs".format(module=module)
 
 
 def detail(module, detail_type):

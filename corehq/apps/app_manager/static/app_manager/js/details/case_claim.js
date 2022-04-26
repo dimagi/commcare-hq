@@ -90,6 +90,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
+            exclude: false,
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -101,6 +102,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
+        self.exclude = ko.observable(options.exclude);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -152,7 +154,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
         ], saveButton);
         return self;
     };
@@ -283,6 +285,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_again_label_audio_for_all:
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
+                title_label = self.titleLabel(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
                 additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
                     return query.caseIdXpath();
@@ -331,6 +334,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
+                    exclude: searchProperties[i].exclude,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -369,6 +373,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
+                        exclude: p.exclude(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),

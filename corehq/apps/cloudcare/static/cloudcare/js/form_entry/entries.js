@@ -938,7 +938,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.loadMap = function () {
             var token = initialPageData.get("mapbox_access_token");
             if (token) {
-                self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+                // if a default answer exists, use that instead
+                let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
+                let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
+                let zoom = self.rawAnswer().length ? self.DEFAULT.anszoom : self.DEFAULT.zoom;
+
+                self.map = L.map(self.entryId).setView([lat, lon], zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                             + token, {
                     id: 'mapbox/streets-v11',

@@ -141,16 +141,15 @@ class RemoteRequestFactory(object):
             return Command(
                 id=id_strings.search_command(self.module),
                 display=Display(
-                    text=Text(locale_id=id_strings.case_search_title_tranlsation(self.app, self.module)),
+                    text=Text(locale_id=id_strings.case_search_title_translation(self.module)),
                 ),
             )
-        else:
-            return Command(
-                id=id_strings.search_command(self.module),
-                display=Display(
-                    text=Text(locale_id=id_strings.case_search_locale(self.module)),
-                ),
-            )
+        return Command(
+            id=id_strings.search_command(self.module),
+            display=Display(
+                text=Text(locale_id=id_strings.case_search_locale(self.module)),
+            ),
+        )
 
     def build_instances(self):
         prompt_select_instances = [
@@ -306,6 +305,8 @@ class RemoteRequestFactory(object):
                 )
             if prop.allow_blank_value:
                 kwargs['allow_blank_value'] = prop.allow_blank_value
+            if prop.exclude:
+                kwargs['exclude'] = "true()"
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

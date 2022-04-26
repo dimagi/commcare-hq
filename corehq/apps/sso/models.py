@@ -27,6 +27,17 @@ class IdentityProviderProtocol:
         (OIDC, "OpenID Connect (OIDC)"),
     )
 
+    @classmethod
+    def get_supported_types(cls):
+        return {
+            cls.SAML: (
+                (IdentityProviderType.AZURE_AD, "Azure AD"),
+            ),
+            cls.OIDC: (
+                (IdentityProviderType.ONE_LOGIN, "One Login"),
+            )
+        }
+
 
 class ServiceProviderCertificate:
 
