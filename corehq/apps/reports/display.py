@@ -1,5 +1,6 @@
 from django.utils.translation import gettext as _
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -48,8 +49,12 @@ class FormDisplay(object):
             else:
                 name = ""
         except (ResourceNotFound, IncompatibleDocument):
-            name = "<b>[unregistered]</b>"
-        return (username or _('No data for username')) + (" %s" % name if name else "")
+            name = mark_safe('<b>[unregistered]</b>')  # nosec: no user input
+        username = username or _('No data for username')
+        if name:
+            return format_html('{} {}', username, name)
+        else:
+            return username
 
     @property
     def submission_or_completion_time(self):
