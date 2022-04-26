@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
-from corehq.toggles import toggles_enabled_for_request
+from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -68,7 +68,7 @@ class SessionDetailsView(View):
             domains.add(member_domain)
             domains.update(EnterprisePermissions.get_domains(member_domain))
 
-        enabled_toggles = toggles_enabled_for_request(request)
+        enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
