@@ -310,10 +310,8 @@ def _get_vellum_features(request, domain, app):
     """
     Returns the context of features passed into vellum when it is initialized.
     """
-    vellum_features = {
-        slug: True
-        for slug in toggles.toggles_names_to_slugs(toggles.toggles_enabled_for_request(request))
-    }
+    vellum_features = toggles.toggles_dict(username=request.user.username,
+                                           domain=domain)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
