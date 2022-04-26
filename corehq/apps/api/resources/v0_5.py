@@ -277,9 +277,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             try:
                 update(bundle.obj, key, value, user_change_logger)
             except InvalidFormatException as e:
-                errors.append(_('{} must be a {}'.format(key, e.expected_type)))
-            except UnknownFieldException:
-                errors.append(_("Attempted to update unknown field '{}'").format(key))
+                errors.append(_('{} must be a {}').format(e.field, e.expected_type))
+            except UnknownFieldException as e:
+                errors.append(_("Attempted to update unknown field '{}'").format(e.field))
             except (UpdateConflictException, ValidationError) as e:
                 errors.append(e.message)
 

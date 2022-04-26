@@ -1,11 +1,14 @@
 class InvalidFormatException(Exception):
 
-    def __init__(self, expected_type):
+    def __init__(self, field, expected_type):
+        self.field = field
         self.expected_type = expected_type
 
 
 class UnknownFieldException(Exception):
-    pass
+
+    def __init__(self, field):
+        self.field = field
 
 
 class UpdateConflictException(Exception):

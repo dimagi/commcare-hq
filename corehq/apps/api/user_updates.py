@@ -35,7 +35,7 @@ def update(user, field, value, user_change_logger=None):
     }.get(field)
 
     if not update_fn:
-        raise UnknownFieldException
+        raise UnknownFieldException(field)
 
     update_fn(user, value, user_change_logger)
 
@@ -70,7 +70,7 @@ def _update_default_phone_number(user, phone_number, user_change_logger):
     old_phone_numbers = set(user.phone_numbers)
     new_phone_numbers = set(user.phone_numbers)
     if not isinstance(phone_number, str):
-        raise InvalidFormatException('string')
+        raise InvalidFormatException('default_phone_number', 'string')
     formatted_phone_number = strip_plus(phone_number)
     new_phone_numbers.add(formatted_phone_number)
     user.set_default_phone_number(formatted_phone_number)
