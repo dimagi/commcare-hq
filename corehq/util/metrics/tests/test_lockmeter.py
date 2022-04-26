@@ -163,7 +163,7 @@ class FakeLock(object):
     name = attr.ib(default="key")
     timeout = attr.ib(default=None)
 
-    def acquire(self, blocking=True):
+    def acquire(self, blocking: bool = True, *args, **kwargs) -> bool:
         self.locked = True
         return blocking
 

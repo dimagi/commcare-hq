@@ -1,13 +1,16 @@
 import os
+from typing import Union
 
-from django.http import HttpResponse, HttpResponseNotFound
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 
 import prometheus_client
-import settings
 from prometheus_client import multiprocess
 
 
-def prometheus_metrics(request):
+def prometheus_metrics(
+    request: HttpRequest,
+) -> Union[HttpResponse, HttpResponseNotFound]:
     """Exports /metrics as a Django view. Only available in DEBUG mode.
     """
     if not settings.DEBUG:

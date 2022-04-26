@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import time
+from types import TracebackType
+from typing import Any, Optional, Type, cast
 
-from ddtrace import tracer
+from ddtrace import Span, tracer
 
-from corehq.util.metrics import metrics_counter, metrics_histogram_timer
+from . import metrics_counter, metrics_histogram_timer
+from .typing import LockProto
 
 
 class MeteredLock(object):
@@ -14,7 +19,12 @@ class MeteredLock(object):
 
     timing_buckets = (0.1, 1, 5, 10, 30, 60, 120, 60 * 5, 60 * 10, 60 * 15, 60 * 30)
 
-    def __init__(self, lock, name, track_unreleased=True):
+    def __init__(
+        self,
+        lock: LockProto,
+        name: str,
+        track_unreleased: bool = True,
+    ) -> None:
         self.lock = lock
         self.tags = {"lock_name": name}
         self.name = name
@@ -23,10 +33,10 @@ class MeteredLock(object):
             "commcare.lock.locked_time", self.timing_buckets
         )
         self.track_unreleased = track_unreleased
-        self.end_time = None
-        self.lock_trace = None
+        self.end_time: Optional[float] = None
+        self.lock_trace: Optional[Span] = None
 
-    def acquire(self, *args, **kw):
+    def acquire(self, *args: Any, **kw: Any) -> bool:
         buckets = self.timing_buckets
         with metrics_histogram_timer("commcare.lock.acquire_time", buckets), \
                 tracer.trace("commcare.lock.acquire", resource=self.key) as span:
@@ -46,7 +56,7 @@ class MeteredLock(object):
                 self.lock_trace.set_tags({"key": self.key, "name": self.name})
         return acquired
 
-    def release(self):
+    def release(self) -> None:
         self.lock.release()
         if self.lock_timer.is_started():
             self.lock_timer.stop()
@@ -56,14 +66,19 @@ class MeteredLock(object):
             self.lock_trace.finish()
             self.lock_trace = None
 
-    def __enter__(self):
+    def __enter__(self) -> MeteredLock:
         self.acquire(blocking=True)
         return self
 
-    def __exit__(self, *exc_info):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         self.release()
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.track_unreleased and self.lock_timer.is_started():
             metrics_counter("commcare.lock.not_released", tags=self.tags)
         if self.lock_trace is not None:
@@ -71,11 +86,11 @@ class MeteredLock(object):
             self.lock_trace.finish()
             self.lock_trace = None
 
-    def release_failed(self):
+    def release_failed(self) -> None:
         """Indicate that the lock was not released"""
         metrics_counter("commcare.lock.release_failed", tags=self.tags)
 
-    def degraded(self):
+    def degraded(self) -> None:
         """Indicate that the lock has "degraded gracefully"
 
         The lock was not acquired, but processing continued as if it had

@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Any, Literal, Protocol, Union
 
 AlertStr = Literal[
     'error',
@@ -21,3 +21,13 @@ Bucket = Union[float, int]
 BucketName = str
 MetricValue = Union[float, int]
 TagValues = dict[str, str]
+
+
+class LockProto(Protocol):
+    name: str
+
+    def acquire(self, *args: Any, **kwarg: Any) -> bool:
+        ...
+
+    def release(self) -> None:
+        ...
