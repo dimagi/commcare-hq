@@ -120,13 +120,14 @@ class SearchCriteria:
             return
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         if self.has_multiple_terms:
-            for v in self.value:
-                if v:
-                    match = pattern.match(v)
-                    if not match:
-                        raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+            # don't validate empty values
+            values = self._value_without_empty()
+            if isinstance(values, str):
+                values = [values]
         else:
-            match = pattern.match(self.value)
+            values = [self.value]
+        for v in values:
+            match = pattern.match(v)
             if not match:
                 raise CaseFilterError(_('Invalid date range format, {}'), self.key)
 
