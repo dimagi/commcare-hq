@@ -249,34 +249,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
-    def test_update_profile_conflict(self):
-
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-
-        user_json = {
-            "first_name": "florence",
-            "last_name": "ballard",
-            "email": "fballard@example.org",
-            "language": "en",
-            "user_data": {
-                PROFILE_SLUG: self.profile.id,
-                "imaginary": "no",
-            }
-        }
-
-        backend_id = user._id
-        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "metadata properties conflict with profile: imaginary"}'
-        )
-
     def test_update_fails(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
@@ -552,6 +524,24 @@ class TestCommCareUserResourceUpdate(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
 
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='conflicting_field',
+                label='Conflicting Field',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'conflicting_field': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
     def setUp(self) -> None:
         super().setUp()
         self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
@@ -586,3 +576,16 @@ class TestCommCareUserResourceUpdate(TestCase):
         errors = CommCareUserResource._update(bundle)
 
         self.assertIn('default_phone_number must be a string.', errors)
+
+    def test_update_user_data_returns_error_if_profile_conflict(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {
+            'user_data': {
+                PROFILE_SLUG: self.profile.id,
+                'conflicting_field': 'no'}
+        }
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('metadata properties conflict with profile: conflicting_field', errors)

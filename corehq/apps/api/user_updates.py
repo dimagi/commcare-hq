@@ -3,6 +3,7 @@ from dimagi.utils.couch.bulk import get_docs
 from corehq.apps.api.exceptions import (
     InvalidFormatException,
     UnknownFieldException,
+    UpdateConflictException,
 )
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -104,7 +105,10 @@ def _update_groups(user, group_ids, user_change_logger):
 
 def _update_user_data(user, user_data, user_change_logger):
     original_user_data = user.metadata.copy()
-    user.update_metadata(user_data)
+    try:
+        user.update_metadata(user_data)
+    except ValueError as e:
+        raise UpdateConflictException(str(e))
 
     if user_change_logger and original_user_data != user.user_data:
         user_change_logger.add_changes({'user_data': user.user_data})

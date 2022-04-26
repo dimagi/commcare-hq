@@ -6,3 +6,9 @@ class InvalidFormatException(Exception):
 
 class UnknownFieldException(Exception):
     pass
+
+
+class UpdateConflictException(Exception):
+
+    def __init__(self, message):
+        self.message = message

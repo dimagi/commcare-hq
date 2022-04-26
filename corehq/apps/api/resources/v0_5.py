@@ -103,7 +103,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import InvalidFormatException, UnknownFieldException
+from ..exceptions import InvalidFormatException, UnknownFieldException, UpdateConflictException
 from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
@@ -280,7 +280,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 errors.append(_('{} must be a {}.'.format(key, e.expected_type)))
             except UnknownFieldException:
                 errors.append(_("Attempted to update unknown field '{}'.").format(key))
-            except ValidationError as e:
+            except (UpdateConflictException, ValidationError) as e:
                 errors.append(e.message)
 
         return errors

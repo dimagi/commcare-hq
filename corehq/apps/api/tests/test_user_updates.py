@@ -4,8 +4,15 @@ from django.test import TestCase
 from corehq.apps.api.exceptions import (
     InvalidFormatException,
     UnknownFieldException,
+    UpdateConflictException,
 )
 from corehq.apps.api.user_updates import update
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
@@ -14,6 +21,7 @@ from corehq.apps.users.audit.change_messages import (
     PASSWORD_FIELD,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 
 
@@ -106,6 +114,11 @@ class TestUpdateUserMethods(TestCase):
         update(self.user, 'user_data', {'custom_data': 'updated custom data'})
         self.assertEqual(self.user.metadata["custom_data"], "updated custom data")
 
+    def test_update_user_data_raises_exception_if_profile_conflict(self):
+        profile_id = self._setup_profile()
+        with self.assertRaises(UpdateConflictException):
+            update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
+
     def test_update_groups_succeeds(self):
         group = Group({"name": "test"})
         group.save()
@@ -116,6 +129,26 @@ class TestUpdateUserMethods(TestCase):
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UnknownFieldException):
             update(self.user, 'username', 'new-username')
+
+    def _setup_profile(self):
+        definition = CustomDataFieldsDefinition(domain=self.domain,
+                                                field_type=UserFieldsView.field_type)
+        definition.save()
+        definition.set_fields([
+            Field(
+                slug='conflicting_field',
+                label='Conflicting Field',
+                choices=['yes', 'no'],
+            ),
+        ])
+        definition.save()
+        profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'conflicting_field': 'yes'},
+            definition=definition,
+        )
+        profile.save()
+        return profile.id
 
 
 class TestUpdateUserMethodsLogChanges(TestCase):
