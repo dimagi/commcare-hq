@@ -951,6 +951,12 @@ def _update_module_short_detail(src_module, dest_module, attrs):
         _update_module_search_config(src_module, dest_module, search_attrs)
 
     attrs = attrs - search_attrs
+
+    # Shadow modules inherit some attributes from source module, so ignore the detail attr
+    if src_module.module_type == "shadow":
+        if 'multi_select' in attrs:
+            attrs['multi_select'] = src_module.is_multi_select()
+
     if attrs:
         src_detail = getattr(src_module.case_details, "short")
         dest_detail = getattr(dest_module.case_details, "short")
