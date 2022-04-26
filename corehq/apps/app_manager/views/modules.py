@@ -240,6 +240,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 module.search_config.search_label.label if hasattr(module, 'search_config') else "",
             'search_again_label':
                 module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+            'title_label':
+                module.search_config.title_label if hasattr(module, 'search_config') else "",
             'data_registry': module.search_config.data_registry,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
@@ -1175,6 +1177,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_properties.get('properties') is not None
                 or search_properties.get('default_properties') is not None
         ):
+            title_label = module.search_config.title_label
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
             if search_properties.get('search_label_image_for_all'):
@@ -1248,6 +1251,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
+                title_label=title_label,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
                 additional_relevant=search_properties.get('search_additional_relevant', ''),

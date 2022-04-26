@@ -2341,6 +2341,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
+            self.search_config.title_label._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -4869,7 +4870,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 label_dict = {lang: label.get('case.search.title')
                     for lang, label in translations.items() if label}
                 search_config = getattr(module, 'search_config')
-                default_label_dict = getattr(search_config, 'title_label')
+                default_label_dict = getattr(search_config, 'title_label') or {}
                 label_dict.update(default_label_dict)
                 setattr(search_config, 'title_label', label_dict)
 

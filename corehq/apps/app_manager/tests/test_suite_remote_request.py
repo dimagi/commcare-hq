@@ -788,3 +788,54 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_case_search_title_translation(self, *args):
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
+        suite = self.app.create_suite()
+        expected_remote_request = """
+        <partial>
+          <command id="search_command.m0">
+            <display>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </display>
+          </command>
+        </partial>
+        """
+        expected_search_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="cchq.case"/>
+              </text>
+            </title>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected_remote_request, suite, "./remote-request[1]/command")
+        self.assertXmlPartialEqual(expected_search_detail, suite, "./detail[@id='m0_search_short']/title")
+
+        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
+        suite = self.app.create_suite()
+        expected_remote_request = """
+        <partial>
+          <command id="search_command.m0">
+            <display>
+              <text>
+                <locale id="case_search.m0.inputs"/>
+              </text>
+            </display>
+          </command>
+        </partial>
+        """
+        expected_search_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="case_search.m0"/>
+              </text>
+            </title>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected_remote_request, suite, "./remote-request[1]/command")
+        self.assertXmlPartialEqual(expected_search_detail, suite, "./detail[@id='m0_search_short']/title")

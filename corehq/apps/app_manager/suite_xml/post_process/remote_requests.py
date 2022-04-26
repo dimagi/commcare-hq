@@ -137,6 +137,13 @@ class RemoteRequestFactory(object):
         return self.module.search_config.get_relevant(self.module.is_multi_select())
 
     def build_command(self):
+        if self.app.enable_case_search_title_translation:
+            return Command(
+                id=id_strings.search_command(self.module),
+                display=Display(
+                    text=Text(locale_id=id_strings.case_search_title_translation(self.module)),
+                ),
+            )
         return Command(
             id=id_strings.search_command(self.module),
             display=Display(
