@@ -11,6 +11,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
 
         self.constants = constants;
         self.caseType = ko.observable(initial.case_type);
+        self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
 
         self.filterOnServerModified = ko.computed(function () {

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
+from corehq.apps.data_interfaces.const import CRITERIA_OPERATOR_CHOICES
 
 import jsonfield
 import pytz
@@ -99,6 +100,12 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
+
+    criteria_operator = models.CharField(
+        max_length=3,
+        choices=CRITERIA_OPERATOR_CHOICES,
+        default='ALL',
+    )
 
     # For performance reasons, the server_modified_boundary is a
     # required part of the criteria and should be set to the minimum
@@ -343,18 +350,26 @@ class AutomaticUpdateRule(models.Model):
                 (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
             return False
 
-        for criteria in self.memoized_criteria:
-            try:
-                result = criteria.definition.matches(case, now)
-            except CaseNotFound:
-                # This might happen if the criteria references a parent case and the
-                # parent case is not found
-                result = False
+        if self.criteria_operator == 'ANY':
+            for criteria in self.memoized_criteria:
+                try:
+                    if criteria.definition.matches(case, now):
+                        return True
+                except CaseNotFound:
+                    continue
+            return False
+        else:
+            for criteria in self.memoized_criteria:
+                try:
+                    result = criteria.definition.matches(case, now)
+                except CaseNotFound:
+                    # This might happen if the criteria references a parent case and the
+                    # parent case is not found
+                    result = False
 
-            if not result:
-                return False
-
-        return True
+                if not result:
+                    return False
+            return True
 
     def _run_method_on_action_definitions(self, case, method):
         aggregated_result = CaseRuleActionResult()

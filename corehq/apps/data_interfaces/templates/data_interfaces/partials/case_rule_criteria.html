@@ -18,8 +18,8 @@
       {% endfor %}
     </div>
   {% endif %}
-  {% if criteria_form.case_type_helper %}
-    {% crispy criteria_form criteria_form.case_type_helper %}
+  {% if criteria_form.form_beginning_helper %}
+    {% crispy criteria_form criteria_form.form_beginning_helper %}
   {% endif %}
   <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
   <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">

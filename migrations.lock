@@ -281,6 +281,7 @@ data_interfaces
  0025_domaincaserulerun_num_errors
  0026_auto_20220420_1301
  0027_locationfilterdefinition_include_child_locations
+ 0028_automaticupdaterule_criteria_operator
 dhis2
  0001_initial
  0002_auto_20170322_1323
