@@ -4,10 +4,9 @@ import re
 from abc import abstractmethod
 from collections import namedtuple
 from collections.abc import Sequence
-from typing import Any, Callable, Iterable, Optional, Protocol
+from typing import Any, Callable, Optional, Protocol, Union
 
 from prometheus_client.utils import INF
-from typing_extensions import Concatenate, ParamSpec
 
 from .const import ALERT_INFO
 from .typing import AlertStr, Bucket, BucketName, MetricValue, TagValues
@@ -31,31 +30,31 @@ def _enforce_prefix(name: str, prefix: str) -> None:
         "Did you mean to call your metric 'commcare.{}'? ".format(name))
 
 
-def _validate_tag_names(tag_names: Iterable[str]) -> set[str]:
-    tag_names = set(tag_names or [])
-    for l in tag_names:
-        if not METRIC_TAG_NAME_RE.match(l):
-            raise ValueError('Invalid metric tag name: ' + l)
-        if RESERVED_METRIC_TAG_NAME_RE.match(l):
-            raise ValueError('Reserved metric tag name: ' + l)
-        if l in RESERVED_METRIC_TAG_NAMES:
-            raise ValueError('Reserved metric tag name: ' + l)
+def _validate_tag_names(tag_values: Optional[TagValues]) -> set[str]:
+    tag_names = set(tag_values or [])
+    for tag_name in tag_names:
+        if not METRIC_TAG_NAME_RE.match(tag_name):
+            raise ValueError('Invalid metric tag name: ' + tag_name)
+        if RESERVED_METRIC_TAG_NAME_RE.match(tag_name):
+            raise ValueError('Reserved metric tag name: ' + tag_name)
+        if tag_name in RESERVED_METRIC_TAG_NAMES:
+            raise ValueError('Reserved metric tag name: ' + tag_name)
     return tag_names
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
 
     @property
-    def accepted_gauge_params(self):
+    def accepted_gauge_params(self) -> list[str]:
         return []
 
-    def initialize(self):
+    def initialize(self) -> None:
         pass
 
     def counter(
         self,
         name: str,
-        value: float = 1.0,
+        value: MetricValue = 1,
         tags: Optional[TagValues] = None,
         documentation: str = '',
     ) -> None:
@@ -66,10 +65,10 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def gauge(
         self,
         name: str,
-        value: float,
+        value: MetricValue,
         tags: Optional[TagValues] = None,
         documentation: str = '',
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
@@ -79,7 +78,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def histogram(
         self,
         name: str,
-        value: float,
+        value: MetricValue,
         bucket_tag: str,
         buckets: Sequence[Bucket] = DEFAULT_BUCKETS,
         bucket_unit: str = '',
@@ -108,15 +107,37 @@ class HqMetrics(metaclass=abc.ABCMeta):
         pass
 
     @abstractmethod
-    def _counter(self, name, value, tags, documentation):
+    def _counter(
+        self,
+        name: str,
+        value: MetricValue,
+        tags: Optional[TagValues] = None,
+        documentation: str = '',
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def _gauge(self, name, value, tags, documentation, **kwargs):
+    def _gauge(
+        self,
+        name: str,
+        value: MetricValue,
+        tags: Optional[TagValues] = None,
+        documentation: str = '',
+        **kwargs: Any,
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def _histogram(self, name, value, bucket_tag, buckets, bucket_unit, tags, documentation):
+    def _histogram(
+        self,
+        name: str,
+        value: MetricValue,
+        bucket_tag: str,
+        buckets: Sequence[Bucket],
+        bucket_unit: str = '',
+        tags: Optional[TagValues] = None,
+        documentation: str = '',
+    ) -> None:
         raise NotImplementedError
 
     def _create_event(
@@ -132,7 +153,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
 
 
 class Sample(namedtuple('Sample', ['type', 'name', 'tags', 'value'])):
-    def match_tags(self, tags):
+    def match_tags(self, tags: TagValues) -> bool:
         missing = object()
         return all([
             self.tags.get(tag, missing) == val
@@ -141,16 +162,38 @@ class Sample(namedtuple('Sample', ['type', 'name', 'tags', 'value'])):
 
 
 class MetricsProto(Protocol):
-    def counter(self, *args, **kwargs):
+    def counter(
+        self,
+        name: str,
+        value: MetricValue = ...,
+        tags: Optional[TagValues] = ...,
+        documentation: str = ...,
+    ) -> None:
         ...
 
-    def gauge(self, *args, **kwargs):
+    def gauge(
+        self,
+        name: str,
+        value: MetricValue,
+        tags: Optional[TagValues] = ...,
+        documentation: str = ...,
+        **kwargs: Any,
+    ) -> None:
         ...
 
-    def histogram(self, *args, **kwargs):
+    def histogram(
+        self,
+        name: str,
+        value: MetricValue,
+        bucket_tag: str,
+        buckets: Sequence[Bucket] = ...,
+        bucket_unit: str = ...,
+        tags: Optional[TagValues] = ...,
+        documentation: str = ...,
+    ) -> None:
         ...
 
-    def push_metrics(self) -> Any:
+    def push_metrics(self) -> None:
         ...
 
     def create_event(
@@ -164,22 +207,21 @@ class MetricsProto(Protocol):
         ...
 
 
-P = ParamSpec('P')
-CheckFunc = Callable[Concatenate[BucketName, MetricValue, P], None]
+CheckFunc = Callable[..., None]
 
 
 class DebugMetrics:
-    def __init__(self, capture=False):
+    def __init__(self, capture: bool = False) -> None:
         self._capture = capture
-        self.metrics = []
+        self.metrics: list[Sample] = []
 
     def __getattr__(self, item: str) -> CheckFunc:
         if item in ('counter', 'gauge', 'histogram'):
             def _check(
                 name: BucketName,
                 value: MetricValue,
-                *args: P.args,
-                **kwargs: P.kwargs,
+                *args: Any,
+                **kwargs: Any,
             ) -> None:
                 tags = kwargs.get('tags') or {}
                 _enforce_prefix(name, 'commcare')
@@ -205,16 +247,16 @@ class DebugMetrics:
         metrics_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
 
-RecordMetricFunc = Callable[P, None]
+RecordMetricFunc = Callable[..., None]
 
 
 class DelegatedMetrics:
-    def __init__(self, delegates):
+    def __init__(self, delegates: Sequence[MetricsProto]) -> None:
         self.delegates = delegates
 
     def __getattr__(self, item: str) -> RecordMetricFunc:
         if item in ('counter', 'gauge', 'histogram', 'create_event', 'push_metrics'):
-            def _record_metric(*args: P.args, **kwargs: P.kwargs) -> None:
+            def _record_metric(*args: Any, **kwargs: Any) -> None:
                 for delegate in self.delegates:
                     getattr(delegate, item)(*args, **kwargs)
             return _record_metric
