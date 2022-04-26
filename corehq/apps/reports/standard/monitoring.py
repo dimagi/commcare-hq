@@ -74,7 +74,6 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import ES_DEFAULT_INSTANCE
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
@@ -1536,12 +1535,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        if self.exporting_as_excel:
-            es_instance_alias = 'export'
-        else:
-            es_instance_alias = ES_DEFAULT_INSTANCE
         return get_last_submission_time_for_users(self.domain, user_ids,
-                                                  self.datespan, es_instance_alias=es_instance_alias)
+                                                  self.datespan,
+                                                  for_export=self.exporting_as_excel)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
