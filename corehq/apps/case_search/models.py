@@ -121,9 +121,7 @@ class SearchCriteria:
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
         if self.has_multiple_terms:
             # don't validate empty values
-            values = self._value_without_empty()
-            if isinstance(values, str):
-                values = [values]
+            values = [val for val in self.value if val != '']
         else:
             values = [self.value]
         for v in values:
