@@ -268,6 +268,11 @@ def update_subscriptions():
     check_credit_line_balances.delay()
 
 
+@shared_task(serializer='pickle', queue='background_queue')
+def test_latest_celery_task(domain):
+    print(domain.to_json())
+
+
 @shared_task
 def check_credit_line_balances():
     for credit_line in CreditLine.objects.all():
