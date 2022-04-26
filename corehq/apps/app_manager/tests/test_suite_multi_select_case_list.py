@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
 )
+from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
@@ -29,9 +30,9 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.factory = AppFactory(domain="multiple-referrals")
         self.app_id = uuid4().hex
         self.factory.app._id = self.app_id
-        self.module, form = self.factory.new_basic_module('basic', 'person')
-        self.factory.form_requires_case(form, 'person')
-        form.xmlns = "some-xmlns"
+        self.module, self.form = self.factory.new_basic_module('basic', 'person')
+        self.factory.form_requires_case(self.form, 'person')
+        self.form.xmlns = "some-xmlns"
 
         self.module.case_details.short.multi_select = True
         self.module.search_config = CaseSearch(
@@ -71,6 +72,16 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./remote-request",
         )
+
+    def test_session_schema(self):
+        # Session schema should not contain case
+        self.assertEqual(get_session_schema(self.form), {
+            'id': 'commcaresession',
+            'name': 'Session',
+            'path': '/session',
+            'structure': {},
+            'uri': 'jr://instance/session'
+        })
 
     @flag_enabled('APP_BUILDER_SHADOW_MODULES')
     def test_shadow_modules(self):
