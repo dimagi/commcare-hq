@@ -20,4 +20,4 @@ PrometheusMultiprocessModeStr = Literal[
 Bucket = Union[float, int]
 BucketName = str
 MetricValue = Union[float, int]
-Tags = dict[str, str]
+TagValues = dict[str, str]

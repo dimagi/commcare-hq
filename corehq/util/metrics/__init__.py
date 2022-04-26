@@ -139,7 +139,7 @@ from .metrics import (
     _enforce_prefix,
     metrics_logger, MetricsProto,
 )
-from .typing import Tags, AlertStr, PrometheusMultiprocessModeStr
+from .typing import AlertStr, PrometheusMultiprocessModeStr, TagValues
 from .utils import (
     DAY_SCALE_TIME_BUCKETS,
     bucket_value,
@@ -162,7 +162,7 @@ __all__ = [
 def metrics_counter(
     name: str,
     value: float = 1.0,
-    tags: Optional[Tags] = None,
+    tags: Optional[TagValues] = None,
     documentation: str = '',
 ) -> None:
     provider = _get_metrics_provider()
@@ -172,7 +172,7 @@ def metrics_counter(
 def metrics_gauge(
     name: str,
     value: float,
-    tags: Optional[Tags] = None,
+    tags: Optional[TagValues] = None,
     documentation: str = '',
     multiprocess_mode: PrometheusMultiprocessModeStr = MPM_ALL,
 ) -> None:
@@ -186,7 +186,7 @@ def metrics_histogram(
     bucket_tag: str,
     buckets: Sequence[Any] = DEFAULT_BUCKETS,
     bucket_unit: str = '',
-    tags: Optional[Tags] = None,
+    tags: Optional[TagValues] = None,
     documentation: str = '',
 ) -> None:
     provider = _get_metrics_provider()
@@ -231,7 +231,7 @@ def create_metrics_event(
     title: str,
     text: str,
     alert_type: AlertStr = ALERT_INFO,
-    tags: Optional[Tags] = None,
+    tags: Optional[TagValues] = None,
     aggregation_key: Optional[str] = None,
 ) -> None:
     """
@@ -259,7 +259,7 @@ TimerCallback = Callable[[float], Any]
 def metrics_histogram_timer(
     metric: str,
     timing_buckets: Sequence[int],
-    tags: Optional[Tags] = None,
+    tags: Optional[TagValues] = None,
     bucket_tag: str = 'duration',
     callback: Optional[TimerCallback] = None,
 ) -> TimingContext:

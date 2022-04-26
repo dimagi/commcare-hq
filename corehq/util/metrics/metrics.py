@@ -10,7 +10,7 @@ from prometheus_client.utils import INF
 from typing_extensions import Concatenate, ParamSpec
 
 from .const import ALERT_INFO
-from .typing import AlertStr, Bucket, BucketName, MetricValue, Tags
+from .typing import AlertStr, Bucket, BucketName, MetricValue, TagValues
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
 METRIC_TAG_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
@@ -56,7 +56,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         self,
         name: str,
         value: float = 1.0,
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         documentation: str = '',
     ) -> None:
         _enforce_prefix(name, 'commcare')
@@ -67,7 +67,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         self,
         name: str,
         value: float,
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         documentation: str = '',
         **kwargs,
     ) -> None:
@@ -83,7 +83,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         bucket_tag: str,
         buckets: Sequence[Bucket] = DEFAULT_BUCKETS,
         bucket_unit: str = '',
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         documentation: str = '',
     ) -> None:
         """Create a histogram metric. Histogram implementations differ between provider. See provider
@@ -98,7 +98,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         title: str,
         text: str,
         alert_type: AlertStr = ALERT_INFO,
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         aggregation_key: Optional[str] = None,
     ) -> None:
         _validate_tag_names(tags)
@@ -124,7 +124,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         title: str,
         text: str,
         alert_type: AlertStr = ALERT_INFO,
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         aggregation_key: Optional[str] = None,
     ) -> None:
         """Optional API to implement"""
@@ -158,7 +158,7 @@ class MetricsProto(Protocol):
         title: str,
         text: str,
         alert_type: AlertStr = ...,
-        tags: Optional[Tags] = ...,
+        tags: Optional[TagValues] = ...,
         aggregation_key: Optional[str] = ...,
     ) -> None:
         ...
@@ -198,7 +198,7 @@ class DebugMetrics:
         title: str,
         text: str,
         alert_type: AlertStr = ALERT_INFO,
-        tags: Optional[Tags] = None,
+        tags: Optional[TagValues] = None,
         aggregation_key: Optional[str] = None,
     ) -> None:
         _validate_tag_names(tags)
