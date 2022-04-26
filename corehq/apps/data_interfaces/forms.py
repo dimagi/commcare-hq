@@ -913,12 +913,7 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
                 HTML(
                     '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
-                hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
-                hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
-                hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
-                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
-                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 hidden_bound_field('location_filter_definition', 'locationFilterDefinition'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria-panel",
@@ -934,3 +929,6 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
 
     def clean_custom_match_definitions(self):
         return []
+
+    def clean_filter_on_closed_parent(self):
+        return False
