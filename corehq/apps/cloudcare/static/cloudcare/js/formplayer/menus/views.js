@@ -1,9 +1,9 @@
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
-
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -397,6 +397,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
+            kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
@@ -411,6 +412,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+            kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
         paginateKeyAction: function (e) {
@@ -485,6 +487,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateContext: function () {
             var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+
+            $(function ()  {
+                var goButton = $("#pagination-go-button");
+                if (goButton.length) {
+                    kissmetrics.track.event("Accessibility Tracking - Pagination Page Loaded");
+                }
+            });
+
+            var isMultiSelectCaseList = this.options.isMultiSelect;
+
             return {
                 startPage: paginateItems.startPage,
                 title: this.options.title,
@@ -515,6 +527,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
+
+
 
     // this method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.

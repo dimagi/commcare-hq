@@ -69,9 +69,7 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - smh/multi-select-case-detail-workflow # Steph April 15
     - smh/multi-select-clear-session-storage # Steph April 16
-    - ad/change-referrer-policy+rp/gsheet/create-livegooglesheetview # Addison April 18
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - bmb/upgrade-dompurify  # Biyeun Apr 19
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - smh/multi-select-web-ui-formatting # Steph April 19
     - sk/remove-feature-phone-support  # Simon April 20
@@ -79,4 +77,8 @@ branches:
     - ml/dhis2-error-handling # Minha April 21
     - jm/elastic-client-adapter  # Joel April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
+    - smh/multi-select-qa-followup # Steph April 22
+    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
+    - jls/toggles-in-build-errors # Jenny April 26
+    - ad/autoupdate-criteria-operator # Addison April 26
 submodules: { }

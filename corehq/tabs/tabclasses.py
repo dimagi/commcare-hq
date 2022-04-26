@@ -1314,6 +1314,7 @@ class ProjectUsersTab(UITab):
     view = "users_default"
 
     url_prefix_formats = (
+        '/a/{domain}/reports/user_management/',
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
