@@ -21,8 +21,9 @@ from corehq.apps.es.case_search import (
     flatten_result,
     wrap_case_search_hit,
 )
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
