@@ -256,7 +256,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
-            formatted_errors = ' '.join(errors)
+            formatted_errors = ', '.join(errors)
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
         bundle.obj.save()
@@ -277,9 +277,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             try:
                 update(bundle.obj, key, value, user_change_logger)
             except InvalidFormatException as e:
-                errors.append(_('{} must be a {}.'.format(key, e.expected_type)))
+                errors.append(_('{} must be a {}'.format(key, e.expected_type)))
             except UnknownFieldException:
-                errors.append(_("Attempted to update unknown field '{}'.").format(key))
+                errors.append(_("Attempted to update unknown field '{}'").format(key))
             except (UpdateConflictException, ValidationError) as e:
                 errors.append(e.message)
 
