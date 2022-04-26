@@ -80,5 +80,4 @@ branches:
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - smh/multi-select-qa-followup # Steph April 22
     - sk/unique-datum-id-for-remote-requests # Simon April 25
-    - ap/remove-couch-from-auditcare # Amit April 26
 submodules: { }
