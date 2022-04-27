@@ -103,7 +103,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import InvalidFormatException, UnknownFieldException, UpdateConflictException
+from ..exceptions import InvalidFormatException, InvalidFieldException, UpdateConflictException
 from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
@@ -276,10 +276,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         for key, value in bundle.data.items():
             try:
                 update(bundle.obj, key, value, user_change_logger)
+            except InvalidFieldException as e:
+                errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
             except InvalidFormatException as e:
                 errors.append(_('{} must be a {}').format(e.field, e.expected_type))
-            except UnknownFieldException as e:
-                errors.append(_("Attempted to update unknown field '{}'").format(e.field))
             except (UpdateConflictException, ValidationError) as e:
                 errors.append(e.message)
 

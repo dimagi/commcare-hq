@@ -2,7 +2,7 @@ from dimagi.utils.couch.bulk import get_docs
 
 from corehq.apps.api.exceptions import (
     InvalidFormatException,
-    UnknownFieldException,
+    InvalidFieldException,
     UpdateConflictException,
 )
 from corehq.apps.domain.forms import clean_password
@@ -35,7 +35,7 @@ def update(user, field, value, user_change_logger=None):
     }.get(field)
 
     if not update_fn:
-        raise UnknownFieldException(field)
+        raise InvalidFieldException(field)
 
     update_fn(user, value, user_change_logger)
 

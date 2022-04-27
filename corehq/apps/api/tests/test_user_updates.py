@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from corehq.apps.api.exceptions import (
     InvalidFormatException,
-    UnknownFieldException,
+    InvalidFieldException,
     UpdateConflictException,
 )
 from corehq.apps.api.user_updates import update
@@ -127,7 +127,7 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(self.user.get_group_ids()[0], group._id)
 
     def test_update_unknown_field_raises_exception(self):
-        with self.assertRaises(UnknownFieldException):
+        with self.assertRaises(InvalidFieldException):
             update(self.user, 'username', 'new-username')
 
     def _setup_profile(self):
