@@ -933,7 +933,7 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
                 css_id="rule-criteria-panel",
             ),
         )
-        self.case_type_helper = None
+        self.form_beginning_helper = None
 
     def clean_filter_on_server_modified(self):
         return False
