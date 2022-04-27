@@ -89,6 +89,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -307,6 +308,7 @@ def save_copy(request, domain, app_id):
                 'build_errors': e.errors,
                 'domain': domain,
                 'langs': langs,
+                'toggles': toggles_enabled_for_request(request),
             }),
         })
     except BuildConflictException:

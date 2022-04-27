@@ -121,6 +121,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     StaticReportConfiguration,
@@ -1341,6 +1342,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
+        'toggles': toggles_enabled_for_request(request),
     })
     if ajax:
         return json_response({'error_html': response_html})
