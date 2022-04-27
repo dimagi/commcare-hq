@@ -58,6 +58,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
+    Detail,
     DetailColumn,
     DetailTab,
     FixtureSelect,
@@ -950,8 +951,14 @@ def _update_module_short_detail(src_module, dest_module, attrs):
         _update_module_search_config(src_module, dest_module, search_attrs)
 
     attrs = attrs - search_attrs
+    src_detail = Detail.wrap(getattr(src_module.case_details, "short").to_json().copy())
+
+    # Shadow modules inherit some attributes from source module, so ignore the detail attr
+    if src_module.module_type == "shadow":
+        if 'multi_select' in attrs:
+            src_detail.multi_select = src_module.is_multi_select()
+
     if attrs:
-        src_detail = getattr(src_module.case_details, "short")
         dest_detail = getattr(dest_module.case_details, "short")
         dest_detail.overwrite_attrs(src_detail, attrs)
 
