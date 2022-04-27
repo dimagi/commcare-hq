@@ -239,7 +239,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function () {
             var self = this;
-            this.parentView = this.options.parentView;
+            self.isMultiSelect = this.options.isMultiSelect;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
                 if (_.contains(caseIds, self.model.get('id'))) {
                     self.ui.selectRow[0].checked = action === Constants.MULTI_SELECT_ADD;
@@ -258,7 +258,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         rowClick: function (e) {
             if (!(e.target.classList.contains('module-case-list-column-checkbox') || e.target.classList.contains("select-row-checkbox"))) {
                 e.preventDefault();
-                FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.parentView.options.isMultiSelect);
+                FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, this.isMultiSelect);
             }
         },
 
@@ -282,7 +282,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                isMultiSelect: this.options.parentView.options.isMultiSelect,
+                isMultiSelect: this.options.isMultiSelect,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
@@ -322,8 +322,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childView: CaseView,
         childViewOptions: function () {
             return {
+                isMultiSelect: this.options.isMultiSelect,
                 styles: this.options.styles,
-                parentView: this,
             };
         },
 
