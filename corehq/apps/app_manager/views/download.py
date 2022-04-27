@@ -38,6 +38,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -400,6 +401,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
+            'toggles': toggles_enabled_for_request(request),
         })
 
     if ajax:
