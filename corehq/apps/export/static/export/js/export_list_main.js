@@ -16,8 +16,8 @@ hqDefine("export/js/export_list_main", [
 ) {
     $(function () {
         var $createExport = $("#create-export"),
-            isOData = initialPageData.get('is_odata', true);
-
+            isOData = initialPageData.get('is_odata', true),
+            isLiveGoogleSheet = initialPageData.get('is_live_google_sheet', true);
         if ($createExport.length) {
             $createExport.koApplyBindings(createModels.createExportModel({
                 model_type: initialPageData.get("model_type", true),
@@ -28,6 +28,7 @@ hqDefine("export/js/export_list_main", [
                     is_feed: initialPageData.get('is_feed', true),
                     is_deid: initialPageData.get('is_deid', true),
                     is_odata: isOData,
+                    is_live_google_sheet: isLiveGoogleSheet,
                     model_type: initialPageData.get('model_type', true),
                 },
             }));
@@ -65,6 +66,7 @@ hqDefine("export/js/export_list_main", [
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
             isOData: isOData,
+            isLiveGoogleSheet: isLiveGoogleSheet,
             headers: {
                 my_export_type: initialPageData.get('my_export_type'),
                 shared_export_type: initialPageData.get('shared_export_type'),
@@ -100,6 +102,7 @@ hqDefine("export/js/export_list_main", [
         const isDailySavedExport = initialPageData.get('is_daily_saved_export', true);
         const isExcelExport = initialPageData.get('is_feed', true);
         const isOData = initialPageData.get('is_odata', true);
+        const isLiveGoogleSheet = initialPageData.get('is_live_google_sheet', true);
 
         if (isDailySavedExport) {
             // NOTE: Currently, excel exports are considered daily exports,
@@ -107,6 +110,8 @@ hqDefine("export/js/export_list_main", [
             return (isExcelExport ? 'Excel Dashboard' : 'Daily Saved');
         } else if (isOData) {
             return 'PowerBI';
+        } else if (isLiveGoogleSheet) {
+            return 'Live Google Sheet';
         }
     }
 });
