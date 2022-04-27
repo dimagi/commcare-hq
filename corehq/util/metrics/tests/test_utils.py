@@ -1,14 +1,21 @@
+from collections.abc import Sequence
 from datetime import timedelta
 
 from django.test import SimpleTestCase
+
 from testil import eq
 
-from corehq.util.metrics import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS, bucket_value
-from corehq.util.metrics.utils import sanitize_url, get_url_group
+from corehq.util.metrics import (
+    DAY_SCALE_TIME_BUCKETS,
+    bucket_value,
+    make_buckets_from_timedeltas,
+)
+from corehq.util.metrics.typing import Bucket, MetricValue
+from corehq.util.metrics.utils import get_url_group, sanitize_url
 from corehq.util.test_utils import generate_cases
 
 
-def test_make_buckets_from_timedeltas():
+def test_make_buckets_from_timedeltas() -> None:
     buckets = [1, 10, 60, 10 * 60, 60 * 60, 12 * 60 * 60, 24 * 60 * 60]
     eq(make_buckets_from_timedeltas(
         timedelta(seconds=1),
@@ -22,8 +29,9 @@ def test_make_buckets_from_timedeltas():
     eq(DAY_SCALE_TIME_BUCKETS, buckets)
 
 
-class MetricsUtilsTest(SimpleTestCase):
+class MetricsUtilsTest(SimpleTestCase):  # type: ignore[misc]
     """Tests metrics utility functions"""
+
 
 @generate_cases([
     (0, (1, 2, 5), '', 'lt_001'),
@@ -35,7 +43,13 @@ class MetricsUtilsTest(SimpleTestCase):
     (6, (1, 2, 5, 1000, 43000), 's', 'lt_01000s'),
     (3000, (1, 2, 5, 1000), 's', 'over_1000s'),
 ], MetricsUtilsTest)
-def test_bucket_value(self, value, buckets, unit, expected):
+def test_bucket_value(
+    self: MetricsUtilsTest,
+    value: MetricValue,
+    buckets: Sequence[Bucket],
+    unit: str,
+    expected: str,
+) -> None:
     self.assertEqual(bucket_value(value, buckets, unit), expected)
 
 
@@ -46,7 +60,11 @@ def test_bucket_value(self, value, buckets, unit, expected):
     ),
     ('/a/ben/modules-1/forms-2/uuid:abc123/', '/a/*/modules-*/forms-*/uuid:*/')
 ], MetricsUtilsTest)
-def test_sanitize_url(self, url, sanitized):
+def test_sanitize_url(
+    self: MetricsUtilsTest,
+    url: str,
+    sanitized: str,
+) -> None:
     self.assertEqual(sanitize_url(url), sanitized)
 
 
@@ -57,5 +75,5 @@ def test_sanitize_url(self, url, sanitized):
     ('/1/2/3/4', 'other'),
     ('/a/*/cloudcare', 'cloudcare'),
 ], MetricsUtilsTest)
-def test_url_group(self, url, group):
+def test_url_group(self: MetricsUtilsTest, url: str, group: str) -> None:
     self.assertEqual(get_url_group(url), group)
