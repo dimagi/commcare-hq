@@ -350,26 +350,19 @@ class AutomaticUpdateRule(models.Model):
                 (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
             return False
 
-        if self.criteria_operator == 'ANY':
-            for criteria in self.memoized_criteria:
-                try:
-                    if criteria.definition.matches(case, now):
-                        return True
-                except CaseNotFound:
-                    continue
-            return False
-        else:
-            for criteria in self.memoized_criteria:
-                try:
-                    result = criteria.definition.matches(case, now)
-                except CaseNotFound:
-                    # This might happen if the criteria references a parent case and the
-                    # parent case is not found
-                    result = False
+        def _evaluate_criteria(criteria):
+            try:
+                return criteria.definition.matches(case, now)
+            except CaseNotFound:
+                # This might happen if the criteria references a parent case and the
+                # parent case is not found
+                return False
 
-                if not result:
-                    return False
-            return True
+        results = (_evaluate_criteria(criteria) for criteria in self.memoized_criteria)
+        if self.criteria_operator == 'ANY':
+            return any(results)
+        else:
+            return all(results)
 
     def _run_method_on_action_definitions(self, case, method):
         aggregated_result = CaseRuleActionResult()

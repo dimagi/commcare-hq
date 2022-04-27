@@ -9,6 +9,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from corehq.apps.data_interfaces.const import CRITERIA_OPERATOR_CHOICES
+from corehq.apps.hqwebapp.widgets import SelectToggle
 
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
@@ -274,9 +275,11 @@ class CaseRuleCriteriaForm(forms.Form):
         required=True,
     )
     criteria_operator = forms.ChoiceField(
-        label=gettext_lazy("Critera Operator"),
+        label=gettext_lazy("Run when"),
         required=False,
-        initial='ALL'
+        initial='ALL',
+        choices=CRITERIA_OPERATOR_CHOICES,
+        widget=SelectToggle(choices=CRITERIA_OPERATOR_CHOICES, attrs={"ko_value": "criteriaOperator"}),
     )
 
     filter_on_server_modified = forms.CharField(required=False, initial='false')
@@ -432,7 +435,7 @@ class CaseRuleCriteriaForm(forms.Form):
             Fieldset(
                 _("Rule Criteria"),
                 Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2"),
-                Field('criteria_operator', data_bind="value: criteriaOperator", css_class="hqwebapp-select2")
+                Field('criteria_operator'),
             )
         )
 
