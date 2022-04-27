@@ -189,16 +189,6 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     })
 
 
-class RepeaterMeta(ModelBase):
-
-    def __new__(cls, name, bases, dct):
-        repeater_class = super().__new__(cls, name, bases, dct)
-        if name != "SQLRepeater":
-            assert name.startswith("SQL"), repeater_class
-            REPEATER_CLASS_MAP[repeater_class.__name__[3:]] = repeater_class
-        return repeater_class
-
-
 class RepeaterSuperProxy(models.Model):
     # See https://stackoverflow.com/questions/241250/single-table-inheritance-in-django/60894618#60894618
     PROXY_FIELD_NAME = "repeater_type"
@@ -264,7 +254,7 @@ class RepeaterManager(models.Manager):
         return list(self.filter(domain=domain))
 
 
-class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy, metaclass=RepeaterMeta):
+class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     format = models.CharField(max_length=64, null=True)
