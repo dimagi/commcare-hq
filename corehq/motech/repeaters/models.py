@@ -72,7 +72,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models
-from django.db.models.base import ModelBase
+from django.db.models.base import ModelBase, Deferred
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -221,6 +221,8 @@ class RepeaterSuperProxy(models.Model):
                 cls._meta.get_field(cls.PROXY_FIELD_NAME))
             try:
                 proxy_class_name = args[proxy_name_field_index]
+                if isinstance(proxy_class_name, Deferred):
+                    return super().__new__(repeater_class)
             except IndexError:
                 pass
             else:
