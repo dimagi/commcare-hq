@@ -341,13 +341,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-
-                // Update state of Continue button
-                self.ui.continueButtonText[0].innerText = self.selectedCaseIds.length;
-                self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
-
-                // Reconcile state of "select all" checkbox
-                self.ui.selectAllCheckbox[0].checked = !_.difference(self._allCaseIds(), self.selectedCaseIds).length;
+                self.reconcileMultiSelectUI();
             });
         },
 
@@ -385,9 +379,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         onRender: function () {
             if (sessionStorage.selectedValues && sessionStorage.selectedValues.length !== 0) {
                 this.selectedCaseIds = sessionStorage.selectedValues.split(',');
-                this.updateCheckboxes();
+                this.reconcileMultiSelectUI();
                 sessionStorage.selectedValues = [];
-                this.ui.continueButton.prop("disabled", this.selectedCaseIds.length === 0);
             }
         },
 
@@ -474,16 +467,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         },
 
-        updateCheckboxes: function () {
+        reconcileMultiSelectUI: function () {
             var self = this;
-            if (this.isMultiSelect) {
-                this.children.each(function (childView) {
-                    if (self.selectedCaseIds.indexOf(childView.model.id) !== -1) {
-                        let checkbox = childView.ui.selectRow[0];
-                        checkbox.checked = true;
-                    }
-                });
+            if (!self.isMultiSelect) {
+                return;
             }
+
+            // Update states of row checkboxes
+            self.children.each(function (childView) {
+                if (self.selectedCaseIds.indexOf(childView.model.id) !== -1) {
+                    let checkbox = childView.ui.selectRow[0];
+                    checkbox.checked = true;
+                }
+            });
+
+            // Update state of Continue button
+            self.ui.continueButtonText[0].innerText = self.selectedCaseIds.length;
+            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
+            // Reconcile state of "select all" checkbox
+            self.ui.selectAllCheckbox[0].checked = !_.difference(self._allCaseIds(), self.selectedCaseIds).length;
         },
 
         templateContext: function () {
