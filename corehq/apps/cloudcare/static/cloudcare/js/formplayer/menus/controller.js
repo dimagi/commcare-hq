@@ -149,9 +149,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
-        $('#select-case-for-multi-select').off('click').click(function () {
-            // todo: add logic to select case id via checkbox
-        });
     };
 
     var getDetailList = function (detailObject) {
