@@ -138,13 +138,6 @@ def patch_jsonfield():
 
     JSONField.to_python = to_python
 
-    import django
-    if django.VERSION < (3, 1):
-        # TODO remove after upgrading to Django 3.2
-        from django.contrib.postgres.fields.jsonb import JSONField
-        import django.db.models
-        django.db.models.JSONField = JSONField
-
 
 def set_default_settings_path(argv):
     if is_testing(argv):
