@@ -2,7 +2,8 @@
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+    var Constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
     var MenuView = Marionette.View.extend({
         tagName: function () {
@@ -34,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             var id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
+            if (this.model.collection.layoutStyle === Constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -101,7 +102,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: ".menus-container",
         getTemplate: function () {
             var id = "#menu-view-list-template";
-            if (this.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
+            if (this.collection.layoutStyle === Constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-template";
             }
             return _.template($(id).html() || "");
@@ -263,14 +264,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         selectRowAction: function (e) {
             if (e.target.checked) {
                 this.parentView.selectedCaseIds.push(this.model.get('id'));
-                FormplayerFrontend.trigger("multiSelect:addCases", [this.model.get('id')]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.model.get('id')]);
             } else {
                 const index = this.parentView.selectedCaseIds.indexOf(this.model.get('id'));
                 if (index > -1) {
                     this.parentView.selectedCaseIds.splice(index, 1);
                 }
                 this.parentView.ui.selectAllCheckbox[0].checked = false;
-                FormplayerFrontend.trigger("multiSelect:removeCases", [this.model.get('id')]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [this.model.get('id')]);
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
             this.parentView.reconcileSelectAll();
@@ -450,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     for (const value of childView.model.collection.models) {
                         if (self.selectedCaseIds.indexOf(value.id) === -1) {
                             self.selectedCaseIds.push(value.id);
-                            FormplayerFrontend.trigger("multiSelect:addCases", [value.id]);
+                            FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [value.id]);
                         }
                     }
                 } else {
@@ -458,7 +459,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                         let index = self.selectedCaseIds.indexOf(value.id);
                         if (index !== -1) {
                             self.selectedCaseIds.splice(index, 1);
-                            FormplayerFrontend.trigger("multiSelect:removeCases", [value.id]);
+                            FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [value.id]);
                         }
                     }
                 }
@@ -800,7 +801,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         selectCase: function () {
             if (this.isMultiSelect) {
-                FormplayerFrontend.trigger("multiSelect:addCases", [this.caseId]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
             }
