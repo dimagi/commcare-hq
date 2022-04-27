@@ -269,17 +269,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectRowAction: function (e) {
-            if (e.target.checked) {
-                this.parentView.selectedCaseIds.push(this.model.get('id'));
-                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.model.get('id')]);
-            } else {
-                const index = this.parentView.selectedCaseIds.indexOf(this.model.get('id'));
-                if (index > -1) {
-                    this.parentView.selectedCaseIds.splice(index, 1);
-                }
-                this.parentView.ui.selectAllCheckbox[0].checked = false;
-                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [this.model.get('id')]);
-            }
+            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, [this.model.get('id')]);
         },
 
         isChecked: function () {
