@@ -272,7 +272,7 @@ class CaseRuleCriteriaForm(forms.Form):
         required=True,
     )
     criteria_operator = forms.ChoiceField(
-        label=gettext_lazy("Critera Operator"),
+        label=gettext_lazy("Run when"),
         required=False,
         initial='ALL'
     )
