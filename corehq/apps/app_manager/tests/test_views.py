@@ -11,7 +11,6 @@ from unittest.mock import patch
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -24,7 +23,6 @@ from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
     AppFormSummaryView,
-    DownloadCaseSummaryView,
 )
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
