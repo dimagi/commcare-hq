@@ -333,16 +333,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.redoLast = options.redoLast;
             this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
             this.isMultiSelect = options.isMultiSelect;
-
-            var self = this;
-            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
         },
 
         ui: {
@@ -377,11 +367,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         onRender: function () {
-            if (sessionStorage.selectedValues && sessionStorage.selectedValues.length !== 0) {
-                this.selectedCaseIds = sessionStorage.selectedValues.split(',');
-                this.reconcileMultiSelectUI();
-                sessionStorage.selectedValues = [];
-            }
+            var self = this;
+            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
+                if (action === Constants.MULTI_SELECT_ADD) {
+                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+                } else {
+                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+                }
+                sessionStorage.selectedValues = self.selectedCaseIds.join(",");
+                self.reconcileMultiSelectUI();
+            });
+            this.reconcileMultiSelectUI();
         },
 
         caseListAction: function (e) {
@@ -417,7 +413,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             var casesPerPage = this.ui.casesPerPageLimit.val();
             FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
-            sessionStorage.selectedValues = this.selectedCaseIds;
         },
 
         paginationGoAction: function (e) {
@@ -463,7 +458,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         continueAction: function () {
-            sessionStorage.selectedValues = this.selectedCaseIds;
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         },
 
