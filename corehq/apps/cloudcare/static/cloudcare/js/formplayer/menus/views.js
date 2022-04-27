@@ -236,8 +236,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'click @ui.selectRow': 'selectRowAction',
             'keypress @ui.selectRow': 'selectRowAction',
         },
+
         initialize: function () {
+            var self = this;
             this.parentView = this.options.parentView;
+            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                if (_.contains(caseIds, self.model.get('id'))) {
+                    self.ui.selectRow[0].checked = action === Constants.MULTI_SELECT_ADD;
+                }
+            });
         },
 
         className: "formplayer-request",
