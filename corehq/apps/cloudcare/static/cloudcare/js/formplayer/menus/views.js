@@ -280,7 +280,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.parentView.ui.selectAllCheckbox[0].checked = false;
                 FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [this.model.get('id')]);
             }
-            this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
         },
 
         isChecked: function () {
@@ -352,6 +351,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
 
+                // Update state of Continue button
+                self.ui.continueButtonText[0].innerText = self.selectedCaseIds.length;
+                self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
                 // Reconcile state of "select all" checkbox
                 self.ui.selectAllCheckbox[0].checked = !_.difference(self._allCaseIds(), self.selectedCaseIds).length;
             });
@@ -369,6 +372,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             casesPerPageLimit: '.per-page-limit',
             selectAllCheckbox: "#select-all-checkbox",
             continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
         },
 
         events: {
@@ -464,7 +468,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         selectAllAction: function (e) {
             var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
-            this.updateContinueButtonText(this.selectedCaseIds.length);
         },
 
         _allCaseIds: function () {
@@ -478,15 +481,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         continueAction: function () {
             sessionStorage.selectedValues = this.selectedCaseIds;
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
-        },
-
-        updateContinueButtonText: function (newValue) {
-            document.getElementById('multi-select-btn-text').innerText = String(newValue);
-            if (this.selectedCaseIds.length === 0) {
-                this.ui.continueButton.prop("disabled", true);
-            } else {
-                this.ui.continueButton.prop("disabled", false);
-            }
         },
 
         updateCheckboxes: function () {
