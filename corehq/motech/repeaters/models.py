@@ -72,7 +72,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import models
-from django.db.models.base import ModelBase, Deferred
+from django.db.models.base import Deferred
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
