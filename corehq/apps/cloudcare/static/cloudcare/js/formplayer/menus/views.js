@@ -281,7 +281,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [this.model.get('id')]);
             }
             this.parentView.updateContinueButtonText(this.parentView.selectedCaseIds.length);
-            this.parentView.reconcileSelectAll();
         },
 
         isChecked: function () {
@@ -344,6 +343,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.redoLast = options.redoLast;
             this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
             this.isMultiSelect = options.isMultiSelect;
+
+            var self = this;
+            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                self.reconcileSelectAll();
+            });
         },
 
         ui: {
