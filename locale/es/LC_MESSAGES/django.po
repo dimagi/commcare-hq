@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 19:17+0000\n"
+"POT-Creation-Date: 2022-04-27 19:59+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Sravan Reddy <sreddy@dimagi.com>, 2017\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -3520,10 +3520,8 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:260
-#, fuzzy
-#| msgid "The report returned the following error"
 msgid "The request resulted in the following errors: {}"
-msgstr "El reporte retornó el siguiente error"
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:280
 msgid "Attempted to update unknown or non-editable field '{}'"
@@ -7369,11 +7367,8 @@ msgid "Followup: This form loads a case from a data registry"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:119
-#, fuzzy
-#| msgid "Followup: This form loads a case and may then update or close it"
 msgid "Followup: This form loads a set of cases"
 msgstr ""
-"Seguimiento: Este formulario carga un caso y puede actualizarlo o cerrarlo."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:121
 msgid "Followup: This form loads a case and may then update or close it"
@@ -7389,11 +7384,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:159
-#, fuzzy
-#| msgid ""
-#| "Printing the case detail is not supported on this version of CommCare"
 msgid "Updating cases directly is not supported for multi-select menus."
-msgstr "Esta versión de CommCare no permite la impresión de detalles del caso."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:186
 msgid ""
@@ -42846,170 +42838,3 @@ msgstr ""
 #: manage.py:136
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Generic Select"
-#~ msgstr "Selección Genérica"
-
-#~ msgid "Select Something..."
-#~ msgstr "Seleccione Algo..."
-
-#~ msgid "Select Case Owner"
-#~ msgstr "Seleccione un Propietario de Caso"
-
-#~ msgid "All Case Owners"
-#~ msgstr "Todos los Propietarios de Caso"
-
-#~ msgid "Name of the Block"
-#~ msgstr "Nombre del Bloque"
-
-#~ msgid "Select Block"
-#~ msgstr "Seleccionar Bloque"
-
-#~ msgid "Sub Center"
-#~ msgstr "Sub Centro"
-
-#~ msgid "ASHA"
-#~ msgstr "ASHA"
-
-#~ msgid "Type ASHA name"
-#~ msgstr "Nombre tipo ASHA"
-
-#~ msgid "Home"
-#~ msgstr "Hogar"
-
-#~ msgid "Hospital"
-#~ msgstr "Hospital"
-
-#~ msgid "Mother Name"
-#~ msgstr "Nombre de la Madre"
-
-#~ msgid "Baby Name"
-#~ msgstr "Nombre del Bebé"
-
-#~ msgid "CHW Name"
-#~ msgstr "Nombre CHW"
-
-#~ msgid "Date of Delivery"
-#~ msgstr "Fecha del Parto"
-
-#~ msgid "PNC Visit Completion"
-#~ msgstr "Fin de Visita PNC"
-
-#~ msgid "Delivery"
-#~ msgstr "Parto"
-
-#, python-format
-#~ msgid "%(report_name)s for (0-42 days after delivery)"
-#~ msgstr "%(report_name)s para (0-42 días después del parto)"
-
-#~ msgid "Mother HBNC Form"
-#~ msgstr "Formulario Madre HBNC"
-
-#~ msgid "A. Ask Mother."
-#~ msgstr "A. Preguntar a Madre."
-
-#~ msgid "Number of times mother takes full meals in 24 hours?"
-#~ msgstr ""
-#~ "¿Número de veces en que la madre toma comidas completas en 24 horas?"
-
-#~ msgid "Bleeding. How many Pads are changed in a day?"
-#~ msgstr "Sangrando. ¿Cuántas Compresas son cambiadas en un día?"
-
-#~ msgid "During the cold season is the baby being kept warm?"
-#~ msgstr "¿Durante la época de frío se mantiene caliente el bebé?"
-
-#~ msgid "Is the baby being fed properly?"
-#~ msgstr "¿Se está alimentando al bebé apropiadamente?"
-
-#~ msgid "Is the baby crying incessantly or passing urine less than 6 times?"
-#~ msgstr "¿Está el bebé llorando incesantemente u orinando menos de 6 veces?"
-
-#~ msgid "B. Examination of mother"
-#~ msgstr "B. Examen de la madre "
-
-#~ msgid "Temperature: Measure and Record?"
-#~ msgstr "Temperatura: ¿Medida y Registro?"
-
-#~ msgid "Foul Smelling Discharge?"
-#~ msgstr "¿Descargas con olor extraño?"
-
-#~ msgid "Mother has no milk since delivery or less milk"
-#~ msgstr "La madre no tiene leche desde el parto o menos leche"
-
-#~ msgid "C.  Examination of Baby"
-#~ msgstr "C. Examen del Bebé"
-
-#~ msgid "Eyes Swollen with pus?"
-#~ msgstr "¿Ojos cubiertos de pus?"
-
-#~ msgid "Weight (7,14,21,28)?"
-#~ msgstr "¿Peso (7,14,21,28)?"
-
-#~ msgid "Skin: Pus filled pustules?"
-#~ msgstr "Piel: ¿Pústulas llenas de pus?"
-
-#~ msgid "Cracks and Redness on the skin fold?"
-#~ msgstr "¿Grietas y enjorecimiento en los pliegues de la piel?"
-
-#~ msgid "Yellowness in eyes"
-#~ msgstr "Ojos amarillos"
-
-#~ msgid "D.  Sepsis Signs Checkup"
-#~ msgstr "D. Revisión de Signos de Sepsis"
-
-#~ msgid "Feeding Less/Stopped?"
-#~ msgstr "¿Alimentación Menor/Se detuvo?"
-
-#~ msgid "Cry Weak/Stopped?"
-#~ msgstr "¿Llanto Débil/Se detuvo?"
-
-#~ msgid "Distant Abdomen?"
-#~ msgstr "¿Abdomen Distendido?"
-
-#~ msgid "Baby Cold to touch?"
-#~ msgstr "¿Bebé Frío al tacto?"
-
-#~ msgid "Pus on umbilicus?"
-#~ msgstr "¿Pus en el ombligo?"
-
-#~ msgid "Print to PDF"
-#~ msgstr "Imprimir en PDF"
-
-#~ msgid "Mother's Name:"
-#~ msgstr "Nombre de la Madre:"
-
-#~ msgid "Fathers Name:"
-#~ msgstr "Nombre del Padre:"
-
-#~ msgid "Village:"
-#~ msgstr "Aldea:"
-
-#~ msgid "Date of Birth:"
-#~ msgstr "Fecha de Nacimiento:"
-
-#~ msgid "Day 1"
-#~ msgstr "Día 1"
-
-#~ msgid "Day 2"
-#~ msgstr "Día 2"
-
-#~ msgid "Day 3"
-#~ msgstr "Día 3"
-
-#~ msgid "Day 7"
-#~ msgstr "Día 7"
-
-#~ msgid "Day 14"
-#~ msgstr "Día 14"
-
-#~ msgid "Day 21"
-#~ msgstr "Día 21"
-
-#~ msgid "Day 28"
-#~ msgstr "Día 28"
-
-#~ msgid "Action Taken"
-#~ msgstr "Acción Tomada"
-
-#~ msgid "Day 42"
-#~ msgstr "Día 42"

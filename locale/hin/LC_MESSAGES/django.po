@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 19:17+0000\n"
+"POT-Creation-Date: 2022-04-27 19:59+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Zsolt Bölöny <bolony.zsolt@gmail.com>, 2013\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -41264,12 +41264,3 @@ msgstr ""
 #: manage.py:136
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "ASHA"
-#~ msgstr "आशा"
-
-#~ msgid "Mother Name"
-#~ msgstr "नाम"
-
-#~ msgid "CHW Name"
-#~ msgstr "नाम"

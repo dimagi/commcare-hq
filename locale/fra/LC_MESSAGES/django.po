@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 19:17+0000\n"
+"POT-Creation-Date: 2022-04-27 19:59+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -3537,10 +3537,8 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:260
-#, fuzzy
-#| msgid "The report returned the following error"
 msgid "The request resulted in the following errors: {}"
-msgstr "Le rapport contient les erreurs suivantes "
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:280
 msgid "Attempted to update unknown or non-editable field '{}'"
@@ -7265,13 +7263,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:159
-#, fuzzy
-#| msgid ""
-#| "Printing the case detail is not supported on this version of CommCare"
 msgid "Updating cases directly is not supported for multi-select menus."
 msgstr ""
-"L'impression des détails de dossier ne sont pas pris en compte par cette "
-"version de CommCare"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:186
 msgid ""
@@ -42779,207 +42772,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py:136
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Generic Select"
-#~ msgstr "Sélection générique"
-
-#~ msgid "Select Something..."
-#~ msgstr "Sélectionner un élément..."
-
-#~ msgid "Select Case Owner"
-#~ msgstr "Sélectionner un propriétaire de dossier"
-
-#~ msgid "All Case Owners"
-#~ msgstr "Tous les propriétaires de dossier"
-
-#~ msgid "Name of the Block"
-#~ msgstr "Nom du Bloc"
-
-#~ msgid "Select Block"
-#~ msgstr "Sélectionner un bloc"
-
-#~ msgid "Sub Center"
-#~ msgstr "Sous-centre"
-
-#~ msgid "ASHA"
-#~ msgstr "ASHA"
-
-#~ msgid "Type ASHA name"
-#~ msgstr "Entrez le nom d'ASHA"
-
-#~ msgid "Home"
-#~ msgstr "Accueil"
-
-#~ msgid "Hospital"
-#~ msgstr "Hôpital"
-
-#~ msgid "Mother Name"
-#~ msgstr "Nom de la mère"
-
-#~ msgid "Baby Name"
-#~ msgstr "Nom du bébé"
-
-#~ msgid "CHW Name"
-#~ msgstr "Nom de TSC"
-
-#~ msgid "Date of Delivery"
-#~ msgstr "Date d'accouchement"
-
-#~ msgid "PNC Visit Completion"
-#~ msgstr "Exécution de visite PNC"
-
-#~ msgid "Delivery"
-#~ msgstr "Accouchement"
-
-#, python-format
-#~ msgid "%(report_name)s for (0-42 days after delivery)"
-#~ msgstr "%(report_name)s pour (0 à 42 jours après la accouchement)"
-
-#~ msgid "Mother HBNC Form"
-#~ msgstr "Formulaire mère HBNC"
-
-#~ msgid "A. Ask Mother."
-#~ msgstr "A. Demander à ta mère."
-
-#~ msgid "Number of times mother takes full meals in 24 hours?"
-#~ msgstr "Nombre de fois la mère prend des repas complets en 24 heures ?"
-
-#~ msgid "Bleeding. How many Pads are changed in a day?"
-#~ msgstr ""
-#~ "Saignement. Combien de fois les serviettes sanitaires sont-elles changées "
-#~ "dans une journée ?"
-
-#~ msgid "During the cold season is the baby being kept warm?"
-#~ msgstr "Pendant la saison froide, le bébé est-il tenu au chaud ?"
-
-#~ msgid "Is the baby being fed properly?"
-#~ msgstr "Le bébé est-il nourri de manière appropriée ?"
-
-#~ msgid "Is the baby crying incessantly or passing urine less than 6 times?"
-#~ msgstr "Le bébé pleure-t-il constamment ou urine-t-il moins de 6 fois ?"
-
-#~ msgid "B. Examination of mother"
-#~ msgstr "B. Examen de la mère"
-
-#~ msgid "Temperature: Measure and Record?"
-#~ msgstr "Température : Mesurer et enregistrer ?"
-
-#~ msgid "Foul Smelling Discharge?"
-#~ msgstr "Écoulement nauséabond ?"
-
-#~ msgid "Is mother speaking normally or having fits"
-#~ msgstr "La mère parle-t-elle normalement ou a-t-elle des crises"
-
-#~ msgid "Mother has no milk since delivery or less milk"
-#~ msgstr "La mère n'a pas de lait depuis l'accouchement ou moins de lait"
-
-#~ msgid "Cracked Nipples/Painful or Engorged Breast/"
-#~ msgstr "Mamelons fissurés / douloureux ou Sein engorgé / "
-
-#~ msgid "C.  Examination of Baby"
-#~ msgstr "C. Examen du bébé"
-
-#~ msgid "Eyes Swollen with pus?"
-#~ msgstr "Yeux gonflés avec pus ?"
-
-#~ msgid "Weight (7,14,21,28)?"
-#~ msgstr "Poids (7, 14, 21, 18 ) ?"
-
-#~ msgid "Skin: Pus filled pustules?"
-#~ msgstr "Peau : Pustules remplis de pus ?"
-
-#~ msgid "Cracks and Redness on the skin fold?"
-#~ msgstr "Fissures et rougeur sur le pli de peau ?"
-
-#~ msgid "Yellowness in eyes"
-#~ msgstr "Aspect jaunâtre des yeux"
-
-#~ msgid "D.  Sepsis Signs Checkup"
-#~ msgstr "D.  Vérification des symptômes de sepsis"
-
-#~ msgid "All limbs up?"
-#~ msgstr "Tous les membres en haut ?"
-
-#~ msgid "Feeding Less/Stopped?"
-#~ msgstr "Alimentation réduite / arrêtée ?"
-
-#~ msgid "Cry Weak/Stopped?"
-#~ msgstr "Pleur faible / arrêté ?"
-
-#~ msgid "Distant Abdomen?"
-#~ msgstr "Abdomen reculé ?"
-
-#~ msgid "Baby Cold to touch?"
-#~ msgstr "Le bébé est froid au toucher ?"
-
-#~ msgid "Chest Indrawing?"
-#~ msgstr "Tirage sous-costal ?"
-
-#~ msgid "Pus on umbilicus?"
-#~ msgstr "Présence de pus sur l'ombilic ?"
-
-#~ msgid "Print to PDF"
-#~ msgstr "Imprimer en PDF"
-
-#~ msgid "Mother's Name:"
-#~ msgstr "Nom de la mère:"
-
-#~ msgid "Fathers Name:"
-#~ msgstr "Nom du père:"
-
-#~ msgid "Village:"
-#~ msgstr "Village:"
-
-#~ msgid "Date of Birth:"
-#~ msgstr "Date de naissance:"
-
-#~ msgid "Ask/Examine date of ASHA's visit"
-#~ msgstr "Date de demande / examen de la visite ASHA"
-
-#~ msgid "Day 1"
-#~ msgstr "Jour 1"
-
-#~ msgid "Day 2"
-#~ msgstr "Jour 2"
-
-#~ msgid "Day 3"
-#~ msgstr "Jour 3"
-
-#~ msgid "Day 7"
-#~ msgstr "Jour 7"
-
-#~ msgid "Day 14"
-#~ msgstr "Jour 14"
-
-#~ msgid "Day 21"
-#~ msgstr "Jour 21"
-
-#~ msgid "Day 28"
-#~ msgstr "Jour 28"
-
-#~ msgid "Action by the Asha"
-#~ msgstr "Action par le Asha"
-
-#~ msgid "Action Taken"
-#~ msgstr "Action prise"
-
-#~ msgid "Day 42"
-#~ msgstr "Jour 42"
-
-#~ msgid "Supervisor Check"
-#~ msgstr "Vérification du superviseur"
-
-#~ msgid "Supervisor's note: "
-#~ msgstr "Remarque du superviseur : "
-
-#~ msgid "Incomplete work/incorrect work/incorrect record/ "
-#~ msgstr "Tâche incomplète / tâche non correcte / dossier incorrect / "
-
-#~ msgid "Name of ASHA:"
-#~ msgstr "Nom d'ASHA :"
-
-#~ msgid "Date:"
-#~ msgstr "Date :"
-
-#~ msgid "Name of Trainer/Facilitator"
-#~ msgstr "Nom de l'entraîneur / facilitateur"
