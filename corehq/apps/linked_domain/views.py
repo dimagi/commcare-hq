@@ -93,7 +93,7 @@ from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app,
     server_to_user_time,
     user_has_admin_access_in_all_domains,
-    can_domain_access_release_management,
+    can_domain_access_linked_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -328,7 +328,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
-                'has_full_access': can_domain_access_release_management(self.domain, include_lite_version=False),
+                'has_full_access': can_domain_access_linked_domains(self.domain, include_lite_version=False),
             },
         }
 

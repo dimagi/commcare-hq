@@ -22,7 +22,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
     def setUp(self):
         super().setUp()
 
-        access_patcher = patch('corehq.tabs.tabclasses.can_user_access_release_management')
+        access_patcher = patch('corehq.tabs.tabclasses.can_user_access_linked_domains')
         self.mock_can_access = access_patcher.start()
         self.addCleanup(access_patcher.stop)
 
@@ -35,7 +35,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
         self.mock_reverse.return_value = 'dummy_url'
         self.addCleanup(reverse_patcher.stop)
 
-    def test_returns_none_if_cannot_user_access_release_management(self):
+    def test_returns_none_if_user_does_not_have_access(self):
         self.mock_can_access.return_value = False
 
         title, items = _get_release_management_items(self.user, "domain")
@@ -43,7 +43,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
         self.assertFalse(title)
         self.assertFalse(items)
 
-    def test_returns_erm_if_can_access_full_release_management(self):
+    def test_returns_erm_if_user_has_full_access(self):
         self.mock_can_access.return_value = True
         self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == RELEASE_MANAGEMENT
 
@@ -53,7 +53,7 @@ class TestAccessToReleaseManagementTab(SimpleTestCase):
         self.assertEqual(items[0]['title'], 'Linked Project Spaces')
         self.assertEqual(items[1]['title'], 'Linked Project Space History')
 
-    def test_returns_mrm_if_has_privilege_but_not_admin(self):
+    def test_returns_mrm_if_user_has_lite_access(self):
         self.mock_can_access.return_value = True
         self.mock_domain_has_privilege.side_effect = lambda domain, privilege: privilege == LITE_RELEASE_MANAGEMENT
 
