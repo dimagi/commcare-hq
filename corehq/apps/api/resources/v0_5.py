@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
-from django.forms import ValidationError
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -18,7 +18,6 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -43,7 +42,6 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.esaccessors import (
@@ -60,8 +58,6 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.sms.util import strip_plus
-from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -82,7 +78,6 @@ from corehq.apps.userreports.util import (
     get_configurable_and_static_reports,
     get_report_config_or_not_found,
 )
-from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
@@ -108,6 +103,8 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+from ..exceptions import InvalidFormatException, InvalidFieldException, UpdateConflictException
+from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
 
@@ -200,7 +197,6 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
-    immutable_fields = ['id', 'username']
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -260,7 +256,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
         if errors:
-            formatted_errors = ' '.join(errors)
+            formatted_errors = ', '.join(errors)
             raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
         assert bundle.obj.domain == kwargs['domain']
         bundle.obj.save()
@@ -278,100 +274,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def _update(cls, bundle, user_change_logger=None):
         errors = []
         for key, value in bundle.data.items():
-            if key in cls.immutable_fields:
-                errors.append(_('Cannot update a mobile user\'s {}.').format(key))
-                continue
-            if getattr(bundle.obj, key, None) != value:
-                if key == 'phone_numbers':
-                    old_phone_numbers = set(bundle.obj.phone_numbers)
-                    new_phone_numbers = set()
-                    bundle.obj.phone_numbers = []
-                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        formatted_phone_number = strip_plus(phone_number)
-                        new_phone_numbers.add(formatted_phone_number)
-                        bundle.obj.add_phone_number(formatted_phone_number)
-                        if idx == 0:
-                            bundle.obj.set_default_phone_number(formatted_phone_number)
-
-                    if user_change_logger:
-                        (numbers_added, numbers_removed) = find_differences_in_list(
-                            target=list(new_phone_numbers),
-                            source=list(old_phone_numbers)
-                        )
-
-                        change_messages = {}
-                        if numbers_removed:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
-                            )
-
-                        if numbers_added:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
-                            )
-
-                        if change_messages:
-                            user_change_logger.add_change_message({'phone_numbers': change_messages})
-                elif key == 'default_phone_number':
-                    old_phone_numbers = set(bundle.obj.phone_numbers)
-                    phone_number = bundle.data.get('default_phone_number')
-                    if not isinstance(phone_number, str):
-                        errors.append(_('{} must be a string.'.format(key)))
-                        continue
-                    formatted_phone_number = strip_plus(phone_number)
-                    bundle.obj.set_default_phone_number(formatted_phone_number)
-
-                    if user_change_logger:
-                        (numbers_added, numbers_removed) = find_differences_in_list(
-                            target=list(phone_number),
-                            source=list(old_phone_numbers)
-                        )
-
-                        change_messages = {}
-                        if numbers_added:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
-                            )
-                            user_change_logger.add_change_message({'phone_numbers': change_messages})
-
-                elif key == 'groups':
-                    group_ids = bundle.data.get("groups", [])
-                    groups_updated = bundle.obj.set_groups(group_ids)
-                    if user_change_logger and groups_updated:
-                        groups = []
-                        if group_ids:
-                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
-                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
-                elif key == 'email':
-                    lowercase_value = value.lower()
-                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
-                        user_change_logger.add_changes({key: lowercase_value})
-                    setattr(bundle.obj, key, lowercase_value)
-                elif key == 'password':
-                    domain = Domain.get_by_name(bundle.obj.domain)
-                    if domain.strong_mobile_passwords:
-                        try:
-                            clean_password(bundle.data.get("password"))
-                        except ValidationError as e:
-                            errors.append(e.message)
-                    bundle.obj.set_password(bundle.data.get("password"))
-                    if user_change_logger:
-                        user_change_logger.add_change_message(UserChangeMessage.password_reset())
-                elif key == 'user_data':
-                    try:
-                        original_user_data = bundle.obj.metadata.copy()
-                        bundle.obj.update_metadata(value)
-                        # check changes post update to account for any changes in update_metadata
-                        if user_change_logger and original_user_data != bundle.obj.user_data:
-                            user_change_logger.add_changes({'user_data': bundle.obj.user_data})
-                    except ValueError as e:
-                        raise BadRequest(str(e))
-                elif key in ['first_name', 'last_name', 'language']:
-                    if user_change_logger and getattr(bundle.obj, key) != value:
-                        user_change_logger.add_changes({key: value})
-                    setattr(bundle.obj, key, value)
-                else:
-                    errors.append(_('Attempted to update unknown field {}.').format(key))
+            try:
+                update(bundle.obj, key, value, user_change_logger)
+            except InvalidFieldException as e:
+                errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
+            except InvalidFormatException as e:
+                errors.append(_('{} must be a {}').format(e.field, e.expected_type))
+            except (UpdateConflictException, ValidationError) as e:
+                errors.append(e.message)
 
         return errors
 
