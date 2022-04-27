@@ -346,6 +346,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             var self = this;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                if (action === Constants.MULTI_SELECT_ADD) {
+                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+                } else {
+                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+                }
                 self.reconcileSelectAll();
             });
         },
