@@ -351,7 +351,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-                self.reconcileSelectAll();
+
+                // Reconcile state of "select all" checkbox
+                self.ui.selectAllCheckbox[0].checked = !_.difference(self._allCaseIds(), self.selectedCaseIds).length;
             });
         },
 
@@ -460,35 +462,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            var self = this;
-            this.children.each(function (childView) {
-                childView.ui.selectRow[0].checked = e.target.checked;
-                if (e.target.checked) {
-                    for (const value of childView.model.collection.models) {
-                        if (self.selectedCaseIds.indexOf(value.id) === -1) {
-                            self.selectedCaseIds.push(value.id);
-                            FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [value.id]);
-                        }
-                    }
-                } else {
-                    for (const value of childView.model.collection.models) {
-                        let index = self.selectedCaseIds.indexOf(value.id);
-                        if (index !== -1) {
-                            self.selectedCaseIds.splice(index, 1);
-                            FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_REMOVE, [value.id]);
-                        }
-                    }
-                }
-            });
+            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
             this.updateContinueButtonText(this.selectedCaseIds.length);
         },
 
-        reconcileSelectAll: function () {
-            var allSelected = true;
+        _allCaseIds: function () {
+            var caseIds = [];
             this.children.each(function (childView) {
-                allSelected = allSelected && childView.isChecked();
+                caseIds.push(childView.model.get('id'));
             });
-            this.ui.selectAllCheckbox[0].checked = allSelected;
+            return caseIds;
         },
 
         continueAction: function () {
