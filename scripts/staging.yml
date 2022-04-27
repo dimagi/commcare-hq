@@ -78,7 +78,7 @@ branches:
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - smh/multi-select-qa-followup # Steph April 22
     - jls/toggles-in-build-errors # Jenny April 26
-    - jls/overwrite-shadow-multi-select # Jenny April 26
+    - jls/multi-select-select-button # Jenny April 27
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/autoupdate-criteria-operator # Addison April 26
