@@ -778,9 +778,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
         className: "",
-        events: {
-            "click": "tabClick",
-        },
         getTemplate: function () {
             var id = "#module-case-detail";
             if (this.isPersistentDetail) {
