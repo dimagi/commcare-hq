@@ -141,6 +141,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
         var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
             model: model,
+            caseId: caseId,
             isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
@@ -148,9 +149,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
-        $('#select-case').off('click').click(function () {
-            FormplayerFrontend.trigger("menu:select", caseId);
-        });
         $('#select-case-for-multi-select').off('click').click(function () {
             // todo: add logic to select case id via checkbox
         });

@@ -778,6 +778,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
         className: "",
+        events: {
+            "click #select-case": "selectCase",
+        },
         getTemplate: function () {
             var id = "#module-case-detail";
             if (this.isPersistentDetail) {
@@ -790,6 +793,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.isPersistentDetail = options.model.get('isPersistentDetail');
             this.isMultiSelect = options.isMultiSelect;
+            this.caseId = options.caseId;
+        },
+        selectCase: function () {
+            FormplayerFrontend.trigger("menu:select", this.caseId);
         },
     });
 
