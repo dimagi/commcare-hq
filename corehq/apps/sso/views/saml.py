@@ -4,7 +4,7 @@ from django.http import (
     HttpResponseServerError,
     HttpResponseRedirect,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
@@ -25,6 +25,7 @@ from corehq.apps.sso.utils.url_helpers import (
     add_username_hint_to_login_url,
 )
 from corehq.apps.sso.utils.view_helpers import (
+    render_sso_user_login_failed,
     render_saml_acs_error,
 )
 
@@ -76,7 +77,7 @@ def sso_saml_acs(request, idp_slug):
         )
 
     if not request.saml2_auth.is_authenticated():
-        return render(request, 'sso/sso_request_denied.html', {})
+        return render_sso_user_login_failed(request)
 
     if 'AuthNRequestID' in request.session:
         del request.session['AuthNRequestID']
