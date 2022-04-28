@@ -44,6 +44,9 @@
                         as: 'caseConfig',
                         afterRender: initCaseConfigTemplate
                     }"></div>
+    <div data-bind="visible: isError()">
+        <p data-bind="text: errorMessage()"></p>
+    </div>
     <p>
         <button type="button"
                 class="btn btn-primary"
