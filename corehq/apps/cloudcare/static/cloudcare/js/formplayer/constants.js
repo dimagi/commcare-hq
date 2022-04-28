@@ -15,5 +15,8 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
             LIST: 'list',
         },
         DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE: 20,
+
+        MULTI_SELECT_ADD: 'add',
+        MULTI_SELECT_REMOVE: 'remove',
     };
 });
