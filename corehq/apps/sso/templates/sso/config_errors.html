@@ -15,7 +15,7 @@
               {% endblocktrans %}
             </h2>
 
-            {% if error.code == error.REDIRECT_INVALID_URL %}
+            {% if is_saml and error.code == error.REDIRECT_INVALID_URL %}
               <p class="lead">
                 {% blocktrans %}
                   Your Redirect URL is invalid.
@@ -42,7 +42,7 @@
                 {% endblocktrans %}
               </p>
             {% else %}
-              {% if error.code == error.SETTINGS_INVALID %}
+              {% if is_saml and error.code == error.SETTINGS_INVALID %}
                 <p class="lead">
                   {% blocktrans %}
                     It looks like your setup is not complete.
@@ -55,7 +55,7 @@
                     for setting up SSO.
                   {% endblocktrans %}
                 </p>
-              {% elif error.code == error.CERT_NOT_FOUND %}
+              {% elif is_saml and error.code == error.CERT_NOT_FOUND %}
                 <p class="lead">
                   {% blocktrans %}
                     It looks like we are missing your certificate.
