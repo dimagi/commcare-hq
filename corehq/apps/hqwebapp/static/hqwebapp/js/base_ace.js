@@ -98,6 +98,7 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             observable(editor.getSession().getValue());
         });
+        editor.session.setOption("useWorker", true);
         self.editor.push(editor);
     };
 
