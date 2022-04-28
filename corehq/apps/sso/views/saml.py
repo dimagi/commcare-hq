@@ -19,13 +19,13 @@ from corehq.apps.sso.decorators import (
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
-from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
 )
 from corehq.apps.sso.utils.url_helpers import (
     get_documentation_url,
     get_saml_login_url,
+    add_username_hint_to_login_url,
 )
 
 
@@ -146,12 +146,8 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    login_url = request.saml2_auth.login(return_to=request.GET.get('next'))
-    username = request.GET.get('username')
-    if username:
-        # verify that the stored user data actually the current IdP
-        idp = IdentityProvider.get_active_identity_provider_by_username(username)
-        if idp and idp.slug == idp_slug:
-            # pre-populate username for Azure AD
-            login_url = f'{login_url}&login_hint={username}'
+    login_url = add_username_hint_to_login_url(
+        request.saml2_auth.login(return_to=request.GET.get('next')),
+        request
+    )
     return HttpResponseRedirect(login_url)
