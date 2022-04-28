@@ -1,14 +1,13 @@
-import dataclasses
 import uuid
+from collections import namedtuple
 from datetime import timedelta
-from typing import Optional
-
-from couchdbkit import MultipleResultsFound
 
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_noop
+
+from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
@@ -20,6 +19,7 @@ from corehq.messaging.scheduling.util import utcnow
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
+
 from . import signals  # noqa: F401
 
 XFORMS_SESSION_SMS = "SMS"
@@ -401,7 +401,7 @@ class XFormsSessionSynchronization:
     def _release_running_session_info_for_channel(cls, running_session_info, channel):
         # Drop the session_id but keep the contact_id
         # This will let incoming SMS keep affinity with that contact_id until a new session starts
-        running_session_info = dataclasses.replace(running_session_info, session_id=None)
+        running_session_info = running_session_info._replace(session_id=None)
         cls._set_running_session_info_for_channel(
             channel, running_session_info,
             # Keep affinity for 30 days
@@ -444,16 +444,8 @@ def get_channel_for_contact(contact_id, phone_number):
     )
 
 
-@dataclasses.dataclass(frozen=True)
-class RunningSessionInfo:
-    session_id: Optional[str]
-    contact_id: Optional[str]
-
-
-@dataclasses.dataclass(frozen=True)
-class SMSChannel:
-    """A channel is a connection between a gateway on our end and a phone number on the user end.
-    A single channel can be used by multiple contacts,
-    but each channel should only have one active session at a time"""
-    backend_id: Optional[str]
-    phone_number: str
+RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id'])
+# A channel is a connection between a gateway on our end an a phone number on the user end
+# A single channel can be used by multiple contacts,
+# but each channel should only have one active session at a time
+SMSChannel = namedtuple('SMSChannel', ['backend_id', 'phone_number'])
