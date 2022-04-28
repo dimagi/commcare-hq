@@ -25,7 +25,9 @@ of all unknown users, web users, and demo users on a domain.
 from copy import deepcopy
 
 from . import filters, queries
+from .client import ElasticDocumentAdapter
 from .es_query import HQESQuery
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class UserES(HQESQuery):
@@ -62,6 +64,20 @@ class UserES(HQESQuery):
     def show_only_inactive(self):
         query = self.remove_default_filter('active')
         return query.is_active(False)
+
+
+class ElasticUser(ElasticDocumentAdapter):
+
+    _index_name = "hqusers_2017-09-07"
+    type = "user"
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def domain(domain, allow_enterprise=False):
