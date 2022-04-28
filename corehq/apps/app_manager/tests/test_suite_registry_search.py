@@ -46,7 +46,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
         self.app._id = '123'
-        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Followup", None))
         self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.form.requires = 'case'
@@ -189,6 +189,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_case_detail_tabs_with_registry_module(self, *args):
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
             DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
@@ -295,7 +296,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         super().setUp()
         self.app = Application.new_app(DOMAIN, "Application with Shadow")
         self.app._id = '456'
-        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
+        self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Followup", None))
         self.form = self.app.new_form(0, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         self.form.requires = 'case'
