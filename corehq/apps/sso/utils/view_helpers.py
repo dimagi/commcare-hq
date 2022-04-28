@@ -1,7 +1,8 @@
 from django.shortcuts import render
 
 from django.utils.translation import gettext as _
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
+from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
 
 def render_untrusted_identity_provider_for_domain_view(request, domain):
@@ -30,3 +31,14 @@ def render_untrusted_identity_provider_for_domain_view(request, domain):
         'identity_provider': identity_provider.name,
     }
     return render(request, template, context)
+
+
+def render_sso_error(request, error):
+    return render(request, 'sso/config_errors.html', {
+        'idp_is_active': request.idp.is_active,
+        'idp_name': request.idp.name,
+        'error': error,
+        'docs_link': get_documentation_url(request.idp),
+        'is_saml': request.idp.protocol == IdentityProviderProtocol.SAML,
+        'is_oidc': request.idp.protocol == IdentityProviderProtocol.OIDC,
+    })
