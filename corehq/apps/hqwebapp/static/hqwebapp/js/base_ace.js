@@ -6,6 +6,7 @@ hqDefine('hqwebapp/js/base_ace', [
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
     'ace-builds/src-min-noconflict/ext-searchbox',
+    'ace-builds/webpack-resolver',
 ], function (
     $,
     _,
@@ -98,6 +99,7 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             observable(editor.getSession().getValue());
         });
+        editor.session.setOption("useWorker", true);
         self.editor.push(editor);
     };
 
