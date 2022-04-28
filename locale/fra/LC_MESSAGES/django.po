@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 19:17+0000\n"
+"POT-Creation-Date: 2022-04-28 15:53+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -3537,10 +3537,8 @@ msgid "No matching '{field_name}' field for ordering"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:260
-#, fuzzy
-#| msgid "The report returned the following error"
 msgid "The request resulted in the following errors: {}"
-msgstr "Le rapport contient les erreurs suivantes "
+msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py:280
 msgid "Attempted to update unknown or non-editable field '{}'"
@@ -4142,7 +4140,7 @@ msgstr ""
 #: corehq/apps/app_manager/models.py:2612
 #: corehq/apps/app_manager/models.py:3127
 #: corehq/apps/app_manager/models.py:3142
-#: corehq/apps/app_manager/views/modules.py:765
+#: corehq/apps/app_manager/views/modules.py:766
 #: corehq/apps/reports/views.py:1856 corehq/apps/reports/views.py:1883
 msgid "Untitled Form"
 msgstr "Formulaire sans Titre"
@@ -6206,7 +6204,7 @@ msgstr "Recueillir des données une fois."
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:106
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:234
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:418
-#: corehq/apps/app_manager/views/modules.py:499
+#: corehq/apps/app_manager/views/modules.py:500
 #: corehq/apps/reports/standard/cases/basic.py:149
 msgid "Case List"
 msgstr "Liste de dossiers"
@@ -6265,7 +6263,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:167
 #: corehq/apps/app_manager/views/forms.py:500
-#: corehq/apps/app_manager/views/modules.py:1409
+#: corehq/apps/app_manager/views/modules.py:1411
 #: corehq/apps/reminders/forms.py:153 corehq/apps/reminders/forms.py:176
 #: corehq/apps/reminders/forms.py:184 corehq/apps/sms/filters.py:34
 msgid "Survey"
@@ -7265,13 +7263,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:159
-#, fuzzy
-#| msgid ""
-#| "Printing the case detail is not supported on this version of CommCare"
 msgid "Updating cases directly is not supported for multi-select menus."
 msgstr ""
-"L'impression des détails de dossier ne sont pas pris en compte par cette "
-"version de CommCare"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:186
 msgid ""
@@ -8270,7 +8263,7 @@ msgid "Display Properties"
 msgstr "Propriétés d'affichage"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html:16
-#: corehq/apps/app_manager/views/modules.py:500
+#: corehq/apps/app_manager/views/modules.py:501
 #: corehq/apps/cloudcare/templates/formplayer/case_detail.html:56
 msgid "Case Detail"
 msgstr "Détail de dossier"
@@ -10699,13 +10692,13 @@ msgstr ""
 msgid "Your linked application was successfully updated to the latest version."
 msgstr "Votre application liée a été mise à jour avec succès."
 
-#: corehq/apps/app_manager/views/download.py:46
+#: corehq/apps/app_manager/views/download.py:47
 msgid ""
 "Sorry: this build is invalid. Try deleting it and rebuilding. If error "
 "persists, please report an issue"
 msgstr ""
 
-#: corehq/apps/app_manager/views/download.py:429
+#: corehq/apps/app_manager/views/download.py:430
 msgid ""
 "We were unable to get your files because your Application has errors. Please "
 "click <strong>Make New Version</strong> for feedback on how to fix these "
@@ -10778,79 +10771,79 @@ msgstr "Impossible de valider les formulaires dû à une erreur de serveur. "
 msgid "All Programs"
 msgstr "Tous programmes"
 
-#: corehq/apps/app_manager/views/modules.py:212
+#: corehq/apps/app_manager/views/modules.py:213
 msgid "Load external case into form"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:213
+#: corehq/apps/app_manager/views/modules.py:214
 msgid "Smart link to external domain"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:481
+#: corehq/apps/app_manager/views/modules.py:482
 msgid "Case list used by Select Parent First in '{}' not found"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:524
+#: corehq/apps/app_manager/views/modules.py:525
 msgid "Product List"
 msgstr "Liste de produit"
 
-#: corehq/apps/app_manager/views/modules.py:525
+#: corehq/apps/app_manager/views/modules.py:526
 msgid "Product Detail"
 msgstr "Détail de produit"
 
-#: corehq/apps/app_manager/views/modules.py:543
+#: corehq/apps/app_manager/views/modules.py:544
 msgid "'Menu Mode' is not configured as 'Display menu and then forms'"
 msgstr ""
 "Le \"mode menu\" n'est pas configuré sur \"Afficher le menu puis les "
 "formulaires\""
 
-#: corehq/apps/app_manager/views/modules.py:545
+#: corehq/apps/app_manager/views/modules.py:546
 msgid ""
 "all forms in this case list must update a case, which means that "
 "registration forms must go in a different case list"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:550
+#: corehq/apps/app_manager/views/modules.py:551
 msgid "'Parent Selection' is configured"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:681
-#: corehq/apps/app_manager/views/modules.py:1177
+#: corehq/apps/app_manager/views/modules.py:682
+#: corehq/apps/app_manager/views/modules.py:1178
 msgid "The case hierarchy contains a circular reference."
 msgstr "L'hiérarchie des dossiers contient une référence circulaire. "
 
-#: corehq/apps/app_manager/views/modules.py:818
+#: corehq/apps/app_manager/views/modules.py:819
 msgid "\"{}\" has sub-menus. You must remove these before you can delete it."
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:839
+#: corehq/apps/app_manager/views/modules.py:840
 #, python-brace-format
 msgid ""
 "You have deleted \"{deleted_names}\". <a href=\"{restore_url}\" class=\"post-"
 "link\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:914
+#: corehq/apps/app_manager/views/modules.py:915
 msgid "Case type {} does not match current menu."
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:921
+#: corehq/apps/app_manager/views/modules.py:922
 msgid "Updated {}"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:928
+#: corehq/apps/app_manager/views/modules.py:929
 msgid "Could not update {}"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:939
+#: corehq/apps/app_manager/views/modules.py:940
 msgid "Please choose at least one menu to overwrite."
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:942
+#: corehq/apps/app_manager/views/modules.py:943
 msgid "Please choose at least one option to overwrite."
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1033
+#: corehq/apps/app_manager/views/modules.py:1034
 msgid ""
 "\n"
 "                    The case search property '{}' is missing the following "
@@ -10858,59 +10851,59 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1310
-#: corehq/apps/app_manager/views/modules.py:1326
+#: corehq/apps/app_manager/views/modules.py:1311
+#: corehq/apps/app_manager/views/modules.py:1327
 msgid "There was a problem processing your request."
 msgstr "Il y a eu un problème pour procéder à votre requête."
 
-#: corehq/apps/app_manager/views/modules.py:1393
+#: corehq/apps/app_manager/views/modules.py:1395
 msgid "Registration Form"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1399
+#: corehq/apps/app_manager/views/modules.py:1401
 msgid ""
 "This is your follow up form. Delete this label and add questions for any "
 "follow up visits."
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1402
+#: corehq/apps/app_manager/views/modules.py:1404
 msgid "Followup Form"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1444
+#: corehq/apps/app_manager/views/modules.py:1446
 msgid "Registration"
 msgstr "Inscription"
 
-#: corehq/apps/app_manager/views/modules.py:1446
-#: corehq/apps/app_manager/views/modules.py:1494
+#: corehq/apps/app_manager/views/modules.py:1448
+#: corehq/apps/app_manager/views/modules.py:1496
 msgid "Enroll New Person"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1451
+#: corehq/apps/app_manager/views/modules.py:1453
 msgid "What is your name?"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1452
+#: corehq/apps/app_manager/views/modules.py:1454
 msgid "Scan Fingerprints"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1486
+#: corehq/apps/app_manager/views/modules.py:1488
 msgid "Identify Registered Person"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1499
+#: corehq/apps/app_manager/views/modules.py:1501
 msgid "Scan Fingerprint"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1508
+#: corehq/apps/app_manager/views/modules.py:1510
 msgid "Confidence"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1511
+#: corehq/apps/app_manager/views/modules.py:1513
 msgid "Followup with Person"
 msgstr ""
 
-#: corehq/apps/app_manager/views/modules.py:1524
+#: corehq/apps/app_manager/views/modules.py:1526
 msgid ""
 "This is your follow up form for {}. Delete this label and add questions for "
 "any follow up visits."
@@ -10937,28 +10930,28 @@ msgstr ""
 "Ce formulaire a été mis à jour par  {}. Recharger la page pour voir les "
 "derniers changements."
 
-#: corehq/apps/app_manager/views/releases.py:259
+#: corehq/apps/app_manager/views/releases.py:260
 msgid ""
 "Please disable any enabled profiles/location restriction to un-release this "
 "build."
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:315
+#: corehq/apps/app_manager/views/releases.py:317
 msgid "There is already a version build in progress. Please wait."
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:319
+#: corehq/apps/app_manager/views/releases.py:321
 msgid "Unable to validate forms."
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:373
+#: corehq/apps/app_manager/views/releases.py:375
 #, python-format
 msgid ""
 "Successfully reverted to version %(old_version)s, now at version "
 "%(new_version)s"
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:384
+#: corehq/apps/app_manager/views/releases.py:386
 #, python-brace-format
 msgid ""
 "Reverted to version {old_version}\n"
@@ -10967,20 +10960,20 @@ msgid ""
 "{original_comment}"
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:386
+#: corehq/apps/app_manager/views/releases.py:388
 #, python-brace-format
 msgid "Reverted to version {old_version}"
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:530
+#: corehq/apps/app_manager/views/releases.py:532
 msgid "App diff"
 msgstr "App diff"
 
-#: corehq/apps/app_manager/views/releases.py:636
+#: corehq/apps/app_manager/views/releases.py:638
 msgid "Latest version for profile {} is now {}"
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:640
+#: corehq/apps/app_manager/views/releases.py:642
 msgid "Latest release now available for profile {}"
 msgstr ""
 
@@ -42779,207 +42772,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py:136
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Generic Select"
-#~ msgstr "Sélection générique"
-
-#~ msgid "Select Something..."
-#~ msgstr "Sélectionner un élément..."
-
-#~ msgid "Select Case Owner"
-#~ msgstr "Sélectionner un propriétaire de dossier"
-
-#~ msgid "All Case Owners"
-#~ msgstr "Tous les propriétaires de dossier"
-
-#~ msgid "Name of the Block"
-#~ msgstr "Nom du Bloc"
-
-#~ msgid "Select Block"
-#~ msgstr "Sélectionner un bloc"
-
-#~ msgid "Sub Center"
-#~ msgstr "Sous-centre"
-
-#~ msgid "ASHA"
-#~ msgstr "ASHA"
-
-#~ msgid "Type ASHA name"
-#~ msgstr "Entrez le nom d'ASHA"
-
-#~ msgid "Home"
-#~ msgstr "Accueil"
-
-#~ msgid "Hospital"
-#~ msgstr "Hôpital"
-
-#~ msgid "Mother Name"
-#~ msgstr "Nom de la mère"
-
-#~ msgid "Baby Name"
-#~ msgstr "Nom du bébé"
-
-#~ msgid "CHW Name"
-#~ msgstr "Nom de TSC"
-
-#~ msgid "Date of Delivery"
-#~ msgstr "Date d'accouchement"
-
-#~ msgid "PNC Visit Completion"
-#~ msgstr "Exécution de visite PNC"
-
-#~ msgid "Delivery"
-#~ msgstr "Accouchement"
-
-#, python-format
-#~ msgid "%(report_name)s for (0-42 days after delivery)"
-#~ msgstr "%(report_name)s pour (0 à 42 jours après la accouchement)"
-
-#~ msgid "Mother HBNC Form"
-#~ msgstr "Formulaire mère HBNC"
-
-#~ msgid "A. Ask Mother."
-#~ msgstr "A. Demander à ta mère."
-
-#~ msgid "Number of times mother takes full meals in 24 hours?"
-#~ msgstr "Nombre de fois la mère prend des repas complets en 24 heures ?"
-
-#~ msgid "Bleeding. How many Pads are changed in a day?"
-#~ msgstr ""
-#~ "Saignement. Combien de fois les serviettes sanitaires sont-elles changées "
-#~ "dans une journée ?"
-
-#~ msgid "During the cold season is the baby being kept warm?"
-#~ msgstr "Pendant la saison froide, le bébé est-il tenu au chaud ?"
-
-#~ msgid "Is the baby being fed properly?"
-#~ msgstr "Le bébé est-il nourri de manière appropriée ?"
-
-#~ msgid "Is the baby crying incessantly or passing urine less than 6 times?"
-#~ msgstr "Le bébé pleure-t-il constamment ou urine-t-il moins de 6 fois ?"
-
-#~ msgid "B. Examination of mother"
-#~ msgstr "B. Examen de la mère"
-
-#~ msgid "Temperature: Measure and Record?"
-#~ msgstr "Température : Mesurer et enregistrer ?"
-
-#~ msgid "Foul Smelling Discharge?"
-#~ msgstr "Écoulement nauséabond ?"
-
-#~ msgid "Is mother speaking normally or having fits"
-#~ msgstr "La mère parle-t-elle normalement ou a-t-elle des crises"
-
-#~ msgid "Mother has no milk since delivery or less milk"
-#~ msgstr "La mère n'a pas de lait depuis l'accouchement ou moins de lait"
-
-#~ msgid "Cracked Nipples/Painful or Engorged Breast/"
-#~ msgstr "Mamelons fissurés / douloureux ou Sein engorgé / "
-
-#~ msgid "C.  Examination of Baby"
-#~ msgstr "C. Examen du bébé"
-
-#~ msgid "Eyes Swollen with pus?"
-#~ msgstr "Yeux gonflés avec pus ?"
-
-#~ msgid "Weight (7,14,21,28)?"
-#~ msgstr "Poids (7, 14, 21, 18 ) ?"
-
-#~ msgid "Skin: Pus filled pustules?"
-#~ msgstr "Peau : Pustules remplis de pus ?"
-
-#~ msgid "Cracks and Redness on the skin fold?"
-#~ msgstr "Fissures et rougeur sur le pli de peau ?"
-
-#~ msgid "Yellowness in eyes"
-#~ msgstr "Aspect jaunâtre des yeux"
-
-#~ msgid "D.  Sepsis Signs Checkup"
-#~ msgstr "D.  Vérification des symptômes de sepsis"
-
-#~ msgid "All limbs up?"
-#~ msgstr "Tous les membres en haut ?"
-
-#~ msgid "Feeding Less/Stopped?"
-#~ msgstr "Alimentation réduite / arrêtée ?"
-
-#~ msgid "Cry Weak/Stopped?"
-#~ msgstr "Pleur faible / arrêté ?"
-
-#~ msgid "Distant Abdomen?"
-#~ msgstr "Abdomen reculé ?"
-
-#~ msgid "Baby Cold to touch?"
-#~ msgstr "Le bébé est froid au toucher ?"
-
-#~ msgid "Chest Indrawing?"
-#~ msgstr "Tirage sous-costal ?"
-
-#~ msgid "Pus on umbilicus?"
-#~ msgstr "Présence de pus sur l'ombilic ?"
-
-#~ msgid "Print to PDF"
-#~ msgstr "Imprimer en PDF"
-
-#~ msgid "Mother's Name:"
-#~ msgstr "Nom de la mère:"
-
-#~ msgid "Fathers Name:"
-#~ msgstr "Nom du père:"
-
-#~ msgid "Village:"
-#~ msgstr "Village:"
-
-#~ msgid "Date of Birth:"
-#~ msgstr "Date de naissance:"
-
-#~ msgid "Ask/Examine date of ASHA's visit"
-#~ msgstr "Date de demande / examen de la visite ASHA"
-
-#~ msgid "Day 1"
-#~ msgstr "Jour 1"
-
-#~ msgid "Day 2"
-#~ msgstr "Jour 2"
-
-#~ msgid "Day 3"
-#~ msgstr "Jour 3"
-
-#~ msgid "Day 7"
-#~ msgstr "Jour 7"
-
-#~ msgid "Day 14"
-#~ msgstr "Jour 14"
-
-#~ msgid "Day 21"
-#~ msgstr "Jour 21"
-
-#~ msgid "Day 28"
-#~ msgstr "Jour 28"
-
-#~ msgid "Action by the Asha"
-#~ msgstr "Action par le Asha"
-
-#~ msgid "Action Taken"
-#~ msgstr "Action prise"
-
-#~ msgid "Day 42"
-#~ msgstr "Jour 42"
-
-#~ msgid "Supervisor Check"
-#~ msgstr "Vérification du superviseur"
-
-#~ msgid "Supervisor's note: "
-#~ msgstr "Remarque du superviseur : "
-
-#~ msgid "Incomplete work/incorrect work/incorrect record/ "
-#~ msgstr "Tâche incomplète / tâche non correcte / dossier incorrect / "
-
-#~ msgid "Name of ASHA:"
-#~ msgstr "Nom d'ASHA :"
-
-#~ msgid "Date:"
-#~ msgstr "Date :"
-
-#~ msgid "Name of Trainer/Facilitator"
-#~ msgstr "Nom de l'entraîneur / facilitateur"
