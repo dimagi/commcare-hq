@@ -78,4 +78,5 @@ branches:
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/autoupdate-criteria-operator # Addison April 26
+    - bmb/sso-oidc-endpoints  # Biyeun April 28
 submodules: { }
