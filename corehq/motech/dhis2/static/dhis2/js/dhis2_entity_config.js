@@ -22,9 +22,10 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         return self;
     };
 
+    require(['jsonlint'], function(jsonlint) {});
+
     var dhis2EntityConfig = function (caseConfigs) {
         var self = {};
-        var editors = [];
         self.oCaseConfigs = ko.observableArray();
         self.errorMessage = ko.observable('');
         self.isError = ko.computed(function() {
@@ -56,19 +57,12 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 
         self.submit = function (form) {
             var editors = baseAce.returnEditors();
-            for (let i = 0; i < editors.length; i++) {
-                var annotations = editors[i].getSession().getAnnotations()
-                if (annotations.length > 0) {
-                    for (let i = 0; i < annotations.length; i++) {
-                        var row = annotations[0]['row']
-                            error = annotations[0]['text'];
-                        var text = `Syntax error on row ${row}: `;
-                        self.errorMessage(text + error);
-                    };
-                    return self;
-                };
-            };
-
+            try {
+                var words = jsonlint.parse(editor[0].getValue());
+            } catch (error) {
+                self.errorMessage(error)
+                return self;
+            }
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},
