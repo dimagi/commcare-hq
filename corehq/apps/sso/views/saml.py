@@ -6,19 +6,16 @@ from django.http import (
 )
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import gettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
-from corehq.apps.domain.exceptions import NameUnavailableException
-from corehq.apps.registration.models import AsyncSignupRequest
-from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
+from corehq.apps.sso.utils.login_helpers import process_async_signup_requests
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
 )
@@ -102,28 +99,7 @@ def sso_saml_acs(request, idp_slug):
 
     if user:
         auth.login(request, user)
-
-        # activate new project if needed
-        async_signup = AsyncSignupRequest.get_by_username(user.username)
-        if async_signup and async_signup.project_name:
-            try:
-                request_new_domain(
-                    request,
-                    async_signup.project_name,
-                    is_new_user=True,
-                    is_new_sso_user=True
-                )
-            except NameUnavailableException:
-                # this should never happen, but in the off chance it does
-                # we don't want to throw a 500 on this view
-                messages.error(
-                    request,
-                    _("We were unable to create your requested project "
-                      "because the name was already taken."
-                      "Please contact support.")
-                )
-
-        AsyncSignupRequest.clear_data_for_username(user.username)
+        process_async_signup_requests(request, user)
 
         relay_state = request.saml2_request_data['post_data'].get('RelayState')
         if relay_state not in [
