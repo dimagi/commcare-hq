@@ -1,4 +1,4 @@
-from django.contrib import auth, messages
+from django.contrib import auth
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
@@ -16,6 +16,7 @@ from corehq.apps.sso.decorators import (
 )
 from corehq.apps.sso.configuration import get_saml2_config
 from corehq.apps.sso.utils.login_helpers import process_async_signup_requests
+from corehq.apps.sso.utils.message_helpers import show_sso_login_success_or_error_messages
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
 )
@@ -89,13 +90,7 @@ def sso_saml_acs(request, idp_slug):
         is_handshake_successful=True,
     )
 
-    # we add the messages to the django messages framework here since
-    # that middleware was not available for SsoBackend
-    if hasattr(request, 'sso_new_user_messages'):
-        for success_message in request.sso_new_user_messages['success']:
-            messages.success(request, success_message)
-        for error_message in request.sso_new_user_messages['error']:
-            messages.error(request, error_message)
+    show_sso_login_success_or_error_messages(request)
 
     if user:
         auth.login(request, user)
