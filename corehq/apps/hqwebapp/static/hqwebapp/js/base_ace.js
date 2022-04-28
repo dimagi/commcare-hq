@@ -6,6 +6,7 @@ hqDefine('hqwebapp/js/base_ace', [
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
     'ace-builds/src-min-noconflict/ext-searchbox',
+    'ace-builds/webpack-resolver',
 ], function (
     $,
     _,
@@ -15,6 +16,8 @@ hqDefine('hqwebapp/js/base_ace', [
     xmlMode,   // eslint-disable-line no-unused-vars
     searchBox  // eslint-disable-line no-unused-vars
 ) {
+
+    self.editor = [];
 
     var initAceEditor = function (element, mode, options, value) {
         var defaultOptions = {
@@ -53,6 +56,9 @@ hqDefine('hqwebapp/js/base_ace', [
         });
     };
 
+    var returnEditors = function() {
+        return self.editor;
+    }
 
     /**
      * initObservableJsonWidget allows the ACE editor to be applied to
@@ -93,6 +99,8 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             observable(editor.getSession().getValue());
         });
+        editor.session.setOption("useWorker", true);
+        self.editor.push(editor);
     };
 
 
@@ -108,5 +116,6 @@ hqDefine('hqwebapp/js/base_ace', [
         initJsonWidget: initJsonWidget,
         initObservableJsonWidget: initObservableJsonWidget,
         initAceEditor: initAceEditor,
+        returnEditors: returnEditors,
     };
 });
