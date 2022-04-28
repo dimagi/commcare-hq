@@ -651,7 +651,7 @@ class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
             email_domain=email_domain,
         )
         post_data = self._get_post_data()
-        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
         self.assertTrue(edit_sso_idp_form.is_valid())
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
 
