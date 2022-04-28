@@ -242,7 +242,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.isMultiSelect = this.options.isMultiSelect;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
                 if (_.contains(caseIds, self.model.get('id'))) {
-                    self.ui.selectRow[0].checked = action === Constants.MULTI_SELECT_ADD;
+                    self.ui.selectRow.prop("checked", action === Constants.MULTI_SELECT_ADD);
                 }
             });
         },
@@ -274,7 +274,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         isChecked: function () {
-            return this.ui.selectRow[0].checked;
+            return this.ui.selectRow.prop("checked");
         },
 
         templateContext: function () {
@@ -469,18 +469,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             // Update states of row checkboxes
             self.children.each(function (childView) {
-                if (self.selectedCaseIds.indexOf(childView.model.id) !== -1) {
-                    let checkbox = childView.ui.selectRow[0];
-                    checkbox.checked = true;
-                }
+                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
             });
 
             // Update state of Continue button
-            self.ui.continueButtonText[0].innerText = self.selectedCaseIds.length;
+            self.ui.continueButtonText.text(self.selectedCaseIds.length);
             self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
 
             // Reconcile state of "select all" checkbox
-            self.ui.selectAllCheckbox[0].checked = !_.difference(self._allCaseIds(), self.selectedCaseIds).length;
+            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
 
         templateContext: function () {
