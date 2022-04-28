@@ -42,3 +42,12 @@ def render_sso_error(request, error):
         'is_saml': request.idp.protocol == IdentityProviderProtocol.SAML,
         'is_oidc': request.idp.protocol == IdentityProviderProtocol.OIDC,
     })
+
+
+def render_saml_acs_error(request, saml_error_reason=None, idp_service_name=None, login_error=None):
+    return render(request, 'sso/acs_errors.html', {
+        'saml_error_reason': saml_error_reason,
+        'idp_type': idp_service_name,
+        'docs_link': get_documentation_url(request.idp),
+        'login_error': login_error,
+    })

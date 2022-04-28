@@ -23,9 +23,11 @@ from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
 )
 from corehq.apps.sso.utils.url_helpers import (
-    get_documentation_url,
     get_saml_login_url,
     add_username_hint_to_login_url,
+)
+from corehq.apps.sso.utils.view_helpers import (
+    render_saml_acs_error,
 )
 
 
@@ -59,7 +61,6 @@ def sso_saml_acs(request, idp_slug):
     to CommCare HQ.
     """
     request_id = request.session.get('AuthNRequestID')
-    error_template = 'sso/acs_errors.html'
 
     try:
         request.saml2_auth.process_response(request_id=request_id)
@@ -70,11 +71,11 @@ def sso_saml_acs(request, idp_slug):
         errors = [e]
 
     if errors:
-        return render(request, error_template, {
-            'saml_error_reason': request.saml2_auth.get_last_error_reason() or errors[0],
-            'idp_type': "Azure AD",  # we will update this later,
-            'docs_link': get_documentation_url(request.idp),
-        })
+        return render_saml_acs_error(
+            request,
+            saml_error_reason=request.saml2_auth.get_last_error_reason() or errors[0],
+            idp_service_name=request.idp.service_name,
+        )
 
     if not request.saml2_auth.is_authenticated():
         return render(request, 'sso/sso_request_denied.html', {})
@@ -136,9 +137,10 @@ def sso_saml_acs(request, idp_slug):
 
         return redirect("homepage")
 
-    return render(request, error_template, {
-        'login_error': getattr(request, 'sso_login_error', None),
-    })
+    return render_saml_acs_error(
+        request,
+        login_error=getattr(request, 'sso_login_error', None),
+    )
 
 
 @use_saml2_auth
