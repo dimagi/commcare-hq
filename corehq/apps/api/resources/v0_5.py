@@ -196,7 +196,6 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
-
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
@@ -380,7 +379,6 @@ class AdminWebUserResource(v0_1.UserResource):
 
 
 class GroupResource(v0_4.GroupResource):
-
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post', 'patch']
@@ -400,7 +398,8 @@ class GroupResource(v0_4.GroupResource):
         (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
         """
         request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
 
         collection_name = self._meta.collection_name
         if collection_name not in deserialized:
@@ -431,7 +430,8 @@ class GroupResource(v0_4.GroupResource):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1314
         (BSD licensed) and modified to catch Exception and not returning traceback
         """
-        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
         deserialized = self.alter_deserialized_detail_data(request, deserialized)
         bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
         try:
@@ -531,7 +531,6 @@ class DomainAuthorization(ReadOnlyAuthorization):
 
 
 class DeviceReportResource(HqBaseResource, ModelResource):
-
     class Meta(object):
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
@@ -860,15 +859,18 @@ class UserDomainsResource(CorsResourceMixin, Resource):
                 raise
 
     def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
+        feature_flag = kwargs.get("feature_flag")
+        return self.get_object_list(bundle.request, feature_flag=feature_flag)
 
-    def get_object_list(self, request):
+    def get_object_list(self, request, feature_flag=None):
         couch_user = CouchUser.from_django_user(request.user)
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
+            if feature_flag and feature_flag not in toggles.toggles_enabled_for_domain(domain):
+                continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
                 project_name=domain_object.hr_name or domain_object.name
@@ -933,6 +935,7 @@ class DomainForms(Resource):
             form_name = '{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
+
 
 # Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
 CaseType = namedtuple('CaseType', 'case_type placeholder')
