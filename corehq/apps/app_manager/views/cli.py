@@ -7,11 +7,11 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 from dimagi.ext.couchdbkit import Document
 from soil import FileDownload
 
-from corehq import toggles
 from corehq.apps.app_manager.views.utils import get_langs, report_build_time
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.view_utils import absolute_reverse, json_error
 
 from ..dbaccessors import (
@@ -71,7 +71,6 @@ def direct_ccz(request, domain):
     version = request.GET.get('version', None)
     latest = request.GET.get('latest', None)
     include_multimedia = request.GET.get('include_multimedia', 'false').lower() == 'true'
-    visit_scheduler_enabled = toggles.VISIT_SCHEDULER.enabled_for_request(request)
 
     # Make sure URL params make sense
     if not app_id:
@@ -97,10 +96,10 @@ def direct_ccz(request, domain):
     lang, langs = get_langs(request, app)
 
     with report_build_time(domain, app._id, 'live_preview'):
-        return get_direct_ccz(domain, app, langs, version, include_multimedia, visit_scheduler_enabled)
+        return get_direct_ccz(domain, app, langs, version, include_multimedia)
 
 
-def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
+def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, request=False):
     if not app.copy_of:
         errors = app.validate_app()
     else:
@@ -112,7 +111,7 @@ def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, v
             'build_errors': errors,
             'domain': domain,
             'langs': langs,
-            'visit_scheduler_enabled': visit_scheduler_enabled,
+            'toggles': toggles_enabled_for_request(request),
         })
         return JsonResponse(
             {'error_html': error_html},

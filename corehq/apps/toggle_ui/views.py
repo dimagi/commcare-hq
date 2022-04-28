@@ -32,6 +32,7 @@ from corehq.toggles import (
     all_toggles,
     NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
+    toggles_enabled_for_email_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
 from corehq.toggles.models import Toggle
@@ -287,7 +288,9 @@ def _clear_cache_for_toggle(namespace, entry):
     if namespace == NAMESPACE_DOMAIN:
         domain = entry
         toggles_enabled_for_domain.clear(domain)
-    elif namespace != NAMESPACE_EMAIL_DOMAIN:
+    elif namespace == NAMESPACE_EMAIL_DOMAIN:
+        toggles_enabled_for_email_domain.clear(entry)
+    else:
         # these are sent down with no namespace
         assert ':' not in entry, entry
         username = entry
