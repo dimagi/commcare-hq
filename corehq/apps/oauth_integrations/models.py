@@ -10,10 +10,11 @@ class GoogleApiToken(models.Model):
 
 
 class LiveGoogleSheetSchedule(models.Model):
-    export_config_id = models.CharField(max_length=250, db_index=True)
+    export_config_id = models.CharField(max_length=250, db_index=True, unique=True)
     is_active = models.BooleanField(default=True)
     start_time = models.IntegerField(default=200)
     google_sheet_id = models.CharField(max_length=250)
+    user = models.CharField(max_length=80, null=True)
 
 
 class LiveGoogleSheetErrorReason():
