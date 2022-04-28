@@ -1,11 +1,12 @@
-from django.conf import settings
-
+from corehq.apps.es.forms import ElasticForm
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 
-XFORM_INDEX = prefix_for_tests(settings.ES_XFORM_INDEX_NAME)
+XFORM_INDEX = ElasticForm.index_name
+XFORM_ES_TYPE = ElasticForm.type
+XFORM_ALIAS = prefix_for_tests("xforms")
 
 XFORM_MAPPING = {
     "_meta": {
@@ -218,11 +219,8 @@ XFORM_MAPPING = {
     }
 }
 
-if settings.ES_XFORM_DISABLE_ALL:
+if ElasticForm.settings.get("DISABLE_ALL"):
     XFORM_MAPPING["_all"] = {"enabled": False}
-
-XFORM_ES_TYPE = 'xform'
-XFORM_ALIAS = prefix_for_tests("xforms")
 
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
