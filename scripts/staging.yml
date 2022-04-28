@@ -67,8 +67,6 @@ branches:
     - fr/ucr-registry-linked  # Farid April 12
     - ap/sql-case-repeater # Amit March 23
     - ml/all-in-one-offboarding # Minha April 13
-    - smh/multi-select-case-detail-workflow # Steph April 15
-    - smh/multi-select-clear-session-storage # Steph April 16
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - sk/remove-feature-phone-support  # Simon April 20
@@ -76,7 +74,6 @@ branches:
     - ml/dhis2-error-handling # Minha April 21
     - jm/elastic-client-adapter  # Joel April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
-    - smh/multi-select-qa-followup # Steph April 22
     - jls/toggles-in-build-errors # Jenny April 26
     - jls/multi-select-select-button # Jenny April 27
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
