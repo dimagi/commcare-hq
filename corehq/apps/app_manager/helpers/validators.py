@@ -374,10 +374,17 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
-        if self.module.is_multi_select():
-            if self.module.parent_select.active and self.module.parent_select.relationship == 'parent':
+        if self.module.parent_select.active and self.module.parent_select.relationship == 'parent':
+            if self.module.parent_select.relationship == 'parent':
+                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+                valid_modules = get_modules_with_parent_case_type(app, self.module)
+            else:
+                from corehq.apps.app_manager.views.modules import get_all_case_modules
+                valid_modules = get_all_case_modules(app, self.module)
+            valid_module_ids = [info['unique_id'] for info in valid_modules]
+            if self.module.parent_select.module_id not in valid_module_ids:
                 errors.append({
-                    'type': 'multi select select parent first',
+                    'type': 'invalid parent select id',
                     'module': self.get_module_info(),
                 })
 
