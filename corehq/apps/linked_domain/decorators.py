@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
 
-from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+from corehq.apps.linked_domain.dbaccessors import get_domain_link
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 
 REMOTE_REQUESTER_HEADER = 'HTTP_HQ_REMOTE_REQUESTER'
@@ -33,8 +33,8 @@ def require_linked_domain(fn):
         if not requester:
             return HttpResponseBadRequest()
 
-        link = get_upstream_domain_link(requester)
-        if not link or link.master_domain != domain:
+        domain_link = get_domain_link(upstream=domain, downstream=requester)
+        if not domain_link:
             return HttpResponseForbidden()
 
         return fn(request, domain, *args, **kwargs)
