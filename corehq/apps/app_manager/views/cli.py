@@ -54,7 +54,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
+        return JsonResponse({'status': 'error', 'message': msg}, status=code)
 
     def get_app(app_id, version, latest):
         if version:
@@ -115,7 +115,7 @@ def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, r
         })
         return JsonResponse(
             {'error_html': error_html},
-            status_code=400,
+            status=400,
         )
 
     app.set_media_versions()
@@ -130,5 +130,5 @@ def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, r
             filename='{}.ccz'.format(slugify(app.name)),
         )
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status_code=400)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return FileDownload.get(download.download_id).toHttpResponse()
