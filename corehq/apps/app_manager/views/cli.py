@@ -54,7 +54,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
+        return JsonResponse({'status': 'error', 'message': msg}, status=code)
 
     def get_app(app_id, version, latest):
         if version:
