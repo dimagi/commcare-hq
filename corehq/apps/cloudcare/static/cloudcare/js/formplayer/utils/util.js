@@ -226,11 +226,13 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             delete this.endpointId;
             delete this.endpointArgs;
             this.selections = selections || [];
+            sessionStorage.removeItem('selectedValues');
         };
 
         this.clearExceptApp = function () {
             this.sessionId = null;
             this.selections = null;
+            sessionStorage.removeItem('selectedValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -263,6 +265,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
             this.sortIndex = null;
             this.queryData = null;
+            sessionStorage.removeItem('selectedValues');
         };
     };
 
