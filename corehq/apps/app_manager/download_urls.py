@@ -3,15 +3,12 @@ from django.conf.urls import re_path as url
 from corehq.apps.app_manager.views import (
     download_app_strings,
     download_index,
-    download_jad,
-    download_jar,
     download_media_profile,
     download_media_suite,
     download_odk_media_profile,
     download_odk_profile,
     download_practice_user_restore,
     download_profile,
-    download_raw_jar,
     download_suite,
     download_xform,
 )
@@ -27,7 +24,4 @@ urlpatterns = [
     url(r'^practice_user_restore.xml$', download_practice_user_restore, {}, 'download_practice_user_restore'),
     url(r'^(?P<lang>[\w-]+)/app_strings.txt$', download_app_strings, {}, 'download_app_strings'),
     url(r'^modules-(?P<module_id>\d+)/forms-(?P<form_id>\d+).xml$', download_xform, {}, 'download_xform'),
-    url(r'^CommCare.jad$', download_jad, {}, 'download_jad'),
-    url(r'^CommCare_raw.jar$', download_raw_jar, {}, 'download_raw_jar'),
-    url(r'^CommCare.jar$', download_jar, {}, 'download_jar'),
 ]
