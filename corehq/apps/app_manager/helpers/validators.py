@@ -374,7 +374,7 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
-        if self.module.parent_select.active and self.module.parent_select.relationship == 'parent':
+        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
             if self.module.parent_select.relationship == 'parent':
                 from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
                 valid_modules = get_modules_with_parent_case_type(app, self.module)
