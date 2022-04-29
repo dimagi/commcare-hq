@@ -50,7 +50,7 @@ from corehq.apps.linked_domain.dbaccessors import (
 )
 from corehq.apps.linked_domain.decorators import (
     require_access_to_linked_domains,
-    require_linked_domain,
+    require_existing_domain_link,
 )
 from corehq.apps.linked_domain.exceptions import (
     AttemptedPushViolatesConstraints,
@@ -120,62 +120,62 @@ from corehq.util.timezones.utils import get_timezone_for_request
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def tableau_server_and_visualizations(request, domain):
     return JsonResponse(get_tableau_server_and_visualizations(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def toggles_and_previews(request, domain):
     return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def auto_update_rules(request, domain):
     return JsonResponse({'rules': get_auto_update_rules(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def custom_data_models(request, domain):
     limit_types = request.GET.getlist('type')
     return JsonResponse(get_custom_data_models(domain, limit_types))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def fixture(request, domain, tag):
     return JsonResponse(get_fixture(domain, tag))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def brief_apps(request, domain):
     return JsonResponse({'brief_apps': get_brief_app_docs_in_domain(domain, include_remote=False)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def app_by_version(request, domain, app_id, version):
     return JsonResponse({'app': get_build_doc_by_version(domain, app_id, version)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def released_app_versions(request, domain):
     return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def case_search_config(request, domain):
     try:
         config = CaseSearchConfig.objects.get(domain=domain).to_json()
@@ -186,7 +186,7 @@ def case_search_config(request, domain):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 @require_permission(HqPermissions.view_reports)
 def linkable_ucr(request, domain):
     """Returns a list of reports to be used by the downstream
@@ -202,7 +202,7 @@ def linkable_ucr(request, domain):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def ucr_config(request, domain, config_id):
     report_config = ReportConfiguration.get(config_id)
     if report_config.domain != domain:
@@ -217,7 +217,7 @@ def ucr_config(request, domain, config_id):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
     if master_app.domain != domain:
@@ -231,25 +231,25 @@ def get_latest_released_app_source(request, domain, app_id):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def dialer_settings(request, domain):
     return JsonResponse(get_dialer_settings(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def otp_settings(request, domain):
     return JsonResponse(get_otp_settings(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_existing_domain_link
 def hmac_callout_settings(request, domain):
     return JsonResponse(get_hmac_callout_settings(domain))
 

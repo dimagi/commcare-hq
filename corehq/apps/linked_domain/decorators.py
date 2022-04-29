@@ -26,7 +26,10 @@ def require_access_to_linked_domains(view_func):
     return _inner
 
 
-def require_linked_domain(fn):
+def require_existing_domain_link(fn):
+    """
+    Ensure the requesting domain is linked downstream of the specified domain
+    """
     @wraps(fn)
     def _inner(request, domain, *args, **kwargs):
         requester = request.META.get(REMOTE_REQUESTER_HEADER, None)
