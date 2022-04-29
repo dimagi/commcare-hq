@@ -202,13 +202,13 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
     def test_select_parent_first_parent_not_allowed(self, *args):
-        self.other_module.parent_select.active = True
-        self.other_module.parent_select.module_id = self.module.unique_id
-        self.other_module.parent_select.relationship = 'parent'
+        self.module.parent_select.active = True
+        self.module.parent_select.module_id = self.other_module.unique_id
+        self.module.parent_select.relationship = 'parent'
 
         self.assertIn({
-            'type': 'multi select select parent first',
-            'module': {'id': 1, 'unique_id': 'another_module', 'name': {'en': 'another module'}}
+            'type': 'invalid parent select id',
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
         }, self.factory.app.validate_app())
 
     @flag_enabled('NON_PARENT_MENU_SELECTION')
