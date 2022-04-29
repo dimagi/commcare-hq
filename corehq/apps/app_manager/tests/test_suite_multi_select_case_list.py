@@ -3,10 +3,14 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase
 
+import lxml
+
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
+    UpdateCaseAction,
 )
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -260,3 +264,150 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./entry",
         )
+
+
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
+@patch_validate_xform()
+@patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
+class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
+    MAIN_CASE_TYPE = 'beneficiary'
+    OTHER_CASE_TYPE = 'household'
+
+    def setUp(self):
+        # All of these tests use the same app structure:
+        # m0 is a parent module and its case list is multi-select
+        # m1 is a child of m0 and uses the same case type, this is where the tests focus
+        # m2 is a standalone module of the same case type
+        # m3 is a standalone module of another case type
+
+        self.factory = AppFactory(domain="multiple-referrals-child-test")
+
+        self.m0, self.m0f0 = self.factory.new_basic_module('parent', self.MAIN_CASE_TYPE)
+        self.m0f0.requires = 'case'
+        self.m0.case_details.short.multi_select = True
+
+        self.m1, self.m1f0 = self.factory.new_basic_module(
+            'child', self.MAIN_CASE_TYPE, parent_module=self.m0)
+        self.m1f0.requires = 'case'
+
+        self.m2, m2f0 = self.factory.new_basic_module('m2', self.MAIN_CASE_TYPE)
+        m2f0.requires = 'case'
+
+        self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
+        m3f0.requires = 'case'
+
+    def set_parent_select(self, module, parent_module):
+        module.parent_select.active = True
+        module.parent_select.module_id = parent_module.unique_id
+        module.parent_select.relationship = None
+
+    def assert_module_datums(self, module_id, datums):
+        """Check the datum IDs used in the suite XML"""
+        suite_xml = lxml.etree.XML(self.factory.app.create_suite())
+
+        session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
+        assert len(session_nodes) == 1
+        actual_datums = [
+            (child.tag, child.attrib['id'])
+            for child in session_nodes[0].getchildren()
+        ]
+        self.assertEqual(datums, actual_datums)
+
+    def assert_form_datums(self, form, datum_id):
+        """Check the datum IDs used in the form XML case preload"""
+        form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        form.actions.update_case = UpdateCaseAction(
+            update={'question1': ConditionalCaseUpdate(question_path='/data/question1')}
+        )
+        form.actions.update_case.condition.type = 'always'
+
+        xml = lxml.etree.XML(form.render_xform())
+        model_children = xml.getchildren()[0].getchildren()[1].getchildren()
+        calculate_expr = [child.attrib['calculate'] for child in model_children
+                          if child.attrib.get('nodeset') == '/data/case/@case_id'][0]
+        self.assertTrue(calculate_expr.startswith("instance('commcaresession')/session/data/"))
+        actual_id = calculate_expr.split("/")[-1]
+        self.assertEqual(datum_id, actual_id)
+
+    def test_child_of_multiselect(self):
+        self.assert_module_datums(self.m0.id, [('instance-datum', 'selected_cases')])
+
+        # datum = selected_cases? Should it be case_id?
+        self.assert_module_datums(self.m1.id, [('datum', 'selected_cases')])
+        # case_id isn't defined in the session
+        self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_select_parent_multiselect(self):
+        self.set_parent_select(self.m1, self.m0)
+
+        self.assert_module_datums(self.m0.id, [('instance-datum', 'selected_cases')])
+        self.assert_module_datums(self.m1.id, [
+            ('instance-datum', 'selected_cases'),
+            ('datum', 'case_id'),
+        ])
+        # This should just be `case_id`
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+
+    def test_parent_selects_parent_same_type(self):
+        self.set_parent_select(self.m0, self.m2)
+
+        self.assert_module_datums(self.m0.id, [
+            ('datum', 'case_id_beneficiary'),
+            ('instance-datum', 'selected_cases')
+        ])
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'case_id_beneficiary'),
+        ])
+        # this is an error
+        self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_parent_selects_parent_different_type(self):
+        self.set_parent_select(self.m0, self.m2)
+
+        self.assert_module_datums(self.m0.id, [
+            ('datum', 'case_id_beneficiary'),
+            ('instance-datum', 'selected_cases')
+        ])
+        # I'm not sure why this sets it to case_id_beneficiary instead of
+        # selected_cases, as in test_child_of_multiselect
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'case_id_beneficiary'),
+        ])
+        # This is an error
+        self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_select_parent_that_selects_other_same_case_type(self):
+        # Do we intend to support 3 case selections in a row of the same type?
+        self.set_parent_select(self.m0, self.m2)
+        self.set_parent_select(self.m1, self.m0)
+
+        self.assert_module_datums(self.m0.id, [
+            # I would've guessed this to be parent_selected_cases
+            ('datum', 'case_id_beneficiary'),
+            ('instance-datum', 'selected_cases')
+        ])
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'case_id_beneficiary'),
+            ('instance-datum', 'selected_cases'),
+            ('datum', 'case_id'),
+        ])
+        # This should just be `case_id`
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+
+    def test_select_parent_that_selects_other_different_case_type(self):
+        self.set_parent_select(self.m0, self.m3)
+        self.set_parent_select(self.m1, self.m0)
+
+        self.assert_module_datums(self.m0.id, [
+            ('datum', 'parent_selected_cases'),
+            ('instance-datum', 'selected_cases')
+        ])
+        # This looks correct
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'parent_selected_cases'),
+            ('instance-datum', 'selected_cases'),
+            ('datum', 'case_id'),
+        ])
+        # This should just be `case_id`
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
