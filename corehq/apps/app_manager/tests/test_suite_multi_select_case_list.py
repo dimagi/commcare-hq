@@ -346,8 +346,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('instance-datum', 'selected_cases'),
             ('datum', 'case_id'),
         ])
-        # This should just be `case_id`
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_parent_selects_parent_same_type(self):
         self.set_parent_select(self.m0, self.m2)
@@ -392,8 +391,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('instance-datum', 'selected_cases'),
             ('datum', 'case_id'),
         ])
-        # This should just be `case_id`
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_that_selects_other_different_case_type(self):
         self.set_parent_select(self.m0, self.m3)
@@ -403,11 +401,9 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'parent_selected_cases'),
             ('instance-datum', 'selected_cases')
         ])
-        # This looks correct
         self.assert_module_datums(self.m1.id, [
             ('datum', 'parent_selected_cases'),
             ('instance-datum', 'selected_cases'),
             ('datum', 'case_id'),
         ])
-        # This should just be `case_id`
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
