@@ -981,12 +981,15 @@ class EntriesHelper(object):
                     if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
                         datums.insert(index, attr.evolve(parent_datum_meta, from_parent=True))
-                    elif this_datum_meta and this_datum_meta.case_type == parent_datum_meta.case_type:
-                        append_update(changed_ids_by_case_tag,
-                                      rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
-                        append_update(changed_ids_by_case_tag,
-                                      get_changed_id(this_datum_meta, parent_datum_meta))
-                        this_datum_meta.datum.id = parent_datum_meta.datum.id
+                    elif this_datum_meta:
+                        same_case_type = this_datum_meta.case_type == parent_datum_meta.case_type
+                        same_datum_type = type(this_datum_meta.datum) == type(parent_datum_meta.datum)
+                        if same_case_type and same_datum_type:
+                            append_update(changed_ids_by_case_tag,
+                                          rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
+                            append_update(changed_ids_by_case_tag,
+                                          get_changed_id(this_datum_meta, parent_datum_meta))
+                            this_datum_meta.datum.id = parent_datum_meta.datum.id
                 index += 1
 
     @staticmethod
