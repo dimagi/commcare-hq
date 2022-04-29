@@ -130,6 +130,10 @@ class IdentityProvider(models.Model):
     def __str__(self):
         return f"{self.name} IdP [{self.idp_type}]"
 
+    @property
+    def service_name(self):
+        return dict(IdentityProviderType.CHOICES)[self.idp_type]
+
     def create_service_provider_certificate(self):
         sp_cert = ServiceProviderCertificate()
         self.sp_cert_public = sp_cert.public_key
@@ -177,8 +181,9 @@ class IdentityProvider(models.Model):
         :param username: (string) username to pre-populate IdP login with
         :return: (String) identity provider login url
         """
+        login_view_name = 'sso_saml_login' if self.protocol == IdentityProviderProtocol.SAML else 'sso_oidc_login'
         return '{}?username={}'.format(
-            reverse('sso_saml_login', args=(self.slug,)),
+            reverse(login_view_name, args=(self.slug,)),
             username
         )
 
