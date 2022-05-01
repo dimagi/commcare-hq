@@ -1352,15 +1352,15 @@ class InvalidUCRData(models.Model):
 
 
 class UCRExpressionManager(models.Manager):
-    def get_filters_for_domain(self, domain):
+    def get_filters_for_domain(self, domain, context):
         return {
-            f.name: f.wrapped_definition(domain)
+            f.name: f.wrapped_definition(context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
         }
 
-    def get_expressions_for_domain(self, domain):
+    def get_expressions_for_domain(self, domain, context):
         return {
-            f.name: f.wrapped_definition(domain)
+            f.name: f.wrapped_definition(context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
         }
 

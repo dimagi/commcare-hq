@@ -34,7 +34,7 @@ class FactoryContext():
         extra_filters = {}
         if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.models import UCRExpression
-            extra_filters = UCRExpression.objects.get_filters_for_domain(self.domain)
+            extra_filters = UCRExpression.objects.get_filters_for_domain(self.domain, self)
         return extra_filters | self._named_filters
 
     @named_filters.setter
@@ -47,7 +47,7 @@ class FactoryContext():
         extra_expressions = {}
         if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
             from corehq.apps.userreports.models import UCRExpression
-            extra_expressions = UCRExpression.objects.get_expressions_for_domain(self.domain)
+            extra_expressions = UCRExpression.objects.get_expressions_for_domain(self.domain, self)
         return extra_expressions | self._named_expressions
 
     @named_expressions.setter
