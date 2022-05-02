@@ -396,6 +396,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
+            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
 
             var invalidFields = [];
             this.children.each(function (childView) {
