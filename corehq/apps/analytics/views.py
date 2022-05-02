@@ -89,10 +89,7 @@ def submit_hubspot_cta_form(request):
             "message": gettext("No hubspot API ID is present."),
         })
 
-    url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-        hubspot_id=hubspot_id,
-        form_id=form_id
-    )
+    url = f"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}"
     response = requests.post(url, data=form_data)
     log_response('HS', form_data, response)
     response.raise_for_status()
