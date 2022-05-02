@@ -25,6 +25,7 @@
       <span class="caption">
         <%- text ? text : "" %>
       </span>
+      <% if (hasError) { %> i have a problem<% } %>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
       <div class="hq-help pull-right">
         <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">

@@ -164,12 +164,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
+                hasError: this.hasError,
             };
         },
 
         initialize: function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
+            this.hasError = false;
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -199,13 +201,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
-        isValid: function () {
+        _isValid: function () {
             if (!this.model.get('required')) {
                 return true;
             }
 
             var answer = this.getEncodedValue();
             return answer !== undefined && (answer == "" || answer.replace(/\s+/, "") !== "");
+        },
+
+        isValid: function () {
+            var hasError = !this._isValid();
+            if (hasError != this.hasError) {
+                this.hasError = hasError;
+                this.render();
+            }
+            return !this.hasError;
         },
 
         getEncodedValue: function () {
@@ -383,7 +394,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.setStickyQueryInputs();
         },
 
-        // jls
         submitAction: function (e) {
             e.preventDefault();
 
