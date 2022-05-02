@@ -551,6 +551,7 @@ motech
  0008_requestlog_response_headers
  0009_auto_20211122_2011
  0010_auto_20211124_1931
+ 0011_connectionsettings_is_deleted
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -656,6 +657,7 @@ repeaters
  0003_migrate_connectionsettings
  0004_attempt_strings
  0005_rename_repeaterstub_to_sql_repeater
+ 0006_add_proxy_models
 reports
  0001_initial
  0002_auto_20171121_1803

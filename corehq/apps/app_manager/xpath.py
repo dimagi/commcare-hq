@@ -404,8 +404,8 @@ class IndicatorXpath(InstanceXpath):
         return self
 
 
-class SelectedCasesInstanceXpath(InstanceXpath):
-    id = "selected_cases"
+class SearchSelectedCasesInstanceXpath(InstanceXpath):
+    id = "search_selected_cases"
     path = "results/value"
 
 
