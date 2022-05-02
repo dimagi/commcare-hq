@@ -157,10 +157,10 @@
             <!-- /ko -->
           </div>
           <div class="form-group">
-            <label for="case_claim_title" class="{% css_label_class %} control-label">
-              {% trans "Case Claim Title" %}
-              <span class="hq-help-template" data-title="{% trans "Case Claim Title Translation" %}"
-                    data-content="{% trans_html_attr "Lorem Ipsum" %}">
+            <label for="search_screen_title" class="{% css_label_class %} control-label">
+              {% trans "Search Screen Title" %}
+              <span class="hq-help-template" data-title="{% trans "Search Screen Title Translation" %}"
+                    data-content="{% trans_html_attr "Define the title label displayed on the search screen." %}">
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: titleLabel" %}

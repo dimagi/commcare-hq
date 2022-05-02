@@ -6,7 +6,7 @@
     <command id="search_command.m1">
       <display>
         <text>
-          <locale id="case_search.m1"/>
+          <locale id="case_search.m1.inputs"/>
         </text>
       </display>
     </command>

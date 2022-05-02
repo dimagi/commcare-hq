@@ -789,7 +789,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
-    def test_case_search_title_translation(self, *args):
+    def test_case_search_title_translation_legacy(self, *args):
         self.app.build_spec = BuildSpec(version='2.52.0', build_number=1)
         suite = self.app.create_suite()
         expected_remote_request = """
@@ -812,9 +812,20 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             </title>
         </partial>
         """
+        expected_case_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="cchq.case"/>
+              </text>
+            </title>
+        </partial>
+        """
         self.assertXmlPartialEqual(expected_remote_request, suite, "./remote-request[1]/command")
         self.assertXmlPartialEqual(expected_search_detail, suite, "./detail[@id='m0_search_short']/title")
+        self.assertXmlPartialEqual(expected_case_detail, suite, "./detail[@id='m0_case_short']/title")
 
+    def test_case_search_title_translation(self, *args):
         self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
         suite = self.app.create_suite()
         expected_remote_request = """
@@ -837,5 +848,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             </title>
         </partial>
         """
+        expected_case_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="cchq.case"/>
+              </text>
+            </title>
+        </partial>
+        """
         self.assertXmlPartialEqual(expected_remote_request, suite, "./remote-request[1]/command")
         self.assertXmlPartialEqual(expected_search_detail, suite, "./detail[@id='m0_search_short']/title")
+        self.assertXmlPartialEqual(expected_case_detail, suite, "./detail[@id='m0_case_short']/title")

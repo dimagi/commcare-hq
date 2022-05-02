@@ -86,7 +86,7 @@ class DetailContributor(SectionContributor):
                             print_template_path = None
                             if detail.print_template:
                                 print_template_path = detail.print_template['path']
-                            locale_id = id_strings.detail_title_locale(self.app, module, detail_type)
+                            locale_id = id_strings.detail_title_locale(module, detail_type)
                             title = Text(locale_id=locale_id) if locale_id else Text()
                             d = self.build_detail(
                                 module,
@@ -662,7 +662,7 @@ class CaseTileHelper(object):
         """
         return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(self.app, self.module, self.detail_type),
+            "title_text_id": id_strings.detail_title_locale(self.module, self.detail_type),
         }
 
     def _get_column_context(self, column):
