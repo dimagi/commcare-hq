@@ -5,13 +5,15 @@ hqDefine("reports/js/hq_report", [
     'hqwebapp/js/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets', //multi-emails
 ], function (
     $,
     ko,
     _,
     alertUser,
     kissmetrics,
-    initialPageData
+    initialPageData,
+    widgets  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
         'use strict';
@@ -214,13 +216,13 @@ hqDefine("reports/js/hq_report", [
 
             self.send_to_owner = ko.observable(true);
             self.subject = ko.observable(hqReport.emailDefaultSubject);
-            self.recipient_emails = ko.observable();
+            self.recipient_emails = ko.observableArray();
             self.notes = ko.observable();
             self.getReportRenderUrl = hqReport.getReportRenderUrl;
 
             self.unwrap = function () {
                 var data = ko.mapping.toJS(self, {
-                    ignore: ['sendEmail', 'unwrap', 'resetModal'],
+                    ignore: ['sendEmail', 'unwrap', 'resetModal', 'getReportRenderUrl'],
                 });
 
                 for (var i in data) {

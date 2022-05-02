@@ -8,7 +8,7 @@ from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
@@ -222,22 +222,47 @@ class ScheduledReportForm(forms.Form):
 
 
 class EmailReportForm(forms.Form):
-    subject = forms.CharField(required=False)
-    send_to_owner = forms.BooleanField(required=False)
+    subject = forms.CharField(required=False, label=_('Subject'))
+    send_to_owner = forms.BooleanField(required=False, label=_('Send to me'))
     attach_excel = forms.BooleanField(required=False)
-    recipient_emails = MultiEmailField(required=False)
-    notes = forms.CharField(required=False)
+    recipient_emails = MultiEmailField(required=False, label=_('Additional Recipients'))
+    notes = forms.CharField(required=False, label=_('Report notes'), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.field_class = "col-xs-10"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                    data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            FormActions(
+                crispy.Div(
+                    crispy.Button('close', 'Close', css_class='btn btn-default cancel-button',
+                        data_bind='click: resetModal', data_dismiss='modal'),
+                    crispy.Submit('submit_btn', 'Send Email', css_class="btn btn-primary send-button",
+                        data_bind='click: sendEmail', data_loading_text='Sending...'),
+                    css_class='pull-right',
+                )
+            )
+        )
 
     def clean(self):
-        cleaned_data = super(EmailReportForm, self).clean()
+        cleaned_data = super().clean()
         _verify_email(cleaned_data)
         return cleaned_data
 
 
 def _verify_email(cleaned_data):
     if ('recipient_emails' in cleaned_data
-        and not (cleaned_data['recipient_emails'] or
-                     cleaned_data['send_to_owner'])):
+        and not (cleaned_data['recipient_emails']
+            or cleaned_data['send_to_owner'])):
         raise forms.ValidationError("You must specify at least one "
                                     "valid recipient")
 
