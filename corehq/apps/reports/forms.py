@@ -243,10 +243,10 @@ class EmailReportForm(forms.Form):
             ),
             FormActions(
                 crispy.Div(
-                    crispy.Button('close', 'Close', css_class='btn btn-default cancel-button',
+                    crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
                         data_bind='click: resetModal', data_dismiss='modal'),
-                    crispy.Submit('submit_btn', 'Send Email', css_class="btn btn-primary send-button",
-                        data_bind='click: sendEmail', data_loading_text='Sending...'),
+                    crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                        data_bind='click: sendEmail', data_loading_text=_('Sending...')),
                     css_class='pull-right',
                 )
             )
