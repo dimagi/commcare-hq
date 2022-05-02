@@ -3,6 +3,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData) {
 
     var caseRuleCriteria = function (initial, constants) {
