@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional, Union, overload
 
 from django.conf import settings
 
-from datadog.api import (  # type: ignore[attr-defined]
+from datadog.api import (
     Event,
     _api_key,
     _application_key,
