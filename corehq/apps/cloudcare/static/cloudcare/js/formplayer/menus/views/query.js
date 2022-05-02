@@ -199,6 +199,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
+        isValid: function () {
+            if (!this.model.get('required')) {
+                return true;
+            }
+
+            var answer = this.getEncodedValue();
+            return answer !== undefined && (answer == "" || answer.replace(/\s+/, "") !== "");
+        },
+
         getEncodedValue: function () {
             if (this.model.get('input') === 'address') {
                 return;  // skip geocoder address
@@ -374,16 +383,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self.setStickyQueryInputs();
         },
 
+        // jls
         submitAction: function (e) {
             e.preventDefault();
-            var answers = this.getAnswers(),
-                invalidFields = [];
+
+            var invalidFields = [];
             this.children.each(function (childView) {
-                if (childView.model.get('required')) {
-                    var answer = answers[childView.model.get('id')];
-                    if (answer === undefined || (answer !== "" && answer.replace(/\s+/, "") === "")) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
                 }
             });
 
@@ -394,7 +401,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return;
             }
 
-            FormplayerFrontend.trigger("menu:query", answers);
+            FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
 
         setStickyQueryInputs: function () {
