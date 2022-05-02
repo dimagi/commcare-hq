@@ -207,12 +207,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
 
             var answer = this.getEncodedValue();
-            return answer !== undefined && (answer == "" || answer.replace(/\s+/, "") !== "");
+            return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
         },
 
         isValid: function () {
             var hasError = !this._isValid();
-            if (hasError != this.hasError) {
+            if (hasError !== this.hasError) {
                 this.hasError = hasError;
                 this.render();
             }

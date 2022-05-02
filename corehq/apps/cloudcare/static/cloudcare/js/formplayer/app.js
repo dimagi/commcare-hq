@@ -129,7 +129,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         formplayerLoadingComplete();
     });
 
-    FormplayerFrontend.on('clearNotifications', function (errorMessage, isHTML) {
+    FormplayerFrontend.on('clearNotifications', function () {
         $("#cloudcare-notifications").empty();
     });
 
