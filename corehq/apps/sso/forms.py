@@ -779,12 +779,11 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        kwargs['initial'] = {
-            'is_active': identity_provider.is_active,
-            'entity_id': identity_provider.entity_id,
-            'client_id': identity_provider.client_id,
-            'client_secret': identity_provider.client_secret,
-        }
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('entity_id': identity_provider.entity_id)
+        initial.setdefault('client_id': identity_provider.client_id)
+        initial.setdefault('client_secret': identity_provider.client_secret)
         super().__init__(identity_provider, *args, **kwargs)
 
         rp_details_form = RelyingPartyDetailsForm(identity_provider)
