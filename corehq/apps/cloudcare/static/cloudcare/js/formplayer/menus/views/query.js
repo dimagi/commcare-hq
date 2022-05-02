@@ -375,7 +375,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:query", this.getAnswers());
+            var valid = true,
+                answers = this.getAnswers();
+            this.children.each(function (childView) {
+                if (childView.model.get('required')) {
+                    var answer = answers[childView.model.get('id')];
+                    if (answer === undefined || (answer !== "" && answer.replace(/\s+/, "") === "")) {
+                        valid = false;
+                    }
+                }
+            });
+
+            if (!valid) {
+                alert("nope");
+                return;
+            }
+
+            FormplayerFrontend.trigger("menu:query", answers);
         },
 
         setStickyQueryInputs: function () {
