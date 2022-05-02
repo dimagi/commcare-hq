@@ -258,6 +258,20 @@ class EmailReportForm(forms.Form):
         _verify_email(cleaned_data)
         return cleaned_data
 
+    def get_readable_errors(self):
+        errors = []
+
+        if not self.errors:
+            return errors
+
+        for field in self.errors:
+            field_name = self.fields[field].label if field in self.fields else ''
+            for error in self.errors.get_json_data(escape_html=True)[field]:
+                prefix = f'{field_name}: ' if field_name else ''
+                errors.append(f'{prefix}{error["message"]}')
+
+        return errors
+
 
 def _verify_email(cleaned_data):
     if ('recipient_emails' in cleaned_data

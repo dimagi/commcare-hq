@@ -241,10 +241,13 @@ hqDefine("reports/js/hq_report", [
                         self.resetModal();
                         alertUser.alert_user(hqReport.emailSuccessMessage, "success");
                     })
-                    .fail(function () {
+                    .fail(function (response) {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
-                        alertUser.alert_user(hqReport.emailErrorMessage, "error");
+                        const errors = JSON.parse(response.responseText);
+                        let messages = [hqReport.emailErrorMessage].concat(errors);
+                        const message = messages.join('<br/>');
+                        alertUser.alert_user(message, "error");
                     });
             };
 

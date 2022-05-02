@@ -561,7 +561,7 @@ def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDis
 
     form = EmailReportForm(querydict_to_dict(request.POST))
     if not form.is_valid():
-        return HttpResponseBadRequest()
+        return HttpResponseBadRequest(json.dumps(form.get_readable_errors()))
 
     if not _can_email_report(report_slug, request, dispatcher_class, domain):
         raise Http404()
