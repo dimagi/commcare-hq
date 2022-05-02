@@ -224,7 +224,6 @@ class ScheduledReportForm(forms.Form):
 class EmailReportForm(forms.Form):
     subject = forms.CharField(required=False, label=_('Subject'))
     send_to_owner = forms.BooleanField(required=False, label=_('Send to me'))
-    attach_excel = forms.BooleanField(required=False)
     recipient_emails = MultiEmailField(required=False, label=_('Additional Recipients'))
     notes = forms.CharField(required=False, label=_('Report notes'), widget=forms.Textarea(attrs={"rows": 3}))
 
