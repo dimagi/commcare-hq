@@ -24,16 +24,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
 
         self.showFilter = ko.observable(!!self.nodesetFilter());
 
-        var ui = '<select class="form-control" data-bind="options: dropdownOptions, optionsText: \'name\', optionsValue: \'value\', value: nodesetCaseType" style="margin-bottom: 5px;"></select>';
-        ui += '<button class="btn btn-default btn-xs" data-bind="visible: !showFilter() && !showXpath(), click: function () { showFilter(true); }">'
-        ui += '<i class="fa fa-plus"></i>' + gettext("Add filter");
-        ui += '</button>';
-        ui += '<input type="text" class="form-control" data-bind="value: nodesetFilter, visible: showFilter" placeholder="' + gettext("referral = 'y'") + '" />';
-        ui += '<textarea class="form-control" data-bind="value: nodeset, visible: showXpath" /></textarea>';
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')) {
-            ui += '<p data-bind="visible: showXpath() && nodeset()" class="help-block">' + gettext("This data will not be shown for case search results.") + '</p>';
-        }
-        self.ui = $('<div>' + ui + '</div>');
+        self.ui = $(_.template($("#module-case-detail-tab-nodeset-template").text())());
         self.ui.koApplyBindings(self);
 
         hqImport("hqwebapp/js/main").eventize(self);
