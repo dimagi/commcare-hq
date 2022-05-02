@@ -199,6 +199,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
+        getEncodedValue: function () {
+            if (this.model.get('input') === 'address') {
+                return;  // skip geocoder address
+            }
+            var queryValue = $(this.ui.queryField).val(),
+                searchForBlank = $(this.ui.searchForBlank).prop('checked');
+            return encodeValue(this.model, queryValue, searchForBlank);
+        },
+
         changeQueryField: function (e) {
             if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
@@ -302,19 +311,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $inputGroups = $(".query-input-group"),
-                answers = {},
-                model = this.parentModel;
-            $inputGroups.each(function (index) {
-                if (model[index].get('input') === 'address') {
-                    return;  // skip geocoder address
-                }
-                var queryValue = $(this).find('.query-field').val(),
-                    fieldId = model[index].get('id'),
-                    searchForBlank = $(this).find('.search-for-blank').prop('checked'),
-                    encodedValue = encodeValue(model[index], queryValue, searchForBlank);
+            var answers = {};
+            this.children.each(function (childView) {
+                var encodedValue = childView.getEncodedValue();
                 if (encodedValue !== undefined) {
-                    answers[fieldId] = encodedValue;
+                    answers[childView.model.get('id')] = encodedValue;
                 }
             });
             return answers;
