@@ -1870,6 +1870,7 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty(exclude_if_none=True)
     nodeset_case_type = StringProperty(exclude_if_none=True)
+    nodeset_filter = StringProperty(exclude_if_none=True)   # only relevant if nodeset_case_type is populated
 
     # Display condition for the tab
     relevant = StringProperty(exclude_if_none=True)
