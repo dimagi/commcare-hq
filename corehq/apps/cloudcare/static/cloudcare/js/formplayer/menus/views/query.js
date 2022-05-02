@@ -375,19 +375,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
-            var valid = true,
-                answers = this.getAnswers();
+            var answers = this.getAnswers(),
+                invalidFields = [];
             this.children.each(function (childView) {
                 if (childView.model.get('required')) {
                     var answer = answers[childView.model.get('id')];
                     if (answer === undefined || (answer !== "" && answer.replace(/\s+/, "") === "")) {
-                        valid = false;
+                        invalidFields.push(childView.model.get('text'));
                     }
                 }
             });
 
-            if (!valid) {
-                alert("nope");
+            if (invalidFields.length) {
+                var errorHTML = "Please enter values for the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }) + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true);
                 return;
             }
 
