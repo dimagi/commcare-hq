@@ -1411,9 +1411,9 @@ class UserFilterForm(forms.Form):
     INACTIVE = 'inactive'
 
     USER_ACTIVE_STATUS = [
-        ('show_all', _('Show All')),
-        (ACTIVE, _('Only Active')),
-        (INACTIVE, _('Only Deactivated'))
+        ('show_all', gettext_lazy('Show All')),
+        (ACTIVE, gettext_lazy('Only Active')),
+        (INACTIVE, gettext_lazy('Only Deactivated'))
     ]
 
     role_id = forms.ChoiceField(label=gettext_lazy('Role'), choices=(), required=False)
