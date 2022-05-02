@@ -70,13 +70,9 @@ class GreenhouseCandidateView(View):
 @require_POST
 def submit_hubspot_cta_form(request):
     form_data = {data: value[0] for data, value in dict(request.POST).items()}
-    form_id = form_data['hubspot_form_id']
-    page_url = form_data['page_url']
-    page_name = form_data['page_name']
-
-    del form_data['hubspot_form_id']
-    del form_data['page_url']
-    del form_data['page_name']
+    form_id = form_data.pop('hubspot_form_id')
+    page_url = form_data.pop('page_url')
+    page_name = form_data.pop('page_name')
 
     hubspot_cookie = request.COOKIES.get(HUBSPOT_COOKIE)
     form_data['hs_context'] = json.dumps({
