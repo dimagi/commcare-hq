@@ -24,7 +24,7 @@ settings.LOGGING = {}
 init_hq_python_path()
 
 # Must setup django app registry prior to building docs with sphinx
-import django
+import django  # noqa: E402
 django.setup()
 
 # -- Custom configuration -----------------------------------------------------
