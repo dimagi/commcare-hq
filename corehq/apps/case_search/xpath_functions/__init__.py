@@ -1,4 +1,10 @@
-from .query_functions import not_, selected_all, selected_any, within_distance
+from .query_functions import (
+    fuzzy_match,
+    not_,
+    selected_all,
+    selected_any,
+    within_distance,
+)
 from .subcase_functions import subcase
 from .value_functions import date, date_add, today
 
@@ -18,4 +24,5 @@ XPATH_QUERY_FUNCTIONS = {
     'selected-any': selected_any,
     'selected-all': selected_all,
     'within-distance': within_distance,
+    'fuzzy-match': fuzzy_match,
 }

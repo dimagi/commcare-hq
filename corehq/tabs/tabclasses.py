@@ -52,7 +52,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.linked_domain.util import can_user_access_release_management
+from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -1328,6 +1328,7 @@ class ProjectUsersTab(UITab):
     view = "users_default"
 
     url_prefix_formats = (
+        '/a/{domain}/reports/user_management/',
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
@@ -2068,7 +2069,7 @@ def _get_feature_flag_items(domain, couch_user):
 def _get_release_management_items(user, domain):
     items = []
     title = None
-    if not can_user_access_release_management(user, domain):
+    if not can_user_access_linked_domains(user, domain):
         return title, items
 
     if domain_has_privilege(domain, privileges.RELEASE_MANAGEMENT):

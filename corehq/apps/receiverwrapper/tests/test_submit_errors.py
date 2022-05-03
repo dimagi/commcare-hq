@@ -236,7 +236,6 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             cookies = []
             headers = {}
             _resource_closers = []
-            _closable_objects = []  # TODO remove when Django 2 is no longer supported
 
             def has_header(self, name):
                 return False
@@ -247,10 +246,6 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             def close(self):
                 for close in self._resource_closers:
                     close()
-
-                # TODO remove when Django 2 is no longer supported
-                for obj in self._closable_objects:
-                    obj.close()
 
         def process_device_log(self_, xform):
             result = FormProcessingResult(xform)

@@ -374,7 +374,6 @@ HQ_APPS = (
 
     # custom reports
     'custom.reports.mc',
-    'custom.apps.crs_reports',
     'custom.ucla',
 
     'custom.up_nrhm',
@@ -1552,7 +1551,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
 
     # custom reports
@@ -1937,18 +1935,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
-
-    'crs-remind': 'custom.apps.crs_reports',
 
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',

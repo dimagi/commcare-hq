@@ -3237,6 +3237,9 @@ class AdvancedModule(ModuleBase):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
 
+    def is_multi_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
@@ -3890,6 +3893,11 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return []
         return self.source_module.all_forms_require_a_case()
+
+    def is_multi_select(self):
+        if not self.source_module:
+            return False
+        return self.source_module.is_multi_select()
 
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):

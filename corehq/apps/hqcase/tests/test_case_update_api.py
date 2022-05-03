@@ -24,6 +24,7 @@ from ..utils import submit_case_blocks
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None

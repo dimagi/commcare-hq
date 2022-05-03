@@ -63,19 +63,22 @@ branches:
     #- jm/elastic-client-adapter  # Joel Mar 1
     - nh/loadtest_users_postmigration  # Norman March 25
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
-    - smh/multi-select-contiune-workflow # Steph/Jenny April 11
-    - jls/multiple-referrals-block-case-management # Jenny April 14
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
     - fr/ucr-registry-linked  # Farid April 12
-    - ap/sql-case-repeater # Amit March 23
     - ml/all-in-one-offboarding # Minha April 13
-    - smh/multi-select-case-detail-workflow # Steph April 15
-#     - smh/multi-select-clear-session-storage # Steph April 16
-    - revert-31042-gh/revert-openpyxl-upgrade # Graham April 18
-    - ad/change-referrer-policy+rp/gsheet/create-livegooglesheetview # Addison April 18
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - bmb/upgrade-dompurify  # Biyeun Apr 19
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
-    - smh/multi-select-web-ui-formatting # Steph April 19
     - sk/remove-feature-phone-support  # Simon April 20
+    - bmb/trial-signup-bug  # Biyeun April 21
+    - ml/dhis2-error-handling # Minha April 21
+    - jm/elastic-client-adapter  # Joel April 21
+    - rp/gsheet/update-project-info-form # Rynhard April 22
+    - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
+    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
+    - ad/autoupdate-criteria-operator # Addison April 26
+    - bmb/sso-staging  # Biyeun May 2
+    - ml/case-property-bug # Minha April 28
+    - jls/tab-nodeset-filter # Jenny May 2
+    - jls/conditional-case-search # Jenny May 3
+    - rc/case-search-accessibility # Robert May 3
 submodules: { }

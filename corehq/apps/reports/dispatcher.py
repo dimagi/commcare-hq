@@ -323,15 +323,6 @@ class AdminReportDispatcher(ReportDispatcher):
         )
 
 
-class QuestionTemplateDispatcher(ProjectReportDispatcher):
-    prefix = 'question_templates'
-    map_name = 'QUESTION_TEMPLATES'
-
-    def get_question_templates(self, domain, report_slug):
-        question_templates = dict(self.get_reports(domain))
-        return question_templates.get(report_slug, None)
-
-
 class UserManagementReportDispatcher(ReportDispatcher):
     prefix = 'user_management_report'
     map_name = 'USER_MANAGEMENT_REPORTS'
@@ -350,5 +341,5 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_user_access_release_management
-        return can_user_access_release_management(request.couch_user, domain)
+        from corehq.apps.linked_domain.util import can_user_access_linked_domains
+        return can_user_access_linked_domains(request.couch_user, domain)

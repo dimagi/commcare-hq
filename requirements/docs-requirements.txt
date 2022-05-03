@@ -231,8 +231,6 @@ intervaltree==3.1.0
     # via ddtrace
 iso8601==0.1.13
     # via -r base-requirements.in
-jdcal==1.4.1
-    # via openpyxl
 jinja2==2.11.3
     # via
     #   -r base-requirements.in
@@ -290,7 +288,7 @@ oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
-openpyxl==3.0.6
+openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
