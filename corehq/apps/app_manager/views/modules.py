@@ -1030,7 +1030,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
         if prop['required']:
-            ret['required'] = "true()" if prop['required'] else None
+            ret['required'] = prop['required']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'

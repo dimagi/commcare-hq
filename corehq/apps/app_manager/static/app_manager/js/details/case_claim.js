@@ -91,7 +91,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             receiverExpression: '',
             itemsetOptions: {},
             exclude: false,
-            required: false,
+            required: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
