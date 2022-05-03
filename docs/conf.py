@@ -23,10 +23,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 settings.LOGGING = {}
 init_hq_python_path()
 
-# Must setup django app registry prior to building docs with sphinx
-import django  # noqa: E402
-django.setup()
-
 # -- Custom configuration -----------------------------------------------------
 
 # mock out stubborn modules that are hard to pip install
