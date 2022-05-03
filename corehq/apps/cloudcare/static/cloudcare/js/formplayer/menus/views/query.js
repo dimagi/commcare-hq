@@ -407,7 +407,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             if (invalidFields.length) {
                 var errorHTML = "Please enter values for the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }) + "</ul>";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
                 FormplayerFrontend.trigger('showError', errorHTML, true);
                 return;
             }
