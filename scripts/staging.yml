@@ -80,4 +80,5 @@ branches:
     - ml/case-property-bug # Minha April 28
     - jls/tab-nodeset-filter # Jenny May 2
     - jls/conditional-case-search # Jenny May 3
+    - rc/case-search-accessibility # Robert May 3
 submodules: { }
