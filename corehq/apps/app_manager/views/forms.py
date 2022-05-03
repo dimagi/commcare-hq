@@ -879,7 +879,10 @@ def _get_form_link_context(module, langs):
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. All other menus can be linked manually.
+        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
+        # All other menus can be linked manually.
+        if candidate_module.is_multi_select():
+            continue
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
