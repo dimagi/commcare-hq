@@ -1,4 +1,4 @@
-from celery import Celery
+from celery import Celery, Task
 from django.apps import AppConfig
 
 
@@ -18,3 +18,25 @@ def _init_celery_app():
     app.config_from_object('django.conf:settings', namespace='CELERY')
     app.autodiscover_tasks()
     app.set_default()
+
+
+class PeriodicTask(Task):
+
+    @classmethod
+    def on_bound(cls, app):
+        app.conf.beat_schedule[cls.name] = {
+            'task': cls.name,
+            'schedule': cls.run_every,
+            'args': (),
+            'kwargs': {},
+            'options': cls.options or {}
+        }
+
+
+def periodic_task(*args, **options):
+    if options.get('queue'):
+        options['options'] = {
+            'queue': options.pop('queue')
+        }
+    options['base'] = PeriodicTask
+    return app.task(**options)
