@@ -6,18 +6,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
 
-def count_fixture_data_types(domain):
-    from corehq.apps.fixtures.models import FixtureDataType
-    num_fixtures = FixtureDataType.get_db().view(
-        'by_domain_doc_type_date/view',
-        startkey=[domain, 'FixtureDataType'],
-        endkey=[domain, 'FixtureDataType', {}],
-        reduce=True,
-        group_level=2,
-    ).first()
-    return num_fixtures['value'] if num_fixtures is not None else 0
-
-
 @quickcache(['domain'], timeout=30 * 60, skip_arg='bypass_cache')
 def get_fixture_data_types(domain, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataType

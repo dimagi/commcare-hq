@@ -139,11 +139,6 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
         return any(f.is_indexed for f in self.fields)
 
     @classmethod
-    def total_by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import count_fixture_data_types
-        return count_fixture_data_types(domain)
-
-    @classmethod
     def by_domain(cls, domain, **kw):
         from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
         return get_fixture_data_types(domain, **kw)
