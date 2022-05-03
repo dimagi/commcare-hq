@@ -37,6 +37,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
@@ -757,8 +762,18 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         if not has_case_error:
             messages.error(request, "Error in Case Management: %s" % e)
 
+    form_workflows = {
+        WORKFLOW_DEFAULT: _("Home Screen"),
+        WORKFLOW_ROOT: _("First Menu"),
+        WORKFLOW_PREVIOUS: _("Previous Screen"),
+    }
+    if not module.put_in_root:
+        form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
+    if module.root_module_id and not module.root_module.put_in_root:
+        form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
     allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
-    allow_form_workflow = allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM
+    if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
+        form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
     case_config_options = {
         'caseType': form.get_case_type(),
@@ -773,11 +788,11 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'nav_form': form,
         'xform_languages': languages,
         'form_errors': form_errors,
+        'form_workflows': form_workflows,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'allow_form_workflow': allow_form_workflow,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
