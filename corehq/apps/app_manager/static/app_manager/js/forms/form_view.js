@@ -110,7 +110,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
             workflow_fallback: initialPageData('post_form_workflow_fallback'),
         };
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
+        if (initialPageData('allow_form_workflow')) {
             labels[FormWorkflow.Values.FORM] = gettext("Link to other form or menu");
             options.forms = initialPageData('linkable_forms');
             options.formLinks = initialPageData('form_links');

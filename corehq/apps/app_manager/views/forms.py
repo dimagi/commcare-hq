@@ -757,6 +757,9 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         if not has_case_error:
             messages.error(request, "Error in Case Management: %s" % e)
 
+    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM
+
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
@@ -774,7 +777,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
+        'allow_form_workflow': allow_form_workflow,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
