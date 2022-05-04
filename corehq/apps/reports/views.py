@@ -1710,7 +1710,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    meta = _top_level_tags(form).get('meta', None) or {}
+    meta = form.form_data.get('meta', None) or {}
 
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
@@ -1755,28 +1755,6 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
-
-
-def _top_level_tags(form):
-    """
-    Returns a OrderedDict of the top level tags found in the xml, in the
-    order they are found.
-
-    The actual values are taken from the form JSON data and not from the XML
-    """
-    to_return = OrderedDict()
-
-    element = form.get_xml_element()
-    if element is None:
-        return OrderedDict(sorted(form.form_data.items()))
-
-    for child in element:
-        # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-        key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
-        if key == "Meta":
-            key = "meta"
-        to_return[key] = form.get_data('form/' + key)
-    return to_return
 
 
 def _sorted_form_metadata_keys(keys):
