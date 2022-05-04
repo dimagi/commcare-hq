@@ -8,8 +8,10 @@ import lxml
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
+    WORKFLOW_PARENT_MODULE,
 )
 from corehq.apps.app_manager.models import (
+    Application,
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
@@ -417,6 +419,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
 @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
+@patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
@@ -430,27 +433,26 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         # m2/m3 are a parent single select and child multi-select
         # m3/m4 are a parent multi-select and child single select
         # All menus use the same case type and all forms require a case.
-        self.factory = AppFactory(domain="multiple-referrals-eof-nav-test")
+        self.factory = AppFactory(domain="multiple-referrals-eof-nav-test", build_version='2.43.0',
+                                  include_xmlns=True)
 
         self.single_loner, form0 = self.factory.new_basic_module('Single Loner', self.CASE_TYPE)
-        form0.requires = 'case'
         self.multi_loner, form1 = self.factory.new_basic_module('Multi Loner', self.CASE_TYPE)
-        form1.requires = 'case'
         self.multi_loner.case_details.short.multi_select = True
 
         self.single_parent, form2 = self.factory.new_basic_module('Single Parent', self.CASE_TYPE)
-        form2.requires = 'case'
-        self.multi_child, form3 = self.factory.new_basic_module('Multi Child', self.CASE_TYPE,
+        self.multi_child, form3 = self.factory.new_basic_module('Multi child', self.CASE_TYPE,
                                                                 parent_module=self.single_parent)
-        form3.requires = 'case'
         self.multi_child.case_details.short.multi_select = True
 
         self.multi_parent, form4 = self.factory.new_basic_module('Multi Parent', self.CASE_TYPE)
-        form4.requires = 'case'
         self.multi_parent.case_details.short.multi_select = True
         self.single_child, form5 = self.factory.new_basic_module('Single Child', self.CASE_TYPE,
                                                                  parent_module=self.multi_parent)
-        form5.requires = 'case'
+
+        for module in self.factory.app.get_modules():
+            for form in module.get_forms():
+                form.requires = 'case'
 
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     def test_block_form_linking(self, *args):
@@ -518,3 +520,38 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
             'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
         }, self.factory.app.validate_app())
+
+    def test_eof_nav_multi_to_multi(self, *args):
+        form = self.multi_loner.get_form(0)
+        form.post_form_workflow = WORKFLOW_MODULE
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m1'"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[2]/stack",
+        )
+
+    def test_eof_nav_multi_to_single(self, *args):
+        form = self.multi_child.get_form(0)
+        form.post_form_workflow = WORKFLOW_PARENT_MODULE
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m2'"/>
+                  <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[4]/stack",
+        )
