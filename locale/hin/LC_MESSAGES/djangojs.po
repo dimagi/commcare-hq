@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-28 15:53+0000\n"
+"POT-Creation-Date: 2022-05-04 19:22+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -123,7 +123,35 @@ msgstr ""
 msgid "Please enter a valid email."
 msgstr ""
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js:187
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js:41
+msgid "Please enter your first name."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js:48
+msgid "Please enter your last name."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js:55
+msgid "Please enter your organization."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js:62
+msgid "Please enter your email address."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js:195
+msgid "We are sorry, but something unexpected has occurred."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:70
+msgid "Book a Time"
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:143
+msgid "Next"
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:153
 msgid "Your trial request has been received!"
 msgstr ""
 
@@ -2867,7 +2895,7 @@ msgstr ""
 msgid "Switching project spaces..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:537
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:512
 msgid "Page <%-num%>"
 msgstr ""
 
