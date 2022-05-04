@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
-from dimagi.ext.couchdbkit import DictProperty
+from dimagi.ext.couchdbkit import DictProperty, StringProperty
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -23,6 +23,7 @@ class BaseExpressionRepeater(Repeater):
 
     configured_filter = DictProperty()
     configured_expression = DictProperty()
+    url_template = StringProperty()
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
     @property
@@ -50,6 +51,16 @@ class BaseExpressionRepeater(Repeater):
             self.payload_doc(repeat_record),
             self.parsed_expression,
         )
+
+    def get_url(self, repeat_record):
+        base_url = super().get_url(repeat_record)
+        if self.url_template:
+            return base_url + self.generator.get_url(
+                repeat_record,
+                self.url_template,
+                self.payload_doc(repeat_record),
+            )
+        return base_url
 
     @classmethod
     def _migration_get_sql_model_class(cls):
