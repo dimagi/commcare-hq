@@ -20,6 +20,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -830,6 +831,9 @@ class FormBaseValidator(object):
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
+            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
+                errors.append(dict(type='previous multi select form links', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

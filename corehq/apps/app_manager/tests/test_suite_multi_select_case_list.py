@@ -9,6 +9,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -520,6 +521,24 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
             'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
         }, self.factory.app.validate_app())
+
+    def test_block_previous_screen(self, *args):
+        self.multi_loner.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
+        self.single_child.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
+
+        errors = self.factory.app.validate_app()
+        self.assertIn({
+            'type': 'previous multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
+            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
+        }, errors)
+        self.assertIn({
+            'type': 'previous multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, errors)
 
     def test_eof_nav_multi_to_multi(self, *args):
         form = self.multi_loner.get_form(0)
