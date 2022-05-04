@@ -212,11 +212,11 @@ class DataTablesHeader(object):
                 groups.append(column.render_group_html)
             head.append(column.render_html)
 
-        headerSegment = format_html_join('\n', '{}', ((segment,) for segment in head))
-        header = format_html('<tr>{}</tr>', headerSegment)
+        header_segment = format_html_join('\n', '{}', ((segment,) for segment in head))
+        header = format_html('<tr>{}</tr>', header_segment)
         if len(groups) > 2:
-            groupSegment = format_html_join('\n', '{}', ((segment,) for segment in groups))
-            header = format_html('{}\n<tr>{}</tr>', header, groupSegment)
+            group_segment = format_html_join('\n', '{}', ((segment,) for segment in groups))
+            header = format_html('{}\n<tr>{}</tr>', header, group_segment)
         return header
 
     @property
