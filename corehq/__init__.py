@@ -44,3 +44,7 @@ assert _state._tls.current_app is None, "Current app already created"
 assert hasattr(_state.current_app, "_Proxy__local")
 object.__setattr__(_state.current_app, "_Proxy__local", _get_current_app)
 _state.get_current_app = _get_current_app
+
+if os.environ.get('DOCS_BUILD'):
+    import django
+    django.setup()
