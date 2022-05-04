@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
-from corehq.apps.data_interfaces.const import CRITERIA_OPERATOR_CHOICES
+from django.utils.translation import gettext_lazy
 
 import jsonfield
 import pytz
@@ -99,9 +99,13 @@ class AutomaticUpdateRule(models.Model):
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
 
+    class CriteriaOperator(models.TextChoices):
+        ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
+        ANY = 'ANY', gettext_lazy('ANY of the criteria are met')
+
     criteria_operator = models.CharField(
         max_length=3,
-        choices=CRITERIA_OPERATOR_CHOICES,
+        choices=CriteriaOperator.choices,
         default='ALL',
     )
 

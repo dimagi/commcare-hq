@@ -8,7 +8,6 @@ from django.db import transaction
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from corehq.apps.data_interfaces.const import CRITERIA_OPERATOR_CHOICES
 from corehq.apps.hqwebapp.widgets import SelectToggle
 
 from couchdbkit import ResourceNotFound
@@ -25,6 +24,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
     CaseRuleAction,
     CaseRuleCriteria,
     ClosedParentDefinition,
@@ -276,8 +276,11 @@ class CaseRuleCriteriaForm(forms.Form):
         label=gettext_lazy("Run when"),
         required=False,
         initial='ALL',
-        choices=CRITERIA_OPERATOR_CHOICES,
-        widget=SelectToggle(choices=CRITERIA_OPERATOR_CHOICES, attrs={"ko_value": "criteriaOperator"}),
+        choices=AutomaticUpdateRule.CriteriaOperator.choices,
+        widget=SelectToggle(
+            choices=AutomaticUpdateRule.CriteriaOperator.choices,
+            attrs={"ko_value": "criteriaOperator"}
+        ),
     )
 
     filter_on_server_modified = forms.CharField(required=False, initial='false')
@@ -386,7 +389,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
-        self.fields['criteria_operator'].choices = CRITERIA_OPERATOR_CHOICES
+        self.fields['criteria_operator'].choices = AutomaticUpdateRule.CriteriaOperator.choices
 
         self.helper = HQFormHelper()
         self.helper.form_tag = False
