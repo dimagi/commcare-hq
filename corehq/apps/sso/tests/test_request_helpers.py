@@ -60,7 +60,7 @@ def test_is_request_using_sso_true():
     Testing the successful criteria for an sso request.
     """
     request = RequestFactory().get('/sso/test')
-    generator.create_request_session(request, use_sso=True)
+    generator.create_request_session(request, use_saml_sso=True)
     eq(is_request_using_sso(request), True)
 
 
@@ -140,7 +140,7 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        generator.create_request_session(self.request, use_sso=True)
+        generator.create_request_session(self.request, use_saml_sso=True)
         MessageMiddleware(self.fail).process_request(self.request)  # add support for messages
         self.request.user = self.user
 
