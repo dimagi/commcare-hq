@@ -7,6 +7,7 @@ import lxml
 
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
+    WORKFLOW_MODULE,
 )
 from corehq.apps.app_manager.models import (
     CaseSearch,
@@ -414,6 +415,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
@@ -493,3 +495,26 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             'module': {'id': 2, 'unique_id': 'Single Parent_module', 'name': {'en': 'Single Parent module'}},
             'form': {'id': 0, 'name': {'en': 'Single Parent form 0'}, 'unique_id': 'Single Parent_form_0'},
         }, errors)
+
+    def test_block_eof_nav_multi_parent(self, *args):
+        form = self.single_child.get_form(0)
+
+        form.post_form_workflow = WORKFLOW_MODULE
+        self.assertIn({
+            'type': 'parent multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, self.factory.app.validate_app())
+
+        form.post_form_workflow = WORKFLOW_FORM
+        form.form_links = [FormLink(
+            xpath="true()",
+            form_id=form.unique_id,
+        )]
+        self.assertIn({
+            'type': 'parent multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, self.factory.app.validate_app())

@@ -83,6 +83,12 @@
                 a multi-select form, which is not supported.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "parent multi select form links" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct. It appears to involve
+                a parent menu that uses multi-select, which is not supported.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
             {% case "endpoint to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
