@@ -4,7 +4,7 @@ import attr
 
 from casexml.apps.case.xform import extract_case_blocks
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.value_source import CaseTriggerInfo
 
 
@@ -30,7 +30,7 @@ def get_relevant_case_updates_from_form_json(
     result = []
     case_blocks = extract_case_blocks(form_json)
     case_ids = [case_block['@case_id'] for case_block in case_blocks]
-    cases = CaseAccessors(domain).get_cases(case_ids, ordered=True)
+    cases = CommCareCase.objects.get_cases(case_ids, domain, ordered=True)
     db_case_dict = {case.case_id: case for case in cases}
 
     for case_block in case_blocks:

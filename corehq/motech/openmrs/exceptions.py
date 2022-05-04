@@ -15,7 +15,11 @@ class OpenmrsConfigurationError(OpenmrsException):
     pass
 
 
-class OpenmrsFeedDoesNotExist(OpenmrsException):
+class OpenmrsFeedRuntimeException(OpenmrsException):
+    pass
+
+
+class OpenmrsFeedSyntaxError(OpenmrsException):
     pass
 
 

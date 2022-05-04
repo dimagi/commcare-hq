@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.linked_domain.applications import (
     get_downstream_app_id,
@@ -76,7 +76,11 @@ def _get_or_create_datasource_link(domain_link, datasource, app_id):
     new_datasource = DataSourceConfiguration.wrap(datasource_json)
     new_datasource.save()
 
-    rebuild_indicators.delay(new_datasource.get_id, source=f"Datasource link: {new_datasource.get_id}")
+    rebuild_indicators.delay(
+        new_datasource.get_id,
+        source=f"Datasource link: {new_datasource.get_id}",
+        domain=new_datasource.domain
+    )
 
     return new_datasource
 
@@ -156,7 +160,11 @@ def _update_linked_datasource(master_datasource, linked_datasource):
     linked_datasource_json.update(master_datasource_json)
     DataSourceConfiguration.wrap(linked_datasource_json).save()
 
-    rebuild_indicators.delay(linked_datasource.get_id, source=f"Datasource link: {linked_datasource.get_id}")
+    rebuild_indicators.delay(
+        linked_datasource.get_id,
+        source=f"Datasource link: {linked_datasource.get_id}",
+        domain=linked_datasource.domain
+    )
 
 
 def _update_linked_report(master_report, linked_report):

@@ -5,9 +5,10 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from unittest.mock import patch
 
-from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS
+from corehq.apps.api.cors import ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW, ACCESS_CONTROL_ALLOW_HEADERS, \
+    ACCESS_CONTROL_ALLOW_METHODS
 from corehq.apps.api.decorators import allow_cors
-from corehq.apps.domain.decorators import _login_or_challenge, api_auth
+from corehq.apps.domain.decorators import _login_or_challenge, api_auth, api_auth_with_scope
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
@@ -175,7 +176,7 @@ class LoginOrChallengeDBTest(TestCase, AuthTestMixin):
 
 
 def _get_auth_mock(succeed=True):
-    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    def mock_auth_decorator(allow_cc_users=False, allow_sessions=True, require_domain=True, oauth_scopes=None):
         def _outer(fn):
             @wraps(fn)
             def inner(request, *args, **kwargs):
@@ -222,6 +223,16 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
 
     def test_api_auth_key(self):
         self._do_auth_test('ApiKey user:pass', 'corehq.apps.domain.decorators.login_or_api_key_ex')
+
+    def test_api_auth_oauth_with_scope(self):
+        decorator_to_mock = 'corehq.apps.domain.decorators.login_or_oauth2_ex'
+        decorated_view = api_auth_with_scope(['my_scope'])(sample_view)
+        request = _get_request()
+        request.META['HTTP_AUTHORIZATION'] = 'bearer myToken'
+        with patch(decorator_to_mock, mock_successful_auth):
+            self.assertEqual(SUCCESS, decorated_view(request, self.domain_name))
+        with patch(decorator_to_mock, mock_failed_auth):
+            self.assertForbidden(decorated_view(request, self.domain_name))
 
     def test_api_auth_formplayer(self):
         # formplayer auth is governed under different rules so can't use the shared function
@@ -270,4 +281,5 @@ class AllowCORSDecoratorTest(TestCase):
     def test_options(self):
         response = allow_cors(['POST'])(sample_view_with_response)(RequestFactory().options('/foobar/'))
         self._assert_cors(response)
+        self.assertEqual(response[ACCESS_CONTROL_ALLOW_METHODS], 'POST, OPTIONS')
         self.assertEqual(response[ACCESS_CONTROL_ALLOW], 'POST, OPTIONS')

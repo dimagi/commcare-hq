@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
@@ -90,7 +90,7 @@ def find_missing_form_repeat_records_for_domain(domain, startdate, enddate, shou
     total_missing_count = total_count = 0
     form_repeaters_in_domain = get_form_repeaters_in_domain(domain)
     form_ids = [f['_id'] for f in get_form_ids_in_domain_between_dates(domain, startdate, enddate)]
-    forms = FormAccessors(domain).get_forms(form_ids)
+    forms = XFormInstance.objects.get_forms(form_ids, domain)
     for form in forms:
         missing_count, successful_count = find_missing_form_repeat_records_for_form(
             form, domain, form_repeaters_in_domain, enddate, should_create
@@ -174,7 +174,7 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
     # get all cases in domain
     case_repeaters_in_domain = get_case_repeaters_in_domain(domain)
     case_ids = [c['_id'] for c in get_case_ids_in_domain_since_date(domain, startdate)]
-    cases = CaseAccessors(domain).get_cases(case_ids)
+    cases = CommCareCase.objects.get_cases(case_ids, domain)
 
     missing_case_counts = defaultdict(int)
     for case in cases:
@@ -494,8 +494,7 @@ def get_repeaters_for_type_in_domain(domain, repeater_types):
     """
     repeaters = get_repeaters_by_domain(domain)
     if repeater_types:
-        return [repeater for repeater in get_repeaters_by_domain(domain)
-                if isinstance(repeater, repeater_types)]
+        return [repeater for repeater in repeaters if isinstance(repeater, repeater_types)]
     return repeaters
 
 

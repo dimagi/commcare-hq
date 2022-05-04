@@ -1,6 +1,6 @@
 import os
 import sys
-import traceback
+from datetime import datetime
 from functools import wraps
 
 from django.conf import settings
@@ -8,6 +8,8 @@ from django.core.management import call_command
 from django.db import migrations
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 from django.db.migrations import RunPython
+
+from django.db.migrations.recorder import MigrationRecorder
 
 
 def add_if_not_exists(string):
@@ -115,41 +117,54 @@ def noop_migration():
     return RunPython(RunPython.noop, RunPython.noop)
 
 
-def run_once_off_migration(command_name, *args, required_commit=None, **kwargs):
-    """Return a migration operation that can be used to run a management command from
-    a Django migration. This will give the user directions for running the command
-    manually if the command fails or has since been removed from the codebase"""
+def prompt_for_historical_migration(app_name, migration_name, required_commit):
+    """Returns a migration operation that will prompt the user to run a migration from a previous
+    version of the code. Note that this operation is never intended to succeed, because the code
+    needed for the migration no longer exists"""
+
+    def get_most_recent_migration_date():
+        return MigrationRecorder.Migration.objects \
+            .order_by('-applied') \
+            .values_list('applied') \
+            .first()[0]
+
+    def get_days_since_last_migration():
+        current_time = datetime.now()
+        last_migration_time = get_most_recent_migration_date()
+
+        return (current_time - last_migration_time).days
+
     @skip_on_fresh_install
     def _run_command(apps, schema_editor):
-        run_management_command_or_exit(command_name, required_commit, *args, **kwargs)
-
-    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop, elidable=True)
-
-
-def run_management_command_or_exit(command_name, *args, required_commit=None, custom_message=None, **kwargs):
-    """Helper function to run a management command automatically and abort if there was an error
-    with helpful console output to allow users to run it manually if it fails or
-    has since been removed from the codebase."""
-    try:
-        call_command(command_name, *args, **kwargs)
-    except Exception:
-        traceback.print_exc()
+        print("")
         print(f"""
-            A migration must be performed before this environment can be upgraded to the latest version
-            of CommCareHQ. This migration is run using the management command {command_name}.
-        """)
-        if required_commit or custom_message:
-            print("")
-            print(custom_message or f"""
-            Run the following commands to run the migration and get up to date:
+        This migration cannot be run, as it depends on code that has since been removed.
+        To fix this, follow the instructions below to run this migration from a previous version of the code.
+        In order to prevent this in the future, we recommend running migrations at least once every 6 weeks.
+        For reference, the current code has not run migrations for {get_days_since_last_migration()} days.
 
+        Run the following commands to run the historical migration and get up to date:
+            With a cloud setup:
                 commcare-cloud <env> fab setup_limited_release --set code_branch={required_commit}
 
-                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi
+                commcare-cloud <env> django-manage --release <release created by previous command> migrate_multi {app_name}
 
                 commcare-cloud <env> deploy commcare
-            """)
+
+            With a development setup:
+                git checkout {required_commit}
+                ./manage.py migrate_multi {app_name}
+
+        If you are sure this migration is unnecessary, you can fake the migration:
+            With a cloud setup:
+                commcare-cloud <env> django-manage migrate_multi --fake {app_name} {migration_name}
+
+            With a development setup:
+                ./manage.py migrate_multi --fake {app_name} {migration_name}
+        """)  # noqa: E501
         sys.exit(1)
+
+    return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop)
 
 
 def block_upgrade_for_removed_migration(commit_with_migration):
@@ -178,3 +193,24 @@ def block_upgrade_for_removed_migration(commit_with_migration):
         sys.exit(1)
 
     return migrations.RunPython(show_message, reverse_code=migrations.RunPython.noop, elidable=True)
+
+
+def update_es_mapping(index_name, quiet=False):
+    """Returns a django migration Operation which calls the `update_es_mapping`
+    management command to update the mapping on an Elastic index.
+
+    :param index_name: name of the target index for mapping updates
+    :param quiet: (optional) suppress non-error management command output"""
+    @skip_on_fresh_install
+    def update_es_mapping(*args, **kwargs):
+        argv = ["update_es_mapping", index_name]
+        if quiet:
+            argv.append("--quiet")
+        else:
+            print(f"\nupdating mapping for index: {index_name} ...")
+        return call_command(*argv, noinput=True)
+    return migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
+
+
+def get_migration_name(file_path):
+    return os.path.splitext(os.path.basename(file_path))[0]

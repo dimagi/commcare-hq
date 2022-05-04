@@ -5,12 +5,17 @@ import re
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import CharField, BooleanField, ChoiceField, IntegerField
+from django.forms.fields import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    IntegerField,
+)
 from django.forms.forms import Form
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
@@ -21,12 +26,12 @@ from crispy_forms.layout import Div
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
-from corehq.toggles import TURN_IO_BACKEND
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
@@ -35,7 +40,6 @@ from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
     get_sms_backend_classes,
     is_superuser_or_contractor,
-    strip_plus,
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -44,21 +48,21 @@ ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 
 ENABLED_DISABLED_CHOICES = (
-    (DISABLED, ugettext_noop("Disabled")),
-    (ENABLED, ugettext_noop("Enabled")),
+    (DISABLED, gettext_noop("Disabled")),
+    (ENABLED, gettext_noop("Enabled")),
 )
 
 DEFAULT = "DEFAULT"
 CUSTOM = "CUSTOM"
 
 DEFAULT_CUSTOM_CHOICES = (
-    (DEFAULT, ugettext_noop("Default")),
-    (CUSTOM, ugettext_noop("Custom")),
+    (DEFAULT, gettext_noop("Default")),
+    (CUSTOM, gettext_noop("Custom")),
 )
 
 MESSAGE_COUNTER_CHOICES = (
-    (DEFAULT, ugettext_noop("Don't use counter")),
-    (CUSTOM, ugettext_noop("Use counter with threshold:")),
+    (DEFAULT, gettext_noop("Don't use counter")),
+    (CUSTOM, gettext_noop("Use counter with threshold:")),
 )
 
 SMS_CONVERSATION_LENGTH_CHOICES = (
@@ -84,10 +88,10 @@ WELCOME_RECIPIENT_MOBILE_WORKER = 'MOBILE_WORKER'
 WELCOME_RECIPIENT_ALL = 'ALL'
 
 WELCOME_RECIPIENT_CHOICES = (
-    (WELCOME_RECIPIENT_NONE, ugettext_lazy('Nobody')),
-    (WELCOME_RECIPIENT_CASE, ugettext_lazy('Cases only')),
-    (WELCOME_RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Workers only')),
-    (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
+    (WELCOME_RECIPIENT_NONE, gettext_lazy('Nobody')),
+    (WELCOME_RECIPIENT_CASE, gettext_lazy('Cases only')),
+    (WELCOME_RECIPIENT_MOBILE_WORKER, gettext_lazy('Mobile Workers only')),
+    (WELCOME_RECIPIENT_ALL, gettext_lazy('Cases and Mobile Workers')),
 )
 
 LANGUAGE_FALLBACK_NONE = 'NONE'
@@ -96,17 +100,17 @@ LANGUAGE_FALLBACK_DOMAIN = 'DOMAIN'
 LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
 
 LANGUAGE_FALLBACK_CHOICES = (
-    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_NONE, gettext_lazy("""
         Only send message if text is available in recipient's preferred language
     """)),
-    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_SCHEDULE, gettext_lazy("""
         Use text from the alert or broadcast's default language as a backup
     """)),
-    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_DOMAIN, gettext_lazy("""
         Use text from the project's default language as a backup
         if the alert or broadcast's language is also unavailable
     """)),
-    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("""
+    (LANGUAGE_FALLBACK_UNTRANSLATED, gettext_lazy("""
         Use all available text backups, including untranslated content
     """)),
 )
@@ -149,7 +153,7 @@ class SettingsForm(Form):
     # General Settings
     use_default_sms_response = ChoiceField(
         required=False,
-        label=ugettext_noop("Default SMS Response"),
+        label=gettext_noop("Default SMS Response"),
         choices=ENABLED_DISABLED_CHOICES,
     )
     default_sms_response = TrimmedCharField(
@@ -158,10 +162,10 @@ class SettingsForm(Form):
     )
     use_restricted_sms_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Send SMS on..."),
+        label=gettext_noop("Send SMS on..."),
         choices=(
-            (DISABLED, ugettext_noop("any day, at any time")),
-            (ENABLED, ugettext_noop("only specific days and times")),
+            (DISABLED, gettext_noop("any day, at any time")),
+            (ENABLED, gettext_noop("only specific days and times")),
         ),
     )
     restricted_sms_times_json = CharField(
@@ -171,9 +175,9 @@ class SettingsForm(Form):
 
     sms_survey_date_format = ChoiceField(
         required=False,
-        label=ugettext_lazy("SMS Survey Date Format"),
+        label=gettext_lazy("SMS Survey Date Format"),
         choices=(
-            (df.human_readable_format, ugettext_lazy(df.human_readable_format))
+            (df.human_readable_format, gettext_lazy(df.human_readable_format))
             for df in ALLOWED_SURVEY_DATE_FORMATS
         ),
     )
@@ -185,7 +189,7 @@ class SettingsForm(Form):
     )
     custom_case_username = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter a Case Property"),
+        label=gettext_noop("Enter a Case Property"),
     )
     use_custom_message_count_threshold = ChoiceField(
         required=False,
@@ -193,11 +197,11 @@ class SettingsForm(Form):
     )
     custom_message_count_threshold = IntegerField(
         required=False,
-        label=ugettext_noop("Enter a Number"),
+        label=gettext_noop("Enter a Number"),
     )
     use_sms_conversation_times = ChoiceField(
         required=False,
-        label=ugettext_noop("Delay Automated SMS"),
+        label=gettext_noop("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
         widget=SelectToggle(choices=ENABLED_DISABLED_CHOICES, attrs={"ko_value": "use_sms_conversation_times"}),
     )
@@ -207,25 +211,25 @@ class SettingsForm(Form):
     )
     sms_conversation_length = ChoiceField(
         required=False,
-        label=ugettext_noop("Conversation Duration"),
+        label=gettext_noop("Conversation Duration"),
         choices=SMS_CONVERSATION_LENGTH_CHOICES,
     )
     survey_traffic_option = ChoiceField(
         required=False,
-        label=ugettext_noop("Survey Traffic"),
+        label=gettext_noop("Survey Traffic"),
         choices=(
-            (SHOW_ALL, ugettext_noop("Show all survey traffic")),
-            (SHOW_INVALID, ugettext_noop("Hide all survey traffic except "
-                                         "invalid responses")),
-            (HIDE_ALL, ugettext_noop("Hide all survey traffic")),
+            (SHOW_ALL, gettext_noop("Show all survey traffic")),
+            (SHOW_INVALID, gettext_noop("Hide all survey traffic except "
+                                        "invalid responses")),
+            (HIDE_ALL, gettext_noop("Hide all survey traffic")),
         ),
     )
     count_messages_as_read_by_anyone = ChoiceField(
         required=False,
-        label=ugettext_noop("A Message is Read..."),
+        label=gettext_noop("A Message is Read..."),
         choices=(
-            (ENABLED, ugettext_noop("when it is read by anyone")),
-            (DISABLED, ugettext_noop("only for the user that reads it")),
+            (ENABLED, gettext_noop("when it is read by anyone")),
+            (DISABLED, gettext_noop("only for the user that reads it")),
         ),
     )
     use_custom_chat_template = ChoiceField(
@@ -234,41 +238,45 @@ class SettingsForm(Form):
     )
     custom_chat_template = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Enter Chat Template Identifier"),
+        label=gettext_noop("Enter Chat Template Identifier"),
     )
 
     # Registration settings
     sms_case_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("Case Self-Registration"),
+        label=gettext_noop("Case Self-Registration"),
     )
     sms_case_registration_type = TrimmedCharField(
         required=False,
-        label=ugettext_noop("Default Case Type"),
+        label=gettext_noop("Default Case Type"),
     )
     sms_case_registration_owner_id = CharField(
         required=False,
-        label=ugettext_noop("Default Case Owner"),
+        label=gettext_noop("Default Case Owner"),
         widget=forms.Select(choices=[]),
     )
     sms_case_registration_user_id = CharField(
         required=False,
-        label=ugettext_noop("Registration Submitter"),
+        label=gettext_noop("Registration Submitter"),
         widget=forms.Select(choices=[]),
     )
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_noop("SMS Mobile Worker Registration"),
+        label=gettext_noop("SMS Mobile Worker Registration"),
+    )
+    sms_worker_registration_alert_emails = MultiEmailField(
+        required=False,
+        label=gettext_noop("Emails to send alerts for new mobile worker registrations"),
     )
     registration_welcome_message = ChoiceField(
         choices=WELCOME_RECIPIENT_CHOICES,
-        label=ugettext_lazy("Send registration welcome message to"),
+        label=gettext_lazy("Send registration welcome message to"),
     )
     language_fallback = ChoiceField(
         choices=LANGUAGE_FALLBACK_CHOICES,
-        label=ugettext_lazy("Backup behavior for missing translations"),
+        label=gettext_lazy("Backup behavior for missing translations"),
     )
     twilio_whatsapp_phone_number = CharField(
         required=False,
@@ -278,11 +286,11 @@ class SettingsForm(Form):
     override_daily_outbound_sms_limit = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
-        label=ugettext_lazy("Override Daily Outbound SMS Limit"),
+        label=gettext_lazy("Override Daily Outbound SMS Limit"),
     )
     custom_daily_outbound_sms_limit = IntegerField(
         required=False,
-        label=ugettext_noop("Daily Outbound SMS Limit"),
+        label=gettext_noop("Daily Outbound SMS Limit"),
         min_value=1000,
     )
 
@@ -382,6 +390,14 @@ class SettingsForm(Form):
                     "[project] worker [username]' (where [project] is your "
                     " project space and [username] is an optional username)"
                     ", and the system will add them as a mobile worker."),
+                data_bind="value: sms_mobile_worker_registration_enabled",
+            ),
+            crispy.Div(
+                hqcrispy.FieldWithHelpBubble(
+                    "sms_worker_registration_alert_emails",
+                    help_bubble_text=_("Email these people when new users register through SMS"),
+                ),
+                data_bind="visible: showAdminAlertEmails",
             ),
             hqcrispy.FieldWithHelpBubble(
                 'registration_welcome_message',
@@ -599,6 +615,7 @@ class SettingsForm(Form):
         self.helper.layout = crispy.Layout(
             *self.sections
         )
+        self.set_admin_email_choices(data, kwargs)
 
         self.restricted_sms_times_widget_context = {
             "template_name": "ko-template-restricted-sms-times",
@@ -616,6 +633,19 @@ class SettingsForm(Form):
             "remove_window_method": "$parent.removeSMSConversationTime",
             "add_window_method": "addSMSConversationTime",
         }
+
+    def set_admin_email_choices(self, data, kwargs):
+        email_choices = []
+        if 'initial' in kwargs and 'sms_worker_registration_alert_emails' in kwargs['initial']:
+            # for a GET request, the form is populated by 'initial'
+            email_choices = kwargs['initial']['sms_worker_registration_alert_emails']
+        if data:
+            # for a POST request, we should return the list of emails that was given
+            email_choices = data.getlist('sms_worker_registration_alert_emails')
+
+        self.fields['sms_worker_registration_alert_emails'].choices = [
+            (email, email) for email in email_choices
+        ]
 
     @property
     def enable_registration_welcome_sms_for_case(self):
@@ -859,44 +889,44 @@ class BackendForm(Form):
     domain = None
     backend_id = None
     name = CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     display_name = CharField(
-        label=ugettext_noop("Display Name"),
+        label=gettext_noop("Display Name"),
         required=False,
     )
     description = CharField(
-        label=ugettext_noop("Description"),
+        label=gettext_noop("Description"),
         widget=forms.Textarea,
         required=False,
     )
     give_other_domains_access = BooleanField(
         required=False,
-        label=ugettext_noop("Give other domains access.")
+        label=gettext_noop("Give other domains access.")
     )
     authorized_domains = CharField(
         required=False,
-        label=ugettext_noop("List of authorized domains"),
-        help_text=ugettext_lazy("A comma-separated list of domain names")
+        label=gettext_noop("List of authorized domains"),
+        help_text=gettext_lazy("A comma-separated list of domain names")
     )
     reply_to_phone_number = CharField(
         required=False,
-        label=ugettext_noop("Reply-To Phone Number"),
+        label=gettext_noop("Reply-To Phone Number"),
     )
     inbound_api_key = CharField(
         required=False,
-        label=ugettext_lazy("Inbound API Key"),
+        label=gettext_lazy("Inbound API Key"),
         disabled=True,
     )
     opt_out_keywords = CharField(
         required=False,
-        label=ugettext_noop("List of opt out keywords"),
-        help_text=ugettext_lazy("A comma-separated list of keywords")
+        label=gettext_noop("List of opt out keywords"),
+        help_text=gettext_lazy("A comma-separated list of keywords")
     )
     opt_in_keywords = CharField(
         required=False,
-        label=ugettext_noop("List of opt in keywords"),
-        help_text=ugettext_lazy("A comma-separated list of keywords")
+        label=gettext_noop("List of opt in keywords"),
+        help_text=gettext_lazy("A comma-separated list of keywords")
     )
 
     @property
@@ -1046,7 +1076,7 @@ class BackendForm(Form):
 
 class BackendMapForm(Form):
     catchall_backend_id = ChoiceField(
-        label=ugettext_lazy("Catch-All Gateway"),
+        label=gettext_lazy("Catch-All Gateway"),
         required=False
     )
     backend_map = CharField(required=False)
@@ -1159,7 +1189,9 @@ class InitiateAddSMSBackendForm(Form):
         domain = kwargs.pop('domain', None)
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
-        from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+        from corehq.messaging.smsbackends.telerivet.models import (
+            SQLTelerivetBackend,
+        )
         backend_classes = self.backend_classes_for_domain(domain)
 
         backend_choices = []
@@ -1187,7 +1219,7 @@ class InitiateAddSMSBackendForm(Form):
 
     def backend_classes_for_domain(self, domain):
         backends = copy.deepcopy(get_sms_backend_classes())
-        if (domain is not None) and (not TURN_IO_BACKEND.enabled(domain)):
+        if (domain is not None) and (not toggles.TURN_IO_BACKEND.enabled(domain)):
             backends.pop('TURN')
 
         return backends
@@ -1195,33 +1227,33 @@ class InitiateAddSMSBackendForm(Form):
 
 class SubscribeSMSForm(Form):
     stock_out_facilities = BooleanField(
-        label=ugettext_lazy("Receive stockout facilities SMS alert"),
+        label=gettext_lazy("Receive stockout facilities SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with specific users/facilities that are "
             "stocked out of your commodities"
         )
     )
     stock_out_commodities = BooleanField(
-        label=ugettext_lazy("Receive stockout commodities SMS alert"),
+        label=gettext_lazy("Receive stockout commodities SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with specific commodities that are stocked "
             "out by your users/facilities"
         )
     )
     stock_out_rates = BooleanField(
-        label=ugettext_lazy("Receive stockout SMS alert"),
+        label=gettext_lazy("Receive stockout SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This will alert you with the percent of facilities that are "
             "stocked out of a specific commodity"
         )
     )
     non_report = BooleanField(
-        label=ugettext_lazy("Receive non-reporting SMS alert"),
+        label=gettext_lazy("Receive non-reporting SMS alert"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "This alert highlight users/facilities which have not submitted "
             "their CommCare Supply stock report."
         )
@@ -1264,8 +1296,8 @@ class SubscribeSMSForm(Form):
 class ComposeMessageForm(forms.Form):
 
     recipients = forms.CharField(widget=forms.Textarea,
-                                 help_text=ugettext_lazy("Type a username, group name or 'send to all'"))
-    message = forms.CharField(widget=forms.Textarea, help_text=ugettext_lazy('0 characters (160 max)'))
+                                 help_text=gettext_lazy("Type a username, group name or 'send to all'"))
+    message = forms.CharField(widget=forms.Textarea, help_text=gettext_lazy('0 characters (160 max)'))
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')

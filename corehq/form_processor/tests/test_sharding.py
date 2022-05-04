@@ -7,9 +7,10 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import XFormInstance, CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, sharded
 from corehq.sql_db.config import plproxy_config
+from corehq.sql_db.tests.utils import ignore_databases_override_warning
 
 DOMAIN = 'sharding-test'
 
@@ -38,11 +39,11 @@ class ShardingTests(TestCase):
         dbs_with_form = []
         dbs_with_case = []
         for db in plproxy_config.form_processing_dbs:
-            form_in_db = XFormInstanceSQL.objects.using(db).filter(form_id=form.form_id).exists()
+            form_in_db = XFormInstance.objects.using(db).filter(form_id=form.form_id).exists()
             if form_in_db:
                 dbs_with_form.append(db)
 
-            case_in_db = CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
+            case_in_db = CommCareCase.objects.using(db).filter(case_id=case_id).exists()
             if case_in_db:
                 dbs_with_case.append(db)
 
@@ -60,8 +61,8 @@ class ShardingTests(TestCase):
         forms_per_db = {}
         cases_per_db = {}
         for db in plproxy_config.form_processing_dbs:
-            forms_per_db[db] = XFormInstanceSQL.objects.using(db).filter(domain=DOMAIN).count()
-            cases_per_db[db] = CommCareCaseSQL.objects.using(db).filter(domain=DOMAIN).count()
+            forms_per_db[db] = XFormInstance.objects.using(db).filter(domain=DOMAIN).count()
+            cases_per_db[db] = CommCareCase.objects.using(db).filter(domain=DOMAIN).count()
 
         self.assertEqual(num_forms, sum(forms_per_db.values()), forms_per_db)
         self.assertEqual(num_forms, sum(cases_per_db.values()), cases_per_db)
@@ -81,7 +82,7 @@ class ShardingTests(TestCase):
 
         dbs_for_docs = ShardAccessor.get_database_for_docs(form_ids)
         for form_id, db_alias in dbs_for_docs.items():
-            XFormInstanceSQL.objects.using(db_alias).get(form_id=form_id)
+            XFormInstance.objects.using(db_alias).get(form_id=form_id)
 
     def test_get_docs_by_database(self):
         # test_python_hashing_gives_correct_db ensures the hashing works correctly so this just tests
@@ -131,6 +132,7 @@ def _mock_databases():
 
 
 @sharded
+@ignore_databases_override_warning
 @override_settings(DATABASES=_mock_databases())
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):

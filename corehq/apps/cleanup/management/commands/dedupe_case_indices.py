@@ -6,15 +6,11 @@ Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migrat
 from itertools import groupby
 
 from django.core.management.base import BaseCommand
-from django.db import connections
 
 from dimagi.utils.chunked import chunked
 
-from corehq.form_processor.models import CommCareCaseIndexSQL
-from corehq.form_processor.utils.sql import (
-    fetchall_as_namedtuple,
-    fetchone_as_namedtuple,
-)
+from corehq.form_processor.models import CommCareCaseIndex
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 IDENTIFIER_INDEX_NAME = 'form_processor_commcarecaseindexsql_identifier'
@@ -59,7 +55,7 @@ class Command(BaseCommand):
                     'indices after 3 attempts for db: {}'.format(len(case_ids), db))
                 )
                 grouped_indices = groupby(
-                    CommCareCaseIndexSQL.objects.using(db)
+                    CommCareCaseIndex.objects.using(db)
                     .filter(case_id__in=case_ids), key=lambda c: c.case_id
                 )
                 for case_id, indices in grouped_indices:
@@ -83,21 +79,21 @@ def _add_temp_index(db):
     add_identifier_index = """
         CREATE INDEX CONCURRENTLY {identifier_index_name} ON {case_index_table} (identifier)
     """.format(
-        case_index_table=CommCareCaseIndexSQL._meta.db_table,
+        case_index_table=CommCareCaseIndex._meta.db_table,
         identifier_index_name=IDENTIFIER_INDEX_NAME
     )
-    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
+    with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
         if not _index_exists(db, IDENTIFIER_INDEX_NAME):
             log_sql(add_identifier_index)
             cursor.execute(add_identifier_index)
 
 
 def _index_exists(db, index_name):
-    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db).cursor() as cursor:
-        sql = "SELECT to_regclass('{}') IS NOT NULL as index_exists".format(index_name)
-        log_sql(sql)
-        cursor.execute(sql)
-        return fetchone_as_namedtuple(cursor).index_exists
+    with CommCareCaseIndex.get_cursor_for_partition_db(db).cursor() as cursor:
+        sql = "SELECT to_regclass(%s) IS NOT NULL as index_exists"
+        log_sql(sql % repr(index_name))
+        cursor.execute(sql, [index_name])
+        return cursor.fetchone()[0]
 
 
 def _drop_index(db, index_name):
@@ -105,7 +101,7 @@ def _drop_index(db, index_name):
     drop_identifier_index = """
             DROP INDEX CONCURRENTLY IF EXISTS {index_name}
         """.format(index_name=index_name)
-    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
+    with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
         log_sql(drop_identifier_index)
         cursor.execute(drop_identifier_index)
 
@@ -117,24 +113,24 @@ def _add_unique_constraint_to_case_index_table(db):
     create_index_sql = """
         CREATE UNIQUE INDEX CONCURRENTLY {index_name} on {case_index_table} ("case_id", "identifier")
     """.format(
-        case_index_table=CommCareCaseIndexSQL._meta.db_table,
+        case_index_table=CommCareCaseIndex._meta.db_table,
         index_name=UNIQIE_INDEX_NAME,
     )
 
     add_constraint_sql = """
         ALTER TABLE {case_index_table} ADD CONSTRAINT {index_name} UNIQUE USING INDEX {index_name}
     """.format(
-        case_index_table=CommCareCaseIndexSQL._meta.db_table,
+        case_index_table=CommCareCaseIndex._meta.db_table,
         index_name=UNIQIE_INDEX_NAME,
     )
 
     try:
-        with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
+        with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
             log_sql(create_index_sql)
             cursor.execute(create_index_sql)
             log_sql(add_constraint_sql)
             cursor.execute(add_constraint_sql)
-    except:
+    except:  # noqa: E722
         # if the index creation failed make sure we remove it otherwise we
         # are left with an invalid index
         _drop_index(db, UNIQIE_INDEX_NAME)
@@ -148,16 +144,16 @@ def _delete_duplicate_indices(case_ids, db):
         DELETE FROM {case_index_table} WHERE id in (
         SELECT id FROM (
           SELECT id, case_id, row_number() OVER (PARTITION BY case_id, identifier, referenced_id, relationship_id)
-          FROM {case_index_table} JOIN (SELECT UNNEST(ARRAY['{{case_ids}}']) AS case_id) AS cx USING (case_id)) as indices
+          FROM {case_index_table}
+          JOIN (SELECT UNNEST(%s) AS case_id) AS cx USING (case_id)) as indices
         WHERE row_number > 1
         )
-    """.format(case_index_table=CommCareCaseIndexSQL._meta.db_table)
+    """.format(case_index_table=CommCareCaseIndex._meta.db_table)
 
-    for chunk in chunked(case_ids, 100):
-        with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
-            delete_sql = delete_dupes_sql.format(case_ids="','".join(chunk))
-            log_sql(delete_sql)
-            cursor.execute(delete_sql)
+    for chunk in chunked(case_ids, 100, list):
+        with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
+            log_sql(delete_dupes_sql % repr(chunk))
+            cursor.execute(delete_dupes_sql, [chunk])
 
 
 def _get_case_ids_with_dupe_indices(db):
@@ -168,9 +164,9 @@ def _get_case_ids_with_dupe_indices(db):
         FROM {case_index_table}
         GROUP BY case_id, identifier
         HAVING count(*) > 1
-    """.format(case_index_table=CommCareCaseIndexSQL._meta.db_table)
+    """.format(case_index_table=CommCareCaseIndex._meta.db_table)
 
-    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
+    with CommCareCaseIndex.get_cursor_for_partition_db(db) as cursor:
         log_sql(case_id_with_dupes_sql)
         cursor.execute(case_id_with_dupes_sql)
         rows_with_dupes = fetchall_as_namedtuple(cursor)

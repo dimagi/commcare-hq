@@ -1,8 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
@@ -17,60 +17,60 @@ from corehq.privileges import DEFAULT_EXPORT_SETTINGS
 
 class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
-        label=ugettext_lazy("Restrict Project Space Creation"),
+        label=gettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
-                                "to create new project spaces."),
+        help_text=gettext_lazy("Do not allow current web users, other than enterprise admins, "
+                               "to create new project spaces."),
     )
     restrict_signup = forms.BooleanField(
-        label=ugettext_lazy("Restrict User Signups"),
+        label=gettext_lazy("Restrict User Signups"),
         required=False,
-        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+        help_text=gettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
     )
     restrict_signup_message = forms.CharField(
         label="Signup Restriction Message",
         required=False,
-        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        help_text=gettext_lazy("Message to display to users who attempt to sign up for an account"),
         widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
     )
 
     forms_filetype = forms.ChoiceField(
-        label=ugettext_lazy("Default File Type"),
+        label=gettext_lazy("Default File Type"),
         required=False,
         initial=ExportFileType.EXCEL_2007_PLUS,
         choices=ExportFileType.CHOICES,
     )
 
     forms_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        label=gettext_lazy("Excel Date & Multimedia Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically convert dates and multimedia links for Excel"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
-                                "Otherwise they will appear as a normal text format. This also allows "
-                                "for hyperlinks to the multimedia captured by your form submission.")
+        help_text=gettext_lazy("Leaving this checked will ensure dates appear in excel format. "
+                               "Otherwise they will appear as a normal text format. This also allows "
+                               "for hyperlinks to the multimedia captured by your form submission.")
     )
 
     forms_auto_format_cells = forms.BooleanField(
-        label=ugettext_lazy("Excel Cell Format"),
+        label=gettext_lazy("Excel Cell Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically format cells for Excel 2007+"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("If this setting is not selected, your export will be in Excel's generic format. "
-                                "If you enable this setting, Excel will format dates, integers, decimals, "
-                                "boolean values (True/False), and currencies.")
+        help_text=gettext_lazy("If this setting is not selected, your export will be in Excel's generic format. "
+                               "If you enable this setting, Excel will format dates, integers, decimals, "
+                               "boolean values (True/False), and currencies.")
     )
 
     forms_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Checkbox Format"),
+        label=gettext_lazy("Checkbox Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Expand checkbox questions"
             ),
         ),
@@ -78,33 +78,33 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     cases_filetype = forms.ChoiceField(
-        label=ugettext_lazy("Default File Type"),
+        label=gettext_lazy("Default File Type"),
         required=False,
         initial=ExportFileType.EXCEL_2007_PLUS,
         choices=ExportFileType.CHOICES,
     )
 
     cases_auto_convert = forms.BooleanField(
-        label=ugettext_lazy("Excel Date & Multimedia Format"),
+        label=gettext_lazy("Excel Date & Multimedia Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Automatically convert dates and multimedia links for Excel"
             ),
         ),
         required=False,
-        help_text=ugettext_lazy("Leaving this checked will ensure dates appear in excel format. "
-                                "Otherwise they will appear as a normal text format. This also allows "
-                                "for hyperlinks to the multimedia captured by your form submission.")
+        help_text=gettext_lazy("Leaving this checked will ensure dates appear in excel format. "
+                               "Otherwise they will appear as a normal text format. This also allows "
+                               "for hyperlinks to the multimedia captured by your form submission.")
     )
 
     odata_expand_checkbox = forms.BooleanField(
-        label=ugettext_lazy("Checkbox Format"),
+        label=gettext_lazy("Checkbox Format"),
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_lazy(
+            inline_label=gettext_lazy(
                 "Expand checkbox questions"
             ),
         ),
-        help_text=ugettext_lazy("Only applies to form exports."),
+        help_text=gettext_lazy("Only applies to form exports."),
         required=False,
     )
 
@@ -225,3 +225,89 @@ class EnterpriseSettingsForm(forms.Form):
             )
             self.export_settings.save()
         return True
+
+
+class EnterpriseManageMobileWorkersForm(forms.Form):
+    enable_auto_deactivation = forms.BooleanField(
+        label=gettext_lazy("Auto-Deactivation by Inactivity"),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Automatically deactivate Mobile Workers who have not "
+                "submitted a form within the Inactivity Period below."
+            ),
+        ),
+        required=False,
+    )
+    inactivity_period = forms.ChoiceField(
+        label=gettext_lazy("Inactivity Period"),
+        required=False,
+        initial=90,
+        choices=(
+            (30, gettext_lazy("30 days")),
+            (60, gettext_lazy("60 days")),
+            (90, gettext_lazy("90 days")),
+            (120, gettext_lazy("120 days")),
+            (150, gettext_lazy("150 days")),
+            (180, gettext_lazy("180 days")),
+        ),
+        help_text=gettext_lazy(
+            "Mobile workers who have not submitted a form after these many "
+            "days will be considered inactive."
+        ),
+    )
+    allow_custom_deactivation = forms.BooleanField(
+        label=gettext_lazy("Auto-Deactivation by Month"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Allow auto-deactivation of Mobile Workers after "
+                "a specific month."
+            ),
+        ),
+        help_text=gettext_lazy(
+            "When this is enabled, an option to select a month and "
+            "year for deactivating a Mobile Worker will be present when "
+            "creating that Mobile Worker."
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.emw_settings = kwargs.pop('emw_settings', None)
+        self.domain = kwargs.pop('domain', None)
+        kwargs['initial'] = {
+            "enable_auto_deactivation": self.emw_settings.enable_auto_deactivation,
+            "inactivity_period": self.emw_settings.inactivity_period,
+            "allow_custom_deactivation": self.emw_settings.allow_custom_deactivation,
+        }
+
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'emw-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Manage Mobile Workers"),
+                PrependedText('enable_auto_deactivation', ''),
+                crispy.Div(
+                    crispy.Field('inactivity_period'),
+                ),
+                PrependedText('allow_custom_deactivation', ''),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def update_settings(self):
+        self.emw_settings.enable_auto_deactivation = self.cleaned_data['enable_auto_deactivation']
+        self.emw_settings.inactivity_period = self.cleaned_data['inactivity_period']
+        self.emw_settings.allow_custom_deactivation = self.cleaned_data['allow_custom_deactivation']
+        self.emw_settings.save()
+        for domain in self.emw_settings.account.get_domains():
+            self.emw_settings.clear_domain_caches(domain)

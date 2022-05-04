@@ -1,10 +1,10 @@
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from corehq.apps.translations.models import SMSTranslations
 from corehq.util.translation import localize
 
-MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
+MSG_GENERIC_ERROR = "sms.survey.restart"
 MSG_TOUCHFORMS_DOWN = "sms.survey.temporarilydown"
 MSG_TOUCHFORMS_ERROR = "sms.survey.internalerror"
 MSG_CHOICE_OUT_OF_RANGE = "sms.validation.outofrange"
@@ -39,48 +39,48 @@ MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
 MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
 
 _MESSAGES = {
-    MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
-    MSG_TOUCHFORMS_DOWN: ugettext_noop(
+    MSG_GENERIC_ERROR: gettext_noop("An error has occurred. Please try restarting the survey."),
+    MSG_TOUCHFORMS_DOWN: gettext_noop(
         "Our system is receiving a lot of messages now. "
         "Can you re-send in 15 minutes? Apologies for the inconvenience!"),
-    MSG_TOUCHFORMS_ERROR: ugettext_noop("Internal server error."),
-    MSG_CHOICE_OUT_OF_RANGE: ugettext_noop("Answer is out of range."),
-    MSG_INVALID_CHOICE: ugettext_noop("Invalid choice."),
-    MSG_INVALID_INT: ugettext_noop("Invalid integer entered."),
+    MSG_TOUCHFORMS_ERROR: gettext_noop("Internal server error."),
+    MSG_CHOICE_OUT_OF_RANGE: gettext_noop("Answer is out of range."),
+    MSG_INVALID_CHOICE: gettext_noop("Invalid choice."),
+    MSG_INVALID_INT: gettext_noop("Invalid integer entered."),
     MSG_INVALID_INT_RANGE:
-        ugettext_noop("Invalid integer entered, expected a number between -2147483648 and 2147483647."),
-    MSG_INVALID_FLOAT: ugettext_noop("Invalid decimal number entered."),
-    MSG_INVALID_LONG: ugettext_noop("Invalid long integer entered."),
-    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected {0}."),
-    MSG_INVALID_TIME: ugettext_noop("Invalid time format: expected HHMM (24-hour)."),
-    MSG_KEYWORD_NOT_FOUND: ugettext_noop("Keyword not found: '{0}'"),
-    MSG_START_KEYWORD_USAGE: ugettext_noop("Usage: {0} <keyword>"),
-    MSG_UNKNOWN_GLOBAL_KEYWORD: ugettext_noop("Unknown command: '{0}'"),
-    MSG_FIELD_REQUIRED: ugettext_noop("This field is required."),
-    MSG_EXPECTED_NAMED_ARGS_SEPARATOR: ugettext_noop("Expected name and value to be joined by '{0}'."),
-    MSG_MULTIPLE_ANSWERS_FOUND: ugettext_noop("More than one answer found for '{0}'"),
-    MSG_MULTIPLE_QUESTIONS_MATCH: ugettext_noop("More than one question matches '{0}'"),
-    MSG_MISSING_EXTERNAL_ID: ugettext_noop("Please provide an external id for the case."),
-    MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
-    MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
-    MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
-    MSG_FORM_NOT_FOUND: ugettext_noop("Could not find the survey being requested."),
-    MSG_FORM_ERROR: ugettext_noop("There is a configuration error with this survey. "
+        gettext_noop("Invalid integer entered, expected a number between -2147483648 and 2147483647."),
+    MSG_INVALID_FLOAT: gettext_noop("Invalid decimal number entered."),
+    MSG_INVALID_LONG: gettext_noop("Invalid long integer entered."),
+    MSG_INVALID_DATE: gettext_noop("Invalid date format: expected {0}."),
+    MSG_INVALID_TIME: gettext_noop("Invalid time format: expected HHMM (24-hour)."),
+    MSG_KEYWORD_NOT_FOUND: gettext_noop("Keyword not found: '{0}'"),
+    MSG_START_KEYWORD_USAGE: gettext_noop("Usage: {0} <keyword>"),
+    MSG_UNKNOWN_GLOBAL_KEYWORD: gettext_noop("Unknown command: '{0}'"),
+    MSG_FIELD_REQUIRED: gettext_noop("This field is required."),
+    MSG_EXPECTED_NAMED_ARGS_SEPARATOR: gettext_noop("Expected name and value to be joined by '{0}'."),
+    MSG_MULTIPLE_ANSWERS_FOUND: gettext_noop("More than one answer found for '{0}'"),
+    MSG_MULTIPLE_QUESTIONS_MATCH: gettext_noop("More than one question matches '{0}'"),
+    MSG_MISSING_EXTERNAL_ID: gettext_noop("Please provide an external id for the case."),
+    MSG_CASE_NOT_FOUND: gettext_noop("Case with the given external id was not found."),
+    MSG_MULTIPLE_CASES_FOUND: gettext_noop("More than one case was found with the given external id."),
+    MSG_FIELD_DESCRIPTOR: gettext_noop("Field '{0}': "),
+    MSG_FORM_NOT_FOUND: gettext_noop("Could not find the survey being requested."),
+    MSG_FORM_ERROR: gettext_noop("There is a configuration error with this survey. "
         "Please contact your administrator."),
-    MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
+    MSG_OPTED_IN: gettext_noop("You have opted-in to receive messages from"
         " CommCareHQ. To opt-out, reply to this number with {0}"),
-    MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
+    MSG_OPTED_OUT: gettext_noop("You have opted-out from receiving"
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
-    MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
-    MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
-    MSG_VERIFICATION_START_WITH_REPLY: ugettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+    MSG_DUPLICATE_USERNAME: gettext_noop("CommCare user {0} already exists"),
+    MSG_USERNAME_TOO_LONG: gettext_noop("Username {0} is too long.  Must be under {1} characters."),
+    MSG_VERIFICATION_START_WITH_REPLY: gettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
         "If yes, reply '123' to {1} to start using SMS with CommCareHQ."),
-    MSG_VERIFICATION_START_WITHOUT_REPLY: ugettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+    MSG_VERIFICATION_START_WITHOUT_REPLY: gettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
         "If yes, reply '123' to start using SMS with CommCareHQ."),
-    MSG_VERIFICATION_SUCCESSFUL: ugettext_noop("Thank you. This phone has been verified for "
+    MSG_VERIFICATION_SUCCESSFUL: gettext_noop("Thank you. This phone has been verified for "
         "using SMS with CommCareHQ"),
-    MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
-    MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
+    MSG_REGISTRATION_WELCOME_CASE: gettext_noop("Thank you for registering with CommCareHQ."),
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER: gettext_noop("Thank you for registering with CommCareHQ."),
 }
 
 

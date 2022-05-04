@@ -1,5 +1,5 @@
 from django.db import models, migrations
-import corehq.form_processor.models
+import corehq.util.models
 
 
 
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('case_id', models.CharField(default=None, max_length=255)),
                 ('entry_id', models.CharField(default=None, max_length=100)),
                 ('section_id', models.CharField(default=None, max_length=100)),
-                ('user_defined_type', corehq.form_processor.models.TruncatingCharField(max_length=20, null=True, blank=True)),
+                ('user_defined_type', corehq.util.models.TruncatingCharField(max_length=20, null=True, blank=True)),
                 ('delta', models.IntegerField(default=0)),
                 ('updated_balance', models.IntegerField(default=0)),
             ],

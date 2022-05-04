@@ -65,6 +65,10 @@ class CaseFactory(object):
 
     The API is a wrapper around the CaseBlock utility and is designed to be
     easier to work with to setup parent/child structures or default properties.
+
+    Use corehq.form_processor.tests.utils.create_case() instead if possible.
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
     """
 
     def __init__(self, domain=None, case_defaults=None, form_extras=None):
@@ -75,7 +79,7 @@ class CaseFactory(object):
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
             kwargs.setdefault(k, v)
-        return CaseBlock.deprecated_init(case_id=case_id, **kwargs).as_xml()
+        return CaseBlock(case_id=case_id, **kwargs).as_xml()
 
     def get_case_blocks(self, case_structures):
 
@@ -109,6 +113,10 @@ class CaseFactory(object):
     def create_case(self, **kwargs):
         """
         Shortcut to create a simple case without needing to make a structure for it.
+
+        Use corehq.form_processor.tests.utils.create_case() instead if possible.
+        This submits a form to create the case. The form_procssor version
+        creates and saves the case directly, which is faster.
         """
         kwargs['create'] = True
         case_id = uuid.uuid4().hex
@@ -117,6 +125,10 @@ class CaseFactory(object):
     def update_case(self, case_id, **kwargs):
         """
         Shortcut to update a simple case given its id without needing to make a structure for it.
+
+        Use corehq.form_processor.tests.utils.create_case() instead if possible.
+        This submits a form to create the case. The form_procssor version
+        creates and saves the case directly, which is faster.
         """
         kwargs['create'] = False
         return self.create_or_update_case(CaseStructure(case_id=case_id, attrs=kwargs))[0]
@@ -124,6 +136,10 @@ class CaseFactory(object):
     def close_case(self, case_id):
         """
         Shortcut to close a case (and do nothing else)
+
+        Use corehq.form_processor.tests.utils.create_case() instead if possible.
+        This submits a form to create the case. The form_procssor version
+        creates and saves the case directly, which is faster.
         """
         return self.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}))[0]
 
@@ -131,7 +147,7 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras, user_id=user_id)
 
     def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
-        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+        from corehq.form_processor.models import CommCareCase
         self.post_case_blocks(
             self.get_case_blocks(case_structures),
             form_extras,
@@ -140,4 +156,4 @@ class CaseFactory(object):
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
-        return list(CaseAccessors(self.domain).get_cases(case_ids, ordered=True))
+        return list(CommCareCase.objects.get_cases(case_ids, self.domain, ordered=True))

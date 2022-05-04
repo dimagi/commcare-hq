@@ -12,11 +12,10 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView, View
 
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq.apps.sso.models import IdentityProvider
@@ -58,6 +57,7 @@ from corehq.apps.registration.utils import (
 from corehq.apps.users.models import CouchUser, WebUser, Invitation
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.soft_assert import soft_assert
 
 _domainless_new_user_soft_assert = soft_assert(to=[
@@ -84,7 +84,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     def _create_new_account(self, reg_form, additional_hubspot_data=None):
         activate_new_user_via_reg_form(
-            reg_form, created_by=None, created_via=USER_CHANGE_VIA_WEB, ip=get_ip(self.request))
+            reg_form,
+            created_by=None,
+            created_via=USER_CHANGE_VIA_WEB,
+            ip=get_ip(self.request)
+        )
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password'],
@@ -520,7 +524,7 @@ def confirm_domain(request, guid=''):
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
         track_workflow(requesting_user.email, "Confirmed new project")
-        track_confirmed_account_on_hubspot.delay(requesting_user)
+        track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 
         return HttpResponseRedirect(reverse(view_name, args=view_args))
@@ -541,6 +545,5 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.couch_user.email or request.user.username,
-                                    request.couch_user.full_name)
+    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name)
     return HttpResponse()

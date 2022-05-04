@@ -1,71 +1,89 @@
-from functools import wraps
+import io
 from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import (
     Http404,
-    HttpResponse,
-    HttpResponseRedirect,
     HttpResponseBadRequest,
+    HttpResponseRedirect,
     JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
+from six.moves.urllib.parse import quote_plus
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.parsing import json_format_date
+
 from corehq import privileges
-from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
-from corehq.apps.domain.models import Domain
-from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
-from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
-from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
-from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+)
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_nvd3,
+    use_timepicker,
+)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
-from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
+from corehq.apps.sms.filters import EventStatusFilter, EventTypeFilter
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    MessagingEvent,
+    QueuedSMS,
+)
+from corehq.apps.sms.tasks import OutboundDailyCounter, time_within_windows
+from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.messaging.scheduling.async_handlers import (
+    ConditionalAlertAsyncHandler,
+    MessagingRecipientHandler,
+)
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
-    ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
+    ConditionalAlertForm,
     ConditionalAlertScheduleForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
-    SMSContent,
     TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
 )
-from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
-from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.messaging.scheduling.tasks import (
+    refresh_alert_schedule_instances,
+    refresh_timed_schedule_instances,
+)
 from corehq.messaging.scheduling.view_helpers import (
+    TranslatedConditionalAlertUploader,
+    UntranslatedConditionalAlertUploader,
     get_conditional_alert_headers,
     get_conditional_alert_rows,
     get_conditional_alerts_queryset_by_domain,
-    TranslatedConditionalAlertUploader,
-    UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
-from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.couch import CriticalSection
-import io
-from six.moves.urllib.parse import quote_plus
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -78,7 +96,7 @@ def get_conditional_alert_edit_critical_section(rule_id):
 
 class MessagingDashboardView(BaseMessagingSectionView):
     urlname = 'messaging_dashboard'
-    page_title = ugettext_lazy("Dashboard")
+    page_title = gettext_lazy("Dashboard")
     template_name = 'scheduling/dashboard.html'
 
     @use_nvd3
@@ -103,9 +121,9 @@ class MessagingDashboardView(BaseMessagingSectionView):
     @property
     def page_context(self):
         from corehq.apps.reports.standard.sms import (
-            ScheduleInstanceReport,
             MessageLogReport,
             MessagingEventsReport,
+            ScheduleInstanceReport,
         )
 
         scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
@@ -282,7 +300,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
 class BroadcastListView(BaseMessagingSectionView):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
-    page_title = ugettext_lazy('Broadcasts')
+    page_title = gettext_lazy('Broadcasts')
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
@@ -372,9 +390,9 @@ class BroadcastListView(BaseMessagingSectionView):
 
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
         refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
+            broadcast.schedule_id.hex,
             broadcast.recipients,
-            start_date=broadcast.start_date
+            start_date_iso_string=json_format_date(broadcast.start_date)
         )
 
         return JsonResponse({
@@ -416,7 +434,7 @@ class BroadcastListView(BaseMessagingSectionView):
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_schedule'
-    page_title = ugettext_lazy('New Broadcast')
+    page_title = gettext_lazy('New Broadcast')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
@@ -475,10 +493,13 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
-                refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
+                refresh_alert_schedule_instances.delay(schedule.schedule_id.hex, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
-                refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
-                    start_date=broadcast.start_date)
+                refresh_timed_schedule_instances.delay(
+                    schedule.schedule_id.hex,
+                    broadcast.recipients,
+                    start_date_iso_string=json_format_date(broadcast.start_date)
+                )
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
@@ -489,7 +510,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditScheduleView(CreateScheduleView):
     urlname = 'edit_schedule'
-    page_title = ugettext_lazy('Edit Broadcast')
+    page_title = gettext_lazy('Edit Broadcast')
 
     IMMEDIATE_BROADCAST = 'immediate'
     SCHEDULED_BROADCAST = 'scheduled'
@@ -583,7 +604,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
-    page_title = ugettext_lazy('Conditional Alerts')
+    page_title = gettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
     ACTION_ACTIVATE = 'activate'
@@ -743,7 +764,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
-    page_title = ugettext_lazy('New Conditional Alert')
+    page_title = gettext_lazy('New Conditional Alert')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
@@ -893,7 +914,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
-    page_title = ugettext_lazy('Edit Conditional Alert')
+    page_title = gettext_lazy('Edit Conditional Alert')
 
     @property
     def page_url(self):
@@ -1019,7 +1040,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
-    page_title = ugettext_lazy("Upload SMS Alert Content")
+    page_title = gettext_lazy("Upload SMS Alert Content")
     template_name = 'hqwebapp/bulk_upload.html'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))

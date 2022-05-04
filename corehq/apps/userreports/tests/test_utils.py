@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from testil import eq
 
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.util import (
@@ -6,6 +7,7 @@ from corehq.apps.userreports.util import (
     get_table_name,
     truncate_value,
 )
+from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
 
 
 class UtilitiesTestCase(SimpleTestCase):
@@ -82,3 +84,14 @@ class UtilitiesTestCase(SimpleTestCase):
             column_name,
             '_be_a_bunch_longer_than_sixty_three_characters_6174b354_decimal',
         )
+
+
+def test_remove_deleted_doc_type_suffix():
+    def _check(doc_type, expected):
+        eq(expected, remove_deleted_doc_type_suffix(doc_type))
+
+    yield from [
+        (_check, 'DataSource', 'DataSource'),
+        (_check, 'DataSource-Deleted', 'DataSource'),
+        (_check, 'DataSource-Deleted-Deleted', 'DataSource'),
+    ]

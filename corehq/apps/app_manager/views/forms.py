@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import json
 import logging
 import re
@@ -15,7 +14,7 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -55,6 +54,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
+    ArbitraryDatum,
     CaseReferences,
     CustomAssertion,
     CustomIcon,
@@ -81,7 +81,8 @@ from corehq.apps.app_manager.util import (
     advanced_actions_use_usercase,
     enable_usercase,
     is_usercase_in_use,
-    save_xform, module_offers_registry_search,
+    save_xform,
+    module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -193,6 +194,7 @@ def undo_delete_form(request, domain, record_id):
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
+    # Handle edit for actions and arbitrary_datums
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
@@ -205,6 +207,11 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
+
+    datums_json = json.loads(request.POST.get('arbitrary_datums'))
+    datums = [ArbitraryDatum.wrap(item) for item in datums_json]
+    form.arbitrary_datums = datums
+
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -307,6 +314,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+
             if request.POST.get('cleanup', False):
                 try:
                     # First, we strip all newlines and reformat the DOM.
@@ -449,6 +457,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except InvalidSessionEndpoint as e:
             return json_response({'message': str(e)}, status_code=400)
 
+    if should_edit('function_datum_endpoints'):
+        if request.POST['function_datum_endpoints']:
+            form.function_datum_endpoints = request.POST['function_datum_endpoints'].replace(" ", "").split(",")
+        else:
+            form.function_datum_endpoints = []
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -531,7 +545,12 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    xml = save_xform(app, form, xml.encode('utf-8'))
+
+    try:
+        xml = save_xform(app, form, xml.encode('utf-8'))
+    except XFormException:
+        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
@@ -541,7 +560,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
-    return json_response(response_json)
+    return JsonResponse(response_json)
 
 
 def apply_patch(patch, text):
@@ -619,7 +638,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
                 'module_id': module.id,
                 'name': clean_trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
-            } for module in app.modules]
+            } for module in app.get_modules()]
         }
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not
@@ -778,7 +797,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
-        'module_offers_registry_search': module_offers_registry_search(module),
+        'module_is_multi_select': module.is_multi_select(),
+        'module_loads_registry_case': module_loads_registry_case(module),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -804,6 +824,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             'commtrack_programs': all_programs + commtrack_programs(),
             'module_id': module.unique_id,
             'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
+            'arbitrary_datums': form.arbitrary_datums,
         })
         if form.form_type == "shadow_form":
             case_config_options.update({

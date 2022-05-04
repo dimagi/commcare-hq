@@ -209,13 +209,24 @@
       <thead>
       <tr>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">
+        <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-5' : 'col-sm-6'">
           {% trans "Question" %}
         </th>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">
+        <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
           {% trans "Case Property" %}
         </th>
+        {% comment %} The odd style additions in this block were necessary to put the question mark
+        in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
+        <!-- ko if: saveOnlyEditedFormFieldsEnabled -->
+        <th class="col-sm-2 text-center" style="padding-right: 30px">
+            <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>
+            <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {
+              description: '{% trans "Only save the answer if form submission will change the property from its previous value." %}',
+              placement: 'left'
+            }"></span>
+        </th>
+        <!-- /ko -->
       </tr>
       </thead>
 
@@ -231,14 +242,14 @@
             <i class="fa fa-remove"></i>
           </button>
         </td>
-        <td class="col-sm-5">
+        <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-sm-5' : 'col-sm-6'">
           <div class="full-width-select2"
                data-bind="template: 'case-config:case-properties:question'"></div>
         </td>
         <td class="text-center col-sm-1">
           <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
         </td>
-        <td class="col-sm-5">
+        <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
           <div class="full-width-select2"
                data-bind="template: {
                             name: 'case-config:case-properties:property',
@@ -252,7 +263,7 @@
           <p class="help-block"
              data-bind="html: validate,
                         visible: validate"></p>
-          <!-- ko if: $data.description() && $parent.hasPrivilege -->
+          <!-- ko if: $parent.hasPrivilege -->
           <inline-edit params="value: $data.description,
                                rows: 3,
                                cols: 30,
@@ -273,6 +284,13 @@
           <!-- ko if: $data.description() && !$parent.hasPrivilege -->
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
+        </td>
+        <td data-bind="if: $parent.saveOnlyEditedFormFieldsEnabled" class="col-sm-2 text-center">
+          <input type="checkbox"
+                 data-bind="click: $parent.switchSaveOnlyIfEdited,
+                            checked: $data.save_only_if_edited,
+                            disabled: $parent.hasPrivilege"
+                  />
         </td>
       </tr>
       </tbody>
@@ -305,18 +323,4 @@
       </p>
     <!-- /ko -->
   </div>
-</script>
-
-<script type="text/html"
-        id="case-config:refresh-form-questions">
-  <p class="pull-right">
-    <button class="btn btn-default refresh-form-questions"
-            type="button"
-            data-bind="click: function(data, event){
-                         refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
-                         hqImport('analytix/js/google').track.event('Refresh case management', 'Button Clicked');
-                       }">
-      <i class="fa fa-refresh"></i>
-    </button>
-  </p>
 </script>

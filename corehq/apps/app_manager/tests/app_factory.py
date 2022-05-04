@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models import (
     AutoSelectCase,
     CaseIndex,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DetailColumn,
     FormActionCondition,
     LoadUpdateAction,
@@ -109,6 +110,9 @@ class AppFactory(object):
 
     @staticmethod
     def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
+        if update:
+            update = {
+                name: ConditionalCaseUpdate(question_path=question_path) for name, question_path in update.items()}
         if form.form_type == 'module_form':
             form.requires = 'case'
             if update:
@@ -149,18 +153,21 @@ class AppFactory(object):
             if is_subcase:
                 form.actions.subcases.append(OpenSubCaseAction(
                     case_type=case_type,
-                    case_name="/data/name",
+                    name_update=ConditionalCaseUpdate(question_path="/data/name"),
                     condition=FormActionCondition(type='always')
                 ))
             else:
-                form.actions.open_case = OpenCaseAction(name_path="/data/name", external_id=None)
+                form.actions.open_case = OpenCaseAction(
+                    name_update=ConditionalCaseUpdate(question_path="/data/name"),
+                    external_id=None
+                )
                 form.actions.open_case.condition.type = 'always'
         else:
             case_type = case_type or form.get_module().case_type
             action = AdvancedOpenCaseAction(
                 case_type=case_type,
                 case_tag='open_{}'.format(case_type),
-                name_path='/data/name'
+                name_update=ConditionalCaseUpdate(question_path='/data/name'),
             )
             if is_subcase:
                 if not parent_tag:

@@ -1,14 +1,19 @@
+from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -126,21 +131,42 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
+def get_values_hints_dict(domain, case_type_name):
+    values_hints_dict = defaultdict(list)
+    case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
+    if case_type:
+        for prop in case_type.properties.all():
+            if prop.data_type == 'date':
+                values_hints_dict[prop.name] = [gettext('YYYY-MM-DD')]
+            elif prop.data_type == 'select':
+                values_hints_dict[prop.name] = [av.allowed_value for av in prop.allowed_values.all()]
+    return values_hints_dict
+
+
+def get_deprecated_fields(domain, case_type_name):
+    deprecated_fields = set()
+    case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
+    if case_type:
+        deprecated_fields = set(case_type.properties.filter(deprecated=True).values_list('name', flat=True))
+    return deprecated_fields
+
+
 def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None,
-                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False):
+                       fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
+                       allowed_values=None):
     """
     Takes a case property to update and returns an error if there was one
     """
     if not name:
-        return ugettext('Case property must have a name')
+        return gettext('Case property must have a name')
 
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
     if data_type:
         prop.data_type = data_type
-    if description:
+    if description is not None:
         prop.description = description
     if group:
         prop.group = group
@@ -155,13 +181,37 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         update_fhir_resource_property(prop, fhir_resource_type, fhir_resource_prop_path, remove_path)
     prop.save()
 
+    # If caller has supplied non-None value for allowed_values, then
+    # synchronize the supplied dict (key=allowed_value, value=description)
+    # with the database stored values for this property.
+    err_cnt = 0
+    max_len = CasePropertyAllowedValue._meta.get_field('allowed_value').max_length
+    if allowed_values is not None:
+        obj_pks = []
+        for allowed_value, av_desc in allowed_values.items():
+            if len(allowed_value) > max_len:
+                err_cnt += 1
+            else:
+                av_obj, _ = CasePropertyAllowedValue.objects.update_or_create(
+                    case_property=prop, allowed_value=allowed_value, defaults={"description": av_desc})
+                obj_pks.append(av_obj.pk)
+        # Delete any database-resident allowed values that were not found in
+        # the set supplied by caller.
+        prop.allowed_values.exclude(pk__in=obj_pks).delete()
 
-@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
-def get_data_dict_props_by_case_type(domain):
+    if err_cnt:
+        return gettext('Unable to save valid values longer than {} characters').format(max_len)
+
+
+@quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
+def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
+    filter_kwargs = {'case_type__domain': domain}
+    if exclude_deprecated:
+        filter_kwargs['deprecated'] = False
     return {
         case_type: {prop.name for prop in props} for case_type, props in groupby(
             CaseProperty.objects
-            .filter(case_type__domain=domain, deprecated=False)
+            .filter(**filter_kwargs)
             .select_related("case_type")
             .order_by('case_type__name'),
             key=attrgetter('case_type.name')
@@ -183,3 +233,12 @@ def fields_to_validate(domain, case_type_name):
     }
     props = CaseProperty.objects.filter(**filter_kwargs)
     return {prop.name: prop for prop in props}
+
+
+@quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
+def get_gps_properties(domain, case_type):
+    return set(CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type,
+        data_type=CaseProperty.DataType.GPS,
+    ).values_list('name', flat=True))

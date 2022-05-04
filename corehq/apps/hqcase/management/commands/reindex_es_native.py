@@ -4,7 +4,8 @@ from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.elastic import get_es_export, ES_META
+from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.elastic import get_es_export
 from pillowtop.es_utils import initialize_index, set_index_reindex_settings
 
 USAGE = """Reindex data from one ES index into another ES index using Elasticsearch reindex API
@@ -21,7 +22,7 @@ class Command(BaseCommand):
             help="Index to be used as the source",
         )
         parser.add_argument(
-            "target_index_name", choices=ES_META,
+            "target_index_name", choices=get_registry().keys(),
             help="Index to be used as the target"
         )
         parser.add_argument(
@@ -41,7 +42,7 @@ class Command(BaseCommand):
         if not es.indices.exists(source_index):
             raise CommandError(f"Source index does not exist: '{source_index}'")
 
-        target_index_info = ES_META[target_index_name]
+        target_index_info = registry_entry(target_index_name)
         target_index = target_index_info.index
         _initialize_target(es, target_index_info)
 

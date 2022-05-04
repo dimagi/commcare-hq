@@ -112,6 +112,46 @@ function usage() {
     exit
 }
 
+compose_os_prefix='hq-compose-os-'
+if [ -n "$COMPOSE_OS_FILE" ]; then
+    # Allow overriding in the local shell env to bypass OS detection logic.
+    here=$(dirname "$0")
+    dockerdir=$(python -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "${here}/../docker")
+    if ! [ -f "$COMPOSE_OS_FILE" ] && ! [ -f "${dockerdir}/${COMPOSE_OS_FILE}" ]; then
+        echo "ERROR: invalid compose OS file: $COMPOSE_OS_FILE"
+        echo "Please specify a valid YAML file, or consider using an existing one:"
+        ls "${dockerdir}/${compose_os_prefix}"*.yml | sed -E 's,^.*/docker/,  - docker/,'
+        exit 1
+    fi
+else
+    # This exists because of M1 Macs
+    os_info=$(uname -s)-$(uname -m)-$(uname -r | cut -d. -f1)
+    os_suffix='default'
+    case "$os_info" in
+        Darwin-arm64-20)
+            os_suffix='macos-m1-11'
+            ;;
+        Darwin-arm64-21)
+            os_suffix='macos-m1-12'
+            ;;
+        Darwin-arm64-*)
+            os_suffix='macos-m1-12'
+            echo "WARNING: You are entering new territory with your new M1 Mac. Congratulations!"
+            echo "Defaulting to most recently known M1 setup: $os_suffix"
+            echo ""
+            echo "To remove this message in the future, create a new 'base OS'"
+            echo "(or copy an existing, working) docker-compose configuration"
+            echo "for your OS. For example:"
+            echo ""
+            macos_version=$(sw_vers -productVersion | cut -d. -f1)
+            suggested_file="${compose_os_prefix}macos-m1-${macos_version}.yml"
+            echo "$ cp -pv ${compose_os_prefix}${os_suffix}.yml $suggested_file"
+            echo ""
+            ;;
+    esac
+    export COMPOSE_OS_FILE="${compose_os_prefix}${os_suffix}.yml"
+fi
+
 CMD="$1"
 shift
 if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
@@ -122,7 +162,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
             CMD=help
         fi
     fi
-    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_FILE="docker/hq-compose.yml"
     export COMPOSE_PROJECT_NAME=hqtest
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
@@ -192,6 +232,7 @@ export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export DOCKER_HQ_OVERLAYFS_METACOPY="${DOCKER_HQ_OVERLAYFS_METACOPY:-off}"
+export DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 export GITHUB_ACTIONS="$GITHUB_ACTIONS"
 export GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME"
 export JS_SETUP="${JS_SETUP:-no}"
@@ -244,6 +285,8 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
+    # Disabled due to: https://github.com/github/feedback/discussions/8848
+    # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker-compose pull --quiet
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"

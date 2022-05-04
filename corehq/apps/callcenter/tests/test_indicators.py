@@ -33,7 +33,7 @@ from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
@@ -55,7 +55,7 @@ def create_domain_and_user(domain_name, username):
     domain.call_center_config.case_type = CASE_TYPE
     domain.save()
 
-    sync_call_center_user_case(user)
+    sync_call_center_user_case(user, domain_name)
     return domain, user
 
 
@@ -139,7 +139,7 @@ class BaseCCTests(TestCase):
         super(BaseCCTests, self).tearDown()
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(user.domain, user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
@@ -307,11 +307,8 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self, mock):
-        user_case = (
-            CaseAccessors(self.cc_domain.name)
-            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
-        )
-
+        user_case = CommCareCase.objects.get_case_by_external_id(
+            self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
             self.cc_domain.default_timezone,
@@ -390,10 +387,8 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self, mock):
-        user_case = (
-            CaseAccessors(self.cc_domain.name)
-            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
-        )
+        user_case = CommCareCase.objects.get_case_by_external_id(
+            self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,
@@ -459,7 +454,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain_name)
 
         load_data(self.domain_name, self.user.user_id)
 
@@ -501,7 +496,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain_name)
 
         self.group = Group(
             domain=self.domain_name,
@@ -558,7 +553,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain_name)
 
         load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
 

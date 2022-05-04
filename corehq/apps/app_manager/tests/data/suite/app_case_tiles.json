@@ -560,11 +560,26 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "town": "\/data\/village",
-                "dob": "\/data\/dob",
-                "other_name": "\/data\/name",
-                "mother_name": "\/data\/mother_name",
-                "sex": "\/data\/sex"
+                "town": {
+                  "question_path": "\/data\/village",
+                  "update_mode": "always"
+                },
+                "dob": {
+                  "question_path": "\/data\/dob",
+                  "update_mode": "always"
+                },
+                "other_name": {
+                  "question_path": "\/data\/name",
+                  "update_mode": "always"
+                },
+                "mother_name": {
+                  "question_path": "\/data\/mother_name",
+                  "update_mode": "always"
+                },
+                "sex": {
+                  "question_path": "\/data\/sex",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,

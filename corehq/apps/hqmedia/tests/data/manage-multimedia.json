@@ -286,11 +286,26 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "play_count": "/data/play_count",
-                "rating": "/data/ratings/rating",
-                "energy": "/data/ratings/energy",
-                "mood": "/data/ratings/mood",
-                "artist": "/data/basics/artist"
+                  "play_count": {
+                    "question_path": "/data/play_count",
+                    "update_mode": "always"
+                  },
+                  "rating": {
+                    "question_path": "/data/ratings/rating",
+                    "update_mode": "always"
+                  },
+                  "energy": {
+                    "question_path": "/data/ratings/energy",
+                    "update_mode": "always"
+                  },
+                  "mood": {
+                    "question_path": "/data/ratings/mood",
+                    "update_mode": "always"
+                  },
+                  "artist": {
+                    "question_path": "/data/basics/artist",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -740,7 +755,10 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "play_count": "/data/new_play_count"
+                "play_count": {
+                  "question_path": "/data/play_count",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1511,7 +1529,10 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "when_is_the_show": "/data/when_is_the_show"
+                "when_is_the_show": {
+                  "question_path": "/data/when_is_the_show",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,

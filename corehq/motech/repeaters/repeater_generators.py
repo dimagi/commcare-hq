@@ -7,7 +7,7 @@ from uuid import uuid4
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.case.const import CASE_INDEX_IDENTIFIER_HOST
 from casexml.apps.case.mock import CaseBlock
@@ -19,7 +19,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.motech.repeaters.exceptions import ReferralError, DataRegistryCaseUpdateError
 from dimagi.utils.parsing import json_format_datetime
@@ -60,14 +60,6 @@ class BasePayloadGenerator(object):
 
     def get_headers(self):
         return {'Content-Type': self.content_type}
-
-    def get_test_payload(self, domain):
-        return (
-            "<?xml version='1.0' ?>"
-            "<data id='test'>"
-            "<TestString>Test post from CommCareHQ on %s</TestString>"
-            "</data>" % datetime.utcnow()
-        )
 
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
@@ -211,9 +203,6 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
 
-    def get_test_payload(self, domain):
-        return self.get_payload(None, _get_test_form(domain))
-
 
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     format_name = 'case_xml'
@@ -221,15 +210,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
-
-    def get_test_payload(self, domain):
-        from casexml.apps.case.mock import CaseBlock
-        return CaseBlock.deprecated_init(
-            case_id='test-case-%s' % uuid4().hex,
-            create=True,
-            case_type='test',
-            case_name='test case',
-        ).as_text()
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
@@ -243,16 +223,6 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
-
-    def get_test_payload(self, domain):
-        from casexml.apps.case.models import CommCareCase
-        return self.get_payload(
-            None,
-            CommCareCase(
-                domain=domain, type='case_type', name='Demo',
-                user_id='user1', prop_a=True, prop_b='value'
-            )
-        )
 
 
 @attr.s
@@ -274,11 +244,12 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
 
         case_ids_to_forward = payload_doc.get_case_property('cases_to_forward')
         if not case_ids_to_forward:
-            raise ReferralError(f'No cases included in transfer. Please add case ids to "cases_to_forward" property')
+            raise ReferralError('No cases included in transfer. '
+                'Please add case ids to "cases_to_forward" property')
         else:
             case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
-        cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
+        cases_to_forward = CommCareCase.objects.get_cases(case_ids_to_forward, payload_doc.domain)
         case_ids_to_forward = set(case_ids_to_forward)
         included_case_types = payload_doc.get_case_property('case_types').split(' ')
         case_type_configs = {}
@@ -330,7 +301,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 if index.referenced_id in case_ids_to_forward:
                     index.referenced_id = self._get_updated_case_id(index.referenced_id, case_id_map)
                 else:
-                    raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
+                    raise ReferralError(f'case {original_id} included without '
+                        f'referenced case {index.referenced_id}')
             config = case_type_configs[case.type]
             original_case_json = case.case_json.copy()
             if config.use_blacklist:
@@ -406,17 +378,26 @@ class CaseUpdateConfig:
         "close_case": "target_case_close",
         "includes": "target_property_includelist",
         "excludes": "target_property_excludelist",
+        # index create
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        "index_create_identifier": "target_index_create_identifier",
+        # index remove
         "index_remove_case_id": "target_index_remove_case_id",
+        "index_remove_identifier": "target_index_remove_identifier",
         "index_remove_relationship": "target_index_remove_relationship",
+        # copy from other case
+        "copy_domain": "target_copy_properties_from_case_domain",
+        "copy_case_id": "target_copy_properties_from_case_id",
+        "copy_case_type": "target_copy_properties_from_case_type",
+        "copy_includelist": "target_copy_properties_includelist",
+        "copy_excludelist": "target_copy_properties_excludelist"
     }
     REQUIRED_FIELDS = [
         "registry_slug",
         "domain",
         "case_id",
-        "case_type",
     ]
 
     intent_case = attr.ib()
@@ -432,8 +413,15 @@ class CaseUpdateConfig:
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
+    index_create_identifier = attr.ib()
     index_remove_case_id = attr.ib()
+    index_remove_identifier = attr.ib()
     index_remove_relationship = attr.ib()
+    copy_domain = attr.ib()
+    copy_case_id = attr.ib()
+    copy_case_type = attr.ib()
+    copy_includelist = attr.ib()
+    copy_excludelist = attr.ib()
 
     @classmethod
     def from_payload(cls, payload_doc):
@@ -442,21 +430,17 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
-        if "index_create_relationship" not in kwargs:
+
+        if kwargs.get("index_create_relationship") is None:
             kwargs["index_create_relationship"] = "child"
-        if "index_remove_relationship" not in kwargs:
-            kwargs["index_remove_relationship"] = "child"
+        if kwargs.get("index_create_identifier") is None:
+            kwargs["index_create_identifier"] = (
+                "parent" if kwargs["index_create_relationship"] == "child" else "host"
+            )
+
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
-
-    @property
-    def index_remove_identifier(self):
-        return "parent" if self.index_remove_relationship == "child" else "host"
-
-    @property
-    def index_create_identifier(self):
-        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
@@ -475,43 +459,61 @@ class CaseUpdateConfig:
         if value and value not in ("child", "extension"):
             raise DataRegistryCaseUpdateError("Index relationships must be either 'child' or 'extension'")
 
-    def get_case_block(self, target_case):
+    def get_case_block(self, registry_helper, repeat_record, couch_user, configs_by_case_id):
         kwargs = {}
-        if target_case is None:
-            if not self.create_case:
-                # should never get here but added as a precaution
-                raise DataRegistryCaseUpdateError("Target case not found")
+        if self.create_case:
             if not self.owner_id:
                 raise DataRegistryCaseUpdateError("'owner_id' required when creating cases")
+            if not self.case_type:
+                raise DataRegistryCaseUpdateError("'case_type' required when creating cases")
             kwargs = {
                 "create": True,
                 "case_type": self.case_type,
                 "date_opened": self.intent_case.opened_on
             }
-        elif self.create_case:
-            # should never get here but added as a precaution
-            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
 
+        target_case = self._get_target_case(couch_user, registry_helper, repeat_record)
+        updates = self.get_case_updates(couch_user, registry_helper, repeat_record)
+        indices = self.get_case_indices(self.domain, target_case, configs_by_case_id)
         return CaseBlock(
             case_id=self.case_id,
             owner_id=self.owner_id,
-            update=self.get_case_updates(),
-            index=self.get_case_indices(target_case),
+            update=updates,
+            index=indices,
             close=bool(self.close_case),
             date_modified=self.intent_case.modified_on,
             **kwargs
         ).as_text()
 
-    def get_case_updates(self):
-        case_json = self.intent_case.case_json
-        if self.intent_case.name:
-            case_json["case_name"] = self.intent_case.name
-        if self.intent_case.external_id:
-            case_json["external_id"] = self.intent_case.external_id
-        if self.excludes is not None:
-            update_props = set(case_json) - set(self.excludes.split())
-        elif self.includes is not None:
-            update_props = set(case_json) & set(self.includes.split())
+    def _get_target_case(self, couch_user, registry_helper, repeat_record):
+        return self._get_registry_case(
+            self.domain, self.case_id, self.case_type, self.create_case,
+            registry_helper, repeat_record, couch_user
+        )
+
+    def get_case_updates(self, couch_user, registry_helper, repeat_record):
+        updates = {}
+        if self.copy_case_id:
+            copy_from = self._get_registry_case(
+                self.copy_domain, self.copy_case_id, self.copy_case_type, False,
+                registry_helper, repeat_record, couch_user
+            )
+            updates.update(self._get_case_updates_from_source(
+                copy_from, self.copy_includelist, self.copy_excludelist))
+        # properties on the intent case override properties from the other case
+        updates.update(self._get_case_updates_from_source(self.intent_case, self.includes, self.excludes))
+        return updates
+
+    def _get_case_updates_from_source(self, from_case, includes, excludes):
+        case_json = from_case.case_json
+        if from_case.name:
+            case_json["case_name"] = from_case.name
+        if from_case.external_id:
+            case_json["external_id"] = from_case.external_id
+        if excludes is not None:
+            update_props = set(case_json) - set(excludes.split())
+        elif includes is not None:
+            update_props = set(case_json) & set(includes.split())
         else:
             update_props = set(case_json)
 
@@ -521,52 +523,87 @@ class CaseUpdateConfig:
             for prop in update_props
         }
 
-    def get_case_indices(self, target_case):
-        indices = self.get_create_case_index(target_case)
+    def get_case_indices(self, target_domain, target_case, configs_by_case_id):
+        indices = self.get_create_case_index(target_domain, configs_by_case_id)
         if not self.index_remove_case_id:
             return indices
 
-        if self.index_remove_identifier not in indices:
+        if target_case and self.index_remove_identifier not in indices:
             indices.update(self.get_remove_case_index(target_case))
 
         return indices
 
-    def get_create_case_index(self, target_case):
+    def get_create_case_index(self, target_domain, configs_by_case_id):
         if not (self.index_create_case_id and self.index_create_case_type):
             return {}
 
+        index_spec = {
+            self.index_create_identifier: (
+                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
+            )
+        }
+        # check if we are indexing a case that is also being created
+        config = configs_by_case_id.get(self.index_create_case_id)
+        if config and config.create_case:
+            if self.index_create_case_type != config.case_type:
+                raise DataRegistryCaseUpdateError("Index case type does not match")
+            else:
+                return index_spec
+
         try:
-            index_case = CaseAccessors(self.domain).get_case(self.index_create_case_id)
+            index_case = CommCareCase.objects.get_case(self.index_create_case_id, self.domain)
         except CaseNotFound:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
-        if index_case.domain != target_case.domain:
+        if index_case.domain != target_domain:
             raise DataRegistryCaseUpdateError(f"Index case not found: {self.index_create_case_id}")
 
         if index_case.type != self.index_create_case_type:
             raise DataRegistryCaseUpdateError("Index case type does not match")
 
-        return {
-            self.index_create_identifier: (
-                self.index_create_case_type, self.index_create_case_id, self.index_create_relationship
-            )
-        }
+        return index_spec
 
     def get_remove_case_index(self, target_case):
-        identifier = "parent" if self.index_remove_relationship == "child" else "host"
-        indices = [index for index in target_case.live_indices if index.identifier == identifier]
+        indices = [
+            index for index in target_case.live_indices
+            if index.identifier == self.index_remove_identifier
+        ]
         if not indices:
             return {}
         assert len(indices) == 1
         index = indices[0]
         if index.referenced_id != self.index_remove_case_id:
             raise DataRegistryCaseUpdateError("Index case ID does not match for index to remove")
+        if self.index_remove_relationship and self.index_remove_relationship != index.relationship:
+            raise DataRegistryCaseUpdateError("Index relationship does not match for index to remove")
+
         return {
-            identifier: (index.referenced_type, "", self.index_remove_relationship)
+            index.identifier: (index.referenced_type, "", index.relationship)
         }
+
+    @staticmethod
+    def _get_registry_case(domain, case_id, case_type, for_create, registry_helper, repeat_record, couch_user):
+        try:
+            case = registry_helper.get_case(case_id, couch_user, repeat_record.repeater)
+        except RegistryAccessException:
+            raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
+        except CaseNotFound:
+            if for_create:
+                return
+            raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
+
+        if for_create:
+            raise DataRegistryCaseUpdateError(f"Unable to create case as it already exists: {case_id}")
+
+        if case.domain != domain or (case_type and case.type != case_type):
+            raise DataRegistryCaseUpdateError(f"Case not found: {case_id}")
+
+        return case
 
 
 class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
+    DEVICE_ID = 'DataRegistryCaseUpdateRepeater'
+    XMLNS = 'http://commcarehq.org/data_registry_case_update'
 
     def get_headers(self):
         headers = super().get_headers()
@@ -576,17 +613,15 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         configs = self._get_configs(payload_doc)
         submitting_user = CouchUser.get_by_user_id(payload_doc.user_id)
-        cases = self._get_target_cases(repeat_record, configs, submitting_user)
-
-        case_blocks = self._get_case_blocks(cases, configs)
+        case_blocks = self._get_case_blocks(repeat_record, configs, submitting_user)
         return render_to_string('hqcase/xml/case_block.xml', {
-            'xmlns': SYSTEM_FORM_XMLNS,
+            'xmlns': self.XMLNS,
             'case_block': " ".join(case_blocks),
             'time': json_format_datetime(datetime.utcnow()),
             'uid': str(uuid4()),
             'username': self.submission_username(),
             'user_id': self.submission_user_id(),
-            'device_id': "DataRegistryCaseUpdateRepeater",
+            'device_id': f"{self.DEVICE_ID}:{payload_doc.domain}",
             'form_data': {
                 "source_domain": payload_doc.domain,
                 "source_form_id": payload_doc.get_form_transactions()[-1].form_id,
@@ -614,39 +649,15 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
             raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
         return configs
 
-    def _get_target_cases(self, repeat_record, configs, couch_user):
+    def _get_case_blocks(self, repeat_record, configs, couch_user):
         main_config = configs[0]
         registry_slug = main_config.registry_slug
         helper = DataRegistryHelper(main_config.intent_case.domain, registry_slug=registry_slug)
-        return list(filter(None, [
-            self._get_case(helper, repeat_record, config, couch_user)
-            for config in configs
-        ]))
-
-    def _get_case(self, registry_helper, repeat_record, config, couch_user):
-        try:
-            case = registry_helper.get_case(config.case_id, couch_user, repeat_record.repeater)
-        except RegistryAccessException:
-            raise DataRegistryCaseUpdateError("User does not have permission to access the registry")
-        except CaseNotFound:
-            if config.create_case:
-                return
-            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
-
-        if config.create_case:
-            raise DataRegistryCaseUpdateError("Unable to create target case as it already exists")
-
-        if case.domain != config.domain or case.type != config.case_type:
-            raise DataRegistryCaseUpdateError(f"Target case not found: {config.case_id}")
-
-        return case
-
-    def _get_case_blocks(self, target_cases, configs):
-        targets_by_id = {
-            case.case_id: case for case in target_cases
+        configs_by_case_id = {
+            config.case_id: config for config in configs
         }
         return [
-            config.get_case_block(targets_by_id.get(config.case_id, None))
+            config.get_case_block(helper, repeat_record, couch_user, configs_by_case_id)
             for config in configs
         ]
 
@@ -674,13 +685,6 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self, domain):
-        return json.dumps({
-            'form_id': 'test-form-' + uuid4().hex,
-            'received_on': json_format_datetime(datetime.utcnow()),
-            'case_ids': ['test-case-' + uuid4().hex, 'test-case-' + uuid4().hex]
-        })
-
 
 class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
@@ -697,9 +701,6 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
-
-    def get_test_payload(self, domain):
-        return self.get_payload(None, _get_test_form(domain))
 
 
 class FormDictPayloadGenerator(BasePayloadGenerator):

@@ -56,6 +56,7 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
 
             var sourceModule = sourceModuleModel('', 'None');
             self.modules.push(sourceModule);
+            modules = _.sortBy(modules, function (m) { return m.name; });
             for (var i = 0; i < modules.length; i++) {
                 var mod = modules[i];
                 sourceModule = sourceModuleModel(mod.unique_id, mod.name, mod.root_module_id);

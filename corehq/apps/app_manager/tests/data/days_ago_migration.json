@@ -238,10 +238,22 @@
                                 "type": "always"
                             },
                             "update": {
-                                "dob": "/data/dob",
-                                "last_beer": "/data/last_beer",
-                                "last_checkup": "/data/last_checkup",
-                                "last_party": "/data/last_party"
+                              "dob": {
+                                "question_path": "/data/dob",
+                                "update_mode": "always"
+                              },
+                              "last_beer": {
+                                "question_path": "/data/last_beer",
+                                "update_mode": "always"
+                              },
+                              "last_checkup": {
+                                "question_path": "/data/last_checkup",
+                                "update_mode": "always"
+                              },
+                              "last_party": {
+                                "question_path": "/data/last_party",
+                                "update_mode": "always"
+                              }
                             }
                         },
                         "update_referral": {

@@ -10,8 +10,8 @@ from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.utils.functional import lazy
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -20,7 +20,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.views.download import DownloadDETSchemaView
-from couchexport.models import Format
+from couchexport.models import Format, IntegrationFormat
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -78,7 +78,6 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
-
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -352,7 +351,8 @@ class DailySavedExportListHelper(ExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and not export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -391,7 +391,9 @@ class FormExportListHelper(ExportListHelper):
         return _("Select a Form to Export")
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -407,7 +409,9 @@ class CaseExportListHelper(ExportListHelper):
     allow_bulk_export = False
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export'] and not export['is_odata_config']
+        return (not export['is_daily_saved_export']
+            and not export['is_odata_config']
+            and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -438,7 +442,8 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and export['export_format'] == "html"
-                and not export['is_odata_config'])
+                and not export['is_odata_config']
+                and not IntegrationFormat.is_integration_format(export['export_format']))
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -486,7 +491,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = mark_safe_lazy(ugettext_lazy(  # nosec: no user input
+    lead_text = mark_safe_lazy(gettext_lazy(  # nosec: no user input
         '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
@@ -615,7 +620,7 @@ def update_emailed_export_data(request, domain):
 @location_safe
 class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
     urlname = 'list_daily_saved_exports'
-    page_title = ugettext_lazy("Daily Saved Exports")
+    page_title = gettext_lazy("Daily Saved Exports")
 
     def dispatch(self, *args, **kwargs):
         if not self._priv_check():
@@ -694,13 +699,13 @@ def commit_filters(request, domain):
 @location_safe
 class FormExportListView(BaseExportListView, FormExportListHelper):
     urlname = 'list_form_exports'
-    page_title = ugettext_noop("Export Form Data")
+    page_title = gettext_noop("Export Form Data")
 
 
 @location_safe
 class CaseExportListView(BaseExportListView, CaseExportListHelper):
     urlname = 'list_case_exports'
-    page_title = ugettext_noop("Export Case Data")
+    page_title = gettext_noop("Export Case Data")
 
     @property
     def page_name(self):
@@ -712,9 +717,9 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
 @location_safe
 class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
     urlname = 'list_dashboard_feeds'
-    page_title = ugettext_lazy("Excel Dashboard Integration")
+    page_title = gettext_lazy("Excel Dashboard Integration")
 
-    lead_text = ugettext_lazy('''
+    lead_text = gettext_lazy('''
         Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
         Data is updated daily.
     ''')
@@ -735,20 +740,20 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
 
 
 class DeIdFormExportListView(FormExportListView, DeIdFormExportListHelper):
-    page_title = ugettext_noop("Export De-Identified Form Data")
+    page_title = gettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
 
 
 @location_safe
 class DeIdDailySavedExportListView(DailySavedExportListView, DeIdDailySavedExportListHelper):
     urlname = 'list_deid_daily_saved_exports'
-    page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
+    page_title = gettext_noop("Export De-Identified Daily Saved Exports")
 
 
 @location_safe
 class DeIdDashboardFeedListView(DashboardFeedListView, DeIdDashboardFeedListHelper):
     urlname = 'list_deid_dashboard_feeds'
-    page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
+    page_title = gettext_noop("Export De-Identified Dashboard Feeds")
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
@@ -1012,7 +1017,7 @@ class ODataFeedListHelper(ExportListHelper):
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("PowerBi/Tableau Integration")
+    page_title = gettext_lazy("PowerBi/Tableau Integration")
 
     @property
     def lead_text(self):

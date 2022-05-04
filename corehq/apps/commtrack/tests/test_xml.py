@@ -55,12 +55,8 @@ from corehq.apps.products.models import Product
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-    LedgerAccessors,
-)
-from corehq.form_processor.models import LedgerTransaction
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.models import CommCareCase, LedgerTransaction, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from testapps.test_pillowtop.utils import process_pillow_changes
@@ -459,7 +455,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial = float(100)
         balances = [('', initial)]
         instance_id = self.submit_xml_form(balance_submission(balances))
-        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        instance = XFormInstance.objects.get_form(instance_id, self.domain.name)
         self.assertTrue(instance.is_error)
         self.assertTrue('MissingProductId' in instance.problem)
 
@@ -473,7 +469,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             domain=self.domain.name,
         )[0]
         self.addCleanup(self.delete_ledger_transactions, form.form_id)
-        instance = FormAccessors(self.domain.name).get_form(form.form_id)
+        instance = XFormInstance.objects.get_form(form.form_id, self.domain.name)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
@@ -485,7 +481,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             domain=self.domain.name,
         )[0]
         self.addCleanup(self.delete_ledger_transactions, form.form_id)
-        instance = FormAccessors(self.domain.name).get_form(form.form_id)
+        instance = XFormInstance.objects.get_form(form.form_id, self.domain.name)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
@@ -530,13 +526,13 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
 
     def test_xform_id_added_to_case_xform_list_only_once(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=self.sp.case_id,
             user_id='jack',
@@ -547,7 +543,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
         # make sure the ID only got added once
         self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
@@ -559,14 +555,13 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             timestamp=datetime.utcnow() + timedelta(-30)
         )
 
-        case_accessors = CaseAccessors(self.domain.name)
-        case = case_accessors.get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertIn(instance_id, case.xform_ids)
 
-        form = FormAccessors(self.domain.name).get_form(instance_id)
+        form = XFormInstance.objects.get_form(instance_id, self.domain.name)
         form.archive()
 
-        case = case_accessors.get_case(self.sp.case_id)
+        case = CommCareCase.objects.get_case(self.sp.case_id, self.domain.name)
         self.assertNotIn(instance_id, case.xform_ids)
 
 
@@ -580,7 +575,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.group.save()
 
         self.restore_user = self.user.to_ota_restore_user()
-        self.sp_block = CaseBlock.deprecated_init(
+        self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
 
@@ -644,7 +639,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         _assert_initial_state()
 
         # archive and confirm commtrack data is deleted
-        form = FormAccessors(self.domain.name).get_form(second_form_id)
+        form = XFormInstance.objects.get_form(second_form_id, self.domain.name)
         with self.process_legder_changes:
             form.archive()
 
@@ -684,7 +679,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         _assert_initial_state()
 
         # archive and confirm commtrack data is cleared
-        form = FormAccessors(self.domain.name).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, self.domain.name)
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
         self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
@@ -707,7 +702,7 @@ def _report_soh(soh_reports, case_id, domain):
         for report in soh_reports
     ]
     form = submit_case_blocks(balance_blocks, domain)[0]
-    received_on = json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
+    received_on = json_format_datetime(XFormInstance.objects.get_form(form.form_id, domain).received_on)
     return form.form_id, received_on
 
 

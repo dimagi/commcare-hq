@@ -20,7 +20,6 @@ def get_app_submission_breakdown_es(domain_name, monthspan, user_ids=None):
         AggregationTerm('app_id', 'app_id'),
         AggregationTerm('device_id', 'form.meta.deviceID'),
         AggregationTerm('user_id', 'form.meta.userID'),
-        AggregationTerm('username', 'form.meta.username'),
     ]
     query = FormES(es_instance_alias=ES_EXPORT_INSTANCE).domain(domain_name).submitted(
         gte=monthspan.startdate,

@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from pillowtop.checkpoints.manager import (
     PillowCheckpoint,
     PillowCheckpointEventHandler,
@@ -52,7 +51,7 @@ class KafkaProcessor(PillowProcessor):
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
-    return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
+    return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db(None))
 
 
 def get_user_groups_db_kafka_pillow(pillow_id, **kwargs):

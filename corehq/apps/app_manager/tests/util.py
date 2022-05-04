@@ -16,7 +16,7 @@ from corehq.apps.builds.models import (
 from corehq.tests.util.xml import (
     assert_html_equal,
     assert_xml_equal,
-    parse_normalize,
+    parse_normalize, assert_xml_partial_equal,
 )
 from corehq.util.test_utils import TestFileMixin, unit_testing_only
 
@@ -25,14 +25,7 @@ class TestXmlMixin(TestFileMixin):
     root = os.path.dirname(__file__)
 
     def assertXmlPartialEqual(self, expected, actual, xpath):
-        """
-        Extracts a section of XML using the xpath and compares it to the expected
-
-        Extracted XML is placed inside a <partial/> element prior to comparison.
-        """
-        expected = parse_normalize(expected)
-        actual = extract_xml_partial(actual, xpath)
-        self.assertXmlEqual(expected, actual, normalize=False)
+        assert_xml_partial_equal(expected, actual, xpath)
 
     def assertXmlEqual(self, expected, actual, normalize=True):
         assert_xml_equal(expected, actual, normalize)
@@ -87,15 +80,6 @@ class SuiteMixin(TestFileMixin):
         self._assertHasAllStrings(app_xml, app_strings)
 
 
-def extract_xml_partial(xml, xpath):
-    actual = parse_normalize(xml, to_string=False)
-    nodes = actual.findall(xpath)
-    root = etree.Element('partial')
-    for node in nodes:
-        root.append(node)
-    return etree.tostring(root, pretty_print=True, encoding='utf-8')
-
-
 def add_build(version, build_number):
     path = os.path.join(os.path.dirname(__file__), "jadjar")
     jad_path = os.path.join(path, 'CommCare_%s_%s.zip' % (version, build_number))
@@ -142,7 +126,7 @@ def patch_get_xform_resource_overrides():
 
 
 def patch_validate_xform():
-    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _, __: None)
+    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
 
 
 @unit_testing_only

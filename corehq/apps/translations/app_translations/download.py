@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormException
@@ -365,7 +365,7 @@ def get_form_question_label_name_media(langs, form):
                     if isinstance(part, ItextOutput):
                         value += "<output value=\"" + part.ref + "\"/>"
                     else:
-                        part = force_text(part)
+                        part = force_str(part)
                         part = part.replace('&', '&amp;')
                         part = part.replace('<', '&lt;')
                         part = part.replace('>', '&gt;')

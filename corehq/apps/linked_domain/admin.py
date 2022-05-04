@@ -20,6 +20,7 @@ class DomainLinkAdmin(admin.ModelAdmin):
         'linked_domain',
         'master_domain',
         'last_pull',
+        'deleted',
     ]
     search_fields = ['linked_domain', 'master_domain']
     inlines = [
@@ -28,6 +29,9 @@ class DomainLinkAdmin(admin.ModelAdmin):
     actions = [
         'delete', 'undelete'
     ]
+
+    def get_queryset(self, request):
+        return self.model.all_objects
 
     def delete(self, request, queryset):
         queryset.update(deleted=True)

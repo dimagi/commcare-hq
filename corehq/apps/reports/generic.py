@@ -14,7 +14,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
@@ -155,8 +155,8 @@ class GenericReportView(object):
     parent_report_class = None
 
     is_deprecated = False
-    deprecation_email_message = ugettext("This report has been deprecated.")
-    deprecation_message = ugettext("This report has been deprecated.")
+    deprecation_email_message = gettext("This report has been deprecated.")
+    deprecation_message = gettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -305,7 +305,7 @@ class GenericReportView(object):
     @property
     @memoized
     def rendered_report_title(self):
-        return ugettext(self.name)
+        return gettext(self.name)
 
     @property
     @memoized
@@ -1130,30 +1130,6 @@ def summary_context(report):
     # will intentionally break if used with something that doesn't have
     # a summary_values attribute
     return {"summary_values": report.summary_values}
-
-
-class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
-    extra_context_providers = [summary_context]
-
-    @property
-    def data(self):
-        """
-        Should return a list of data values, that corresponds to the
-        headers.
-        """
-        raise NotImplementedError("Override this function!")
-
-    @property
-    def rows(self):
-        # for backwards compatibility / easy switching with a single-row table
-        return [self.data]
-
-    @property
-    def summary_values(self):
-        headers = list(self.headers)
-        assert (len(self.data) == len(headers))
-        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

@@ -2,7 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.web import get_site_domain

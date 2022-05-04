@@ -70,7 +70,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
             })
             response = self.client.post(
                 post_url,
-                {'connection_settings_id': connx.id},
+                {'connection_settings_id': connx.id, 'request_method': "POST"},
                 follow=True
             )
             self.assertEqual(response.status_code, 200)
@@ -93,7 +93,7 @@ class BaseAutocompleteTest(TestCase):
         # https://github.com/django-compressor/django-appconf/issues/30
         with patch(setting_path, flag):
             response = self.client.get(view_path)
-            soup = BeautifulSoup(response.content)
+            soup = BeautifulSoup(response.content, features="lxml")
             for field in fields:
                 tag = soup.find("input", attrs={"name": field})
                 self.assertTrue(tag, "field not found: " + field)

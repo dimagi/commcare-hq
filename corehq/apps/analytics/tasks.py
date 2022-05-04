@@ -19,8 +19,15 @@ from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
+from corehq.apps.analytics.utils.partner_analytics import (
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_web_user_statistics,
+    generate_monthly_submissions_statistics,
+    send_partner_emails,
+)
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
+from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -35,11 +42,17 @@ from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
     get_instance_string,
     get_meta,
+    get_client_ip_from_meta,
+    log_response,
+)
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
     hubspot_enabled_for_user,
     hubspot_enabled_for_email,
     remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
+    emails_that_accepted_invitations_to_blocked_hubspot_domains,
+    remove_blocked_domain_invited_users_from_hubspot,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
@@ -172,7 +185,7 @@ def _hubspot_post(url, data):
         }
         params = {'hapikey': api_key}
         response = _send_post_data(url, params, data, headers)
-        _log_response('HS', data, response)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -209,27 +222,21 @@ def _get_user_hubspot_id(web_user, retry_num=0):
             if retry_num <= MAX_API_RETRIES:
                 return _get_user_hubspot_id(web_user, retry_num + 1)
             else:
+                metrics_counter(
+                    'commcare.hubspot.get_user_hubspot_id.retry_fail'
+                )
                 logger.error(f"Failed to get Hubspot user id for WebUser "
                              f"{web_user.username} due to {str(e)}.")
         else:
+            metrics_counter(
+                'commcare.hubspot.get_user_hubspot_id.success'
+            )
             return req.json().get("vid", None)
-    elif api_key:
+    elif api_key and retry_num == 0:
         metrics_counter(
-            'commcare.hubspot_data.rejected.get_user_hubspot_id',
-            tags={
-                'username': web_user.username,
-            }
+            'commcare.hubspot.get_user_hubspot_id.rejected'
         )
     return None
-
-
-def _get_client_ip(meta):
-    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = meta.get('REMOTE_ADDR')
-    return ip
 
 
 def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
@@ -241,10 +248,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             or (not webuser and not hubspot_enabled_for_email(email))):
         # This user has analytics disabled
         metrics_counter(
-            'commcare.hubspot_data.rejected.send_form_to_hubspot',
-            tags={
-                'username': webuser.username if webuser else email,
-            }
+            'commcare.hubspot.sent_form.rejected'
         )
         return
 
@@ -252,7 +256,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if hubspot_id and hubspot_cookie:
         data = {
             'email': email if email else webuser.username,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": get_client_ip_from_meta(meta)}),
         }
         if webuser:
             data.update({
@@ -263,7 +267,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             data.update(extra_fields)
 
         response = _send_hubspot_form_request(hubspot_id, form_id, data)
-        _log_response('HS', data, response)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -275,12 +279,16 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
         form_id=form_id
     )
     response = requests.post(url, data=data)
-    metrics_counter('commcare.hubspot.sent_form', tags={'status_code': response.status_code})
+    metrics_counter('commcare.hubspot.sent_form', tags={
+        'status_code': response.status_code,
+        'form_id': form_id,
+    })
     return response
 
 
-@analytics_task(serializer='pickle', )
-def update_hubspot_properties(webuser, properties):
+@analytics_task()
+def update_hubspot_properties(webuser_id, properties):
+    webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
@@ -317,21 +325,24 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     )
 
 
-@analytics_task(serializer='pickle', )
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
+@analytics_task()
+def track_user_sign_in_on_hubspot(webuser_id, hubspot_cookie, meta):
+    webuser = WebUser.get_by_user_id(webuser_id)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task(serializer='pickle', )
-def track_built_app_on_hubspot(webuser):
+@analytics_task()
+def track_built_app_on_hubspot(webuser_id):
+    webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task(serializer='pickle', )
-def track_confirmed_account_on_hubspot(webuser):
+@analytics_task()
+def track_confirmed_account_on_hubspot(webuser_id):
+    webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -369,15 +380,15 @@ def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
-@analytics_task(serializer='pickle', )
-def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
-    ab = {
-        'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
-    }
+@analytics_task()
+def track_clicked_deploy_on_hubspot(webuser_id, hubspot_cookie, meta):
+    webuser = WebUser.get_by_user_id(webuser_id)
+    num = deterministic_random(webuser.username + 'a_b_variable_deploy')
+    ab = {'a_b_variable_deploy': 'A' if num > 0.5 else 'B'}
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task()
 def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
@@ -385,7 +396,7 @@ def track_job_candidate_on_hubspot(user_email):
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task()
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
@@ -418,7 +429,7 @@ def track_workflow(email, event, properties=None):
         notify_exception(None, "Error tracking kissmetrics workflow")
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, str):
@@ -434,12 +445,12 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
             {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
-        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
@@ -451,7 +462,7 @@ def identify(email, properties):
     if api_key and analytics_enabled_for_email(email):
         km = KISSmetrics.Client(key=api_key)
         res = km.set(email, properties)
-        _log_response("KM", {'email': email, 'properties': properties}, res)
+        log_response("KM", {'email': email, 'properties': properties}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
@@ -502,6 +513,7 @@ def track_periodic_data():
     hubspot_number_of_users_blocked = 0
 
     blocked_domains = get_blocked_hubspot_domains()
+    blocked_users = emails_that_accepted_invitations_to_blocked_hubspot_domains()
 
     for chunk in range(num_chunks):
         users_to_domains = (user_query
@@ -538,6 +550,17 @@ def track_periodic_data():
         for user in users_to_domains:
             email = user.get('email') or user.get('username')
             if not _email_is_valid(email):
+                continue
+
+            if (user.get('email') in blocked_users
+                    or user.get('username') in blocked_users):
+                # User had accepted an invitation to a project space whose
+                # Billing Account has blocked HubSpot analytics, so we
+                # should not send any data about them going forward
+                metrics_counter(
+                    'commcare.hubspot_data.rejected.periodic_task.invitation',
+                )
+                hubspot_number_of_users_blocked += 1
                 continue
 
             date_created = user.get('date_joined')
@@ -639,7 +662,7 @@ def _email_is_valid(email):
     try:
         validate_email(email)
     except EmailNotValidError as e:
-        logger.warn(str(e))
+        logger.warning(str(e))
         return False
 
     return True
@@ -722,23 +745,7 @@ def _track_periodic_data_on_kiss(submit_json):
     os.remove(filename)
 
 
-def _log_response(target, data, response):
-    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
-    try:
-        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
-    except Exception:
-        response_text = status_code
 
-    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
-        target=target,
-        data=json.dumps(data, indent=2, sort_keys=True),
-        response=response_text
-    )
-
-    if 400 <= status_code < 600:
-        logger.error(message)
-    else:
-        logger.debug(message)
 
 
 def get_ab_test_properties(user):
@@ -765,7 +772,7 @@ def update_subscription_properties_by_domain(domain):
 def update_subscription_properties_by_user(web_user_id, properties):
     web_user = WebUser.get_by_user_id(web_user_id)
     identify(web_user.username, properties)
-    update_hubspot_properties(web_user, properties)
+    update_hubspot_properties(web_user_id, properties)
 
 
 def get_subscription_properties_by_user(couch_user):
@@ -844,4 +851,39 @@ def cleanup_blocked_hubspot_contacts():
     if not HUBSPOT_ENABLED:
         return
 
+    time_started = datetime.utcnow()
+
     remove_blocked_domain_contacts_from_hubspot()
+    remove_blocked_domain_invited_users_from_hubspot()
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.hubspot.runtimes.cleanup_blocked_hubspot_contacts',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )
+
+
+@periodic_task(run_every=crontab(day_of_month='1', hour=3, minute=0), queue='background_queue', acks_late=True)
+def generate_partner_reports():
+    """
+    Generates analytics reports for partners that have requested tracking on
+    specific data points.
+    :return:
+    """
+    time_started = datetime.utcnow()
+
+    last_month = add_months_to_date(datetime.today(), -1)
+    year = last_month.year
+    month = last_month.month
+    generate_monthly_mobile_worker_statistics(year, month)
+    generate_monthly_web_user_statistics(year, month)
+    generate_monthly_submissions_statistics(year, month)
+    send_partner_emails(year, month)
+
+    task_time = datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.analytics.runtimes.generate_partner_reports',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )

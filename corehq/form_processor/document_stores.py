@@ -16,11 +16,7 @@ from corehq.form_processor.exceptions import (
     MissingFormXml,
     XFormNotFound,
 )
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 class UnexpectedBackend(Exception):
@@ -31,28 +27,27 @@ class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
         self.domain = domain
-        self.form_accessors = FormAccessors(domain=domain)
         self.xmlns = xmlns
 
     def get_document(self, doc_id):
         try:
-            form = self.form_accessors.get_form(doc_id)
+            form = XFormInstance.objects.get_form(doc_id, self.domain)
             return self._to_json(form)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
     @staticmethod
     def _to_json(form):
-        if isinstance(form, XFormInstanceSQL):
+        if isinstance(form, XFormInstance):
             return form.to_json(include_attachments=True)
         else:
             return form.to_json()
 
     def iter_document_ids(self):
-        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
+        return iter(XFormInstance.objects.iter_form_ids_by_xmlns(self.domain, self.xmlns))
 
     def iter_documents(self, ids):
-        for wrapped_form in self.form_accessors.iter_forms(ids):
+        for wrapped_form in XFormInstance.objects.iter_forms(ids, self.domain):
             try:
                 yield self._to_json(wrapped_form)
             except (DocumentNotFoundError, MissingFormXml):
@@ -63,12 +58,11 @@ class CaseDocumentStore(DocumentStore):
 
     def __init__(self, domain, case_type=None):
         self.domain = domain
-        self.case_accessors = CaseAccessors(domain=domain)
         self.case_type = case_type
 
     def get_document(self, doc_id):
         try:
-            return self.case_accessors.get_case(doc_id).to_json()
+            return CommCareCase.objects.get_case(doc_id, self.domain).to_json()
         except CaseNotFound as e:
             raise DocumentNotFoundError(e)
 
@@ -77,7 +71,7 @@ class CaseDocumentStore(DocumentStore):
         return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
-        for wrapped_case in self.case_accessors.iter_cases(ids):
+        for wrapped_case in CommCareCase.objects.iter_cases(ids, self.domain):
             yield wrapped_case.to_json()
 
 

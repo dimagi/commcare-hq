@@ -16,7 +16,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
 from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
@@ -60,10 +60,8 @@ def _import_case_type(domain, case_type, csv_filename, user):
 
 def _update_case_id_properties(domain, user):
     """Some case properties store the ID of related cases.  This updates those IDs"""
-
-    accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain()
-    cases = list(accessor.get_cases(case_ids))
+    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain)
+    cases = CommCareCase.objects.get_cases(case_ids, domain)
     case_ids_by_external_id = {c.external_id: c.case_id for c in cases}
 
     case_blocks = []
@@ -74,7 +72,7 @@ def _update_case_id_properties(domain, user):
                 update[k] = case_ids_by_external_id[v]
         if update:
             case_blocks.append(
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,

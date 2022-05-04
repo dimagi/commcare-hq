@@ -4,10 +4,8 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from corehq.util.es.elasticsearch import ConnectionError
 from unittest.mock import MagicMock, patch
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -59,8 +57,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
@@ -71,40 +68,36 @@ from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
 @es_test
 class BaseESAccessorsTest(TestCase):
-    es_index_info = None
+
+    es_index_infos = []
 
     def setUp(self):
         super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
-            self._delete_es_index()
+            self._delete_es_indices()
             self.domain = uuid.uuid4().hex
-            if isinstance(self.es_index_info, (list, tuple)):
-                for index_info in self.es_index_info:
-                    initialize_index_and_mapping(self.es, index_info)
-            else:
-                initialize_index_and_mapping(self.es, self.es_index_info)
+            for index_info in self.es_index_infos:
+                initialize_index_and_mapping(self.es, index_info)
 
     def tearDown(self):
-        self._delete_es_index()
+        self._delete_es_indices()
         super(BaseESAccessorsTest, self).tearDown()
 
-    def _delete_es_index(self):
-        if isinstance(self.es_index_info, (list, tuple)):
-            for index_info in self.es_index_info:
-                ensure_index_deleted(index_info.index)
-        else:
-            ensure_index_deleted(self.es_index_info.index)
+    def _delete_es_indices(self):
+        for index_info in self.es_index_infos:
+            ensure_index_deleted(index_info.index)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
 
-    es_index_info = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
+    es_index_infos = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
 
     def _send_form_to_es(
             self,
@@ -346,16 +339,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
-
-    def test_get_form_counts_for_domains(self):
-        self._send_form_to_es()
-        self._send_form_to_es()
-        self._send_form_to_es(domain='other')
-
-        self.assertEqual(
-            get_form_counts_for_domains([self.domain, 'other']),
-            {self.domain: 2, 'other': 1}
-        )
 
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
@@ -861,6 +844,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @es_test
 class TestUserESAccessors(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -1022,7 +1006,7 @@ class TestGroupESAccessors(SimpleTestCase):
 
 class TestCaseESAccessors(BaseESAccessorsTest):
 
-    es_index_info = CASE_INDEX_INFO
+    es_index_infos = [CASE_INDEX_INFO, USER_INDEX_INFO]
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()
@@ -1039,7 +1023,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             closed_on=None,
             modified_on=None):
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid.uuid4().hex,
             domain=domain or self.domain,
             owner_id=owner_id or self.owner_id,
@@ -1256,8 +1240,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
 
         # simulate a save
-        from casexml.apps.case.signals import case_post_save
-        case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
+        from corehq.form_processor.signals import sql_case_post_save
+        sql_case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
@@ -1266,7 +1250,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = self._send_case_to_es()
         case.external_id = '123'
         case.save()
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
         es_case = transform_case_for_elasticsearch(case_json)

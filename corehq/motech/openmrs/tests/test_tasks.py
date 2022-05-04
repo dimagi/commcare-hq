@@ -1,4 +1,5 @@
 import datetime
+import doctest
 import json
 import logging
 from contextlib import contextmanager
@@ -8,7 +9,7 @@ from django.test import SimpleTestCase
 
 import pytz
 from unittest.mock import patch
-from nose.tools import assert_raises_regexp
+from nose.tools import assert_raises_regex
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from corehq.apps.groups.models import Group
@@ -193,7 +194,7 @@ def test_bad_data_type():
         'property': 'data_proxima_consulta'
     }
     with get_importer(bad_column_mapping) as importer:
-        with assert_raises_regexp(
+        with assert_raises_regex(
             ConfigurationError,
             'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
             'Unable to deserialize value 1551564000000 '
@@ -460,3 +461,10 @@ class OwnerTests(LocationHierarchyTestCase):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
+
+
+def test_doctests():
+    import corehq.motech.openmrs.tasks
+
+    results = doctest.testmod(corehq.motech.openmrs.tasks)
+    assert results.failed == 0

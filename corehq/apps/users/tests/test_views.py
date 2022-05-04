@@ -3,6 +3,10 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq.apps.es.tests.utils import populate_user_index
+from corehq.util.elastic import ensure_index_deleted
+from corehq.pillows.mappings.user_mapping import USER_INDEX
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -12,6 +16,10 @@ from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import generate_cases
+from corehq.apps.locations.tests.util import make_loc, delete_all_locations
+from corehq.apps.locations.models import LocationType
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
+from corehq.toggles.shortcuts import set_toggle
 
 
 class TestMobileWorkerListView(TestCase):
@@ -201,3 +209,79 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.by_domain, self.domain)
         self.assertEqual(user_history_log.for_domain, self.domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
+
+
+class TestCountWebUsers(TestCase):
+
+    view = 'count_web_users'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = 'test'
+        cls.domain_obj = create_domain(cls.domain)
+
+        set_toggle(FILTERED_BULK_USER_DOWNLOAD.slug, cls.domain, True, namespace=NAMESPACE_DOMAIN)
+
+        location_type = LocationType(domain=cls.domain, name='phony')
+        location_type.save()
+
+        cls.some_location = make_loc('1', 'some_location', type=location_type, domain=cls.domain_obj.name)
+
+        cls.admin_user = WebUser.create(
+            cls.domain_obj.name,
+            'edith1@wharton.com',
+            'badpassword',
+            None,
+            None,
+            email='edith@wharton.com',
+            first_name='Edith',
+            last_name='Wharton',
+            is_admin=True,
+        )
+
+        cls.admin_user_with_location = WebUser.create(
+            cls.domain_obj.name,
+            'edith2@wharton.com',
+            'badpassword',
+            None,
+            None,
+            email='edith2@wharton.com',
+            first_name='Edith',
+            last_name='Wharton',
+            is_admin=True,
+        )
+        cls.admin_user_with_location.set_location(cls.domain, cls.some_location)
+
+        populate_user_index([
+            cls.admin_user_with_location,
+            cls.admin_user,
+        ])
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+        delete_all_locations()
+
+        cls.admin_user_with_location.delete(cls.domain_obj.name, deleted_by=None)
+        cls.admin_user.delete(cls.domain_obj.name, deleted_by=None)
+
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def test_admin_user_sees_all_web_users(self):
+        self.client.login(
+            username=self.admin_user.username,
+            password='badpassword',
+        )
+        result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
+        self.assertEqual(json.loads(result.content)['count'], 2)
+
+    def test_admin_location_user_sees_all_web_users(self):
+        self.client.login(
+            username=self.admin_user_with_location.username,
+            password='badpassword',
+        )
+        result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
+        self.assertEqual(json.loads(result.content)['count'], 2)

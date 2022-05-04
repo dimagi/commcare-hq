@@ -184,7 +184,7 @@ class HqdbContext(DatabaseContext):
     and migrated.
 
     When using REUSE_DB=1, you may also want to provide a value for the
-    --reusedb option, either reset, flush, migrate, or teardown.
+    --reusedb option, either reset, flush, bootstrap, migrate, or teardown.
     ./manage.py test --help will give you a description of these.
     """
 
@@ -213,6 +213,8 @@ class HqdbContext(DatabaseContext):
                 call_command('migrate_multi', interactive=False)
             if self.reuse_db == "flush":
                 flush_databases()
+            if self.reuse_db == "bootstrap":
+                bootstrap_migrated_db_state()
             return  # skip remaining setup
 
         if self.reuse_db == "reset":
@@ -368,6 +370,15 @@ def flush_databases():
         except (ResourceNotFound, HTTPError):
             pass
     call_command('flush', interactive=False)
+    bootstrap_migrated_db_state()
+
+
+@unit_testing_only
+def bootstrap_migrated_db_state():
+    from corehq.apps.accounting.tests.generator import bootstrap_accounting
+    from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
+    bootstrap_accounting()
+    bootstrap_smsbillables()
 
 
 if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):

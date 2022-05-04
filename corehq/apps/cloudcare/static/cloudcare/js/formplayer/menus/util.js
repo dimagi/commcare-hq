@@ -116,10 +116,12 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             useUniformUnits: menuResponse.useUniformUnits,
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
+            isMultiSelect: menuResponse.multiSelect,
         };
         var Util = hqImport("cloudcare/js/formplayer/utils/util");
         var urlObject = Util.currentUrlToObject();
 
+        sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
@@ -132,8 +134,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 }
                 hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
             }
-            sessionStorage.queryKey = menuResponse.queryKey;
-            urlObject.setQueryData({}, false);
+            urlObject.setQueryData({}, false, false);
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
         } else if (menuResponse.type === "entities") {
             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {

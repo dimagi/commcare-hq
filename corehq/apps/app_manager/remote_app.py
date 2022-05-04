@@ -72,7 +72,6 @@ def make_remote_profile(app, langs=None):
             profile_xml.set_property("ota-restore-url", app.ota_restore_url)
             profile_xml.set_property("PostURL", app.post_url)
             profile_xml.set_property("cc_user_domain", cc_user_domain(app.domain))
-            profile_xml.set_property('form-record-url', app.form_record_url)
             profile_xml.set_property('key_server', app.key_server_url)
             download_index_url = reverse(
                 'download_index',

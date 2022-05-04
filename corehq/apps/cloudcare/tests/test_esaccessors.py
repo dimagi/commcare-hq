@@ -16,11 +16,11 @@ from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
-class TestCloudcareESAccessors(SimpleTestCase):
+class TestLoginAsUserQuery(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCloudcareESAccessors, cls).setUpClass()
+        super(TestLoginAsUserQuery, cls).setUpClass()
         cls.username = 'superman'
         cls.first_name = 'clark'
         cls.last_name = 'kent'
@@ -36,7 +36,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestCloudcareESAccessors, cls).tearDownClass()
+        super(TestLoginAsUserQuery, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
         user = CommCareUser(
@@ -99,6 +99,38 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     0
                 ).count(),
                 1
+            )
+
+    def test_limited_users_case_insensitive(self):
+        self._send_user_to_es(username='superman')
+        self._send_user_to_es(username='robin', user_data={'login_as_user': 'BATMAN'})
+
+        with patch('corehq.apps.cloudcare.esaccessors._limit_login_as', return_value=True):
+            self.assertEqual(
+                login_as_user_query(
+                    self.domain,
+                    MagicMock(username='batman'),
+                    None,
+                    10,
+                    0
+                ).values_list("username", flat=True),
+                ["robin"]
+            )
+
+    def test_limited_users_partial_match(self):
+        self._send_user_to_es(username='superman')
+        self._send_user_to_es(username='robin', user_data={'login_as_user': 'batman and robin'})
+
+        with patch('corehq.apps.cloudcare.esaccessors._limit_login_as', return_value=True):
+            self.assertEqual(
+                login_as_user_query(
+                    self.domain,
+                    MagicMock(username='batman'),
+                    None,
+                    10,
+                    0
+                ).values_list("username", flat=True),
+                ["robin"]
             )
 
     def test_default_user(self):

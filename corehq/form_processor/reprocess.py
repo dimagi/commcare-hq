@@ -6,12 +6,11 @@ from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseVa
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, PostSaveError
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
+from corehq.form_processor.models import CommCareCase, XFormInstance, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.metrics.load_counters import form_load_counter
 from dimagi.utils.couch import LockManager
@@ -32,7 +31,7 @@ def reprocess_unfinished_stub(stub, save=True):
 
     form_id = stub.xform_id
     try:
-        form = FormAccessors(stub.domain).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, stub.domain)
     except XFormNotFound:
         if stub.saved:
             logger.error("Form not found for reprocessing", extra={
@@ -40,7 +39,7 @@ def reprocess_unfinished_stub(stub, save=True):
                 'domain': stub.domain
             })
         save and stub.delete()
-        return
+        return ReprocessingResult(None, None, None, "Form not found for reprocessing")
 
     return reprocess_unfinished_stub_with_form(stub, form, save)
 
@@ -121,7 +120,7 @@ def reprocess_form(form, save=True, lock_form=True):
     with LockManager(form, lock):
         logger.info('Reprocessing form: %s (%s)', form.form_id, form.domain)
         # reset form state prior to processing
-        form.state = XFormInstanceSQL.NORMAL
+        form.state = XFormInstance.NORMAL
 
         cache = interface.casedb_cache(
             domain=form.domain, lock=True, deleted_ok=True, xforms=[form],
@@ -151,9 +150,9 @@ def reprocess_form(form, save=True, lock_form=True):
 
             if save:
                 for case in cases:
-                    CaseAccessorSQL.save_case(case)
+                    case.save(with_tracked_models=True)
                 LedgerAccessorSQL.save_ledger_values(ledgers)
-                FormAccessorSQL.update_form_problem_and_state(form)
+                XFormInstance.objects.update_form_problem_and_state(form)
                 FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)
 
             # rebuild cases and ledgers that were affected
@@ -192,7 +191,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
     # exclude any cases that didn't already exist
     case_ids = [case.case_id for case in cases if case.is_saved()]
-    modified_dates = CaseAccessorSQL.get_last_modified_dates(form.domain, case_ids)
+    modified_dates = CommCareCase.objects.get_last_modified_dates(form.domain, case_ids)
     return {
         case_id for case_id in case_ids
         if modified_dates.get(case_id, datetime.max) > form.received_on
@@ -200,8 +199,7 @@ def _get_case_ids_needing_rebuild(form, cases):
 
 
 def _get_form(form_id):
-    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
     try:
-        return FormAccessorSQL.get_form(form_id)
+        return XFormInstance.objects.get_form(form_id)
     except XFormNotFound:
         return None

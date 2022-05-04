@@ -1,0 +1,21 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+            <div class="form-group">
+              <label class="control-label {% css_label_class %}">
+                {% trans 'Enable these function datums in session endpoints' %}
+                <span class="hq-help-template"
+                      data-title="{% trans 'Session Endpoint ID' %}"
+                      data-content="{% blocktrans %}Comma separated list of function datums in session endpoints{% endblocktrans %}"></span>
+              </label>
+              <div id="computed-endpoints"
+                   class="{% css_field_class %} commcare-feature"
+                   data-since-version="2.51"
+                   class="{% css_field_class %}">
+                <input class="code form-control"
+                       type="text"
+                       id="function_datum_endpoints"
+                       name="function_datum_endpoints"
+                       value="{{ form.function_datum_endpoints|default:''|join:',' }}" />
+              </div>
+            </div>

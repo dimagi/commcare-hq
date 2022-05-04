@@ -6,15 +6,15 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
-    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.safestring import SafeText
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
@@ -42,7 +42,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -77,14 +77,14 @@ from corehq.apps.userreports.util import (
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
+    get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from corehq.util.couch import (
     DocumentNotFound,
     get_document_or_404,
-    get_document_or_not_found,
 )
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import is_ajax, reverse
 from no_exceptions.exceptions import Http403
 
 
@@ -144,7 +144,7 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
 
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
-    section_name = ugettext_noop("Reports")
+    section_name = gettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
@@ -196,7 +196,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+            return get_report_config_or_not_found(self.domain, self.report_config_id)
 
     def get_spec_or_404(self):
         try:
@@ -290,7 +290,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return self.excel_response
             elif request.GET.get('format', None) == "export":
                 return self.export_response
-            elif request.is_ajax() or request.GET.get('format', None) == 'json':
+            elif is_ajax(request) or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request.GET)
             self.content_type = None
             try:
@@ -322,7 +322,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def post(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
             self.get_spec_or_404()
-            if request.is_ajax():
+            if is_ajax(request):
                 return self.get_ajax(self.request.POST)
             else:
                 return HttpResponseBadRequest()
@@ -345,8 +345,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'url': self.url,
             'method': 'POST',
             'headers': self.headers,
-            'can_edit_report': can_edit_report(self.request, self),
-            'can_delete_report': can_delete_report(self.request, self),
+            'can_edit_report': can_edit_report(self.request, self.spec),
+            'can_delete_report': can_delete_report(self.request, self.spec),
             'referring_apps': get_referring_apps(self.domain, self.report_config_id),
             'has_report_builder_trial': has_report_builder_trial(self.request),
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
@@ -418,9 +418,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def _sanitize_column(cls, col):
-        if isinstance(col, str):
+        if isinstance(col, str) and not isinstance(col, SafeText):
             return escape(col)
-
         return col
 
     def get_ajax(self, params):
@@ -483,7 +482,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import url
+        from django.conf.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
@@ -630,7 +629,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import url
+        from django.conf.urls import re_path as url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
@@ -638,8 +637,8 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 @conditionally_location_safe(_ucr_view_is_safe)
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
-    page_title = ugettext_noop('Download UCR Status')
-    section_name = ugettext_noop("Reports")
+    page_title = gettext_noop('Download UCR Status')
+    section_name = gettext_noop("Reports")
 
     @property
     def section_url(self):
@@ -680,7 +679,7 @@ class DownloadUCRStatusView(BaseDomainView):
         if self.is_static:
             return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
-            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+            return get_report_config_or_not_found(self.domain, self.report_config_id)
 
     @property
     def is_static(self):

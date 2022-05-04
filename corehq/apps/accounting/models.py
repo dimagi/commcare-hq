@@ -13,7 +13,7 @@ from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
@@ -530,18 +530,17 @@ class BillingAccount(ValidateModelMixin, models.Model):
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
         from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
-        old_user = self.auto_pay_user
+        old_username = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        old_web_user = WebUser.get_by_username(old_user)
-        if old_web_user:
-            old_user_name = old_web_user.first_name
-        else:
-            old_user_name = old_user
+
+        old_web_user = WebUser.get_by_username(old_username)
+        old_user_first_name = old_web_user.first_name if old_web_user else old_username
+        email = old_web_user.get_email() if old_web_user else old_username
 
         context = {
             'new_user': new_user,
-            'old_user_name': old_user_name,
+            'old_user_name': old_user_first_name,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
                                                  args=[domain]),
@@ -550,7 +549,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         send_html_email_async(
             subject,
-            old_user,
+            email,
             render_to_string('accounting/email/autopay_card_removed.html', context),
             text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
         )
@@ -562,6 +561,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
         new_user_name = web_user.first_name if web_user else self.auto_pay_user
+        email = web_user.get_email() if web_user else self.auto_pay_user
         try:
             last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
@@ -569,7 +569,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         context = {
             'name': new_user_name,
-            'email': self.auto_pay_user,
+            'username': web_user.username if web_user else self.auto_pay_user,
             'domain': domain,
             'last_4': last_4,
             'billing_account_name': self.name,
@@ -580,7 +580,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
         send_html_email_async(
             subject,
-            self.auto_pay_user,
+            email,
             render_to_string('accounting/email/invoice_autopay_setup.html', context),
             text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
@@ -779,7 +779,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
-    is_customer_software_plan = models.BooleanField(default=False)
+    is_customer_software_plan = models.BooleanField(default=False)  # can plan be used in customer billing account
     max_domains = models.IntegerField(blank=True, null=True)
     is_annual_plan = models.BooleanField(default=False)
 
@@ -839,7 +839,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run migrations?"
+                f"No default {edition!r} product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod
@@ -1748,7 +1748,7 @@ class Subscription(models.Model):
         return context
 
     def _reminder_email_contacts(self, domain_name):
-        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if not self.is_trial:
             billing_contact_emails = (

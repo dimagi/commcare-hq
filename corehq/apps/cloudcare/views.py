@@ -15,7 +15,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -43,8 +43,9 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     get_current_app_doc,
     get_latest_build_doc,
+    get_latest_build_id,
     get_latest_released_app_doc,
-    wrap_app,
+    get_latest_released_build_id,
 )
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -77,15 +78,13 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CouchUser, DomainMembershipError
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import XFormInstance
 from xml2json.lib import xml2json
 
 
@@ -222,6 +221,13 @@ def _fetch_build(domain, username, app_id):
         return get_latest_build_doc(domain, app_id)
     else:
         return get_latest_released_app_doc(domain, app_id)
+
+
+def _fetch_build_id(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_id(domain, app_id)
+    else:
+        return get_latest_released_build_id(domain, app_id)
 
 
 class FormplayerMainPreview(FormplayerMain):
@@ -371,7 +377,7 @@ class LoginAsUsers(View):
 
 
 def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile']
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context
@@ -401,7 +407,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     )
 
     if case_id:
-        case = CaseAccessors(domain).get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, domain)
         session_name = '{0} - {1}'.format(session_name, case.name)
 
     root_context = {
@@ -410,7 +416,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     }
     if instance_id:
         try:
-            root_context['instance_xml'] = FormAccessors(domain).get_form(instance_id).get_xml()
+            root_context['instance_xml'] = XFormInstance.objects.get_form(instance_id, domain).get_xml()
         except XFormNotFound:
             raise Http404()
 
@@ -535,7 +541,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'[Cloudcare] unknown error type', details=data)
+        notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
 
 
@@ -571,7 +577,7 @@ def _message_to_sentry_thread_topic(message):
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
     ... 'If this error persists please report a bug to CommCareHQ.')
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
-    """
+    """  # noqa: E501
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
 
 
@@ -587,8 +593,8 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         return _fail(_("Linking directly into Web Apps has been disabled."))
 
-    build = _fetch_build(domain, request.couch_user.username, app_id)
-    if not build:
+    build_id = _fetch_build_id(domain, request.couch_user.username, app_id)
+    if not build_id:
         # These links can be used for cross-domain web apps workflows, where a link jumps to the
         # same screen but in another domain's corresponding app. This works if both the source and
         # target apps are downstream apps that share an upstream app - the link references the upstream app.
@@ -596,16 +602,9 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
-                build = _fetch_build(domain, request.couch_user.username, id_map[app_id][0])
-        if not build:
+                build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
+        if not build_id:
             return _fail(_("Could not find application."))
-    build = wrap_app(build)
-
-    valid_endpoint_ids = {m.session_endpoint_id for m in build.get_modules() if m.session_endpoint_id}
-    valid_endpoint_ids |= {f.session_endpoint_id for f in build.get_forms() if f.session_endpoint_id}
-    if endpoint_id not in valid_endpoint_ids:
-        return _fail(_("This link does not exist. "
-                       "Your app may have changed so that the given link is no longer valid."))
 
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
     force_login_as = not restore_as_user.is_commcare_user()
@@ -613,7 +612,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
         return _fail(_("This user cannot access this link."))
 
     cloudcare_state = json.dumps({
-        "appId": build._id,
+        "appId": build_id,
         "endpointId": endpoint_id,
         "endpointArgs": {
             urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)

@@ -13,8 +13,8 @@ from django.http import (
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
@@ -78,7 +78,7 @@ from corehq.apps.reports.v2.reports.explore_case_data import (
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -138,7 +138,7 @@ class BulkUploadCasesException(Exception):
 
 
 class DataInterfaceSection(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
     urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
@@ -154,7 +154,7 @@ class DataInterfaceSection(BaseDomainView):
 class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
-    page_title = ugettext_lazy("Explore Case Data")
+    page_title = gettext_lazy("Explore Case Data")
 
     @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
@@ -193,13 +193,13 @@ class ExploreCaseDataView(BaseDomainView):
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = "data_interfaces/list_case_groups.html"
     urlname = 'case_group_list'
-    page_title = ugettext_lazy("Case Groups")
+    page_title = gettext_lazy("Case Groups")
 
-    limit_text = ugettext_lazy("groups per page")
-    empty_notification = ugettext_lazy("You have no case groups. Please create one!")
-    loading_message = ugettext_lazy("Loading groups...")
-    deleted_items_header = ugettext_lazy("Deleted Groups:")
-    new_items_header = ugettext_lazy("New Groups:")
+    limit_text = gettext_lazy("groups per page")
+    empty_notification = gettext_lazy("You have no case groups. Please create one!")
+    loading_message = gettext_lazy("Loading groups...")
+    deleted_items_header = gettext_lazy("Deleted Groups:")
+    new_items_header = gettext_lazy("New Groups:")
 
     @property
     def page_url(self):
@@ -279,13 +279,13 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
-    page_title = ugettext_noop("Manage Case Group")
+    page_title = gettext_noop("Manage Case Group")
 
-    limit_text = ugettext_noop("cases per page")
-    empty_notification = ugettext_noop("You have no cases in your group.")
-    loading_message = ugettext_noop("Loading cases...")
-    deleted_items_header = ugettext_noop("Removed Cases:")
-    new_items_header = ugettext_noop("Added Cases:")
+    limit_text = gettext_noop("cases per page")
+    empty_notification = gettext_noop("You have no cases in your group.")
+    loading_message = gettext_noop("Loading cases...")
+    deleted_items_header = gettext_noop("Removed Cases:")
+    new_items_header = gettext_noop("Added Cases:")
 
     @property
     def group_id(self):
@@ -480,7 +480,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 @location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
-    page_title = ugettext_noop('Form Management')
+    page_title = gettext_noop('Form Management')
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
@@ -492,7 +492,7 @@ class XFormManagementView(DataInterfaceSection):
                     "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
 
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
@@ -509,7 +509,7 @@ class XFormManagementView(DataInterfaceSection):
         )
 
     def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
-        xforms = FormAccessors(domain).get_forms(xform_ids)
+        xforms = XFormInstance.objects.get_forms(xform_ids, domain)
         xforms_user_ids = set([xform.user_id for xform in xforms])
         accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
         return xforms_user_ids - accessible_user_ids
@@ -518,14 +518,11 @@ class XFormManagementView(DataInterfaceSection):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
-            import six.moves.urllib.error
-            import six.moves.urllib.parse
-            import six.moves.urllib.request
-            form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
+            from urllib.parse import unquote
             from django.http import HttpRequest, QueryDict
-
             from django_otp.middleware import OTPMiddleware
 
+            form_query_string = unquote(self.request.POST.get('select_all'))
             _request = HttpRequest()
             _request.couch_user = request.couch_user
             _request.user = request.couch_user.get_django_user()
@@ -561,7 +558,7 @@ class XFormManagementView(DataInterfaceSection):
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
-    page_title = ugettext_noop('Form Status')
+    page_title = gettext_noop('Form Status')
 
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
@@ -634,12 +631,12 @@ def find_by_id(request, domain):
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Update Cases")
+    page_title = gettext_lazy("Automatically Update Cases")
 
-    limit_text = ugettext_lazy("rules per page")
-    empty_notification = ugettext_lazy("You have no case rules.")
-    loading_message = ugettext_lazy("Loading rules...")
-    deleted_items_header = ugettext_lazy("Deleted Rules")
+    limit_text = gettext_lazy("rules per page")
+    empty_notification = gettext_lazy("You have no case rules.")
+    loading_message = gettext_lazy("Loading rules...")
+    deleted_items_header = gettext_lazy("Deleted Rules")
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
@@ -665,9 +662,10 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def page_context(self):
         context = self.pagination_context
         domain_obj = Domain.get_by_name(self.domain)
+        hour = domain_obj.auto_case_update_hour
         context.update({
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-            'time': f"{domain_obj.auto_case_update_hour}:00" if domain_obj.auto_case_update_hour else _('midnight'),
+            'time': f"{hour}:00" if hour else _('midnight'),
         })
         return context
 
@@ -775,7 +773,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 class AddCaseRuleView(DataInterfaceSection):
     template_name = "data_interfaces/case_rule.html"
     urlname = 'add_case_rule'
-    page_title = ugettext_lazy("Add Case Rule")
+    page_title = gettext_lazy("Add Case Rule")
 
     @property
     def page_url(self):
@@ -794,10 +792,9 @@ class AddCaseRuleView(DataInterfaceSection):
     @memoized
     def read_only_mode(self):
         return (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.actions_form.requires_system_admin_to_edit
+            not self.is_system_admin and (
+                self.criteria_form.requires_system_admin_to_edit
+                or self.actions_form.requires_system_admin_to_edit
             )
         )
 
@@ -849,8 +846,8 @@ class AddCaseRuleView(DataInterfaceSection):
 
         if rule_form_valid and criteria_form_valid and actions_form_valid:
             if not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_save or
-                self.actions_form.requires_system_admin_to_save
+                self.criteria_form.requires_system_admin_to_save
+                or self.actions_form.requires_system_admin_to_save
             ):
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
@@ -876,7 +873,7 @@ class AddCaseRuleView(DataInterfaceSection):
 
 class EditCaseRuleView(AddCaseRuleView):
     urlname = 'edit_case_rule'
-    page_title = ugettext_lazy("Edit Case Rule")
+    page_title = gettext_lazy("Edit Case Rule")
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
 
@@ -909,7 +906,7 @@ class EditCaseRuleView(AddCaseRuleView):
 class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     template_name = 'data_interfaces/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
-    page_title = ugettext_lazy("Deduplicate Cases")
+    page_title = gettext_lazy("Deduplicate Cases")
 
     rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
 
@@ -960,7 +957,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
 class DeduplicationRuleCreateView(DataInterfaceSection):
     template_name = "data_interfaces/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
-    page_title = ugettext_lazy("Create Deduplication Rule")
+    page_title = gettext_lazy("Create Deduplication Rule")
 
     @property
     def page_context(self):
@@ -1035,14 +1032,14 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         }
         return rule_params, action_params
 
-    def validate_rule_params(self, domain, rule_params):
-        unique_name = AutomaticUpdateRule.objects.filter(
+    def validate_rule_params(self, domain, rule_params, rule=None):
+        existing_rule = AutomaticUpdateRule.objects.filter(
             deleted=False,
             domain=domain,
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
             name=rule_params['name'],
-        ).count() == 0
-        if not unique_name:
+        )
+        if existing_rule and existing_rule[0] != rule:
             return [_("A rule with name {name} already exists").format(name=rule_params['name'])]
         return []
 
@@ -1075,7 +1072,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             domain=domain,
             name=name,
             case_type=case_type,
-            active=True,
+            active=False,
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
@@ -1085,7 +1082,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
 class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     urlname = 'edit_deduplication_rule'
-    page_title = ugettext_lazy("Edit Deduplication Rule")
+    page_title = gettext_lazy("Edit Deduplication Rule")
 
     @property
     def page_url(self):
@@ -1152,7 +1149,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
 
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
-        errors.extend(self.validate_rule_params(request.domain, rule_params))
+        errors.extend(self.validate_rule_params(request.domain, rule_params, self.rule))
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))

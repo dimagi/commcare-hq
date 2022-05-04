@@ -5,6 +5,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_error, notify_exception
@@ -14,6 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.messages import (
     MSG_DUPLICATE_USERNAME,
     MSG_OPTED_IN,
@@ -54,6 +57,7 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -169,8 +173,8 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
     return queue_outgoing_sms(msg)
 
-def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None, events=[]):
+
+def send_sms_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -202,6 +206,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     add_msg_tags(msg, metadata)
 
     msg.custom_metadata = {}
+    events = [] if events is None else events
     for event in events:
         multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
         for field in multimedia_fields:
@@ -380,6 +385,44 @@ def should_log_exception_for_backend(backend, exception):
         return True
 
 
+def register_sms_user(
+    username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
+):
+    try:
+        user_data = {}
+
+        username = process_username(username, domain)
+        password = random_password()
+        new_user = CommCareUser.create(
+            domain,
+            username,
+            password,
+            created_by=None,
+            created_via=USER_CHANGE_VIA_SMS,
+            metadata=user_data
+        )
+        new_user.add_phone_number(cleaned_phone_number)
+        new_user.save()
+
+        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
+
+        if send_welcome_sms:
+            send_sms(
+                domain, None, cleaned_phone_number,
+                get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain)
+            )
+        if admin_alert_emails:
+            send_admin_registration_alert(domain, admin_alert_emails, new_user)
+    except ValidationError as e:
+        send_sms(domain, None, cleaned_phone_number, e.messages[0])
+        return False
+    else:
+        return True
+
+
 def random_password():
     """
     This method creates a random password for an sms user registered via sms
@@ -400,6 +443,20 @@ def process_username(username, domain):
         name_too_long_message=get_message(MSG_USERNAME_TOO_LONG, context=(username, max_length)),
         name_exists_message=get_message(MSG_DUPLICATE_USERNAME, context=(username,))
     )
+
+
+def send_admin_registration_alert(domain, recipients, user):
+    from corehq.apps.users.views.mobile.users import EditCommCareUserView
+    subject = _("New user {username} registered for {domain} through SMS").format(
+        username=user.username,
+        domain=domain,
+    )
+    html_content = render_to_string('sms/email/new_sms_user.html', {
+        "username": user.username,
+        "domain": domain,
+        "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
+    })
+    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
 
 
 def is_registration_text(text):
@@ -458,32 +515,14 @@ def process_sms_registration(msg):
                         keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
                         and domain_obj.sms_mobile_worker_registration_enabled
                 ):
-                    if keyword4 != '':
-                        username = keyword4
-                    else:
-                        username = cleaned_phone_number
-                    try:
-                        user_data = {}
-
-                        username = process_username(username, domain_obj)
-                        password = random_password()
-                        new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
-                        new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save()
-
-                        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
-                        entry.set_two_way()
-                        entry.set_verified()
-                        entry.save()
-                        registration_processed = True
-
-                        if domain_obj.enable_registration_welcome_sms_for_mobile_worker:
-                            send_sms(domain_obj.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain_obj.name))
-                    except ValidationError as e:
-                        send_sms(domain_obj.name, None, cleaned_phone_number, e.messages[0])
-
+                    username = cleaned_phone_number if keyword4 == '' else keyword4
+                    registration_processed = register_sms_user(
+                        username=username,
+                        domain=domain_obj.name,
+                        cleaned_phone_number=cleaned_phone_number,
+                        send_welcome_sms=domain_obj.enable_registration_welcome_sms_for_mobile_worker,
+                        admin_alert_emails=list(domain_obj.sms_worker_registration_alert_emails),
+                    )
                 elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
                         domain=domain_obj.name,
@@ -627,6 +666,8 @@ def get_inbound_phone_entry(msg):
                         }
                     )
 
+            # NOTE: I don't think the backend could ever be global here since global backends
+            # don't have a 'domain' and so the toggles would never be activated
             if not backend.is_global:
                 p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
                 return (
@@ -659,10 +700,10 @@ def process_incoming(msg):
         })
 
 
-def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+def _allow_load_handlers(verified_number, is_two_way, has_domain_two_way_scope):
     return (
         (is_two_way or has_domain_two_way_scope)
-        and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+        and is_contact_active(verified_number.domain, verified_number.owner_doc_type, verified_number.owner_id)
     )
 
 
@@ -672,17 +713,17 @@ def _domain_accepts_inbound(msg):
 
 def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
-    v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
-    is_two_way = v is not None and v.is_two_way
+    verified_number, has_domain_two_way_scope = get_inbound_phone_entry(msg)
+    is_two_way = verified_number is not None and verified_number.is_two_way
 
-    if v:
-        if any_migrations_in_progress(v.domain):
+    if verified_number:
+        if any_migrations_in_progress(verified_number.domain):
             raise DelayProcessing()
 
-        msg.couch_recipient_doc_type = v.owner_doc_type
-        msg.couch_recipient = v.owner_id
-        msg.domain = v.domain
-        msg.location_id = get_location_id_by_verified_number(v)
+        msg.couch_recipient_doc_type = verified_number.owner_doc_type
+        msg.couch_recipient = verified_number.owner_id
+        msg.domain = verified_number.domain
+        msg.location_id = get_location_id_by_verified_number(verified_number)
         msg.save()
 
     elif msg.domain_scope:
@@ -693,15 +734,15 @@ def _process_incoming(msg):
         msg.save()
 
     opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
-    domain = v.domain if v else None
+    domain = verified_number.domain if verified_number else None
     opt_keyword = False
 
     if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
-            text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
-            if v:
-                send_sms_to_verified_number(v, text, metadata=metadata)
+            text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
+            if verified_number:
+                send_sms_to_verified_number(verified_number, text, metadata=metadata)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
@@ -709,9 +750,9 @@ def _process_incoming(msg):
             opt_keyword = True
     elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
-            text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
-            if v:
-                send_sms_to_verified_number(v, text)
+            text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
+            if verified_number:
+                send_sms_to_verified_number(verified_number, text)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
@@ -725,12 +766,13 @@ def _process_incoming(msg):
     handled = False
 
     if _domain_accepts_inbound(msg):
-        if v and v.pending_verification:
+        if verified_number and verified_number.pending_verification:
             from . import verify
-            handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+            handled = verify.process_verification(
+                verified_number, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
 
-        if _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
-            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+        if _allow_load_handlers(verified_number, is_two_way, has_domain_two_way_scope):
+            handled = load_and_call(settings.SMS_HANDLERS, verified_number, msg.text, msg)
 
     if not handled and not is_two_way and not opt_keyword:
         handled = process_sms_registration(msg)

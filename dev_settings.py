@@ -39,8 +39,7 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
-    ('casexml.apps.case.models', 'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
+    ('corehq.form_processor.models', ('CommCareCase', 'XFormInstance')),
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),
@@ -92,6 +91,13 @@ COUCH_DATABASES = {
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
+    # match production settings
+    'PARSER_CLASS': 'redis.connection.HiredisParser',
+    'REDIS_CLIENT_KWARGS': {
+        'health_check_interval': 15,
+    },
+    # see `settingshelper.update_redis_location_for_tests`
+    'TEST_LOCATION': 'redis://127.0.0.1:6379/1',
 }
 
 CACHES = {

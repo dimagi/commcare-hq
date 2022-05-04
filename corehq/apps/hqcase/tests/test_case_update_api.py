@@ -10,10 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import Permissions, UserRole, WebUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
@@ -27,6 +24,7 @@ from ..utils import submit_case_blocks
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -36,11 +34,9 @@ class TestCaseAPI(TestCase):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         role = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
-        cls.case_accessor = CaseAccessors(cls.domain)
-        cls.form_accessor = FormAccessors(cls.domain)
 
     def setUp(self):
         self.client.login(username='netflix', password='password')
@@ -134,9 +130,10 @@ class TestCaseAPI(TestCase):
             },
         }).json()
         self.assertItemsEqual(res.keys(), ['case', 'form_id'])
-        case = self.case_accessor.get_case(res['case']['case_id'])
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
         self.assertEqual(case.domain, self.domain)
         self.assertEqual(case.type, 'player')
+        self.assertFalse(case.closed)
         self.assertEqual(case.name, 'Elizabeth Harmon')
         self.assertEqual(case.external_id, '1')
         self.assertEqual(case.owner_id, 'methuen_home')
@@ -146,7 +143,7 @@ class TestCaseAPI(TestCase):
             'sport': 'chess',
         })
 
-        xform = self.form_accessor.get_form(res['form_id'])
+        xform = XFormInstance.objects.get_form(res['form_id'])
         self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
         self.assertEqual(xform.metadata.userID, self.web_user.user_id)
         self.assertEqual(xform.metadata.deviceID, 'user agent string')
@@ -171,7 +168,7 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 200)
 
-        case = self.case_accessor.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         # Nothing was zeroed out by being omitted
         self.assertEqual(case.name, 'Elizabeth Harmon')
         self.assertEqual(case.owner_id, 'methuen_home')
@@ -195,7 +192,8 @@ class TestCaseAPI(TestCase):
         }).json()
         self.assertItemsEqual(res.keys(), ['case', 'form_id'])
 
-        case = self.case_accessor.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertFalse(case.closed)
         self.assertEqual(case.name, 'Beth Harmon')
         self.assertEqual(case.owner_id, 'us_chess_federation')
         self.assertEqual(case.dynamic_case_properties(), {
@@ -212,8 +210,27 @@ class TestCaseAPI(TestCase):
             'case_type': 'legend',
         })
         self.assertEqual(res.status_code, 200)
-        case = self.case_accessor.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.type, 'legend')
+
+    def test_close_case(self):
+        case = self._make_case()
+        res = self._update_case(case.case_id, {'close': True})
+        self.assertEqual(res.status_code, 200)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertTrue(case.closed)
+
+    def test_create_closed_case(self):
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'us_chess_federation',
+            'close': True,
+        })
+        self.assertEqual(res.status_code, 200)
+        case_id = res.json()['case']['case_id']
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue(case.closed)
 
     def test_update_case_bad_id(self):
         res = self._update_case('notarealcaseid', {
@@ -225,7 +242,7 @@ class TestCaseAPI(TestCase):
             },
         })
         self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_update_case_on_other_domain(self):
         case_id = str(uuid.uuid4())
@@ -241,7 +258,7 @@ class TestCaseAPI(TestCase):
             'owner_id': 'stealing_this_case',
         })
         self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_create_child_case(self):
         parent_case = self._make_case()
@@ -263,7 +280,7 @@ class TestCaseAPI(TestCase):
         }).json()
         self.assertItemsEqual(res.keys(), ['case', 'form_id'])
 
-        case = self.case_accessor.get_case(res['case']['case_id'])
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
         self.assertEqual(case.name, 'Harmon/Luchenko')
         self.assertEqual(case.external_id, '23')
         self.assertEqual(case.owner_id, 'harmon')
@@ -302,10 +319,10 @@ class TestCaseAPI(TestCase):
         #  only returns a single form ID - chunking should happen in the client
         self.assertItemsEqual(res.keys(), ['cases', 'form_id'])
 
-        updated_case = self.case_accessor.get_case(existing_case.case_id)
+        updated_case = CommCareCase.objects.get_case(existing_case.case_id, self.domain)
         self.assertEqual(updated_case.name, 'Beth Harmon')
 
-        new_case = self.case_accessor.get_cases_by_external_id('jolene')[0]
+        new_case = CommCareCase.objects.get_case_by_external_id(self.domain, 'jolene')
         self.assertEqual(new_case.name, 'Jolene')
 
     def test_bulk_update_too_big(self):
@@ -335,7 +352,7 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
-        self.assertEqual(self.case_accessor.get_case_ids_in_domain(), [])
+        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_create_parent_and_child_together(self):
         res = self._bulk_update_cases([
@@ -365,8 +382,8 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 200)
-        parent = self.case_accessor.get_cases_by_external_id('beth')[0]
-        child = self.case_accessor.get_cases_by_external_id('harmon-luchenko')[0]
+        parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
+        child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
 
     def test_create_child_with_no_parent(self):
@@ -438,7 +455,7 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 400)
         self.assertIn("InvalidCaseIndex", res.json()['error'])
-        form = self.form_accessor.get_form(res.json()['form_id'])
+        form = XFormInstance.objects.get_form(res.json()['form_id'])
         self.assertEqual(form.is_error, True)
 
     def test_unset_external_id(self):
@@ -449,7 +466,7 @@ class TestCaseAPI(TestCase):
             'external_id': '',
         })
         self.assertEqual(res.status_code, 200)
-        case = self.case_accessor.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.external_id, '')
 
     def test_omitting_external_id_doesnt_clear_it(self):
@@ -460,7 +477,7 @@ class TestCaseAPI(TestCase):
             'properties': {'champion': 'true'},
         })
         self.assertEqual(res.status_code, 200)
-        case = self.case_accessor.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.external_id, '1')
 
     def test_urls_without_trailing_slash(self):

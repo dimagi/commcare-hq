@@ -26,6 +26,19 @@ hqDefine("case_importer/js/main", [
         _.delay(function () {
             recentUploads.goToPage(1);
         });
+
+        $('input:file').change(function () {
+            const fileName = $(this).val();
+            if (fileName) {
+                $(':submit').enableButton();
+            } else {
+                $(':submit').disableButtonNoSpinner();
+            }
+        });
+        // enable button in case of "Back" pressed, file chosen
+        if ($('input:file').val()) {
+            $(':submit').enableButton();
+        }
     };
 
     var behaviorForExcelMappingPage = function () {

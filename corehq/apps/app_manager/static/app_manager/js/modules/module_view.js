@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
-        $('.multiselect-caselist').select2();
+        $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
         });
@@ -37,7 +37,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     fixtureSelect: detail.fixture_select,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
-                    searchDefaultRelevant: options.search_default_relevant,
                     searchAdditionalRelevant: options.search_additional_relevant,
                     autoLaunch: options.auto_launch,
                     defaultSearch: options.default_search,
@@ -48,7 +47,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                     dataRegistry: options.data_registry,
+                    dataRegistryWorkflow: options.data_registry_workflow,
                     additionalRegistryCases: options.additional_registry_cases,
+                    customRelatedCaseProperty: options.custom_related_case_property,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

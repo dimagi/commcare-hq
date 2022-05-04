@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from django.db import router
 from django.test import TestCase
-from django.utils.decorators import classproperty
+from django.utils.functional import classproperty
 
 from couchdbkit.ext.django.loading import get_db
 

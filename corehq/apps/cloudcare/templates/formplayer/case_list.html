@@ -2,7 +2,7 @@
 {% load i18n %}
 
 <script type="text/template" id="case-view-list-template">
-  <div class="module-caselist-container">
+  <div class="module-case-list-container">
 
     <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
 
@@ -20,17 +20,20 @@
     <% if (useGrid) { %>
     <section class="js-case-container clearfix"></section>
     <% } else { %>
-    <div class="module-caselist-table-container">
-      <table class="table module-table module-table-caselist">
+    <div class="module-case-list-table-container">
+      <table class="table module-table module-table-case-list">
         <% if(!useTiles) { %>
         <thead>
         <tr>
+          <% if (isMultiSelect && !hasNoItems) { %>
+          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+          <% } %>
           <% _.each(headers, function(header, index) { %>
           <% if (columnVisible(index)) { %>
           <% if (columnSortable(index)) { %>
-          <th class="module-caselist-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
+          <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
           <% } else { %>
-          <th class="module-caselist-header" data-id="<%- index %>"> <%- header %></th>
+          <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
           <% } %>
           <% } %>
           <% }); %>
@@ -40,7 +43,7 @@
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
-          <td class="module-caselist-column module-caselist-column-empty" colspan="<%-headers.length%>">
+          <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
             <div class="alert alert-info">{% trans "List is empty." %}</div>
           </td>
         </tr>
@@ -52,13 +55,18 @@
     </div>
     <% } %>
 
-    <% if (actions) { %>
-    <div class="caselist-actions">
-      <% _.each(actions, function(action, index) { %>
-      <div class="caselist-action-button btn-group formplayer-request">
-        <button type="button" class="btn btn-success btn-lg" data-index="<%- index %>"><%- action.text %></button>
-      </div>
-      <% }) %>
+    <% if (actions || isMultiSelect) { %>
+    <div class="case-list-actions">
+      <% if (isMultiSelect) { %>
+      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} (<span id="multi-select-btn-text"><%- selectedCaseIds.length %></span>)</button>
+      <% } %>
+      <% if (actions) { %>
+        <% _.each(actions, function(action, index) { %>
+        <div class="case-list-action-button btn-group formplayer-request">
+          <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+        </div>
+        <% }) %>
+      <% } %>
     </div>
     <% } %>
 
@@ -71,14 +79,17 @@
 </script>
 
 <script type="text/template" id="case-view-item-template">
+  <% if (isMultiSelect) { %>
+  <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
+  <% } %>
   <% _.each(data, function(datum, index) { %>
   <% if (!(styles[index].widthHint === 0)) { %>
   <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-caselist-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
   <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-caselist-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
+  <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
   <% } else { %>
-  <td class="module-caselist-column"><%- datum %></td>
+  <td class="module-case-list-column"><%- datum %></td>
   <% } %>
   <% } %>
   <% }); %>
@@ -139,15 +150,15 @@
 </script>
 
 <script type="text/template" id="case-view-list-detail-template">
-  <div class="module-caselist-container">
+  <div class="module-case-list-container">
     <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
-    <div class="module-caselist-table-container">
-      <table class="table module-table module-table-caselist">
+    <div class="module-case-list-table-container">
+      <table class="table module-table module-table-case-list">
         <thead>
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-caselist-header"> <%- header %></th>
+          <th class="module-case-list-header"> <%- header %></th>
           <% } %>
           <% }); %>
         </tr>
@@ -155,7 +166,7 @@
         <% if (hasNoItems) { %>
         <tbody>
         <tr>
-          <td class="module-caselist-column module-caselist-column-empty" colspan="<%-headers.length%>">
+          <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
             <div class="alert alert-info">{% trans "List is empty." %}</div>
           </td>
         </tr>

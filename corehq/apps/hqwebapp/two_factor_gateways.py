@@ -5,7 +5,7 @@ from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import pgettext
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from requests.compat import getproxies
 from six.moves.urllib.parse import urlencode
@@ -195,8 +195,7 @@ two_factor_rate_limiter_per_ip = RateLimiter(
             per_minute=700,
             per_second=60,
         )
-    ).get_rate_limits(),
-    scope_length=1,
+    ).get_rate_limits(scope),
 )
 
 two_factor_rate_limiter_per_user = RateLimiter(
@@ -210,8 +209,7 @@ two_factor_rate_limiter_per_user = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
-    scope_length=1,
+    ).get_rate_limits(scope),
 )
 
 two_factor_rate_limiter_per_number = RateLimiter(
@@ -225,19 +223,17 @@ two_factor_rate_limiter_per_number = RateLimiter(
             per_minute=2,
             per_second=1,
         )
-    ).get_rate_limits(),
-    scope_length=1,
+    ).get_rate_limits(scope),
 )
 
 global_two_factor_setup_rate_limiter = RateLimiter(
     feature_key='global_two_factor_setup_attempts',
-    get_rate_limits=lambda: get_dynamic_rate_definition(
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
         'global_two_factor_setup_attempts',
         default=RateDefinition(
             per_day=100,
         )
     ).get_rate_limits(),
-    scope_length=0,
 )
 
 
@@ -249,10 +245,13 @@ def _report_usage(ip_address, number, username):
 
 
 def _report_current_global_two_factor_setup_rate_limiter():
-    for window, value, threshold in global_two_factor_setup_rate_limiter.iter_rates():
-        metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
-            'window': window
-        }, multiprocess_mode=MPM_MAX)
-        metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
-            'window': window
-        }, multiprocess_mode=MPM_MAX)
+    for scope, limits in global_two_factor_setup_rate_limiter.iter_rates():
+        for window, value, threshold in limits:
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
+                'window': window,
+                'scope': scope
+            }, multiprocess_mode=MPM_MAX)
+            metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
+                'window': window,
+                'scope': scope
+            }, multiprocess_mode=MPM_MAX)

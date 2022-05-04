@@ -1,10 +1,9 @@
 from django import forms
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
-from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
@@ -14,23 +13,21 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
-from corehq import toggles
 
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
-from ..accounting.utils import domain_has_privilege
 from ..hqwebapp.widgets import BootstrapCheckboxInput
-from ...privileges import RELEASE_MANAGEMENT
+from ..linked_domain.util import can_domain_access_linked_domains
 
 
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
-        label=ugettext_lazy("Copy this app to project"),
+        label=gettext_lazy("Copy this app to project"),
         widget=forms.Select(choices=[], attrs={
             "data-bind": "autocompleteSelect2: domainNames, event:{ change: domainChanged }",
         }))
-    name = forms.CharField(required=True, label=ugettext_lazy('Name'))
+    name = forms.CharField(required=True, label=gettext_lazy('Name'))
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
@@ -60,9 +57,7 @@ class CopyApplicationForm(forms.Form):
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if (toggles.LINKED_DOMAINS.enabled(self.from_domain)
-            or domain_has_privilege(self.from_domain, RELEASE_MANAGEMENT)) \
-                and not is_linked_app(app):
+        if can_domain_access_linked_domains(self.from_domain) and not is_linked_app(app):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -89,7 +84,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not domain_has_privilege(domain, RELEASE_MANAGEMENT) and not toggles.LINKED_DOMAINS.enabled(domain):
+            if not can_domain_access_linked_domains(domain):
                 raise forms.ValidationError("The target project space does not have this feature enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
             if link and link[0].master_domain != self.from_domain:
@@ -100,13 +95,13 @@ class CopyApplicationForm(forms.Form):
 
 class PromptUpdateSettingsForm(forms.Form):
     app_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to App"),
+        label=gettext_lazy("Prompt Updates to App"),
         choices=(
-            ('off', ugettext_lazy('Off')),
-            ('on', ugettext_lazy('On')),
-            ('forced', ugettext_lazy('Forced')),
+            ('off', gettext_lazy('Off')),
+            ('on', gettext_lazy('On')),
+            ('forced', gettext_lazy('Forced')),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "If enabled, users will receive in-app prompts to update "
             "to the selected version of the app, if they are not "
             "already on it. (Selecting 'Forced' will make it so that users "
@@ -115,13 +110,13 @@ class PromptUpdateSettingsForm(forms.Form):
     )
 
     apk_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to CommCare"),
+        label=gettext_lazy("Prompt Updates to CommCare"),
         choices=(
-            ('off', ugettext_lazy('Off')),
-            ('on', ugettext_lazy('On')),
-            ('forced', ugettext_lazy('Forced')),
+            ('off', gettext_lazy('Off')),
+            ('on', gettext_lazy('On')),
+            ('forced', gettext_lazy('Forced')),
         ),
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "If enabled, users will receive in-app prompts to update "
             "to the selected version of CommCare, if they are not already "
             "on it. (Selecting 'Forced' will make it so that users cannot "
@@ -130,10 +125,10 @@ class PromptUpdateSettingsForm(forms.Form):
     )
 
     apk_version = forms.ChoiceField(
-        label=ugettext_lazy("CommCare Version")
+        label=gettext_lazy("CommCare Version")
     )
     app_version = forms.ChoiceField(
-        label=ugettext_lazy("Application Version")
+        label=gettext_lazy("Application Version")
     )
 
     def __init__(self, *args, **kwargs):

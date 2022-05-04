@@ -59,6 +59,23 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+                                    FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
+                                    FormplayerFrontend.trigger('navigateHome');
+                                    return;
+                                }
+
+                                // Drop last selection to avoid redirect loop if user presses back in the future
+                                var urlObject = Util.currentUrlToObject();
+                                urlObject.setSelections(_.initial(urlObject.selections || []));
+                                Util.setUrlToObject(urlObject, true);
+
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -107,7 +124,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
-                    "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
@@ -117,6 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
+                    "selected_values": params.selectedValues,
                 });
                 options.url = formplayerUrl + '/' + route;
 
@@ -133,9 +150,17 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
+        if (sessionStorage.selectedValues !== undefined) {
+            options.selectedValues = sessionStorage.selectedValues.split(',');
+        }
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
+
+        var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
+            progressMessage: gettext("Switching project spaces..."),
+        });
+        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
         var user = FormplayerFrontend.getChannel().request('currentUser');
         if (options.forceLoginAs && !user.restoreAs) {

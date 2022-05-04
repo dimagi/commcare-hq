@@ -13,6 +13,7 @@ hqDefine('userreports/js/configure_report', function () {
             "app": initialPageData.get('application'),
             "sourceId": initialPageData.get('source_id'),
             "sourceType": initialPageData.get('source_type'),
+            "registrySlug": initialPageData.get('registry_slug'),
             "reportPreviewUrl": initialPageData.get('report_preview_url'),
             "previewDatasourceId": initialPageData.get('preview_datasource_id'),
             "existingReport": existing_report ? existing_report._id : null,
@@ -32,12 +33,11 @@ hqDefine('userreports/js/configure_report', function () {
                 (initialPageData.get('at_report_limit') && !existing_report)),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
-        multiselectUtils.createFullMultiselectWidget(
-            'domain-selector',
-            gettext("Linked projects"),
-            gettext("Projects to copy to"),
-            gettext("Search projects")
-        );
+        multiselectUtils.createFullMultiselectWidget('domain-selector', {
+            selectableHeaderTitle: gettext("Linked projects"),
+            selectedHeaderTitle: gettext("Projects to copy to"),
+            searchItemTitle: gettext("Search projects"),
+        });
         window._bindingsApplied = true;
     });
 });

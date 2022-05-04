@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from phonelog.models import DeviceReportEntry
 
@@ -15,7 +15,7 @@ from corehq.util.quickcache import quickcache
 
 class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
-    label = ugettext_lazy("Filter Logs by Tag")
+    label = gettext_lazy("Filter Logs by Tag")
     errors_only_slug = "errors_only"
     template = "reports/filters/devicelog_tags.html"
 
@@ -45,7 +45,7 @@ class DeviceLogTagFilter(BaseReportFilter):
 
 class DeviceLogDomainFilter(BaseSingleOptionFilter):
     slug = "domain"
-    label = ugettext_lazy("Filter Logs by Domain")
+    label = gettext_lazy("Filter Logs by Domain")
 
     @property
     @quickcache([], timeout=60 * 60)
@@ -55,14 +55,14 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
 
 class DeviceLogCommCareVersionFilter(BaseTagsFilter):
     slug = "commcare_version"
-    label = ugettext_lazy("Filter Logs by CommCareVersion")
-    placeholder = ugettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
+    label = gettext_lazy("Filter Logs by CommCareVersion")
+    placeholder = gettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
 class BaseDeviceLogFilter(BaseMultipleOptionFilter):
     slug = "logfilter"
     field = None
-    label = ugettext_lazy("Filter Logs By")
+    label = gettext_lazy("Filter Logs By")
     url_param_map = {'Unknown': None}
     endpoint = None
 
@@ -94,13 +94,13 @@ class BaseDeviceLogFilter(BaseMultipleOptionFilter):
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):
     slug = "loguser"
-    label = ugettext_lazy("Filter Logs by Username")
+    label = gettext_lazy("Filter Logs by Username")
     field = 'username'
     endpoint = 'device_log_users'
 
 
 class DeviceLogDevicesFilter(BaseDeviceLogFilter):
     slug = "logdevice"
-    label = ugettext_lazy("Filter Logs by Device")
+    label = gettext_lazy("Filter Logs by Device")
     field = 'device_id'
     endpoint = 'device_log_ids'

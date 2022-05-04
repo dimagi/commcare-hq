@@ -1,8 +1,8 @@
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from memoized import memoized
 
@@ -21,6 +21,7 @@ from corehq.apps.saved_reports.models import (
     ReportNotification,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.toggles import HOURLY_SCHEDULED_REPORT, NAMESPACE_DOMAIN
 
 
 class SavedReportConfigForm(forms.Form):
@@ -103,7 +104,11 @@ class SavedReportConfigForm(forms.Form):
 
 
 class ScheduledReportForm(forms.Form):
-    INTERVAL_CHOICES = [("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")]
+    INTERVAL_CHOICES = [
+        ("daily", _("Daily")),
+        ("weekly", _("Weekly")),
+        ("monthly", _("Monthly"))
+    ]
 
     config_ids = forms.MultipleChoiceField(
         label=_("Saved report(s)"),
@@ -161,15 +166,23 @@ class ScheduledReportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        super(ScheduledReportForm, self).__init__(*args, **kwargs)
+
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        domain = kwargs.get('initial', {}).get('domain', None)
+        if domain is not None and HOURLY_SCHEDULED_REPORT.enabled(domain, NAMESPACE_DOMAIN):
+            self.fields['interval'].choices.insert(0, ("hourly", gettext("Hourly")))
+            self.fields['interval'].widget.choices.insert(0, ("hourly", gettext("Hourly")))
+
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    ugettext("Configure Scheduled Report"),
+                    gettext("Configure Scheduled Report"),
                     'config_ids',
                     'interval',
                     'day',
@@ -197,12 +210,13 @@ class ScheduledReportForm(forms.Form):
             )
         )
 
-        super(ScheduledReportForm, self).__init__(*args, **kwargs)
-
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
-        if cleaned_data["interval"] == "daily":
+        if cleaned_data.get("interval") == "daily":
             del cleaned_data["day"]
+        if cleaned_data.get("interval") == "hourly":
+            del cleaned_data["day"]
+            del cleaned_data["hour"]
         _verify_email(cleaned_data)
         return cleaned_data
 

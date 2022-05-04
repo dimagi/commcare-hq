@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     Module,
     OpenSubCaseAction,
     PreloadAction,
-    UpdateCaseAction,
+    UpdateCaseAction, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import (
@@ -69,8 +69,8 @@ class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
         """
         self.freshwater_form.requires = 'case'
         self.freshwater_form.actions.update_case = UpdateCaseAction(update={
-            'question1': '/data/question1',
-            'host/question1': '/data/question1',
+            'question1': ConditionalCaseUpdate(question_path='/data/question1'),
+            'host/question1': ConditionalCaseUpdate(question_path='/data/question1'),
         })
         self.freshwater_form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_host_case'), self.freshwater_form.render_xform())
@@ -126,8 +126,8 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
             case_type=self.module.case_type,
             case_tag='load_1',
             case_properties={
-                'question1': '/data/question1',
-                'host/question1': '/data/question1'
+                'question1': ConditionalCaseUpdate(question_path='/data/question1'),
+                'host/question1': ConditionalCaseUpdate(question_path='/data/question1')
             },
         ))
         self.assertXmlEqual(self.get_xml('update_host_case_adv'), self.form.render_xform())
@@ -162,9 +162,9 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             case_tag='open_freshwater_0',
             case_type='freshwater',
             case_name='Wanda',
-            name_path='/data/question1',
+            name_update=ConditionalCaseUpdate(question_path='/data/question1'),
             open_condition=FormActionCondition(type='always'),
-            case_properties={'name': '/data/question1'},
+            case_properties={'name': ConditionalCaseUpdate(question_path='/data/question1')},
             case_indices=[self.case_index],
         )
         self.form.actions.open_cases.append(self.subcase)
@@ -276,7 +276,11 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
     def test_advanced_xform_create_owner_id_explicitly_set(self):
         """When owner_id is explicitly set, don't autoset"""
         advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_properties': {'owner_id': 'owner'},
+            'case_properties': {"owner_id": {
+                                "doc_type": "ConditionalCaseUpdate",
+                                "question_path": "owner",
+                                "update_mode": "always"}
+                                },
             'case_indices': [
                 {
                     'tag': 'mother',
@@ -288,7 +292,11 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
         self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
 
         advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_properties': {'owner_id': 'owner'},
+            'case_properties': {"owner_id": {
+                                "doc_type": "ConditionalCaseUpdate",
+                                "question_path": "owner",
+                                "update_mode": "always"}
+                                },
             'case_indices': [
                 {
                     'tag': 'mother',
@@ -300,7 +308,11 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
         self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
 
         advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_properties': {'owner_id': 'owner'},
+            'case_properties': {"owner_id": {
+                                "doc_type": "ConditionalCaseUpdate",
+                                "question_path": "owner",
+                                "update_mode": "always"}
+                                },
         })
         self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
 
@@ -314,32 +326,67 @@ class OpenSubCaseActionTests(SimpleTestCase):
         """
         OpenSubCaseAction should allow relationship to be set
         """
-        action = OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        action = OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='extension',
+        )
         self.assertEqual(action.relationship, 'extension')
 
     def test_open_subcase_action_default_relationship(self):
         """
         OpenSubCaseAction relationship should default to "child"
         """
-        action = OpenSubCaseAction(case_type='mother', case_name='Eva')
+        action = OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+        )
         self.assertEqual(action.relationship, 'child')
 
     def test_open_subcase_action_valid_relationship(self):
         """
         OpenSubCaseAction relationship should only allow valid values
         """
-        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='child')
-        OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='extension')
+        OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='child',
+        )
+        OpenSubCaseAction(
+            case_type='mother',
+            name_update=ConditionalCaseUpdate(question_path='Eva'),
+            relationship='extension',
+        )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='parent')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='parent',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='host')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='host'
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='primary')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='primary',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='replica')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='replica',
+            )
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='cousin')
+            OpenSubCaseAction(
+                case_type='mother',
+                name_update=ConditionalCaseUpdate(question_path='Eva'),
+                relationship='cousin',
+            )
 
 
 class CaseIndexTests(SimpleTestCase):

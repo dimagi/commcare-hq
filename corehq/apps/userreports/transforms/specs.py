@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+import markdown
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -128,3 +131,17 @@ class MultipleValueStringTranslationTransform(TranslationTransform):
             return delimiter.join(translated_values_list)
 
         return transform_function
+
+
+class MarkdownTransform(Transform):
+    """Transform that lets you render markdown to HTML in a report."""
+    type = TypeProperty('markdown')
+
+    def get_transform_function(self):
+        def _markdown_text(value):
+            if isinstance(value, str):
+                escaped_value = conditional_escape(value)
+                return mark_safe(markdown.markdown(escaped_value))  # nosec: trust markdown after escaping value
+            return value
+
+        return _markdown_text

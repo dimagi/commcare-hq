@@ -19,13 +19,12 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
-from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
@@ -73,7 +72,6 @@ from corehq.apps.users.dbaccessors import (
     user_exists,
 )
 from corehq.apps.users.decorators import (
-    can_use_filtered_user_download,
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
     require_can_edit_web_users,
@@ -90,7 +88,11 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UserFilterForm,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeactivateMobileWorkerTrigger,
+)
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -120,6 +122,7 @@ from corehq import toggles
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.metrics import metrics_counter
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -154,7 +157,7 @@ def _can_edit_workers_location(web_user, mobile_worker):
 @location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
-    page_title = ugettext_noop("Edit Mobile Worker")
+    page_title = gettext_noop("Edit Mobile Worker")
 
     @property
     def page_name(self):
@@ -276,6 +279,7 @@ class EditCommCareUserView(BaseEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+            'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
             'can_create_groups': (
                 self.request.couch_user.has_permission(self.domain, 'edit_groups') and
                 self.request.couch_user.has_permission(self.domain, 'access_all_locations')
@@ -365,7 +369,7 @@ class EditCommCareUserView(BaseEditUserView):
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
     template_name = 'users/extra_users_confirm_billing.html'
-    page_title = ugettext_noop("Confirm Billing Information")
+    page_title = gettext_noop("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -529,7 +533,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
     template_name = 'users/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
-    page_title = ugettext_noop("Turn off Demo mode")
+    page_title = gettext_noop("Turn off Demo mode")
 
     @property
     def page_context(self):
@@ -548,7 +552,7 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
 
 class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
-    page_title = ugettext_noop('Demo User Status')
+    page_title = gettext_noop('Demo User Status')
 
     def dispatch(self, request, *args, **kwargs):
         return super(DemoRestoreStatusView, self).dispatch(request, *args, **kwargs)
@@ -633,7 +637,7 @@ def update_user_groups(request, domain, couch_user_id):
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
-    page_title = ugettext_noop("Mobile Workers")
+    page_title = gettext_noop("Mobile Workers")
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
@@ -672,10 +676,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
-        if can_use_filtered_user_download(self.domain):
-            bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
-        else:
-            bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
+
         profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
@@ -692,6 +694,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'bulk_download_url': bulk_download_url,
+            'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
         }
 
     @property
@@ -778,7 +781,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
         is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
-        return CommCareUser.create(
+        commcare_user = CommCareUser.create(
             self.domain,
             username,
             password,
@@ -792,6 +795,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
+
+        if self.new_mobile_worker_form.show_deactivate_after_date:
+            DeactivateMobileWorkerTrigger.update_trigger(
+                self.domain,
+                commcare_user.user_id,
+                self.new_mobile_worker_form.cleaned_data['deactivate_after_date']
+            )
+
+        return commcare_user
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
@@ -814,6 +826,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
@@ -1037,7 +1050,7 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
 class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
-    page_title = ugettext_noop("Bulk Upload Mobile Workers")
+    page_title = gettext_noop("Bulk Upload Mobile Workers")
     is_web_upload = False
 
     @method_decorator(require_can_edit_commcare_users)
@@ -1057,7 +1070,7 @@ class UploadCommCareUsers(BaseUploadUser):
 
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
-    page_title = ugettext_noop('Mobile Worker Upload Status')
+    page_title = gettext_noop('Mobile Worker Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
@@ -1088,6 +1101,7 @@ class CommcareUserUploadJobPollView(UserUploadJobPollView):
 
 
 @require_can_edit_or_view_commcare_users
+@location_safe
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
@@ -1097,9 +1111,10 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
     return render(request, template, context)
 
 
+@location_safe
 class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
-    page_title = ugettext_noop('Download Users Status')
+    page_title = gettext_noop('Download Users Status')
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -1131,7 +1146,6 @@ class DownloadUsersStatusView(BaseUserSettingsView):
 
 
 class FilteredUserDownload(BaseUserSettingsView):
-    page_title = ugettext_noop('Filter and Download Users')
 
     def get(self, request, domain, *args, **kwargs):
         form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=self.user_type)
@@ -1146,8 +1160,9 @@ class FilteredUserDownload(BaseUserSettingsView):
         )
 
 
-@method_decorator([require_can_use_filtered_user_download], name='dispatch')
+@location_safe
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
+    page_title = gettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
@@ -1159,6 +1174,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
+    page_title = gettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
@@ -1212,7 +1228,7 @@ class UsernameUploadMixin(object):
 
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
-    page_title = ugettext_noop('Bulk Delete')
+    page_title = gettext_noop('Bulk Delete')
     template_name = 'users/bulk_delete.html'
 
     @property
@@ -1285,7 +1301,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
-    page_title = ugettext_noop('Mobile Workers Bulk Lookup')
+    page_title = gettext_noop('Mobile Workers Bulk Lookup')
     template_name = 'users/bulk_lookup.html'
 
     @property
@@ -1328,7 +1344,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 
 
 @require_can_edit_commcare_users
-@require_can_use_filtered_user_download
+@location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
@@ -1350,6 +1366,7 @@ def _count_users(request, domain, user_type):
         count_invitations_by_filters,
     )
     form = UserFilterForm(request.GET, domain=domain, couch_user=request.couch_user, user_type=user_type)
+
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1370,6 +1387,7 @@ def _count_users(request, domain, user_type):
 
 
 @require_can_edit_or_view_commcare_users
+@location_safe
 def download_commcare_users(request, domain):
     return download_users(request, domain, user_type=MOBILE_USER_TYPE)
 

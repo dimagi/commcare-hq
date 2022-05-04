@@ -23,15 +23,14 @@ from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.getters import (
     safe_recursive_lookup,
-    transform_from_datatype,
+    transform_for_datatype,
 )
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
 from .utils import eval_statements
@@ -126,7 +125,7 @@ class PropertyNameGetterSpec(JsonObject):
 
     def __call__(self, item, context=None):
         raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
-        return transform_from_datatype(self.datatype)(raw_value)
+        return transform_for_datatype(self.datatype)(raw_value)
 
     def __str__(self):
         value = self.property_name
@@ -156,7 +155,7 @@ class PropertyPathGetterSpec(JsonObject):
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
-        transform = transform_from_datatype(self.datatype)
+        transform = transform_for_datatype(self.datatype)
         return transform(safe_recursive_lookup(item, self.property_path))
 
     def __str__(self):
@@ -498,8 +497,9 @@ class RelatedDocExpressionSpec(JsonObject):
 
     def configure(self, doc_id_expression, value_expression):
         non_couch_doc_types = {
+            CommCareCase.DOC_TYPE,
             LOCATION_DOC_TYPE,
-            XFormInstanceSQL.STATE_TO_DOC_TYPE[XFormInstanceSQL.NORMAL],
+            XFormInstance.STATE_TO_DOC_TYPE[XFormInstance.NORMAL],
         }
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):
@@ -699,7 +699,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             untransformed_value = eval_statements(self.statement, var_dict)
-            return transform_from_datatype(self.datatype)(untransformed_value)
+            return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
@@ -793,7 +793,7 @@ class SubcasesExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('case_id',))
     def _get_subcases(self, case_id, context):
         domain = context.root_doc['domain']
-        return [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
+        return [c.to_json() for c in CommCareCase.objects.get_reverse_indexed_cases(domain, [case_id])]
 
     def __str__(self):
         return "get subcases for {}".format(str(self._case_id_expression))
@@ -937,7 +937,7 @@ class SplitStringExpressionSpec(JsonObject):
 class CoalesceExpressionSpec(JsonObject):
     """
     This expression returns the value of the expression provided, or the
-    value of the default_expression if the expression provided evalutes to a
+    value of the default_expression if the expression provided evaluates to a
     null or blank string.
 
     .. code:: json

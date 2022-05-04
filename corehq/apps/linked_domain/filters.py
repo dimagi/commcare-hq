@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS, SUPERUSER_DATA_MODELS
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
@@ -7,7 +7,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 class DomainLinkFilter(BaseSingleOptionFilter):
     slug = 'domain_link'
-    label = ugettext_lazy('Project Space Link')
+    label = gettext_lazy('Project Space Link')
     default_text = None
 
     @property
@@ -21,8 +21,8 @@ class DomainLinkFilter(BaseSingleOptionFilter):
 
 class DomainLinkModelFilter(BaseSingleOptionFilter):
     slug = 'domain_link_model'
-    label = ugettext_lazy('Content')
-    default_text = ugettext_lazy("All")
+    label = gettext_lazy('Content')
+    default_text = gettext_lazy("All")
 
     @property
     def options(self):

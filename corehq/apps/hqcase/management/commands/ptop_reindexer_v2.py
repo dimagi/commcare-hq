@@ -5,10 +5,7 @@ from corehq.pillows.app_submission_tracker import (
     UserAppFormSubmissionReindexerFactory,
 )
 from corehq.pillows.application import AppReindexerFactory
-from corehq.pillows.case import (
-    CouchCaseReindexerFactory,
-    SqlCaseReindexerFactory,
-)
+from corehq.pillows.case import SqlCaseReindexerFactory
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
@@ -37,7 +34,6 @@ FACTORIES = [
     UserReindexerFactory,
     GroupReindexerFactory,
     GroupToUserReindexerFactory,
-    CouchCaseReindexerFactory,
     SqlCaseReindexerFactory,
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
@@ -132,6 +128,7 @@ class Command(SubCommand):
             'traceback',
             'no_color',
             'force_color',
+            'skip_checks'
         ]:
             options.pop(option, None)
 

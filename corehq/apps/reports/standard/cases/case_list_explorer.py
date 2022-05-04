@@ -1,5 +1,5 @@
 from django.utils.html import escape
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -8,7 +8,7 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
 )
-from corehq.apps.case_search.filter_dsl import CaseFilterError
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader

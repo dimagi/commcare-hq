@@ -3,7 +3,6 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
 
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
@@ -53,7 +52,7 @@ class BulkTest(SimpleTestCase):
 
 
 @sharded
-@es_test
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -62,7 +61,7 @@ class TestBulkDocOperations(TestCase):
         cls.case_ids = [
             uuid.uuid4().hex for i in range(4)
         ]
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             for case_id in cls.case_ids:
                 create_form_for_test(cls.domain, case_id)
 
@@ -142,7 +141,9 @@ class TestBulkDocOperations(TestCase):
         )
 
 
+@es_test(index=TEST_INDEX_INFO)
 class TestBulkOperationsCaseToSQL(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -159,7 +160,7 @@ class TestBulkOperationsCaseToSQL(TestCase):
         cls.case_ids = [
             uuid.uuid4().hex for i in range(4)
         ]
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             for case_id in cls.case_ids:
                 create_and_save_a_case(cls.domain, case_id, case_id)
 

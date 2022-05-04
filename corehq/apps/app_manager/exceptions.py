@@ -186,3 +186,7 @@ class BuildConflictException(Exception):
 class AppValidationError(AppManagerException):
     def __init__(self, errors):
         self.errors = errors
+
+
+class DangerousXmlException(Exception):
+    pass

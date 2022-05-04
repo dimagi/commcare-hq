@@ -1,10 +1,11 @@
 import json
-from copy import deepcopy
 
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
@@ -13,6 +14,7 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -33,6 +35,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
+from ..resources.v0_5 import CommCareUserResource
 from .utils import APIResourceTest
 
 
@@ -246,21 +249,19 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
-    def test_update_profile_conflict(self):
+    def test_update_fails(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        group = Group({"name": "test"})
+        group.save()
+
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(group.delete)
 
         user_json = {
-            "first_name": "florence",
-            "last_name": "ballard",
-            "email": "fballard@example.org",
-            "language": "en",
-            "user_data": {
-                PROFILE_SLUG: self.profile.id,
-                "imaginary": "no",
-            }
+            "username": "updated-username",
+            "default_phone_number": 1234567890
         }
 
         backend_id = user._id
@@ -271,7 +272,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "metadata properties conflict with profile: imaginary"}'
+            "{\"error\": \"The request resulted in the following errors: Attempted to update unknown or "
+            "non-editable field 'username', default_phone_number must be a string\"}"
         )
 
 
@@ -511,3 +513,79 @@ class TestIdentityResource(APIResourceTest):
         self.assertEqual(data['first_name'], self.user.first_name)
         self.assertEqual(data['last_name'], self.user.last_name)
         self.assertEqual(data['email'], self.user.email)
+
+
+class TestCommCareUserResourceUpdate(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='conflicting_field',
+                label='Conflicting Field',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'conflicting_field': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    def test_update_unknown_fields_returns_error(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"id": 'updated-id'}
+
+        errors = CommCareUserResource._update(bundle)
+        self.assertIn("Attempted to update unknown or non-editable field 'id'", errors)
+
+    def test_update_password_with_weak_passwords_returns_error_if_strong_option_on(self):
+        self.domain_obj.strong_mobile_passwords = True
+        self.domain_obj.save()
+
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"password": 'abc123'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        expected_error_message = 'Password is not strong enough. Try making your password more complex.'
+        self.assertIn(expected_error_message, errors)
+
+    def test_update_default_phone_number_returns_error_if_invalid_format(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"default_phone_number": ["50253311399"]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('default_phone_number must be a string', errors)
+
+    def test_update_user_data_returns_error_if_profile_conflict(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {
+            'user_data': {
+                PROFILE_SLUG: self.profile.id,
+                'conflicting_field': 'no'}
+        }
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('metadata properties conflict with profile: conflicting_field', errors)

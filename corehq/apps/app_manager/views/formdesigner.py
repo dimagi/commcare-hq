@@ -3,13 +3,11 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
-
-from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
 
@@ -36,12 +34,13 @@ from corehq.apps.app_manager.exceptions import (
     AppManagerException,
     FormNotFoundException,
 )
-from corehq.apps.app_manager.models import Form, ModuleNotFoundException
+from corehq.apps.app_manager.models import ModuleNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     is_linked_app,
     is_usercase_in_use,
+    module_loads_registry_case,
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
@@ -190,7 +189,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
-        if form.requires_case() and form.get_module().search_config.data_registry:
+        if form.requires_case() and module_loads_registry_case(form.get_module()):
             data.append(get_registry_schema(form))
     except AppManagerException as e:
         notify_exception(request, message=str(e))
@@ -297,8 +296,8 @@ def _get_vellum_plugins(domain, form, module):
         vellum_plugins.append("saveToCase")
 
     form_uses_case = (
-        (module and module.case_type and form.requires_case()) or
-        is_usercase_in_use(domain)
+        (module and module.case_type and form.requires_case())
+        or is_usercase_in_use(domain)
     )
     form_is_basic = form.doc_type == 'Form'
     if form_uses_case and form_is_basic:
@@ -363,8 +362,8 @@ def _get_core_context_scheduler_data_nodes(module, form):
     Returns a list of enabled scheduler data nodes.
     """
     has_schedule = (
-        getattr(module, 'has_schedule', False) and
-        getattr(form, 'schedule', False) and form.schedule.enabled
+        getattr(module, 'has_schedule', False)
+        and getattr(form, 'schedule', False) and form.schedule.enabled
     )
     scheduler_data_nodes = []
     if has_schedule:

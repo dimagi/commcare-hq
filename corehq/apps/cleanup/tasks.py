@@ -12,7 +12,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import XFormInstance, CommCareCase
 from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
@@ -30,7 +30,7 @@ def check_for_sql_cases_without_existing_domain():
     for domain in _get_missing_domains():
         case_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
-            case_count += CommCareCaseSQL.objects.using(db_name).filter(domain=domain).count()
+            case_count += CommCareCase.objects.using(db_name).filter(domain=domain).count()
         if case_count:
             case_count_by_missing_domain[domain] = case_count
 
@@ -51,7 +51,7 @@ def check_for_sql_forms_without_existing_domain():
     for domain in _get_missing_domains():
         form_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
-            form_count += XFormInstanceSQL.objects.using(db_name).filter(domain=domain).count()
+            form_count += XFormInstance.objects.using(db_name).filter(domain=domain).count()
         if form_count:
             form_count_by_missing_domain[domain] = form_count
 

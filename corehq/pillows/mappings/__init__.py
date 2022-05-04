@@ -1,14 +1,24 @@
-#Static Definitions of ES mappings.
-#In practice the base ES mapping definition for our core type should not change much and shouldn't surprise us if we made subtle changes to it.
-#as such, any changes must be done and committed to source control.
-#to regenerate case mappings, call the management command ptop_generate_mapping casexml.apps.case.models.CommCareCase
-#it'll dump out a json string which you set to here.
 
+from .app_mapping import APP_INDEX_INFO
+from .case_mapping import CASE_INDEX_INFO
+from .case_search_mapping import CASE_SEARCH_INDEX_INFO
+from .domain_mapping import DOMAIN_INDEX_INFO
+from .group_mapping import GROUP_INDEX_INFO
+from .reportcase_mapping import REPORT_CASE_INDEX_INFO
+from .reportxform_mapping import REPORT_XFORM_INDEX_INFO
+from .sms_mapping import SMS_INDEX_INFO
+from .user_mapping import USER_INDEX_INFO
+from .xform_mapping import XFORM_INDEX_INFO
 
-#staging
-#CASE_INDEX = "hqcases_58bb9e522b9b6513e64cc6e69556c37b"
-#prod
-#CASE_INDEX = "hqcases_3f765bd72c844d353619408862556ebd"
-
-
-NULL_VALUE = "__NULL__"
+CANONICAL_NAME_INFO_MAP = {
+    "forms": XFORM_INDEX_INFO,
+    "cases": CASE_INDEX_INFO,
+    "users": USER_INDEX_INFO,
+    "domains": DOMAIN_INDEX_INFO,
+    "apps": APP_INDEX_INFO,
+    "groups": GROUP_INDEX_INFO,
+    "sms": SMS_INDEX_INFO,
+    "report_cases": REPORT_CASE_INDEX_INFO,
+    "report_xforms": REPORT_XFORM_INDEX_INFO,
+    "case_search": CASE_SEARCH_INDEX_INFO,
+}

@@ -1,4 +1,4 @@
-from six.moves.urllib.error import URLError
+from urllib.error import URLError
 
 
 class Format(object):
@@ -14,7 +14,6 @@ class Format(object):
     JSON = "json"
     PYTHON_DICT = "dict"
     UNZIPPED_CSV = 'unzipped-csv'
-    CDISC_ODM = 'cdisc-odm'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
@@ -42,12 +41,7 @@ class Format(object):
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
-                                  "download": True},
-                   CDISC_ODM: {'mimetype': 'application/cdisc-odm+xml',
-                               'extension': 'xml',
-                               'download': True},
-
-    }
+                                  "download": True}}
 
     VALID_FORMATS = list(FORMAT_DICT)
 
@@ -63,3 +57,18 @@ class Format(object):
         if format not in cls.VALID_FORMATS:
             raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
+
+
+class IntegrationFormat(object):
+    LIVE_GOOGLE_SHEETS = "live_google_sheets"
+
+    VALID_FORMATS = [
+        LIVE_GOOGLE_SHEETS,
+    ]
+
+    @classmethod
+    def is_integration_format(cls, format):
+        format = format.lower()
+        if format in cls.VALID_FORMATS:
+            return True
+        return False

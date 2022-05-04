@@ -367,6 +367,8 @@ class Enum(FormattedDetailColumn):
     def _make_xpath(self, type):
         return sx.XPathEnum.build(
             enum=self.column.enum,
+            format=self.column.format,
+            type=type,
             template=self._xpath_template(type),
             get_template_context=self._xpath_template_context(type),
             get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
@@ -374,9 +376,9 @@ class Enum(FormattedDetailColumn):
 
     def _xpath_template(self, type):
         if type == 'sort':
-            return "if({xpath} = '{key}', {i}, "
+            return "if(selected({xpath}, '{key}'), {i}, "
         if type == 'display':
-            return "if({xpath} = '{key}', ${key_as_var}, "
+            return "if(selected({xpath}, '{key}'), ${key_as_var}, ''), "
         raise ValueError('type must be in sort, display')
 
     def _xpath_template_context(self, type):
@@ -592,9 +594,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
 
         if indexes and indexes[0] == 'user':
             case = CaseXPath(UsercaseXPath().case())
-        else:
+        elif indexes:
+            instance_name = self.detail.get_instance_name(self.module)
             for index in indexes:
-                case = case.index_id(index).case(instance_name=self.detail.instance_name)
+                case = case.index_id(index).case(instance_name=instance_name)
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))

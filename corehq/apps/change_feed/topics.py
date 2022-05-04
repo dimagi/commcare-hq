@@ -3,7 +3,7 @@ from kafka.common import OffsetRequestPayload
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 
 DOMAIN = 'domain'
 META = 'meta'
@@ -44,7 +44,7 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
 
     if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL
-    elif doc_type in XFormInstanceSQL.ALL_DOC_TYPES:
+    elif doc_type in XFormInstance.ALL_DOC_TYPES:
         return FORM_SQL
     elif doc_type in document_types.DOMAIN_DOC_TYPES:
         return DOMAIN

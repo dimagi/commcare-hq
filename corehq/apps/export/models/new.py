@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from django.utils.datastructures import OrderedSet
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import (
     BooleanProperty,
@@ -108,6 +108,8 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.html_utils import strip_tags
+
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -225,7 +227,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     def create_from_question(cls, question, app_id, app_version, repeats):
         return cls(
             path=_question_path_to_path_nodes(question['value'], repeats),
-            label=question['label'],
+            label=strip_tags(question['label']),
             last_occurrences={app_id: app_version},
             datatype=get_form_indicator_data_type(question['type'])
         )

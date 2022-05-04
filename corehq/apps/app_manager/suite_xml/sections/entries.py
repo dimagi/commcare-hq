@@ -1,8 +1,8 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -17,9 +17,13 @@ from corehq.apps.app_manager.suite_xml.contributors import (
 from corehq.apps.app_manager.suite_xml.utils import (
     get_form_locale_id,
     get_select_chain_meta,
+    get_ordered_case_types,
 )
 from corehq.apps.app_manager.suite_xml.xml_models import *
-from corehq.apps.app_manager.util import actions_use_usercase, module_offers_registry_search
+from corehq.apps.app_manager.util import (
+    actions_use_usercase,
+    module_loads_registry_case,
+)
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
     autoset_owner_id_for_open_case,
@@ -34,6 +38,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     session_var,
 )
+from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -63,9 +68,11 @@ class FormDatumMeta:
     def __repr__(self):
         if isinstance(self.datum, RemoteRequestQuery):
             datum = f"<RemoteRequestQuery(id={self.datum.url})>"
+        elif isinstance(self.datum, InstanceDatum):
+            datum = f"<InstanceDatum(id={self.datum.id})>"
         else:
             datum = f"<SessionDatum(id={self.datum.id})>"
-        return 'FormDataumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
+        return 'FormDatumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
             datum, self.case_type, self.requires_selection, self.action
         )
 
@@ -122,13 +129,10 @@ class EntriesHelper(object):
 
     @staticmethod
     def _get_nodeset_xpath(instance_name, root_element, case_type, filter_xpath='', additional_types=None):
-        if additional_types:
-            case_type_filter = " or ".join([
-                "@case_type='{case_type}'".format(case_type=case_type)
-                for case_type in set(additional_types).union({case_type})
-            ])
-        else:
-            case_type_filter = "@case_type='{case_type}'".format(case_type=case_type)
+        case_type_filter = " or ".join([
+            "@case_type='{case_type}'".format(case_type=case_type)
+            for case_type in get_ordered_case_types(case_type, additional_types)
+        ])
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
@@ -212,9 +216,6 @@ class EntriesHelper(object):
 
             EntriesHelper.add_custom_assertions(e, form)
 
-            if module_offers_registry_search(module):
-                EntriesHelper.add_registry_search_instances(e, form)
-
             if (
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
@@ -256,7 +257,8 @@ class EntriesHelper(object):
                 detail_confirm = None
                 if not detail_inline:
                     detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
-                e.datums.append(SessionDatum(
+                datum_cls = InstanceDatum if module.is_multi_select() else SessionDatum
+                e.datums.append(datum_cls(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
@@ -313,12 +315,6 @@ class EntriesHelper(object):
         ]
 
     @staticmethod
-    def add_registry_search_instances(entry, form):
-        for prop in form.get_module().search_config.properties:
-            if prop.itemset.instance_id:
-                entry.instances.append(Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri))
-
-    @staticmethod
     def add_custom_assertions(entry, form):
         for id, assertion in enumerate(form.custom_assertions):
             locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
@@ -368,7 +364,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm._create_casexml_2
+                    # see XForm._create_casexml
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(
@@ -429,7 +425,7 @@ class EntriesHelper(object):
         for datum in datums:
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                if module_offers_registry_search(module):
+                if module_loads_registry_case(module):
                     result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
                     result.append(self.get_data_registry_case_datums(datum, module))
@@ -500,18 +496,20 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_offers_registry_search(detail_module):
+            if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
+                filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
                 instance_name, root_element,
                 datum['case_type'],
                 filter_xpath=filter_xpath,
-                additional_types=datum['module'].search_config.additional_case_types
+                additional_types=datum['module'].additional_case_types
             )
 
+            datum_cls = InstanceDatum if datum['module'].is_multi_select() else SessionDatum
             datums.append(FormDatumMeta(
-                datum=SessionDatum(
+                datum=datum_cls(
                     id=datum['session_var'],
                     nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",
@@ -538,7 +536,7 @@ class EntriesHelper(object):
         details screen. The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-        factory = RemoteRequestFactory(module, [])
+        factory = RemoteRequestFactory(None, module, [])
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
@@ -549,14 +547,13 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        case_types = set(module.search_config.additional_case_types) | {datum.case_type}
         case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
         data.extend([
             QueryData(key='case_type', ref=f"'{case_type}'")
-            for case_type in sorted(case_types)
+            for case_type in get_ordered_case_types(datum.case_type, module.additional_case_types)
         ])
         data.extend([
             QueryData(key='case_id', ref=case_id_xpath)
@@ -811,6 +808,11 @@ class EntriesHelper(object):
                     requires_selection=True,
                     action=action
                 ))
+
+        for datum in form.arbitrary_datums:
+            datums.append(FormDatumMeta(
+                SessionDatum(id=datum['datum_id'], function=datum['datum_function']), None, False, None)
+            )
 
         if module.get_app().commtrack_enabled:
             try:

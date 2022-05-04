@@ -1,8 +1,6 @@
-import logging
+from django.conf.urls import include, re_path as url
 
-from django.conf.urls import include, url
-from django.core.exceptions import ImproperlyConfigured
-
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.reports.standard.tableau import TableauView
 from corehq.apps.userreports.reports.view import (
@@ -25,7 +23,6 @@ from .dispatcher import (
     UserManagementReportDispatcher,
 )
 from .filters import urls as filter_urls
-from .util import get_installed_custom_modules
 from .views import (
     AddSavedReportConfigView,
     CaseAttachmentsView,
@@ -58,6 +55,7 @@ from .views import (
     send_test_scheduled_report,
     unarchive_form,
     undo_close_case_view,
+    view_form_attachment,
     view_scheduled_report,
 )
 
@@ -120,6 +118,8 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment,
+        name='form_attachment_view'),
 
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
@@ -164,11 +164,6 @@ urlpatterns = [
     url(r'^release_management/', include(release_management_urls)),
 ]
 
-for module in get_installed_custom_modules():
-    module_name = module.__name__.split('.')[-1]
-    try:
-        custom_report_urls += [
-             url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
-        ]
-    except ImproperlyConfigured:
-        logging.info("Module %s does not provide urls" % module_name)
+# Exporting Case List Explorer reports with the word " on*" at the end of the search query
+# get filtered by the WAF
+waf_allow("XSS_BODY", hard_code_pattern=r'^/a/([\w\.:-]+)/reports/export/(case_list_explorer|duplicate_cases)/$')

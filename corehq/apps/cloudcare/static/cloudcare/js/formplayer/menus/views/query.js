@@ -4,6 +4,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var separator = " to ",
         dateFormat = "YYYY-MM-DD";
@@ -51,6 +52,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
         geocoderItemCallback = function (addressTopic, model) {
             return function (item) {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
                 var broadcastObj = Utils.getBroadcastObject(item);
@@ -60,6 +62,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
         geocoderOnClearCallback = function (addressTopic) {
             return function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 $.publish(addressTopic, Const.NO_ANSWER);
             };
         },
@@ -119,7 +122,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var id = model.get('id'),
                 inputId = id + "_mapbox",
                 $field = $("#" + inputId);
-
+            $(function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Seen in Case Search");
+            });
             if ($field.find('.mapboxgl-ctrl-geocoder--input').length === 0) {
                 if (!initialPageData.get("has_geocoder_privs")) {
                     $("#" + inputId).addClass('unsupported alert alert-warning');
@@ -233,9 +238,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 locale: {
                     format: dateFormat,
                     separator: separator,
-                    cancelLabel: gettext('Clear'),
                 },
                 autoUpdateInput: false,
+                "autoApply": true,
             });
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');

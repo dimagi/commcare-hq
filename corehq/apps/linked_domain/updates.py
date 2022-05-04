@@ -2,10 +2,8 @@ from copy import copy
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.db import transaction
-
-from toggle.shortcuts import set_toggle
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
@@ -109,6 +107,7 @@ from corehq.apps.userreports.util import (
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles.shortcuts import set_toggle
 
 
 def update_model_type(domain_link, model_type, model_detail=None):

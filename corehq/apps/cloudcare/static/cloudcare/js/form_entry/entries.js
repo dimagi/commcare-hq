@@ -1,5 +1,6 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -36,6 +37,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         }
     }
     Entry.prototype.onAnswerChange = function () {};
+
+    // Allows multiple input entries on the same row for Combined Multiple Choice and Combined
+    // Checkbox questions in a Question List Group.
+    Entry.prototype.getColStyle = function (numChoices) {
+        var colWidth = parseInt(12 / (numChoices + 1)) || 1;
+        return 'col-xs-' + colWidth;
+    };
 
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
     // function performs any sort of processing that needs to be done before setting the answer.
@@ -237,7 +245,16 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'address';
         self.broadcastTopics = [];
         self.editing = true;
-
+        let isRequired = self.question.required() ? "Yes" : "No";
+        $(function () {
+            let entry = $(`#${self.entryId}`);
+            entry.on("change", function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+            });
+        });
+        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+            "Required": isRequired,
+        });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
         // subscribers.
         self.geocoderItemCallback = function (item) {
@@ -388,6 +405,29 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'select';
         self.choices = question.choices;
         self.isMulti = true;
+        self.hideLabel = options.hideLabel;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (answer === Const.NO_ANSWER) {
+                    return [];
+                }
+
+                let choices = this.choices();
+                return answer.map(index => choices[index - 1]);
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                // answer is based on a 1 indexed index of the choices
+                let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
+                self.onPreProcess.call(this, answer);
+            },
+        });
+
+        self.colStyleIfHideLabel = ko.computed(function () {
+            return self.hideLabel ? self.getColStyle(self.choices().length) : null;
+        });
 
         self.onClear = function () {
             self.rawAnswer([]);
@@ -413,15 +453,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return "";
         };
 
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    id: idx + 1,
-                };
-            });
-        });
-
         self.afterRender = function () {
             select2ify(self, {});
         };
@@ -439,26 +470,33 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'select';
         self.isMulti = false;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (!answer) {
+                    return Const.NO_ANSWER;
+                }
+
+                let choices = this.choices();
+                return choices[answer - 1];
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.indexOf(choices, value);
+                // answer is based on a 1 indexed index of the choices
+                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
+            },
+        });
+
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
-        };
-        self.isValid = function () {
-            return true;
         };
 
         self.enableReceiver(question, options);
     }
     SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-    SingleSelectEntry.prototype.onPreProcess = function (newValue) {
-        if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
-                this.answer(newValue);
-            } else {
-                this.answer(+newValue);
-            }
-        }
-    };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         // Iterate through choices and select the one that matches the message[field]
         var self = this;
@@ -476,7 +514,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     /**
-     * Represents the label part of a Combined Multiple Choice question in a Question List
+     * This is used for the labels and inputs in a Combined Multiple Choice question in a Question
+     * List Group. It is also used for labels in a Combined Checkbox question.
      */
     function ChoiceLabelEntry(question, options) {
         var self = this;
@@ -484,12 +523,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'choice-label';
 
-        self.hideLabel = ko.observable(options.hideLabel);
+        self.hideLabel = options.hideLabel;
 
         self.colStyle = ko.computed(function () {
-            // Account for number of choices plus column for clear button
-            var colWidth = parseInt(12 / (self.choices().length + 1)) || 1;
-            return 'col-xs-' + colWidth;
+            return self.getColStyle(self.choices().length);
         });
 
         self.onClear = function () {
@@ -598,24 +635,45 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         query = query.toLowerCase();
         var haystack = option.text.toLowerCase();
 
-        var match;
+        var match,
+            wordsInQuery = query.split(/\s+/),
+            wordsInChoice = haystack.split(/\s+/);
         if (matchType === Const.COMBOBOX_MULTIWORD) {
             // Multiword filter, matches any choice that contains all of the words in the query
             //
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
-            var wordsInQuery = query.split(' ');
-            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
             });
         } else if (matchType === Const.COMBOBOX_FUZZY) {
+            var isFuzzyMatch = function (haystack, query, distanceThreshold) {
+                return (
+                    haystack === query ||
+                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
+                );
+            };
+
+            // First handle prefixes, which will fail fuzzy match if they're too short
+            var distanceThreshold = 2;
+            if (haystack.length > query.length + distanceThreshold) {
+                haystack = haystack.substring(0, query.length + distanceThreshold);
+            }
+
             // Fuzzy filter, matches if query is "close" to answer
-            match = (
-                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
-                haystack === query
-            );
+            match = isFuzzyMatch(haystack, query, distanceThreshold);
+
+            // For multiword strings, return true if any word in the query fuzzy matches any word in the target
+            if (!match) {
+                if (wordsInChoice.length > 1 || wordsInQuery.length > 1) {
+                    _.each(wordsInChoice, function (choiceWord) {
+                        _.each(wordsInQuery, function (queryWord) {
+                            match = match || isFuzzyMatch(choiceWord, queryWord, distanceThreshold);
+                        });
+                    });
+                }
+            }
         }
 
         // If we've already matched, return true
@@ -890,7 +948,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.loadMap = function () {
             var token = initialPageData.get("mapbox_access_token");
             if (token) {
-                self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+                // if a default answer exists, use that instead
+                let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
+                let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
+                let zoom = self.rawAnswer().length ? self.DEFAULT.anszoom : self.DEFAULT.zoom;
+
+                self.map = L.map(self.entryId).setView([lat, lon], zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                             + token, {
                     id: 'mapbox/streets-v11',
@@ -1051,6 +1114,18 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+
+                    }
                 } else {
                     entry = new SingleSelectEntry(question, {
                         receiveStyle: receiveStyle,
@@ -1059,8 +1134,32 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.MULTI_SELECT:
                 isMinimal = style === Const.MINIMAL;
+                if (style) {
+                    isLabel = style === Const.LABEL;
+                    hideLabel = style === Const.LIST_NOLABEL;
+                }
+
                 if (isMinimal) {
                     entry = new MultiDropdownEntry(question, {});
+                } else if (isLabel) {
+                    entry = new ChoiceLabelEntry(question, {
+                        hideLabel: false,
+                    });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+                    }
+                } else if (hideLabel) {
+                    entry = new MultiSelectEntry(question, {
+                        hideLabel: true,
+                    });
                 } else {
                     entry = new MultiSelectEntry(question, {});
                 }

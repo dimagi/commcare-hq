@@ -3,7 +3,7 @@ from memoized import memoized
 import re
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from sqlalchemy import or_
 from sqlalchemy.exc import ProgrammingError
@@ -12,6 +12,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registry.exceptions import RegistryNotFound
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, NONE_CHOICE
@@ -25,6 +26,7 @@ DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
 USER = 'user'
 OWNER = 'owner'
+COMMCARE_PROJECT = 'commcare_project'
 
 assert_user_passed_in = soft_assert(to="@".join(["esoergel", "dimagi.com"]), fail_if_debug=True)
 
@@ -125,7 +127,7 @@ class StaticChoiceProvider(ChoiceProvider):
         default = self.default_value(query_context.user)
         if not default:
             default = SearchableChoice(SHOW_ALL_CHOICE,
-                                       "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All')))
+                                       "[{}]".format(gettext('Show All')), "[{}]".format(gettext('Show All')))
         filtered_set = [choice for choice in self.choices
                        if choice == default or any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
@@ -161,7 +163,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         try:
             default = self.default_value(query_context.user)
             if not default:
-                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
             choices = [
                 self._make_choice_from_value(value)
                 for value in self.get_values_for_query(query_context)
@@ -325,7 +327,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
             return self._locations_to_choices([location])
 
         # If the user isn't assigned to a location, they have access to all locations
-        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
 
     def _locations_to_choices(self, locations):
         cached_path_display = {}
@@ -401,28 +403,31 @@ class GroupChoiceProvider(ChainableChoiceProvider):
 class DomainChoiceProvider(ChainableChoiceProvider):
 
     @memoized
-    def _query_domains(self, domain, query_text):
+    def _query_domains(self, domain, query_text, user):
         domains = {domain}
+        if user is None or not RegistryPermissionCheck(domain, user).can_view_registry_data(
+                self.report.registry_helper.registry_slug):
+            return list(domains)
         try:
             domains.update(self.report.registry_helper.visible_domains)
         except RegistryNotFound:
-            return domains
+            return list(domains)
         if query_text:
             domains = {domain for domain in domains if re.search(query_text, domain)}
         return list(domains)
 
     def query(self, query_context):
-        domains = self._query_domains(self.domain, query_context.query)
+        domains = self._query_domains(self.domain, query_context.query, query_context.user)
         domains.sort()
         return self._domains_to_choices(
             domains[query_context.offset:query_context.offset + query_context.limit]
         )
 
-    def query_count(self, query):
-        return len(self._query_domains(self.domain, query))
+    def query_count(self, query, user=None):
+        return len(self._query_domains(self.domain, query, user))
 
     def get_choices_for_known_values(self, values, user):
-        domains = self._query_domains(self.domain, None)
+        domains = self._query_domains(self.domain, None, user)
         domain_options = [domain for domain in domains if domain in values]
         return self._domains_to_choices(domain_options)
 
@@ -475,7 +480,7 @@ class AbstractMultiProvider(ChoiceProvider):
 
         if choices[0] is None:
             if not default:
-                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(gettext('Show All')))]
             choices[0] = default[0]
 
         return choices

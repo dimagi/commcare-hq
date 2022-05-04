@@ -18,7 +18,6 @@ def get_writer(format, use_formatted_cells=False):
             Format.JSON: writers.JsonExportWriter,
             Format.XLS: writers.Excel2003ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
-            Format.CDISC_ODM: writers.CdiscOdmExportWriter,
             Format.PYTHON_DICT: writers.PythonDictWriter,
         }[format]()
     except KeyError:

@@ -23,6 +23,7 @@ NOSE_ARGS = [
 ]
 NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
+    'corehq.tests.noseplugins.classcleanup.ClassCleanupPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
@@ -106,7 +107,8 @@ LOGGING = {
     'loggers': {},
 }
 
-helper.assign_test_db_names(DATABASES)
+helper.assign_test_db_names(DATABASES)  # noqa: F405
+helper.update_redis_location_for_tests(CACHES)  # noqa: F405
 
 # See comment under settings.SMS_QUEUE_ENABLED
 SMS_QUEUE_ENABLED = False

@@ -1,4 +1,4 @@
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             print("")
             print("Creating tasks for cases in %s ..." % db_alias)
             case_ids = list(
-                CommCareCaseSQL
+                CommCareCase
                 .objects
                 .using(db_alias)
                 .filter(domain=domain, type=case_type, deleted=False)

@@ -10,8 +10,9 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.auth import AuthContext
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCase
 
 
 def close_cases(case_ids, domain, user, device_id, case_db=None):
@@ -32,7 +33,7 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         user_id = user
         username = user
 
-    case_blocks = [ElementTree.tostring(CaseBlock.deprecated_init(
+    case_blocks = [ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
         close=True,
@@ -100,11 +101,11 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
     """
     claim_id = uuid4().hex
     if not (host_type and host_name):
-        case = CaseAccessors(domain).get_case(host_id)
+        case = CommCareCase.objects.get_case(host_id, domain)
         host_type = case.type
         host_name = case.name
     identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    claim_case_block = CaseBlock.deprecated_init(
+    claim_case_block = CaseBlock(
         create=True,
         case_id=claim_id,
         case_name=host_name,
@@ -136,14 +137,20 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
     return claim_id
 
 
-def get_first_claim(domain, user_id, case_id):
+def get_first_claims(domain, user_id, case_ids):
     """
-    Returns the first claim by user_id of case_id, or None
+    Returns the first claim by user_id of case_ids, or None
     """
-    case = CaseAccessors(domain).get_case(case_id)
-    identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    try:
-        return next((c for c in case.get_subcases(identifier)
-                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id and c.closed is False))
-    except StopIteration:
-        return None
+    case_ids_found = CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
+    cases_not_found = [case for case in case_ids if case not in case_ids_found]
+
+    if len(cases_not_found) != 0:
+        raise CaseNotFound(", ".join(cases_not_found))
+
+    potential_cases = CommCareCase.objects.get_reverse_indexed_cases(
+        domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
+    # creates set of claimed case_ids where owner_id = user_id
+    previously_claimed_ids = {case.get_index('host').referenced_id for case in potential_cases
+        if case.owner_id == user_id}
+
+    return previously_claimed_ids

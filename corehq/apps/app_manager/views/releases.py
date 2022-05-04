@@ -11,8 +11,8 @@ from django.http.response import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
@@ -40,6 +40,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_version,
     get_latest_released_app_version,
     get_latest_released_app_versions_by_app_id,
+    get_latest_released_build_id,
 )
 from corehq.apps.app_manager.decorators import (
     avoid_parallel_build_request,
@@ -88,6 +89,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -266,6 +268,7 @@ def release_build(request, domain, app_id, saved_app_id):
     saved_app.is_auto_generated = False
     saved_app.save(increment_version=False)
     get_latest_released_app_versions_by_app_id.clear(domain)
+    get_latest_released_build_id.clear(domain, app_id)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
 
@@ -289,7 +292,7 @@ def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
     """
-    track_built_app_on_hubspot.delay(request.couch_user)
+    track_built_app_on_hubspot.delay(request.couch_user.get_id)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -306,6 +309,7 @@ def save_copy(request, domain, app_id):
                 'build_errors': e.errors,
                 'domain': domain,
                 'langs': langs,
+                'toggles': toggles_enabled_for_request(request),
             }),
         })
     except BuildConflictException:
@@ -525,7 +529,7 @@ def _get_app_diffs(first_app, second_app):
 
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
-    page_title = ugettext_lazy("App diff")
+    page_title = gettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
     def dispatch(self, request, *args, **kwargs):
