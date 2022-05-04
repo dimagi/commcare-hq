@@ -10,7 +10,6 @@ from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
 from django.core import mail
 from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
-from django.utils.safestring import mark_safe
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
 from corehq.util.view_utils import get_request
