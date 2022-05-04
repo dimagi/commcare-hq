@@ -163,7 +163,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
         self.all_attrs = ['columns', 'filter', 'sort_elements', 'custom_variables', 'custom_xml',
-                          'case_tile_configuration', 'print_template']
+                          'case_tile_configuration', 'multi_select', 'print_template']
         self.cols_and_filter = ['columns', 'filter']
         self.case_tile = ['case_tile_configuration']
 
@@ -175,6 +175,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.filter_ = setattr(self.src_detail, 'filter', 'a > b')
         self.custom_variables = setattr(self.src_detail, 'custom_variables', 'def')
         self.custom_xml = setattr(self.src_detail, 'custom_xml', 'ghi')
+        self.multi_select = getattr(self.src_detail, 'multi_select')
         self.print_template = getattr(self.src_detail, 'print_template')
         self.print_template['name'] = 'test'
         self.case_tile_configuration = setattr(self.src_detail, 'persist_tile_on_forms', True)
@@ -229,7 +230,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             ],
             auto_launch=True,
             default_search=True,
-            default_relevant=False,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",

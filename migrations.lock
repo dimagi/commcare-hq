@@ -79,6 +79,10 @@ accounting
  0057_add_sms_report_toggle
  0058_delete_linked_projects_role
  0059_add_lite_release_management_priv
+ 0060_add_loadtest_users_priv
+ 0061_remove_enterprise_v1
+ 0062_add_release_management_to_enterprise
+ 0063_replace_linked_projects_ff_with_erm
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -139,6 +143,7 @@ auth
  0009_alter_user_last_name_max_length
  0010_alter_group_name_max_length
  0011_update_proxy_permissions
+ 0012_alter_user_first_name_max_length
 blobs
  0001_squashed_0009_domains
  0002_blobmeta
@@ -545,6 +550,7 @@ motech
  0008_requestlog_response_headers
  0009_auto_20211122_2011
  0010_auto_20211124_1931
+ 0011_connectionsettings_is_deleted
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -553,6 +559,7 @@ notifications
  0005_domain_specific_notifications
  0006_add_billing_type
  0007_auto_20170704_1643
+ 0008_add_notification_types
 oauth2_provider
  0001_initial
  0002_auto_20190406_1805
@@ -621,6 +628,7 @@ pillowtop
  0003_auto_20170411_1957
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
+ 0006_add_geopoint_to_case_search_index
 products
  0001_initial
 project_limits
@@ -648,6 +656,7 @@ repeaters
  0003_migrate_connectionsettings
  0004_attempt_strings
  0005_rename_repeaterstub_to_sql_repeater
+ 0006_add_proxy_models
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -904,6 +913,7 @@ sql_proxy_standby_accessors
 sso
  0001_initial
  0002_identityprovider_require_encrypted_assertions
+ 0003_oidc_onelogin_idp_update
 start_enterprise
  0001_initial
 stock
@@ -957,6 +967,7 @@ userreports
  0015_auto_20190701_2006
  0016_change_primary_key_to_bigint
  0017_index_cleanup
+ 0018_ucrexpression
 users
  0001_add_location_permission
  0002_domainrequest

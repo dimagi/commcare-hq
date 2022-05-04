@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from eulxml.xpath.ast import (
     BinaryExpression,
@@ -47,14 +47,14 @@ class SubCaseQuery:
         return self.count == count
 
 
-def subcase(domain, node, fuzzy=False):
+def subcase(node, context):
     """
     Supports the following syntax:
     - subcase-exists('parent', {subcase filter} )
     - subcase-count('host', {subcase_filter} ) {=, !=, >, <, >=, <=} {integer value}
     """
     subcase_query = _parse_normalize_subcase_query(node)
-    ids = _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy)
+    ids = _get_parent_case_ids_matching_subcase_query(subcase_query, context)
     if subcase_query.invert:
         if not ids:
             return filters.match_all()
@@ -65,7 +65,7 @@ def subcase(domain, node, fuzzy=False):
     return filters.doc_id(ids)
 
 
-def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=False):
+def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
     """Get a list of case IDs for cases that have a subcase with the given index identifier
     and matching the subcase predicate filter.
 
@@ -78,7 +78,7 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
     )
 
     if subcase_query.subcase_filter:
-        subcase_filter = build_filter_from_ast(domain, subcase_query.subcase_filter, fuzzy=fuzzy)
+        subcase_filter = build_filter_from_ast(subcase_query.subcase_filter, context)
     else:
         subcase_filter = filters.match_all()
 
@@ -94,7 +94,7 @@ def _get_parent_case_ids_matching_subcase_query(domain, subcase_query, fuzzy=Fal
         )
     )
     es_query = (
-        CaseSearchES().domain(domain)
+        CaseSearchES().domain(context.domain)
         .filter(index_query)
         .filter(subcase_filter)
         .aggregation(

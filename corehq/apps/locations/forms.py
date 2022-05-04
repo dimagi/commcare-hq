@@ -4,8 +4,8 @@ from django import forms
 from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -102,36 +102,36 @@ class LocTypeWidget(forms.Widget):
 
 class LocationForm(forms.Form):
     parent_id = forms.CharField(
-        label=ugettext_lazy('Parent'),
+        label=gettext_lazy('Parent'),
         required=False,
         widget=ParentLocWidget(),
     )
     name = forms.CharField(
-        label=ugettext_lazy('Name'),
+        label=gettext_lazy('Name'),
         max_length=255,
     )
     location_type = forms.CharField(
-        label=ugettext_lazy('Organization Level'),
+        label=gettext_lazy('Organization Level'),
         required=False,
         widget=LocTypeWidget(),
     )
     coordinates = forms.CharField(
-        label=ugettext_lazy('Coordinates'),
+        label=gettext_lazy('Coordinates'),
         max_length=30,
         required=False,
-        help_text=ugettext_lazy("enter as 'lat lon' or 'lat, lon' "
-                                "(e.g., '42.3652 -71.1029')"),
+        help_text=gettext_lazy("enter as 'lat lon' or 'lat, lon' "
+                               "(e.g., '42.3652 -71.1029')"),
     )
     site_code = forms.CharField(
         label='Site Code',
         required=False,
-        help_text=ugettext_lazy("A unique system code for this location. "
-                                "Leave this blank to have it auto generated"),
+        help_text=gettext_lazy("A unique system code for this location. "
+                               "Leave this blank to have it auto generated"),
     )
     external_id = forms.CharField(
         label='External ID',
         required=False,
-        help_text=ugettext_lazy("A number referencing this location on an external system")
+        help_text=gettext_lazy("A number referencing this location on an external system")
     )
     external_id.widget.attrs['readonly'] = True
 
@@ -425,7 +425,7 @@ class LocationFormSet(object):
 
 class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
-        label=ugettext_lazy("Workers at Location"),
+        label=gettext_lazy("Workers at Location"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -456,7 +456,7 @@ class UsersAtLocationForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', ugettext_lazy("Update Location Membership"))
+                    Submit('submit', gettext_lazy("Update Location Membership"))
                 )
             )
         )
@@ -561,13 +561,13 @@ class LocationFilterForm(forms.Form):
     SHOW_ALL = 'show_all'
 
     LOCATION_ACTIVE_STATUS = (
-        (SHOW_ALL, _('Show All')),
-        (ACTIVE, _('Only Active')),
-        (ARCHIVED, _('Only Archived'))
+        (SHOW_ALL, gettext_lazy('Show All')),
+        (ACTIVE, gettext_lazy('Only Active')),
+        (ARCHIVED, gettext_lazy('Only Archived'))
     )
 
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
     )
     selected_location_only = forms.BooleanField(

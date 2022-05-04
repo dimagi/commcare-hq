@@ -2,7 +2,7 @@ import io
 from datetime import datetime, timedelta
 
 from django.template.defaultfilters import yesno
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 

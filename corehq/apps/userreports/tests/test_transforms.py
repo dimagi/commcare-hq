@@ -221,3 +221,17 @@ class MultiValueStringTranslationTransform(SimpleTestCase):
         self.assertEqual(transform('#800080 #123456'), 'Purple #123456')
         self.assertEqual(transform('#123 #123456'), '#123 #123456')
         self.assertEqual(transform("#0000FF"), "Blue")
+
+
+class MarkdownTransformTest(SimpleTestCase):
+
+    def test_markdown_rendering(self):
+        transform = TransformFactory.get_transform({
+            "type": "markdown",
+        }).get_transform_function()
+        self.assertEqual(transform('Hello World!'), '<p>Hello World!</p>')
+        self.assertEqual(transform('Hello **strong** world!'), '<p>Hello <strong>strong</strong> world!</p>')
+        self.assertEqual(transform('Hello [example](http://www.example.com)!'),
+                         '<p>Hello <a href="http://www.example.com">example</a>!</p>')
+        self.assertEqual(transform('Hello <script>alert("pwned!");</script>'),
+                         '<p>Hello &lt;script&gt;alert(&quot;pwned!&quot;);&lt;/script&gt;</p>')

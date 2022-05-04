@@ -5,7 +5,7 @@ import pytz
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -175,7 +175,7 @@ class CaseDisplay:
 
     def _dateprop(self, prop):
         date = self.parse_date(self.case[prop])
-        if date:
+        if isinstance(date, datetime.datetime):
             user_time = PhoneTime(date, self.timezone).user_time(self.timezone)
             return user_time.ui_string(self.date_format)
         else:

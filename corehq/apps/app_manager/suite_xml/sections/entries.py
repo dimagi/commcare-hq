@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import zip_longest
 
 import attr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -68,9 +68,11 @@ class FormDatumMeta:
     def __repr__(self):
         if isinstance(self.datum, RemoteRequestQuery):
             datum = f"<RemoteRequestQuery(id={self.datum.url})>"
+        elif isinstance(self.datum, InstanceDatum):
+            datum = f"<InstanceDatum(id={self.datum.id})>"
         else:
             datum = f"<SessionDatum(id={self.datum.id})>"
-        return 'FormDataumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
+        return 'FormDatumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
             datum, self.case_type, self.requires_selection, self.action
         )
 
@@ -255,7 +257,8 @@ class EntriesHelper(object):
                 detail_confirm = None
                 if not detail_inline:
                     detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
-                e.datums.append(SessionDatum(
+                datum_cls = InstanceDatum if module.is_multi_select() else SessionDatum
+                e.datums.append(datum_cls(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
@@ -361,7 +364,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm._create_casexml_2
+                    # see XForm._create_casexml
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(
@@ -504,8 +507,9 @@ class EntriesHelper(object):
                 additional_types=datum['module'].additional_case_types
             )
 
+            datum_cls = InstanceDatum if datum['module'].is_multi_select() else SessionDatum
             datums.append(FormDatumMeta(
-                datum=SessionDatum(
+                datum=datum_cls(
                     id=datum['session_var'],
                     nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",

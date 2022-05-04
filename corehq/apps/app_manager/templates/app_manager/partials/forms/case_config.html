@@ -115,6 +115,8 @@
           {% trans "Registration: This form opens a new case" as registers_case %}
           {% if module_loads_registry_case %}
             {% trans "Followup: This form loads a case from a data registry" as updates_case %}
+          {% elif module_is_multi_select %}
+            {% trans "Followup: This form loads a set of cases" as updates_case %}
           {% else %}
             {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
           {% endif %}
@@ -151,6 +153,14 @@
           {% endblocktrans %}</p>
         </div>
       </div>
+      {% elif module_is_multi_select %}
+      <div class="panel panel-appmanager">
+        <div class="panel-body">
+          <p>{% blocktrans trimmed %}
+            Updating cases directly is not supported for multi-select menus.
+          {% endblocktrans %}</p>
+        </div>
+      </div>
       {% else %}
       <div data-bind="template: {
                         name: 'case-config:case-transaction',
@@ -165,8 +175,8 @@
                       }"></div>
       <!--/ko-->
       {% if add_ons.subcases %}
-        {% if module_loads_registry_case %}
-        {# only allow subcases when also opening a case since we can't attach subcases to a case in another domain #}
+        {% if module_loads_registry_case or module_is_multi_select %}
+        {# only allow subcases updating a single case in the same domain #}
         <!--ko if: actionType() === 'open'-->
         {% else %}
         <!--ko if: actionType() !== 'none'-->

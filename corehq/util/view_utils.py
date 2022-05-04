@@ -184,3 +184,12 @@ def request_as_dict(request):
         logging.error("Could not pickle the couch_user id from the request object. Error: %s" % e)
 
     return request_data
+
+
+def is_ajax(request):
+    """Check if requested with XMLHttpRequest
+
+    HttpRequest.is_ajax() was deprecated in Django 3.1
+    https://docs.djangoproject.com/en/4.0/releases/3.1/#id2
+    """
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'

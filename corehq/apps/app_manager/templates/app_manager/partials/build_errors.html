@@ -161,6 +161,18 @@
                 uses both smart links and Parent Child Selection. These two
                 features are not compatible.
               {% endblocktrans %}
+            {% case "smart links multi select" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses both smart links and a multi-select case list. These two
+                features are not compatible.
+              {% endblocktrans %}
+            {% case "data registry multi select" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                loads a case from a data registry and uses a multi-select case list.
+                These two features are not compatible.
+              {% endblocktrans %}
             {% case "circular case hierarchy" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
@@ -283,7 +295,7 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 doesn't have a source module specified.
               {% endblocktrans %}
-            {% case "no parent select id" %}
+            {% case "invalid parent select id" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses parent case selection but doesn't have a parent case list specified.
@@ -338,14 +350,14 @@
             {% case "path error" %}
               {% if error.path %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in form {% include "app_manager/partials/form_error_message.html" %}
                 references a question that no longer exists: "{{ error.path }}". It is likely that
                 this question has been renamed or deleted. Please update or delete this question
                 reference before you make a new version.
               {% else %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
                 is missing a question.
                 Please choose a question from the dropdown next to the case property.

@@ -3,14 +3,14 @@ import pytz
 import re
 from collections import OrderedDict, defaultdict
 
-from django.conf.urls import url, include
+from django.conf.urls import re_path as url, include
 from django.contrib import messages
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
 from django.urls import Resolver404
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 
@@ -38,6 +38,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -131,15 +132,13 @@ def download_app_strings(request, domain, app_id, lang):
 @safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
-    See Application.fetch_xform
-
+    See FormBase.render_xform
     """
     profile = _get_build_profile_id(request)
     try:
         form = request.app.get_module(module_id).get_form(form_id)
-        return HttpResponse(
-            request.app.fetch_xform(form, build_profile_id=profile)
-        )
+        form = form.validate_form()
+        return HttpResponse(form.render_xform(build_profile_id=profile))
     except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
@@ -473,6 +472,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
+            'toggles': toggles_enabled_for_request(request),
         })
 
     if ajax:

@@ -1,16 +1,17 @@
 from collections import namedtuple
 from datetime import datetime
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import jsonobject
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.linked_domain.const import ALL_LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.privileges import RELEASE_MANAGEMENT
 
 
 class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
@@ -65,6 +66,10 @@ class DomainLink(models.Model):
     @property
     def is_remote(self):
         return bool(self.remote_base_url) or 'http' in self.linked_domain
+
+    def has_full_access(self):
+        return (domain_has_privilege(self.master_domain, RELEASE_MANAGEMENT)
+                and domain_has_privilege(self.linked_domain, RELEASE_MANAGEMENT))
 
     @atomic
     def update_last_pull(self, model, user_id, date=None, model_detail=None):
@@ -145,7 +150,7 @@ class DomainLinkHistory(models.Model):
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
     model = models.CharField(max_length=128, choices=ALL_LINKED_MODELS, null=False)
-    model_detail = JSONField(null=True, blank=True)
+    model_detail = models.JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
     hidden = models.BooleanField(default=False)
 

@@ -2,7 +2,7 @@ import datetime
 import functools
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 
@@ -14,6 +14,8 @@ from corehq.apps.userreports.expressions.date_specs import (
     AddDaysExpressionSpec,
     AddMonthsExpressionSpec,
     DiffDaysExpressionSpec,
+    EthiopianDateToGregorianDateSpec,
+    GregorianDateToEthiopianDateSpec,
     MonthEndDateExpressionSpec,
     MonthStartDateExpressionSpec,
     AddHoursExpressionSpec,
@@ -207,6 +209,22 @@ def _diff_days_expression(spec, context):
     return wrapped
 
 
+def _gregorian_date_to_ethiopian_date(spec, context):
+    wrapped = GregorianDateToEthiopianDateSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+    )
+    return wrapped
+
+
+def _ethiopian_date_to_gregorian_date(spec, context):
+    wrapped = EthiopianDateToGregorianDateSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+    )
+    return wrapped
+
+
 def _evaluator_expression(spec, context):
     wrapped = EvalExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -332,6 +350,8 @@ class ExpressionFactory(object):
         'month_end_date': _month_end_date_expression,
         'diff_days': _diff_days_expression,
         'utcnow': _utcnow,
+        'gregorian_date_to_ethiopian_date': _gregorian_date_to_ethiopian_date,
+        'ethiopian_date_to_gregorian_date': _ethiopian_date_to_gregorian_date,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
         'get_subcases': _get_subcases_expression,

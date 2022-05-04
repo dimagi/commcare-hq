@@ -1,5 +1,6 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -15,6 +16,9 @@ from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 
 
+ONE_WEEK = 7 * 24 * 60 * 60
+
+
 class StringWithAttributes(str):
 
     def replace(self, *args):
@@ -22,7 +26,7 @@ class StringWithAttributes(str):
         return StringWithAttributes(string)
 
 
-class FormDisplay(object):
+class FormDisplay():
 
     def __init__(self, form_doc, report, lang=None):
         self.form = form_doc
@@ -43,13 +47,17 @@ class FormDisplay(object):
         username = self.form["form"]["meta"].get("username")
         try:
             if username not in ['demo_user', 'admin']:
-                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=ONE_WEEK)
                 name = '"%s"' % full_name if full_name else ""
             else:
                 name = ""
         except (ResourceNotFound, IncompatibleDocument):
-            name = "<b>[unregistered]</b>"
-        return (username or _('No data for username')) + (" %s" % name if name else "")
+            name = mark_safe('<b>[unregistered]</b>')  # nosec: no user input
+        username = username or _('No data for username')
+        if name:
+            return format_html('{} {}', username, name)
+        else:
+            return username
 
     @property
     def submission_or_completion_time(self):

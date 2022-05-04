@@ -24,8 +24,8 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import FormView, TemplateView, View
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -64,7 +64,7 @@ from corehq.util.timer import TimingContext
 
 
 class UserAdministration(BaseAdminSectionView):
-    section_name = ugettext_lazy("User Administration")
+    section_name = gettext_lazy("User Administration")
 
 
 class SuperuserManagement(UserAdministration):
@@ -214,14 +214,14 @@ class AdminRestoreView(TemplateView):
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
-        create_case_type = filter(None, [case.find(
+        create_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}create/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
-        update_case_type = filter(None, [case.find(
+        ) for case in cases if len(case) and hasattr(case, "type")]
+        update_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}update/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
+        ) for case in cases if len(case) and hasattr(case, "type")]
         case_type_counts = dict(Counter([
             case.type for case in itertools.chain(create_case_type, update_case_type)
         ]))

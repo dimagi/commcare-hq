@@ -4,8 +4,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.exceptions import PermissionDenied
 from lxml import etree
@@ -40,6 +39,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_loads_registry_case,
     module_uses_smart_links,
     split_path,
     xpath_references_case,
@@ -49,7 +49,6 @@ from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.domain.models import Domain
-from corehq.util import view_utils
 from corehq.util.timer import time_method
 
 
@@ -375,6 +374,20 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
+        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
+            if self.module.parent_select.relationship == 'parent':
+                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+                valid_modules = get_modules_with_parent_case_type(app, self.module)
+            else:
+                from corehq.apps.app_manager.views.modules import get_all_case_modules
+                valid_modules = get_all_case_modules(app, self.module)
+            valid_module_ids = [info['unique_id'] for info in valid_modules]
+            if self.module.parent_select.module_id not in valid_module_ids:
+                errors.append({
+                    'type': 'invalid parent select id',
+                    'module': self.get_module_info(),
+                })
+
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
                 errors.append({
@@ -384,6 +397,18 @@ class ModuleBaseValidator(object):
             if self.module.parent_select.active:
                 errors.append({
                     'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+
+        if module_loads_registry_case(self.module):
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'data registry multi select',
                     'module': self.get_module_info(),
                 })
 
@@ -569,10 +594,11 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     })
                 elif len(non_auto_select_actions) != 1:
                     for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        check_tag = non_auto_select_actions[index - 1].case_tag
                         if (
-                            index > 0 and
-                            non_auto_select_actions[index - 1].case_tag and
-                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                            index > 0
+                            and check_tag
+                            and check_tag not in (p.tag for p in action.case_indices)
                         ):
                             errors.append({
                                 'type': 'case list module form can only load parent cases',
@@ -949,8 +975,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)
                     if meta and meta['type'] == 'open' and meta['action'].repeat_context:
                         if (
-                            not action.repeat_context or
-                            not action.repeat_context.startswith(meta['action'].repeat_context)
+                            not action.repeat_context
+                            or not action.repeat_context.startswith(meta['action'].repeat_context)
                         ):
                             errors.append({'type': 'subcase repeat context',
                                            'case_tag': action.case_tag,
@@ -1001,8 +1027,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     module=self.form.get_module(), form=self.form)
 
             form_filter_references_case = (
-                xpath_references_case(interpolated_form_filter) or
-                xpath_references_usercase(interpolated_form_filter)
+                xpath_references_case(interpolated_form_filter)
+                or xpath_references_usercase(interpolated_form_filter)
             )
 
             if form_filter_references_case:

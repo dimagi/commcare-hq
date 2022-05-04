@@ -36,6 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'titles',
             'useUniformUnits',
             'widthHints',
+            'multiSelect',
         ],
 
         commandProperties: [
@@ -56,7 +57,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             if (response.selections) {
                 var urlObject = Util.currentUrlToObject();
                 urlObject.setSelections(response.selections);
-                Util.setUrlToObject(urlObject);
+                Util.setUrlToObject(urlObject, true);
             }
 
             if (response.commands) {

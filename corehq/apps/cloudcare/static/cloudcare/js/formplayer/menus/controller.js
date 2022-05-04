@@ -72,14 +72,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    var selectDetail = function (caseId, detailIndex, isPersistent) {
+    var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
         var urlObject = Util.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {
-            showDetail(detailResponse, detailIndex, caseId);
+            showDetail(detailResponse, detailIndex, caseId, isMultiSelect);
         }).fail(function () {
             FormplayerFrontend.trigger('navigateHome');
         });
@@ -117,7 +117,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         FormplayerFrontend.regions.getRegion('persistentCaseTile').show(detailView.render());
     };
 
-    var showDetail = function (model, detailTabIndex, caseId) {
+    var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
@@ -139,19 +139,16 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 showDetail(model, detailTabIndex, caseId);
             },
         });
-
-        $('#select-case').off('click').click(function () {
-            FormplayerFrontend.trigger("menu:select", caseId);
+        var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
+            model: model,
+            caseId: caseId,
+            isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
-        if (model.isPersistentDetail) {
-            $('#case-detail-modal').find('#select-case').hide();
-        } else {
-            $('#case-detail-modal').find('#select-case').show();
-        }
     };
 
     var getDetailList = function (detailObject) {

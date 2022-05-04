@@ -4,7 +4,7 @@ import attr
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -95,7 +95,13 @@ class SearchCriteria:
             'owner_id',
         ]
 
-        if self.key in disallowed_parameters or self.is_daterange:
+        if self.is_daterange and len(self.value) > 2:
+            raise CaseFilterError(
+                _("Only one blank value plus one date range value are supprted"),
+                self.key
+            )
+
+        if self.key in disallowed_parameters:
             raise CaseFilterError(
                 _("Multiple values are only supported for simple text and range searches"),
                 self.key
@@ -112,11 +118,16 @@ class SearchCriteria:
     def _validate_daterange(self):
         if not self.is_daterange:
             return
-
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
-        match = pattern.match(self.value)
-        if not match:
-            raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+        if self.has_multiple_terms:
+            # don't validate empty values
+            values = [val for val in self.value if val != '']
+        else:
+            values = [self.value]
+        for v in values:
+            match = pattern.match(v)
+            if not match:
+                raise CaseFilterError(_('Invalid date range format, {}'), self.key)
 
 
 def criteria_dict_to_criteria_list(criteria_dict):

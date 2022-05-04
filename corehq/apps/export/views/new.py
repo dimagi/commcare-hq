@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
@@ -255,7 +255,7 @@ class BaseExportView(BaseProjectDataView):
 @location_safe
 class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
-    page_title = ugettext_lazy("Create Form Data Export")
+    page_title = gettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
     metric_name = 'Form Export'
 
@@ -291,7 +291,7 @@ class CreateNewCustomFormExportView(BaseExportView):
 @location_safe
 class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
-    page_title = ugettext_lazy("Create Case Data Export")
+    page_title = gettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
     metric_name = 'Case Export'
 
@@ -328,14 +328,14 @@ class CreateNewCustomCaseExportView(BaseExportView):
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
     metric_name = 'Excel Dashboard Case Export'
-    page_title = ugettext_lazy("Create Dashboard Feed")
+    page_title = gettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
 class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_feed_export'
     metric_name = 'Excel Dashboard Form Export'
-    page_title = ugettext_lazy("Create Dashboard Feed")
+    page_title = gettext_lazy("Create Dashboard Feed")
 
 
 @location_safe
@@ -353,7 +353,7 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
-    page_title = ugettext_lazy("Create OData Case Feed")
+    page_title = gettext_lazy("Create OData Case Feed")
     metric_name = 'PowerBI Case Export'
 
     def create_new_export_instance(self, schema, username, export_settings=None):
@@ -369,7 +369,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
 @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
-    page_title = ugettext_lazy("Create OData Form Feed")
+    page_title = gettext_lazy("Create OData Form Feed")
     metric_name = 'PowerBI Form Export'
 
     def create_new_export_instance(self, schema, username, export_settings=None):

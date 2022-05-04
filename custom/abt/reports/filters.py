@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
@@ -85,7 +85,7 @@ class VectorLinkLocFilter(BaseSingleOptionFilter):
 
 class UsernameFilter(VectorLinkLocFilter):
     slug = 'user_id'
-    label = ugettext_lazy('Username')
+    label = gettext_lazy('Username')
 
     @property
     def options(self):
@@ -96,32 +96,32 @@ class UsernameFilter(VectorLinkLocFilter):
 
 class CountryFilter(VectorLinkLocFilter):
     slug = 'country'
-    label = ugettext_lazy('Country')
+    label = gettext_lazy('Country')
 
 
 class LevelOneFilter(VectorLinkLocFilter):
     slug = 'level_1'
-    label = ugettext_lazy('Level 1')
+    label = gettext_lazy('Level 1')
 
 
 class LevelTwoFilter(VectorLinkLocFilter):
     slug = 'level_2'
-    label = ugettext_lazy('Level 2')
+    label = gettext_lazy('Level 2')
 
 
 class LevelThreeFilter(VectorLinkLocFilter):
     slug = 'level_3'
-    label = ugettext_lazy('Level 3')
+    label = gettext_lazy('Level 3')
 
 
 class LevelFourFilter(VectorLinkLocFilter):
     slug = 'level_4'
-    label = ugettext_lazy('Level 4')
+    label = gettext_lazy('Level 4')
 
 
 class SubmissionStatusFilter(BaseSingleOptionFilter):
     slug = 'submission_status'
-    label = ugettext_lazy('Submission Status')
+    label = gettext_lazy('Submission Status')
     default_text = 'All'
 
     @property

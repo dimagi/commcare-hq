@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 from corehq.apps.case_search.const import (
@@ -54,7 +54,7 @@ class ExploreCaseDataReport(BaseReport):
 
     columns = [
         ColumnMeta(
-            title=ugettext_lazy("Case Name"),
+            title=gettext_lazy("Case Name"),
             name='case_name',
             width=200,
             sort='asc',
@@ -92,7 +92,7 @@ class ExploreCaseDataReport(BaseReport):
                 name=CaseOwnerReportFilter.name,
                 value=[
                     {
-                        'text': "[{}]".format(ugettext_lazy("Project Data")),
+                        'text': "[{}]".format(gettext_lazy("Project Data")),
                         'id': 'project_data',
                     },
                 ],

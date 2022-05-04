@@ -9,7 +9,7 @@ from django.http import QueryDict
 from django.middleware.csrf import get_token
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
@@ -29,7 +29,7 @@ LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
-    username = forms.EmailField(label=_("Email Address"), max_length=75,
+    username = forms.EmailField(label=_("Email Address"),
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
@@ -82,7 +82,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
-    username = forms.CharField(label=_("Username"), max_length=75,
+    username = forms.CharField(label=_("Username"),
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 

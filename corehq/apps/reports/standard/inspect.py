@@ -1,6 +1,6 @@
 from django.utils.translation import get_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized
 
@@ -58,7 +58,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                          ProjectReportParametersMixin,
                          CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
                          DatespanMixin):
-    name = ugettext_noop('Submit History')
+    name = gettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -113,8 +113,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
         # Exclude system forms unless they selected "Unknown User"
         if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
-            for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
-                query = query.NOT(form_es.xmlns(xmlns))
+            query = query.NOT(form_es.xmlns(
+                list(SYSTEM_FORM_XMLNS_MAP.keys())
+            ))
         return query
 
     @property

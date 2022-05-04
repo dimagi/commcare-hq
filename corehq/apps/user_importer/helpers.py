@@ -1,3 +1,4 @@
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
@@ -286,6 +287,15 @@ class CommCareUserImporter(BaseUserImporter):
 
         if set(new_groups) != old_group_ids:
             return UserChangeMessage.groups_info(list(new_groups.values()))
+
+    def update_deactivate_after(self, deactivate_after):
+        change_message = DeactivateMobileWorkerTrigger.update_trigger(
+            self.user_domain, self.user.user_id, deactivate_after
+        )
+        if change_message:
+            self.logger.add_info(UserChangeMessage.updated_deactivate_after(
+                deactivate_after, change_message
+            ))
 
     def _log_phone_number_changes(self, old_phone_numbers, new_phone_numbers):
         (items_added, items_removed) = find_differences_in_list(

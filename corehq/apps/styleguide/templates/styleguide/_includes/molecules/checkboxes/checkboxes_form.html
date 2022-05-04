@@ -10,7 +10,7 @@
   <p>Located in <code>corehq.apps.styleguide.example_forms</code></p>
 
   <pre>from django import forms
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import gettext_lazy, gettext as _
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -18,14 +18,14 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 
 class CheckboxesForm(forms.Form):
     send_email = forms.BooleanField(
-        label=ugettext_lazy("This checkbox is badly aligned"),
+        label=gettext_lazy("This checkbox is badly aligned"),
         required=False,
     )
     recipient = forms.CharField(
-        label=ugettext_lazy("Email recipient"),
+        label=gettext_lazy("Email recipient"),
     )
     send_to_self = forms.BooleanField(
-        label=ugettext_lazy("Also send to myself"),
+        label=gettext_lazy("Also send to myself"),
         required=False,
     )
 

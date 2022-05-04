@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 
@@ -210,17 +210,20 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
-        return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
+        return cls._iter_cases_from_postgres(
+            domain, case_type, boundary_date=boundary_date, db=db, include_closed=include_closed
+        )
 
     @classmethod
-    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
         q_expression = Q(
             domain=domain,
             type=case_type,
-            closed=False,
             deleted=False,
         )
+        if not include_closed:
+            q_expression = q_expression & Q(closed=False)
 
         if boundary_date:
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
@@ -875,7 +878,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             if case_id == case.case_id:
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
-                xmlns=AUTO_UPDATE_XMLNS)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
@@ -888,7 +891,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
 
         if close_case or properties:
             result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
-                xmlns=AUTO_UPDATE_XMLNS)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
 
             rule.log_submission(result[0].form_id)
 
@@ -1524,7 +1527,7 @@ class DomainCaseRuleRun(models.Model):
     num_creates = models.IntegerField(default=0)
     num_errors = models.IntegerField(default=0)
 
-    dbs_completed = JSONField(default=list)
+    dbs_completed = models.JSONField(default=list)
 
     class Meta(object):
         index_together = (

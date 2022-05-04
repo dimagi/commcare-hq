@@ -36,8 +36,8 @@ django-tastypie
 django-transfer
 django-two-factor-auth
 django-user-agents
-django-websocket-redis
-django>=2.2.27,<3.0  # we are not ready to move to django 3.0
+django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
+django>=3.2.13,<4.0
 djangorestframework
 dnspython
 dropbox
@@ -61,7 +61,7 @@ Jinja2
 json-delta
 jsonfield
 jsonobject-couchdbkit
-jsonobject
+jsonobject>=2.0.0
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
@@ -77,6 +77,7 @@ billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/
     # This comment can be removed when that issue is resolved.
 laboratory
 lxml
+markdown
 openpyxl
 phonenumberslite
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8

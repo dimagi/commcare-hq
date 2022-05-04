@@ -92,7 +92,7 @@ class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual('edith', spec['username'])
-        self.assertEquals('', spec['user_profile'])
+        self.assertEqual('', spec['user_profile'])
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
 

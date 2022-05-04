@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 19:55+0000\n"
+"POT-Creation-Date: 2022-04-28 15:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -180,38 +180,38 @@ msgstr ""
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:118
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
 msgid "Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:119
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
 msgid "Mobile UCR Report"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:120
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:122
 msgid "Select a Report..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:121
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:123
 msgid "Advanced Mobile UCR Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:128
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
 msgid "Lookup Table Options"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:129
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50397
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:50814
 msgid "Lookup Table"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:130
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:132
 msgid "Select a Lookup Table..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:131
+#: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js:133
 msgid "Advanced Lookup Table Options"
 msgstr ""
 
@@ -317,29 +317,29 @@ msgstr ""
 msgid "Unknown menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:151
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:155
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:194
 msgid "There is an error in your tab: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:197
 msgid "There is an error in your property name: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:198
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
 msgid "All properties must be below a tab."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:202
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:206
 msgid ""
 "Search Properties and Default Search Filters can't have common properties. "
 "Please update following properties: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:207
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js:211
 msgid "There are errors in your configuration."
 msgstr ""
 
@@ -666,24 +666,24 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:110
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:109
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:122
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:121
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -1283,7 +1283,7 @@ msgid "Phone Number or Numeric ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26379
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:214
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:215
 msgid "Password"
 msgstr ""
 
@@ -1355,7 +1355,7 @@ msgid "Long"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26520
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:383
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:393
 msgid "Decimal"
 msgstr ""
 
@@ -1552,7 +1552,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:45981
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:48723
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:49993
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:802
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:812
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:298
@@ -1658,7 +1658,7 @@ msgid "Form has validation errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:46823
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:322
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:332
 msgid "Number"
 msgstr ""
 
@@ -2684,49 +2684,49 @@ msgstr ""
 msgid "Error evaluating expression."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:218
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:219
 msgid "Barcode"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:220
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:221
 msgid "Free response"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:313
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:323
 msgid "Not a valid whole number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:316
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:377
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:326
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:387
 msgid "Number is too large"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:354
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:364
 msgid "Phone number or Numeric ID"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:374
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:384
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:440
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:550
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:450
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:560
 msgid "Please choose an item"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:602
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:612
 msgid "Combobox"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:695
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:705
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:957
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:972
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:964
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js:979
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -2859,15 +2859,15 @@ msgid ""
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:157
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:161
 msgid "Switching project spaces..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:419
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js:537
 msgid "Page <%-num%>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:127
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js:132
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
@@ -3065,8 +3065,8 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:116
-#: corehq/apps/users/static/users/js/mobile_workers.js:140
+#: corehq/apps/users/static/users/js/mobile_workers.js:118
+#: corehq/apps/users/static/users/js/mobile_workers.js:142
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
@@ -3375,23 +3375,23 @@ msgstr ""
 msgid "There was an error deleting"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:58
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:68
 msgid "Items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:59
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:69
 msgid "Selected items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:60
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:70
 msgid "Search items"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:72
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:84
 msgid "Add All"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:77
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:89
 msgid "Remove All"
 msgstr ""
 
@@ -3511,43 +3511,43 @@ msgstr ""
 msgid "You already have an active call."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:51
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:52
 msgid "Error updating."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:183
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:336
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:189
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:441
 msgid "Report successfully linked."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:186
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:191
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:206
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:275
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:340
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:345
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:192
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:197
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:212
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:380
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:445
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:450
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:254
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:341
 msgid "All project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:255
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:342
 msgid "Project spaces to push to"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:256
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:343
 msgid "Search project spaces"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:374
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:479
 msgid "Unable to link project spaces. <%- error %>"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:380
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:485
 msgid ""
 "Unable to link project spaces.\n"
 "Please try again, or report an issue if the problem persists."
@@ -3624,21 +3624,21 @@ msgstr ""
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:53
+#: corehq/apps/registration/static/registration/js/password.js:54
 msgid ""
 "<i class='fa fa-warning'></i>This password is automatically generated. "
 "Please copy it or create your own. It will not be shown again."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:57
+#: corehq/apps/registration/static/registration/js/password.js:58
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:59
+#: corehq/apps/registration/static/registration/js/password.js:60
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:61
+#: corehq/apps/registration/static/registration/js/password.js:62
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -3798,7 +3798,7 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:125
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:28
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:29
 msgid "Select a language..."
 msgstr ""
 
@@ -4096,15 +4096,19 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:19
+msgid "Edit a custom web report or custom web report source"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:21
 msgid "Edit a report or data source"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:34
 msgid "static"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:29
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:35
 msgid "deactivated"
 msgstr ""
 
@@ -4117,35 +4121,35 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:45
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:46
 msgid "Password changed successfully."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:48
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
 msgid "Password is not strong enough. Try making your password more complex."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:51
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:52
 msgid "The two password fields didn't match."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:53
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:54
 msgid "Password was not changed. "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:93
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:106
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:107
 msgid "Group membership has changed."
 msgstr ""
 
@@ -4169,247 +4173,255 @@ msgstr ""
 msgid "Error determining number of matching users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:306
+#: corehq/apps/users/static/users/js/mobile_workers.js:310
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:308
+#: corehq/apps/users/static/users/js/mobile_workers.js:312
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:369
+#: corehq/apps/users/static/users/js/mobile_workers.js:373
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:390
+#: corehq/apps/users/static/users/js/mobile_workers.js:394
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:25
+#: corehq/apps/users/static/users/js/roles.js:26
 msgid "No Access"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:26
+#: corehq/apps/users/static/users/js/roles.js:27
 msgid "Access All"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:27
+#: corehq/apps/users/static/users/js/roles.js:28
 msgid "Access Selected"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:28
+#: corehq/apps/users/static/users/js/roles.js:29
 msgid "Select which items the role can access:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:156
+#: corehq/apps/users/static/users/js/roles.js:157
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:161
+#: corehq/apps/users/static/users/js/roles.js:162
 msgid "Edit & View Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:162
+#: corehq/apps/users/static/users/js/roles.js:163
 msgid "View-Only Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:172
+#: corehq/apps/users/static/users/js/roles.js:173
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings,deactivate or delete mobile workers."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:177
+#: corehq/apps/users/static/users/js/roles.js:178
 msgid "Edit & View Web Users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:178
+#: corehq/apps/users/static/users/js/roles.js:179
 msgid "View-Only Web Users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:188
+#: corehq/apps/users/static/users/js/roles.js:189
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:193
+#: corehq/apps/users/static/users/js/roles.js:194
 msgid "Edit & View Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:194
+#: corehq/apps/users/static/users/js/roles.js:195
 msgid "View-Only Web Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:196
+#: corehq/apps/users/static/users/js/roles.js:197
 msgid "Allow changing group membership (requires edit groups)."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:204
+#: corehq/apps/users/static/users/js/roles.js:205
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:209
+#: corehq/apps/users/static/users/js/roles.js:210
 msgid "Edit & View Locations"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:210
+#: corehq/apps/users/static/users/js/roles.js:211
 msgid "View-Only Web Locations"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:212
+#: corehq/apps/users/static/users/js/roles.js:213
 msgid "Allow changing workers at a location."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:220
+#: corehq/apps/users/static/users/js/roles.js:221
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:225
+#: corehq/apps/users/static/users/js/roles.js:226
 msgid "Edit & View Data"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:236
+#: corehq/apps/users/static/users/js/roles.js:237
 msgid "<strong>Web Apps</strong> &mdash; use Web Apps for online data entry"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:241
+#: corehq/apps/users/static/users/js/roles.js:242
 msgid "Access Web Apps"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:252
+#: corehq/apps/users/static/users/js/roles.js:253
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:257
+#: corehq/apps/users/static/users/js/roles.js:258
 msgid "Access Messaging"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:268
+#: corehq/apps/users/static/users/js/roles.js:269
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
 "data. Specific APIs may require additional permissions."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:273
+#: corehq/apps/users/static/users/js/roles.js:274
 msgid "Access APIs"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:284
+#: corehq/apps/users/static/users/js/roles.js:285
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:289
+#: corehq/apps/users/static/users/js/roles.js:290
 msgid "Edit & View Apps"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:290
+#: corehq/apps/users/static/users/js/roles.js:291
 msgid "View-Only Applications"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:300
+#: corehq/apps/users/static/users/js/roles.js:301
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:306
+#: corehq/apps/users/static/users/js/roles.js:307
 msgid "View Roles and Permissions"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:316
+#: corehq/apps/users/static/users/js/roles.js:317
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:321
+#: corehq/apps/users/static/users/js/roles.js:322
 msgid "Edit & Download files from the Dropzone "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:322
+#: corehq/apps/users/static/users/js/roles.js:323
 msgid "View-Only Dropzone"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:332
+#: corehq/apps/users/static/users/js/roles.js:333
 msgid ""
 "<strong>Shared Exports</strong> &mdash; access and edit the content and "
 "structure of shared exports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:348
+#: corehq/apps/users/static/users/js/roles.js:349
 msgid "Create and Edit Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:351
+#: corehq/apps/users/static/users/js/roles.js:352
 msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:355
+#: corehq/apps/users/static/users/js/roles.js:356
 msgid "Access All Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:358
+#: corehq/apps/users/static/users/js/roles.js:359
 msgid "Allow role to access all reports."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:362
+#: corehq/apps/users/static/users/js/roles.js:364
+msgid "Create and Edit Custom Web Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:367
+msgid "Allow role to create and edit custom web reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:372
 msgid "Create and Edit Configurable Reports"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:365
+#: corehq/apps/users/static/users/js/roles.js:375
 msgid "Allow role to create and edit configurable reports."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:373
+#: corehq/apps/users/static/users/js/roles.js:383
 msgid "Manage Registries"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:374
+#: corehq/apps/users/static/users/js/roles.js:384
 msgid "Select which registries the role can manage:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:381
+#: corehq/apps/users/static/users/js/roles.js:391
 msgid "View Registry Data"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:382
+#: corehq/apps/users/static/users/js/roles.js:392
 msgid "Select which registry data the role can view:"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:391
+#: corehq/apps/users/static/users/js/roles.js:401
 #, javascript-format
 msgid "Select at least one item from the list for \"%s\""
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:479
+#: corehq/apps/users/static/users/js/roles.js:489
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:479
+#: corehq/apps/users/static/users/js/roles.js:489
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:480
+#: corehq/apps/users/static/users/js/roles.js:490
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:490
+#: corehq/apps/users/static/users/js/roles.js:500
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:493
+#: corehq/apps/users/static/users/js/roles.js:503
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:553
+#: corehq/apps/users/static/users/js/roles.js:563
 msgid "An error occurred, please try again."
 msgstr ""
 

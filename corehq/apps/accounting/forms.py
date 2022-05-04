@@ -15,11 +15,11 @@ from django.urls import reverse
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html, format_html_join
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
@@ -89,22 +89,22 @@ from corehq.util.dates import get_first_last_days
 
 class BillingAccountBasicForm(forms.Form):
     name = forms.CharField(label="Name")
-    salesforce_account_id = forms.CharField(label=ugettext_lazy("Salesforce Account ID"),
+    salesforce_account_id = forms.CharField(label=gettext_lazy("Salesforce Account ID"),
                                             max_length=80,
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
     email_list = forms.CharField(
-        label=ugettext_lazy('Client Contact Emails'),
+        label=gettext_lazy('Client Contact Emails'),
         widget=forms.SelectMultiple(choices=[]),
     )
     is_active = forms.BooleanField(
-        label=ugettext_lazy("Account is Active"),
+        label=gettext_lazy("Account is Active"),
         required=False,
         initial=True,
     )
     is_customer_billing_account = forms.BooleanField(
-        label=ugettext_lazy("Is Customer Billing Account"),
+        label=gettext_lazy("Is Customer Billing Account"),
         required=False,
         initial=False
     )
@@ -128,28 +128,28 @@ class BillingAccountBasicForm(forms.Form):
         required=False
     )
     active_accounts = forms.IntegerField(
-        label=ugettext_lazy("Transfer Subscriptions To"),
-        help_text=ugettext_lazy(
+        label=gettext_lazy("Transfer Subscriptions To"),
+        help_text=gettext_lazy(
             "Transfer any existing subscriptions to the "
             "Billing Account specified here."
         ),
         required=False,
     )
     dimagi_contact = forms.EmailField(
-        label=ugettext_lazy("Dimagi Contact Email"),
+        label=gettext_lazy("Dimagi Contact Email"),
         max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
         required=False,
     )
     entry_point = forms.ChoiceField(
-        label=ugettext_lazy("Entry Point"),
+        label=gettext_lazy("Entry Point"),
         choices=EntryPoint.CHOICES,
     )
     last_payment_method = forms.ChoiceField(
-        label=ugettext_lazy("Last Payment Method"),
+        label=gettext_lazy("Last Payment Method"),
         choices=LastPayment.CHOICES
     )
     pre_or_post_pay = forms.ChoiceField(
-        label=ugettext_lazy("Prepay or Postpay"),
+        label=gettext_lazy("Prepay or Postpay"),
         choices=PreOrPostPay.CHOICES
     )
     account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
@@ -343,8 +343,8 @@ class BillingAccountBasicForm(forms.Form):
                     if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
                         errors.append("{} is restricted by {}".format(domain, account.name))
             if errors:
-                raise ValidationError("The following domains are already restricted by another account: " +
-                                      ", ".join(errors))
+                raise ValidationError("The following domains are already restricted by another account: "
+                                      + ", ".join(errors))
             return domains
         else:
             # Do not return a list with an empty string
@@ -490,70 +490,70 @@ class BillingAccountContactForm(forms.ModelForm):
 
 class SubscriptionForm(forms.Form):
     account = forms.IntegerField(
-        label=ugettext_lazy("Billing Account"),
+        label=gettext_lazy("Billing Account"),
         widget=forms.Select(choices=[]),
     )
     start_date = forms.DateField(
-        label=ugettext_lazy("Start Date"), widget=forms.DateInput()
+        label=gettext_lazy("Start Date"), widget=forms.DateInput()
     )
     end_date = forms.DateField(
-        label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
+        label=gettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     plan_edition = forms.ChoiceField(
-        label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
     plan_version = forms.IntegerField(
-        label=ugettext_lazy("Software Plan"),
+        label=gettext_lazy("Software Plan"),
         widget=forms.Select(choices=[]),
     )
     domain = forms.CharField(
-        label=ugettext_lazy("Project Space"),
+        label=gettext_lazy("Project Space"),
         widget=forms.Select(choices=[]),
     )
     salesforce_contract_id = forms.CharField(
-        label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
+        label=gettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
     do_not_invoice = forms.BooleanField(
-        label=ugettext_lazy("Do Not Invoice"), required=False
+        label=gettext_lazy("Do Not Invoice"), required=False
     )
     no_invoice_reason = forms.CharField(
-        label=ugettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
+        label=gettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
     )
     do_not_email_invoice = forms.BooleanField(label="Do Not Email Invoices", required=False)
     do_not_email_reminder = forms.BooleanField(label="Do Not Email Subscription Reminders", required=False)
     auto_generate_credits = forms.BooleanField(
-        label=ugettext_lazy("Auto-generate Plan Credits"), required=False
+        label=gettext_lazy("Auto-generate Plan Credits"), required=False
     )
     skip_invoicing_if_no_feature_charges = forms.BooleanField(
-        label=ugettext_lazy("Skip invoicing if no feature charges"), required=False
+        label=gettext_lazy("Skip invoicing if no feature charges"), required=False
     )
     active_accounts = forms.IntegerField(
-        label=ugettext_lazy("Transfer Subscription To"),
+        label=gettext_lazy("Transfer Subscription To"),
         required=False,
         widget=forms.Select(choices=[]),
     )
     service_type = forms.ChoiceField(
-        label=ugettext_lazy("Type"),
+        label=gettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
         initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Discounted"),
+        label=gettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )
     funding_source = forms.ChoiceField(
-        label=ugettext_lazy("Funding Source"),
+        label=gettext_lazy("Funding Source"),
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
     skip_auto_downgrade = forms.BooleanField(
-        label=ugettext_lazy("Exclude from automated downgrade process"),
+        label=gettext_lazy("Exclude from automated downgrade process"),
         required=False
     )
     skip_auto_downgrade_reason = forms.CharField(
-        label=ugettext_lazy("Justify why \"Skip Auto Downgrade\""),
+        label=gettext_lazy("Justify why \"Skip Auto Downgrade\""),
         max_length=256,
         required=False,
     )
@@ -622,7 +622,8 @@ class SubscriptionForm(forms.Form):
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
             self.fields['do_not_email_reminder'].initial = subscription.do_not_email_reminder
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
-            self.fields['skip_invoicing_if_no_feature_charges'].initial = subscription.skip_invoicing_if_no_feature_charges
+            self.fields['skip_invoicing_if_no_feature_charges'].initial = \
+                subscription.skip_invoicing_if_no_feature_charges
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
@@ -831,33 +832,33 @@ class SubscriptionForm(forms.Form):
 
 class ChangeSubscriptionForm(forms.Form):
     subscription_change_note = forms.CharField(
-        label=ugettext_lazy("Note"),
+        label=gettext_lazy("Note"),
         required=True,
         widget=forms.Textarea,
     )
     new_plan_edition = forms.ChoiceField(
-        label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
+        label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
     new_plan_version = forms.CharField(
-        label=ugettext_lazy("New Software Plan"),
+        label=gettext_lazy("New Software Plan"),
         widget=forms.Select(choices=[]),
     )
     new_date_end = forms.DateField(
-        label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
+        label=gettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     service_type = forms.ChoiceField(
-        label=ugettext_lazy("Type"),
+        label=gettext_lazy("Type"),
         choices=SubscriptionType.CHOICES,
         initial=SubscriptionType.IMPLEMENTATION,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Discounted"),
+        label=gettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )
     funding_source = forms.ChoiceField(
-        label=ugettext_lazy("Funding Source"),
+        label=gettext_lazy("Funding Source"),
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
@@ -956,7 +957,7 @@ class CreditForm(forms.Form):
     amount = forms.DecimalField(label="Amount (USD)")
     note = forms.CharField(required=True)
     rate_type = forms.ChoiceField(
-        label=ugettext_lazy("Rate Type"),
+        label=gettext_lazy("Rate Type"),
         choices=(
             ('', 'Any'),
             ('Product', 'Product'),
@@ -964,7 +965,7 @@ class CreditForm(forms.Form):
         ),
         required=False,
     )
-    feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
+    feature_type = forms.ChoiceField(required=False, label=gettext_lazy("Feature Type"))
     adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, account, subscription, *args, **kwargs):
@@ -1681,9 +1682,9 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             self.new_product_rate = self._retrieve_product_rate(rate_form)
             self.is_update = (
-                self.is_update or
-                self.plan_version is None or
-                self.new_product_rate.id != self.plan_version.product_rate.id
+                self.is_update
+                or self.plan_version is None
+                or self.new_product_rate.id != self.plan_version.product_rate.id
             )
         return original_data
 
@@ -1863,15 +1864,15 @@ class ProductRateForm(forms.ModelForm):
 
 class EnterprisePlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=gettext_noop("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
         widget=forms.Textarea
     )
 
@@ -1927,15 +1928,15 @@ class EnterprisePlanContactForm(forms.Form):
 
 class AnnualPlanContactForm(forms.Form):
     name = forms.CharField(
-        label=ugettext_noop("Name")
+        label=gettext_noop("Name")
     )
     company_name = forms.CharField(
         required=False,
-        label=ugettext_noop("Company / Organization")
+        label=gettext_noop("Company / Organization")
     )
     message = forms.CharField(
         required=False,
-        label=ugettext_noop("Message"),
+        label=gettext_noop("Message"),
         widget=forms.Textarea
     )
 
@@ -2092,13 +2093,11 @@ class TriggerInvoiceForm(forms.Form):
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=prev_invoices.count(),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
-                                edit_url=reverse(InvoiceSummaryView.urlname,
-                                                 args=(x.id,)),
-                                name=x.invoice_number
-                            ) for x in prev_invoices.all()]
+                            edit_url=reverse(InvoiceSummaryView.urlname, args=(x.id,)),
+                            name=x.invoice_number
+                        ) for x in prev_invoices.all()]
                     ),
                 )
             )
@@ -2181,7 +2180,6 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=len(prev_invoices),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
                             edit_url=reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)),

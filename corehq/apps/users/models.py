@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -11,14 +11,14 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -47,7 +47,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
-from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.dates import (
+    force_to_datetime,
+    get_date_from_month_and_year_string,
+)
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
@@ -301,16 +304,16 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
     # because these are in JSON and cannot be serialized
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,
     # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
-    APP_EDITOR = ugettext_noop("App Editor")
-    READ_ONLY = ugettext_noop("Read Only")
-    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
-    BILLING_ADMIN = ugettext_noop("Billing Admin")
+    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
+    APP_EDITOR = gettext_noop("App Editor")
+    READ_ONLY = gettext_noop("Read Only")
+    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
+    BILLING_ADMIN = gettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -585,7 +588,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_domain_admin(domain):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
             return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
@@ -2845,7 +2850,7 @@ class UserReportingMetadataStaging(models.Model):
 
     # The following properties are null if a user has not submitted a form since their last sync
     xform_version = models.IntegerField(null=True)
-    form_meta = JSONField(null=True)  # This could be filtered to only the parts we need
+    form_meta = models.JSONField(null=True)  # This could be filtered to only the parts we need
     received_on = models.DateTimeField(null=True)
 
     # The following properties are null if a user has not synced since their last form submission
@@ -3070,7 +3075,7 @@ class UserHistory(models.Model):
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
     # JSON structured replacement for the deprecated text message field
-    change_messages = JSONField(default=dict)
+    change_messages = models.JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
@@ -3080,20 +3085,26 @@ class UserHistory(models.Model):
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
-    details = JSONField(default=dict)
+    details = models.JSONField(default=dict)
     # ToDo: remove blank=true post migration/reset of existing records since it will always be present
     # same as the deprecated details.changed_via
     # one of the USER_CHANGE_VIA_* constants
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [
             models.Index(fields=['by_domain']),
             models.Index(fields=['for_domain']),
         ]
+
+
+class DeactivateMobileWorkerTriggerUpdateMessage:
+    UPDATED = 'updated'
+    CREATED = 'created'
+    DELETED = 'deleted'
 
 
 class DeactivateMobileWorkerTrigger(models.Model):
@@ -3121,3 +3132,41 @@ class DeactivateMobileWorkerTrigger(models.Model):
         for chunked_ids in chunked(user_ids, 100):
             bulk_auto_deactivate_commcare_users(chunked_ids, domain)
             cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()
+
+    @classmethod
+    def update_trigger(cls, domain, user_id, deactivate_after):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not deactivate_after:
+            if existing_trigger.exists():
+                existing_trigger.delete()
+                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+            # noop
+            return
+        if isinstance(deactivate_after, str):
+            try:
+                deactivate_after = get_date_from_month_and_year_string(deactivate_after)
+            except ValueError:
+                raise ValueError("Deactivate After Date is not in MM-YYYY format")
+        if isinstance(deactivate_after, date):
+            if existing_trigger.exists():
+                trigger = existing_trigger.first()
+                if trigger.deactivate_after == deactivate_after:
+                    # don't update or record a message
+                    return
+                trigger.deactivate_after = deactivate_after
+                trigger.save()
+                return DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+            else:
+                cls.objects.create(
+                    domain=domain,
+                    user_id=user_id,
+                    deactivate_after=deactivate_after,
+                )
+                return DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+
+    @classmethod
+    def get_deactivate_after_date(cls, domain, user_id):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not existing_trigger.exists():
+            return None
+        return existing_trigger.first().deactivate_after

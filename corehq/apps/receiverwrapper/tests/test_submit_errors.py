@@ -155,13 +155,13 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     def test_submit_bad_xml(self):
         log_output = self._test_submit_bad_data(b'\xad\xac\xab\xd36\xe1\xab\xd6\x9dR\x9b')
-        self.assertRegexpMatches(log_output, r"Problem receiving submission.*")
+        self.assertRegex(log_output, r"Problem receiving submission.*")
 
     def test_submit_bad_device_log(self):
         log_output = self._test_submit_bad_data(
             "malformed xml dvice log</log></log_subreport></device_report>".encode('utf8')
         )
-        self.assertRegexpMatches(log_output, r"Badly formed device log.*")
+        self.assertRegex(log_output, r"Badly formed device log.*")
 
     def test_missing_xmlns(self):
         file, res = self._submit('missing_xmlns.xml')
@@ -234,7 +234,8 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             status_code = 200
             streaming = False
             cookies = []
-            _closable_objects = []
+            headers = {}
+            _resource_closers = []
 
             def has_header(self, name):
                 return False
@@ -243,7 +244,8 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
                 pass
 
             def close(self):
-                pass
+                for close in self._resource_closers:
+                    close()
 
         def process_device_log(self_, xform):
             result = FormProcessingResult(xform)

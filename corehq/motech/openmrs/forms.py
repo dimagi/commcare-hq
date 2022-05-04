@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -108,17 +108,17 @@ class OpenmrsImporterForm(forms.Form):
 
 class OpenmrsRepeaterForm(CaseRepeaterForm):
     location_id = forms.CharField(
-        label=ugettext_lazy("Location"),
+        label=gettext_lazy("Location"),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             'Cases at this location and below will be forwarded. '
             'Leave empty if this is the only OpenMRS Forwarder'
         ),
     )
     atom_feed_enabled = forms.BooleanField(
-        label=ugettext_lazy('Atom feed enabled'),
+        label=gettext_lazy('Atom feed enabled'),
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             'Poll Atom feed for changes made in OpenMRS/Bahmni'
         ),
     )
@@ -144,13 +144,13 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
         location_id = cleaned_data.get('location_id', None)
         if atom_feed_enabled:
             if len(white_listed_case_types) != 1:
-                raise ValidationError(ugettext_lazy(
+                raise ValidationError(gettext_lazy(
                     'Specify a single case type so that CommCare can add '
                     'cases using the Atom feed for patients created in '
                     'OpenMRS/Bahmni.'
                 ))
             if not location_id:
-                raise ValidationError(ugettext_lazy(
+                raise ValidationError(gettext_lazy(
                     'Specify a location so that CommCare can set an owner for '
                     'cases added via the Atom feed.'
                 ))

@@ -2,7 +2,7 @@ import logging
 import sys
 from functools import cmp_to_key
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from ddtrace import tracer
 from iso8601 import iso8601

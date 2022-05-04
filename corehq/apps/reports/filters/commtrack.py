@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import (
@@ -8,14 +8,14 @@ from corehq.apps.reports.filters.base import (
 
 
 class AdvancedColumns(CheckboxFilter):
-    label = ugettext_lazy("Show advanced columns")
+    label = gettext_lazy("Show advanced columns")
     slug = "advanced_columns"
 
 
 class ProgramFilter(BaseSingleOptionFilter):
     slug = "program"
-    label = ugettext_noop("Program")
-    default_text = ugettext_lazy("All")
+    label = gettext_noop("Program")
+    default_text = gettext_lazy("All")
 
     @property
     def options(self):

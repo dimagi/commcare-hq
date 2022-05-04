@@ -1,5 +1,5 @@
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 
@@ -12,27 +12,27 @@ from ..http.form_handling import form_clean_url
 
 class AirtelTCLBackendForm(BackendForm):
     host_and_port = TrimmedCharField(
-        label=ugettext_lazy("Host:Port"),
+        label=gettext_lazy("Host:Port"),
         required=True,
     )
     user_name = TrimmedCharField(
-        label=ugettext_lazy("Username"),
+        label=gettext_lazy("Username"),
         required=True,
     )
     password = TrimmedCharField(
-        label=ugettext_lazy("Password"),
+        label=gettext_lazy("Password"),
         required=True,
     )
     sender_id = TrimmedCharField(
-        label=ugettext_lazy("Sender ID"),
+        label=gettext_lazy("Sender ID"),
         required=True,
     )
     circle_name = TrimmedCharField(
-        label=ugettext_lazy("Circle Name"),
+        label=gettext_lazy("Circle Name"),
         required=True,
     )
     campaign_name = TrimmedCharField(
-        label=ugettext_lazy("Campaign Name"),
+        label=gettext_lazy("Campaign Name"),
         required=True,
     )
 

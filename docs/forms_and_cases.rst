@@ -6,9 +6,8 @@ generic functions and accessors to access and operate on the models.
 
 This document provides a basic guide for how to do that.
 
-Models
-------
-
++-------------------+
+| Models            |
 +===================+
 | CommCareCase      |
 +-------------------+

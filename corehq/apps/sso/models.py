@@ -12,9 +12,31 @@ from corehq.util.quickcache import quickcache
 
 class IdentityProviderType:
     AZURE_AD = 'azure_ad'
+    ONE_LOGIN = 'one_login'
     CHOICES = (
         (AZURE_AD, "Azure AD"),
+        (ONE_LOGIN, "One Login"),
     )
+
+
+class IdentityProviderProtocol:
+    SAML = 'saml'
+    OIDC = 'oidc'
+    CHOICES = (
+        (SAML, "SAML 2.0"),
+        (OIDC, "OpenID Connect (OIDC)"),
+    )
+
+    @classmethod
+    def get_supported_types(cls):
+        return {
+            cls.SAML: (
+                (IdentityProviderType.AZURE_AD, "Azure AD"),
+            ),
+            cls.OIDC: (
+                (IdentityProviderType.ONE_LOGIN, "One Login"),
+            )
+        }
 
 
 class ServiceProviderCertificate:
@@ -48,6 +70,11 @@ class IdentityProvider(models.Model):
         default=IdentityProviderType.AZURE_AD,
         choices=IdentityProviderType.CHOICES,
     )
+    protocol = models.CharField(
+        max_length=5,
+        default=IdentityProviderProtocol.SAML,
+        choices=IdentityProviderProtocol.CHOICES,
+    )
 
     # whether an IdP is editable by its BillingAccount owner
     # (it will always be editable by accounting admins)
@@ -60,11 +87,16 @@ class IdentityProvider(models.Model):
     # configuration fields
     owner = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
 
-    # these are fields required by the external IdP to form a SAML request
     entity_id = models.TextField(blank=True, null=True)
+
+    # these are fields required by the external IdP to form a SAML request
     login_url = models.TextField(blank=True, null=True)
     logout_url = models.TextField(blank=True, null=True)
     idp_cert_public = models.TextField(blank=True, null=True)
+
+    # needed for OIDC
+    client_id = models.TextField(blank=True, null=True)
+    client_secret = models.TextField(blank=True, null=True)
 
     # the date the IdP's SAML signing certificate expires.
     # this will be filled out by enterprise admins
@@ -97,6 +129,10 @@ class IdentityProvider(models.Model):
 
     def __str__(self):
         return f"{self.name} IdP [{self.idp_type}]"
+
+    @property
+    def service_name(self):
+        return dict(IdentityProviderType.CHOICES)[self.idp_type]
 
     def create_service_provider_certificate(self):
         sp_cert = ServiceProviderCertificate()

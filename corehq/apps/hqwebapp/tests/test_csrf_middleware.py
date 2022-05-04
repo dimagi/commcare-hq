@@ -34,7 +34,8 @@ class TestCSRF(TestCase):
     def _form_post_with_and_without_csrf(self):
         client = Client(enforce_csrf_checks=True)
         login_page = client.get(reverse('login'))
-        csrf_token = BeautifulSoup(login_page.content).find('input', {'id': 'csrfTokenContainer'}).get('value')
+        csrf_token = BeautifulSoup(login_page.content, features="lxml") \
+            .find('input', {'id': 'csrfTokenContainer'}).get('value')
         client.login(username=self.username, password=self.password)
 
         form_data = {

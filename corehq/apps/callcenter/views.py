@@ -1,13 +1,12 @@
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from memoized import memoized
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
-from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.reports.util import _report_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
@@ -18,9 +17,9 @@ class _CallCenterOwnerOptionsUtils(object):
         self.domain = domain
 
     def user_tuple(self, user):
-        user = _report_user_dict(user)
-        name = "%s [user]" % user['username_in_report']
-        return (user['user_id'], name)
+        user = _report_user(user)
+        name = "%s [user]" % user.username_in_report
+        return (user.user_id, name)
 
     def reporting_group_tuple(self, group):
         return (group['_id'], '%s [group]' % group['name'])
@@ -36,8 +35,8 @@ class _CallCenterOwnerOptionsUtils(object):
 
         if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
             return [
-                (USE_LOCATION_CHOICE, ugettext("user's location [location]")),
-                (USE_PARENT_LOCATION_CHOICE, ugettext("user's location's parent [location]")),
+                (USE_LOCATION_CHOICE, gettext("user's location [location]")),
+                (USE_PARENT_LOCATION_CHOICE, gettext("user's location's parent [location]")),
             ]
         return []
 
