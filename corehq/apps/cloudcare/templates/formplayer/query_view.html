@@ -3,7 +3,7 @@
 
 <script type="text/template" id="query-view-list-template">
   <form>
-    <p><h2><%- title %></h2></p>
+    <p><h2 tabindex="0"><%- title %></h2></p>
     <table class="table table-hover table-striped table-bordered">
       <tbody>
       </tbody>
@@ -21,7 +21,7 @@
 
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-6">
-    <div>
+    <div tabindex="0">
       <%- text ? text : "" %>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
       <div class="hq-help pull-right">
@@ -53,14 +53,14 @@
     <select>
 
     <% } else if (input == "daterange") { %>
-    <input type="text" class="daterange query-field form-control" value="<%- value %>">
+    <input aria-label="<%- text ? text : "" %> daterange" type="text" class="daterange query-field form-control" value="<%- value %>">
 
     <% } else if (input == "address") { %>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
     </div>
 
     <% } else { %>
-    <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
+    <input aria-label="<%- text ? text : "" %> text entry" type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>">
     <% } %>
 
     <% if (allow_blank_value) { %>
