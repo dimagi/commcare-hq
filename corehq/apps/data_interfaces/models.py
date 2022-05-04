@@ -343,9 +343,8 @@ class AutomaticUpdateRule(models.Model):
         if case.type != self.case_type:
             return False
 
-        if self.filter_on_server_modified and \
-                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
-            return False
+        case_not_modified_since = not(self.filter_on_server_modified
+            and (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))))
 
         def _evaluate_criteria(criteria):
             try:
@@ -355,7 +354,8 @@ class AutomaticUpdateRule(models.Model):
                 # parent case is not found
                 return False
 
-        results = (_evaluate_criteria(criteria) for criteria in self.memoized_criteria)
+        results = [_evaluate_criteria(criteria) for criteria in self.memoized_criteria]
+        results.append(case_not_modified_since)
         if self.criteria_operator == 'ANY':
             return any(results)
         else:
