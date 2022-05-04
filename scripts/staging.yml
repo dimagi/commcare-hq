@@ -81,5 +81,4 @@ branches:
     - jls/tab-nodeset-filter # Jenny May 2
     - rc/case-search-accessibility+jls/conditional-case-search #Robert May 3
     - jls/conditional-case-search # Jenny May 3
-    - rc/case-search-accessibility # Robert May 3
 submodules: { }
