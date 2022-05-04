@@ -181,8 +181,9 @@ class IdentityProvider(models.Model):
         :param username: (string) username to pre-populate IdP login with
         :return: (String) identity provider login url
         """
+        login_view_name = 'sso_saml_login' if self.protocol == IdentityProviderProtocol.SAML else 'sso_oidc_login'
         return '{}?username={}'.format(
-            reverse('sso_saml_login', args=(self.slug,)),
+            reverse(login_view_name, args=(self.slug,)),
             username
         )
 
