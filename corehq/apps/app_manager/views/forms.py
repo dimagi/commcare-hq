@@ -765,11 +765,12 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     form_workflows = {
         WORKFLOW_DEFAULT: _("Home Screen"),
         WORKFLOW_ROOT: _("First Menu"),
-        WORKFLOW_PREVIOUS: _("Previous Screen"),
     }
-    if not module.put_in_root:
-        if not module.root_module_id or not module.root_module.is_multi_select():
+    if not module.root_module_id or not module.root_module.is_multi_select():
+        if not module.put_in_root:
             form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
+        if not module.is_multi_select():
+            form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
         form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
     allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
