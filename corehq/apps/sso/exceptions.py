@@ -17,6 +17,6 @@ class OidcSsoError(Exception):
     OP_ERROR_MESSAGE = 'oidc_op_error_message'
 
     def __init__(self, error_code, message=None):
+        super().__init__()
         self.code = error_code
         self.message = message
-        super().__init__()
