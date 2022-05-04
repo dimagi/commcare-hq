@@ -52,6 +52,7 @@ hqDefine("app_manager/js/details/column", function () {
             nodeset: "",
             // Blank string is meaningful for nodesetCaseType (indicating a custom expression), so be strict here
             nodesetCaseType: _.has(self.original, "nodesetCaseType") ? self.original.nodesetCaseType : screen.childCaseTypes[0] || "",
+            nodesetFilter: "",
             relevant: "",
         };
         _.each(_.keys(tabDefaults), function (key) {
@@ -106,7 +107,7 @@ hqDefine("app_manager/js/details/column", function () {
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.childCaseTypes,
-            }, _.pick(self.original, ['nodeset', 'nodesetCaseType'])));
+            }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
             self.relevant = uiElement.input().val(self.original.relevant);
             if (self.isTab) {
@@ -355,6 +356,7 @@ hqDefine("app_manager/js/details/column", function () {
                     tab = _.extend(tab, {
                         nodeset_case_type: self.nodeset_extra.nodesetCaseType(),
                         nodeset: self.nodeset_extra.nodeset(),
+                        nodeset_filter: self.nodeset_extra.nodesetFilter(),
                     });
                 }
                 return tab;
