@@ -1,3 +1,5 @@
+from urllib.parse import urlencode, urlparse, urlunparse, parse_qsl
+
 from django.urls import reverse
 
 from corehq.apps.sso.models import IdentityProvider
@@ -60,5 +62,9 @@ def add_username_hint_to_login_url(login_url, request):
         # verify that the stored user data actually the current IdP
         idp = IdentityProvider.get_active_identity_provider_by_username(username)
         if idp and idp.slug == request.idp.slug:
-            login_url = f'{login_url}&login_hint={username}'
+            parsed_url = list(urlparse(login_url))
+            params = dict(parse_qsl(parsed_url[4]))
+            params['login_hint'] = username
+            parsed_url[4] = urlencode(params)
+            login_url = urlunparse(parsed_url)
     return login_url
