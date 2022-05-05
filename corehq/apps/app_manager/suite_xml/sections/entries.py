@@ -848,120 +848,25 @@ class EntriesHelper(object):
 
         return datums, assertions
 
+    def _get_datums(self, module_):
+        """
+        Return the datums of the first form in the given module
+        """
+        if not module_:
+            return []
+
+        if module_.module_type == 'shadow' and module_.shadow_module_version > 1:
+            module_ = module_.source_module
+
+        try:
+            # assume that all forms in the module have the same case management
+            form = module_.get_form(0)
+        except FormNotFoundException:
+            return []
+        return self.get_datums_meta_for_form_generic(form)
+
     def add_parent_datums(self, datums, module):
-
-        def update_refs(datum_meta, changed_ids_):
-            """
-            Update references in the nodeset of the given datum, if necessary
-
-            e.g. "instance('casedb')/casedb/case[@case_type='guppy']
-                                                [@status='open']
-                                                [index/parent=instance('commcaresession')/session/data/parent_id]"
-            is updated to
-                 "instance('casedb')/casedb/case[@case_type='guppy']
-                                                [@status='open']
-                                                [index/parent=instance('commcaresession')/session/data/case_id]"
-                                                                                                       ^^^^^^^
-            because the case referred to by "parent_id" in the child module has the ID "case_id" in the parent
-            module.
-            """
-            def _apply_change_to_datum_attr(datum, attr, change):
-                xpath = getattr(datum, attr, None)
-                if xpath:
-                    old = session_var(change['old_id'])
-                    new = session_var(change['new_id'])
-                    setattr(datum, attr, xpath.replace(old, new))
-
-            datum = datum_meta.datum
-            action = datum_meta.action
-            if action:
-                if hasattr(action, 'case_indices'):
-                    # This is an advanced module
-                    for case_index in action.case_indices:
-                        if case_index.tag in changed_ids_:
-                            # update any reference to previously changed datums
-                            for change in changed_ids_[case_index.tag]:
-                                _apply_change_to_datum_attr(datum, 'nodeset', change)
-                                _apply_change_to_datum_attr(datum, 'function', change)
-                else:
-                    if 'basic' in changed_ids_:
-                        for change in changed_ids_['basic']:
-                            _apply_change_to_datum_attr(datum, 'nodeset', change)
-                            _apply_change_to_datum_attr(datum, 'function', change)
-
-        def rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
-            """
-            If the ID of parent datum matches the ID of another datum in this
-            form, rename the ID of the other datum in this form
-
-            e.g. if parent datum ID == "case_id" and there is a datum in this
-            form with the ID of "case_id" too, then rename the ID of the datum
-            in this form to "case_id_<case_type>" (where <case_type> is the
-            case type of the datum in this form).
-            """
-            changed_id = {}
-            parent_datum = parent_datum_meta_.datum
-            action = this_datum_meta_.action
-            if action:
-                if parent_datum.id in datum_ids_:
-                    datum = datum_ids_[parent_datum.id]
-                    new_id = '_'.join((datum.datum.id, datum.case_type))
-                    # Only advanced module actions have a case_tag attribute.
-                    case_tag = getattr(action, 'case_tag', 'basic')
-                    changed_id = {
-                        case_tag: {
-                            'old_id': datum.datum.id,
-                            'new_id': new_id,
-                        }
-                    }
-                    datum.datum.id = new_id
-            return changed_id
-
-        def get_changed_id(this_datum_meta_, parent_datum_meta_):
-            """
-            Maps IDs in the child module to IDs in the parent module
-
-            e.g. The case with the ID "parent_id" in the child module has the
-            ID "case_id" in the parent module.
-            """
-            changed_id = {}
-            action = this_datum_meta_.action
-            if action:
-                case_tag = getattr(action, 'case_tag', 'basic')
-                changed_id = {
-                    case_tag: {
-                        "old_id": this_datum_meta_.datum.id,
-                        "new_id": parent_datum_meta_.datum.id
-                    }
-                }
-            return changed_id
-
-        def get_datums(module_):
-            """
-            Return the datums of the first form in the given module
-            """
-            datums_ = []
-            if not module_:
-                return datums_
-
-            if module_.module_type == 'shadow' and module_.shadow_module_version > 1:
-                module_ = module_.source_module
-
-            try:
-                # assume that all forms in the module have the same case management
-                form = module_.get_form(0)
-            except FormNotFoundException:
-                pass
-            else:
-                datums_.extend(self.get_datums_meta_for_form_generic(form))
-
-            return datums_
-
-        def append_update(dict_, new_dict):
-            for key in new_dict:
-                dict_[key].append(new_dict[key])
-
-        parent_datums = get_datums(module.root_module)
+        parent_datums = self._get_datums(module.root_module)
         if parent_datums:
             # we need to try and match the datums to the root module so that
             # the navigation on the phone works correctly
@@ -974,7 +879,7 @@ class EntriesHelper(object):
             changed_ids_by_case_tag = defaultdict(list)
             for this_datum_meta, parent_datum_meta in list(zip_longest(datums, parent_datums)):
                 if this_datum_meta:
-                    update_refs(this_datum_meta, changed_ids_by_case_tag)
+                    _update_refs(this_datum_meta, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
                 if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
@@ -985,10 +890,10 @@ class EntriesHelper(object):
                         same_case_type = this_datum_meta.case_type == parent_datum_meta.case_type
                         same_datum_type = type(this_datum_meta.datum) == type(parent_datum_meta.datum)
                         if same_case_type and same_datum_type:
-                            append_update(changed_ids_by_case_tag,
-                                          rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
-                            append_update(changed_ids_by_case_tag,
-                                          get_changed_id(this_datum_meta, parent_datum_meta))
+                            _append_update(changed_ids_by_case_tag,
+                                          _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
+                            _append_update(changed_ids_by_case_tag,
+                                          _get_changed_id(this_datum_meta, parent_datum_meta))
                             this_datum_meta.datum.id = parent_datum_meta.datum.id
                 index += 1
 
@@ -1045,3 +950,97 @@ class EntriesHelper(object):
         details = {d[0]: d for d in module.get_details()}
         _, detail, detail_enabled = details[detail_type]
         return detail, detail_enabled
+
+
+def _update_refs(datum_meta, changed_ids_):
+    """
+    Update references in the nodeset of the given datum, if necessary
+
+    e.g. "instance('casedb')/casedb/case[@case_type='guppy']
+                                        [@status='open']
+                                        [index/parent=instance('commcaresession')/session/data/parent_id]"
+    is updated to
+            "instance('casedb')/casedb/case[@case_type='guppy']
+                                        [@status='open']
+                                        [index/parent=instance('commcaresession')/session/data/case_id]"
+                                                                                                ^^^^^^^
+    because the case referred to by "parent_id" in the child module has the ID "case_id" in the parent
+    module.
+    """
+    def _apply_change_to_datum_attr(datum, attr, change):
+        xpath = getattr(datum, attr, None)
+        if xpath:
+            old = session_var(change['old_id'])
+            new = session_var(change['new_id'])
+            setattr(datum, attr, xpath.replace(old, new))
+
+    datum = datum_meta.datum
+    action = datum_meta.action
+    if action:
+        if hasattr(action, 'case_indices'):
+            # This is an advanced module
+            for case_index in action.case_indices:
+                if case_index.tag in changed_ids_:
+                    # update any reference to previously changed datums
+                    for change in changed_ids_[case_index.tag]:
+                        _apply_change_to_datum_attr(datum, 'nodeset', change)
+                        _apply_change_to_datum_attr(datum, 'function', change)
+        else:
+            if 'basic' in changed_ids_:
+                for change in changed_ids_['basic']:
+                    _apply_change_to_datum_attr(datum, 'nodeset', change)
+                    _apply_change_to_datum_attr(datum, 'function', change)
+
+
+def _rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
+    """
+    If the ID of parent datum matches the ID of another datum in this
+    form, rename the ID of the other datum in this form
+
+    e.g. if parent datum ID == "case_id" and there is a datum in this
+    form with the ID of "case_id" too, then rename the ID of the datum
+    in this form to "case_id_<case_type>" (where <case_type> is the
+    case type of the datum in this form).
+    """
+    changed_id = {}
+    parent_datum = parent_datum_meta_.datum
+    action = this_datum_meta_.action
+    if action:
+        if parent_datum.id in datum_ids_:
+            datum = datum_ids_[parent_datum.id]
+            new_id = '_'.join((datum.datum.id, datum.case_type))
+            # Only advanced module actions have a case_tag attribute.
+            case_tag = getattr(action, 'case_tag', 'basic')
+            changed_id = {
+                case_tag: {
+                    'old_id': datum.datum.id,
+                    'new_id': new_id,
+                }
+            }
+            datum.datum.id = new_id
+    return changed_id
+
+
+def _get_changed_id(this_datum_meta_, parent_datum_meta_):
+    """
+    Maps IDs in the child module to IDs in the parent module
+
+    e.g. The case with the ID "parent_id" in the child module has the
+    ID "case_id" in the parent module.
+    """
+    changed_id = {}
+    action = this_datum_meta_.action
+    if action:
+        case_tag = getattr(action, 'case_tag', 'basic')
+        changed_id = {
+            case_tag: {
+                "old_id": this_datum_meta_.datum.id,
+                "new_id": parent_datum_meta_.datum.id
+            }
+        }
+    return changed_id
+
+
+def _append_update(dict_, new_dict):
+    for key in new_dict:
+        dict_[key].append(new_dict[key])
