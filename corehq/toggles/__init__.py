@@ -2151,6 +2151,13 @@ EXPRESSION_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
 )
 
+UCR_EXPRESSION_REGISTRY = StaticToggle(
+    'expression_registry',
+    'Store named UCR expressions and filters in the database to be referenced elsewhere',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',

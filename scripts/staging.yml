@@ -76,7 +76,9 @@ branches:
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/autoupdate-criteria-operator # Addison April 26
-    - bmb/sso-staging  # Biyeun May 2
+    - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
     - ml/case-property-bug # Minha April 28
     - jls/tab-nodeset-filter # Jenny May 2
+    - rc/case-search-accessibility+jls/conditional-case-search #Robert May 3
+    - jls/conditional-case-search # Jenny May 3
 submodules: { }

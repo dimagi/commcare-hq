@@ -238,15 +238,12 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     pip install -r requirements/dev-requirements.txt
     ```
 
-  - Recommended for developers or others with custom requirements. Use this `pip
-    install ...` workflow for initial setup only. Then use commands in
-    `local.in`.
-
-    ```sh
-    cp requirements/local.in.sample requirements/local.in
-    # customize requirements/local.in as desired
-    pip install -r requirements/local.in
-    ```
+    - Recommended for developers or others with custom requirements. Use this `pip
+      install ...` workflow for initial setup only. Then create a copy of local.in.sample,
+      ```sh
+      cp requirements/local.in.sample requirements/local.in
+      ```
+      and follow the instructions in `local.in` to keep requirements in sync.
     
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
     

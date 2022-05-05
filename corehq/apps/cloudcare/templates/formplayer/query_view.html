@@ -3,7 +3,7 @@
 
 <script type="text/template" id="query-view-list-template">
   <form>
-    <p><h2><%- title %></h2></p>
+    <p><h2 tabindex="0"><%- title %></h2></p>
     <table class="table table-hover table-striped table-bordered">
       <tbody>
       </tbody>
@@ -21,7 +21,7 @@
 
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-6 query-caption<% if (required) { %> required<% } %><% if (hasError) { %> has-error<% } %>">
-    <div>
+    <div tabindex="0">
       <span class="control-label">
         <%- text ? text : "" %>
       </span>
@@ -55,14 +55,22 @@
     <select>
 
     <% } else if (input == "daterange") { %>
-    <input type="text" class="daterange query-field form-control" value="<%- value %>"<% if (required) { %> aria-required="true"<% } %>>
+    <input aria-label="<%- text ? text : "" %> daterange"
+           type="text" class="daterange query-field form-control"
+           value="<%- value %>"
+           <% if (required) { %> aria-required="true"<% } %>>
 
     <% } else if (input == "address") { %>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
     </div>
 
     <% } else { %>
-    <input type="text" class="query-field form-control" value="<%- value %>" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
+    <input aria-label="<%- text ? text : "" %> text entry"
+           type="text"
+           class="query-field form-control"
+           value="<%- value %>"
+           data-receive="<%- receive %>"
+           <% if (required) { %> aria-required="true"<% } %>>
     <% } %>
 
     <% if (allow_blank_value) { %>

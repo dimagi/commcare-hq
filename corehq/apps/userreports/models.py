@@ -54,9 +54,12 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 )
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
+    ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
@@ -376,14 +379,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
+        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
         while named_expression_specs:
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    named_expressions[name] = ExpressionFactory.from_spec(
-                        expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={})
-                    )
+                    factory_context.named_expressions = named_expressions
+                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]
                 except BadSpecError as bad_spec_error:
@@ -399,11 +401,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
-                for name, filter in self.named_filters.items()}
+        factory_context = FactoryContext(self.named_expression_objects, {}, domain=self.domain)
+        return {
+            name: FilterFactory.from_spec(filter, factory_context)
+            for name, filter in self.named_filters.items()
+        }
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
 
     @property
     @memoized
@@ -1344,6 +1349,46 @@ class InvalidUCRData(models.Model):
 
     class Meta(object):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
+
+
+class UCRExpressionManager(models.Manager):
+    def get_filters_for_domain(self, domain, context):
+        return {
+            f.name: f.wrapped_definition(context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+        }
+
+    def get_expressions_for_domain(self, domain, context):
+        return {
+            f.name: f.wrapped_definition(context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+        }
+
+
+class UCRExpression(models.Model):
+    """
+    A single UCR named expression or named filter that can
+    be shared amongst features that use these
+    """
+    name = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    expression_type = models.CharField(
+        max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
+    )
+    definition = models.JSONField(null=True)
+
+    objects = UCRExpressionManager()
+
+    class Meta:
+        app_label = 'userreports'
+        unique_together = ('name', 'domain')
+
+    def wrapped_definition(self, context):
+        if self.expression_type == UCR_NAMED_EXPRESSION:
+            return ExpressionFactory.from_spec(self.definition, context)
+        elif self.expression_type == UCR_NAMED_FILTER:
+            return FilterFactory.from_spec(self.definition, context)
 
 
 def get_datasource_config_infer_type(config_id, domain):
