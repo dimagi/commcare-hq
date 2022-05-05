@@ -155,8 +155,9 @@ def test_add_hours_to_datetime_expression(self, source_doc, count_expression, ex
 
 @generate_cases([
     ({'dob': '2015-01-20'}, date(2022, 9, 30)),
-    ({'dob': date(2015, 1, 20)}, None),  # Cannot convert a native date
-    ({'dob': datetime(2015, 1, 20)}, None),
+    ({'dob': '2014-13-05'}, date(2022, 9, 10)),
+    ({'dob': date(2015, 1, 20)}, date(2022, 9, 30)),
+    ({'dob': datetime(2015, 1, 20)}, date(2022, 9, 30)),
 ])
 def test_ethiopian_to_gregorian_expression(self, source_doc, expected_value):
     date_expression = {

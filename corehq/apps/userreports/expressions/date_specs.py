@@ -297,5 +297,5 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
     def __call__(self, item, context=None):
         unwrapped_date = self._date_expression(item, context)
         if isinstance(unwrapped_date, (datetime.datetime, datetime.date)):
-            unwrapped_date = unwrapped_date.isoformat()
+            unwrapped_date = unwrapped_date.strftime('%Y-%m-%d')
         return transform_date(get_ethiopian_to_gregorian(unwrapped_date))
