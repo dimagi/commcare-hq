@@ -283,6 +283,11 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
         }
 
     """
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty("ethiopian_date_to_gregorian_date")
     date_expression = DefaultProperty(required=True)
 

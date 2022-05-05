@@ -82,6 +82,10 @@ class ConstantGetterSpec(JsonObject):
            "constant": "hello"
        }
     """
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty('constant')
     constant = DefaultProperty()
 
