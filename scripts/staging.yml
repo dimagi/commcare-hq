@@ -60,9 +60,7 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    # - jm/elastic-client-adapter  # Joel Mar 1
     - nh/loadtest_users_postmigration  # Norman March 25
-    - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
     - fr/ucr-registry-linked  # Farid April 12
     - ml/all-in-one-offboarding # Minha April 13
@@ -71,7 +69,6 @@ branches:
     - sk/remove-feature-phone-support  # Simon April 20
     - bmb/trial-signup-bug  # Biyeun April 21
     - ml/dhis2-error-handling # Minha April 21
-    - jm/elastic-client-adapter  # Joel April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
