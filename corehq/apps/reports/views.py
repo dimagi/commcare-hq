@@ -541,7 +541,7 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
-def querydict_to_dict(query_dict):
+def _querydict_to_dict(query_dict):
     data = {}
     for key in query_dict.keys():
         if key.endswith('[]'):
@@ -559,7 +559,7 @@ def querydict_to_dict(query_dict):
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(querydict_to_dict(request.POST))
+    form = EmailReportForm(_querydict_to_dict(request.POST))
     if not form.is_valid():
         return HttpResponseBadRequest(json.dumps(form.get_readable_errors()))
 
