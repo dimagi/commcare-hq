@@ -848,19 +848,19 @@ class EntriesHelper(object):
 
         return datums, assertions
 
-    def _get_datums(self, module_):
+    def _get_datums(self, module):
         """
         Return the datums of the first form in the given module
         """
-        if not module_:
+        if not module:
             return []
 
-        if module_.module_type == 'shadow' and module_.shadow_module_version > 1:
-            module_ = module_.source_module
+        if module.module_type == 'shadow' and module.shadow_module_version > 1:
+            module = module.source_module
 
         try:
             # assume that all forms in the module have the same case management
-            form = module_.get_form(0)
+            form = module.get_form(0)
         except FormNotFoundException:
             return []
         return self.get_datums_meta_for_form_generic(form)
@@ -952,7 +952,7 @@ class EntriesHelper(object):
         return detail, detail_enabled
 
 
-def _update_refs(datum_meta, changed_ids_):
+def _update_refs(datum_meta, changed_ids):
     """
     Update references in the nodeset of the given datum, if necessary
 
@@ -980,19 +980,19 @@ def _update_refs(datum_meta, changed_ids_):
         if hasattr(action, 'case_indices'):
             # This is an advanced module
             for case_index in action.case_indices:
-                if case_index.tag in changed_ids_:
+                if case_index.tag in changed_ids:
                     # update any reference to previously changed datums
-                    for change in changed_ids_[case_index.tag]:
+                    for change in changed_ids[case_index.tag]:
                         _apply_change_to_datum_attr(datum, 'nodeset', change)
                         _apply_change_to_datum_attr(datum, 'function', change)
         else:
-            if 'basic' in changed_ids_:
-                for change in changed_ids_['basic']:
+            if 'basic' in changed_ids:
+                for change in changed_ids['basic']:
                     _apply_change_to_datum_attr(datum, 'nodeset', change)
                     _apply_change_to_datum_attr(datum, 'function', change)
 
 
-def _rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
+def _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids):
     """
     If the ID of parent datum matches the ID of another datum in this
     form, rename the ID of the other datum in this form
@@ -1003,11 +1003,11 @@ def _rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
     case type of the datum in this form).
     """
     changed_id = {}
-    parent_datum = parent_datum_meta_.datum
-    action = this_datum_meta_.action
+    parent_datum = parent_datum_meta.datum
+    action = this_datum_meta.action
     if action:
-        if parent_datum.id in datum_ids_:
-            datum = datum_ids_[parent_datum.id]
+        if parent_datum.id in datum_ids:
+            datum = datum_ids[parent_datum.id]
             new_id = '_'.join((datum.datum.id, datum.case_type))
             # Only advanced module actions have a case_tag attribute.
             case_tag = getattr(action, 'case_tag', 'basic')
@@ -1021,7 +1021,7 @@ def _rename_other_id(this_datum_meta_, parent_datum_meta_, datum_ids_):
     return changed_id
 
 
-def _get_changed_id(this_datum_meta_, parent_datum_meta_):
+def _get_changed_id(this_datum_meta, parent_datum_meta):
     """
     Maps IDs in the child module to IDs in the parent module
 
@@ -1029,13 +1029,13 @@ def _get_changed_id(this_datum_meta_, parent_datum_meta_):
     ID "case_id" in the parent module.
     """
     changed_id = {}
-    action = this_datum_meta_.action
+    action = this_datum_meta.action
     if action:
         case_tag = getattr(action, 'case_tag', 'basic')
         changed_id = {
             case_tag: {
-                "old_id": this_datum_meta_.datum.id,
-                "new_id": parent_datum_meta_.datum.id
+                "old_id": this_datum_meta.datum.id,
+                "new_id": parent_datum_meta.datum.id
             }
         }
     return changed_id
