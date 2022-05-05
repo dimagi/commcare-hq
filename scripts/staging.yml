@@ -61,13 +61,10 @@ branches:
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - nh/loadtest_users_postmigration  # Norman March 25
-    - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
-    - fr/ucr-registry-linked  # Farid April 12
     - ml/all-in-one-offboarding # Minha April 13
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - sk/remove-feature-phone-support  # Simon April 20
-    - bmb/trial-signup-bug  # Biyeun April 21
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
