@@ -171,7 +171,8 @@ def test_ethiopian_to_gregorian_expression(self, source_doc, expected_value):
 
 
 @generate_cases([
-    ({"type": "constant", "constant": '2015-01-20'}, date(2022, 9, 30)),
+    ({"type": "constant", "constant": '2015-01-20'}, date(2022, 9, 30)),  # Date that looks like gregorian dates
+    ({"type": "constant", "constant": '2014-13-05'}, date(2022, 9, 10)),  # Invalid gregorian date, valid ethiopian
 ])
 def test_ethiopian_to_gregorian_expression_constant(self, expression, expected_value):
     """
