@@ -125,11 +125,6 @@
               {% if error.message %}
                 {% trans "Details:" %}
               {% endif %}
-            {% case "no forms" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has no forms.
-              {% endblocktrans %}
             {% case "no forms or case list" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
