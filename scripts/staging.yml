@@ -55,12 +55,12 @@ branches:
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     - sr/es-alias # Sravan Nov 18
     - ce/bulk-case-search # Cal July 6
-    #- sr/memoized-toggle # Sravan July 26
+    # - sr/memoized-toggle # Sravan July 26
     - smh/remove-extra-spinner-icons # Steph Oct 6
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    #- jm/elastic-client-adapter  # Joel Mar 1
+    # - jm/elastic-client-adapter  # Joel Mar 1
     - nh/loadtest_users_postmigration  # Norman March 25
     - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
     - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
