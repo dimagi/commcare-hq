@@ -46,5 +46,7 @@ object.__setattr__(_state.current_app, "_Proxy__local", _get_current_app)
 _state.get_current_app = _get_current_app
 
 if os.environ.get('DOCS_BUILD'):
+    # Before building docs, django.setup() needs to be run, specifically to register apps so that imports succeed.
+    # Adding this in docs/conf.py would be too early because autodoc_mock_imports have not yet been applied.
     import django
     django.setup()
