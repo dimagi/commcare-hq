@@ -26,11 +26,10 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.models import (
-    CommCareCaseIndexSQL,
-    CommCareCaseSQL,
     LedgerTransaction,
     LedgerValue,
 )
+from corehq.form_processor.models.cases import CommCareCase
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.util import (
@@ -59,7 +58,6 @@ RESOURCE_MODEL_STATS = [
     'cases_total',
     'case_transactions_per_form',
     'case_transactions_total',
-    'case_indices',
     'synclogs_per_user',
     'static_datasources',
     'dynamic_datasources',
@@ -131,7 +129,6 @@ class Command(BaseCommand):
         self.collect_case_indices()
         self.collect_synclogs()
         self.collect_devicelogs()
-        self.collect_case_to_case_index_ratio()
         self.collect_ledgers_per_case()
         self.collect_attachment_sizes()
         self.collect_ucr_data()
@@ -264,18 +261,19 @@ class Command(BaseCommand):
         resource_model['monthly_user_cases_updated'] = final_stats
 
     def collect_ledgers_per_case(self):
-        db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
-        results = (
-            LedgerValue.objects.using(db_name).filter(domain=self.domain)
-            .values('case_id')
-            .annotate(ledger_count=Count('pk'))
-        )[:100]
-
         case_ids = set()
         ledger_count = 0
-        for result in results:
-            case_ids.add(result['case_id'])
-            ledger_count += result['ledger_count']
+
+        for db_name in get_db_aliases_for_partitioned_query():
+            results = (
+                LedgerValue.objects.using(db_name).filter(domain=self.domain)
+                .values('case_id')
+                .annotate(ledger_count=Count('pk'))
+            )
+
+            for result in results:
+                case_ids.add(result['case_id'])
+                ledger_count += result['ledger_count']
 
         if not case_ids:
             self.stdout.write("Domain has no ledgers")
@@ -294,7 +292,7 @@ class Command(BaseCommand):
             self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
             db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
             results = (
-                CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
+                CommCareCase.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
                 .annotate(lifespan=F('closed_on') - F('opened_on'))
                 .annotate(avg_lifespan=Avg('lifespan'))
                 .values('avg_lifespan', flat=True)
@@ -322,18 +320,6 @@ class Command(BaseCommand):
 
         self.stdout.write('Ledger updates per case')
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
-
-    def collect_case_to_case_index_ratio(self):
-        case_count_total = 0
-        case_index_count_total = 0
-
-        for db_name in get_db_aliases_for_partitioned_query():
-            case_query = CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain)
-            index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
-            case_count_total += estimate_row_count(case_query, db_name)
-            case_index_count_total += estimate_row_count(index_query, db_name)
-
-        resource_model['case_index_ratio'] = case_index_count_total / case_count_total
 
     def collect_attachment_sizes(self):
         result = []
@@ -404,38 +390,28 @@ class Command(BaseCommand):
 
             with db_cursor as cursor:
                 cursor.execute("""
-                    SELECT COUNT(*) as num_forms, d.count as num_updates
+                    SELECT COUNT(*) as num_forms, sum(d.count) as num_updates
                     FROM (
                         SELECT COUNT(*) as count
-                        FROM form_processor_casetransaction
-                        WHERE case_id IN (
-                            SELECT case_id
-                            FROM form_processor_commcarecasesql
-                            WHERE domain = %s
-                        )
+                        FROM form_processor_casetransaction t 
+                        JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
+                        WHERE c.domain = %s
                         GROUP BY form_id
                     ) AS d
-                    GROUP BY d.count;
                 """, [self.domain])
                 result = cursor.fetchall()
+                forms, form_case_updates = (0, 0)
+                if result:
+                    forms, form_case_updates = result[0]
 
-                running_form_case_updates = 0
-                forms = 0
-                for num_forms, num_updates in result:
-                    forms += num_forms
-                    running_form_case_updates += num_forms * num_updates
-
-                total_form_case_updates += running_form_case_updates
                 total_forms += forms
+                total_form_case_updates += form_case_updates
 
                 cursor.execute("""
-                    SELECT COUNT(*)
-                    FROM form_processor_casetransaction
-                    WHERE case_id IN (
-                        SELECT case_id
-                        FROM form_processor_commcarecasesql
-                        WHERE domain = %s
-                    );
+                    SELECT COUNT(*) as count
+                    FROM form_processor_casetransaction t 
+                    JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
+                    WHERE c.domain = %s
                 """, [self.domain])
                 (transactions,) = cursor.fetchone()
                 total_transactions += transactions
@@ -459,7 +435,9 @@ class Command(BaseCommand):
 
         total_cases = resource_model['cases_total']
         if total_cases > 0:
-            resource_model['case_indices'] = total_case_indices/total_cases
+            resource_model['case_index_ratio'] = total_case_indices/total_cases
+        else:
+            resource_model['case_index_ratio'] = 0
 
     def collect_synclogs(self):
         db_name = router.db_for_read(SyncLogSQL)
@@ -467,25 +445,24 @@ class Command(BaseCommand):
 
         with db_cursor as cursor:
             cursor.execute("""
-                SELECT COUNT(*), d.count
+                SELECT COUNT(*), sum(d.count)
                 FROM (
                     SELECT COUNT(*) AS count
                     FROM phone_synclogsql
                     WHERE domain = %s
                     GROUP BY user_id
                 ) AS d
-                GROUP BY d.count
-                ORDER BY d.count;
             """, [self.domain])
             result = cursor.fetchall()
 
-            total_user_synclogs = 0
-            total_users = 0
-            for num_users, num_synclogs in result:
-                total_users += num_users
-                total_user_synclogs += num_users * num_synclogs
+            total_users, total_user_synclogs = (0, 0)
+            if result:
+                total_users, total_user_synclogs = result[0]
 
-            resource_model['synclogs_per_user'] = total_user_synclogs / total_users
+            if total_users > 0:
+                resource_model['synclogs_per_user'] = total_user_synclogs / total_users
+            else:
+                resource_model['synclogs_per_user'] = 0
 
     def collect_devicelogs(self):
         from phonelog.models import DeviceReportEntry
