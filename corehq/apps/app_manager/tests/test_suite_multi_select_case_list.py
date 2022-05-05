@@ -334,7 +334,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.assert_module_datums(self.m0.id, [('instance-datum', 'selected_cases')])
 
         self.assert_module_datums(self.m1.id, [('datum', 'case_id')])
-        # case_id isn't defined in the session
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_multiselect(self):
