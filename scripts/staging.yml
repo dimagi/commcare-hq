@@ -79,7 +79,6 @@ branches:
     - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
     - ml/case-property-bug # Minha April 28
     - jls/tab-nodeset-filter # Jenny May 2
-    - rc/case-search-accessibility+jls/conditional-case-search #Robert May 3
     - jls/conditional-case-search # Jenny May 3
     - jls/multiple-referrals-eof-nav # Jenny May 5
 submodules: { }
