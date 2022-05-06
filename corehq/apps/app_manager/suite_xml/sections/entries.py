@@ -887,12 +887,20 @@ class EntriesHelper(object):
                 if not parent_datum_meta.requires_selection:
                     # Add parent datums of opened subcases and automatically-selected cases
                     datums.insert(i, attr.evolve(parent_datum_meta, from_parent=True))
-                elif this_datum_meta and _is_conflict(this_datum_meta, parent_datum_meta):
-                    _append_update(changed_ids_by_case_tag,
-                                    _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
-                    _append_update(changed_ids_by_case_tag,
-                                    _get_changed_id(this_datum_meta, parent_datum_meta))
-                    this_datum_meta.datum.id = parent_datum_meta.datum.id
+                elif _same_case_datum_type(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
+                    def set_id(datum, new_id):
+                        case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
+                        changed_ids_by_case_tag[case_tag].append({
+                            'old_id': datum.id,
+                            'new_id': new_id,
+                        })
+                        datum.id = new_id
+
+                    if parent_datum_meta.datum.id in datum_ids:
+                        datum = datum_ids[parent_datum_meta.datum.id]
+                        set_id(datum.datum, '_'.join((datum.datum.id, datum.case_type)))
+
+                    set_id(this_datum_meta.datum, parent_datum_meta.datum.id)
 
     @staticmethod
     def _get_module_for_persistent_context(detail_module, module_unique_id):
@@ -989,60 +997,7 @@ def _update_refs(datum_meta, changed_ids):
                     _apply_change_to_datum_attr(datum, 'function', change)
 
 
-def _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids):
-    """
-    If the ID of parent datum matches the ID of another datum in this
-    form, rename the ID of the other datum in this form
-
-    e.g. if parent datum ID == "case_id" and there is a datum in this
-    form with the ID of "case_id" too, then rename the ID of the datum
-    in this form to "case_id_<case_type>" (where <case_type> is the
-    case type of the datum in this form).
-    """
-    changed_id = {}
-    parent_datum = parent_datum_meta.datum
-    action = this_datum_meta.action
-    if action:
-        if parent_datum.id in datum_ids:
-            datum = datum_ids[parent_datum.id]
-            new_id = '_'.join((datum.datum.id, datum.case_type))
-            # Only advanced module actions have a case_tag attribute.
-            case_tag = getattr(action, 'case_tag', 'basic')
-            changed_id = {
-                case_tag: {
-                    'old_id': datum.datum.id,
-                    'new_id': new_id,
-                }
-            }
-            datum.datum.id = new_id
-    return changed_id
-
-
-def _get_changed_id(this_datum_meta, parent_datum_meta):
-    """
-    Maps IDs in the child module to IDs in the parent module
-
-    e.g. The case with the ID "parent_id" in the child module has the
-    ID "case_id" in the parent module.
-    """
-    changed_id = {}
-    action = this_datum_meta.action
-    if action:
-        case_tag = getattr(action, 'case_tag', 'basic')
-        changed_id = {
-            case_tag: {
-                "old_id": this_datum_meta.datum.id,
-                "new_id": parent_datum_meta.datum.id
-            }
-        }
-    return changed_id
-
-
-def _append_update(dict_, new_dict):
-    for key in new_dict:
-        dict_[key].append(new_dict[key])
-
-
-def _is_conflict(this_datum_meta, parent_datum_meta):
-    return (this_datum_meta.case_type == parent_datum_meta.case_type
+def _same_case_datum_type(this_datum_meta, parent_datum_meta):
+    return (this_datum_meta
+            and this_datum_meta.case_type == parent_datum_meta.case_type
             and type(this_datum_meta.datum) == type(parent_datum_meta.datum))
