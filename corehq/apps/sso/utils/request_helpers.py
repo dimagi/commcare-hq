@@ -35,7 +35,11 @@ def get_request_data(request):
 
 
 def is_request_using_sso(request):
-    return bool(hasattr(request, 'session') and request.session.get('samlSessionIndex'))
+    if not hasattr(request, 'session'):
+        return False
+    is_using_saml = request.session.get('samlSessionIndex') is not None
+    is_using_oidc = request.session.get('oidc_state') is not None
+    return is_using_saml or is_using_oidc
 
 
 def is_request_blocked_from_viewing_domain_due_to_sso(request, domain_obj):
