@@ -130,6 +130,24 @@ class CaseClaimTests(TestCase):
         first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
         self.assertEqual(first_claim, {self.host_case_id})
 
+    def test_claim_index_deleted(self):
+        """
+        get_first_claim should return None if claim case is closed
+        """
+        claim_id = claim_case(DOMAIN, self.restore_user, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+
+        # delete the case index
+        case_block = CaseBlock(
+            create=False,
+            case_id=claim_id,
+            index={"host": (self.host_case_type, "")}
+        ).as_xml()
+        post_case_blocks([case_block], {'domain': DOMAIN})
+
+        first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
+        self.assertEqual(len(first_claim), 0)
+
     def test_claim_case_other_domain(self):
         malicious_domain = 'malicious_domain'
         domain_obj = create_domain(malicious_domain)
