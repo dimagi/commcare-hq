@@ -867,35 +867,32 @@ class EntriesHelper(object):
 
     def add_parent_datums(self, datums, module):
         parent_datums = self._get_datums(module.root_module)
-        if parent_datums:
-            # we need to try and match the datums to the root module so that
-            # the navigation on the phone works correctly
-            # 1. Add in any datums that don't require user selection e.g. new case IDs
-            # 2. Match the datum ID for datums that appear in the same position and
-            #    will be loading the same case type
-            # see advanced_app_features#child-modules in docs
-            datum_ids = {d.datum.id: d for d in datums}
-            index = 0
-            changed_ids_by_case_tag = defaultdict(list)
-            for this_datum_meta, parent_datum_meta in list(zip_longest(datums, parent_datums)):
-                if this_datum_meta:
-                    _update_refs(this_datum_meta, changed_ids_by_case_tag)
-                if not parent_datum_meta:
-                    continue
-                if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
-                    if not parent_datum_meta.requires_selection:
-                        # Add parent datums of opened subcases and automatically-selected cases
-                        datums.insert(index, attr.evolve(parent_datum_meta, from_parent=True))
-                    elif this_datum_meta:
-                        same_case_type = this_datum_meta.case_type == parent_datum_meta.case_type
-                        same_datum_type = type(this_datum_meta.datum) == type(parent_datum_meta.datum)
-                        if same_case_type and same_datum_type:
-                            _append_update(changed_ids_by_case_tag,
-                                          _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
-                            _append_update(changed_ids_by_case_tag,
-                                          _get_changed_id(this_datum_meta, parent_datum_meta))
-                            this_datum_meta.datum.id = parent_datum_meta.datum.id
-                index += 1
+        if not parent_datums:
+            return
+
+        # we need to try and match the datums to the root module so that
+        # the navigation on the phone works correctly
+        # 1. Add in any datums that don't require user selection e.g. new case IDs
+        # 2. Match the datum ID for datums that appear in the same position and
+        #    will be loading the same case type
+        # see advanced_app_features#child-modules in docs
+        datum_ids = {d.datum.id: d for d in datums}
+        changed_ids_by_case_tag = defaultdict(list)
+        for i, (this_datum_meta, parent_datum_meta) in list(enumerate(zip_longest(datums, parent_datums))):
+            if this_datum_meta:
+                _update_refs(this_datum_meta, changed_ids_by_case_tag)
+            if not parent_datum_meta:
+                continue
+            if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
+                if not parent_datum_meta.requires_selection:
+                    # Add parent datums of opened subcases and automatically-selected cases
+                    datums.insert(i, attr.evolve(parent_datum_meta, from_parent=True))
+                elif this_datum_meta and _is_conflict(this_datum_meta, parent_datum_meta):
+                    _append_update(changed_ids_by_case_tag,
+                                    _rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
+                    _append_update(changed_ids_by_case_tag,
+                                    _get_changed_id(this_datum_meta, parent_datum_meta))
+                    this_datum_meta.datum.id = parent_datum_meta.datum.id
 
     @staticmethod
     def _get_module_for_persistent_context(detail_module, module_unique_id):
@@ -1044,3 +1041,8 @@ def _get_changed_id(this_datum_meta, parent_datum_meta):
 def _append_update(dict_, new_dict):
     for key in new_dict:
         dict_[key].append(new_dict[key])
+
+
+def _is_conflict(this_datum_meta, parent_datum_meta):
+    return (this_datum_meta.case_type == parent_datum_meta.case_type
+            and type(this_datum_meta.datum) == type(parent_datum_meta.datum))
