@@ -19,6 +19,7 @@ from corehq.apps.smsforms.models import (
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import flag_enabled
 
+
 @flag_enabled("ONE_PHONE_NUMBER_MULTIPLE_CONTACTS")
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
        new=lambda contact_id: contextlib.supress())
