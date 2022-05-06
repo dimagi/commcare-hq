@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
-from time import sleep, time
+from time import sleep
 
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
 from celery import shared_task
 from django.conf import settings
-# import kombu.five
+
 
 from corehq.apps.celery import periodic_task
 
@@ -39,9 +39,8 @@ class TaskInfo(object):
     def __init__(self, _id, name, time_start=None):
         self.id = _id
         self.name = name
-        # http://stackoverflow.com/questions/20091505/celery-task-with-a-time-start-attribute-in-1970
         if time_start:
-            self.time_start = datetime.fromtimestamp(time() - kombu.five.monotonic() + time_start)
+            self.time_start = datetime.fromtimestamp(time_start)
         else:
             self.time_start = None
 
