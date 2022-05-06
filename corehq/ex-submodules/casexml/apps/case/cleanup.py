@@ -150,7 +150,17 @@ def get_first_claims(domain, user_id, case_ids):
     potential_cases = CommCareCase.objects.get_reverse_indexed_cases(
         domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
     # creates set of claimed case_ids where owner_id = user_id
-    previously_claimed_ids = {case.get_index('host').referenced_id for case in potential_cases
-        if case.owner_id == user_id}
 
-    return previously_claimed_ids
+    def _get_host_case_id(case):
+        """The actual index identifier is irrelevant so return the referenced case ID from the first
+        extension index."""
+        for index in case.live_indices:
+            if index.relationship == CASE_INDEX_EXTENSION:
+                return index.referenced_id
+
+    previously_claimed_ids = {
+        _get_host_case_id(case) for case in potential_cases
+        if case.owner_id == user_id
+    }
+
+    return set(case_id for case_id in previously_claimed_ids if case_id)
