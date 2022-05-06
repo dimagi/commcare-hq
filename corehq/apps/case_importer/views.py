@@ -9,7 +9,6 @@ from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
@@ -34,15 +33,20 @@ from corehq.apps.case_importer.suggested_fields import (
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.view_utils import absolute_reverse
-from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.util.view_utils import absolute_reverse
+from corehq.util.workbook_reading import (
+    SpreadsheetFileExtError,
+    SpreadsheetFileInvalidError,
+    valid_extensions,
+)
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
