@@ -119,6 +119,8 @@ from corehq.apps.userreports.models import (
     get_report_config,
     id_is_static,
     report_config_id_is_static,
+    RegistryDataSourceConfiguration,
+    is_data_registry_report,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
