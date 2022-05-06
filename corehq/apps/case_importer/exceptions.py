@@ -22,8 +22,8 @@ class ImporterFileNotFound(ImporterError):
     """Raised when a referenced file can't be found"""
 
 
-class ImporterRefError(ImporterError):
-    """Raised when a Soil download ref is None"""
+class ImporterCacheError(ImporterError):
+    """Raised when a referenced file can't be found in cache"""
 
 
 class ImporterExcelError(ImporterError, xlrd.XLRDError):

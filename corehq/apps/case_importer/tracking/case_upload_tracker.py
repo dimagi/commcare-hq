@@ -4,7 +4,7 @@ from django.db import transaction
 
 from memoized import memoized
 
-from corehq.apps.case_importer.exceptions import ImporterRefError
+from corehq.apps.case_importer.exceptions import ImporterCacheError
 from corehq.apps.case_importer.tracking.exceptions import TimedOutWaitingForCaseUploadRecord
 from corehq.apps.case_importer.tracking.filestorage import (
     persistent_file_store,
@@ -59,7 +59,7 @@ class CaseUpload(object):
         """
         tempfile = self.get_tempfile()
         if not tempfile:
-            raise ImporterRefError('file not found in cache')
+            raise ImporterCacheError('file not found in cache')
         open_spreadsheet_download_ref(tempfile)
 
     def get_spreadsheet(self):
