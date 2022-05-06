@@ -3,7 +3,7 @@ import uuid
 from collections import namedtuple
 from tempfile import mkstemp
 
-from django.core.cache import caches, DEFAULT_CACHE_ALIAS
+from django.core.cache import cache
 
 from memoized import memoized
 
@@ -68,7 +68,7 @@ class TransientFileStore(object):
     """
     def __init__(self, bucket, timeout):
         self._bucket = bucket
-        self._cache = caches[DEFAULT_CACHE_ALIAS]
+        self._cache = cache
         self._timeout = timeout
 
     def _get_key(self, identifier):
