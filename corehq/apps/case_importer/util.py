@@ -10,7 +10,6 @@ from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
-    ImporterCacheError,
     ImporterExcelError,
     ImporterExcelFileEncrypted,
     ImporterFileNotFound,
@@ -184,12 +183,9 @@ def get_spreadsheet(filename):
 
 
 def get_importer_error_message(e):
-    if isinstance(e, ImporterCacheError):
-        return _('The file you uploaded cannot be read successfully. '
-                 'Please try again and reach out to support if the problem persists.')
-    elif isinstance(e, ImporterFileNotFound):
-        return _('The session containing the file you uploaded has expired. '
-                 'Please upload a new one.')
+    if isinstance(e, ImporterFileNotFound):
+        return _('There was an unexpected error retrieving the file you uploaded. '
+                 'Please try again and contact support if the problem persists.')
     elif isinstance(e, ImporterExcelFileEncrypted):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')

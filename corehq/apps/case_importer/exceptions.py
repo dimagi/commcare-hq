@@ -22,10 +22,6 @@ class ImporterFileNotFound(ImporterError):
     """Raised when a referenced file can't be found"""
 
 
-class ImporterCacheError(ImporterError):
-    """Raised when a referenced file can't be found in cache"""
-
-
 class ImporterExcelError(ImporterError, xlrd.XLRDError):
     """
     Generic error raised for any error parsing an Excel file

@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from corehq.apps.hqwebapp.decorators import waf_allow
+from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -21,6 +22,7 @@ from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
+    ImporterFileNotFound,
     ImporterRawError,
 )
 from corehq.apps.case_importer.extension_points import (
@@ -95,6 +97,9 @@ def excel_config(request, domain):
         case_upload, context = _process_file_and_get_upload(
             uploaded_file_handle, request, domain, max_columns=MAX_CASE_IMPORTER_COLUMNS
         )
+    except ImporterFileNotFound as e:
+        notify_error(f"Import file not found after initial upload: {str(e)}")
+        return render_error(request, domain, get_importer_error_message(e))
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
