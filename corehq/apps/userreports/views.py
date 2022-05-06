@@ -26,9 +26,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.userreports.forms import UCRExpressionForm, UCRExpressionUpdateForm
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -61,7 +58,7 @@ from corehq.apps.domain.decorators import (
     api_auth_with_scope,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -72,14 +69,15 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
     DATA_SOURCE_TYPE_RAW,
@@ -108,9 +106,14 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.forms import (
+    UCRExpressionForm,
+    UCRExpressionUpdateForm,
+)
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
+    RegistryDataSourceConfiguration,
     RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
@@ -118,9 +121,8 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
-    report_config_id_is_static,
-    RegistryDataSourceConfiguration,
     is_data_registry_report,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
