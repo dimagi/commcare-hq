@@ -34,9 +34,11 @@ class PeriodicTask(Task):
 
 
 def periodic_task(*args, **options):
+    if not options.get('options'):
+        options['options'] = {}
     if options.get('queue'):
-        options['options'] = {
+        options['options'].update({
             'queue': options.pop('queue')
-        }
+        })
     options['base'] = PeriodicTask
     return app.task(**options)
