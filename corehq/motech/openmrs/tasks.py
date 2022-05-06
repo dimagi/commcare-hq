@@ -12,13 +12,14 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID

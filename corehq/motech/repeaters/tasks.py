@@ -3,13 +3,14 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.celery import periodic_task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,

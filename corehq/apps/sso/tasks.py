@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol

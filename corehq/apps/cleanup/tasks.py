@@ -6,7 +6,7 @@ from django.core.management import call_command
 from django.db import connections
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain

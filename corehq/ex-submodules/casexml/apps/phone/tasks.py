@@ -5,12 +5,13 @@ from django.db import connections, router
 
 from celery import current_task, current_app
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_gauge
 
 log = logging.getLogger(__name__)

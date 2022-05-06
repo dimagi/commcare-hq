@@ -6,11 +6,12 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.models import XFormInstance

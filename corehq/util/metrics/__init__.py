@@ -113,7 +113,7 @@ from contextlib import ContextDecorator
 from functools import wraps
 from typing import Iterable, Callable, Dict
 
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from django.conf import settings
 from sentry_sdk import add_breadcrumb

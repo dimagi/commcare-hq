@@ -15,7 +15,7 @@ import six.moves.urllib.parse
 import six.moves.urllib.request
 import tinys3
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 

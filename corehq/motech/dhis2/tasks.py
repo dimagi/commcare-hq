@@ -3,8 +3,9 @@ from datetime import datetime
 from psycopg2 import DatabaseError
 from django.utils.translation import gettext_lazy as _
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 
+from corehq.apps.celery import periodic_task
 from corehq.motech.utils import pformat_json
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 

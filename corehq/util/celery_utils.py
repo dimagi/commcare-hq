@@ -4,9 +4,11 @@ from time import sleep, time
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import task
 from django.conf import settings
 import kombu.five
+
+from corehq.apps.celery import periodic_task
 
 
 def no_result_task(*args, **kwargs):

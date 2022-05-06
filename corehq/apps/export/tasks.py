@@ -9,7 +9,8 @@ from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
+from corehq.apps.celery import periodic_task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.models.incremental import generate_and_send_incremental_export
 from corehq.apps.export.exceptions import RejectedStaleExport

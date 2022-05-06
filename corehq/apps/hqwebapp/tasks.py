@@ -8,8 +8,9 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import task
 
+from corehq.apps.celery import periodic_task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors

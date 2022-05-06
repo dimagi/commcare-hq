@@ -2,7 +2,7 @@ from datetime import datetime
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL

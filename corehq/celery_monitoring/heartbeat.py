@@ -1,6 +1,6 @@
 import datetime
 
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from django.conf import settings
 from django.core.cache import cache
 

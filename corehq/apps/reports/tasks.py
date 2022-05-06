@@ -4,7 +4,7 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
@@ -15,6 +15,7 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters

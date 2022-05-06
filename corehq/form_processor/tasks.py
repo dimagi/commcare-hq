@@ -2,7 +2,7 @@ import time
 from datetime import timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from django.conf import settings
 
 from corehq.form_processor.reprocess import reprocess_unfinished_stub

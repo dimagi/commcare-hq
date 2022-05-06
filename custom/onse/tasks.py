@@ -8,13 +8,14 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase

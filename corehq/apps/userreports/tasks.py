@@ -13,9 +13,10 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from couchdbkit import ResourceConflict, ResourceNotFound
 
+from corehq.apps.celery import periodic_task
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
 from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
