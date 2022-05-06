@@ -17,8 +17,7 @@ from couchdbkit import BulkSaveError, ResourceConflict
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.celery import periodic_task
-from corehq.util.metrics import metrics_counter, metrics_gauge
-from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_counter
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
