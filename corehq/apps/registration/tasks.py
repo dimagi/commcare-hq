@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.translation import gettext
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
@@ -61,7 +61,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-@task(queue="email_queue")
+@shared_task(queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {

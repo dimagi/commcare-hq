@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
@@ -69,7 +69,7 @@ def build_last_month_GIR():
     )
 
 
-@task(queue='malt_generation_queue')
+@shared_task(queue='malt_generation_queue')
 def update_malt(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     generate_malt([month], domains=domains)

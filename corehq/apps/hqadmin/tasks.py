@@ -13,14 +13,14 @@ from django.template.loader import render_to_string
 
 import attr
 from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
+from celery import shared_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -72,7 +72,7 @@ def check_non_dimagi_superusers():
         notify_error(message=message)
 
 
-@task(serializer='pickle', queue="email_queue")
+@shared_task(serializer='pickle', queue="email_queue")
 def send_mass_emails(email_for_requesting_user, real_email, subject, html, text):
 
     if real_email:
@@ -135,7 +135,7 @@ class AbnormalUsageAlert(object):
     message = attr.ib()
 
 
-@task(serializer='pickle', queue="email_queue")
+@shared_task(serializer='pickle', queue="email_queue")
 def send_abnormal_usage_alert(alert):
     """ Sends an alert to #support and email to let support know when a domain is doing something weird
 

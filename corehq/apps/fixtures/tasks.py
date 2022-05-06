@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from celery.task import task
+from celery import shared_task
 
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase
@@ -14,7 +14,7 @@ from corehq.apps.fixtures.upload import upload_fixture_file
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
-@task
+@shared_task
 def fixture_upload_async(domain, download_id, replace, skip_orm, user_email=None):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
@@ -54,7 +54,7 @@ def send_upload_fixture_complete_email(email, domain, time_start, time_end, mess
     return
 
 
-@task
+@shared_task
 def async_fixture_download(table_ids, domain, download_id, owner_id):
     task = async_fixture_download
     DownloadBase.set_progress(task, 0, 100)
@@ -62,7 +62,7 @@ def async_fixture_download(table_ids, domain, download_id, owner_id):
     DownloadBase.set_progress(task, 100, 100)
 
 
-@task(queue='background_queue', bind=True, default_retry_delay=15 * 60)
+@shared_task(queue='background_queue', bind=True, default_retry_delay=15 * 60)
 def delete_unneeded_fixture_data_item(self, domain, data_type_id):
     """Deletes all fixture data items and their ownership models based on their data type.
 

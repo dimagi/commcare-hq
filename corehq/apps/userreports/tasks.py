@@ -13,7 +13,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from couchdbkit import ResourceConflict, ResourceNotFound
 
 from corehq.apps.celery import periodic_task
@@ -138,7 +138,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
         _iteratively_build_table(config, in_place=True)
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
@@ -206,7 +206,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
             current_config.save()
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE)
+@shared_task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     if report_config_id not in settings.UCR_COMPARISONS:
         return
@@ -277,7 +277,7 @@ def _compare_ucr_reports(domain, control_report, candidate_report, filter_values
     return objects
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
+@shared_task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def delete_data_source_task(domain, config_id):
     from corehq.apps.userreports.views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
@@ -362,12 +362,12 @@ def _queue_indicators(async_indicators, use_agg_queue=False):
             build_async_indicators.delay(indicator_doc_ids)
 
 
-@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+@shared_task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
 def build_indicators_with_agg_queue(indicator_doc_ids):
     build_async_indicators(indicator_doc_ids)
 
 
-@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
@@ -628,7 +628,7 @@ def _indicator_metrics(date_created=None):
     return ret
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')

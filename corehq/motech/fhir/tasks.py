@@ -3,7 +3,7 @@ from typing import Generator, List
 from uuid import uuid4
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from django.conf import settings
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
@@ -73,7 +73,7 @@ def run_monthly_importers():
         run_importer.delay(importer_id)
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def run_importer(importer_id):
     """
     Poll remote API and import resources as CommCare cases.

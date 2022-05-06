@@ -1,4 +1,4 @@
-from celery.task import task
+from celery import shared_task
 from datetime import timedelta
 
 from corehq import toggles
@@ -133,7 +133,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
             close_session.delay(contact_id, session_id)
 
 
-@task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
+@shared_task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
 def close_session(self, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)

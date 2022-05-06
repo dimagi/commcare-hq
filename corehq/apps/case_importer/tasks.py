@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
@@ -16,7 +16,7 @@ from .tracking.task_status import make_task_status_success
 from .util import get_importer_error_message, exit_celery_with_error_message, ImporterConfig
 
 
-@task(queue='case_import_queue')
+@shared_task(queue='case_import_queue')
 def bulk_import_async(config_dict, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     # case_upload.trigger_upload fires off this task right before saving the CaseUploadRecord
@@ -43,7 +43,7 @@ def bulk_import_async(config_dict, domain, excel_id):
             store_failed_task_result.delay(excel_id)
 
 
-@task(queue='case_import_queue')
+@shared_task(queue='case_import_queue')
 def store_failed_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_failed_task_result()

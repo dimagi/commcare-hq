@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -16,7 +16,7 @@ from corehq.util.decorators import serial_task
 logger = get_task_logger(__name__)
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercase
     if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
@@ -47,7 +47,7 @@ def autogenerate_build_task(app_id, domain, version, comment):
     return copy
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
@@ -60,7 +60,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)
@@ -76,13 +76,13 @@ def prune_auto_generated_builds(domain, app_id):
         app.save(increment_version=False)
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, email):
     from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
     update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email)
 
 
-@task
+@shared_task
 def load_appcues_template_app(domain, username, app_slug):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
     load_app_from_slug(domain, username, app_slug)

@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
@@ -73,7 +73,7 @@ def sync_usercases_if_applicable(user, spawn_task):
             sync_usercases(user, user.domain)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def sync_usercases_task(user_id, domain):
     user = CouchUser.get_by_user_id(user_id)
     sync_usercases(user, domain)

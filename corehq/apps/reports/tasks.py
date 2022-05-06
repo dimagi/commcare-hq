@@ -4,7 +4,7 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
@@ -53,7 +53,7 @@ def update_calculated_properties():
         update_calculated_properties_for_domains.delay(chunk)
 
 
-@task(queue='background_queue')
+@shared_task(queue='background_queue')
 def update_calculated_properties_for_domains(domains):
     """
     :param domains: list of {'name': <name>, '_id': <id>} entries
@@ -159,7 +159,7 @@ def apps_update_calculated_properties():
         send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
-@task(serializer='pickle', ignore_result=True)
+@shared_task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
@@ -209,7 +209,7 @@ def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     return key
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def build_form_multimedia_zipfile(
         domain,
         export_id,
@@ -227,7 +227,7 @@ def build_form_multimedia_zipfile(
 
 
 # ToDo: Remove post build_form_multimedia_zipfile rollout
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
         export_id,

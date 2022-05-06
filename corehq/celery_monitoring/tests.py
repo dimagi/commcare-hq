@@ -1,4 +1,4 @@
-from celery.task import task
+from celery import shared_task
 from django.conf import settings
 
 import datetime
@@ -93,23 +93,23 @@ def test_import_tasks():
 
 
 def test_get_domain_from_task():
-    @task()
+    @shared_task()
     def example_task_1(domain, var1, var2):
         pass
 
-    @task()
+    @shared_task()
     def example_task_2(var1, domain, var2):
         pass
 
-    @task()
+    @shared_task()
     def example_task_3(var1, var2, domain=None):
         pass
 
-    @task()
+    @shared_task()
     def example_task_4(domain_name):
         pass
 
-    @task()
+    @shared_task()
     def example_task_5(var1, var2):
         pass
 

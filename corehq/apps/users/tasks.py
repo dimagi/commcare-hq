@@ -10,13 +10,13 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -34,13 +34,13 @@ from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic
 logger = get_task_logger(__name__)
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
     from corehq.apps.users.bulk_download import dump_usernames
     dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async, owner_id)
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters, is_web_download, owner_id):
     from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
     errors = []
@@ -83,7 +83,7 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 
 
 # rate limit to two bulk saves per second so cloudant has time to reindex
-@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
+@shared_task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
@@ -96,7 +96,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, delet
         delete_duplicates_for_cases.delay(case_ids)
 
 
-@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
 def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list, deletion_id,
                                                   deletion_date, deleted_cases=None):
     """
@@ -154,20 +154,20 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
     to_delete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=True)
     XFormInstance.objects.soft_delete_forms(domain, to_delete, deletion_date, deletion_id)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def undelete_system_forms(domain, deleted_forms, deleted_cases):
     """The reverse of tag_system_forms_as_deleted; called on user.unretire()"""
     to_undelete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=False)
     XFormInstance.objects.soft_undelete_forms(domain, to_undelete)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
+@shared_task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
     if toggles.SKIP_REMOVE_INDICES.enabled(domain):
         return
@@ -204,7 +204,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     submit_case_blocks(case_updates, domain, device_id=device_id)
 
 
-@task(serializer='pickle', bind=True, queue='background_queue', ignore_result=True,
+@shared_task(serializer='pickle', bind=True, queue='background_queue', ignore_result=True,
       default_retry_delay=5 * 60, max_retries=3, acks_late=True)
 def _rebuild_case_with_retries(self, domain, case_id, detail):
     """
@@ -241,7 +241,7 @@ def resend_pending_invitations():
                 invitation.send_activation_email(days_to_expire - days)
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def turn_on_demo_mode_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import turn_on_demo_mode
     from corehq.apps.users.models import CommCareUser
@@ -256,7 +256,7 @@ def turn_on_demo_mode_task(commcare_user_id, domain):
     }
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def reset_demo_user_restore_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import reset_demo_user_restore
     from corehq.apps.users.models import CommCareUser
@@ -278,13 +278,13 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
     return {'messages': results}
 
 
-@task(serializer='pickle')
+@shared_task(serializer='pickle')
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
 
 
-@task()
+@shared_task()
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id)

@@ -1,4 +1,4 @@
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch.database import iter_docs
@@ -10,7 +10,7 @@ from corehq.apps.users.signals import update_user_in_es
 logger = get_task_logger(__name__)
 
 
-@task(queue='background_queue', ignore_result=True)
+@shared_task(queue='background_queue', ignore_result=True)
 def refresh_es_for_profile_users(domain, profile_id):
     try:
         profile = CustomDataFieldsProfile.objects.get(id=profile_id, definition__domain=domain)

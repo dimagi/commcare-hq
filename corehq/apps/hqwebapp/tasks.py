@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 
 from corehq.apps.celery import periodic_task
 from corehq.util.bounced_email_manager import BouncedEmailManager
@@ -39,7 +39,7 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
         )
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, from_email, recipient_list,
                     messaging_event_id=None, domain=None):
@@ -121,7 +121,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
@@ -169,7 +169,7 @@ def send_html_email_async(self, subject, recipient, html_content,
                 mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
-@task(serializer='pickle', queue="email_queue",
+@shared_task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def mail_admins_async(self, subject, message, fail_silently=False, connection=None,
                       html_message=None):

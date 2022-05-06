@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
@@ -100,7 +100,7 @@ def _iterate_repeat_records_for_partition(start, partition, total_partitions):
         yield from iterate_repeat_records_for_ids(chunked_ids)
 
 
-@task(queue=settings.CELERY_PERIODIC_QUEUE)
+@shared_task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition):
     """
     The CHECK_REPEATERS_PARTITION_COUNT constant dictates the total number of partitions
@@ -145,7 +145,7 @@ def check_repeaters_in_partition(partition):
         check_repeater_lock.release()
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record_id):
     """
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
@@ -154,7 +154,7 @@ def process_repeat_record(repeat_record_id):
     _process_repeat_record(repeat_record)
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def retry_process_repeat_record(repeat_record_id):
     """
     NOTE: Keep separate from process_repeat_record for monitoring purposes
@@ -211,7 +211,7 @@ metrics_gauge_task(
 )
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@shared_task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(repeater_id: int):
     """
     Worker task to send SQLRepeatRecords in chronological order.

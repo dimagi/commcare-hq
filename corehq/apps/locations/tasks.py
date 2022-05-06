@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 
-from celery.task import task
+from celery import shared_task
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
@@ -35,7 +35,7 @@ def sync_administrative_status(location_type):
         location.save()
 
 
-@task
+@shared_task
 def download_locations_async(domain, download_id, include_consumption,
                              headers_only, owner_id, root_location_ids=None, **kwargs):
     DownloadBase.set_progress(download_locations_async, 0, 100)
@@ -93,7 +93,7 @@ def import_locations_async(domain, file_ref_id, user_id):
     }
 
 
-@task
+@shared_task
 def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_ids):
     """
     Update location fixtures for users given locations

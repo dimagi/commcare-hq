@@ -8,7 +8,7 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import task
+from celery import shared_task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
@@ -74,7 +74,7 @@ def update_facility_cases_from_dhis2_data_elements():
     _update_facility_cases_from_dhis2_data_elements.delay()
 
 
-@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+@shared_task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
 def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
     if not domain_exists(DOMAIN):
         return
