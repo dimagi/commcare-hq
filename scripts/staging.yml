@@ -75,5 +75,4 @@ branches:
     - jls/tab-nodeset-filter # Jenny May 2
     - jls/conditional-case-search # Jenny May 3
     - jls/multiple-referrals-eof-nav # Jenny May 5
-    - gh/test-cache # Graham May 5
 submodules: { }
