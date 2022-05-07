@@ -877,10 +877,9 @@ class EntriesHelper(object):
         #    will be loading the same case type
         # see advanced_app_features#child-modules in docs
         datum_ids = {d.datum.id: d for d in datums}
-        changed_ids_by_case_tag = defaultdict(list)
+        datums_by_case_tag = _get_datums_by_case_tag(datums)
+
         for i, (this_datum_meta, parent_datum_meta) in list(enumerate(zip_longest(datums, parent_datums))):
-            if this_datum_meta:
-                _update_refs(this_datum_meta, changed_ids_by_case_tag)
             if not parent_datum_meta:
                 continue
             if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
@@ -890,10 +889,7 @@ class EntriesHelper(object):
                 elif _same_case_datum_type(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     def set_id(datum, new_id):
                         case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
-                        changed_ids_by_case_tag[case_tag].append({
-                            'old_id': datum.id,
-                            'new_id': new_id,
-                        })
+                        _update_refs(datums_by_case_tag[case_tag], datum.id, new_id)
                         datum.id = new_id
 
                     if parent_datum_meta.datum.id in datum_ids:
@@ -957,44 +953,44 @@ class EntriesHelper(object):
         return detail, detail_enabled
 
 
-def _update_refs(datum_meta, changed_ids):
+def _update_refs(datums, old_id, new_id):
     """
     Update references in the nodeset of the given datum, if necessary
 
-    e.g. "instance('casedb')/casedb/case[@case_type='guppy']
-                                        [@status='open']
-                                        [index/parent=instance('commcaresession')/session/data/parent_id]"
-    is updated to
-            "instance('casedb')/casedb/case[@case_type='guppy']
-                                        [@status='open']
-                                        [index/parent=instance('commcaresession')/session/data/case_id]"
-                                                                                                ^^^^^^^
-    because the case referred to by "parent_id" in the child module has the ID "case_id" in the parent
-    module.
-    """
-    def _apply_change_to_datum_attr(datum, attr, change):
-        xpath = getattr(datum, attr, None)
-        if xpath:
-            old = session_var(change['old_id'])
-            new = session_var(change['new_id'])
-            setattr(datum, attr, xpath.replace(old, new))
+    e.g. instance('casedb')/casedb/case
+             [@case_type='guppy']
+             [@status='open']
+             [index/parent=instance('commcaresession')/session/data/parent_id]
 
-    datum = datum_meta.datum
-    action = datum_meta.action
-    if action:
-        if hasattr(action, 'case_indices'):
-            # This is an advanced module
-            for case_index in action.case_indices:
-                if case_index.tag in changed_ids:
-                    # update any reference to previously changed datums
-                    for change in changed_ids[case_index.tag]:
-                        _apply_change_to_datum_attr(datum, 'nodeset', change)
-                        _apply_change_to_datum_attr(datum, 'function', change)
-        else:
-            if 'basic' in changed_ids:
-                for change in changed_ids['basic']:
-                    _apply_change_to_datum_attr(datum, 'nodeset', change)
-                    _apply_change_to_datum_attr(datum, 'function', change)
+    is updated to
+         instance('casedb')/casedb/case[@case_type='guppy']
+             [@status='open']
+             [index/parent=instance('commcaresession')/session/data/case_id]
+                                                                    ^^^^^^^
+    because the case referred to by "parent_id" in the child module has the ID
+    "case_id" in the parent module.
+    """
+    old = session_var(old_id)
+    new = session_var(new_id)
+
+    for datum in datums:
+        for attr in ['nodeset', 'function']:
+            xpath = getattr(datum, attr, None)
+            if xpath:
+                setattr(datum, attr, xpath.replace(old, new))
+
+
+def _get_datums_by_case_tag(datums):
+    ret = defaultdict(list)
+    for datum in datums:
+        if datum.action:
+            if hasattr(datum.action, 'case_indices'):
+                # This is an advanced module
+                for case_index in datum.action.case_indices:
+                    ret[case_index.tag].append(datum.datum)
+            else:
+                ret['basic'].append(datum.datum)
+    return ret
 
 
 def _same_case_datum_type(this_datum_meta, parent_datum_meta):
