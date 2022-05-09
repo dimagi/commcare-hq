@@ -68,7 +68,7 @@ class UserES(HQESQuery):
 
 class ElasticUser(ElasticDocumentAdapter):
 
-    _index_name = "hqusers_2017-09-07"
+    _index_name = "hqusers_2022-05-09"
     type = "user"
 
     @property
