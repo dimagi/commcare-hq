@@ -420,11 +420,14 @@ class TestSMSMessageView(BaseDomainView):
 
             phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
             if not phone_entry or phone_entry.domain != self.domain:
-                messages.error(
-                    request,
-                    _("Invalid phone number being simulated. Please choose a "
-                      "two-way phone number belonging to a contact in your project.")
-                )
+                msg = _("Invalid phone number. Please choose a "
+                        "two-way phone number belonging to a contact in your project.")
+                if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+                    msg = _("Invalid phone number. Either this number is not assigned to a contact in your "
+                            "project or there is an active session for this number in another project space. "
+                            "To 'claim' this number start a new SMS survey with this number and wait for the "
+                            "first message to be sent.")
+                messages.error(request, msg)
                 return self.get(request, *args, **kwargs)
 
             backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
