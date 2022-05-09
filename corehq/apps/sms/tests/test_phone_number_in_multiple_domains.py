@@ -100,9 +100,11 @@ class FormSessionMultipleContactsTestCase(TestCase):
         self._claim_channel(session)
 
         msg = self._get_sms2()
-        # session belongs to `number2` but message comes from `number1` NOT THE CASE ANY MORE
         handled = form_session_handler(self.number2, msg.text, msg)
         self.assertTrue(handled)
+
+        # message gets attached to the correct session
+        self.assertEqual(msg.xforms_session_couch_id, session.couch_id)
 
         session.refresh_from_db()
         self.assertTrue(session.session_is_open)
