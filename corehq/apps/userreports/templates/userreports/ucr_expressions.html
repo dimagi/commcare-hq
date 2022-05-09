@@ -14,6 +14,7 @@
         <button type="button"
                 data-toggle="modal"
                 data-bind="
+                    visible: ! upstream_id,
                     attr: {
                         'data-target': '#update-expression-' + id
                     }
@@ -21,6 +22,11 @@
                 class="btn btn-primary">
             {% trans "Update Expression" %}
         </button>
+        <a class="btn btn-primary"
+                href="{% url 'domain_links' domain %}"
+                data-bind="visible: upstream_id">
+            {% trans "Linked Project Spaces" %}
+        </a>
 
         <div class="modal fade"
              data-bind="
