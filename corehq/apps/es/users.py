@@ -163,17 +163,20 @@ def primary_location(location_id):
     )
 
 
-def location(location_id):
+def location(location_id, include_web_users=False):
     # by any assigned-location primary or not
-    return filters.OR(
-        filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
-        # todo; this actually doesn't get applied since the below field is not indexed
-        filters.AND(
-            web_users(),
-            filters.term('domain_memberships.assigned_location_ids', location_id)
-        ),
-    )
+    users_locations_filter = filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id))
 
+    if include_web_users:
+        users_locations_filter = filters.OR(
+            users_locations_filter,
+            filters.AND(
+                web_users(),
+                filters.term('domain_memberships.assigned_location_ids', location_id)
+            ),
+        )
+
+    return users_locations_filter
 
 def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
