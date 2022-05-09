@@ -16,7 +16,7 @@ asgiref==3.5.0
     # via django
 asttokens==2.0.5
     # via stack-data
-attrs==18.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
