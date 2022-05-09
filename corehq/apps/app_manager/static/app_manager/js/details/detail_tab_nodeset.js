@@ -38,6 +38,9 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
             self.showFilter(false);
             self.nodesetFilter("");
         });
+        self.nodesetFilter.subscribe(function () {
+            self.fire('change');
+        });
 
         return self;
     };
