@@ -45,7 +45,7 @@ from corehq.apps.app_manager.util import (
     module_loads_registry_case,
     module_offers_search,
 )
-from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
 AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
@@ -236,6 +236,8 @@ class DetailContributor(SectionContributor):
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")
+            if tab.nodeset_filter:
+                nodeset = nodeset.select_raw(interpolate_xpath(tab.nodeset_filter))
             return nodeset
 
         return None
