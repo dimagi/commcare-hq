@@ -302,7 +302,7 @@ class RemoteRequestFactory(object):
             if prop.exclude:
                 kwargs['exclude'] = "true()"
             if prop.required:
-                kwargs['required'] = prop.required
+                kwargs['required'] = interpolate_xpath(prop.required)
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
