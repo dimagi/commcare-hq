@@ -8,7 +8,8 @@ from django.db import transaction
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition,
-    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
@@ -475,6 +476,11 @@ def update_auto_update_rules(domain_link):
                     )
                 elif criteria['closed_parent_definition']:
                     definition = ClosedParentDefinition.objects.create()
+                elif criteria['location_filter_definition']:
+                    definition = LocationFilterDefinition.objects.create(
+                        location_id=criteria['location_filter_definition']['location_id'],
+                        include_child_locations=criteria['location_filter_definition']['include_child_locations'],
+                    )
 
                 new_criteria = CaseRuleCriteria(rule=downstream_rule)
                 new_criteria.definition = definition
