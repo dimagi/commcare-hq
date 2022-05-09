@@ -5,6 +5,9 @@ from corehq.apps.userreports.models import UCRExpression
 
 
 def create_linked_ucr_expression(domain_link, ucr_expression_id):
+    if domain_link.is_remote:
+        raise DomainLinkError(_("Linking expressions to a remote link is not currently supported"))
+
     try:
         ucr_expression = UCRExpression.objects.get(id=ucr_expression_id, domain=domain_link.master_domain)
     except UCRExpression.DoesNotExist:
