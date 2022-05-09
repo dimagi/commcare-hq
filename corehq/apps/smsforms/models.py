@@ -429,6 +429,7 @@ def get_channel_for_contact(contact_id, phone_number):
     backend_id = None
     phone_number_record = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
     if phone_number_record:
+        phone_number = phone_number_record.phone_number  # prefer this number since it has leniency applied
         try:
             backend = phone_number_record.backend
         except BadSMSConfigException:
