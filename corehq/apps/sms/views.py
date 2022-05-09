@@ -71,6 +71,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import (
     MessageMetadata,
+    get_inbound_phone_entry,
     incoming,
     send_sms,
     send_sms_to_verified_number,
@@ -92,6 +93,7 @@ from corehq.apps.sms.forms import (
     BackendMapForm,
     ComposeMessageForm,
     InitiateAddSMSBackendForm,
+    SentTestSmsForm,
     SettingsForm,
     SubscribeSMSForm,
 )
@@ -372,36 +374,64 @@ class TestSMSMessageView(BaseDomainView):
     def section_url(self):
         return reverse('sms_default', args=(self.domain,))
 
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.domain, self.phone_number,))
-
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def phone_number(self):
-        return self.kwargs['phone_number']
-
-    @property
     def page_context(self):
         return {
-            'phone_number': self.phone_number,
+            'form': self.get_form()
         }
 
-    def post(self, request, *args, **kwargs):
-        message = request.POST.get("message", "")
-        phone_entry = PhoneNumber.get_two_way_number(self.phone_number)
-        if phone_entry and phone_entry.domain != self.domain:
-            messages.error(
-                request,
-                _("Invalid phone number being simulated. Please choose a "
-                  "two-way phone number belonging to a contact in your project.")
+    @memoized
+    def get_form(self):
+        backends = SQLMobileBackend.get_domain_backends(
+            SQLMobileBackend.SMS,
+            self.domain,
+        )
+        if self.request.method == 'POST':
+            return SentTestSmsForm(
+                self.request.POST,
+                domain=self.domain,
+                backends=backends,
             )
-        else:
-            incoming(self.phone_number, message, SQLTestSMSBackend.get_api_id(), domain_scope=self.domain)
+
+        default_backend = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain
+        )
+        initial = None
+        if default_backend:
+            initial = {'backend_id': default_backend.couch_id}
+        return SentTestSmsForm(
+            initial=initial,
+            domain=self.domain,
+            backends=backends,
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            phone_number = form.cleaned_data.get("phone_number", "")
+            message = form.cleaned_data.get("message", "")
+            backend_id = form.cleaned_data.get("backend_id", "")
+
+            phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
+            if not phone_entry or phone_entry.domain != self.domain:
+                messages.error(
+                    request,
+                    _("Invalid phone number being simulated. Please choose a "
+                      "two-way phone number belonging to a contact in your project.")
+                )
+                return self.get(request, *args, **kwargs)
+
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+            incoming(
+                phone_number, message, backend.get_api_id(),
+                domain_scope=self.domain, backend_id=backend.couch_id
+            )
             messages.success(
                 request,
                 _("Test message received.")

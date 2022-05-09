@@ -35,9 +35,11 @@ from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
+    clean_phone_number,
     get_sms_backend_classes,
     is_superuser_or_contractor,
     validate_phone_number,
@@ -1315,3 +1317,59 @@ class ComposeMessageForm(forms.Form):
                 ),
             ),
         )
+
+
+class SentTestSmsForm(Form):
+    phone_number = CharField(
+        required=True, help_text=gettext_lazy("Phone number with country code"))
+    message = CharField(widget=forms.Textarea, required=True)
+    backend_id = ChoiceField(
+        label=gettext_lazy("Gateway"),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        backends = kwargs.pop('backends')
+        self.domain = kwargs.pop('domain')
+        super(SentTestSmsForm, self).__init__(*args, **kwargs)
+        self.set_backend_choices(backends)
+        self.setup_crispy()
+
+    def set_backend_choices(self, backends):
+        backend_choices = [('', _("(none)"))]
+        backend_choices.extend([
+            (backend.couch_id, backend.name) for backend in backends
+        ])
+        self.fields['backend_id'].choices = backend_choices
+
+    def setup_crispy(self):
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Field('phone_number'),
+            crispy.Field('message', rows=2),
+            crispy.Field('backend_id'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Send Message"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
+
+    def clean_phone_number(self):
+        phone_number = clean_phone_number(self.cleaned_data['phone_number'])
+        validate_phone_number(phone_number)
+        return phone_number
+
+    def clean_backend_id(self):
+        backend_id = self.cleaned_data['backend_id']
+        try:
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+        except (BadSMSConfigException, SQLMobileBackend.DoesNotExist):
+            backend = None
+
+        if not backend or not backend.domain_is_authorized(self.domain):
+            raise ValidationError("Invalid backend choice")
+
+        return backend.couch_id
