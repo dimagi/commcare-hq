@@ -23,7 +23,7 @@ class PeriodicTask(Task):
         }
 
 
-def periodic_task(*args, **options):
+def periodic_task(**options):
     if not options.get('options'):
         options['options'] = {}
     if options.get('queue'):
