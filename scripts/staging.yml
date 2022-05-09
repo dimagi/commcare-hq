@@ -76,4 +76,5 @@ branches:
     - jls/conditional-case-search # Jenny May 3
     - jls/multiple-referrals-eof-nav # Jenny May 5
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
+    - rc/sms-multiple-contacts-bug # Robert May 9
 submodules: { }
