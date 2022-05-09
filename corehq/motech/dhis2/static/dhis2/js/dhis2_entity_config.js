@@ -25,6 +25,10 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     var dhis2EntityConfig = function (caseConfigs) {
         var self = {};
         self.oCaseConfigs = ko.observableArray();
+        self.errorMessage = ko.observable('');
+        self.isError = ko.computed(function() {
+            return self.errorMessage() === '' ? false : true
+        });
 
         self.init = function () {
             if (caseConfigs.length > 0) {
@@ -50,6 +54,29 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         };
 
         self.submit = function (form) {
+            console.log("submitting")
+            var editors = baseAce.returnEditors();
+            console.log(editors)
+            for (let i = 0; i < editors.length; i++) {
+                var annotations = editors[i].getSession().getAnnotations()
+                console.log(annotations)
+                if (annotations.length > 0) {
+                    for (let i = 0; i < annotations.length; i++) {
+                        var row = annotations[0]['row']
+                            error = annotations[0]['text'];
+                        var text = `Syntax error on row ${row}: `;
+                        self.errorMessage(text + error);
+                    };
+                    return self;
+                };
+            };
+            try {
+                JSON.stringify(self.oCaseConfigs());
+            } catch (error) {
+                console.log("Error!!!")
+                console.log(error);
+                return self;
+            }
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},
