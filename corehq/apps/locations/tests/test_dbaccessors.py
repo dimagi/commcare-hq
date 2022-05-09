@@ -145,7 +145,7 @@ class TestUsersByLocation(TestCase):
             [self.meereen._id, self.pentos._id]
         )
 
-    def test_user_ids_at_locations(self):
+    def test_mobile_user_ids_at_locations(self):
         self.assertItemsEqual(
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
