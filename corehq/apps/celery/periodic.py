@@ -24,6 +24,15 @@ class PeriodicTask(Task):
 
 
 def periodic_task(**options):
+    """Use this decorator to create periodic celery tasks in HQ
+
+        Parameters:
+        queue (string): Name of the queue in which task is supposed to run
+        run_every (integer|crontab): Accepts
+            - integer value which represents the seconds interval in which task will run.
+            - celery.schedules.crontab interval
+        options (dict): https://docs.celeryq.dev/en/latest/reference/celery.app.task.html#celery.app.task.Task.apply_async # noqa E501
+    """
     if not options.get('options'):
         options['options'] = {}
     if options.get('queue'):
