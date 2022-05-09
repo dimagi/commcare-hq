@@ -402,3 +402,23 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id'),
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_child_module_selects_other_parent_same_type(self):
+        self.set_parent_select(self.m1, self.m2)
+
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id')
+        ])
+        # I'm guessing this is wrong - it's pulling the case from the parent module
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+
+    def test_child_module_selects_other_parent_different_type(self):
+        self.set_parent_select(self.m1, self.m3)
+
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'parent_id'),
+            ('datum', 'case_id')
+        ])
+        # This is definitely wrong
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
