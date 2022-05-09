@@ -301,6 +301,8 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
+            if prop.required:
+                kwargs['required'] = prop.required
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
