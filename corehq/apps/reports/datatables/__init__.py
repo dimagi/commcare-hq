@@ -1,3 +1,4 @@
+from django.utils.html import format_html, format_html_join
 from django.template.loader import render_to_string
 from django.utils.functional import Promise
 
@@ -99,16 +100,14 @@ class DataTablesColumnGroup(object):
 
     @property
     def render_html(self):
-        template = '<th%(css_class)s colspan="%(colspan)d"><strong>%(title)s</strong></th>'
+        template = '<th{} colspan="{}"><strong>{}</strong></th>'
         css_class = ' class="col-sm-%d"' % self.css_span if self.css_span > 0 else ''
-        return template % dict(title=self.html, css_class=css_class, colspan=len(self.columns)) if self.columns else ""
+        col_span = len(self.columns)
+        return format_html(template, css_class, col_span, self.html) if self.columns else ''
 
     @property
     def render_group_html(self):
-        group = list()
-        for col in self.columns:
-            group.append(col.render_html)
-        return "\n".join(group)
+        return format_html_join('\n', '{}', ((col.render_html,) for col in self.columns))
 
     @property
     def render_aoColumns(self):
@@ -203,8 +202,7 @@ class DataTablesHeader(object):
     def render_html(self):
         head = list()
         groups = list()
-        head.append("<tr>")
-        groups.append("<tr>")
+
         for column in self.header:
             if isinstance(column, DataTablesColumn):
                 column.rowspan = 2 if self.has_group else 1
@@ -213,11 +211,13 @@ class DataTablesHeader(object):
             elif isinstance(column, DataTablesColumnGroup):
                 groups.append(column.render_group_html)
             head.append(column.render_html)
-        head.append("</tr>")
-        groups.append("</tr>")
+
+        header_segment = format_html_join('\n', '{}', ((segment,) for segment in head))
+        header = format_html('<tr>{}</tr>', header_segment)
         if len(groups) > 2:
-            head.extend(groups)
-        return "\n".join(head)
+            group_segment = format_html_join('\n', '{}', ((segment,) for segment in groups))
+            header = format_html('{}\n<tr>{}</tr>', header, group_segment)
+        return header
 
     @property
     def render_aoColumns(self):
