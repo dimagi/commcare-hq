@@ -360,18 +360,15 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_parent_selects_parent_different_type(self):
-        self.set_parent_select(self.m0, self.m2)
+        self.set_parent_select(self.m0, self.m3)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'parent_selected_cases'),
             ('instance-datum', 'selected_cases')
         ])
-        # I'm not sure why this sets it to case_id_beneficiary instead of
-        # selected_cases, as in test_child_of_multiselect
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id'),
         ])
-        # This is an error
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_that_selects_other_same_case_type(self):
