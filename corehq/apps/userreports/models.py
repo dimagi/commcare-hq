@@ -1378,6 +1378,8 @@ class UCRExpression(models.Model):
     )
     definition = models.JSONField(null=True)
 
+    # For use with linked domains - the upstream UCRExpression
+    upstream_id = models.CharField(max_length=126, null=True)
     objects = UCRExpressionManager()
 
     class Meta:

@@ -968,6 +968,7 @@ userreports
  0016_change_primary_key_to_bigint
  0017_index_cleanup
  0018_ucrexpression
+ 0019_ucrexpression_upstream_id
 users
  0001_add_location_permission
  0002_domainrequest
