@@ -128,7 +128,7 @@ class FormSessionMultipleContactsTestCase(TestCase):
 
         mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
         mocker.add_action("answer", ANSWER_RESPONSE)
-        msg = self._get_sms(number.phone_number)
+        msg = self._get_sms("+" + number.phone_number)
         with mocker:
             # with the mocks configured this should result in the session being completed
             _process_incoming(msg)
