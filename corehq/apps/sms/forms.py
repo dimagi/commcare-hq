@@ -1327,6 +1327,10 @@ class SentTestSmsForm(Form):
         label=gettext_lazy("Gateway"),
         required=False
     )
+    claim_channel = BooleanField(
+        label=gettext_lazy("Attempt to claim the channel for this number."),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         backends = kwargs.pop('backends')
@@ -1343,19 +1347,27 @@ class SentTestSmsForm(Form):
         self.fields['backend_id'].choices = backend_choices
 
     def setup_crispy(self):
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Field('phone_number'),
             crispy.Field('message', rows=2),
             crispy.Field('backend_id'),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Send Message"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
+        ]
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+            fields.append(hqcrispy.FieldWithHelpBubble(
+                "claim_channel",
+                help_bubble_text=_("Use this option if the phone number is used by multiple projects "
+                                   "and is currently claimed by another project or the default owner of "
+                                   "the number is a different project."),
+            ))
+        fields.append(hqcrispy.FormActions(
+            twbscrispy.StrictButton(
+                _("Send Message"),
+                type="submit",
+                css_class="btn-primary",
             ),
-        )
+        ))
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(*fields)
 
     def clean_phone_number(self):
         phone_number = clean_phone_number(self.cleaned_data['phone_number'])

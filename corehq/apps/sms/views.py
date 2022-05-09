@@ -2,6 +2,7 @@
 import io
 import json
 import re
+import uuid
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
@@ -119,6 +120,10 @@ from corehq.apps.sms.util import (
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+)
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
@@ -127,7 +132,6 @@ from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -417,17 +421,11 @@ class TestSMSMessageView(BaseDomainView):
             phone_number = form.cleaned_data.get("phone_number", "")
             message = form.cleaned_data.get("message", "")
             backend_id = form.cleaned_data.get("backend_id", "")
+            claim_channel = form.cleaned_data.get("claim_channel", False)
 
-            phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
-            if not phone_entry or phone_entry.domain != self.domain:
-                msg = _("Invalid phone number. Please choose a "
-                        "two-way phone number belonging to a contact in your project.")
-                if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
-                    msg = _("Invalid phone number. Either this number is not assigned to a contact in your "
-                            "project or there is an active session for this number in another project space. "
-                            "To 'claim' this number start a new SMS survey with this number and wait for the "
-                            "first message to be sent.")
-                messages.error(request, msg)
+            error_message = self._check_phone_number(phone_number, backend_id, claim_channel)
+            if error_message:
+                messages.error(request, error_message)
                 return self.get(request, *args, **kwargs)
 
             backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
@@ -442,6 +440,32 @@ class TestSMSMessageView(BaseDomainView):
             )
 
         return self.get(request, *args, **kwargs)
+
+    def _check_phone_number(self, phone_number, backend_id, claim_channel):
+        phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
+        if not phone_entry or phone_entry.domain != self.domain:
+            msg = _("Invalid phone number. Please choose a "
+                    "two-way phone number belonging to a contact in your project.")
+            if not toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+                return msg
+
+            phone_entry_this_domain = PhoneNumber.get_two_way_number_with_domain_scope(
+                phone_number, [self.domain])
+            if claim_channel and phone_entry_this_domain:
+                # attempt to claim the channel
+                fake_session = SQLXFormsSession(
+                    session_id=uuid.uuid4().hex,
+                    connection_id=phone_entry_this_domain.owner_id,
+                    phone_number=phone_entry_this_domain.phone_number
+                )
+                if XFormsSessionSynchronization.set_channel_for_affinity(fake_session):
+                    # re-check but don't attempt a claim this time
+                    return self._check_phone_number(phone_number, backend_id, claim_channel=False)
+
+            return _("Invalid phone number. Either this number is not assigned to a contact in your "
+                     "project or there is an active session for this number in another project space. "
+                     "To 'claim' this channel use the 'claim this channel' checkbox or start a new SMS "
+                     "survey with this number and wait for the first message to be sent.")
 
 
 @csrf_exempt
