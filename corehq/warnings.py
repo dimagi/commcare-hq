@@ -19,7 +19,6 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("celery", "'collections.abc'"),
     ("compressor.filters.base", "smart_text() is deprecated"),
     ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
@@ -32,12 +31,12 @@ WHITELIST = [
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
     ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
-    ("kombu.utils.functional", "'collections.abc'"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
+    ("nose.suite", "'collections.abc'"),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
