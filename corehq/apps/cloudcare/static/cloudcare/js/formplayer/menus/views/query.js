@@ -164,12 +164,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
+                hasError: this.hasError,
             };
         },
 
         initialize: function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
+            this.hasError = false;
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -197,6 +199,33 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         modelEvents: {
             'change': 'render',
+        },
+
+        _isValid: function () {
+            if (!this.model.get('required')) {
+                return true;
+            }
+
+            var answer = this.getEncodedValue();
+            return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
+        },
+
+        isValid: function () {
+            var hasError = !this._isValid();
+            if (hasError !== this.hasError) {
+                this.hasError = hasError;
+                this.render();
+            }
+            return !this.hasError;
+        },
+
+        getEncodedValue: function () {
+            if (this.model.get('input') === 'address') {
+                return;  // skip geocoder address
+            }
+            var queryValue = $(this.ui.queryField).val(),
+                searchForBlank = $(this.ui.searchForBlank).prop('checked');
+            return encodeValue(this.model, queryValue, searchForBlank);
         },
 
         changeQueryField: function (e) {
@@ -302,19 +331,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $inputGroups = $(".query-input-group"),
-                answers = {},
-                model = this.parentModel;
-            $inputGroups.each(function (index) {
-                if (model[index].get('input') === 'address') {
-                    return;  // skip geocoder address
-                }
-                var queryValue = $(this).find('.query-field').val(),
-                    fieldId = model[index].get('id'),
-                    searchForBlank = $(this).find('.search-for-blank').prop('checked'),
-                    encodedValue = encodeValue(model[index], queryValue, searchForBlank);
+            var answers = {};
+            this.children.each(function (childView) {
+                var encodedValue = childView.getEncodedValue();
                 if (encodedValue !== undefined) {
-                    answers[fieldId] = encodedValue;
+                    answers[childView.model.get('id')] = encodedValue;
                 }
             });
             return answers;
@@ -375,6 +396,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
+            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
+
+            var invalidFields = [];
+            this.children.each(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            if (invalidFields.length) {
+                var errorHTML = "Please enter values for the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true);
+                return;
+            }
+
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
 
