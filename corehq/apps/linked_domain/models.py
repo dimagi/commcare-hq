@@ -182,10 +182,15 @@ class KeywordLinkDetail(jsonobject.JsonObject):
     keyword_id = jsonobject.StringProperty()
 
 
+class UCRExpressionLinkDetail(jsonobject.JsonObject):
+    ucr_expression_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
         'fixture': FixtureLinkDetail,
         'report': ReportLinkDetail,
         'keyword': KeywordLinkDetail,
+        'ucr_expression': UCRExpressionLinkDetail,
     }[model].wrap(detail_json)
