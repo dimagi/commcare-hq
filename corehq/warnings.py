@@ -42,6 +42,7 @@ WHITELIST = [
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
+    ("corehq.apps.userreports.util", "'collections.abc'"),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
