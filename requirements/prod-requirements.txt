@@ -166,7 +166,7 @@ django-two-factor-auth==1.13.2
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
-https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
+django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.12.2
     # via -r base-requirements.in
@@ -268,7 +268,7 @@ jsonobject==2.0.0
     #   jsonobject-couchdbkit
 jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
-https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
+jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==3.2.0
     # via -r base-requirements.in
@@ -461,7 +461,7 @@ setproctitle==1.2.2
     # via -r prod-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
-git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
 simplejson==3.17.2
     # via
@@ -578,9 +578,9 @@ xmlsec==1.3.12
     # via python3-saml
 zipp==3.7.0
     # via importlib-metadata
-zope.event==4.5.0
+zope-event==4.5.0
     # via gevent
-zope.interface==5.4.0
+zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -593,5 +593,5 @@ setuptools==50.3.0
     #   gunicorn
     #   ipython
     #   jsonschema
-    #   zope.event
-    #   zope.interface
+    #   zope-event
+    #   zope-interface
