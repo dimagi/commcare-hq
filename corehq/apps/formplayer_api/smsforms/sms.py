@@ -56,8 +56,8 @@ def _next_responses(xformsresponse, formplayer_interface):
             for additional_resp in _next_responses(response, formplayer_interface):
                 yield additional_resp
     elif xformsresponse.event.type == "form-complete":
-        sms_form_complete.send(sender="touchforms", session_id=formplayer_interface.session_id,
-                               form=xformsresponse.event.output)
+        from corehq.apps.smsforms.signals import handle_sms_form_complete
+        handle_sms_form_complete(formplayer_interface.session_id, xformsresponse.event.output)
         yield xformsresponse
 
 
