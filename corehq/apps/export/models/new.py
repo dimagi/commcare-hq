@@ -523,8 +523,22 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                 if as_json:
                     for index, header in enumerate(col.get_headers(split_column=split_columns)):
                         if isinstance(val, list):
+                            if header == "location_id":
+                                if val[index] == '---':
+                                    val[index] = "val is initially messed up (is list)"
+                                else:
+                                    val[index] = "val is something else (is list): " + "{}".format(val[index])
+                            if row_data["location_id"]:
+                                header = "location_id already happened? (is list)"
                             row_data[header] = "{}".format(val[index])
                         else:
+                            if header == "location_id":
+                                if val == '---':
+                                    val = "val is initially messed up (not list)"
+                                else:
+                                    val = "val is something else (not list): " + "{}".format(val)
+                            if row_data["location_id"]:
+                                header = "location_id already happened? (not list)"
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
