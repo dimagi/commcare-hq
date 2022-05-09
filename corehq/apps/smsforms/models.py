@@ -11,7 +11,7 @@ from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.mixin import BadSMSConfigException, apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.models import XFormInstance
@@ -408,12 +408,15 @@ class XFormsSessionSynchronization:
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
-        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{channel.phone_number}'
+        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{apply_leniency(channel.phone_number)}'
 
     @staticmethod
     def _critical_section(channel):
         return CriticalSection([
-            f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/{channel.phone_number}'
+            (
+                f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/'
+                f'{apply_leniency(channel.phone_number)}'
+            )
         ], timeout=5 * 60)
 
 
