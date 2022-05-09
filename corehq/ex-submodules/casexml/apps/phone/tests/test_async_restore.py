@@ -212,7 +212,7 @@ class ShardedAsyncRestoreTest(BaseAsyncRestoreTest):
                 last_sync_token=last_sync_token,
             )
 
-        with mock.patch('corehq.form_processor.submission_post.revoke_celery_task') as revoke:
+        with mock.patch('corehq.apps.celery.app.control.revoke') as revoke:
             # with a different user in the same domain, task doesn't get killed
             submit_form(user_id="other_user", device_id='OTHERDEVICEID', last_sync_token='othersynctoken')
             self.assertFalse(revoke.called)
