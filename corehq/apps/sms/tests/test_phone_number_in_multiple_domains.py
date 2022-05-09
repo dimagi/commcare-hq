@@ -53,7 +53,6 @@ ANSWER_RESPONSE = {
 }
 
 
-
 @flag_enabled("ONE_PHONE_NUMBER_MULTIPLE_CONTACTS")
 @flag_enabled("INBOUND_SMS_LENIENCY")
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
