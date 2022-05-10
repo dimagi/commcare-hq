@@ -643,7 +643,7 @@ def get_inbound_phone_entry(msg):
             p = None
             if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
-                    SMSChannel(backend_id=msg.backend_id, phone_number=apply_leniency(msg.phone_number))
+                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
                 )
                 contact_id = running_session_info.contact_id
                 if contact_id:
