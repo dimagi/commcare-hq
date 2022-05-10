@@ -801,7 +801,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
     def obj_get_list(self, bundle, **kwargs):
         feature_flag = bundle.request.GET.get("feature_flag")
         if feature_flag and feature_flag not in toggles.all_toggles_slug():
-            raise BadRequest("{} is not a valid feature flag".format(feature_flag))
+            raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         return self.get_object_list(bundle.request, feature_flag)
 
     def get_object_list(self, request, feature_flag=None):
