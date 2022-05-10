@@ -2156,6 +2156,7 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     'Store named UCR expressions and filters in the database to be referenced elsewhere',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://www.commcarehq.org/hq/flags/edit/expression_registry/",
 )
 
 TURN_IO_BACKEND = StaticToggle(
