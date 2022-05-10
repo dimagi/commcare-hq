@@ -811,7 +811,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
-            if feature_flag and feature_flag not in toggles.toggles_dict(domain=domain).keys():
+            if feature_flag and feature_flag not in toggles.toggles_dict(domain=domain):
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
