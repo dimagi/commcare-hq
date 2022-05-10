@@ -26,7 +26,7 @@ from corehq.apps.sms.messages import (
     MSG_USERNAME_TOO_LONG,
     get_message,
 )
-from corehq.apps.sms.mixin import BadSMSConfigException, apply_leniency
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
