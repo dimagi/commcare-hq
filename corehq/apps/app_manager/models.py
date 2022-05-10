@@ -2171,6 +2171,7 @@ class CaseSearchProperty(DocumentSchema):
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
+    required = StringProperty(exclude_if_none=True)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
