@@ -115,19 +115,15 @@ class FormSessionMultipleContactsTestCase(TestCase):
     @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
     @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
         return_value=Mock(xform=Mock(form_id="123"))))
-    def test_sms_form_session_across_multiple_domains_with_same_backend_and_number(self):
-        self._test(self.number1)  # test session from domain1
-        self._test(self.number2)  # test session from domain2 immediately after
-
-    def _test(self, number):
-        session = self._make_session(number)
+    def test_sms_form_session_in_first_domain_with_plus_prefix_same_backend_and_number(self):
+        session = self._make_session(self.number1)
         self._claim_channel(session)
 
         channel = session.get_channel()
 
         mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
         mocker.add_action("answer", ANSWER_RESPONSE)
-        msg = self._get_sms("+" + number.phone_number)
+        msg = self._get_sms("+" + self.number1.phone_number)
         with mocker:
             # with the mocks configured this should result in the session being completed
             _process_incoming(msg)
@@ -146,6 +142,109 @@ class FormSessionMultipleContactsTestCase(TestCase):
 
         self.assertIsNone(session_info.session_id)
         self.assertEqual(session_info.contact_id, session.connection_id)
+
+    @patch('corehq.apps.sms.api.get_location_id_by_verified_number', MagicMock(return_value=None))
+    @patch('corehq.apps.sms.api._domain_accepts_inbound', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api.domain_has_privilege', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
+    @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
+        return_value=Mock(xform=Mock(form_id="234"))))
+    def test_sms_form_session_in_first_domain_without_plus_prefix_same_backend_and_number(self):
+        session = self._make_session(self.number1)
+        self._claim_channel(session)
+
+        channel = session.get_channel()
+
+        mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
+        mocker.add_action("answer", ANSWER_RESPONSE)
+        msg = self._get_sms(self.number1.phone_number)
+        with mocker:
+            # with the mocks configured this should result in the session being completed
+            _process_incoming(msg)
+
+        # message gets attached to the correct session
+        self.assertEqual(msg.xforms_session_couch_id, session.couch_id)
+
+        # confirm session closed
+        session.refresh_from_db()
+        self.assertFalse(session.session_is_open)
+        self.assertTrue(session.completed)
+        self.assertEqual(session.submission_id, "234")
+
+        # sticky session is released
+        session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
+
+        self.assertIsNone(session_info.session_id)
+        self.assertEqual(session_info.contact_id, session.connection_id)
+
+    @patch('corehq.apps.sms.api.get_location_id_by_verified_number', MagicMock(return_value=None))
+    @patch('corehq.apps.sms.api._domain_accepts_inbound', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api.domain_has_privilege', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
+    @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
+        return_value=Mock(xform=Mock(form_id="345"))))
+    def test_sms_form_session_in_second_domain_with_plus_prefix_same_backend_and_number(self):
+        session = self._make_session(self.number2)
+        self._claim_channel(session)
+
+        channel = session.get_channel()
+
+        mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
+        mocker.add_action("answer", ANSWER_RESPONSE)
+        msg = self._get_sms("+" + self.number2.phone_number)
+        with mocker:
+            # with the mocks configured this should result in the session being completed
+            _process_incoming(msg)
+
+        # message gets attached to the correct session
+        self.assertEqual(msg.xforms_session_couch_id, session.couch_id)
+
+        # confirm session closed
+        session.refresh_from_db()
+        self.assertFalse(session.session_is_open)
+        self.assertTrue(session.completed)
+        self.assertEqual(session.submission_id, "345")
+
+        # sticky session is released
+        session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
+
+        self.assertIsNone(session_info.session_id)
+        self.assertEqual(session_info.contact_id, session.connection_id)
+
+    @patch('corehq.apps.sms.api.get_location_id_by_verified_number', MagicMock(return_value=None))
+    @patch('corehq.apps.sms.api._domain_accepts_inbound', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api.domain_has_privilege', MagicMock(return_value=True))
+    @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
+    @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
+        return_value=Mock(xform=Mock(form_id="456"))))
+    def test_sms_form_session_in_second_domain_without_plus_prefix_same_backend_and_number(self):
+        session = self._make_session(self.number2)
+        self._claim_channel(session)
+
+        channel = session.get_channel()
+
+        mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
+        mocker.add_action("answer", ANSWER_RESPONSE)
+        msg = self._get_sms(self.number2.phone_number)
+        with mocker:
+            # with the mocks configured this should result in the session being completed
+            _process_incoming(msg)
+
+        # message gets attached to the correct session
+        self.assertEqual(msg.xforms_session_couch_id, session.couch_id)
+
+        # confirm session closed
+        session.refresh_from_db()
+        self.assertFalse(session.session_is_open)
+        self.assertTrue(session.completed)
+        self.assertEqual(session.submission_id, "456")
+
+        # sticky session is released
+        session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
+
+        self.assertIsNone(session_info.session_id)
+        self.assertEqual(session_info.contact_id, session.connection_id)
+
 
     def _claim_channel(self, session):
         self.assertEqual(session.get_channel(), SMSChannel(
