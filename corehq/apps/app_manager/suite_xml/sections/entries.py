@@ -880,23 +880,23 @@ class EntriesHelper(object):
         datums_by_case_tag = _get_datums_by_case_tag(datums)
 
         for i, (this_datum_meta, parent_datum_meta) in list(enumerate(zip_longest(datums, parent_datums))):
-            if not parent_datum_meta:
+            if not parent_datum_meta or this_datum_meta == parent_datum_meta:
                 continue
-            if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
-                if not parent_datum_meta.requires_selection:
-                    # Add parent datums of opened subcases and automatically-selected cases
-                    datums.insert(i, attr.evolve(parent_datum_meta, from_parent=True))
-                elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
-                    def set_id(datum, new_id):
-                        case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
-                        _update_refs(datums_by_case_tag[case_tag], datum.id, new_id)
-                        datum.id = new_id
 
-                    if parent_datum_meta.datum.id in datum_ids:
-                        datum = datum_ids[parent_datum_meta.datum.id]
-                        set_id(datum.datum, '_'.join((datum.datum.id, datum.case_type)))
+            if not parent_datum_meta.requires_selection:
+                # Add parent datums of opened subcases and automatically-selected cases
+                datums.insert(i, attr.evolve(parent_datum_meta, from_parent=True))
+            elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
+                def set_id(datum, new_id):
+                    case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
+                    _update_refs(datums_by_case_tag[case_tag], datum.id, new_id)
+                    datum.id = new_id
 
-                    set_id(this_datum_meta.datum, parent_datum_meta.datum.id)
+                if parent_datum_meta.datum.id in datum_ids:
+                    datum = datum_ids[parent_datum_meta.datum.id]
+                    set_id(datum.datum, '_'.join((datum.datum.id, datum.case_type)))
+
+                set_id(this_datum_meta.datum, parent_datum_meta.datum.id)
 
     @staticmethod
     def _get_module_for_persistent_context(detail_module, module_unique_id):
