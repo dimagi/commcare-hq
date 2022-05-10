@@ -4,7 +4,7 @@ from collections import namedtuple
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseNotFound, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
@@ -798,7 +798,9 @@ class UserDomainsResource(CorsResourceMixin, Resource):
                 raise
 
     def obj_get_list(self, bundle, **kwargs):
-        feature_flag = kwargs.get("feature_flag")
+        feature_flag = bundle.request.GET.get("feature_flag")
+        if feature_flag and feature_flag not in toggles.all_toggles_slug():
+            raise BadRequest("{} is not a valid feature flag".format(feature_flag))
         return self.get_object_list(bundle.request, feature_flag=feature_flag)
 
     def get_object_list(self, request, feature_flag=None):
@@ -808,7 +810,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
-            if feature_flag and feature_flag not in toggles.toggles_enabled_for_domain(domain):
+            if feature_flag and feature_flag not in toggles.toggles_dict(domain=domain).keys():
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,

@@ -496,6 +496,13 @@ def all_toggles():
     return list(all_toggles_by_name().values())
 
 
+def all_toggles_slug():
+    """
+    Provides all toggles by their slug as a list
+    """
+    return [toggle.slug for toggle in all_toggles()]
+
+
 @memoized
 def all_toggles_by_name():
     # trick for listing the attributes of the current module.
