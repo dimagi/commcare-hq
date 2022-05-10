@@ -2341,6 +2341,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
+            self.search_config.title_label._module = self
 
     @classmethod
     def wrap(cls, data):

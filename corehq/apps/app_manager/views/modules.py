@@ -1178,6 +1178,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 or search_properties.get('default_properties') is not None
         ):
             title_label = module.search_config.title_label
+            title_label[lang] = search_properties.get('title_label', '')
+
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
             if search_properties.get('search_label_image_for_all'):

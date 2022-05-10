@@ -177,6 +177,8 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                     yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
                 if search_again_label_audio:
                     yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
+
+                yield id_strings.case_search_title_translation(module), trans(module.search_config.title_label)
             else:
                 yield id_strings.case_search_title_translation(module), trans(CaseSearch.title_label.default())
                 yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.default().label)
