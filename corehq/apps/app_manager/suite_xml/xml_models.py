@@ -508,7 +508,7 @@ class QueryPrompt(DisplayNode):
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
-
+    required = StringField('@required', required=False)
 
     itemset = NodeField('itemset', Itemset)
 

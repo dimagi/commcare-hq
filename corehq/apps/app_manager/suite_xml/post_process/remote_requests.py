@@ -158,6 +158,7 @@ class RemoteRequestFactory(object):
         xpaths = xpaths.union(self._get_multi_select_xpaths())
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
+        xpaths.update(prop.required for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         xpaths.update(self._get_xpaths_for_module())
@@ -301,6 +302,8 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
+            if prop.required:
+                kwargs['required'] = interpolate_xpath(prop.required)
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

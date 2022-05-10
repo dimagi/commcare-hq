@@ -173,6 +173,16 @@
                           </div>
                         </div>
                       {% endif %}
+                      {% if js_options.required_search_fields_enabled %}
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Required" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input type="text" class="form-control" data-bind="value: required" placeholder="true()" />
+                          </div>
+                        </div>
+                      {% endif %}
                     </fieldset>
                 {% endif %}
                 <fieldset data-bind="visible: appearanceFinal() == 'fixture'">
