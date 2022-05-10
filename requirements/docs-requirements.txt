@@ -14,7 +14,7 @@ architect==0.6.0
     # via -r base-requirements.in
 asgiref==3.5.0
     # via django
-attrs==21.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
