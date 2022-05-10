@@ -684,18 +684,28 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
     include_child_locations = models.BooleanField(default=False)
 
     def matches(self, case, now):
-        if case.owner_id:
-            # Checks if case belongs to location (hierarchy)
+        criteria_location = SQLLocation.by_location_id(self.location_id)
 
+        if not criteria_location:
+            return False
+
+        # Check if case is generated at location
+        if case.location_id:
             if not self.include_child_locations:
-                return case.owner_id == self.location_id
+                if case.location_id == self.location_id:
+                    return True
             else:
-                location = SQLLocation.by_location_id(self.location_id)
+                if criteria_location.descendants_include_location(case.location_id):
+                    return True
 
-                if not location:
-                    return False
-
-                return location.descendants_include_location(case.owner_id)
+        # Check if case belongs to location
+        if case.owner_id:
+            if not self.include_child_locations:
+                if case.owner_id == self.location_id:
+                    return True
+            else:
+                if criteria_location.descendants_include_location(case.owner_id):
+                    return True
 
         return False
 
