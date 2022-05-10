@@ -25,13 +25,10 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.dbaccessors import domain_exists
-from corehq.apps.domain.decorators import (
-    domain_admin_required,
-    login_or_api_key,
-)
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -89,11 +86,11 @@ from corehq.apps.linked_domain.tasks import (
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
+    can_domain_access_linked_domains,
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
-    user_has_admin_access_in_all_domains,
-    can_domain_access_linked_domains,
+    user_has_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -270,7 +267,7 @@ def pull_missing_multimedia(request, domain, app_id):
 
 
 @method_decorator(require_access_to_linked_domains, name='dispatch')
-class DomainLinkView(BaseAdminProjectSettingsView):
+class DomainLinkView(BaseProjectSettingsView):
     urlname = 'domain_links'
     page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
@@ -333,7 +330,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         }
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     urlname = "domain_link_rmi"
 
@@ -463,8 +460,8 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
-    if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = gettext("You must be an admin in both project spaces to create a link.")
+    if not user_has_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
+        error = gettext("You do not have adequate permissions in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
