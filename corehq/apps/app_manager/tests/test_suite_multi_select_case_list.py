@@ -363,7 +363,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m0, self.m3)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'parent_selected_cases'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases')
         ])
         self.assert_module_datums(self.m1.id, [
@@ -377,7 +377,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m1, self.m0)
 
         self.assert_module_datums(self.m0.id, [
-            # I would've guessed this to be parent_selected_cases
             ('datum', 'case_id_beneficiary'),
             ('instance-datum', 'selected_cases')
         ])
@@ -393,11 +392,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m1, self.m0)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'parent_selected_cases'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases')
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'parent_selected_cases'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases'),
             ('datum', 'case_id'),
         ])
