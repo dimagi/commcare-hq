@@ -100,6 +100,16 @@ Rebuild and redeploy your application
 
 You'll have to rebuild and redeploy your application to get it to sync.
 
+Directly Modifying APp Builds (CCZ files)
+=========================================
+
+During development, it's occasionally useful to directly edit app files.
+
+CommCare apps are bundled as ``.ccz`` files, which are just zip files with a custom extension.
+
+See `ccz.sh <https://github.com/dimagi/commcare-hq/tree/master/scripts/ccz.sh>_` for utilities for unzipping, editing, and rezipping CCZ files. Doing this via the command line is often
+cleaner than doing it an in OS, which may add additional hidden files.
+
 Adding CommCare (J2ME) Builds to CommCare HQ
 =====================================
 
