@@ -5,11 +5,19 @@ from django.test import SimpleTestCase
 
 import lxml
 
+from corehq.apps.app_manager.const import (
+    WORKFLOW_FORM,
+    WORKFLOW_MODULE,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
+)
 from corehq.apps.app_manager.models import (
+    Application,
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
     ConditionalCaseUpdate,
+    FormLink,
     UpdateCaseAction,
 )
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
@@ -407,3 +415,162 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id'),
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
+
+
+@patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
+@patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
+@patch.object(Application, 'enable_practice_users', return_value=False)
+@patch_validate_xform()
+@patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
+class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
+    CASE_TYPE = 'noun'
+
+    def setUp(self):
+        # All of these tests use the same app structure, which has the following menus:
+        # m0 is a standalone single-select menu
+        # m1 is a standalone multi-select menu
+        # m2/m3 are a parent single select and child multi-select
+        # m3/m4 are a parent multi-select and child single select
+        # All menus use the same case type and all forms require a case.
+        self.factory = AppFactory(domain="multiple-referrals-eof-nav-test", build_version='2.43.0',
+                                  include_xmlns=True)
+
+        self.single_loner, form0 = self.factory.new_basic_module('Single Loner', self.CASE_TYPE)
+        self.multi_loner, form1 = self.factory.new_basic_module('Multi Loner', self.CASE_TYPE)
+        self.multi_loner.case_details.short.multi_select = True
+
+        self.single_parent, form2 = self.factory.new_basic_module('Single Parent', self.CASE_TYPE)
+        self.multi_child, form3 = self.factory.new_basic_module('Multi child', self.CASE_TYPE,
+                                                                parent_module=self.single_parent)
+        self.multi_child.case_details.short.multi_select = True
+
+        self.multi_parent, form4 = self.factory.new_basic_module('Multi Parent', self.CASE_TYPE)
+        self.multi_parent.case_details.short.multi_select = True
+        self.single_child, form5 = self.factory.new_basic_module('Single Child', self.CASE_TYPE,
+                                                                 parent_module=self.multi_parent)
+
+        for module in self.factory.app.get_modules():
+            for form in module.get_forms():
+                form.requires = 'case'
+
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+    def test_block_form_linking(self, *args):
+        form0 = self.multi_loner.get_form(0)
+        form1 = self.single_loner.get_form(0)
+        form2 = self.single_parent.get_form(0)
+
+        form0.post_form_workflow = WORKFLOW_FORM
+        form0.form_links = [FormLink(
+            xpath="true()",
+            form_id=form1.unique_id,    # can't link *to* multi-select form
+        )]
+
+        form1.post_form_workflow = WORKFLOW_FORM    # can't link *from* multi-select form
+        form1.form_links = [FormLink(
+            xpath="true()",
+            form_id=form0.unique_id,
+        )]
+
+        form2.post_form_workflow = WORKFLOW_FORM    # can't link *to* multi-select module
+        form2.form_links = [FormLink(
+            xpath="true()",
+            module_unique_id=self.multi_loner.unique_id,
+        )]
+
+        errors = self.factory.app.validate_app()
+        self.assertIn({
+            'type': 'multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 0, 'unique_id': 'Single Loner_module', 'name': {'en': 'Single Loner module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Loner form 0'}, 'unique_id': 'Single Loner_form_0'}
+        }, errors)
+        self.assertIn({
+            'type': 'multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
+            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'},
+        }, errors)
+        self.assertIn({
+            'type': 'multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 2, 'unique_id': 'Single Parent_module', 'name': {'en': 'Single Parent module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Parent form 0'}, 'unique_id': 'Single Parent_form_0'},
+        }, errors)
+
+    def test_block_eof_nav_multi_parent(self, *args):
+        form = self.single_child.get_form(0)
+
+        form.post_form_workflow = WORKFLOW_MODULE
+        self.assertIn({
+            'type': 'parent multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, self.factory.app.validate_app())
+
+        form.post_form_workflow = WORKFLOW_FORM
+        form.form_links = [FormLink(
+            xpath="true()",
+            form_id=form.unique_id,
+        )]
+        self.assertIn({
+            'type': 'parent multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, self.factory.app.validate_app())
+
+    def test_block_previous_screen(self, *args):
+        self.multi_loner.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
+        self.single_child.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
+
+        errors = self.factory.app.validate_app()
+        self.assertIn({
+            'type': 'previous multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
+            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
+        }, errors)
+        self.assertIn({
+            'type': 'previous multi select form links',
+            'form_type': 'module_form',
+            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
+            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        }, errors)
+
+    def test_eof_nav_multi_to_multi(self, *args):
+        form = self.multi_loner.get_form(0)
+        form.post_form_workflow = WORKFLOW_MODULE
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m1'"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[2]/stack",
+        )
+
+    def test_eof_nav_multi_to_single(self, *args):
+        form = self.multi_child.get_form(0)
+        form.post_form_workflow = WORKFLOW_PARENT_MODULE
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m2'"/>
+                  <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[4]/stack",
+        )
