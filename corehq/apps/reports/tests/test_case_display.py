@@ -55,3 +55,17 @@ def test_parse_date_none():
 def test_parse_date_int():
     parsed = CaseDisplay({}).parse_date(4)
     assert_equal(parsed, 4)
+
+
+def test_blank_owner_id():
+    # previously this would error
+    owner_type, meta = CaseDisplay({}).owner
+    assert_equal(owner_type, 'user')
+    assert_equal(meta, {'id': '', 'name': ''})
+
+
+def test_null_owner_id():
+    # previously this would error
+    owner_type, meta = CaseDisplay({'owner_id': None}).owner
+    assert_equal(owner_type, 'user')
+    assert_equal(meta, {'id': None, 'name': None})
