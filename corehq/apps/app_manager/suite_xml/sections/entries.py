@@ -886,7 +886,7 @@ class EntriesHelper(object):
                 if not parent_datum_meta.requires_selection:
                     # Add parent datums of opened subcases and automatically-selected cases
                     datums.insert(i, attr.evolve(parent_datum_meta, from_parent=True))
-                elif _same_case_datum_type(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
+                elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     def set_id(datum, new_id):
                         case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
                         _update_refs(datums_by_case_tag[case_tag], datum.id, new_id)
@@ -993,7 +993,8 @@ def _get_datums_by_case_tag(datums):
     return ret
 
 
-def _same_case_datum_type(this_datum_meta, parent_datum_meta):
+def _same_case(this_datum_meta, parent_datum_meta):
+    # I suspect this should compare each datum_meta's module_id, but that breaks tests
     return (this_datum_meta
             and this_datum_meta.case_type == parent_datum_meta.case_type
-            and type(this_datum_meta.datum) == type(parent_datum_meta.datum))
+            and this_datum_meta.datum.ROOT_NAME == parent_datum_meta.datum.ROOT_NAME)
