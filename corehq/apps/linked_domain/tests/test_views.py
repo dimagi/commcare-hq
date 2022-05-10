@@ -54,10 +54,10 @@ class LinkDomainsTests(SimpleTestCase):
             mock_linkdomains.side_effect = mock_handler
             link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
-    def test_exception_raised_if_user_is_not_admin_in_both_domains(self):
+    def test_exception_raised_if_user_does_not_have_access_in_both_domains(self):
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
              patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
-             patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=False),\
+             patch('corehq.apps.linked_domain.views.user_has_access_in_all_domains', return_value=False),\
              self.assertRaises(DomainLinkNotAllowed):
             link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
@@ -65,7 +65,7 @@ class LinkDomainsTests(SimpleTestCase):
         with patch('corehq.apps.linked_domain.views.domain_exists', return_value=True),\
              patch('corehq.apps.linked_domain.views.get_active_domain_link', return_value=None),\
              patch('corehq.apps.linked_domain.views.DomainLink.link_domains', return_value=True),\
-             patch('corehq.apps.linked_domain.views.user_has_admin_access_in_all_domains', return_value=True):
+             patch('corehq.apps.linked_domain.views.user_has_access_in_all_domains', return_value=True):
             domain_link = link_domains(Mock(), self.upstream_domain, self.downstream_domain)
 
         self.assertIsNotNone(domain_link)
