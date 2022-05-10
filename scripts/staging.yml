@@ -64,7 +64,6 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
-    - sk/remove-feature-phone-support  # Simon April 20
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
@@ -72,7 +71,6 @@ branches:
     - ad/autoupdate-criteria-operator # Addison April 26
     - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
     - ml/case-property-bug # Minha April 28
-    - jls/tab-nodeset-filter # Jenny May 2
     - jls/conditional-case-search # Jenny May 3
     - jls/multiple-referrals-eof-nav # Jenny May 5
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
