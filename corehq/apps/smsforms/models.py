@@ -370,6 +370,21 @@ class XFormsSessionSynchronization:
                 cls._release_running_session_info_for_channel(running_session_info, channel)
 
     @classmethod
+    def set_channel_for_affinity(cls, session):
+        """
+        Set the channel affinity for the session. This is used for manually setting the affinity.
+
+        Returns True if the affinity was set
+        """
+        channel = session.get_channel()
+        with cls._critical_section(channel):
+            if cls._channel_is_available_for_session(session):
+                session_info = RunningSessionInfo(None, session.connection_id)
+                cls._release_running_session_info_for_channel(session_info, channel)
+                return True
+        return False
+
+    @classmethod
     def clear_stale_channel_claim(cls, channel):
         with cls._critical_section(channel):
             return cls._clear_stale_channel_claim(channel)

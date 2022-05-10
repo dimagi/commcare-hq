@@ -1108,6 +1108,12 @@ class MessagingTab(UITab):
                 ],
             })
 
+            if self.couch_user.is_superuser or toggles.SUPPORT.enabled_for_request(self._request):
+                reminders_urls.append({
+                    'title': _("Test Inbound SMS"),
+                    'url': reverse("message_test", args=[self.domain]),
+                })
+
         return reminders_urls
 
     @property
