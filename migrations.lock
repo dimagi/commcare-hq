@@ -1016,6 +1016,7 @@ users
  0040_add_repr_and_changed_by_repr
  0041_migrate_reprs
  0042_deactivatemobileworkertrigger
+ 0043_add_release_management_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
