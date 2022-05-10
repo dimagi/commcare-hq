@@ -245,7 +245,6 @@ class FormSessionMultipleContactsTestCase(TestCase):
         self.assertIsNone(session_info.session_id)
         self.assertEqual(session_info.contact_id, session.connection_id)
 
-
     def _claim_channel(self, session):
         self.assertEqual(session.get_channel(), SMSChannel(
             backend_id=self.backend.couch_id, phone_number=self.phone_number))
