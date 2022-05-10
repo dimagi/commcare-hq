@@ -176,13 +176,13 @@ class IdentityProvider(models.Model):
     def get_login_url(self, username=None):
         """
         Gets the login endpoint for the IdentityProvider based on the protocol
-        being used. Since we only support SAML2 right now, this redirects to
-        the SAML2 login endpoint.
+        being used.
         :param username: (string) username to pre-populate IdP login with
         :return: (String) identity provider login url
         """
+        login_view_name = 'sso_saml_login' if self.protocol == IdentityProviderProtocol.SAML else 'sso_oidc_login'
         return '{}?username={}'.format(
-            reverse('sso_saml_login', args=(self.slug,)),
+            reverse(login_view_name, args=(self.slug,)),
             username
         )
 
