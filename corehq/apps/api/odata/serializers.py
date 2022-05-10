@@ -93,6 +93,7 @@ class ODataBaseSerializer(Serializer):
                 as_json=True,
             )
             data.extend(rows)
+            data.extend("this is a test")
         return data
 
 
