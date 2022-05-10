@@ -279,6 +279,9 @@ data_interfaces
  0023_auto_20210914_1726
  0024_add_automaticupdaterule_upstream_id
  0025_domaincaserulerun_num_errors
+ 0026_auto_20220420_1301
+ 0027_locationfilterdefinition_include_child_locations
+ 0028_automaticupdaterule_criteria_operator
 dhis2
  0001_initial
  0002_auto_20170322_1323
