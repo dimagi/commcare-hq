@@ -77,4 +77,5 @@ branches:
     - rc/sms-multiple-contacts-bug # Robert May 9
     - dependabot/pip/requirements/phonenumberslite-8.12.46  # [QA] Joel May 10
     - dependabot/pip/requirements/reportlab-3.6.9  # [QA] Joel May 10
+    - gh/use-release-management-permission # [QA] Graham May 10
 submodules: { }
