@@ -111,6 +111,18 @@ def midpoint(x1, x2):
 
 
 class InvoiceTemplate(object):
+    # TODO: improve invoice rendering logic to be more robust:
+    # - More than 4 lines for a "from" address block (more than 4 populated of:
+    #   name, company_name, first_line, second_line, city/region/postal_code,
+    #   country) results in the bottom of the header "from" block being obscured
+    #   by the "BILL TO" block.
+    # - Too much text in a "bank" address (enough to result in a wrap) garbles
+    #   the footer.
+    # - It's unclear if all combinations of `is_wire`, `is_customer` and
+    #   `is_prepayment` are valid together. If there are invalid combinations,
+    #   this class should raise `ValueError` on invalid args.
+    # - Add tests to validate expectations.
+    # - Flywire URL should be parameterized.
 
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=Address(**settings.INVOICE_FROM_ADDRESS),
@@ -186,8 +198,9 @@ class InvoiceTemplate(object):
                 self.draw_totals_on_new_page()
 
     def draw_logo(self):
-        self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
-                              width=inches(1.2), preserveAspectRatio=True)
+        self.canvas.drawImage(self.logo_filename, inches(0.5), inches(10.5),
+                              height=inches(0.75), width=inches(1.25),
+                              preserveAspectRatio=True, anchor="w")
 
     def draw_text(self, string, x, y):
         text = self.canvas.beginText()
