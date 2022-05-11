@@ -1693,6 +1693,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'type': expression.expression_type,
             'description': expression.description,
             'definition': self._truncate_value(json.dumps(expression.definition)),
+            'upstream_id': expression.upstream_id,
             'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
         }
 
