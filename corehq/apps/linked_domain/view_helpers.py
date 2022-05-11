@@ -325,45 +325,32 @@ def pop_fixture_for_action(action, fixtures, domain):
     return fixture
 
 
-def pop_report_for_action(action, reports):
-    report_id = action.wrapped_detail.report_id
-    try:
-        report = reports.get(report_id)
-        del reports[report_id]
-        return report
-    except KeyError:
+def pop_report(report_id, reports):
+    report = reports.pop(report_id, None)
+    if report is None:
         report = ReportConfiguration.get(report_id)
         if report.doc_type == "ReportConfiguration-Deleted":
             return None
-        else:
-            return report
+    return report
 
 
-def pop_keyword_for_action(action, keywords):
-    keyword_id = action.wrapped_detail.keyword_id
-    try:
-        keyword = keywords[keyword_id]
-        del keywords[keyword_id]
-    except KeyError:
+def pop_keyword(keyword_id, keywords):
+    keyword = keywords.pop(keyword_id, None)
+    if keyword is None:
         try:
             keyword = Keyword.objects.get(id=keyword_id)
         except Keyword.DoesNotExist:
             keyword = None
-
     return keyword
 
 
-def pop_ucr_expression_for_action(action, ucr_expressions):
-    ucr_expression_id = action.wrapped_detail.ucr_expression_id
-    try:
-        ucr_expression = ucr_expressions[ucr_expression_id]
-        del ucr_expressions[ucr_expression_id]
-    except KeyError:
+def pop_ucr_expression(ucr_expression_id, ucr_expressions):
+    ucr_expression = ucr_expressions.pop(ucr_expression_id, None)
+    if ucr_expression is None:
         try:
             ucr_expression = UCRExpression.objects.get(id=ucr_expression_id)
         except UCRExpression.DoesNotExist:
             ucr_expression = None
-
     return ucr_expression
 
 
@@ -396,13 +383,13 @@ def build_pullable_view_models_from_data_models(
             fixture = pop_fixture_for_action(action, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
         elif action.model == MODEL_REPORT:
-            report = pop_report_for_action(action, reports)
+            report = pop_report(action.wrapped_detail.report_id, reports)
             view_model = build_report_view_model(report, last_update=last_update)
         elif action.model == MODEL_KEYWORD:
-            keyword = pop_keyword_for_action(action, keywords)
+            keyword = pop_keyword(action.wrapped_detail.keyword_id, keywords)
             view_model = build_keyword_view_model(keyword, last_update=last_update)
         elif action.model == MODEL_UCR_EXPRESSION:
-            ucr_expression = pop_ucr_expression_for_action(action, ucr_expressions)
+            ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
             view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
         else:
             view_model = build_linked_data_view_model(
