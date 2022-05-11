@@ -10,12 +10,13 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkNotAllowed,
     DomainLinkNotFound,
     NoDownstreamDomainsProvided,
+    UserDoesNotHavePermission,
 )
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.views import (
+    check_if_push_violates_constraints,
     link_domains,
     validate_push,
-    validate_push_for_user,
 )
 from corehq.apps.users.models import WebUser
 
@@ -81,9 +82,13 @@ class ValidatePushTests(TestCase):
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, 'test-domain', deleted_by=None)
 
-        validate_patcher = patch('corehq.apps.linked_domain.views.validate_push_for_user')
-        cls.mock_validate_push_for_user = validate_patcher.start()
+        validate_patcher = patch('corehq.apps.linked_domain.views.check_if_push_violates_constraints')
+        cls.mock_violates_constraints = validate_patcher.start()
         cls.addClassCleanup(validate_patcher.stop)
+
+        permissions_check_patcher = patch('corehq.apps.linked_domain.views.user_has_access_in_all_domains')
+        cls.mock_permissions_check = permissions_check_patcher.start()
+        cls.addClassCleanup(permissions_check_patcher.stop)
 
     def test_raises_exception_if_no_downstream_domains_selected(self):
         with self.assertRaises(NoDownstreamDomainsProvided):
@@ -93,21 +98,29 @@ class ValidatePushTests(TestCase):
         with self.assertRaises(DomainLinkNotFound):
             validate_push(self.user, 'upstream', ['downstream'])
 
+    def test_raises_exception_if_user_does_not_have_permission(self):
+        DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_permissions_check.return_value = False
+        with self.assertRaises(UserDoesNotHavePermission):
+            validate_push(self.user, 'upstream', ['downstream'])
+
     def test_raises_exception_if_user_attempts_invalid_push(self):
         DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
-        self.mock_validate_push_for_user.side_effect = AttemptedPushViolatesConstraints
+        self.mock_permissions_check.return_value = True
+        self.mock_violates_constraints.side_effect = AttemptedPushViolatesConstraints
 
         with self.assertRaises(AttemptedPushViolatesConstraints):
             validate_push(self.user, 'upstream', ['downstream'])
 
     def test_successful_validation(self):
         DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
-        self.mock_validate_push_for_user.side_effect = None
+        self.mock_permissions_check.return_value = True
+        self.mock_violates_constraints.side_effect = None
 
         validate_push(self.user, 'upstream', ['downstream'])
 
 
-class ValidatePushForUserTests(TestCase):
+class CheckIfPushViolatesConstraintTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -137,7 +150,7 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         try:
-            validate_push_for_user(self.superuser, [full_access_link1, full_access_link2])
+            check_if_push_violates_constraints(self.superuser, [full_access_link1, full_access_link2])
         except Exception as e:
             self.fail(f"Unexpected exception raised {e}")
 
@@ -154,7 +167,7 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         try:
-            validate_push_for_user(self.non_superuser, [full_access_link1, full_access_link2])
+            check_if_push_violates_constraints(self.non_superuser, [full_access_link1, full_access_link2])
         except Exception as e:
             self.fail(f"Unexpected exception raised {e}")
 
@@ -171,7 +184,7 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         try:
-            validate_push_for_user(self.superuser, [full_access_link, limited_access_link])
+            check_if_push_violates_constraints(self.superuser, [full_access_link, limited_access_link])
         except Exception as e:
             self.fail(f"Unexpected exception raised {e}")
 
@@ -188,7 +201,7 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         with self.assertRaises(AttemptedPushViolatesConstraints):
-            validate_push_for_user(self.non_superuser, [full_access_link, limited_access_link])
+            check_if_push_violates_constraints(self.non_superuser, [full_access_link, limited_access_link])
 
     def test_superuser_can_push_multiple_limited_access_links(self):
         limited_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited1')
@@ -203,7 +216,7 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         try:
-            validate_push_for_user(self.superuser, [limited_access_link1, limited_access_link2])
+            check_if_push_violates_constraints(self.superuser, [limited_access_link1, limited_access_link2])
         except Exception as e:
             self.fail(f"Unexpected exception raised {e}")
 
@@ -220,4 +233,4 @@ class ValidatePushForUserTests(TestCase):
         self.addCleanup(link2_patcher.stop)
 
         with self.assertRaises(AttemptedPushViolatesConstraints):
-            validate_push_for_user(self.non_superuser, [limited_access_link1, limited_access_link2])
+            check_if_push_violates_constraints(self.non_superuser, [limited_access_link1, limited_access_link2])

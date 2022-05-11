@@ -60,6 +60,7 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkNotFound,
     NoDownstreamDomainsProvided,
     UnsupportedActionError,
+    UserDoesNotHavePermission,
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
@@ -393,6 +394,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 The attempted push from {} to {} is disallowed. Please contact support.
             '''.format(self.domain, formatted_domains))
             notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
+        except UserDoesNotHavePermission:
+            error_message = gettext(
+                "You do not have permission to push to all specified downstream project spaces."
+            )
         finally:
             if error_message:
                 return {
@@ -478,10 +483,16 @@ def validate_push(user, domain, downstream_domains):
     except DomainLink.DoesNotExist:
         raise DomainLinkNotFound
 
-    validate_push_for_user(user, domain_links)
+    if not user_has_access_in_all_domains(user, downstream_domains):
+        raise UserDoesNotHavePermission
+
+    check_if_push_violates_constraints(user, domain_links)
 
 
-def validate_push_for_user(user, domain_links):
+def check_if_push_violates_constraints(user, domain_links):
+    """
+    Ensures MRM limit of pushing to 1 domain at a time is enforced
+    """
     if user.is_superuser:
         return
 
