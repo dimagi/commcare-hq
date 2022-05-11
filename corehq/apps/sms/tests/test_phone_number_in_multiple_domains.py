@@ -114,6 +114,9 @@ class FormSessionMultipleContactsTestCase(TestCase):
     def setUp(self):
         get_channel_for_contact.clear(self.number1.owner_id, self.number1.phone_number)
         get_channel_for_contact.clear(self.number2.owner_id, self.number2.phone_number)
+        SQLMobileBackendMapping.get_prefix_to_backend_map.clear("SMS", None)
+        SQLMobileBackendMapping.get_prefix_to_backend_map.clear("SMS", self.domain_name1)
+        SQLMobileBackendMapping.get_prefix_to_backend_map.clear("SMS", self.domain_name2)
 
     def test_sms_form_session_in_primary_domain_with_plus_prefix(self):
         self._test(self.number1, with_prefix=True)
