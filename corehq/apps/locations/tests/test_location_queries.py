@@ -64,6 +64,15 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
         # should not raise excepiton
         pickle.dumps(locs)
 
+    def test_location_descendants_include_location(self):
+        boston = SQLLocation.objects.get(name="Boston")
+
+        massachusetts = SQLLocation.objects.get(name="Massachusetts")
+        self.assertTrue(massachusetts.descendants_include_location(boston.location_id))
+
+        california = SQLLocation.objects.get(name="California")
+        self.assertFalse(california.descendants_include_location(boston.location_id))
+
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 
