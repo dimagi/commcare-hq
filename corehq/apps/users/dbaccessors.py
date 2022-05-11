@@ -152,7 +152,7 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
     filters_applied = any([
         user_filters.get(f, None)
         for f in ['role_id', 'search_string', 'location_id', 'web_user_assigned_location_ids']
-    ]) or type(user_filters.get('user_active_status', None) == bool)
+    ]) or type(user_filters.get('user_active_status', None)) == bool
     if not count_only and not filters_applied:
         if user_type == MOBILE_USER_TYPE:
             return get_all_commcare_users_by_domain(domain)
