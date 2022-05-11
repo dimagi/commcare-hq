@@ -16,6 +16,7 @@ from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.views import (
     check_if_push_violates_constraints,
     link_domains,
+    validate_pull,
     validate_push,
 )
 from corehq.apps.users.models import WebUser
@@ -234,3 +235,34 @@ class CheckIfPushViolatesConstraintTests(TestCase):
 
         with self.assertRaises(AttemptedPushViolatesConstraints):
             check_if_push_violates_constraints(self.non_superuser, [limited_access_link1, limited_access_link2])
+
+
+class ValidatePullTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = WebUser()
+        cls.user.username = 'user'
+        cls.user.is_superuser = False
+        cls.user.save()
+        cls.addClassCleanup(cls.user.delete, 'test-domain', deleted_by=None)
+
+        permissions_check_patcher = patch('corehq.apps.linked_domain.views.user_has_access')
+        cls.mock_permissions_check = permissions_check_patcher.start()
+        cls.addClassCleanup(permissions_check_patcher.stop)
+
+    def test_raises_exception_if_user_does_not_have_permission(self):
+        domain_link = DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_permissions_check.return_value = False
+        with self.assertRaises(UserDoesNotHavePermission):
+            validate_pull(self.user, domain_link)
+
+    def test_successful_if_user_has_permission_in_downstream_domain_only(self):
+        domain_link = DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
+        self.mock_permissions_check.side_effect = lambda user, domain: domain == 'downstream'
+
+        try:
+            validate_pull(self.user, domain_link)
+        except UserDoesNotHavePermission:
+            self.fail("Unexpected exception UserDoesNotHavePermission raised")

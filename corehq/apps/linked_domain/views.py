@@ -91,6 +91,7 @@ from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
+    user_has_access,
     user_has_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
@@ -341,13 +342,26 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         type_ = model['type']
         detail = model['detail']
         detail_obj = wrap_detail(type_, detail) if detail else None
+        timezone = get_timezone_for_request()
+        domain_link = get_upstream_domain_link(self.domain)
 
-        upstream_link = get_upstream_domain_link(self.domain)
+        try:
+            validate_pull(self.request.couch_user, domain_link)
+        except UserDoesNotHavePermission:
+            notify_exception(self.request, "Triggered UserDoesNotHavePermission exception")
+            return {
+                'success': False,
+                'error': gettext(
+                    "You do not have permission to pull content into this project space."
+                ),
+                'last_update': server_to_user_time(domain_link.last_pull, timezone),
+            }
+
         error = ""
         try:
-            update_model_type(upstream_link, type_, detail_obj)
+            update_model_type(domain_link, type_, detail_obj)
             model_detail = detail_obj.to_json() if detail_obj else None
-            upstream_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
+            domain_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
@@ -357,11 +371,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             {"data_model": type_}
         )
 
-        timezone = get_timezone_for_request()
         return {
             'success': not error,
             'error': error,
-            'last_update': server_to_user_time(upstream_link.last_pull, timezone)
+            'last_update': server_to_user_time(domain_link.last_pull, timezone)
         }
 
     @allow_remote_invocation
@@ -507,6 +520,12 @@ def check_if_push_violates_constraints(user, domain_links):
         return
 
     raise AttemptedPushViolatesConstraints
+
+
+def validate_pull(user, domain_link):
+    # ensure user has access in the downstream domain
+    if not user_has_access(user, domain_link.linked_domain):
+        raise UserDoesNotHavePermission
 
 
 class DomainLinkHistoryReport(GenericTabularReport):

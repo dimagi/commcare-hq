@@ -194,9 +194,11 @@ def is_domain_in_active_link(domain_name):
     return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
 
 
+def user_has_access(d, u):
+    return u.is_domain_admin(d) or u.has_permission(d, 'access_release_management')
+
+
 def user_has_access_in_all_domains(user, domains):
-    def user_has_access(d, u):
-        return u.is_domain_admin(d) or u.has_permission(d, 'access_release_management')
     return all([user_has_access(domain, user) for domain in domains])
 
 
