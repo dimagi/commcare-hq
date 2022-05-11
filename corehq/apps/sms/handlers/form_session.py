@@ -55,15 +55,17 @@ def form_session_handler(verified_number, text, msg):
                 if session.connection_id != verified_number.owner_id:
                     notify_error("SMS response contact does not match open session contact", details={
                         "session_id": session.session_id,
-                        "phone_number_id": verified_number.couch_id,
+                        "phone_number_id": verified_number.pk,
                         "message_id": msg.couch_id
                     })
-                    session.mark_completed(False)  # this will also release the channel
-                    session.save()
-                    send_sms_to_verified_number(
-                        verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
-                    )
-                    return True
+                    # comment this out for now to avoid breaking existing workflows
+
+                    # session.mark_completed(False)  # this will also release the channel
+                    # session.save()
+                    # send_sms_to_verified_number(
+                    #     verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
+                    # )
+                    # return True
                 if not session.session_is_open:
                     # This should never happen. But if it does we should set the channel free
                     # and act like there was no available session
