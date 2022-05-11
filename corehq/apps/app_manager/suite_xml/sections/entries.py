@@ -983,7 +983,7 @@ class EntriesHelper(object):
                         datums.insert(index, attr.evolve(parent_datum_meta, from_parent=True))
                     elif this_datum_meta:
                         same_case_type = this_datum_meta.case_type == parent_datum_meta.case_type
-                        same_datum_type = type(this_datum_meta.datum) == type(parent_datum_meta.datum)
+                        same_datum_type = this_datum_meta.datum.ROOT_NAME == parent_datum_meta.datum.ROOT_NAME
                         if same_case_type and same_datum_type:
                             append_update(changed_ids_by_case_tag,
                                           rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
