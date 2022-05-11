@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
+from corehq.apps.hqwebapp.widgets import SelectToggle
 
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
@@ -23,6 +24,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
     CaseRuleAction,
     CaseRuleCriteria,
     ClosedParentDefinition,
@@ -270,6 +272,16 @@ class CaseRuleCriteriaForm(forms.Form):
         label=gettext_lazy("Case Type"),
         required=True,
     )
+    criteria_operator = forms.ChoiceField(
+        label=gettext_lazy("Run when"),
+        required=False,
+        initial='ALL',
+        choices=AutomaticUpdateRule.CriteriaOperator.choices,
+        widget=SelectToggle(
+            choices=AutomaticUpdateRule.CriteriaOperator.choices,
+            attrs={"ko_value": "criteriaOperator"}
+        ),
+    )
 
     filter_on_server_modified = forms.CharField(required=False, initial='false')
     server_modified_boundary = forms.CharField(required=False, initial='')
@@ -286,6 +298,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'property_match_definitions': json.loads(self['property_match_definitions'].value()),
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
             'case_type': self['case_type'].value(),
+            'criteria_operator': self['criteria_operator'].value(),
         }
 
     @property
@@ -303,6 +316,7 @@ class CaseRuleCriteriaForm(forms.Form):
     def compute_initial(self, domain, rule):
         initial = {
             'case_type': rule.case_type,
+            'criteria_operator': rule.criteria_operator,
             'filter_on_server_modified': 'true' if rule.filter_on_server_modified else 'false',
             'server_modified_boundary': rule.server_modified_boundary,
         }
@@ -375,6 +389,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
+        self.fields['criteria_operator'].choices = AutomaticUpdateRule.CriteriaOperator.choices
 
         self.helper = HQFormHelper()
         self.helper.form_tag = False
@@ -394,14 +409,16 @@ class CaseRuleCriteriaForm(forms.Form):
             ),
         )
 
-        self.case_type_helper = HQFormHelper()
-        self.case_type_helper.form_tag = False
-        self.case_type_helper.layout = Layout(
+        self.form_beginning_helper = HQFormHelper()
+        self.form_beginning_helper.form_tag = False
+        self.form_beginning_helper.layout = Layout(
             Fieldset(
                 _("Rule Criteria"),
-                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2")
+                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2"),
+                Field('criteria_operator'),
             )
         )
+
 
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
@@ -559,6 +576,7 @@ class CaseRuleCriteriaForm(forms.Form):
     def save_criteria(self, rule):
         with transaction.atomic():
             rule.case_type = self.cleaned_data['case_type']
+            rule.criteria_operator = self.cleaned_data['criteria_operator']
             rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
             rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
             rule.save()
