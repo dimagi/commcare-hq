@@ -350,11 +350,11 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m0, self.m2)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'case_id_beneficiary'),
-            ('instance-datum', 'selected_cases')
+            ('datum', 'case_id_beneficiary'),  # m2
+            ('instance-datum', 'selected_cases')  # m0
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id_beneficiary'),  # From m1, but copied from m2
         ])
         # this is an error
         self.assert_form_datums(self.m1f0, 'case_id')
@@ -409,7 +409,9 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id_beneficiary'),
             ('datum', 'case_id')
         ])
-        # I'm guessing this is wrong - it's pulling the case from the parent module
+        # This is wrong - get_add_case_preloads_case_id_xpath expects the child
+        # module datum to be renamed because of a conflict with the parent, but
+        # in this case the parent (m0) doesn't conflict, as it's a multiselect.
         self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_child_module_selects_other_parent_different_type(self):
@@ -419,5 +421,5 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'parent_id'),
             ('datum', 'case_id')
         ])
-        # This is definitely wrong
+        # This is wrong in the same way as the above test
         self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
