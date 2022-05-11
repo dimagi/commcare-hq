@@ -78,6 +78,7 @@ billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/
 laboratory
 lxml
 markdown
+oic
 openpyxl
 phonenumberslite
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
