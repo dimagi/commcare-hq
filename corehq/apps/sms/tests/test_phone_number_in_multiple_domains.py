@@ -115,11 +115,10 @@ class FormSessionMultipleContactsTestCase(TestCase):
     @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
     @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
         return_value=Mock(xform=Mock(form_id="123"))))
-    def test_sms_form_session_across_multiple_domains_with_same_backend_and_number(self):
-        self._test(self.number1)  # test session from domain1
-        self._test(self.number2)  # test session from domain2 immediately after
+    def test_sms_form_session_in_primary_domain_with_plus_prefix(self):
+        self._test(self.number1, with_prefix=True)
 
-    def _test(self, number):
+    def _test(self, number, with_prefix):
         session = self._make_session(number)
         self._claim_channel(session)
 
@@ -127,7 +126,10 @@ class FormSessionMultipleContactsTestCase(TestCase):
 
         mocker = MockFormplayerRequest("current", QUESTION_RESPONSE)
         mocker.add_action("answer", ANSWER_RESPONSE)
-        msg = self._get_sms("+" + number.phone_number)
+        sms_number = number.phone_number
+        if with_prefix:
+            sms_number = "+" + sms_number
+        msg = self._get_sms(sms_number)
         with mocker:
             # with the mocks configured this should result in the session being completed
             _process_incoming(msg)
