@@ -118,6 +118,15 @@ class FormSessionMultipleContactsTestCase(TestCase):
     def test_sms_form_session_in_primary_domain_with_plus_prefix(self):
         self._test(self.number1, with_prefix=True)
 
+    def test_sms_form_session_in_primary_domain_without_plus_prefix(self):
+        self._test(self.number1, with_prefix=False)
+
+    def test_sms_form_session_in_secondary_domain_with_plus_prefix(self):
+        self._test(self.number2, with_prefix=True)
+
+    def test_sms_form_session_in_secondary_domain_without_plus_prefix(self):
+        self._test(self.number2, with_prefix=False)
+
     def _test(self, number, with_prefix):
         session = self._make_session(number)
         self._claim_channel(session)
