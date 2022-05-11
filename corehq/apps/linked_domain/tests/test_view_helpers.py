@@ -35,6 +35,7 @@ from corehq.apps.linked_domain.view_helpers import (
     build_pullable_view_models_from_data_models,
     build_report_view_model,
     build_superuser_view_models,
+    build_ucr_expression_view_model,
     build_view_models_from_data_models,
     get_upstream_and_downstream_apps,
     get_upstream_and_downstream_fixtures,
@@ -433,6 +434,32 @@ class TestBuildIndividualViewModels(TestCase):
 
         actual_view_model = build_keyword_view_model(keyword)
         self.assertEqual(expected_view_model, actual_view_model)
+
+    def test_build_ucr_expression_view_model_returns_match(self):
+        ucr_expression = _create_ucr_expression(self.domain, should_save=False)
+        ucr_expression.id = '100'
+
+        expected_view_model = {
+            'type': 'ucr_expression',
+            'name': f'Data Expressions and Filters ({ucr_expression.name})',
+            'detail': {'ucr_expression_id': '100'},
+            'last_update': None,
+            'can_update': True,
+            'is_linkable': True,
+        }
+
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertEqual(expected_view_model, actual_view_model)
+
+    def test_build_ucr_expression_view_model_with_none_returns_none(self):
+        ucr_expression = None
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertIsNone(actual_view_model)
+
+    def test_build_ucr_expression_view_model_with_empty_returns_none(self):
+        ucr_expression = {}
+        actual_view_model = build_ucr_expression_view_model(ucr_expression)
+        self.assertIsNone(actual_view_model)
 
 
 class TestBuildFeatureFlagViewModels(TestCase):
