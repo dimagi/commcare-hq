@@ -4,7 +4,6 @@ from corehq.apps.fixtures.dbaccessors import (
     delete_all_fixture_data,
     delete_fixture_items_for_data_type,
     get_fixture_data_types,
-    get_fixture_data_type_by_tag,
     get_fixture_items_for_data_type,
 )
 from corehq.apps.fixtures.models import (
@@ -13,6 +12,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureItemField,
     FixtureTypeField,
+    LookupTable,
     LookupTableRow,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
@@ -156,31 +156,23 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
     def test_update_fixture_with_stale_caches(self):
         def stale_caches():
             from dimagi.utils.couch.bulk import CouchTransaction
-            # populate caches
-            table = get_fixture_data_type_by_tag(self.domain, "moons")
-            rows = get_fixture_items_for_data_type(self.domain, table._id)
+            table = LookupTable.objects.by_domain_tag(self.domain, "moons")
+            # populate row cache
+            rows = get_fixture_items_for_data_type(self.domain, table._migration_couch_id)
             assert len(rows) == 3, rows
-            # simulate failed cache invalidation, which could be caused by
-            # BulkSaveError and probably for other things too
-            cache_patch = patch.object(FixtureDataType, "clear_caches", lambda self: None)
-            with cache_patch, CouchTransaction() as tx:
-                table.tag = "rings"
-                tx.save(table)
+            with CouchTransaction() as tx:
                 for row in rows:
                     tx.delete(row)
-                tx.set_sql_save_action(FixtureDataType, lambda: None)
-                tx.set_sql_save_action(FixtureDataItem, lambda: None)
 
         self.assertEqual([], get_fixture_data_types(self.linked_domain, bypass_cache=True))
 
         stale_caches()
 
         # Update linked domain
-        update_fixture(self.domain_link, "rings")
+        update_fixture(self.domain_link, "moons")
 
         # Linked domain should now have master domain's table and rows
         table, = get_fixture_data_types(self.linked_domain, bypass_cache=True)
-        self.assertEqual(table.tag, "rings")
         self.assertFalse(get_fixture_items_for_data_type(self.linked_domain, table._id))
 
     def test_update_fixture_stale_cache_race(self):

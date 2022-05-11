@@ -26,11 +26,8 @@ from corehq.apps.integration.models import (
     GaenOtpServerSettings,
     HmacCalloutSettings,
 )
-from corehq.apps.fixtures.dbaccessors import (
-    delete_fixture_items_for_data_type,
-    get_fixture_data_type_by_tag,
-)
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.dbaccessors import delete_fixture_items_for_data_type
+from corehq.apps.fixtures.models import FixtureDataItem, LookupTable
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
@@ -208,6 +205,8 @@ def update_custom_data_models(domain_link, limit_types=None):
 
 def update_fixture(domain_link, tag):
     if domain_link.is_remote:
+        # FIXME Gets a requests.request(...) response object, which does
+        # not support the operations below. It has never worked.
         master_results = remote_fixture(domain_link, tag)
     else:
         master_results = local_fixture(domain_link.master_domain, tag, bypass_cache=True)
@@ -217,28 +216,25 @@ def update_fixture(domain_link, tag):
         raise UnsupportedActionError(_("Found non-global lookup table '{}'.").format(master_data_type.tag))
 
     # Update data type
-    master_data_type = master_data_type.to_json()
-    del master_data_type["_id"]
-    del master_data_type["_rev"]
-
-    linked_data_type = get_fixture_data_type_by_tag(domain_link.linked_domain, master_data_type["tag"])
-    if linked_data_type:
-        linked_data_type = linked_data_type.to_json()
-    else:
-        linked_data_type = {}
-    linked_data_type.update(master_data_type)
-    linked_data_type["domain"] = domain_link.linked_domain
-    linked_data_type = FixtureDataType.wrap(linked_data_type)
+    try:
+        linked_data_type = LookupTable.objects.by_domain_tag(
+            domain_link.linked_domain, master_data_type.tag)
+    except LookupTable.DoesNotExist:
+        linked_data_type = LookupTable(domain=domain_link.linked_domain)
+    for field in LookupTable._meta.fields:
+        if field.attname not in ["id", "domain"]:
+            value = getattr(master_data_type, field.attname)
+            setattr(linked_data_type, field.attname, value)
     linked_data_type.save()
 
     # Re-create relevant data items
-    delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
+    delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._migration_couch_id)
     for master_item in master_results["data_items"]:
         doc = master_item.to_json()
         del doc["_id"]
         del doc["_rev"]
         doc["domain"] = domain_link.linked_domain
-        doc["data_type_id"] = linked_data_type._id
+        doc["data_type_id"] = linked_data_type._migration_couch_id
         FixtureDataItem.wrap(doc).save()
 
     clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])

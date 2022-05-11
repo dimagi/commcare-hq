@@ -100,6 +100,10 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
 
         return super(FixtureDataType, cls).wrap(obj)
 
+    @property
+    def _migration_couch_id(self):
+        return self._id
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -299,6 +303,10 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             obj['item_attributes'] = {}
 
         return super(FixtureDataItem, cls).wrap(obj)
+
+    @property
+    def _migration_couch_id(self):
+        return self._id
 
     @classmethod
     def _migration_get_fields(cls):
@@ -588,13 +596,12 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
 
 def _id_from_doc(doc_or_doc_id):
-    from .models import LookupTable
     if isinstance(doc_or_doc_id, str):
         doc_id = doc_or_doc_id
-    elif isinstance(doc_or_doc_id, LookupTable):
-        doc_id = doc_or_doc_id._migration_couch_id
     else:
-        doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None
+        # ._migration_couch_id was used so usages of this function are
+        # revisited or removed by the time the migration is complete.
+        doc_id = doc_or_doc_id._migration_couch_id if doc_or_doc_id else None
     return doc_id
 
 

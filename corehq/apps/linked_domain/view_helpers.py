@@ -2,10 +2,8 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_type_by_tag,
-    get_fixture_data_types,
-)
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.linked_domain.const import (
     DOMAIN_LEVEL_DATA_MODELS,
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
@@ -320,7 +318,7 @@ def pop_fixture_for_action(action, fixtures, domain):
         tag = action.wrapped_detail.tag
         fixture = fixtures.pop(tag, None)
         if not fixture:
-            fixture = get_fixture_data_type_by_tag(domain, tag)
+            fixture = LookupTable.objects.by_domain_tag(domain, tag)
 
     return fixture
 

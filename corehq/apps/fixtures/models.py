@@ -122,6 +122,9 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
             obj.save(sync_to_sql=False)
         return obj
 
+    def clear_caches(self):
+        pass
+
 
 @define
 class Field:

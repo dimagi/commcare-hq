@@ -29,7 +29,7 @@ from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
@@ -648,9 +648,12 @@ class DomainLinkHistoryReport(GenericTabularReport):
             detail = record.wrapped_detail
             tag = gettext_lazy('Unknown')
             if detail:
-                data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
-                if data_type:
-                    tag = data_type.tag
+                has_tag = LookupTable.objects.filter(
+                    domain=self.selected_link.linked_domain,
+                    tag=detail.tag,
+                ).exists()
+                if has_tag:
+                    tag = detail.tag
             return '{} ({})'.format(name, tag)
 
         if record.model == MODEL_REPORT:
