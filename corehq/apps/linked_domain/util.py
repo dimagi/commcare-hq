@@ -18,14 +18,14 @@ def can_user_access_linked_domains(user, domain):
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
-    If yes, and the user is an admin, returns True
+    Checks if the current user has access to the release management permission, either explicitly or as admin
     """
     if not user or not domain:
         return False
 
-    privileges_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
-    is_admin = user.is_domain_admin(domain)
-    return any(domain_has_privilege(domain, priv) for priv in privileges_with_linked_domain_access) and is_admin
+    privs_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
+    user_has_access = user.is_domain_admin(domain) or user.has_permission(domain, 'access_release_management')
+    return user_has_access and any(domain_has_privilege(domain, priv) for priv in privs_with_linked_domain_access)
 
 
 def can_domain_access_linked_domains(domain, include_lite_version=True):
@@ -144,7 +144,7 @@ def is_linked_report(report):
 
 def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
     """
-    User must be an admin in both domains
+    User must be an admin or have the release management permission in both domains
     :param upstream_domain_name: str
     :param candidate_name: potential domain to link downstream
     :param user: CouchUser
@@ -160,12 +160,12 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
         # cannot link to an already linked project
         return False
 
-    return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    return user_has_access_in_all_domains(user, [upstream_domain_name, candidate_name])
 
 
 def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user):
     """
-    User must be an admin in both domains
+    User must be an admin or have the release management permission in both domains
     :param potential_upstream_domain: potential upstream domain
     :param downstream_domain: domain that would be downstream in this link if able
     :param user: couch user
@@ -183,7 +183,7 @@ def is_available_upstream_domain(potential_upstream_domain, downstream_domain, u
         # needs to be an active upstream domain
         return False
 
-    return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
+    return user_has_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
 
 
 def is_domain_in_active_link(domain_name):
@@ -194,8 +194,10 @@ def is_domain_in_active_link(domain_name):
     return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
 
 
-def user_has_admin_access_in_all_domains(user, domains):
-    return all([user.is_domain_admin(domain) for domain in domains])
+def user_has_access_in_all_domains(user, domains):
+    def user_has_access(d, u):
+        return u.is_domain_admin(d) or u.has_permission(d, 'access_release_management')
+    return all([user_has_access(domain, user) for domain in domains])
 
 
 def is_keyword_linkable(keyword):
