@@ -57,6 +57,12 @@ ANSWER_RESPONSE = {
 @flag_enabled("INBOUND_SMS_LENIENCY")
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
        new=lambda contact_id: contextlib.nullcontext())
+@patch('corehq.apps.sms.api.get_location_id_by_verified_number', MagicMock(return_value=None))
+@patch('corehq.apps.sms.api._domain_accepts_inbound', MagicMock(return_value=True))
+@patch('corehq.apps.sms.api.domain_has_privilege', MagicMock(return_value=True))
+@patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
+@patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
+    return_value=Mock(xform=Mock(form_id="123"))))
 class FormSessionMultipleContactsTestCase(TestCase):
 
     @classmethod
@@ -109,12 +115,6 @@ class FormSessionMultipleContactsTestCase(TestCase):
         get_channel_for_contact.clear(self.number1.owner_id, self.number1.phone_number)
         get_channel_for_contact.clear(self.number2.owner_id, self.number2.phone_number)
 
-    @patch('corehq.apps.sms.api.get_location_id_by_verified_number', MagicMock(return_value=None))
-    @patch('corehq.apps.sms.api._domain_accepts_inbound', MagicMock(return_value=True))
-    @patch('corehq.apps.sms.api.domain_has_privilege', MagicMock(return_value=True))
-    @patch('corehq.apps.sms.api._allow_load_handlers', MagicMock(return_value=True))
-    @patch('corehq.apps.smsforms.util.submit_form_locally', MagicMock(
-        return_value=Mock(xform=Mock(form_id="123"))))
     def test_sms_form_session_in_primary_domain_with_plus_prefix(self):
         self._test(self.number1, with_prefix=True)
 
