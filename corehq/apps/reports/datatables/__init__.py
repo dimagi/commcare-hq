@@ -1,5 +1,6 @@
 from django.utils.html import format_html, format_html_join
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils.functional import Promise
 
 from . import DTSortDirection, DTSortType
@@ -100,10 +101,16 @@ class DataTablesColumnGroup(object):
 
     @property
     def render_html(self):
-        template = '<th{} colspan="{}"><strong>{}</strong></th>'
-        css_class = ' class="col-sm-%d"' % self.css_span if self.css_span > 0 else ''
-        col_span = len(self.columns)
-        return format_html(template, css_class, col_span, self.html) if self.columns else ''
+        template = '<th{css_class} colspan="{colspan}"><strong>{title}</strong></th>'
+        css_class = mark_safe(  # nosec: no user input
+            ' class="col-sm-%d"' % self.css_span if self.css_span > 0 else ''
+        )
+        template_properties = {
+            'title': self.html,
+            'css_class': css_class,
+            'colspan': len(self.columns)
+        }
+        return format_html(template, **template_properties) if self.columns else ''
 
     @property
     def render_group_html(self):
@@ -202,7 +209,6 @@ class DataTablesHeader(object):
     def render_html(self):
         head = list()
         groups = list()
-
         for column in self.header:
             if isinstance(column, DataTablesColumn):
                 column.rowspan = 2 if self.has_group else 1
@@ -212,12 +218,14 @@ class DataTablesHeader(object):
                 groups.append(column.render_group_html)
             head.append(column.render_html)
 
-        header_segment = format_html_join('\n', '{}', ((segment,) for segment in head))
-        header = format_html('<tr>{}</tr>', header_segment)
-        if len(groups) > 2:
-            group_segment = format_html_join('\n', '{}', ((segment,) for segment in groups))
-            header = format_html('{}\n<tr>{}</tr>', header, group_segment)
-        return header
+        headers_data = format_html_join('\n', '{}', ((header,) for header in head))
+        html = format_html('<tr>{}</tr>', headers_data)
+
+        if len(groups):
+            group_data = format_html_join('\n', '{}', ((group,) for group in groups))
+            html = format_html('{}<tr>{}</tr>', html, group_data)
+
+        return html
 
     @property
     def render_aoColumns(self):
