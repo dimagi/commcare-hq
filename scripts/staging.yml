@@ -78,4 +78,5 @@ branches:
     - dependabot/pip/requirements/phonenumberslite-8.12.46  # Joel May 10
     - dependabot/pip/requirements/reportlab-3.6.9  # Joel May 10
     - gh/use-release-management-permission # [QA] Graham May 10
+    - mjr/all_safe_fixes  # Matt May 11
 submodules: { }
