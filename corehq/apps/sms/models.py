@@ -786,7 +786,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         try:
             return cls.objects.get(
                 owner_id=owner_id,
-                phone_number=phone_number
+                phone_number=apply_leniency(phone_number)
             )
         except cls.DoesNotExist:
             return None
