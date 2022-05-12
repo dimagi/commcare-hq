@@ -14,7 +14,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     models
 ) {
     $(function () {
-        var ssoExemptUserManager = models.linkedObjectListModel({
+        let ssoExemptUserManager = models.linkedObjectListModel({
             asyncHandler: 'sso_exempt_users_admin',
             requestContext: {
                 idpSlug: initialPageData.get('idp_slug'),
