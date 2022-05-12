@@ -620,7 +620,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         CasePropertyResult = namedtuple('CasePropertyResult', 'case value')
 
         if property_name.lower().startswith('parent/'):
-            parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+            parents = self.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
             return
@@ -692,7 +692,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return cls.objects.get_case(case_id)
 
     @memoized
-    def get_parent(self, identifier=None, relationship=None):
+    def get_parents(self, identifier=None, relationship=None):
         return [index.referenced_case for index in self.get_indices(identifier, relationship)]
 
     def get_indices(self, identifier=None, relationship=None):
@@ -721,7 +721,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        result = self.get_parent(
+        result = self.get_parents(
             identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=CASE_INDEX_CHILD
         )
@@ -729,7 +729,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CASE_INDEX_EXTENSION)
+        result = self.get_parents(relationship=CASE_INDEX_EXTENSION)
         return result[0] if result else None
 
     def save(self, *args, with_tracked_models=False, **kw):

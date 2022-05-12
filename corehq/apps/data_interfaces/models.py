@@ -666,7 +666,7 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
     def matches(self, case, now):
         relationship = self.relationship_id
 
-        for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
+        for parent in case.get_parents(identifier=self.identifier, relationship=relationship):
             if parent.closed:
                 return True
 
