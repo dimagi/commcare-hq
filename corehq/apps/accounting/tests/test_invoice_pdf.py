@@ -116,8 +116,8 @@ class InvoiceRenderer:
                 yield kwargs
 
     def get_invoice(self, file_or_path, *, is_wire, is_customer, is_prepayment):
-        """Returns an invoice instantiated with all available args passed by
-        position (positionally?).
+        """Returns an invoice instantiated with all available args passed
+        positionally.
 
         NOTE: the required kwargs of this function must match the keys of
         ``INVOICE_KWARG_CHOICES``.
@@ -167,5 +167,7 @@ class InvoiceRenderer:
             country="Around the World",
             phone_number="",
             email=f"{name.lower()}@example.com",
-            website="",  # populating this for a bank address messes up the footer
+            # Don't populate `website` because doing so for a bank address will
+            # likely make the bank info wrap in the footer and garble the text.
+            website="",
         )
