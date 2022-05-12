@@ -77,9 +77,13 @@ class UserInvitationView(object):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         username = self.request.user.username
-        userhalf, domainhalf = username.split('@')
-        # Add zero-width space to username for better line breaking
-        formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
+        if username:
+            userhalf, domainhalf = username.split('@')
+            # Add zero-width space to username for better line breaking
+            formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
+        else:
+            formatted_username = self.request.user.username
+
         context = {
             'formatted_username': formatted_username,
             'domain': self.domain,
