@@ -46,7 +46,7 @@ class TestInvoicePdf(SimpleTestCase):
 class InvoiceRenderer:
 
     TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-    TEST_LOGO_PATH = os.path.join(TEST_DATA_DIR, "logo.jpg")
+    TEST_LOGO_PATH = os.path.join(TEST_DATA_DIR, "logo.png")
 
     INVOICE_KWARG_CHOICES = {
         # keys must be valid kwarg names of `InvoiceTemplate.__init__()`
