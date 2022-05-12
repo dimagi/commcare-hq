@@ -487,7 +487,7 @@ class SQLCaseRepeater(SQLRepeater):
         return not self.white_listed_case_types or payload.type in self.white_listed_case_types
 
     def _allowed_user(self, payload):
-        return self.payload_user_id(payload) not in self.black_listed_users
+        return not self.black_listed_users or self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
@@ -1174,7 +1174,7 @@ class CaseRepeater(Repeater):
         return not self.white_listed_case_types or payload.type in self.white_listed_case_types
 
     def _allowed_user(self, payload):
-        return self.payload_user_id(payload) not in self.black_listed_users
+        return not self.black_listed_users or self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
