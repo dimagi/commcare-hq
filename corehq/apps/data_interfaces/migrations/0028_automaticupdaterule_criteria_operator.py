@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_interfaces', '0025_domaincaserulerun_num_errors'),
+        ('data_interfaces', '0027_locationfilterdefinition_include_child_locations'),
     ]
 
     operations = [
