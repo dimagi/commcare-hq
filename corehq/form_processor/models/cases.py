@@ -15,6 +15,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -480,6 +481,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
+        """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
             assert(len(found) == 1)
@@ -694,13 +696,20 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return [index.referenced_case for index in self.get_indices(identifier, relationship)]
 
     def get_indices(self, identifier=None, relationship=None):
+        """
+        Filter live indices by identifier (and / or) relationship.
+
+        :param identifier: Index identifier
+        :param relationship: Index relationship ('child' or 'extension')
+        :return:
+        """
         indices = self.live_indices
 
         if identifier:
             indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = [index for index in indices if index.relationship_id == relationship]
+            indices = [index for index in indices if index.relationship == relationship]
 
         return indices
 
@@ -714,13 +723,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         """
         result = self.get_parent(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndex.CHILD
+            relationship=CASE_INDEX_CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
+        result = self.get_parent(relationship=CASE_INDEX_EXTENSION)
         return result[0] if result else None
 
     def save(self, *args, with_tracked_models=False, **kw):
@@ -1030,8 +1039,8 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     CHILD = 1
     EXTENSION = 2
     RELATIONSHIP_CHOICES = (
-        (CHILD, 'child'),
-        (EXTENSION, 'extension'),
+        (CHILD, CASE_INDEX_CHILD),
+        (EXTENSION, CASE_INDEX_EXTENSION),
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
