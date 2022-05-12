@@ -259,13 +259,18 @@ def test_generator_update_create_and_remove_same_index():
             }})
 
 
-def test_generator_update_multiple_cases():
+def test_generator_update_multiple_nested_cases():
+    """
+    All cases in the hierarchy should be forwarded as long as they are extension
+    cases of the primary case and fit the requirements of the repeater (case type etc).
+
+    subcase2 -> subcase1 -> case 1
+    """
     main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
-    subcase1 = (
+    subcase1_builder = (
         IntentCaseBuilder()
         .target_case(case_id="sub1")
         .case_properties(sub1_prop="sub1_val")
-        .get_case()
     )
     subcase2 = (
         IntentCaseBuilder()
@@ -273,7 +278,8 @@ def test_generator_update_multiple_cases():
         .case_properties(sub2_prop="sub2_val")
         .get_case()
     )
-    main_case_builder.set_subcases([subcase1, subcase2])
+    subcase1_builder.set_subcases([subcase2])
+    main_case_builder.set_subcases([subcase1_builder.get_case()])
 
     def _get_case(case_id, domain=None):
         return Mock(domain=TARGET_DOMAIN, type="parent", case_id=case_id)
@@ -405,13 +411,20 @@ class DataRegistryUpdateForm:
     def __init__(self, form, primary_intent_case):
         self.intent_cases = {
             case.case_json['target_case_id']: case
-            for case in [primary_intent_case] + primary_intent_case.get_subcases()
+            for case in self._get_intent_cases(primary_intent_case)
         }
         self.formxml = ElementTree.fromstring(form)
         self.cases = {
             case.get('case_id'): CaseBlock.from_xml(case)
             for case in self.formxml.findall("{%s}case" % V2_NAMESPACE)
         }
+
+    def _get_intent_cases(self, intent_case):
+        cases = [intent_case]
+        subs = intent_case.get_subcases()
+        for sub in subs:
+            cases.extend(self._get_intent_cases(sub))
+        return cases
 
     def _get_form_value(self, name):
         return self.formxml.find(f"{{{DataRegistryCaseUpdatePayloadGenerator.XMLNS}}}{name}").text
