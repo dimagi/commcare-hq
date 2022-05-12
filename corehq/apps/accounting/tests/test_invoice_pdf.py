@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from corehq.tests.util.artifact import artifact
+
 from ..invoice_pdf import (
     Address,
     InvoiceTemplate,
@@ -31,12 +33,14 @@ class TestInvoicePdf(SimpleTestCase):
         renderer = InvoiceRenderer()
         print("")  # improves output with `test --nocapture`, noop otherwise
         for fpath, rendered in renderer.iter_invoices():
+            rendered.seek(0)
             with open(fpath, "rb") as expected_pdf:
-                self.assertEqual(
-                    expected_pdf.read(),
-                    rendered.getvalue(),
-                    f"{fpath!r} differs from rendered PDF",
-                )
+                with artifact(os.path.basename(fpath), rendered, mode="b"):
+                    self.assertEqual(
+                        expected_pdf.read(),
+                        rendered.getvalue(),
+                        f"{fpath!r} differs from rendered PDF",
+                    )
 
 
 class InvoiceRenderer:
