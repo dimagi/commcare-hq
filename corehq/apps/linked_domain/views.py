@@ -25,13 +25,10 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.dbaccessors import domain_exists
-from corehq.apps.domain.decorators import (
-    domain_admin_required,
-    login_or_api_key,
-)
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -63,6 +60,7 @@ from corehq.apps.linked_domain.exceptions import (
     DomainLinkNotFound,
     NoDownstreamDomainsProvided,
     UnsupportedActionError,
+    UserDoesNotHavePermission,
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
@@ -89,11 +87,12 @@ from corehq.apps.linked_domain.tasks import (
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
+    can_domain_access_linked_domains,
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
-    user_has_admin_access_in_all_domains,
-    can_domain_access_linked_domains,
+    user_has_access,
+    user_has_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -271,7 +270,7 @@ def pull_missing_multimedia(request, domain, app_id):
 
 
 @method_decorator(require_access_to_linked_domains, name='dispatch')
-class DomainLinkView(BaseAdminProjectSettingsView):
+class DomainLinkView(BaseProjectSettingsView):
     urlname = 'domain_links'
     page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
@@ -349,7 +348,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         }
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     urlname = "domain_link_rmi"
 
@@ -359,13 +358,26 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         type_ = model['type']
         detail = model['detail']
         detail_obj = wrap_detail(type_, detail) if detail else None
+        timezone = get_timezone_for_request()
+        domain_link = get_upstream_domain_link(self.domain)
 
-        upstream_link = get_upstream_domain_link(self.domain)
+        try:
+            validate_pull(self.request.couch_user, domain_link)
+        except UserDoesNotHavePermission:
+            notify_exception(self.request, "Triggered UserDoesNotHavePermission exception")
+            return {
+                'success': False,
+                'error': gettext(
+                    "You do not have permission to pull content into this project space."
+                ),
+                'last_update': server_to_user_time(domain_link.last_pull, timezone),
+            }
+
         error = ""
         try:
-            update_model_type(upstream_link, type_, detail_obj)
+            update_model_type(domain_link, type_, detail_obj)
             model_detail = detail_obj.to_json() if detail_obj else None
-            upstream_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
+            domain_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
@@ -375,11 +387,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             {"data_model": type_}
         )
 
-        timezone = get_timezone_for_request()
         return {
             'success': not error,
             'error': error,
-            'last_update': server_to_user_time(upstream_link.last_pull, timezone)
+            'last_update': server_to_user_time(domain_link.last_pull, timezone)
         }
 
     @allow_remote_invocation
@@ -412,6 +423,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 The attempted push from {} to {} is disallowed. Please contact support.
             '''.format(self.domain, formatted_domains))
             notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
+        except UserDoesNotHavePermission:
+            error_message = gettext(
+                "You do not have permission to push to all specified downstream project spaces."
+            )
         finally:
             if error_message:
                 return {
@@ -479,8 +494,8 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
-    if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = gettext("You must be an admin in both project spaces to create a link.")
+    if not user_has_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
+        error = gettext("You do not have adequate permissions in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
@@ -497,10 +512,16 @@ def validate_push(user, domain, downstream_domains):
     except DomainLink.DoesNotExist:
         raise DomainLinkNotFound
 
-    validate_push_for_user(user, domain_links)
+    if not user_has_access_in_all_domains(user, downstream_domains):
+        raise UserDoesNotHavePermission
+
+    check_if_push_violates_constraints(user, domain_links)
 
 
-def validate_push_for_user(user, domain_links):
+def check_if_push_violates_constraints(user, domain_links):
+    """
+    Ensures MRM limit of pushing to 1 domain at a time is enforced
+    """
     if user.is_superuser:
         return
 
@@ -515,6 +536,12 @@ def validate_push_for_user(user, domain_links):
         return
 
     raise AttemptedPushViolatesConstraints
+
+
+def validate_pull(user, domain_link):
+    # ensure user has access in the downstream domain
+    if not user_has_access(user, domain_link.linked_domain):
+        raise UserDoesNotHavePermission
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
