@@ -15,7 +15,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -25,15 +25,27 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
+)
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
+from ..exceptions import (
+    AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
+    UnknownActionType,
+)
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
+from .util import (
+    attach_prefetch_models,
+    fetchall_as_namedtuple,
+    sort_with_id_list,
+)
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -656,6 +668,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def to_xml(self, version, include_case_on_closed=False):
         from lxml import etree as ElementTree
+
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -671,8 +684,9 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         A server specific URL for remote clients to access case attachment resources async.
         """
         if name in self.case_attachments:
-            from dimagi.utils import web
             from django.urls import reverse
+
+            from dimagi.utils import web
             return "%s%s" % (
                 web.get_url_base(),
                 reverse("api_case_attachment", kwargs={
