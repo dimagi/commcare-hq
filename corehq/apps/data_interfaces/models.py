@@ -840,7 +840,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
                 if name.lower().startswith('parent/'):
                     name = name[7:]
                     # uses first parent if there are multiple
-                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    parent_cases = current_case.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
                     if parent_cases:
                         current_case = parent_cases[0]
                     else:
