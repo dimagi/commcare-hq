@@ -50,6 +50,9 @@
           {% if form.is_system_admin %}
             <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
           {% endif %}
+          {% if form.allow_ucr_filter %}
+          <li data-bind="click: function() { addFilter('ucr-filter'); }"><a>{% trans "UCR Filter" %}</a></li>
+        {% endif %}
         </ul>
       </div>
     </div>
@@ -197,5 +200,19 @@
     <label class="col-xs-1 control-label">
       <span class="label label-primary">Requires System Admin</span>
     </label>
+  </div>
+</script>
+
+
+{# Template for ucr filter #}
+{# An instance of this template is bound to an instance of the js object UCRFilterDefinition #}
+
+<script type="text/html" id="ucr-filter">
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Filter Definition" %}</label>
+    <div class="controls col-xs-4" data-bind="{template: {afterRender: $parent.enableAce}}">
+      <textarea class="formcontrol observablejsonwidget" name="configured_filter" data-bind="value: configured_filter"></textarea>
+    </div>
   </div>
 </script>
