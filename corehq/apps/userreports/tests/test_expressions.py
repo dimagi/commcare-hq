@@ -1300,7 +1300,7 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         self.assertEqual(len(case_sharing_groups), 0)
 
     def test_web_user(self):
-        user = WebUser.create(domain=self.domain, username='web', password='123',
+        user = WebUser.create(domain=None, username='web', password='123',
                               created_by=None, created_via=None)
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
