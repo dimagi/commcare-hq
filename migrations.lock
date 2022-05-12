@@ -967,6 +967,7 @@ userreports
  0015_auto_20190701_2006
  0016_change_primary_key_to_bigint
  0017_index_cleanup
+ 0018_ucrexpression
 users
  0001_add_location_permission
  0002_domainrequest
