@@ -1,5 +1,8 @@
 import os
+import logging
 from contextlib import contextmanager
+
+logger = logging.getLogger(__name__)
 
 ROOT_ARTIFACTS_DIR = "artifacts"
 
@@ -26,6 +29,7 @@ def artifact(filename, stream, mode="b", sub_name=None):
             if not os.path.exists(artifact_dir):
                 os.mkdir(artifact_dir)
         artifact_path = os.path.join(artifact_dir, filename)
+        logger.info(f"writing artifact: {artifact_path}")
         with open(artifact_path, f"w{mode}") as file:
             file.write(stream.read())
         raise
