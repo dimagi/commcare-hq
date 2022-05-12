@@ -998,8 +998,12 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             errors.extend(cases_filter_form.errors)
 
         if errors:
-            error_message = _("Deduplication rule not saved. ")
-            messages.error(request, error_message + "; ".join(errors))
+            messages.error(
+                request, _('Deduplication rule not saved due to the following issues: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(errors)),
+                extra_tags='html'
+            )
+
             kwargs.update({
                 'error': True,
                 'rule_params': rule_params,
@@ -1174,8 +1178,12 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             errors.extend(cases_filter_form.errors)
 
         if errors:
-            error_message = _("Deduplication rule not saved. ")
-            messages.error(request, error_message + "; ".join(errors))
+            messages.error(
+                request, _('Deduplication rule not saved due to the following issues: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(errors)),
+                extra_tags='html'
+            )
+
             kwargs.update({
                 'error': True,
                 'rule_params': rule_params,
