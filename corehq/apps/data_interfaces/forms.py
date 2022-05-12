@@ -19,6 +19,10 @@ from crispy_forms.bootstrap import (
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.specs import FactoryContext
+from corehq.toggles import CASE_UPDATES_UCR_FILTERS
 
 from dimagi.utils.django.fields import TrimmedCharField
 
@@ -31,6 +35,7 @@ from corehq.apps.data_interfaces.models import (
     CustomActionDefinition,
     CustomMatchDefinition,
     MatchPropertyDefinition,
+    UCRFilterDefinition,
     UpdateCaseDefinition,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -288,6 +293,7 @@ class CaseRuleCriteriaForm(forms.Form):
     custom_match_definitions = forms.CharField(required=False, initial='[]')
     property_match_definitions = forms.CharField(required=False, initial='[]')
     filter_on_closed_parent = forms.CharField(required=False, initial='false')
+    ucr_filter_definitions = forms.JSONField(required=False, initial={})
 
     @property
     def current_values(self):
@@ -299,6 +305,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
             'case_type': self['case_type'].value(),
             'criteria_operator': self['criteria_operator'].value(),
+            'ucr_filter_definitions': json.loads(self['ucr_filter_definitions'].value()),
         }
 
     @property
@@ -323,6 +330,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         custom_match_definitions = []
         property_match_definitions = []
+        ucr_filter_definitions = []
 
         for criteria in rule.memoized_criteria:
             definition = criteria.definition
@@ -338,9 +346,15 @@ class CaseRuleCriteriaForm(forms.Form):
                 })
             elif isinstance(definition, ClosedParentDefinition):
                 initial['filter_on_closed_parent'] = 'true'
+            elif isinstance(definition, UCRFilterDefinition):
+                ucr_filter_definitions.append({
+                    'configured_filter': definition.configured_filter,
+                })
 
         initial['custom_match_definitions'] = json.dumps(custom_match_definitions)
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
+        initial['ucr_filter_definitions'] = ucr_filter_definitions
+
         return initial
 
     @property
@@ -366,6 +380,10 @@ class CaseRuleCriteriaForm(forms.Form):
     @property
     def allow_date_case_property_filter(self):
         return True
+
+    @property
+    def allow_ucr_filter(self):
+        return CASE_UPDATES_UCR_FILTERS.enabled(self.domain)
 
     @property
     def allow_regex_case_property_match(self):
@@ -404,6 +422,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
                 hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
+                hidden_bound_field('ucr_filter_definitions', 'ucrFilterDefinitions'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria-panel",
             ),
@@ -573,6 +592,32 @@ class CaseRuleCriteriaForm(forms.Form):
     def clean_filter_on_closed_parent(self):
         return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))
 
+    def clean_ucr_filter_definitions(self):
+        value = self.cleaned_data.get('ucr_filter_definitions')
+
+        if not isinstance(value, list):
+            self._json_fail_hard()
+
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+            try:
+                spec = json.loads(obj['configured_filter'])
+            except (TypeError, ValueError):
+                self._json_fail_hard()
+
+            try:
+                FilterFactory.from_spec(spec, FactoryContext.empty(domain=self.domain))
+            except BadSpecError as error:
+                message = _("There was a problem with a UCR Filter Definition: ")
+                raise ValidationError(message + str(error))
+
+            result.append(obj)
+
+        return result
+
     def save_criteria(self, rule):
         with transaction.atomic():
             rule.case_type = self.cleaned_data['case_type']
@@ -599,6 +644,14 @@ class CaseRuleCriteriaForm(forms.Form):
                     name=item['name'],
                 )
 
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            for item in self.cleaned_data['ucr_filter_definitions']:
+                definition = UCRFilterDefinition.objects.create(
+                    configured_filter=item['configured_filter']
+                )
                 criteria = CaseRuleCriteria(rule=rule)
                 criteria.definition = definition
                 criteria.save()
