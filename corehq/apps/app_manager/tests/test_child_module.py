@@ -479,8 +479,8 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             <session>
                 <datum id="case_id_load_episode_0" nodeset="instance('casedb')/casedb/case[@case_type='episode'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
                 <datum id="case_id_new_lab_test_0" function="uuid()"/>
-                <datum id="case_id_new_lab_referral_1" function="uuid()"/>
                 <datum id="case_id_load_lab_test_0" nodeset="instance('casedb')/casedb/case[@case_type='lab_test'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id_load_episode_0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+                <datum id="case_id_new_lab_referral_1" function="uuid()"/>
             </session>
         </partial>"""
         suite_xml = factory.app.create_suite()
