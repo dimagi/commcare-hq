@@ -114,10 +114,15 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             )]
         )
         cases = factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
+        extension_case, host_case = cases
+
+        # test that the extension case doesn't match the 'allow' criteria
+        self.assertFalse(self.repeater.allowed_to_forward(extension_case))
+        self.assertFalse(self.sql_repeater.allowed_to_forward(extension_case))
+
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        host_case = cases[1]
         form = DataRegistryUpdateForm(payload, host_case)
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
