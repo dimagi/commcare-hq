@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.test import SimpleTestCase
 
 import lxml
+from memoized import memoized
 
 from corehq.apps.app_manager.models import (
     CaseSearch,
@@ -297,6 +298,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
 
+        self._render_suite.reset_cache(self)
+
     def set_parent_select(self, module, parent_module):
         module.parent_select.active = True
         module.parent_select.module_id = parent_module.unique_id
@@ -304,7 +307,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
-        suite_xml = lxml.etree.XML(self.factory.app.create_suite())
+        suite_xml = lxml.etree.XML(self._render_suite())
 
         session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
         assert len(session_nodes) == 1
@@ -313,6 +316,10 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             for child in session_nodes[0].getchildren()
         ]
         self.assertEqual(datums, actual_datums)
+
+    @memoized
+    def _render_suite(self):
+        return self.factory.app.create_suite()
 
     def assert_form_datums(self, form, datum_id):
         """Check the datum IDs used in the form XML case preload"""
