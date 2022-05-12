@@ -76,7 +76,8 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        userhalf, domainhalf = self.request.user.username.split('@')
+        username = self.request.user.username
+        userhalf, domainhalf = username.split('@')
         # Add zero-width space to username for better line breaking
         formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
         context = {
