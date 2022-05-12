@@ -23,7 +23,7 @@ from corehq.apps.userreports.expressions.specs import (
     eval_statements,
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
@@ -1296,6 +1296,12 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
         group.save()
 
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
+    def test_web_user(self):
+        user = WebUser.create(domain=self.domain, username='web', password='123',
+                              created_by=None, created_via=None)
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
