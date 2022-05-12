@@ -1107,11 +1107,15 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     @property
     def relationship(self):
-        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+        return CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
     @relationship.setter
     def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    @staticmethod
+    def relationship_id_to_name(relationship_id):
+        return CommCareCaseIndex.RELATIONSHIP_INVERSE_MAP[relationship_id]
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndex) and (
