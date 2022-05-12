@@ -691,6 +691,9 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @memoized
     def get_parent(self, identifier=None, relationship=None):
+        return [index.referenced_case for index in self.get_indices(identifier, relationship)]
+
+    def get_indices(self, identifier=None, relationship=None):
         indices = self.indices
 
         if identifier:
@@ -699,7 +702,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         if relationship:
             indices = [index for index in indices if index.relationship_id == relationship]
 
-        return [index.referenced_case for index in indices if index.referenced_id]
+        return [index for index in indices if index.referenced_id]
 
     @property
     def parent(self):
