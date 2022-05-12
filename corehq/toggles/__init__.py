@@ -2159,6 +2159,13 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+CASE_UPDATES_UCR_FILTERS = StaticToggle(
+    'case_updates_ucr_filters',
+    'Allow the use of UCR filters in Auto Case Update Rules',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
