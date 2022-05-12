@@ -383,6 +383,39 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             "./entry"
         )
 
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_no_parent_select(self, *args):
+        """This test reveals a bug in child modules where the datums from the parent module
+        are not being added to the child modules when the child module isn't using 'parent_select'.
+
+        Without the parent datum (and the child datum having a different ID) the user will not get
+        prompted to select another case for the child forms. This could be valid if the case type
+        of the child module matches that of the parent module i.e. the child module forms would also operate
+        on the same case as the parent module. But if the child module's case type does not match the
+        parent modules then a second case selection should definitely be happening.
+        """
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.assertXmlPartialEqual(
+            # there should be a case_id datum from the parent module and the child module datum
+            # should be renamed to `case_id_guppy`
+            """<partial>
+                <datum
+                    id="case_id"
+                    nodeset="instance('casedb')/casedb/case[@case_type='guppy'][@status='open']"
+                    value="./@case_id"
+                    detail-select="m1_case_short"
+                    detail-confirm="m1_case_long"
+                />
+            </partial>""",
+            self.app.create_suite(),
+            "./entry[2]/session/datum"
+        )
+
 
 class UsercaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
