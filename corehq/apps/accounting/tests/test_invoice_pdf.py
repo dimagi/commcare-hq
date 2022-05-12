@@ -35,7 +35,7 @@ class TestInvoicePdf(SimpleTestCase):
         for fpath, rendered in renderer.iter_invoices():
             rendered.seek(0)
             with open(fpath, "rb") as expected_pdf:
-                with artifact(os.path.basename(fpath), rendered, mode="b"):
+                with artifact(os.path.basename(fpath), rendered):
                     self.assertEqual(
                         expected_pdf.read(),
                         rendered.getvalue(),
