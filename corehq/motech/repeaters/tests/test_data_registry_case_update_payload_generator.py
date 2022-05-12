@@ -265,6 +265,9 @@ def test_generator_update_multiple_nested_cases():
     cases of the primary case and fit the requirements of the repeater (case type etc).
 
     subcase2 -> subcase1 -> case 1
+                subcase3 -> case 1
+
+    subcase 3 should not be included since it's type does not fit the repeater config
     """
     main_case_builder = IntentCaseBuilder().case_properties(new_prop="new_prop_val")
     subcase1_builder = (
@@ -278,8 +281,14 @@ def test_generator_update_multiple_nested_cases():
         .case_properties(sub2_prop="sub2_val")
         .get_case()
     )
+    subcase3 = (
+        IntentCaseBuilder()
+        .target_case(case_id="sub3")
+        .case_properties(sub2_prop="sub2_val")
+        .get_case(case_type="not what's expected")
+    )
     subcase1_builder.set_subcases([subcase2])
-    main_case_builder.set_subcases([subcase1_builder.get_case()])
+    main_case_builder.set_subcases([subcase1_builder.get_case(), subcase3])
 
     def _get_case(case_id, domain=None):
         return Mock(domain=TARGET_DOMAIN, type="parent", case_id=case_id)
@@ -377,7 +386,9 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
     registry_mock_cases = _mock_registry() if registry_mock_cases is None else registry_mock_cases
 
-    repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN)
+    repeater = DataRegistryCaseUpdateRepeater(domain=SOURCE_DOMAIN, white_listed_case_types=[
+        IntentCaseBuilder.CASE_TYPE
+    ])
     generator = DataRegistryCaseUpdatePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')
@@ -391,7 +402,7 @@ def _test_payload_generator(intent_case, registry_mock_cases=None,
 
     with patch.object(DataRegistryHelper, "get_case", new=_get_case), \
          patch.object(CouchUser, "get_by_user_id", return_value=Mock(username="local_user")):
-        repeat_record = Mock(repeater=Repeater())
+        repeat_record = Mock(repeater=repeater)
         form = DataRegistryUpdateForm(generator.get_payload(repeat_record, intent_case), intent_case)
         form.assert_form_props({
             "source_domain": SOURCE_DOMAIN,
@@ -544,12 +555,12 @@ class IntentCaseBuilder:
     def set_subcases(self, subcases):
         self.subcases = subcases
 
-    def get_case(self, case_json=None):
+    def get_case(self, case_json=None, case_type=None):
         utcnow = datetime.utcnow()
         case_json = self.props if case_json is None else case_json
         intent_case = CommCareCase(
             domain=SOURCE_DOMAIN,
-            type=self.CASE_TYPE,
+            type=case_type or self.CASE_TYPE,
             case_json=case_json,
             case_id=uuid.uuid4().hex,
             user_id="local_user1",

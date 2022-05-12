@@ -646,6 +646,7 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         configs = [CaseUpdateConfig.from_payload(payload_doc)]
         extensions = [
             extension_case for extension_case in payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
+            if self.repeater._allowed_case_type(extension_case)
         ]
         for extension_case in extensions:
             configs.extend(self._recursive_get_configs(extension_case))
