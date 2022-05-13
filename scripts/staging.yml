@@ -71,11 +71,15 @@ branches:
     - ad/autoupdate-criteria-operator # Addison April 26
     - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
     - ml/case-property-bug # Minha April 28
+    - es/datums+jls/multiple-referrals-eof-nav
     - jls/multiple-referrals-eof-nav # Jenny May 5
+    - es/datums # Ethan/Jenny May 12
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - rc/sms-multiple-contacts-bug # Robert May 9
     - dependabot/pip/requirements/phonenumberslite-8.12.46  # Joel May 10
     - dependabot/pip/requirements/reportlab-3.6.9  # Joel May 10
     - gh/use-release-management-permission # [QA] Graham May 10
     - mjr/all_safe_fixes  # Matt May 11
+    - jm/reportlab-tests  # [QA] Joel May 12
+    - bmb/sso-test-users-pt2  # [QA] Biyeun May 13
 submodules: { }
