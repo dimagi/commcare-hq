@@ -66,6 +66,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
@@ -689,17 +690,30 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
     def matches(self, case, now):
         if case.owner_id:
-            # Checks if case belongs to location (hierarchy)
-
             if not self.include_child_locations:
-                return case.owner_id == self.location_id
-            else:
-                location = SQLLocation.by_location_id(self.location_id)
+                # Check if case belongs to location
+                if case.owner_id == self.location_id:
+                    return True
 
-                if not location:
+                # Check if case belongs to user at location
+                user = CommCareUser.get_by_user_id(case.owner_id)
+                if user and user.location_id == self.location_id:
+                    return True
+
+            else:
+                criteria_location = SQLLocation.by_location_id(self.location_id)
+
+                if not criteria_location:
                     return False
 
-                return location.descendants_include_location(case.owner_id)
+                # Check if case belongs to descendant location of criteria_location
+                if criteria_location.descendants_include_location(case.owner_id):
+                    return True
+
+                # Check if case belongs to user at descendant location of criteria_location
+                user = CommCareUser.get_by_user_id(case.owner_id)
+                if user and criteria_location.descendants_include_location(user.location_id):
+                    return True
 
         return False
 
