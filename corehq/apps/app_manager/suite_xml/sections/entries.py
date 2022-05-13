@@ -899,11 +899,16 @@ class EntriesHelper(object):
         datums_by_case_tag = _get_datums_by_case_tag(datums)
 
         ret = []
+        offset = 0
         for this_datum_meta, parent_datum_meta in zip_longest(datums, parent_datums):
             if parent_datum_meta and this_datum_meta != parent_datum_meta:
                 if not parent_datum_meta.requires_selection:
                     # Add parent datums of opened subcases and automatically-selected cases
-                    ret.append(attr.evolve(parent_datum_meta, from_parent=True))
+                    # The position needs to be offset from 'head' in order to match the order in the
+                    # parent module since each loop iteration also appends 'this_datum_meta' to the list
+                    head = len(ret)
+                    ret.insert(head - offset, attr.evolve(parent_datum_meta, from_parent=True))
+                    offset += 1
                 elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     def set_id(datum, new_id):
                         case_tag = getattr(this_datum_meta.action, 'case_tag', 'basic')
