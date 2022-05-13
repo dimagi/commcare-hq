@@ -45,7 +45,18 @@
                         afterRender: initCaseConfigTemplate
                     }"></div>
     <div data-bind="visible: isError()">
-        <p data-bind="text: errorMessage()"></p>
+        <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
+        <p>
+          Common JSON syntax errors (Placeholder from jsonlint.com) class="alert message-alert alert-danger"
+          <br>
+          - Expecting 'STRING' - You probably have an extra comma at the end of your collection. Something like { "a": "b", }
+          <br>
+          - Expecting 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[' - You probably have an extra comma at the end of your list. Something like: ["a", "b", ]
+          <br>
+          - Enclosing your collection keys in quotes. Proper format for a collection is { "key": "value" }
+          <br>
+          - Make sure you follow JSON's syntax properly. For example, always use double quotes, always quotify your keys, and remove all callback functions.
+        </p>
     </div>
     <p>
         <button type="button"
