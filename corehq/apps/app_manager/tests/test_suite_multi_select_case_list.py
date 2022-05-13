@@ -357,9 +357,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
             ('instance-datum', 'selected_cases')  # m0
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),  # From m1, but copied from m2
+            ('datum', 'case_id_beneficiary'),  # m2 and m1 merge
         ])
-        # this is an error
         self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_parent_selects_parent_different_type(self):
@@ -375,7 +374,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_that_selects_other_same_case_type(self):
-        # Do we intend to support 3 case selections in a row of the same type?
         self.set_parent_select(self.m0, self.m2)
         self.set_parent_select(self.m1, self.m0)
 
