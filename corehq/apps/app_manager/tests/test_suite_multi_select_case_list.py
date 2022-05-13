@@ -6,6 +6,9 @@ from django.test import SimpleTestCase
 import lxml
 from memoized import memoized
 
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
@@ -13,9 +16,9 @@ from corehq.apps.app_manager.models import (
     ConditionalCaseUpdate,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
@@ -271,7 +274,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
-class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
+class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
 
@@ -307,15 +310,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
-        suite_xml = lxml.etree.XML(self._render_suite())
-
-        session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
-        assert len(session_nodes) == 1
-        actual_datums = [
-            (child.tag, child.attrib['id'])
-            for child in session_nodes[0].getchildren()
-        ]
-        self.assertEqual(datums, actual_datums)
+        suite = self._render_suite()
+        super().assert_module_datums(suite, module_id, datums)
 
     @memoized
     def _render_suite(self):
