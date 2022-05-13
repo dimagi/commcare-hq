@@ -871,7 +871,7 @@ class EntriesHelper(object):
 
         return self.add_parent_datums(datums, module), assertions
 
-    def _get_datums(self, module):
+    def _get_first_forms_datums(self, module):
         """
         Return the datums of the first form in the given module
         """
@@ -889,7 +889,7 @@ class EntriesHelper(object):
         return self.get_datums_meta_for_form_generic(form)
 
     def add_parent_datums(self, datums, module):
-        parent_datums = self._get_datums(module.root_module)
+        parent_datums = self._get_first_forms_datums(module.root_module)
         if not parent_datums:
             return datums
 
