@@ -9,7 +9,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteFilterTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteFilterTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_form_filter(self, *args):

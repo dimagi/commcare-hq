@@ -4,7 +4,11 @@ from uuid import uuid4
 from django.test import SimpleTestCase
 
 import lxml
+from memoized import memoized
 
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
@@ -12,9 +16,9 @@ from corehq.apps.app_manager.models import (
     ConditionalCaseUpdate,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
@@ -270,7 +274,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
-class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
+class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
 
@@ -297,6 +301,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
 
+        self._render_suite.reset_cache(self)
+
     def set_parent_select(self, module, parent_module):
         module.parent_select.active = True
         module.parent_select.module_id = parent_module.unique_id
@@ -304,15 +310,12 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
-        suite_xml = lxml.etree.XML(self.factory.app.create_suite())
+        suite = self._render_suite()
+        super().assert_module_datums(suite, module_id, datums)
 
-        session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
-        assert len(session_nodes) == 1
-        actual_datums = [
-            (child.tag, child.attrib['id'])
-            for child in session_nodes[0].getchildren()
-        ]
-        self.assertEqual(datums, actual_datums)
+    @memoized
+    def _render_suite(self):
+        return self.factory.app.create_suite()
 
     def assert_form_datums(self, form, datum_id):
         """Check the datum IDs used in the form XML case preload"""
@@ -357,7 +360,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id_beneficiary'),  # From m1, but copied from m2
         ])
         # this is an error
-        self.assert_form_datums(self.m1f0, 'case_id')
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_parent_selects_parent_different_type(self):
         self.set_parent_select(self.m0, self.m3)
@@ -409,10 +412,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id_beneficiary'),
             ('datum', 'case_id')
         ])
-        # This is wrong - get_add_case_preloads_case_id_xpath expects the child
-        # module datum to be renamed because of a conflict with the parent, but
-        # in this case the parent (m0) doesn't conflict, as it's a multiselect.
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_child_module_selects_other_parent_different_type(self):
         self.set_parent_select(self.m1, self.m3)
@@ -421,5 +421,4 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'parent_id'),
             ('datum', 'case_id')
         ])
-        # This is wrong in the same way as the above test
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')

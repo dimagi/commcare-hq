@@ -153,7 +153,7 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
                 return d
             else:
                 return None
@@ -313,8 +313,8 @@ class DetailContributor(SectionContributor):
                     pass
                 else:
                     frame.add_datum(StackDatum(
-                        id=target_meta.datum.id,
-                        value=session_var(source_dm.datum.id))
+                        id=target_meta.id,
+                        value=session_var(source_dm.id))
                     )
             else:
                 s_datum = target_meta.datum
