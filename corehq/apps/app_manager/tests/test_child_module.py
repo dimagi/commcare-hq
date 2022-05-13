@@ -9,12 +9,12 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides, SuiteMixin
 
 DOMAIN = 'domain'
 
 
-class ModuleAsChildTestBase(TestXmlMixin):
+class ModuleAsChildTestBase(SuiteMixin):
     file_path = ('data', 'suite')
     child_module_class = None
 
@@ -381,6 +381,25 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             self.get_xml('child-module-entry-datums-parent-select-other-same-case-type'),
             self.app.create_suite(),
             "./entry"
+        )
+
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_no_parent_select_different_case_type(self, *args):
+        """A child module that does not use 'parent_select'.
+
+        If the case type of the child module differs then we need to update the datum ID to make sure
+        that the user is prompted to select a case.
+        """
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.assert_module_datums(
+            self.app.create_suite(),
+            self.module_1.id,
+            [('datum', 'case_id_guppy')]
         )
 
 
