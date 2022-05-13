@@ -123,8 +123,11 @@ class InvoiceTemplate(object):
     #   this class should raise `ValueError` on invalid args.
     # - Add tests to validate expectations.
     # - Flywire URL should be parameterized.
+    # - Default logo file path assumes that Django's CWD is at the root of the
+    #   repo, which isn't necessarily a safe assumption to make.
 
-    def __init__(self, filename, logo_filename=LOGO_FILENAME,
+    def __init__(self, filename,
+                 logo_image=os.path.join(os.getcwd(), LOGO_FILENAME),
                  from_address=Address(**settings.INVOICE_FROM_ADDRESS),
                  to_address=None, project_name='',
                  invoice_date=None, invoice_number='',
@@ -141,7 +144,7 @@ class InvoiceTemplate(object):
                  is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
-        self.logo_filename = os.path.join(os.getcwd(), logo_filename)
+        self.logo_image = logo_image
         self.from_address = from_address
         self.to_address = to_address
         self.project_name = project_name
@@ -198,7 +201,7 @@ class InvoiceTemplate(object):
                 self.draw_totals_on_new_page()
 
     def draw_logo(self):
-        self.canvas.drawImage(self.logo_filename, inches(0.5), inches(10.5),
+        self.canvas.drawImage(self.logo_image, inches(0.5), inches(10.5),
                               height=inches(0.75), width=inches(1.25),
                               preserveAspectRatio=True, anchor="w")
 
