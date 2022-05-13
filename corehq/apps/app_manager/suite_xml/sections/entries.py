@@ -1004,10 +1004,10 @@ def _update_refs(datums, old_id, new_id):
     new = session_var(new_id)
 
     for datum in datums:
-        for attr in ['nodeset', 'function']:
-            xpath = getattr(datum, attr, None)
+        for prop in ['nodeset', 'function']:
+            xpath = getattr(datum, prop, None)
             if xpath:
-                setattr(datum, attr, xpath.replace(old, new))
+                setattr(datum, prop, xpath.replace(old, new))
 
 
 def _get_datums_by_case_tag(datums):
