@@ -11,7 +11,7 @@ from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.mixin import BadSMSConfigException, apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.models import XFormInstance
@@ -19,8 +19,6 @@ from corehq.messaging.scheduling.util import utcnow
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-
-from . import signals  # noqa: F401
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -425,12 +423,15 @@ class XFormsSessionSynchronization:
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
-        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{channel.phone_number}'
+        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{apply_leniency(channel.phone_number)}'
 
     @staticmethod
     def _critical_section(channel):
         return CriticalSection([
-            f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/{channel.phone_number}'
+            (
+                f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/'
+                f'{apply_leniency(channel.phone_number)}'
+            )
         ], timeout=5 * 60)
 
 
@@ -446,6 +447,7 @@ def get_channel_for_contact(contact_id, phone_number):
     backend_id = None
     phone_number_record = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
     if phone_number_record:
+        phone_number = phone_number_record.phone_number  # prefer this number since it has leniency applied
         try:
             backend = phone_number_record.backend
         except BadSMSConfigException:
