@@ -360,7 +360,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
             ('datum', 'case_id_beneficiary'),  # From m1, but copied from m2
         ])
         # this is an error
-        self.assert_form_datums(self.m1f0, 'case_id')
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_parent_selects_parent_different_type(self):
         self.set_parent_select(self.m0, self.m3)
