@@ -17,7 +17,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteSubcasesTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteSubcasesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_open_case_and_subcase(self, *args):
