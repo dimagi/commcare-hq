@@ -902,15 +902,18 @@ class EntriesHelper(object):
         datum_ids = {d.id: d for d in datums}
         datums_by_case_tag = _get_datums_by_case_tag(datums)
 
-        def set_id(datum_meta, new_id, datum_=None):
-            datum_ = datum_ or datum_meta.datum
+        def set_id(datum_meta, new_id):
             case_tag = getattr(datum_meta.action, 'case_tag', 'basic')
-            _update_refs(datums_by_case_tag[case_tag], datum_.id, new_id)
-            datum_.id = new_id
+            _update_refs(datums_by_case_tag[case_tag], datum_meta.datum.id, new_id)
+            datum_meta.datum.id = new_id
 
         ret = []
         datums_remaining = list(datums)
         for parent_datum_meta in parent_datums:
+            if parent_datum_meta.id in datum_ids:
+                datum = datum_ids[parent_datum_meta.id]
+                set_id(datum, f'{datum.id}_{datum.case_type}')
+
             if not parent_datum_meta.requires_selection:
                 ret.append(attr.evolve(parent_datum_meta, from_parent=True))
                 continue
@@ -920,14 +923,7 @@ class EntriesHelper(object):
                 if this_datum_meta == parent_datum_meta:
                     ret.append(datums_remaining.pop(0))
                 elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
-                    if parent_datum_meta.id in datum_ids:
-                        datum = datum_ids[parent_datum_meta.id]
-                        set_id(this_datum_meta, '_'.join((datum.id, datum.case_type)), datum.datum)
-
                     set_id(this_datum_meta, parent_datum_meta.id)
-                    ret.append(datums_remaining.pop(0))
-                elif _same_id(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
-                    set_id(this_datum_meta, '_'.join((this_datum_meta.id, this_datum_meta.case_type)))
                     ret.append(datums_remaining.pop(0))
 
         return ret + datums_remaining
