@@ -2,17 +2,18 @@ import re
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.db.models import Q
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
-from corehq.apps.users.models import CommCareUser
+
+from email.utils import parseaddr
 
 
 class EmailForm(forms.Form):
@@ -111,7 +112,7 @@ class OffboardingUserListForm(forms.Form):
 
     def clean(self):
         invert = self.cleaned_data.get('invert_apply', False)
-        return clean_data(self.cleaned_data, invert=invert, get_list=True)
+        return clean_data(self.cleaned_data, invert=invert, offboarding_list=True)
 
     def __init__(self, *args, **kwargs):
         super(OffboardingUserListForm, self).__init__(*args, **kwargs)
@@ -131,36 +132,42 @@ class OffboardingUserListForm(forms.Form):
         )
 
 
-def clean_data(cleaned_data, invert=False, get_list=False):
-    from email.utils import parseaddr
-    from django.contrib.auth.models import User
+def clean_data(cleaned_data, invert=False, offboarding_list=False):
+    EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
     csv_email_list = re.split(',|\n', csv_email_list)
-    csv_email_list = [parseaddr(em)[1] for em in csv_email_list]
+    csv_email_list = [parseaddr(email)[EMAIL_INDEX] for email in csv_email_list]
 
-    if not get_list and len(csv_email_list) > 10:
+    MAX_ALLOWED_EMAIL_USERS = 10
+    if not offboarding_list and len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
         raise forms.ValidationError(
-            "This command is intended to grant superuser access to few users at a time. "
-            "If you trying to update permissions for large number of users consider doing it via Django Admin"
+            f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
+            "If you are trying to update permissions for a larger number of users,"
+            " consider doing it via Django Admin"
         )
 
     users = []
+    validationErrors = []
     for username in csv_email_list:
-        if not get_list:
+        if not offboarding_list:
             if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-                raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
+                validationErrors.append(ValidationError(_("Email address '{}' is not a "
+                                                          "dimagi email address".format(username))))
+                continue
         try:
             users.append(User.objects.get(username=username))
         except User.DoesNotExist:
-            raise forms.ValidationError(
+            validationErrors.append(ValidationError(_(
                 "User with email address '{}' does not exist on "
-                "this site, please have the user registered first".format(username))
+                "this site, please have the user registered first".format(username))))
+    if validationErrors:
+        raise ValidationError(validationErrors)
 
     if invert:
         all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
         users = [user for user in all_users if user not in users]
 
-    cleaned_data['users'] = users
+    cleaned_data['csv_email_list'] = users
     return cleaned_data
 
 

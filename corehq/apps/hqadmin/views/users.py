@@ -93,7 +93,7 @@ class SuperuserManagement(UserAdministration):
         can_toggle_is_staff = request.user.is_staff
         form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
         if form.is_valid():
-            users = form.cleaned_data['users']
+            users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
             fields_changed = {}
@@ -442,7 +442,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.user.email if self.user else self.username,
+            couch_user.get_email(),
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -619,31 +619,33 @@ class AppBuildTimingsView(TemplateView):
 
 class OffboardingUserList(UserAdministration):
     urlname = 'get_offboarding_list'
-    page_title = _("Get users to offboard")
+    page_title = gettext_lazy("Get users to offboard")
     template_name = 'hqadmin/superuser_management.html'
-    users = []
-    table_title = ""
+
+    def __init__(self):
+        self.users = []
+        self.table_title = ""
 
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
-        return super(OffboardingUserList, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
-        args = [self.request.POST] if self.request.POST else []
+        form_data = self.request.POST if self.request.method == 'POST' else None
         if not self.users and not self.table_title:
             self.users = augmented_superusers(include_accounting_admin=True)
         return {
-            'form': OffboardingUserListForm(*args),
+            'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
             'offboarding': True,
-            'table_title': "All superusers and staff users" if not self.table_title else self.table_title
+            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title
         }
 
     def post(self, request, *args, **kwargs):
         form = OffboardingUserListForm(self.request.POST)
         if form.is_valid():
-            users = form.cleaned_data['users']
+            users = form.cleaned_data['csv_email_list']
             if users:
                 self.users = augmented_superusers(users=users, include_accounting_admin=True)
             else:
