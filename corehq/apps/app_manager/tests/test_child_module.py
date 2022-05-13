@@ -402,6 +402,28 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             [('datum', 'case_id_guppy')]
         )
 
+    @patch_get_xform_resource_overrides()
+    def test_child_module_parent_no_parent_select_same_case_type(self, *args):
+        """A child module that does not use 'parent_select'.
+
+        If the case type of the child module is the same as the parent then the datum ID should
+        also be the same.
+        """
+        self.module_0.case_type = 'gold_fish'
+        self.module_1.case_type = self.module_0.case_type
+
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        self.assert_module_datums(
+            self.app.create_suite(),
+            self.module_1.id,
+            [('datum', 'case_id')]
+        )
+
 
 class UsercaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
