@@ -925,7 +925,7 @@ class EntriesHelper(object):
                         set_id(this_datum_meta, '_'.join((datum.id, datum.case_type)), datum.datum)
 
                     set_id(this_datum_meta, parent_datum_meta.id)
-                elif this_datum_meta.id == parent_datum_meta.id and this_datum_meta.action:
+                elif _same_id(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     set_id(this_datum_meta, '_'.join((this_datum_meta.id, this_datum_meta.case_type)))
             if this_datum_meta:
                 ret.append(this_datum_meta)
@@ -1030,3 +1030,8 @@ def _same_case(this_datum_meta, parent_datum_meta):
     return (this_datum_meta
             and this_datum_meta.case_type == parent_datum_meta.case_type
             and this_datum_meta.datum.ROOT_NAME == parent_datum_meta.datum.ROOT_NAME)
+
+
+def _same_id(this_datum_meta, parent_datum_meta):
+    return (this_datum_meta and parent_datum_meta
+            and this_datum_meta.id == parent_datum_meta.id)
