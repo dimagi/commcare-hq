@@ -8,13 +8,9 @@
       <h2>{{ current_page.title }}</h2>
       <p class="help-block">
         {% if offboarding %}
-          {% blocktrans %}
-            Please type comma or new-line separated email addresses of users you want to offboard.
-          {% endblocktrans %}
+          {% translate "Please type comma or new-line separated email addresses of users you want to offboard." %}
         {% else %}
-          {% blocktrans %}
-            Please type comma-separated email addresses of users to grant/revoke superuser privileges.
-          {% endblocktrans %}
+          {% translate "Please type comma or new-line separated email addresses of users to grant/revoke superuser privileges." %}
         {% endif %}
       </p>
       {% crispy form %}
@@ -23,21 +19,21 @@
   <div class="row">
     <div class="col-xs-12">
       {% if not offboarding %}
-        <h2>All superusers and staff users</h2>
+        <h2>{% translate "All superusers and staff users" %}</h2>
         <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>
       {% else %}
         <h2> {{ table_title }}</h2>
       {% endif %}
       <table class="table">
         <tr>
-          <th>Username</th>
-          <th>Developer</th>
-          <th>Superuser</th>
+          <th>{% translate "Username" %}</th>
+          <th>{% translate "Developer" %}</th>
+          <th>{% translate "Superuser" %}</th>
           {% if offboarding %}
-            <th>Accounting Admin</th>
-            <th>Active</th>
+            <th>{% translate "Accounting Admin" %}</th>
+            <th>{% translate "Active" %}</th>
           {% endif %}
-          <th>Two Factor Enabled</th>
+          <th>{% translate "Two Factor Enabled" %}</th>
         </tr>
         {% for user in users %}
           <tr>
