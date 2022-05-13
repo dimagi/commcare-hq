@@ -909,27 +909,28 @@ class EntriesHelper(object):
             datum_.id = new_id
 
         ret = []
-        offset = 0
-        for this_datum_meta, parent_datum_meta in zip_longest(datums, parent_datums):
-            if parent_datum_meta and this_datum_meta != parent_datum_meta:
-                if not parent_datum_meta.requires_selection:
-                    # Add parent datums of opened subcases and automatically-selected cases
-                    # The position needs to be offset from 'head' in order to match the order in the
-                    # parent module since each loop iteration also appends 'this_datum_meta' to the list
-                    head = len(ret)
-                    ret.insert(head - offset, attr.evolve(parent_datum_meta, from_parent=True))
-                    offset += 1
+        datums_remaining = list(datums)
+        for parent_datum_meta in parent_datums:
+            if not parent_datum_meta.requires_selection:
+                ret.append(attr.evolve(parent_datum_meta, from_parent=True))
+                continue
+
+            if datums_remaining:
+                this_datum_meta = datums_remaining[0]
+                if this_datum_meta == parent_datum_meta:
+                    ret.append(datums_remaining.pop(0))
                 elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     if parent_datum_meta.id in datum_ids:
                         datum = datum_ids[parent_datum_meta.id]
                         set_id(this_datum_meta, '_'.join((datum.id, datum.case_type)), datum.datum)
 
                     set_id(this_datum_meta, parent_datum_meta.id)
+                    ret.append(datums_remaining.pop(0))
                 elif _same_id(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
                     set_id(this_datum_meta, '_'.join((this_datum_meta.id, this_datum_meta.case_type)))
-            if this_datum_meta:
-                ret.append(this_datum_meta)
-        return ret
+                    ret.append(datums_remaining.pop(0))
+
+        return ret + datums_remaining
 
     @staticmethod
     def _get_module_for_persistent_context(detail_module, module_unique_id):
