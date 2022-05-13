@@ -12,11 +12,8 @@ def get_session_schema(form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = form.get_app()
     structure = {}
-    datums = EntriesHelper(app).get_datums_meta_for_form_generic(form)
-    datums = [
-        d for d in datums
-        if d.requires_selection and d.case_type and not d.is_new_case_id
-    ]
+    datums = EntriesHelper(app).get_case_datums_meta_for_form(form)
+    datums = [d for d in datums if not d.is_new_case_id]
 
     def _get_structure(datum, data_registry, source=None):
         id_source = f":{slugify(source)}" if source else ""
