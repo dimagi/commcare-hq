@@ -81,4 +81,5 @@ branches:
     - gh/use-release-management-permission # [QA] Graham May 10
     - mjr/all_safe_fixes  # Matt May 11
     - jm/reportlab-tests  # [QA] Joel May 12
+    - bmb/sso-test-users-pt2  # [QA] Biyeun May 13
 submodules: { }
