@@ -65,7 +65,12 @@
         <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
       </div>
       <div class="col-xs-6 text-center">
-        <label class="control-label">{% trans "AND" %}</label>
+        <!-- ko if: $parent.criteriaOperator() == 'ALL' -->
+          <label class="control-label">{% trans "AND"%}</label>
+        <!-- /ko -->
+        <!-- ko if: $parent.criteriaOperator() == 'ANY' -->
+          <label class="control-label">{% trans "OR"%}</label>
+        <!-- /ko -->
       </div>
     </div>
   </div>
