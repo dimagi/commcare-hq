@@ -2,6 +2,7 @@ import os
 import uuid
 
 from unittest import mock
+
 from lxml import etree
 from nose.tools import nottest
 
@@ -47,7 +48,7 @@ class TestXmlMixin(TestFileMixin):
         assert_html_equal(expected, actual, normalize)
 
 
-class SuiteMixin(TestFileMixin):
+class SuiteMixin(TestXmlMixin):
 
     def _assertHasAllStrings(self, app, strings):
         et = etree.XML(app)
