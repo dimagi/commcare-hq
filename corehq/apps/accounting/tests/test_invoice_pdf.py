@@ -6,6 +6,7 @@ from itertools import product
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
+from reportlab.lib.utils import ImageReader
 
 from corehq.tests.util.artifact import artifact
 
@@ -46,7 +47,13 @@ class TestInvoicePdf(SimpleTestCase):
 class InvoiceRenderer:
 
     TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-    TEST_LOGO_PATH = os.path.join(TEST_DATA_DIR, "logo.png")
+
+    # Use ImageReader for tests because reportlab creates a unique ID for all
+    # embedded images in order to determine if it can reuse an image or needs
+    # to embed it again (if drawn more than once). When calling `drawImage()`
+    # with a filename, it uses the file path as the unique ID, meaning that the
+    # PDF contents will differ across systems where __file__ differs.
+    TEST_LOGO = ImageReader(os.path.join(TEST_DATA_DIR, "logo.jpg"))
 
     INVOICE_KWARG_CHOICES = {
         # keys must be valid kwarg names of `InvoiceTemplate.__init__()`
@@ -128,7 +135,7 @@ class InvoiceRenderer:
         """
         return InvoiceTemplate(
             file_or_path,  # filename
-            self.TEST_LOGO_PATH,  # logo_image
+            self.TEST_LOGO,  # logo_image
             self.get_address("Tony"),  # from_address
             self.get_address("Jono"),  # to_address
             "group-therapy",  # project_name
