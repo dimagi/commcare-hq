@@ -416,10 +416,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id_beneficiary'),
             ('datum', 'case_id')
         ])
-        # This is wrong - get_add_case_preloads_case_id_xpath expects the child
-        # module datum to be renamed because of a conflict with the parent, but
-        # in this case the parent (m0) doesn't conflict, as it's a multiselect.
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_child_module_selects_other_parent_different_type(self):
         self.set_parent_select(self.m1, self.m3)
@@ -428,5 +425,4 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'parent_id'),
             ('datum', 'case_id')
         ])
-        # This is wrong in the same way as the above test
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
