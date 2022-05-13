@@ -487,7 +487,7 @@ class SQLCaseRepeater(SQLRepeater):
         return not self.white_listed_case_types or payload.type in self.white_listed_case_types
 
     def _allowed_user(self, payload):
-        return self.payload_user_id(payload) not in self.black_listed_users
+        return not self.black_listed_users or self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
@@ -615,7 +615,15 @@ class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
         # Exclude extension cases where the host is also a case type that this repeater
         # would act on since they get forwarded along with their host
         host_index = payload.get_index(CASE_INDEX_IDENTIFIER_HOST)
-        return not host_index or host_index.referenced_type not in self.white_listed_case_types
+        if host_index and host_index.referenced_type in self.white_listed_case_types:
+            return False
+
+        transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
+        if transaction:
+            # prevent chaining updates
+            return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
+
+        return True
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -1174,7 +1182,7 @@ class CaseRepeater(Repeater):
         return not self.white_listed_case_types or payload.type in self.white_listed_case_types
 
     def _allowed_user(self, payload):
-        return self.payload_user_id(payload) not in self.black_listed_users
+        return not self.black_listed_users or self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id

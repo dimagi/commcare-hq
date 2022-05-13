@@ -46,6 +46,7 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             white_listed_case_types=[IntentCaseBuilder.CASE_TYPE]
         )
         cls.repeater.save()
+        cls.sql_repeater = cls.repeater._migration_get_sql_object()
 
         cls.user = create_user("admin", "123")
         cls.registry_slug = create_registry_for_test(
@@ -113,10 +114,15 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             )]
         )
         cases = factory.create_or_update_case(extension, user_id=self.mobile_user.get_id)
+        extension_case, host_case = cases
+
+        # test that the extension case doesn't match the 'allow' criteria
+        self.assertFalse(self.repeater.allowed_to_forward(extension_case))
+        self.assertFalse(self.sql_repeater.allowed_to_forward(extension_case))
+
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 1)
         payload = repeat_records[0].get_payload()
-        host_case = cases[1]
         form = DataRegistryUpdateForm(payload, host_case)
         form.assert_case_updates({
             self.target_case_id_1: {"new_prop": "new_val_case1"},
@@ -135,13 +141,17 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
             .target_case(self.target_domain, self.target_case_id_1)
             .case_properties(new_prop="new_val_case1")
         )
-        case = CaseStructure(
+        case_struct = CaseStructure(
             attrs={"create": True, "case_type": "registry_case_update", "update": builder.props},
         )
-        CaseFactory(self.domain).create_or_update_case(case, user_id=self.mobile_user.get_id, form_extras={
+        [case] = CaseFactory(self.domain).create_or_update_case(case_struct, user_id=self.mobile_user.get_id, form_extras={
             # pretend this form came from a repeater in another domain
             'xmlns': DataRegistryCaseUpdatePayloadGenerator.XMLNS
         })
+
+        self.assertFalse(self.repeater.allowed_to_forward(case))
+        self.assertFalse(self.sql_repeater.allowed_to_forward(case))
+
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(len(repeat_records), 0)
 
