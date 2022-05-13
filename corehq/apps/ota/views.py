@@ -269,6 +269,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not since:
         skip_fixtures = False
 
+    # If loadtest user, do a full restore
+    if restore_user.loadtest_factor > 1:
+        since = None
+
     app = get_app_cached(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
