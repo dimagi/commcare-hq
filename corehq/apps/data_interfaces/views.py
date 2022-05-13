@@ -46,6 +46,7 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleCriteriaForm,
     CaseUpdateRuleForm,
     UpdateCaseGroupForm,
+    DedupeCaseFilterForm,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -963,6 +964,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     def page_context(self):
         context = super().page_context
         context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
+        context['criteria_form'] = self.case_filter_form
         return context
 
     def get_context_data(self, **kwargs):
@@ -989,6 +991,12 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
         errors.extend(self.validate_rule_params(request.domain, rule_params))
+
+        cases_filter_form = DedupeCaseFilterForm(request.domain, request.POST)
+
+        if not cases_filter_form.is_valid():
+            errors.extend(cases_filter_form.errors)
+
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))
@@ -1001,15 +1009,24 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
 
         with transaction.atomic():
             rule = self._create_rule(request.domain, **rule_params)
-            action, action_definition = rule.add_action(
+            _action, _action_definition = rule.add_action(
                 CaseDeduplicationActionDefinition,
                 **action_params
             )
+            cases_filter_form.save_criteria(rule, save_meta=False)
 
         reset_and_backfill_deduplicate_rule(rule)
         messages.success(request, _("Successfully created deduplication rule: {}").format(rule.name))
         return HttpResponseRedirect(
             reverse(DeduplicationRuleEditView.urlname, kwargs={"domain": self.domain, "rule_id": rule.id})
+        )
+
+    @property
+    def case_filter_form(self):
+        return DedupeCaseFilterForm(
+            self.domain,
+            rule=None,
+            couch_user=self.request.couch_user,
         )
 
     def parse_params(self, request):
@@ -1111,7 +1128,6 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
     @property
     def page_context(self):
         context = super().page_context
-
         context.update({
             "name": self.rule.name,
             "case_type": self.rule.case_type,
@@ -1123,6 +1139,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
                 for prop in self.dedupe_action.properties_to_update
             ],
             "readonly": self.rule.locked_for_editing,
+            "criteria_form": self.case_filter_form,
         })
 
         if self.rule.locked_for_editing:
@@ -1150,6 +1167,12 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
         rule_params, action_params = self.parse_params(request)
         errors = self.validate_action_params(action_params)
         errors.extend(self.validate_rule_params(request.domain, rule_params, self.rule))
+
+        cases_filter_form = DedupeCaseFilterForm(request.domain, request.POST)
+
+        if not cases_filter_form.is_valid():
+            errors.extend(cases_filter_form.errors)
+
         if errors:
             error_message = _("Deduplication rule not saved. ")
             messages.error(request, error_message + "; ".join(errors))
@@ -1160,11 +1183,18 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
             })
             return self.get(request, *args, **kwargs)
 
+        filter_criteria_updated = False
+
         with transaction.atomic():
             rule_modified = self._update_model_instance(self.rule, rule_params)
             action_modified = self._update_model_instance(self.dedupe_action, action_params)
 
-        if rule_modified or action_modified:
+            # Is there a good way to check if the criteria has changed without
+            # going over each and every value?
+            cases_filter_form.save_criteria(self.rule, save_meta=False)
+            filter_criteria_updated = True
+
+        if rule_modified or action_modified or filter_criteria_updated:
             reset_and_backfill_deduplicate_rule(self.rule)
             messages.success(
                 request,
@@ -1181,6 +1211,14 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
                 "domain": self.domain,
                 "rule_id": self.rule.id
             })
+        )
+
+    @property
+    def case_filter_form(self):
+        return DedupeCaseFilterForm(
+            self.domain,
+            rule=self.rule,
+            couch_user=self.request.couch_user,
         )
 
     def _update_model_instance(self, model, params):
