@@ -128,7 +128,7 @@ class InvoiceRenderer:
         """
         return InvoiceTemplate(
             file_or_path,  # filename
-            self.TEST_LOGO_PATH,  # logo_filename
+            self.TEST_LOGO_PATH,  # logo_image
             self.get_address("Tony"),  # from_address
             self.get_address("Jono"),  # to_address
             "group-therapy",  # project_name
