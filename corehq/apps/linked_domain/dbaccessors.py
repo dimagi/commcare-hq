@@ -6,7 +6,7 @@ from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 from corehq.apps.linked_domain.util import (
     is_available_upstream_domain,
     is_domain_available_to_link,
-    user_has_admin_access_in_all_domains,
+    user_has_access_in_all_domains,
     can_domain_access_linked_domains,
 )
 from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
@@ -104,5 +104,5 @@ def get_accessible_downstream_domains(upstream_domain_name, user):
     downstream_domains = [d.linked_domain for d in get_linked_domains(upstream_domain_name)]
     if can_domain_access_linked_domains(upstream_domain_name):
         return [domain for domain in downstream_domains
-                if user_has_admin_access_in_all_domains(user, [upstream_domain_name, domain])]
+                if user_has_access_in_all_domains(user, [upstream_domain_name, domain])]
     return downstream_domains
