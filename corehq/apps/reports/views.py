@@ -2044,7 +2044,7 @@ class EditFormInstance(View):
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
                 matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
                 if len(matching_datums) == 1:
-                    edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
+                    edit_session_data[matching_datums[0].id] = case_block.caseblock.get(const.CASE_ATTR_ID)
         else:
             # a bit hacky - the app manager puts the main case directly in the form, so it won't have
             # any other path associated with it. This allows us to differentiate from parent cases.

@@ -1920,7 +1920,7 @@ class XForm(WrappedNode):
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             # TODO: this dict needs to be keyed by something unique to the action
             adjusted_datums = {
-                getattr(meta.action, 'case_tag', None): meta.datum.id
+                getattr(meta.action, 'case_tag', None): meta.id
                 for meta in datums_meta
                 if meta.action
             }

@@ -46,11 +46,11 @@ def get_session_schema(form):
         data_registry = module.search_config.data_registry if module else None
         if i == 0:
             # always add the datum for this module
-            data_structure[datum.datum.id] = _get_structure(datum, data_registry)
+            data_structure[datum.id] = _get_structure(datum, data_registry)
         else:
             if module and module_id in unrelated_parents:
                 source = clean_trans(module.name, app.langs)  # ensure that this structure reference is unique
-                data_structure[datum.datum.id] = _get_structure(datum, data_registry, source)
+                data_structure[datum.id] = _get_structure(datum, data_registry, source)
 
     if data_structure:
         structure["data"] = {

@@ -62,6 +62,10 @@ class FormDatumMeta:
     module_id = attr.ib(default=None)
 
     @property
+    def id(self):
+        return self.datum.id
+
+    @property
     def is_new_case_id(self):
         return self.datum.function == 'uuid()'
 
@@ -69,9 +73,9 @@ class FormDatumMeta:
         if isinstance(self.datum, RemoteRequestQuery):
             datum = f"<RemoteRequestQuery(id={self.datum.url})>"
         elif isinstance(self.datum, InstanceDatum):
-            datum = f"<InstanceDatum(id={self.datum.id})>"
+            datum = f"<InstanceDatum(id={self.id})>"
         else:
-            datum = f"<SessionDatum(id={self.datum.id})>"
+            datum = f"<SessionDatum(id={self.id})>"
         return 'FormDatumMeta(datum={}, case_type={}, requires_selection={}, action={})'.format(
             datum, self.case_type, self.requires_selection, self.action
         )
@@ -99,7 +103,7 @@ class EntriesHelper(object):
         :returns: The datum ID (session variable name) or None"""
         case_datums = self.get_case_datums_meta_for_form(form)
         try:
-            return next(meta.datum.id for meta in reversed(case_datums))
+            return next(meta.id for meta in reversed(case_datums))
         except StopIteration:
             return None
 
@@ -568,7 +572,7 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
 
-        case_ids_expressions = {session_var(datum.datum.id)} | set(module.search_config.additional_registry_cases)
+        case_ids_expressions = {session_var(datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
             QueryData(key=CASE_SEARCH_REGISTRY_ID_KEY, ref=f"'{module.search_config.data_registry}'")
         ]
@@ -895,7 +899,7 @@ class EntriesHelper(object):
         # 2. Match the datum ID for datums that appear in the same position and
         #    will be loading the same case type
         # see advanced_app_features#child-modules in docs
-        datum_ids = {d.datum.id: d for d in datums}
+        datum_ids = {d.id: d for d in datums}
         datums_by_case_tag = _get_datums_by_case_tag(datums)
 
         def set_id(datum_meta, new_id, datum_=None):
@@ -916,13 +920,13 @@ class EntriesHelper(object):
                     ret.insert(head - offset, attr.evolve(parent_datum_meta, from_parent=True))
                     offset += 1
                 elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
-                    if parent_datum_meta.datum.id in datum_ids:
-                        datum = datum_ids[parent_datum_meta.datum.id]
-                        set_id(this_datum_meta, '_'.join((datum.datum.id, datum.case_type)), datum.datum)
+                    if parent_datum_meta.id in datum_ids:
+                        datum = datum_ids[parent_datum_meta.id]
+                        set_id(this_datum_meta, '_'.join((datum.id, datum.case_type)), datum.datum)
 
-                    set_id(this_datum_meta, parent_datum_meta.datum.id)
-                elif this_datum_meta.datum.id == parent_datum_meta.datum.id and this_datum_meta.action:
-                    set_id(this_datum_meta, '_'.join((this_datum_meta.datum.id, this_datum_meta.case_type)))
+                    set_id(this_datum_meta, parent_datum_meta.id)
+                elif this_datum_meta.id == parent_datum_meta.id and this_datum_meta.action:
+                    set_id(this_datum_meta, '_'.join((this_datum_meta.id, this_datum_meta.case_type)))
             if this_datum_meta:
                 ret.append(this_datum_meta)
         return ret
