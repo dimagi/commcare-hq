@@ -919,11 +919,11 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
     @property
     def help_text(self):
-        return super().help_text + _("""
-            <br>
-            Editing a conditional alert will cause it to process each case of the alert's case type.
-            This may take some time.
-        """)
+        return format_html('{}<br>{}',
+            super().help_text,
+            _("Editing a conditional alert will cause it to process each case of the alert's case type. "
+            "This may take some time")
+        )
 
     @property
     def rule_id(self):
