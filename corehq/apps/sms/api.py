@@ -193,15 +193,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
         raise
 
     msg = get_sms_class()(
-        couch_recipient_doc_type = verified_number.owner_doc_type,
-        couch_recipient = verified_number.owner_id,
-        phone_number = "+" + str(verified_number.phone_number),
-        direction = OUTGOING,
+        couch_recipient_doc_type=verified_number.owner_doc_type,
+        couch_recipient=verified_number.owner_id,
+        phone_number="+" + str(verified_number.phone_number),
+        direction=OUTGOING,
         date=get_utcnow(),
-        domain = verified_number.domain,
+        domain=verified_number.domain,
         backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
-        text = text
+        text=text
     )
     add_msg_tags(msg, metadata)
 

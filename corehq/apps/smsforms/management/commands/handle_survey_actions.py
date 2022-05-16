@@ -46,15 +46,9 @@ class Command(BaseCommand):
             current_action_due__lt=datetime.utcnow(),
         ).values_list('domain', 'connection_id', 'session_id', 'current_action_due', 'phone_number')
 
-    def get_open_session_ids(self):
-        return SQLXFormsSession.objects.filter(
-            session_is_open=True
-        ).values_list('session_id', flat=True)
-
     @handle_connection_failure()
     def create_tasks(self):
         survey_sessions_due_for_action = self.get_survey_sessions_due_for_action()
-        all_open_session_ids = self.get_open_session_ids()
         for domain, connection_id, session_id, current_action_due, phone_number in survey_sessions_due_for_action:
             if skip_domain(domain):
                 continue
