@@ -496,7 +496,7 @@ def all_toggles():
     return list(all_toggles_by_name().values())
 
 
-def all_toggles_slug():
+def all_toggle_slugs():
     """
     Provides all toggles by their slug as a list
     """

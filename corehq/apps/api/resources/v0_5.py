@@ -803,7 +803,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
 
     def get_object_list(self, request):
         feature_flag = request.GET.get("feature_flag")
-        if feature_flag and feature_flag not in toggles.all_toggles_slug():
+        if feature_flag and feature_flag not in toggles.all_toggle_slugs():
             raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         couch_user = CouchUser.from_django_user(request.user)
         results = []
