@@ -37,6 +37,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
@@ -757,6 +762,21 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         if not has_case_error:
             messages.error(request, "Error in Case Management: %s" % e)
 
+    form_workflows = {
+        WORKFLOW_DEFAULT: _("Home Screen"),
+        WORKFLOW_ROOT: _("First Menu"),
+    }
+    if not module.root_module_id or not module.root_module.is_multi_select():
+        if not module.put_in_root:
+            form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
+        if not module.is_multi_select():
+            form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
+    if module.root_module_id and not module.root_module.put_in_root:
+        form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
+    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
+        form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
+
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
@@ -770,11 +790,11 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'nav_form': form,
         'xform_languages': languages,
         'form_errors': form_errors,
+        'form_workflows': form_workflows,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
@@ -876,7 +896,10 @@ def _get_form_link_context(module, langs):
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. All other menus can be linked manually.
+        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
+        # All other menus can be linked manually.
+        if candidate_module.is_multi_select():
+            continue
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
@@ -916,7 +939,7 @@ def get_form_datums(request, domain, app_id):
     form = app.get_form(form_id)
 
     def make_datum(datum):
-        return {'name': datum.datum.id, 'case_type': datum.case_type}
+        return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
     datums = []

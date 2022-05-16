@@ -55,9 +55,6 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
     FormWorkflow.Values = {
         DEFAULT: 'default',
         ROOT: 'root',
-        PARENT_MODULE: 'parent_module',
-        MODULE: 'module',
-        PREVIOUS_SCREEN: 'previous_screen',
         FORM: 'form',
         ERROR: 'error',
     };
