@@ -197,7 +197,7 @@ class WorkflowHelper(PostProcessor):
         form = module.get_form(form_id)
         if not form:
             return {}
-        return {d.datum.id: d for d in self.entries_helper.get_datums_meta_for_form_generic(form)}
+        return {d.id: d for d in self.entries_helper.get_datums_meta_for_form_generic(form)}
 
     def _add_missing_case_types(self, module_id, form_id, entry_datums):
         form_datums_by_id = self._form_datums(module_id, form_id)

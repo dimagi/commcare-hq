@@ -939,7 +939,7 @@ def get_form_datums(request, domain, app_id):
     form = app.get_form(form_id)
 
     def make_datum(datum):
-        return {'name': datum.datum.id, 'case_type': datum.case_type}
+        return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
     datums = []

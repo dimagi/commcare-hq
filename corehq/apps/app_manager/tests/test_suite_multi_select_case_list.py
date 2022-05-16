@@ -12,6 +12,9 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_PREVIOUS,
 )
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -21,9 +24,9 @@ from corehq.apps.app_manager.models import (
     FormLink,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
@@ -279,7 +282,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
-class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
+class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
 
@@ -315,15 +318,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
-        suite_xml = lxml.etree.XML(self._render_suite())
-
-        session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
-        assert len(session_nodes) == 1
-        actual_datums = [
-            (child.tag, child.attrib['id'])
-            for child in session_nodes[0].getchildren()
-        ]
-        self.assertEqual(datums, actual_datums)
+        suite = self._render_suite()
+        super().assert_module_datums(suite, module_id, datums)
 
     @memoized
     def _render_suite(self):
@@ -369,10 +365,9 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('instance-datum', 'selected_cases')  # m0
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),  # From m1, but copied from m2
+            ('datum', 'case_id_beneficiary'),  # m2 and m1 merge
         ])
-        # this is an error
-        self.assert_form_datums(self.m1f0, 'case_id')
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_parent_selects_parent_different_type(self):
         self.set_parent_select(self.m0, self.m3)
@@ -387,7 +382,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_that_selects_other_same_case_type(self):
-        # Do we intend to support 3 case selections in a row of the same type?
         self.set_parent_select(self.m0, self.m2)
         self.set_parent_select(self.m1, self.m0)
 
@@ -424,10 +418,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'case_id_beneficiary'),
             ('datum', 'case_id')
         ])
-        # This is wrong - get_add_case_preloads_case_id_xpath expects the child
-        # module datum to be renamed because of a conflict with the parent, but
-        # in this case the parent (m0) doesn't conflict, as it's a multiselect.
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_child_module_selects_other_parent_different_type(self):
         self.set_parent_select(self.m1, self.m3)
@@ -436,8 +427,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
             ('datum', 'parent_id'),
             ('datum', 'case_id')
         ])
-        # This is wrong in the same way as the above test
-        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
+        self.assert_form_datums(self.m1f0, 'case_id')
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
