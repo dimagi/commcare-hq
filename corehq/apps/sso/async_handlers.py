@@ -10,6 +10,7 @@ from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
     UserExemptFromSingleSignOn,
+    SsoTestUser,
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 
@@ -111,7 +112,46 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
         return self.data.get('objectName')
 
 
-class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
+class BaseSsoUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
+
+    @property
+    @memoized
+    def idp_slug(self):
+        return self.data.get('requestContext[idpSlug]')
+
+    @property
+    @memoized
+    def identity_provider(self):
+        return IdentityProvider.objects.get(slug=self.idp_slug)
+
+    @property
+    @memoized
+    def username(self):
+        return self.data.get('objectName')
+
+    @property
+    @memoized
+    def email_domain(self):
+        email_domain = get_email_domain_from_username(self.username)
+        if not email_domain:
+            raise AsyncHandlerError("Please enter in a valid email.")
+        return email_domain
+
+    def _get_authenticated_email_domain(self):
+        auth_email_domain = AuthenticatedEmailDomain.objects.filter(
+            identity_provider__slug=self.idp_slug,
+            email_domain=self.email_domain
+        )
+        if not auth_email_domain.exists():
+            raise AsyncHandlerError(
+                f"Please ensure that '{self.email_domain}' is added as an "
+                f"Authenticated Email Domain for this Identity Provider "
+                f"before proceeding."
+            )
+        return auth_email_domain
+
+
+class SSOExemptUsersAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
     slug = 'sso_exempt_users_admin'
 
     def get_linked_objects(self):
@@ -124,15 +164,14 @@ class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
             raise AsyncHandlerError(
                 f"User {self.username} is already exempt from SSO",
             )
-        auth_email_domain = AuthenticatedEmailDomain.objects.filter(
-            identity_provider__slug=self.idp_slug,
-            email_domain=self.email_domain
+        auth_email_domain = self._get_authenticated_email_domain()
+        test_user = SsoTestUser.objects.filter(
+            username=self.username,
         )
-        if not auth_email_domain.exists():
+        if test_user.exists():
             raise AsyncHandlerError(
-                f"Please ensure that '{self.email_domain}' is added as an "
-                f"Authenticated Email Domain for this Identity Provider "
-                f"before proceeding."
+                f"There is already a testing user {self.username}. "
+                f"A user cannot both be a testing user and exempt from SSO."
             )
         UserExemptFromSingleSignOn.objects.create(
             username=self.username,
@@ -157,25 +196,43 @@ class SSOExemptUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
             )
         existing_exempt_user.delete()
 
-    @property
-    @memoized
-    def idp_slug(self):
-        return self.data.get('requestContext[idpSlug]')
 
-    @property
-    @memoized
-    def identity_provider(self):
-        return IdentityProvider.objects.get(slug=self.idp_slug)
+class SsoTestUserAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
+    slug = 'sso_test_users_admin'
 
-    @property
-    @memoized
-    def username(self):
-        return self.data.get('objectName')
+    def get_linked_objects(self):
+        return list(SsoTestUser.objects.filter(
+            email_domain__identity_provider__slug=self.idp_slug
+        ).order_by('username').values_list('username', flat=True))
 
-    @property
-    @memoized
-    def email_domain(self):
-        email_domain = get_email_domain_from_username(self.username)
-        if not email_domain:
-            raise AsyncHandlerError("Please enter in a valid email.")
-        return email_domain
+    def add_object(self):
+        if SsoTestUser.objects.filter(username=self.username).exists():
+            raise AsyncHandlerError(
+                f"User {self.username} is already a test user.",
+            )
+        auth_email_domain = self._get_authenticated_email_domain()
+        exempt_user = UserExemptFromSingleSignOn.objects.filter(
+            username=self.username,
+        )
+        if exempt_user.exists():
+            raise AsyncHandlerError(
+                f"There is already a user exempt from SSO with the username '{self.username}'. "
+                f"A user cannot both be a test user and exempt from SSO."
+            )
+        SsoTestUser.objects.create(
+            username=self.username,
+            email_domain=auth_email_domain.first(),
+        )
+
+    def remove_object(self):
+        existing_test_user = SsoTestUser.objects.filter(
+            username=self.username,
+            email_domain__identity_provider__slug=self.idp_slug
+        )
+        if not existing_test_user.exists():
+            raise AsyncHandlerError(
+                f"The user {self.username} was never a test user for "
+                f"this Identity Provider and the {self.email_domain} "
+                f"Email Domain."
+            )
+        existing_test_user.delete()
