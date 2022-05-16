@@ -500,6 +500,20 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
+    def release_management_privilege(self):
+        return self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
+
+    @property
+    @memoized
+    def lite_release_management_privilege(self):
+        """
+        Only true if domain does not have privileges.RELEASE_MANAGEMENT
+        """
+        return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
+            not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
+
+    @property
+    @memoized
     def non_admin_roles(self):
         return list(sorted(
             UserRole.objects.get_by_domain(self.domain),
@@ -691,6 +705,8 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
+            'erm_privilege': self.release_management_privilege,
+            'mrm_privilege': self.lite_release_management_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
