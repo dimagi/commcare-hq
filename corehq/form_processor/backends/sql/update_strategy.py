@@ -169,10 +169,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._update_known_properties(update_action)
 
         for key, value in update_action.dynamic_properties.items():
-            if key == 'location_id':
-                # special treatment of location_id
-                self.case.location_id = value
-            elif key == 'name':
+            if key == 'name':
                 # replicate legacy behaviour
                 self.case.name = _convert_type_check_length(key, value)
             elif key not in const.RESTRICTED_PROPERTIES:

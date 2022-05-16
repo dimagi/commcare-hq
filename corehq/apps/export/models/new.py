@@ -522,6 +522,8 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
                 )
                 if as_json:
                     for index, header in enumerate(col.get_headers(split_column=split_columns)):
+                        if row_data[header]:
+                            continue
                         if isinstance(val, list):
                             row_data[header] = "{}".format(val[index])
                         else:
