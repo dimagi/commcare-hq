@@ -32,12 +32,14 @@ from corehq.apps.data_interfaces.models import (
     CustomMatchDefinition,
     MatchPropertyDefinition,
     UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain,
 )
+from corehq.apps.locations.models import SQLLocation
 
 
 def true_or_false(value):
@@ -288,6 +290,7 @@ class CaseRuleCriteriaForm(forms.Form):
     custom_match_definitions = forms.CharField(required=False, initial='[]')
     property_match_definitions = forms.CharField(required=False, initial='[]')
     filter_on_closed_parent = forms.CharField(required=False, initial='false')
+    location_filter_definition = forms.CharField(required=False, initial='')
 
     @property
     def current_values(self):
@@ -298,6 +301,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'property_match_definitions': json.loads(self['property_match_definitions'].value()),
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
             'case_type': self['case_type'].value(),
+            'location_filter_definition': self['location_filter_definition'].value(),
             'criteria_operator': self['criteria_operator'].value(),
         }
 
@@ -338,6 +342,15 @@ class CaseRuleCriteriaForm(forms.Form):
                 })
             elif isinstance(definition, ClosedParentDefinition):
                 initial['filter_on_closed_parent'] = 'true'
+            elif isinstance(definition, LocationFilterDefinition):
+                location_id = definition.location_id
+                location = SQLLocation.by_location_id(location_id)
+
+                initial['location_filter_definition'] = {
+                    'location_id': location_id,
+                    'include_child_locations': definition.include_child_locations,
+                    'name': location.name,
+                }
 
         initial['custom_match_definitions'] = json.dumps(custom_match_definitions)
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
@@ -375,11 +388,21 @@ class CaseRuleCriteriaForm(forms.Form):
         # the case update rule UI.
         return False
 
+    @property
+    def allow_locations_filter(self):
+        return False
+
+    @property
+    def allow_custom_filter(self):
+        return True
+
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
             raise ValueError(_("Initial values are set by the form."))
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
+        self.couch_user = kwargs.pop('couch_user', None)
+        self.domain = domain
 
         self.initial_rule = kwargs.pop('rule', None)
         if self.initial_rule:
@@ -387,7 +410,6 @@ class CaseRuleCriteriaForm(forms.Form):
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 
-        self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
         self.fields['criteria_operator'].choices = AutomaticUpdateRule.CriteriaOperator.choices
 
@@ -404,6 +426,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
                 hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
+                hidden_bound_field('location_filter_definition', 'locationFilterDefinition'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria-panel",
             ),
@@ -421,6 +444,26 @@ class CaseRuleCriteriaForm(forms.Form):
 
 
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
+
+    def user_locations(self):
+        if self.couch_user is None:
+            return []
+
+        if self.couch_user.is_domain_admin(self.domain):
+            user_locations = SQLLocation.active_objects.filter(domain=self.domain)
+        else:
+            domain_membership = next(
+                (membership
+                 for membership in self.couch_user.domain_memberships
+                 if membership.domain == self.domain)
+            )
+            user_locations = (SQLLocation.objects.
+                get_locations_and_children(domain_membership.assigned_location_ids))
+
+        return [
+            {'location_id': location.location_id, 'name': location.name}
+            for location in user_locations
+        ]
 
     @property
     @memoized
@@ -567,19 +610,34 @@ class CaseRuleCriteriaForm(forms.Form):
                     'property_value': property_value,
                     'match_type': match_type,
                 })
-
         return result
 
     def clean_filter_on_closed_parent(self):
         return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))
 
-    def save_criteria(self, rule):
+    def clean_location_filter_definition(self):
+        value = self.cleaned_data.get('location_filter_definition')
+        try:
+            value = json.loads(value)
+        except (TypeError, ValueError):
+            self._json_fail_hard()
+
+        if value:
+            location_def = value[0]
+            if not location_def['include_child_locations']:
+                location_def['include_child_locations'] = False
+
+            return location_def
+        return ''
+
+    def save_criteria(self, rule, save_meta=True):
         with transaction.atomic():
-            rule.case_type = self.cleaned_data['case_type']
-            rule.criteria_operator = self.cleaned_data['criteria_operator']
-            rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
-            rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
-            rule.save()
+            if save_meta:
+                rule.case_type = self.cleaned_data['case_type']
+                rule.criteria_operator = self.cleaned_data['criteria_operator']
+                rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
+                rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
+                rule.save()
 
             rule.delete_criteria()
 
@@ -605,6 +663,17 @@ class CaseRuleCriteriaForm(forms.Form):
 
             if self.cleaned_data['filter_on_closed_parent']:
                 definition = ClosedParentDefinition.objects.create()
+
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            if self.cleaned_data['location_filter_definition']:
+                definition_data = self.cleaned_data['location_filter_definition']
+                definition = LocationFilterDefinition.objects.create(
+                    location_id=definition_data['location_id'],
+                    include_child_locations=definition_data.get('include_child_locations', False),
+                )
 
                 criteria = CaseRuleCriteria(rule=rule)
                 criteria.definition = definition
@@ -809,3 +878,74 @@ class CaseRuleActionsForm(forms.Form):
                 action = CaseRuleAction(rule=rule)
                 action.definition = definition
                 action.save()
+
+
+class DedupeCaseFilterForm(CaseRuleCriteriaForm):
+
+    prefix = 'case-filter'
+
+    case_type = forms.ChoiceField(
+        label=gettext_lazy("Case Type"),
+        required=False,
+    )
+
+    @property
+    def fieldset_help_text(self):
+        return _("The rule will be applied to all cases that match all filter criteria below.")
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False
+
+    @property
+    def allow_locations_filter(self):
+        return True
+
+    @property
+    def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_custom_filter(self):
+        return False
+
+    def __init__(self, domain, *args, **kwargs):
+        couch_user = kwargs.get('couch_user', {})
+        kwargs['is_system_admin'] = couch_user.is_superuser if couch_user else False
+        super(DedupeCaseFilterForm, self).__init__(domain, *args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                _("Cases Filter") if self.show_fieldset_title else "",
+                HTML(
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                ),
+                hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
+                hidden_bound_field('location_filter_definition', 'locationFilterDefinition'),
+                Div(data_bind="template: {name: 'case-filters'}"),
+                css_id="rule-criteria-panel",
+            ),
+        )
+        self.form_beginning_helper = None
+
+    def clean_filter_on_server_modified(self):
+        return False
+
+    def clean_server_modified_boundary(self):
+        return None
+
+    def clean_custom_match_definitions(self):
+        return []
+
+    def clean_filter_on_closed_parent(self):
+        return False
