@@ -39,6 +39,15 @@ class IdentityProviderProtocol:
         }
 
 
+class LoginEnforcementType:
+    GLOBAL = 'global'
+    TEST = 'test'
+    CHOICES = (
+        (GLOBAL, "Global"),
+        (TEST, "Test"),
+    )
+
+
 class ServiceProviderCertificate:
 
     def __init__(self):
@@ -82,6 +91,13 @@ class IdentityProvider(models.Model):
 
     # whether an IdP is actively in use as an authentication method on HQ
     is_active = models.BooleanField(default=False)
+
+    # determines how the is_active behavior enforces the login policy on the homepage
+    login_enforcement_type = models.CharField(
+        max_length=10,
+        default=LoginEnforcementType.GLOBAL,
+        choices=LoginEnforcementType.CHOICES,
+    )
 
     # the enterprise admins of this account will be able to edit the SAML
     # configuration fields
@@ -426,6 +442,21 @@ class UserExemptFromSingleSignOn(models.Model):
 
     def __str__(self):
         return f"{self.username} is exempt from SSO with {self.email_domain}"
+
+
+class SsoTestUser(models.Model):
+    """
+    This specifies users who are able to log in with SSO from the homepage when testing mode is turned on
+    for their Identity Provider.
+    """
+    username = models.CharField(max_length=128, db_index=True)
+    email_domain = models.ForeignKey(AuthenticatedEmailDomain, on_delete=models.CASCADE)
+
+    class Meta:
+        app_label = 'sso'
+
+    def __str__(self):
+        return f"{self.username} is testing SSO with {self.email_domain}"
 
 
 class TrustedIdentityProvider(models.Model):

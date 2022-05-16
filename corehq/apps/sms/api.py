@@ -193,15 +193,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
         raise
 
     msg = get_sms_class()(
-        couch_recipient_doc_type = verified_number.owner_doc_type,
-        couch_recipient = verified_number.owner_id,
-        phone_number = "+" + str(verified_number.phone_number),
-        direction = OUTGOING,
+        couch_recipient_doc_type=verified_number.owner_doc_type,
+        couch_recipient=verified_number.owner_id,
+        phone_number="+" + str(verified_number.phone_number),
+        direction=OUTGOING,
         date=get_utcnow(),
-        domain = verified_number.domain,
+        domain=verified_number.domain,
         backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
-        text = text
+        text=text
     )
     add_msg_tags(msg, metadata)
 
@@ -636,18 +636,22 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
     return handled
 
 
-def get_inbound_phone_entry(msg):
-    if msg.backend_id:
-        backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
+def get_inbound_phone_entry_from_sms(msg):
+    return get_inbound_phone_entry(msg.phone_number, msg.backend_id)
+
+
+def get_inbound_phone_entry(phone_number, backend_id=None):
+    if backend_id:
+        backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
         if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
             p = None
             if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
-                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
+                    SMSChannel(backend_id=backend_id, phone_number=phone_number)
                 )
                 contact_id = running_session_info.contact_id
                 if contact_id:
-                    p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
+                    p = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
                 if p is not None:
                     return (
                         p,
@@ -669,14 +673,14 @@ def get_inbound_phone_entry(msg):
             # NOTE: I don't think the backend could ever be global here since global backends
             # don't have a 'domain' and so the toggles would never be activated
             if not backend.is_global:
-                p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
+                p = PhoneNumber.get_two_way_number_with_domain_scope(phone_number, backend.domains_with_access)
                 return (
                     p,
                     p is not None
                 )
 
     return (
-        PhoneNumber.get_reserved_number(msg.phone_number),
+        PhoneNumber.get_reserved_number(phone_number),
         False
     )
 
@@ -713,7 +717,7 @@ def _domain_accepts_inbound(msg):
 
 def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
-    verified_number, has_domain_two_way_scope = get_inbound_phone_entry(msg)
+    verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
     is_two_way = verified_number is not None and verified_number.is_two_way
 
     if verified_number:

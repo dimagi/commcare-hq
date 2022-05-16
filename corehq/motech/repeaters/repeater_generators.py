@@ -636,17 +636,20 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
     def _get_configs(self, payload_doc):
-        configs = [CaseUpdateConfig.from_payload(payload_doc)]
-        extensions = payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
-        if extensions:
-            configs.extend([
-                CaseUpdateConfig.from_payload(extension_case)
-                for extension_case in extensions
-            ])
-
+        configs = self._recursive_get_configs(payload_doc)
         domains = {config.domain for config in configs}
         if len(domains) > 1:
             raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
+        return configs
+
+    def _recursive_get_configs(self, payload_doc):
+        configs = [CaseUpdateConfig.from_payload(payload_doc)]
+        extensions = [
+            extension_case for extension_case in payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
+            if self.repeater._allowed_case_type(extension_case)
+        ]
+        for extension_case in extensions:
+            configs.extend(self._recursive_get_configs(extension_case))
         return configs
 
     def _get_case_blocks(self, repeat_record, configs, couch_user):

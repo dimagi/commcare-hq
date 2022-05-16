@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
+from django.utils.translation import gettext_lazy
 
 import jsonfield
 import pytz
@@ -97,6 +98,16 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
+
+    class CriteriaOperator(models.TextChoices):
+        ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
+        ANY = 'ANY', gettext_lazy('ANY of the criteria are met')
+
+    criteria_operator = models.CharField(
+        max_length=3,
+        choices=CriteriaOperator.choices,
+        default='ALL',
+    )
 
     # For performance reasons, the server_modified_boundary is a
     # required part of the criteria and should be set to the minimum
@@ -336,22 +347,23 @@ class AutomaticUpdateRule(models.Model):
         if case.type != self.case_type:
             return False
 
-        if self.filter_on_server_modified and \
-                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
-            return False
+        case_not_modified_since = not(self.filter_on_server_modified
+            and (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))))
 
-        for criteria in self.memoized_criteria:
+        def _evaluate_criteria(criteria):
             try:
-                result = criteria.definition.matches(case, now)
+                return criteria.definition.matches(case, now)
             except CaseNotFound:
                 # This might happen if the criteria references a parent case and the
                 # parent case is not found
-                result = False
-
-            if not result:
                 return False
 
-        return True
+        results = [_evaluate_criteria(criteria) for criteria in self.memoized_criteria]
+        results.append(case_not_modified_since)
+        if self.criteria_operator == 'ANY':
+            return any(results)
+        else:
+            return all(results)
 
     def _run_method_on_action_definitions(self, case, method):
         aggregated_result = CaseRuleActionResult()
@@ -652,9 +664,9 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
     relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
-        relationship = self.relationship_id
+        relationship = CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
-        for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
+        for parent in case.get_parents(identifier=self.identifier, relationship=relationship):
             if parent.closed:
                 return True
 
@@ -828,7 +840,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
                 if name.lower().startswith('parent/'):
                     name = name[7:]
                     # uses first parent if there are multiple
-                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    parent_cases = current_case.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
                     if parent_cases:
                         current_case = parent_cases[0]
                     else:
