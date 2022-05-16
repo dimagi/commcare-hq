@@ -664,9 +664,9 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
     relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
-        relationship = self.relationship_id
+        relationship = CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
-        for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
+        for parent in case.get_parents(identifier=self.identifier, relationship=relationship):
             if parent.closed:
                 return True
 
@@ -840,7 +840,7 @@ class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
                 if name.lower().startswith('parent/'):
                     name = name[7:]
                     # uses first parent if there are multiple
-                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    parent_cases = current_case.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
                     if parent_cases:
                         current_case = parent_cases[0]
                     else:

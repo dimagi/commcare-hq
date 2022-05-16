@@ -144,10 +144,10 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
         case_struct = CaseStructure(
             attrs={"create": True, "case_type": "registry_case_update", "update": builder.props},
         )
-        [case] = CaseFactory(self.domain).create_or_update_case(case_struct, user_id=self.mobile_user.get_id, form_extras={
-            # pretend this form came from a repeater in another domain
-            'xmlns': DataRegistryCaseUpdatePayloadGenerator.XMLNS
-        })
+        [case] = CaseFactory(self.domain).create_or_update_case(
+            case_struct, user_id=self.mobile_user.get_id, form_extras={
+                # pretend this form came from a repeater in another domain
+                'xmlns': DataRegistryCaseUpdatePayloadGenerator.XMLNS})
 
         self.assertFalse(self.repeater.allowed_to_forward(case))
         self.assertFalse(self.sql_repeater.allowed_to_forward(case))
