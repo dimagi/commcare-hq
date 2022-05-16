@@ -1175,6 +1175,20 @@ class CaseExportInstance(ExportInstance):
             for column in table.columns
         )
 
+    def get_query(self):
+        from corehq.apps.export.esaccessors import get_case_export_base_query
+        query = get_case_export_base_query(self.domain, self.case_type)
+        for filter in self.get_filters():
+            query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -1243,6 +1257,20 @@ class FormExportInstance(ExportInstance):
                 self.filters.date_period,
             )
         return []
+
+    def get_query(self):
+        from corehq.apps.export.esaccessors import get_form_export_base_query
+        query = get_form_export_base_query(self.domain, self.app_id, self.xmlns, include_errors=False)
+        for filter in self.get_filters():
+            query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
 
 
 class SMSExportInstance(ExportInstance):

@@ -813,6 +813,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.blobs[LOGO_ATTACHMENT].content_type
         )
 
+    def get_odata_feed_limit(self):
+        return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
+
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
 
