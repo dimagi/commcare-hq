@@ -24,8 +24,8 @@ def can_user_access_linked_domains(user, domain):
         return False
 
     privs_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
-    user_has_access = user.is_domain_admin(domain) or user.has_permission(domain, 'access_release_management')
-    return user_has_access and any(domain_has_privilege(domain, priv) for priv in privs_with_linked_domain_access)
+    return user_has_access(user, domain) and \
+        any(domain_has_privilege(domain, priv) for priv in privs_with_linked_domain_access)
 
 
 def can_domain_access_linked_domains(domain, include_lite_version=True):
@@ -194,12 +194,12 @@ def is_domain_in_active_link(domain_name):
     return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
 
 
-def user_has_access(d, u):
-    return u.is_domain_admin(d) or u.has_permission(d, 'access_release_management')
+def user_has_access(user, domain):
+    return user.is_domain_admin(domain) or user.has_permission(domain, 'access_release_management')
 
 
 def user_has_access_in_all_domains(user, domains):
-    return all([user_has_access(domain, user) for domain in domains])
+    return all([user_has_access(user, domain) for domain in domains])
 
 
 def is_keyword_linkable(keyword):
