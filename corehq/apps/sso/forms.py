@@ -639,13 +639,12 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        kwargs['initial'] = {
-            'is_active': identity_provider.is_active,
-            'entity_id': identity_provider.entity_id,
-            'login_url': identity_provider.login_url,
-            'logout_url': identity_provider.logout_url,
-            'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
-        }
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('entity_id', identity_provider.entity_id)
+        initial.setdefault('login_url', identity_provider.login_url)
+        initial.setdefault('logout_url', identity_provider.logout_url)
+        initial.setdefault('require_encrypted_assertions', identity_provider.require_encrypted_assertions)
         super().__init__(identity_provider, *args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
