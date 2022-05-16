@@ -373,15 +373,25 @@ class IdentityProvider(models.Model):
         """
         Gets the Identity Provider for the given username only if that
         user is required to login or sign up with that Identity Provider.
+
+        An Identity Provider is required if:
+        - it exists
+        - is active
+        - is Globally enforcing logins (login_enforcement_type) or is in Test login_enforcement_type
+          and there is an SsoTestUser that maps to the given username
+
         :param username: String
         :return: IdentityProvider or None
         """
         idp = cls.get_active_identity_provider_by_username(username)
-        if idp and not UserExemptFromSingleSignOn.objects.filter(
-            username=username
-        ).exists():
+        if not idp:
+            return
+        if (idp.login_enforcement_type == LoginEnforcementType.GLOBAL
+                and not UserExemptFromSingleSignOn.objects.filter(username=username).exists()):
             return idp
-        return None
+        if (idp.login_enforcement_type == LoginEnforcementType.TEST
+                and SsoTestUser.objects.filter(username=username).exists()):
+            return idp
 
 
 @receiver(post_save, sender=Subscription)
