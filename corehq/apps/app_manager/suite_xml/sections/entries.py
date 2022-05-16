@@ -921,10 +921,9 @@ class EntriesHelper(object):
 
             if datums_remaining:
                 this_datum_meta = datums_remaining[0]
-                if this_datum_meta == parent_datum_meta:
-                    ret.append(datums_remaining.pop(0))
-                elif _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
-                    set_id(this_datum_meta, parent_datum_meta.id)
+                if _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
+                    if this_datum_meta.id != parent_datum_meta.id:
+                        set_id(this_datum_meta, parent_datum_meta.id)
                     ret.append(datums_remaining.pop(0))
 
         return ret + datums_remaining
@@ -1025,6 +1024,5 @@ def _get_datums_by_case_tag(datums):
 
 
 def _same_case(this_datum_meta, parent_datum_meta):
-    return (this_datum_meta
-            and this_datum_meta.case_type == parent_datum_meta.case_type
+    return (this_datum_meta.case_type == parent_datum_meta.case_type
             and this_datum_meta.datum.ROOT_NAME == parent_datum_meta.datum.ROOT_NAME)
