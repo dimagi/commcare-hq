@@ -18,6 +18,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
+from django.utils.html import format_html
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -70,6 +71,7 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.utils.html import safe_replace
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -1583,9 +1585,9 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         return {
             'datasource_display_name': self.config.display_name,
             'filter_summary': self.configured_filter_summary(),
-            'indicator_summary': self._add_links_to_output(self.indicator_summary()),
-            'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
-            'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'indicator_summary': self.indicator_summary(),
+            'named_expression_summary': self.named_expression_summary(),
+            'named_filter_summary': self.named_filter_summary(),
             'named_filter_prefix': NAMED_FILTER_PREFIX,
             'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
         }
@@ -1600,7 +1602,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             {
                 "column_id": wrapped.column_id,
                 "comment": wrapped.comment,
-                "readable_output": wrapped.readable_output(context)
+                "readable_output": NamedExpressionHighlighter.highlight_links(wrapped.readable_output(context))
             }
             for wrapped in wrapped_specs if wrapped
         ]
@@ -1610,7 +1612,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             {
                 "name": name,
                 "comment": self.config.named_expressions[name].get('comment'),
-                "readable_output": str(exp)
+                "readable_output": NamedExpressionHighlighter.highlight_links(str(exp))
             }
             for name, exp in self.config.named_expression_objects.items()
         ]
@@ -1620,7 +1622,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             {
                 "name": name,
                 "comment": self.config.named_filters[name].get('comment'),
-                "readable_output": str(filter)
+                "readable_output": NamedExpressionHighlighter.highlight_links(str(filter))
             }
             for name, filter in self.config.named_filter_objects.items()
         ]
@@ -1631,21 +1633,23 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
                                             context=self.config.get_factory_context()))
         return _("No filter defined")
 
-    def _add_links_to_output(self, items):
-        def make_link(match):
-            value = match.group()
-            return '<a href="#{value}">{value}</a>'.format(value=value)
 
-        def add_links(content):
-            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
-            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
-            return content
+class NamedExpressionHighlighter:
+    # NOTE: This might be worth looking into the intent on the name after the prefix
+    # this looks like it could be simplified as [\w-], but that allows other word characters for non-ASCII
+    # inputs that might change existing behavior
+    NAMED_FILTER_PATTERN = f'{NAMED_FILTER_PREFIX}:[A-Za-z0-9_-]+'
+    NAMED_EXPRESSION_PATTERN = f'{NAMED_EXPRESSION_PREFIX}:[A-Za-z0-9_-]+'
 
-        list = []
-        for i in items:
-            i['readable_output'] = add_links(i.get('readable_output'))
-            list.append(i)
-        return list
+    @classmethod
+    def highlight_links(cls, content):
+        pattern = f'{cls.NAMED_FILTER_PATTERN}|{cls.NAMED_EXPRESSION_PATTERN}'
+        return safe_replace(pattern, cls._make_link, content)
+
+    @classmethod
+    def _make_link(cls, match):
+        value = match.group()
+        return format_html('<a href="#{value}">{value}</a>', value=value)
 
 
 class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
