@@ -911,6 +911,7 @@ class EntriesHelper(object):
         datums_remaining = list(datums)
         for parent_datum_meta in parent_datums:
             if parent_datum_meta.id in datum_ids:
+                # We assume that a conflict is unwanted and rename. This may get undone below.
                 datum = datum_ids[parent_datum_meta.id]
                 set_id(datum, f'{datum.id}_{datum.case_type}')
 
@@ -1027,8 +1028,3 @@ def _same_case(this_datum_meta, parent_datum_meta):
     return (this_datum_meta
             and this_datum_meta.case_type == parent_datum_meta.case_type
             and this_datum_meta.datum.ROOT_NAME == parent_datum_meta.datum.ROOT_NAME)
-
-
-def _same_id(this_datum_meta, parent_datum_meta):
-    return (this_datum_meta and parent_datum_meta
-            and this_datum_meta.id == parent_datum_meta.id)
