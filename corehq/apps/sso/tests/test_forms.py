@@ -17,6 +17,7 @@ from corehq.apps.sso.models import (
     UserExemptFromSingleSignOn,
     IdentityProviderType,
     IdentityProviderProtocol,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import WebUser
@@ -357,10 +358,11 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
 
     @staticmethod
     def _get_post_data(no_entity_id=False, no_login_url=False, no_logout_url=False,
-                       is_active=False, require_encrypted_assertions=False,
-                       certificate=None):
+                       is_active=False, login_enforcement_type=None,
+                       require_encrypted_assertions=False, certificate=None):
         return {
             'is_active': is_active,
+            'login_enforcement_type': login_enforcement_type or LoginEnforcementType.GLOBAL,
             'entity_id': '' if no_entity_id else 'https://test.org/metadata',
             'login_url': '' if no_login_url else 'https://test.org/sls',
             'logout_url': '' if no_logout_url else 'https://test.org/slo',
@@ -535,6 +537,21 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         self.idp.refresh_from_db()
         self.assertTrue(self.idp.require_encrypted_assertions)
 
+    def test_login_enforcement_type_is_saved(self):
+        """
+        Ensure that SsoSamlEnterpriseSettingsForm updates the
+        `login_enforcement_type property` on the IdentityProvider.
+        """
+        post_data = self._get_post_data(
+            login_enforcement_type=LoginEnforcementType.TEST,
+        )
+        self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.GLOBAL)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+        self.idp.refresh_from_db()
+        self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.TEST)
+
 
 class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
 
@@ -557,9 +574,10 @@ class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
 
     @staticmethod
     def _get_post_data(no_entity_id=False, no_client_id=False, no_client_secret=False,
-                       is_active=False):
+                       is_active=False, login_enforcement_type=None):
         return {
             'is_active': is_active,
+            'login_enforcement_type': login_enforcement_type or LoginEnforcementType.GLOBAL,
             'entity_id': '' if no_entity_id else 'https://test.org/oic',
             'client_id': '' if no_client_id else 'vaultwax',
             'client_secret': '' if no_client_secret else 'secret',
@@ -663,3 +681,18 @@ class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
         self.assertEqual(idp.entity_id, post_data['entity_id'])
         self.assertEqual(idp.client_id, post_data['client_id'])
         self.assertEqual(idp.client_secret, post_data['client_secret'])
+
+    def test_login_enforcement_type_is_saved(self):
+        """
+        Ensure that SsoOidcEnterpriseSettingsForm updates the
+        `login_enforcement_type property` on the IdentityProvider.
+        """
+        post_data = self._get_post_data(
+            login_enforcement_type=LoginEnforcementType.TEST,
+        )
+        self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.GLOBAL)
+        edit_sso_idp_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+        self.idp.refresh_from_db()
+        self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.TEST)
