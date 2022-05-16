@@ -133,6 +133,18 @@ class CaseSearchES(CaseES):
             reset_sort=False
         )
 
+    def case_property_has_value(self, case_property_name):
+        return self.add_query(
+            filters.NOT(case_property_missing(case_property_name)),
+            queries.MUST
+        )
+
+    def case_property_has_no_value(self, case_property_name):
+        return self.add_query(
+            case_property_missing(case_property_name),
+            queries.MUST
+        )
+
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
@@ -272,20 +284,24 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
+def case_property_not_set(case_property_name):
+    return filters.NOT(
+        queries.nested(
+            CASE_PROPERTIES_PATH,
+            queries.filtered(
+                queries.match_all(),
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+            )
+        )
+    )
+
+
 def case_property_missing(case_property_name):
     """case_property_name isn't set or is the empty string
 
     """
     return filters.OR(
-        filters.NOT(
-            queries.nested(
-                CASE_PROPERTIES_PATH,
-                queries.filtered(
-                    queries.match_all(),
-                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                )
-            )
-        ),
+        case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
     )
 
