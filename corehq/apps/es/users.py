@@ -68,7 +68,7 @@ class UserES(HQESQuery):
 
 class ElasticUser(ElasticDocumentAdapter):
 
-    _index_name = "hqusers_2017-09-07"
+    _index_name = "hqusers_2022-05-09"
     type = "user"
 
     @property
@@ -167,7 +167,6 @@ def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
-        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)
