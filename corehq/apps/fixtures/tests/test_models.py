@@ -39,6 +39,11 @@ class TestLookupTableManager(TestCase):
         with self.assertRaises(LookupTable.DoesNotExist):
             LookupTable.objects.by_domain_tag(self.domain.name, "lostnotfound")
 
+    def test_domain_tag_exists(self):
+        self.make_table()
+        self.assertTrue(LookupTable.objects.domain_tag_exists(self.domain.name, "price"))
+        self.assertFalse(LookupTable.objects.domain_tag_exists(self.domain.name, "404"))
+
     def make_table(self):
         table = LookupTable(
             domain=self.domain.name,

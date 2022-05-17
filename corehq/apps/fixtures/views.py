@@ -49,6 +49,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureTypeField,
     LookupTableRow,
+    LookupTable,
 )
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
@@ -144,7 +145,7 @@ def update_tables(request, domain, data_type_id=None):
         is_global = fields_update["is_global"]
         description = fields_update["description"]
 
-        if not data_type_id and FixtureDataType.fixture_tag_exists(domain, data_tag):
+        if not data_type_id and LookupTable.objects.domain_tag_exists(domain, data_tag):
             return HttpResponseBadRequest("DuplicateFixture")
 
         # validate tag and fields

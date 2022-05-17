@@ -648,11 +648,8 @@ class DomainLinkHistoryReport(GenericTabularReport):
             detail = record.wrapped_detail
             tag = gettext_lazy('Unknown')
             if detail:
-                has_tag = LookupTable.objects.filter(
-                    domain=self.selected_link.linked_domain,
-                    tag=detail.tag,
-                ).exists()
-                if has_tag:
+                domain_name = self.selected_link.linked_domain
+                if LookupTable.objects.domain_tag_exists(domain_name, detail.tag):
                     tag = detail.tag
             return '{} ({})'.format(name, tag)
 

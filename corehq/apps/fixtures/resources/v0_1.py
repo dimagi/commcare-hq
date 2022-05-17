@@ -134,8 +134,9 @@ class LookupTableResource(HqBaseResource):
                 field["name"] = field.pop("field_name")
             return field
 
-        if LookupTable.objects.filter(domain=kwargs['domain'], tag=bundle.data.get("tag")).exists():
-            raise BadRequest("A lookup table with name %s already exists" % bundle.data.get("tag"))
+        tag = bundle.data.get("tag")
+        if LookupTable.objects.domain_tag_exists(kwargs['domain'], tag):
+            raise BadRequest(f"A lookup table with name {tag} already exists")
 
         data = dict(bundle.data)
         data["fields"] = [TypeField(**adapt(f)) for f in data.get('fields', [])]

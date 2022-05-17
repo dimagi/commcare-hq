@@ -30,6 +30,9 @@ class LookupTableManager(models.Manager):
         """Get lookup table by domain and tag"""
         return self.get(domain=domain_name, tag=tag)
 
+    def domain_tag_exists(self, domain_name, tag):
+        return self.filter(domain=domain_name, tag=tag).exists()
+
 
 @define
 class Alias:
