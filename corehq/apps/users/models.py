@@ -184,6 +184,7 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)

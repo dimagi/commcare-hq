@@ -389,7 +389,17 @@ hqDefine('users/js/roles',[
                         checkboxLabel: "access-all-reports-checkbox",
                         checkboxPermission: self.reportPermissions.all,
                         checkboxText: gettext("Allow role to access all reports."),
-                    }];
+                    },
+                ];
+                if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
+                    self.reports.push({
+                        visibilityRestraint: true,
+                        text: gettext("Access all Tableau Visualizations"),
+                        checkboxLabel: "view-tableau-checkbox",
+                        checkboxPermission: self.permissions.view_tableau,
+                        checkboxText: gettext("Allow role to access all Tableau visualizations."),
+                    });
+                }
                 if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
                     self.ucrs = [{
                         visibilityRestraint: self.permissions.access_all_locations,
