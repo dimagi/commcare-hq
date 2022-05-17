@@ -13,7 +13,7 @@ function abort () {
 function help () {
     echo "Update Translations"
     echo
-    echo "Syntax: scripts/updateTranslations [-h|--no-fuzzy|--no-obsolete]"
+    echo "Syntax: scripts/update-translations.sh [-h|--no-fuzzy|--no-obsolete]"
     echo "options:"
     echo " --no-fuzzy   Remove fuzzy translations"
     echo " --no-obsolte Remove obsolete translations"
