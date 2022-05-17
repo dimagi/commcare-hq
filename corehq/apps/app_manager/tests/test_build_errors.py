@@ -219,3 +219,24 @@ class BuildErrorsTest(SimpleTestCase):
             'type': 'smart links multi select',
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
         }, factory.app.validate_app())
+
+    @flag_enabled('DATA_REGISTRY')
+    @patch.object(Application, 'supports_data_registry', lambda: True)
+    def test_inline_search_module_errors(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        factory.form_requires_case(form, 'person')
+
+        module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
+            data_registry="so_many_cases",
+            data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
+            auto_launch=True,
+            inline_search=True,
+        )
+
+        self.assertIn({
+            'type': "smart links inline search",
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
+        }, factory.app.validate_app())

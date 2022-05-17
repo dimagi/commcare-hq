@@ -92,7 +92,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
 
-        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action/display/text/locale")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action")
         self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
