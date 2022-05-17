@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
     DetailColumn,
+    DetailTab,
     Module,
 )
 from corehq.apps.app_manager.tests.util import (
@@ -56,7 +57,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.form = self.module.forms[0]
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    def test_inline_search(self, *args):
+    def test_inline_search(self):
         suite = self.app.create_suite()
 
         expected_entry_query = """
@@ -104,3 +105,15 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
+
+    def test_case_detail_tabs_with_inline_search(self):
+        """Test that the detail nodeset uses the correct instance (results not casedb)"""
+        self.app.get_module(0).case_details.long.tabs = [
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
+        ]
+
+        self.assertXmlPartialEqual(
+            self.get_xml("detail_tabs"),
+            self.app.create_suite(),
+            './detail[@id="m0_case_long"]')
