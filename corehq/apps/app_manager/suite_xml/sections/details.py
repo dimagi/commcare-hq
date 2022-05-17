@@ -44,6 +44,7 @@ from corehq.apps.app_manager.util import (
     get_sort_and_sort_only_columns,
     module_loads_registry_case,
     module_offers_search,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
@@ -198,7 +199,7 @@ class DetailContributor(SectionContributor):
                     if form.is_registration_form(module.case_type) or form.unique_id in valid_forms:
                         d.actions.append(self._get_case_list_form_action(module))
 
-                if module_offers_search(module):
+                if module_offers_search(module) and not module_uses_inline_search(module):
                     in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
