@@ -23,6 +23,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -419,16 +420,18 @@ class EntriesHelper(object):
 
     def add_remote_query_datums(self, datums):
         """Add in any `query` datums that are necessary.
-        This only applies to datums that are loaded from a data registry.
+        This only applies to datums that are loaded via inline search or from a data registry.
         """
         result = []
         for datum in datums:
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                if module_loads_registry_case(module):
-                    result.append(self.get_data_registry_search_datums(module))
+                loads_registry_case = module_loads_registry_case(module)
+                if loads_registry_case or module_uses_inline_search(module):
+                    result.append(self.get_inline_search_datums(module))
                     result.append(datum)
-                    result.append(self.get_data_registry_case_datums(datum, module))
+                    if loads_registry_case:
+                        result.append(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -530,8 +533,8 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_data_registry_search_datums(self, module):
-        """When a data registry is the source of the search results we skip the normal case search
+    def get_inline_search_datums(self, module):
+        """When doing 'inline' search we skip the normal case search
         workflow and perform the search directly as part of the entry instead of via an action in the
         details screen. The case details is then populated with data from the results of the query.
         """
