@@ -189,9 +189,15 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         })
 
         pre_forms = [
-            create_form_for_test(self.domain_name),
+            create_form_for_test(self.domain_name, auth_context={
+                "user_id": None,
+                "domain": "some-domain",
+                "authenticated": False,
+                "doc_type": "AuthContext"
+            },),
             create_form_for_test(self.domain_name)
         ]
+
         self._dump_and_load(expected_object_counts)
 
         form_ids = XFormInstance.objects.get_form_ids_in_domain(self.domain_name, 'XFormInstance')
