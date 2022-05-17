@@ -508,7 +508,7 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_loads_registry_case(detail_module):
+            if module_loads_registry_case(detail_module) or module_uses_inline_search(module):
                 instance_name, root_element = "results", "results"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
