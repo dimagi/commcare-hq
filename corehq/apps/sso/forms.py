@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 
 from django import forms
 from django.db import transaction
@@ -56,6 +57,14 @@ def _check_required_when_active(is_active, value):
     if is_active and not value:
         raise forms.ValidationError(
             _("This is required when Single Sign On is active.")
+        )
+
+
+def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
+    if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
+            and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
+        raise forms.ValidationError(
+            _("This is not a valid One Login URL.")
         )
 
 
@@ -601,6 +610,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         is_active = bool(self.data.get('is_active'))
         entity_id = self.cleaned_data['entity_id']
         _check_required_when_active(is_active, entity_id)
+        _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
         return entity_id
 
     def update_identity_provider(self, admin_user):
