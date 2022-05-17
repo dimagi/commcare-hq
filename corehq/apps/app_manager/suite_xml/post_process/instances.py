@@ -8,7 +8,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.suite_xml.xml_models import Instance, require_instances
 from corehq.util.timer import time_method
 
 
@@ -19,17 +19,21 @@ class EntryInstances(PostProcessor):
     def update_suite(self):
         for entry in self.suite.entries:
             self.add_entry_instances(entry)
+        for remote_request in self.suite.remote_requests:
+            self.add_entry_instances(remote_request)
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-        custom_instances, unknown_instance_ids = self._get_custom_instances(
-            entry,
-            known_instances,
-            unknown_instance_ids
-        )
+        custom_instances = set()
+        if hasattr(entry, 'form'):
+            custom_instances, unknown_instance_ids = self._get_custom_instances(
+                entry,
+                known_instances,
+                unknown_instance_ids
+            )
         all_instances = known_instances | custom_instances
-        entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
+        require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
         relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
@@ -62,13 +66,14 @@ class EntryInstances(PostProcessor):
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id
-        menu_id = menu_by_command[entry_id]
-        relevances = relevance_by_menu[menu_id]
-        xpaths.update(relevances)
+        if entry_id in menu_by_command:
+            menu_id = menu_by_command[entry_id]
+            relevances = relevance_by_menu[menu_id]
+            xpaths.update(relevances)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
-        for assertion in entry.assertions:
+        for assertion in getattr(entry, 'assertions', []):
             xpaths.add(assertion.test)
         if entry.stack:
             for frame in entry.stack.frames:

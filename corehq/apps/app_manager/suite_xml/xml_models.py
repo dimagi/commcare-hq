@@ -563,40 +563,41 @@ class Entry(OrderedXmlObject, XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
-    def require_instances(self, instances=(), instance_ids=()):
-        used = {(instance.id, instance.src) for instance in self.instances}
-        for instance in instances:
-            if 'remote' in instance.src:
-                continue
-            if (instance.id, instance.src) not in used:
-                self.instances.append(
-                    # it's important to make a copy,
-                    # since these can't be reused
-                    Instance(id=instance.id, src=instance.src)
-                )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(self.instances) == 1:
-                    instance_node = self.node.find('instance')
-                    command_node = self.node.find('command')
-                    self.node.remove(instance_node)
-                    self.node.insert(self.node.index(command_node) + 1,
-                                     instance_node)
-        covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in XPath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
 
-        sorted_instances = sorted(self.instances,
-                                  key=lambda instance: instance.id)
-        if sorted_instances != self.instances:
-            self.instances = sorted_instances
+def require_instances(entry, instances=(), instance_ids=()):
+    used = {(instance.id, instance.src) for instance in entry.instances}
+    for instance in instances:
+        if 'remote' in instance.src:
+            continue
+        if (instance.id, instance.src) not in used:
+            entry.instances.append(
+                # it's important to make a copy,
+                # since these can't be reused
+                Instance(id=instance.id, src=instance.src)
+            )
+            # make sure the first instance gets inserted
+            # right after the command
+            # once you "suggest" a placement to eulxml,
+            # it'll follow your lead and place the rest of them there too
+            if len(entry.instances) == 1:
+                instance_node = entry.node.find('instance')
+                command_node = entry.node.find('command')
+                entry.node.remove(instance_node)
+                entry.node.insert(entry.node.index(command_node) + 1,
+                                 instance_node)
+    covered_ids = {instance_id for instance_id, _ in used}
+    for instance_id in instance_ids:
+        if instance_id not in covered_ids:
+            raise UnknownInstanceError(
+                "Instance reference not recognized: {} in XPath \"{}\""
+                # to get xpath context to show in this error message
+                # make instance_id a unicode subclass with an xpath property
+                .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
+
+    sorted_instances = sorted(entry.instances,
+                              key=lambda instance: instance.id)
+    if sorted_instances != entry.instances:
+        entry.instances = sorted_instances
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
@@ -626,6 +627,9 @@ class RemoteRequest(OrderedXmlObject, XmlObject):
     command = NodeField('command', Command)
     session = NodeField('session', RemoteRequestSession)
     stack = NodeField('stack', Stack)
+
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
 
 class MenuMixin(XmlObject):
