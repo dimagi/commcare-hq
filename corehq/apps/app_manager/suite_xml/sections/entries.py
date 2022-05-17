@@ -182,6 +182,11 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
 
+            if form.requires_case() and module_uses_inline_search(module):
+                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+                factory = RemoteRequestFactory(None, module, [])
+                e.post = factory.build_remote_request_post()
+
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
                 form_custom_icon = form.custom_icon

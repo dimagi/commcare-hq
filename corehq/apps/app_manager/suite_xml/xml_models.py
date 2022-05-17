@@ -529,6 +529,14 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
         return self.storage_instance
 
 
+class RemoteRequestPost(XmlObject):
+    ROOT_NAME = 'post'
+
+    url = StringField('@url')
+    relevant = StringField('@relevant')
+    data = NodeListField('data', QueryData)
+
+
 def _wrap_session_datums(datum):
     return {
         'datum': SessionDatum,
@@ -539,9 +547,10 @@ def _wrap_session_datums(datum):
 
 class Entry(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'entry'
-    ORDER = ('form', 'command', 'instance', 'datums')
+    ORDER = ('form', 'post', 'command', 'instance', 'datums')
 
     form = StringField('form')
+    post = NodeField('post', RemoteRequestPost)
     command = NodeField('command', Command)
     instances = NodeListField('instance', Instance)
 
@@ -588,14 +597,6 @@ class Entry(OrderedXmlObject, XmlObject):
                                   key=lambda instance: instance.id)
         if sorted_instances != self.instances:
             self.instances = sorted_instances
-
-
-class RemoteRequestPost(XmlObject):
-    ROOT_NAME = 'post'
-
-    url = StringField('@url')
-    relevant = StringField('@relevant')
-    data = NodeListField('data', QueryData)
 
 
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
