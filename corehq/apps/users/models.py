@@ -315,6 +315,7 @@ class UserRolePresets(object):
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
+    MOBILE_WORKER = gettext_noop("Mobile Worker")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -328,7 +329,8 @@ class UserRolePresets(object):
         'read-only': READ_ONLY,
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN
+        'billing-admin': BILLING_ADMIN,
+        'mobile-worker': MOBILE_WORKER
     }
 
     # skip legacy duplicate ('no-permissions')
@@ -356,7 +358,11 @@ class UserRolePresets(object):
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+            cls.MOBILE_WORKER: lambda: Permissions(Permissions.from_permission_list(
+                                                   Permissions(access_mobile_endpoints=True,
+                                                   report_an_issue=True,
+                                                   access_all_locations=True)))
         }
 
     @classmethod
