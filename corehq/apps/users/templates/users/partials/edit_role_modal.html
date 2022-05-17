@@ -181,9 +181,9 @@
                          data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
                       <div class="form-check">
                         <input type="checkbox"
-                               data-bind="checked: value, attr: { 'id': 'tableau-' + id() + '-checkbox' },
+                               data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' },
                                           disable: !$root.allowEdit" />
-                        <label data-bind="attr: { 'for': 'tableau-' + id() + '-checkbox' }">
+                        <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
                           <span data-bind="text: name"></span>
                         </label>
                       </div>

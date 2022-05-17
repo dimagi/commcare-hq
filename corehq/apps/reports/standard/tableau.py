@@ -4,15 +4,14 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 
+from no_exceptions.exceptions import Http403
 import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.reports.views import BaseProjectReportSectionView, require_can_view_tableau
+from corehq.apps.reports.views import BaseProjectReportSectionView
 
 
-@method_decorator(require_can_view_tableau, name='dispatch')
-@method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator(), name='dispatch')
 class TableauView(BaseProjectReportSectionView):
     urlname = 'tableau'
     template_name = 'reports/tableau_template.html'
@@ -35,9 +34,12 @@ class TableauView(BaseProjectReportSectionView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.visualization.id,))
 
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
+        if not self.request.couch_user.can_view_tableau_viz(self.domain, f"{self.kwargs.get('viz_id')}"):
+            raise Http403
         return super().dispatch(request, *args, **kwargs)
 
     @property

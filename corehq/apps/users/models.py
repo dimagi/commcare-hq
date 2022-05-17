@@ -273,6 +273,9 @@ class Permissions(DocumentSchema):
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
 
+    def view_tableau_viz(self, viz_id):
+        return self.view_tableau or viz_id in self.view_tableau_list
+
     def has(self, permission, data=None):
         if data:
             return getattr(self, permission)(data)
@@ -2771,6 +2774,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_some_reports(self, domain):
+        return False
+
+    def can_view_tableau_viz(self, viz_id):
         return False
 
     @property

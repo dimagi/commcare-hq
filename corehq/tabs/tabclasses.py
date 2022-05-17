@@ -193,16 +193,17 @@ class ProjectReportsTab(UITab):
         if not toggles.EMBEDDED_TABLEAU.enabled(self.domain):
             return []
 
-        if not self.couch_user.can_view_tableau():
-            return []
-
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
-        items = [{
-            'title': viz.name,
-            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-            'show_in_dropdown': False,
-        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+        items = [
+            {
+                'title': viz.name,
+                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+                'show_in_dropdown': False,
+            }
+            for viz in TableauVisualization.objects.filter(domain=self.domain)
+            if self.couch_user.can_view_tableau_viz(self.domain, f"{viz.id}")
+        ]
 
         return [(_("Tableau Reports"), items)] if items else []
 

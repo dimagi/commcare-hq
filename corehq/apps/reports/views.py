@@ -201,7 +201,6 @@ require_case_view_permission = require_permission(
 )
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
-require_can_view_tableau = require_permission(Permissions.view_tableau)
 
 
 def can_view_attachments(request):
