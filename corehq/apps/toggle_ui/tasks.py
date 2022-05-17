@@ -211,7 +211,7 @@ def _get_user_info(username):
         return {"error": "User not found"}
 
     return {
-        "user_is_dimagi": "@dimagi.com" in username,
+        "user_is_dimagi": CouchUser.is_dimagi_email(username),
         "user_is_mobile": "commcarehq.org" in username,
         "user_is_active": user.is_active,
         "user_last_login": user.last_login,

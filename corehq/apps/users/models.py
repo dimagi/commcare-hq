@@ -990,7 +990,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def is_dimagi(self):
-        return self.username.endswith('@dimagi.com')
+        return self.is_dimagi_email(self.username)
+
+    @staticmethod
+    def is_dimagi_email(email):
+        return email.endswith('@dimagi.com')
 
     def is_locked_out(self):
         return self.supports_lockout() and self.should_be_locked_out()
@@ -2427,7 +2431,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
-            if user_doc['email'].endswith('@dimagi.com'):
+            if CouchUser.is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):

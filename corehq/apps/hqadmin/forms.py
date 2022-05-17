@@ -7,11 +7,10 @@ from django.utils.translation import gettext as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 
 
 class EmailForm(forms.Form):
@@ -81,7 +80,7 @@ class SuperuserManagementForm(forms.Form):
 
         users = []
         for username in csv_email_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
+            if settings.IS_DIMAGI_ENVIRONMENT and not CouchUser.is_dimagi_email(username):
                 raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
             try:
                 users.append(User.objects.get(username=username))
