@@ -1,4 +1,5 @@
 from copy import copy
+from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
@@ -42,6 +43,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_LOCATION_DATA,
     MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
+    MODEL_UCR_EXPRESSION,
     MODEL_USER_DATA,
     MODEL_REPORT,
     MODEL_ROLES,
@@ -129,6 +131,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
+        MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
     }.get(model_type)
 
     kwargs = model_detail or {}

@@ -125,11 +125,6 @@
               {% if error.message %}
                 {% trans "Details:" %}
               {% endif %}
-            {% case "no forms" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has no forms.
-              {% endblocktrans %}
             {% case "no forms or case list" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
@@ -295,21 +290,11 @@
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 doesn't have a source module specified.
               {% endblocktrans %}
-            {% case "no parent select id" %}
+            {% case "invalid parent select id" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses parent case selection but doesn't have a parent case list specified.
               {% endblocktrans %}
-            {% case "multi select select parent first" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection and a multi-select case list.
-              {% endblocktrans %}
-              {% if request|toggle_enabled:"NON_PARENT_MENU_SELECTION" %}
-                {% trans "Multi-select case lists can only use 'other' parent child selection." %}
-              {% else %}
-                {% trans "These two features are not compatible." %}
-              {% endif %}
             {% case "parent cycle" %}
               {% blocktrans %}
                 The app's parent child case selection graph contains a cycle.
@@ -360,14 +345,14 @@
             {% case "path error" %}
               {% if error.path %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in form {% include "app_manager/partials/form_error_message.html" %}
                 references a question that no longer exists: "{{ error.path }}". It is likely that
                 this question has been renamed or deleted. Please update or delete this question
                 reference before you make a new version.
               {% else %}
                 The case management
-                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                {% if "VISIT_SCHEDULER" in toggles %} or visit scheduler {% endif %}
                 in the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
                 is missing a question.
                 Please choose a question from the dropdown next to the case property.

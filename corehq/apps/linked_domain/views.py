@@ -93,7 +93,7 @@ from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app,
     server_to_user_time,
     user_has_admin_access_in_all_domains,
-    can_domain_access_release_management,
+    can_domain_access_linked_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -103,6 +103,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_fixtures,
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
+    get_upstream_and_downstream_ucr_expressions,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -291,16 +292,31 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
         upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
         upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
+        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(
+            self.domain
+        )
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
-            downstream_keywords, timezone, is_superuser=is_superuser
+            self.domain,
+            upstream_link,
+            downstream_apps,
+            downstream_fixtures,
+            downstream_reports,
+            downstream_keywords,
+            downstream_ucr_expressions,
+            timezone,
+            is_superuser=is_superuser
         )
 
         view_models_to_push = build_view_models_from_data_models(
-            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
+            self.domain,
+            upstream_apps,
+            upstream_fixtures,
+            upstream_reports,
+            upstream_keywords,
+            upstream_ucr_expressions,
             is_superuser=is_superuser
         )
 
@@ -328,7 +344,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
-                'has_full_access': can_domain_access_release_management(self.domain, include_lite_version=False),
+                'has_full_access': can_domain_access_linked_domains(self.domain, include_lite_version=False),
             },
         }
 

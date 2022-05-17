@@ -91,6 +91,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             receiverExpression: '',
             itemsetOptions: {},
             exclude: false,
+            required: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -103,6 +104,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.exclude = ko.observable(options.exclude);
+        self.required = ko.observable(options.required);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -154,7 +156,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude', 'required',
         ], saveButton);
         return self;
     };
@@ -334,6 +336,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
                     exclude: searchProperties[i].exclude,
+                    required: searchProperties[i].required,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -373,6 +376,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
+                        required: p.required(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),

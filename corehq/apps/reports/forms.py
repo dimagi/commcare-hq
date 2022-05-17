@@ -105,9 +105,9 @@ class SavedReportConfigForm(forms.Form):
 
 class ScheduledReportForm(forms.Form):
     INTERVAL_CHOICES = [
-        ("daily", gettext("Daily")),
-        ("weekly", gettext("Weekly")),
-        ("monthly", gettext("Monthly"))
+        ("daily", _("Daily")),
+        ("weekly", _("Weekly")),
+        ("monthly", _("Monthly"))
     ]
 
     config_ids = forms.MultipleChoiceField(

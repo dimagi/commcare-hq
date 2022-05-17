@@ -58,6 +58,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
+    Detail,
     DetailColumn,
     DetailTab,
     FixtureSelect,
@@ -121,6 +122,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     StaticReportConfiguration,
@@ -220,6 +222,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
             'exclude_from_search_enabled': app.enable_exclude_from_search,
+            'required_search_fields_enabled': app.enable_required_search_fields,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
@@ -290,8 +293,8 @@ def _get_advanced_module_view_context(app, module):
 
 def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
-        'parent_case_modules': _get_modules_with_parent_case_type(app, module, case_property_builder),
-        'all_case_modules': _get_all_case_modules(app, module),
+        'parent_case_modules': get_modules_with_parent_case_type(app, module, case_property_builder),
+        'all_case_modules': get_all_case_modules(app, module),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             add_ons.show("submenus", request, app, module=module) and not module.is_training_module
@@ -393,22 +396,29 @@ def _setup_case_property_builder(app):
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
-def _get_modules_with_parent_case_type(app, module, case_property_builder):
+def get_modules_with_parent_case_type(app, module, case_property_builder=None):
+    if case_property_builder is None:
+        case_property_builder = _setup_case_property_builder(app)
 
     parent_types = case_property_builder.get_parent_types(module.case_type)
     modules = app.modules
     parent_module_ids = [
         mod.unique_id for mod in modules
-        if mod.case_type in parent_types]
+        if mod.case_type in parent_types
+    ]
 
     return [{
         'unique_id': mod.unique_id,
         'name': mod.name,
-        'is_parent': mod.unique_id in parent_module_ids,
-    } for mod in app.modules if mod.case_type != module.case_type and mod.unique_id != module.unique_id]
+        'is_parent': mod.unique_id in parent_module_ids
+    } for mod in app.modules
+        if mod.case_type != module.case_type
+        and mod.unique_id != module.unique_id
+        and not mod.is_multi_select()
+    ]
 
 
-def _get_all_case_modules(app, module):
+def get_all_case_modules(app, module):
     # return all case modules except the given module
     return [{
         'unique_id': mod.unique_id,
@@ -950,8 +960,14 @@ def _update_module_short_detail(src_module, dest_module, attrs):
         _update_module_search_config(src_module, dest_module, search_attrs)
 
     attrs = attrs - search_attrs
+    src_detail = Detail.wrap(getattr(src_module.case_details, "short").to_json().copy())
+
+    # Shadow modules inherit some attributes from source module, so ignore the detail attr
+    if src_module.module_type == "shadow":
+        if 'multi_select' in attrs:
+            src_detail.multi_select = src_module.is_multi_select()
+
     if attrs:
-        src_detail = getattr(src_module.case_details, "short")
         dest_detail = getattr(dest_module.case_details, "short")
         dest_detail.overwrite_attrs(src_detail, attrs)
 
@@ -1013,6 +1029,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['allow_blank_value'] = prop['allow_blank_value']
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
+        if prop['required']:
+            ret['required'] = prop['required']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1341,6 +1359,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
+        'toggles': toggles_enabled_for_request(request),
     })
     if ajax:
         return json_response({'error_html': response_html})

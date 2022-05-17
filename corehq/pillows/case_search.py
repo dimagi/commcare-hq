@@ -17,13 +17,12 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
+from corehq.apps.es.client import ElasticManageAdapter
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
@@ -302,16 +301,7 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    get_es_new().indices.refresh(CASE_SEARCH_INDEX)
+    case_search = ElasticCaseSearch()
+    ElasticManageAdapter().index_refresh(case_search.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-
-    op_kwargs = {
-        "_op_type": "delete",
-        "_index": CASE_SEARCH_INDEX_INFO.alias,
-        "_type": CASE_ES_TYPE,
-    }
-
-    ElasticsearchInterface(get_es_new()).bulk_ops([{
-        **op_kwargs,
-        "_id": case_id,
-    } for case_id in case_ids])
+    case_search.bulk_delete(case_ids)

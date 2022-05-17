@@ -496,6 +496,13 @@ def all_toggles():
     return list(all_toggles_by_name().values())
 
 
+def all_toggle_slugs():
+    """
+    Provides all toggles by their slug as a list
+    """
+    return [toggle.slug for toggle in all_toggles()]
+
+
 @memoized
 def all_toggles_by_name():
     # trick for listing the attributes of the current module.
@@ -561,6 +568,30 @@ def toggles_enabled_for_user(username):
         for toggle_name, toggle in all_toggles_by_name().items()
         if toggle.enabled(username, NAMESPACE_USER)
     }
+
+
+@quickcache(["email"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def toggles_enabled_for_email_domain(email):
+    """Return set of toggle names that are enabled for the given email"""
+    return {
+        toggle_name
+        for toggle_name, toggle in all_toggles_by_name().items()
+        if toggle.enabled(email, NAMESPACE_EMAIL_DOMAIN)
+    }
+
+
+def toggles_enabled_for_request(request):
+    """Return set of toggle names that are enabled for a particular request"""
+    toggles = set()
+
+    if hasattr(request, 'domain'):
+        toggles = toggles | toggles_enabled_for_domain(request.domain)
+
+    if hasattr(request, 'user'):
+        toggles = toggles | toggles_enabled_for_user(request.user.username)
+        toggles = toggles | toggles_enabled_for_email_domain(getattr(request.user, 'email', request.user.username))
+
+    return toggles
 
 
 def _ensure_valid_namespaces(namespaces):
@@ -2125,6 +2156,14 @@ EXPRESSION_REPEATER = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
+)
+
+UCR_EXPRESSION_REGISTRY = StaticToggle(
+    'expression_registry',
+    'Store named UCR expressions and filters in the database to be referenced elsewhere',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
 TURN_IO_BACKEND = StaticToggle(

@@ -1,5 +1,6 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -244,7 +245,16 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'address';
         self.broadcastTopics = [];
         self.editing = true;
-
+        let isRequired = self.question.required() ? "Yes" : "No";
+        $(function () {
+            let entry = $(`#${self.entryId}`);
+            entry.on("change", function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+            });
+        });
+        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+            "Required": isRequired,
+        });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
         // subscribers.
         self.geocoderItemCallback = function (item) {
@@ -1104,6 +1114,18 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+
+                    }
                 } else {
                     entry = new SingleSelectEntry(question, {
                         receiveStyle: receiveStyle,
@@ -1123,6 +1145,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: false,
                     });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+                    }
                 } else if (hideLabel) {
                     entry = new MultiSelectEntry(question, {
                         hideLabel: true,

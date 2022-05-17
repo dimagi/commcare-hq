@@ -1,10 +1,12 @@
 import json
-from copy import deepcopy
+from unittest.mock import Mock, patch
 
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.custom_data_fields.models import (
@@ -13,6 +15,7 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -33,6 +36,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
+from ..resources.v0_5 import CommCareUserResource, UserDomainsResource, BadRequest
 from .utils import APIResourceTest
 
 
@@ -246,21 +250,19 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
-    def test_update_profile_conflict(self):
+    def test_update_fails(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None)
+                                   created_by=None, created_via=None, phone_number="50253311398")
+        group = Group({"name": "test"})
+        group.save()
+
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        self.addCleanup(group.delete)
 
         user_json = {
-            "first_name": "florence",
-            "last_name": "ballard",
-            "email": "fballard@example.org",
-            "language": "en",
-            "user_data": {
-                PROFILE_SLUG: self.profile.id,
-                "imaginary": "no",
-            }
+            "username": "updated-username",
+            "default_phone_number": 1234567890
         }
 
         backend_id = user._id
@@ -271,64 +273,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "metadata properties conflict with profile: imaginary"}'
-        )
-
-    def test_cannot_update_id(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "id": "changed-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s id."}'
-        )
-
-    def test_cannot_update_username(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "username": "changed-test",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Cannot update a mobile user\'s username."}'
-        )
-
-    def test_cannot_update_unknown_key(self):
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
-                                   created_by=None, created_via=None, phone_number="50253311398")
-        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
-        user_json = {
-            "_id": "changed-id",
-        }
-        response = self._assert_auth_post_resource(self.single_endpoint(user._id),
-                                                   json.dumps(user_json),
-                                                   content_type='application/json',
-                                                   method='PUT')
-        unmodified_user = CommCareUser.get(user._id)
-        self.assertEqual(unmodified_user.username, 'test')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Attempted to update unknown field _id."}'
+            "{\"error\": \"The request resulted in the following errors: Attempted to update unknown or "
+            "non-editable field 'username', default_phone_number must be a string\"}"
         )
 
 
@@ -568,3 +514,139 @@ class TestIdentityResource(APIResourceTest):
         self.assertEqual(data['first_name'], self.user.first_name)
         self.assertEqual(data['last_name'], self.user.last_name)
         self.assertEqual(data['email'], self.user.email)
+
+
+class TestCommCareUserResourceUpdate(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='conflicting_field',
+                label='Conflicting Field',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'conflicting_field': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    def test_update_unknown_fields_returns_error(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"id": 'updated-id'}
+
+        errors = CommCareUserResource._update(bundle)
+        self.assertIn("Attempted to update unknown or non-editable field 'id'", errors)
+
+    def test_update_password_with_weak_passwords_returns_error_if_strong_option_on(self):
+        self.domain_obj.strong_mobile_passwords = True
+        self.domain_obj.save()
+
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"password": 'abc123'}
+
+        errors = CommCareUserResource._update(bundle)
+
+        expected_error_message = 'Password is not strong enough. Try making your password more complex.'
+        self.assertIn(expected_error_message, errors)
+
+    def test_update_default_phone_number_returns_error_if_invalid_format(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {"default_phone_number": ["50253311399"]}
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('default_phone_number must be a string', errors)
+
+    def test_update_user_data_returns_error_if_profile_conflict(self):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.data = {
+            'user_data': {
+                PROFILE_SLUG: self.profile.id,
+                'conflicting_field': 'no'}
+        }
+
+        errors = CommCareUserResource._update(bundle)
+
+        self.assertIn('metadata properties conflict with profile: conflicting_field', errors)
+
+
+class TestUserDomainsResource(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_domain_returned_when_no_filter(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_exception_when_invalid_filter_sent(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
+        bundle.request.user = self.user
+        with self.assertRaises(BadRequest):
+            UserDomainsResource().obj_get_list(bundle)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"superset-analytics": True})
+    def test_domain_returned_when_valid_flag_sent(self, _, __):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"normalset-analytics": True})
+    def test_domain_not_returned_when_invalid_flag_sent(self, _, __):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertEqual(0, len(resp))
