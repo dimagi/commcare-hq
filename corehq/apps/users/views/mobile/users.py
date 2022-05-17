@@ -62,7 +62,7 @@ from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary,
+    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -767,6 +767,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_sms']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            send_account_confirmation_sms_if_necessary(couch_user, phone_number)
         return {
             'success': True,
             'user_id': couch_user.userID,

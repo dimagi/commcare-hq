@@ -2299,3 +2299,10 @@ SUPERSET_ANALYTICS = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+    'two_stage_user_provisioning_by_sms',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
