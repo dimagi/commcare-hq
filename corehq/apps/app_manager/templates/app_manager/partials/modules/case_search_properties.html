@@ -122,6 +122,20 @@
             {% endif %}
           </div>
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          <div class="form-group" data-bind="visible: inlineSearchVisible">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Make search input available after search" %}
+              <span class="hq-help-template" data-title="{% trans "Make search input available after search" %}"
+                    data-content="{% trans_html_attr "Stores the search input values and makes the available via the 'search-input' instance. This also disables the 'Search Again' workflow." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: inlineSearch" />
+                <input type="hidden" name="search-input" data-bind="value: inlineSearch"/>
+              </label>
+            </div>
+          </div>
           <div class="form-group">
             <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}

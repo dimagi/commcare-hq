@@ -2222,6 +2222,8 @@ class CaseSearch(DocumentSchema):
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
+    inline_search = BooleanProperty(default=False)
+
     @property
     def case_session_var(self):
         return "search_case_id"
