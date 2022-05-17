@@ -53,7 +53,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.web import get_url_base, parse_int
@@ -137,8 +136,10 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids, module_loads_registry_case,
+    update_report_module_ids,
+    module_loads_registry_case,
     wrap_transition_from_old_update_case_action,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -148,7 +149,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
     BuildSpec,
-    CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
@@ -178,7 +178,6 @@ from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -2553,7 +2552,7 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        if module_offers_search(self) and not custom_detail:
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -3268,7 +3267,9 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return details
