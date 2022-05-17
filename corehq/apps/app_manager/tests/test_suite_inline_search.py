@@ -71,6 +71,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <locale id="forms.m0f0"/>
               </text>
             </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"

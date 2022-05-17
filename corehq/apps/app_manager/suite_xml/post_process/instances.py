@@ -49,6 +49,15 @@ class EntryInstances(PostProcessor):
             for prompt in query.prompts:
                 if prompt.itemset:
                     xpaths.add(prompt.itemset.nodeset)
+                if prompt.required:
+                    xpaths.add(prompt.required)
+        if entry.post:
+            if entry.post.relevant:
+                xpaths.add(entry.post.relevant)
+            for data in entry.post.data:
+                xpaths.update(
+                    xp for xp in [data.ref, data.nodeset, data.exclude] if xp
+                )
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
