@@ -286,6 +286,10 @@ class AppStringsBase(object):
                 ('This form affects the user case, but no user case id was found. '
                     'Please contact your supervisor.')
 
+        if 'case_search.claimed_case.case_missing' not in messages:
+            messages['case_search.claimed_case.case_missing'] = \
+                'Unable to find the selected case after performing a sync. Please try again.'
+
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
             AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW

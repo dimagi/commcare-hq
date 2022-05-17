@@ -224,6 +224,9 @@ class EntriesHelper(object):
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
 
+            if module_uses_inline_search(module):
+                EntriesHelper.add_case_claim_assertion(e)
+
             EntriesHelper.add_custom_assertions(e, form)
 
             if (
@@ -336,6 +339,18 @@ class EntriesHelper(object):
                                                 "[hq_user_id=instance('commcaresession')/session/context/userid])"
                                                 " = 1", "case_autoload.usercase.case_missing")
         entry.assertions.append(assertion)
+
+    @staticmethod
+    def add_case_claim_assertion(entry):
+        # TODO: what about multi-selects?
+        case_datums = [datum for datum in entry.datums if datum.nodeset]
+        if case_datums:
+            case_id = f"instance('commcaresession')/session/data/{case_datums[-1].id}"
+            assertion = EntriesHelper.get_assertion(
+                f"count(instance('casedb')/casedb/case[@case_id={case_id}]) = 1",
+                "case_search.claimed_case.case_missing"
+            )
+            entry.assertions.append(assertion)
 
     @staticmethod
     def get_extra_case_id_datums(form):
