@@ -48,6 +48,7 @@ class CaseSearchES(CaseES):
             blacklist_owner_id,
             external_id,
             indexed_on,
+            case_property_missing,
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -131,18 +132,6 @@ class CaseSearchES(CaseES):
             sort_filter,
             desc,
             reset_sort=False
-        )
-
-    def case_property_has_value(self, case_property_name):
-        return self.add_query(
-            filters.NOT(case_property_missing(case_property_name)),
-            queries.MUST
-        )
-
-    def case_property_has_no_value(self, case_property_name):
-        return self.add_query(
-            case_property_missing(case_property_name),
-            queries.MUST
         )
 
 

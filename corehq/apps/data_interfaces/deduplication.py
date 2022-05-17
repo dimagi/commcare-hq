@@ -26,9 +26,9 @@ def _get_es_query(domain, case, case_filter_criteria=[]):
             match_type = definition.match_type
 
             if match_type == MatchPropertyDefinition.MATCH_HAS_NO_VALUE:
-                query_ = query_.case_property_has_no_value(definition.property_name)
+                query_ = query_.case_property_missing(definition.property_name)
             elif match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
-                query_ = query_.case_property_has_value(definition.property_name)
+                query_ = query_.NOT(query_.case_property_missing(definition.property_name))
             elif match_type == MatchPropertyDefinition.MATCH_EQUAL:
                 query_ = query_.case_property_query(
                     definition.property_name,
