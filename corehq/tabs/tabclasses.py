@@ -193,6 +193,9 @@ class ProjectReportsTab(UITab):
         if not toggles.EMBEDDED_TABLEAU.enabled(self.domain):
             return []
 
+        if not self.couch_user.can_view_tableau():
+            return []
+
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
         items = [{

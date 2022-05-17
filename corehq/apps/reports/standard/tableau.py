@@ -8,9 +8,10 @@ import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.reports.views import BaseProjectReportSectionView, require_can_view_tableau
 
 
+@method_decorator(require_can_view_tableau, name='dispatch')
 @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator(), name='dispatch')
 class TableauView(BaseProjectReportSectionView):
     urlname = 'tableau'
