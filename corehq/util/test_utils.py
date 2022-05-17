@@ -364,12 +364,20 @@ def unregistered_django_model(model_class):
     return model_class
 
 
-def generate_cases(argsets, cls=None):
-    """Make a decorator to generate a set of parameterized test cases
+class generate_cases:
+    """A decorator to generate parameterized test cases
 
-    Until we have nose generator tests...
+    Usage as test method decorator:
 
-    Usage:
+        class TestThing(TestCase):
+            @generate_cases([
+                ("foo", "bar"),
+                ("bar", "foo"),
+            ])
+            def test_foo(self, foo, bar)
+                self.assertEqual(self.thing[foo], bar)
+
+    Deprecated: two-argument decorator on module level test function:
 
         @generate_cases([
             ("foo", "bar"),
@@ -382,39 +390,63 @@ def generate_cases(argsets, cls=None):
     their parameterized names are not valid function names. This was a
     tradeoff with making parameterized tests identifiable on failure.
 
+    Another alternative is nose test generators.
+    https://nose.readthedocs.io/en/latest/writing_tests.html#test-generators
+
     :param argsets: A sequence of argument tuples or dicts, one for each
     test case to be generated.
     :param cls: Optional test case class to which tests should be added.
     """
-    def add_cases(test_func):
-        if cls is None:
-            class Test(TestCase):
+
+    def __init__(self, argsets, cls=None):
+        self.argsets = argsets
+        self.test_class = cls
+
+    def __call__(self, test_func):
+        def assign(owner, test):
+            assert not hasattr(owner, test.__name__), \
+                "duplicate test case: {}.{}".format(owner, test.__name__)
+            setattr(owner, test.__name__, test)
+
+        tests = []
+
+        if self.test_class is None:
+            class DecoratedMethodMeta(type):
+                def __set_name__(self, owner, name):
+                    # Delete Test class, which has replaced decorated method
+                    delattr(owner, name)
+                    # Assign parameterized tests to class of decorated method
+                    for test in tests:
+                        assign(owner, test)
+
+            class Test(TestCase, metaclass=DecoratedMethodMeta):
+                # Test case for top-level module @generate_cases([...])
                 pass
             Test.__name__ = test_func.__name__
         else:
-            Test = cls
+            Test = self.test_class
 
-        for args in argsets:
+        for args in self.argsets:
             def test(self, args=args):
                 if isinstance(args, dict):
                     return test_func(self, **args)
                 return test_func(self, *args)
 
             test.__name__ = test_func.__name__ + repr(args)
-            assert not hasattr(Test, test.__name__), \
-                "duplicate test case: {} {}".format(Test, test.__name__)
+            assign(Test, test)
+            tests.append(test)
 
-            setattr(Test, test.__name__, test)
-
-        if cls is None:
+        if self.test_class is None:
             # Only return newly created test class; otherwise the test
             # runner will run tests on cls twice. Explanation: the
             # returned value will be bound to the name of the decorated
             # test_func; if cls is provided then there will be two names
-            # bound to the same test class
+            # bound to the same test class. This is happens when the
+            # decorated test is a module-level function.
+            #
+            # In the case of a decorated test method, DecoratedMethodMeta
+            # will delete this and assign tests to the owning test class.
             return Test
-
-    return add_cases
 
 
 def timelimit(limit):

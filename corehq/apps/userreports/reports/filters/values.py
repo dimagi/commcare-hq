@@ -99,8 +99,8 @@ class DateFilterValue(FilterValue):
             enddate = self._offset_enddate(enddate)
 
         if self.filter.get('compare_as_string'):
-            startdate = str(startdate) if startdate is not None else None
-            enddate = str(enddate) if enddate is not None else None
+            startdate = startdate.isoformat() if startdate is not None else None
+            enddate = enddate.isoformat() if enddate is not None else None
 
         sql_values = {}
         if startdate is not None:

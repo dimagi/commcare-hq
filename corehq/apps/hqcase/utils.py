@@ -132,7 +132,7 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None, owner_id=None):
+                xmlns=None, device_id=None, owner_id=None, max_wait=...):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -142,6 +142,9 @@ def update_case(domain, case_id, case_properties=None, close=False,
     close - True to close the case, False otherwise
     xmlns - pass in an xmlns to use it instead of the default
     device_id - see submit_case_blocks device_id docs
+    max_wait - Maximum time (in seconds) to allow the process to be delayed if
+               the project is over its submission rate limit.
+               See the docstring for submit_form_locally for meaning of values
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
@@ -150,6 +153,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,
         device_id=device_id,
+        max_wait=max_wait
     )
 
 

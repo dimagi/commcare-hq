@@ -95,7 +95,13 @@ class SearchCriteria:
             'owner_id',
         ]
 
-        if self.key in disallowed_parameters or self.is_daterange:
+        if self.is_daterange and len(self.value) > 2:
+            raise CaseFilterError(
+                _("Only one blank value plus one date range value are supprted"),
+                self.key
+            )
+
+        if self.key in disallowed_parameters:
             raise CaseFilterError(
                 _("Multiple values are only supported for simple text and range searches"),
                 self.key
@@ -112,11 +118,16 @@ class SearchCriteria:
     def _validate_daterange(self):
         if not self.is_daterange:
             return
-
         pattern = re.compile(r'__range__\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}')
-        match = pattern.match(self.value)
-        if not match:
-            raise CaseFilterError(_('Invalid date range format, {}'), self.key)
+        if self.has_multiple_terms:
+            # don't validate empty values
+            values = [val for val in self.value if val != '']
+        else:
+            values = [self.value]
+        for v in values:
+            match = pattern.match(v)
+            if not match:
+                raise CaseFilterError(_('Invalid date range format, {}'), self.key)
 
 
 def criteria_dict_to_criteria_list(criteria_dict):

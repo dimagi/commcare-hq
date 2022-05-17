@@ -43,7 +43,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
     CaseIDXPath,
-    SelectedCasesInstanceXpath,
+    SearchSelectedCasesInstanceXpath,
     CaseTypeXpath,
     InstanceXpath,
     interpolate_xpath,
@@ -84,7 +84,8 @@ class RemoteRequestFactory(object):
         self.module = module
         self.detail_section_elements = detail_section_elements
         if self.module.is_multi_select():
-            self.case_session_var = "selected_cases"
+            # the instance is dynamic and its ID matches the datum ID
+            self.case_session_var = SearchSelectedCasesInstanceXpath.id
         else:
             self.case_session_var = self.module.search_config.case_session_var
 
@@ -128,7 +129,7 @@ class RemoteRequestFactory(object):
         }
 
     def _get_multi_select_nodeset(self):
-        return SelectedCasesInstanceXpath().instance()
+        return SearchSelectedCasesInstanceXpath().instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
@@ -157,6 +158,7 @@ class RemoteRequestFactory(object):
         xpaths = xpaths.union(self._get_multi_select_xpaths())
         xpaths.add(self.module.search_config.search_filter)
         xpaths.update(prop.default_value for prop in self.module.search_config.properties)
+        xpaths.update(prop.required for prop in self.module.search_config.properties)
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         xpaths.update(self._get_xpaths_for_module())
@@ -300,6 +302,8 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
+            if prop.required:
+                kwargs['required'] = interpolate_xpath(prop.required)
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

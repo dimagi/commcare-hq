@@ -12,6 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
+from django.conf import settings
 from django.utils.dateparse import parse_date
 from memoized import memoized
 
@@ -32,6 +33,9 @@ from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
+from .cases import ElasticCase
+from .client import ElasticDocumentAdapter
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
 class CaseSearchES(CaseES):
@@ -140,6 +144,20 @@ class CaseSearchES(CaseES):
             case_property_missing(case_property_name),
             queries.MUST
         )
+
+
+class ElasticCaseSearch(ElasticDocumentAdapter):
+
+    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
+    type = ElasticCase.type
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
 
 
 def case_property_filter(case_property_name, value):

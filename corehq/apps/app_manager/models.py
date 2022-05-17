@@ -1870,6 +1870,7 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty(exclude_if_none=True)
     nodeset_case_type = StringProperty(exclude_if_none=True)
+    nodeset_filter = StringProperty(exclude_if_none=True)   # only relevant if nodeset_case_type is populated
 
     # Display condition for the tab
     relevant = StringProperty(exclude_if_none=True)
@@ -2170,6 +2171,7 @@ class CaseSearchProperty(DocumentSchema):
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
+    required = StringProperty(exclude_if_none=True)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
@@ -3895,6 +3897,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return self.source_module.all_forms_require_a_case()
 
     def is_multi_select(self):
+        if not self.source_module:
+            return False
         return self.source_module.is_multi_select()
 
     @classmethod
@@ -4409,97 +4413,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def recovery_measures_url(self):
         return reverse('recovery_measures', args=[self.domain, self._id])
 
-    def get_jar_path(self):
-        spec = {
-            'nokia/s40': 'Nokia/S40',
-            'nokia/s60': 'Nokia/S60',
-            'generic': 'Generic/Default',
-            'winmo': 'Native/WinMo'
-        }[self.platform]
-
-        if self.platform in ('nokia/s40', 'nokia/s60'):
-            spec += {
-                ('native',): '-native-input',
-                ('roman',): '-generic',
-                ('custom-keys',):  '-custom-keys',
-                ('qwerty',): '-qwerty'
-            }[(self.text_input,)]
-
-        return spec
-
-    def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
-
-    def validate_jar_path(self):
-        build = self.get_build()
-        setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
-        value = self.text_input
-        setting_version = setting['since'].get(value)
-
-        if setting_version:
-            setting_version = tuple(map(int, setting_version.split('.')))
-            my_version = build.minor_release()
-
-            if my_version < setting_version:
-                i = setting['values'].index(value)
-                assert i != -1
-                name = _(setting['value_names'][i])
-                raise AppEditingError((
-                    '%s Text Input is not supported '
-                    'in CommCare versions before %s.%s. '
-                    '(You are using %s.%s)'
-                ) % ((name,) + setting_version + my_version))
-
-    @property
-    def jad_settings(self):
-        settings = {
-            'JavaRosa-Admin-Password': self.admin_password,
-            'Profile': self.profile_loc,
-            'MIDlet-Jar-URL': self.jar_url,
-            #'MIDlet-Name': self.name,
-            # e.g. 2011-Apr-11 20:45
-            'CommCare-Release': "true",
-        }
-        if not self.build_version or self.build_version < LooseVersion('2.8'):
-            settings['Build-Number'] = self.version
-        return settings
-
     def create_build_files(self, build_profile_id=None):
         all_files = self.create_all_files(build_profile_id)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
-
-    def create_jadjar_from_build_files(self, save=False):
-        self.validate_jar_path()
-        with CriticalSection(['create_jadjar_' + self._id]):
-            try:
-                return (
-                    self.lazy_fetch_attachment('CommCare.jad'),
-                    self.lazy_fetch_attachment('CommCare.jar'),
-                )
-            except (ResourceNotFound, KeyError):
-                all_files = {
-                    filename[len('files/'):]: self.lazy_fetch_attachment(filename)
-                    for filename in self.blobs if filename.startswith('files/')
-                }
-                all_files = {
-                    name: (contents if isinstance(contents, bytes) else contents.encode('utf-8'))
-                    for name, contents in all_files.items()
-                }
-                release_date = self.built_with.datetime or datetime.datetime.utcnow()
-                jad_settings = {
-                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
-                }
-                jad_settings.update(self.jad_settings)
-                jadjar = self.get_jadjar().pack(all_files, jad_settings)
-
-                if save:
-                    self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
-                    self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
-                    self.built_with.signed = jadjar.signed
-
-                return jadjar.jad, jadjar.jar
 
     @property
     @memoized
@@ -4582,9 +4500,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 return self.generate_shortened_url('download_odk_media_profile', build_profile_id)
             else:
                 return self.generate_shortened_url('download_odk_profile', build_profile_id)
-
-    def fetch_jar(self):
-        return self.get_jadjar().fetch_jar()
 
     @time_method()
     def make_build(self, comment=None, user_id=None):
@@ -4790,11 +4705,9 @@ class SavedAppBuild(ApplicationBase):
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'menu_item_label': menu_item_label,
-            'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
             'include_media': not is_remote_app(self),
-            'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
                 if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else None
@@ -5042,19 +4955,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             return gen.create_default_app_strings(self, build_profile_id)
         else:
             return gen.create_app_strings(self, lang)
-
-    @property
-    def skip_validation(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('cc-content-valid', 'yes')
-
-    @property
-    def jad_settings(self):
-        s = super(Application, self).jad_settings
-        s.update({
-            'Skip-Validation': self.skip_validation,
-        })
-        return s
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,

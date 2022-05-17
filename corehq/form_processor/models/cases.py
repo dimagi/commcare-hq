@@ -15,6 +15,7 @@ from jsonobject import JsonObject, StringProperty
 from jsonobject.properties import BooleanProperty
 from memoized import memoized
 
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -24,15 +25,27 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.util import get_content_md5
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query, split_list_by_db_partition
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
+)
 from corehq.util.json import CommCareJSONEncoder
 
-from ..exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError, UnknownActionType
+from ..exceptions import (
+    AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
+    UnknownActionType,
+)
 from ..track_related import TrackRelatedChanges
 from .attachment import AttachmentContent, AttachmentMixin
 from .forms import XFormInstance
 from .mixin import CaseToXMLMixin, IsImageMixin, SaveStateMixin
-from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_list
+from .util import (
+    attach_prefetch_models,
+    fetchall_as_namedtuple,
+    sort_with_id_list,
+)
 
 DEFAULT_PARENT_IDENTIFIER = 'parent'
 
@@ -480,6 +493,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
+        """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
             assert(len(found) == 1)
@@ -618,7 +632,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         CasePropertyResult = namedtuple('CasePropertyResult', 'case value')
 
         if property_name.lower().startswith('parent/'):
-            parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+            parents = self.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
             return
@@ -654,6 +668,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def to_xml(self, version, include_case_on_closed=False):
         from lxml import etree as ElementTree
+
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -669,8 +684,9 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         A server specific URL for remote clients to access case attachment resources async.
         """
         if name in self.case_attachments:
-            from dimagi.utils import web
             from django.urls import reverse
+
+            from dimagi.utils import web
             return "%s%s" % (
                 web.get_url_base(),
                 reverse("api_case_attachment", kwargs={
@@ -690,16 +706,26 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         return cls.objects.get_case(case_id)
 
     @memoized
-    def get_parent(self, identifier=None, relationship=None):
-        indices = self.indices
+    def get_parents(self, identifier=None, relationship=None):
+        return [index.referenced_case for index in self.get_indices(identifier, relationship)]
+
+    def get_indices(self, identifier=None, relationship=None):
+        """
+        Filter live indices by identifier (and / or) relationship.
+
+        :param identifier: Index identifier
+        :param relationship: Index relationship ('child' or 'extension')
+        :return:
+        """
+        indices = self.live_indices
 
         if identifier:
             indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = [index for index in indices if index.relationship_id == relationship]
+            indices = [index for index in indices if index.relationship == relationship]
 
-        return [index.referenced_case for index in indices if index.referenced_id]
+        return indices
 
     @property
     def parent(self):
@@ -709,15 +735,15 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        result = self.get_parent(
+        result = self.get_parents(
             identifier=DEFAULT_PARENT_IDENTIFIER,
-            relationship=CommCareCaseIndex.CHILD
+            relationship=CASE_INDEX_CHILD
         )
         return result[0] if result else None
 
     @property
     def host(self):
-        result = self.get_parent(relationship=CommCareCaseIndex.EXTENSION)
+        result = self.get_parents(relationship=CASE_INDEX_EXTENSION)
         return result[0] if result else None
 
     def save(self, *args, with_tracked_models=False, **kw):
@@ -1027,8 +1053,8 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     CHILD = 1
     EXTENSION = 2
     RELATIONSHIP_CHOICES = (
-        (CHILD, 'child'),
-        (EXTENSION, 'extension'),
+        (CHILD, CASE_INDEX_CHILD),
+        (EXTENSION, CASE_INDEX_EXTENSION),
     )
     RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
@@ -1081,11 +1107,15 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     @property
     def relationship(self):
-        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+        return CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
     @relationship.setter
     def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    @staticmethod
+    def relationship_id_to_name(relationship_id):
+        return CommCareCaseIndex.RELATIONSHIP_INVERSE_MAP[relationship_id]
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndex) and (
