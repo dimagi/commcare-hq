@@ -90,6 +90,17 @@ if [[ $? -ne "0" ]]; then
 fi
 set -e
 
+# Remove diffs for files where the only thing that changed was POT-Creation-Date
+# Todo: It's a bit hacky that this relies on git state to undo unncessary changes
+# Todo: Ideally we'd change the management commands above to just not produce the diff in the first place
+for filename in $(git diff --stat | cut -f2 -d' ' | grep locale/)
+do
+    if ! git diff "$filename" | grep '^[+-]' | grep -v "$filename" | grep -v POT-Creation-Date > /dev/null
+    else
+        git reset $filename; git checkout -- $filename
+    fi
+done
+
 echo "Pushing updates to transifex."
 tx push -s -t
 
