@@ -78,17 +78,20 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, suite, module, detail_section_elements):
+    def __init__(self, suite, module, detail_section_elements, case_session_var=None):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        if self.module.is_multi_select():
-            # the instance is dynamic and its ID matches the datum ID
-            self.case_session_var = SearchSelectedCasesInstanceXpath.id
+        if case_session_var:
+            self.case_session_var = case_session_var
         else:
-            self.case_session_var = self.module.search_config.case_session_var
+            if self.module.is_multi_select():
+                # the instance is dynamic and its ID matches the datum ID
+                self.case_session_var = SearchSelectedCasesInstanceXpath.id
+            else:
+                self.case_session_var = self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
@@ -136,7 +139,7 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.module.is_multi_select())
+        return self.module.search_config.get_relevant(self.case_session_var, self.module.is_multi_select())
 
     def build_command(self):
         return Command(
