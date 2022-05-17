@@ -66,7 +66,6 @@ branches:
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
-    - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/autoupdate-criteria-operator # Addison April 26
     - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
