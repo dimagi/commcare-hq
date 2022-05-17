@@ -1207,7 +1207,7 @@ class LiveGoogleSheetListView(BaseExportListView, LiveGoogleSheetListHelper):
             target="_blank">
         Learn more.
         </a><br />
-        This feature allows 25 integration feeds. Need more? Please write to us at sales@dimagi.com.
+        This feature allows 20 integration feeds. Need more? Please write to us at sales@dimagi.com.
         <br />
         """))
 

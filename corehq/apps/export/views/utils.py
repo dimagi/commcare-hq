@@ -287,7 +287,7 @@ class LiveGoogleSheetMixin(object):
     def terminology(self):
         return {
             'page_header': _("Live Google Sheet Settings"),
-            'help_text': "?",
+            'help_text': "",
             'name_label': _("Sheet Name"),
             'choose_fields_label': _("Choose the fields you want to include in this sheet."),
             'choose_fields_description': _("""
