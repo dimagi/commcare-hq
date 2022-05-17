@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.domain.models import Domain
@@ -65,11 +66,44 @@ class BaseAsyncHandlerTest(TestCase):
         }
 
 
+class TestAsyncHandlerSecurity(BaseAsyncHandlerTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.second_account = generator.get_billing_account_for_idp()
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory().get('/sso/test')
+        self.request.account = self.second_account
+        self.request.method = 'POST'
+
+    def test_get_linked_objects_response_throws_404(self):
+        self.request.POST = self._get_post_data()
+        handler = IdentityProviderAdminAsyncHandler(self.request)
+        with self.assertRaises(Http404):
+            handler.get_linked_objects_response
+
+    def test_add_object_response_throws_404(self):
+        self.request.POST = self._get_post_data('vaultwax.nl')
+        handler = IdentityProviderAdminAsyncHandler(self.request)
+        with self.assertRaises(Http404):
+            handler.add_object_response
+
+    def test_remove_object_response_404(self):
+        self.request.POST = self._get_post_data('vaultwax.nl')
+        handler = IdentityProviderAdminAsyncHandler(self.request)
+        with self.assertRaises(Http404):
+            handler.remove_object_response
+
+
 class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
+        self.request.account = self.idp.owner
         self.request.method = 'POST'
 
     def tearDown(self):
@@ -223,6 +257,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
+        self.request.account = self.idp.owner
         self.request.method = 'POST'
         self.idp.refresh_from_db()
 
@@ -419,6 +454,7 @@ class TestSsoTestUserAdminAsyncHandler(BaseAsyncHandlerTest):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
+        self.request.account = self.idp.owner
         self.request.method = 'POST'
         self.idp.refresh_from_db()
 

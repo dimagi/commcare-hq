@@ -1,3 +1,4 @@
+from django.http import Http404
 from memoized import memoized
 
 from corehq.apps.accounting.async_handlers import BaseSelect2AsyncHandler
@@ -46,13 +47,29 @@ class BaseLinkedObjectAsyncHandler(BaseAsyncHandler):
         raise NotImplementedError("please implement add_object")
 
     @property
+    @memoized
+    def idp_slug(self):
+        return self.data.get('requestContext[idpSlug]')
+
+    @property
+    @memoized
+    def identity_provider(self):
+        return IdentityProvider.objects.get(slug=self.idp_slug)
+
+    def check_that_idp_matches_request_account_or_404(self):
+        if not self.identity_provider.owner == self.request.account:
+            raise Http404()
+
+    @property
     def get_linked_objects_response(self):
+        self.check_that_idp_matches_request_account_or_404()
         return {
             'linkedObjects': self.get_linked_objects(),
         }
 
     @property
     def add_object_response(self):
+        self.check_that_idp_matches_request_account_or_404()
         self.add_object()
         return {
             'linkedObjects': self.get_linked_objects(),
@@ -60,6 +77,7 @@ class BaseLinkedObjectAsyncHandler(BaseAsyncHandler):
 
     @property
     def remove_object_response(self):
+        self.check_that_idp_matches_request_account_or_404()
         self.remove_object()
         return {
             'linkedObjects': self.get_linked_objects(),
@@ -98,31 +116,11 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
 
     @property
     @memoized
-    def idp_slug(self):
-        return self.data.get('requestContext[idpSlug]')
-
-    @property
-    @memoized
-    def identity_provider(self):
-        return IdentityProvider.objects.get(slug=self.idp_slug)
-
-    @property
-    @memoized
     def email_domain(self):
         return self.data.get('objectName')
 
 
 class BaseSsoUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
-
-    @property
-    @memoized
-    def idp_slug(self):
-        return self.data.get('requestContext[idpSlug]')
-
-    @property
-    @memoized
-    def identity_provider(self):
-        return IdentityProvider.objects.get(slug=self.idp_slug)
 
     @property
     @memoized
