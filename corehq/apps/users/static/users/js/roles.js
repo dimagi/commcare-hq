@@ -506,15 +506,6 @@ hqDefine('users/js/roles',[
         self.webAppsPrivilege = o.webAppsPrivilege;
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
-        self.getReportObject = function (path) {
-            var i;
-            for (i = 0; i < self.reportOptions.length; i++) {
-                if (self.reportOptions[i].path === path) {
-                    return self.reportOptions[i];
-                }
-            }
-            return path;
-        };
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
