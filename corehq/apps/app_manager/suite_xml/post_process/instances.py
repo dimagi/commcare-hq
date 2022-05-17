@@ -58,6 +58,8 @@ class EntryInstances(PostProcessor):
                     xpaths.add(prompt.itemset.nodeset)
                 if prompt.required:
                     xpaths.add(prompt.required)
+                if prompt.default_value:
+                    xpaths.add(prompt.default_value)
         if entry.post:
             if entry.post.relevant:
                 xpaths.add(entry.post.relevant)
@@ -80,10 +82,7 @@ class EntryInstances(PostProcessor):
             xpaths.add(assertion.test)
         if entry.stack:
             for frame in entry.stack.frames:
-                xpaths.add(frame.if_clause)
-                if hasattr(frame, 'datums'):
-                    for datum in frame.datums:
-                        xpaths.add(datum.value)
+                xpaths.update(frame.get_xpaths())
         xpaths.discard(None)
         return xpaths
 

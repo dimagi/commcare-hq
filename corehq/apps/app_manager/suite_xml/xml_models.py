@@ -418,6 +418,12 @@ class StackCommand(XmlObject):
 class BaseFrame(XmlObject):
     if_clause = XPathField('@if')
 
+    def get_xpaths(self):
+        xpaths = [child.attrib['value'] for child in self.node.xpath("*") if 'value' in child.attrib]
+        if self.if_clause:
+            xpaths.append(self.if_clause)
+        return xpaths
+
 
 class CreatePushBase(IdNode, BaseFrame):
 
