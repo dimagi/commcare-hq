@@ -144,9 +144,10 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
@@ -185,6 +186,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
     view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)

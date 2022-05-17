@@ -97,6 +97,18 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.tableauPermissions = {
+                    all: data.permissions.view_tableau,
+                    specific: ko.utils.arrayMap(root.tableauOptions, function (viz) {
+                        var slug = String(viz.id);     // ultimately jsonobject expects this to be a string
+                        return {
+                            slug: slug,
+                            name: viz.name,
+                            value: data.permissions.view_tableau_list.indexOf(slug) !== -1,
+                        };
+                    }),
+                };
+
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
                     specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
@@ -139,6 +151,7 @@ hqDefine('users/js/roles',[
                     });
                 };
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.unwrap = function () {
@@ -396,7 +409,7 @@ hqDefine('users/js/roles',[
                         visibilityRestraint: true,
                         text: gettext("Access all Tableau Visualizations"),
                         checkboxLabel: "view-tableau-checkbox",
-                        checkboxPermission: self.permissions.view_tableau,
+                        checkboxPermission: self.tableauPermissions.all,
                         checkboxText: gettext("Allow role to access all Tableau visualizations."),
                     });
                 }
@@ -466,6 +479,8 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_reports = data.reportPermissions.all;
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+                data.permissions.view_tableau = data.tableauPermissions.all;
+                data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
 
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
@@ -484,6 +499,7 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.tableauOptions = o.tableauOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
