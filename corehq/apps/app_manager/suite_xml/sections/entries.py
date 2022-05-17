@@ -174,6 +174,7 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
+        using_inline_search = module_uses_inline_search(module) and not module_loads_registry_case(module)
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -182,7 +183,7 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
 
-            if form.requires_case() and module_uses_inline_search(module):
+            if form.requires_case() and using_inline_search:
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
                 datum = [
                     d for d in self.get_case_datums_basic_module(module, form)
@@ -224,7 +225,7 @@ class EntriesHelper(object):
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
 
-            if module_uses_inline_search(module):
+            if using_inline_search:
                 EntriesHelper.add_case_claim_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
