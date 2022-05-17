@@ -45,6 +45,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],
+            search_filter="active = 'yes'",
             auto_launch=True,
             inline_search=True,
         )
@@ -85,7 +86,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>

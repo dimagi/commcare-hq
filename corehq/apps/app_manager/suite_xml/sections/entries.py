@@ -508,8 +508,10 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_loads_registry_case(detail_module) or module_uses_inline_search(module):
+            if module_loads_registry_case(detail_module) or module_uses_inline_search(detail_module):
                 instance_name, root_element = "results", "results"
+                if detail_module.search_config.search_filter:
+                    filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
