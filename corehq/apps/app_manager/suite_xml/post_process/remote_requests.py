@@ -436,7 +436,7 @@ class RemoteRequestsHelper(PostProcessor):
     @time_method()
     def update_suite(self, detail_section_elements):
         for module in self.modules:
-            if module_offers_search(module) or module_uses_smart_links(module):
+            if module_offers_search(module):
                 self.suite.remote_requests.append(RemoteRequestFactory(
                     self.suite, module, detail_section_elements).build_remote_request()
                 )
