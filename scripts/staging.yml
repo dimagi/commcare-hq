@@ -68,7 +68,7 @@ branches:
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/autoupdate-criteria-operator # Addison April 26
-    - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
+    - bmb/sso-oidc-endpoints  # [QA] Biyeun May 2
     - ml/case-property-bug # Minha April 28
     - es/datums+jls/multiple-referrals-eof-nav
     - jls/multiple-referrals-eof-nav # Jenny May 5
@@ -77,4 +77,5 @@ branches:
     - gh/use-release-management-permission # [QA] Graham May 10
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso-test-users-pt2  # [QA] Biyeun May 13
+    - bmb/sso-oidc-hide-client-secret  # [QA] Biyeun May 17
 submodules: { }
