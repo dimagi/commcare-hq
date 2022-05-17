@@ -6,7 +6,7 @@ from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext
 from django.utils.translation import gettext as _
 
 from crispy_forms.helper import FormHelper
@@ -791,6 +791,26 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
         self.fields['entity_id'].label = _("Issuer URL")
 
+        if self.idp.client_secret:
+            client_secret_toggles = crispy.Div(
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text"><a href="#" data-bind="click: showClientSecret, '
+                        'visible: isClientSecretHidden">{}</a></p>',
+                        gettext("Show Secret")
+                    ),
+                ),
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text" data-bind="visible: isClientSecretVisible">'
+                        '<a href="#" data-bind="click: hideClientSecret">{}</a></p>',
+                        gettext("Hide Secret")
+                    ),
+                ),
+            )
+        else:
+            client_secret_toggles = crispy.Div()
+
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -811,7 +831,17 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                     crispy.Fieldset(
                         _('OpenID Provider Configuration'),
                         'client_id',
-                        'client_secret',
+                        hqcrispy.B3MultiField(
+                            gettext("Client Secret"),
+                            crispy.Div(
+                                hqcrispy.InlineField(
+                                    'client_secret',
+                                    data_bind="visible: isClientSecretVisible"
+                                ),
+                                client_secret_toggles,
+                            ),
+                            show_row_class=False,
+                        ),
                         'entity_id',
                     ),
                     css_class="panel-body"
