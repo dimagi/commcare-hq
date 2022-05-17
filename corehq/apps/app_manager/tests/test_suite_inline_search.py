@@ -45,7 +45,8 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],
-            inline_search=True
+            auto_launch=True,
+            inline_search=True,
         )
 
         self.module.assign_references()
