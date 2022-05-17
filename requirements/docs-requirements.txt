@@ -392,7 +392,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.55
+reportlab==3.6.9
     # via -r base-requirements.in
 requests==2.25.1
     # via
