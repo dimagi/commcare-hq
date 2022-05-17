@@ -235,6 +235,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return self.workflow() === "es_only" || self.workflow() === "auto_launch";
         });
 
+        self.inlineSearchActive = ko.computed(() => {
+            return self.inlineSearchVisible() && self.inlineSearch();
+        });
+
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {
             return searchFilterObservable && searchFilterObservable();
