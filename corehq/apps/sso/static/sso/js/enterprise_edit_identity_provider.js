@@ -14,7 +14,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     models
 ) {
     $(function () {
-        var ssoExemptUserManager = models.linkedObjectListModel({
+        let ssoExemptUserManager = models.linkedObjectListModel({
             asyncHandler: 'sso_exempt_users_admin',
             requestContext: {
                 idpSlug: initialPageData.get('idp_slug'),
@@ -23,5 +23,15 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         });
         $('#sso-exempt-user-manager').koApplyBindings(ssoExemptUserManager);
         ssoExemptUserManager.init();
+
+        let ssoTestUserManager = models.linkedObjectListModel({
+            asyncHandler: 'sso_test_users_admin',
+            requestContext: {
+                idpSlug: initialPageData.get('idp_slug'),
+            },
+            validateNewObjectFn: emailUtils.validateEmail,
+        });
+        $('#sso-test-user-manager').koApplyBindings(ssoTestUserManager);
+        ssoTestUserManager.init();
     });
 });
