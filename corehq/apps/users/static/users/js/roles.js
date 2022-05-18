@@ -341,6 +341,38 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: null,
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: root.ermPrivilege,
+                        editPermission: self.permissions.access_release_management,
+                        viewPermission: null,
+                        text: gettext("<strong>Enterprise Release Management</strong> &mdash; access the Linked Project Spaces feature"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-release-management-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-release-management-checkbox",
+                        screenReaderEditAndViewText: null,
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: root.mrmPrivilege,
+                        editPermission: self.permissions.access_release_management,
+                        viewPermission: null,
+                        text: gettext("<strong>Multi-Environment Release Management</strong> &mdash; access the Linked Project Spaces feature"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-release-management-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-release-management-checkbox",
+                        screenReaderEditAndViewText: null,
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
                     }];
 
                 self.reports = [
@@ -446,6 +478,8 @@ hqDefine('users/js/roles',[
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
+        self.ermPrivilege = o.ermPrivilege;
+        self.mrmPrivilege = o.mrmPrivilege;
         self.getReportObject = function (path) {
             var i;
             for (i = 0; i < self.reportOptions.length; i++) {
