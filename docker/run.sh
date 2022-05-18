@@ -115,7 +115,6 @@ function run_tests {
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
     else
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
         # ensure overlayfs (CWD) is readable and emit a useful message if it is not
         if ! su cchq -c "test -r ."; then
             logmsg ERROR "commcare-hq filesystem (${DOCKER_HQ_OVERLAY}) is not readable (consider setting/changing DOCKER_HQ_OVERLAY)"
@@ -129,6 +128,8 @@ function run_tests {
         log_group_end
 
         send_timing_metric_to_datadog "setup" $delta
+
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
 
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
