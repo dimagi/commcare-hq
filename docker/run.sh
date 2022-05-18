@@ -115,6 +115,7 @@ function run_tests {
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
     else
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
         # ensure overlayfs (CWD) is readable and emit a useful message if it is not
         if ! su cchq -c "test -r ."; then
             logmsg ERROR "commcare-hq filesystem (${DOCKER_HQ_OVERLAY}) is not readable (consider setting/changing DOCKER_HQ_OVERLAY)"
@@ -135,7 +136,6 @@ function run_tests {
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
