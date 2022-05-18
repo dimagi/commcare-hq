@@ -57,7 +57,7 @@ def _assert_migrated(apps, schema_editor):
 
 
 def get_all_repeaters_count():
-    return Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=False).all()
+    return Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=False).count()
 
 
 def count_items_to_be_migrated(connection):
