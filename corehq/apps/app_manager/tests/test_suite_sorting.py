@@ -14,7 +14,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteSortingTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteSortingTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_multisort_suite(self, *args):

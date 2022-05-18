@@ -425,7 +425,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
     datums = EntriesHelper.get_new_case_id_datums_meta(form)
-    session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}
+    session_data = {datum.id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
             extra_datums = EntriesHelper.get_extra_case_id_datums(form)

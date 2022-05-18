@@ -41,7 +41,7 @@ DOMAIN = 'test_domain'
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -107,7 +107,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
-class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
