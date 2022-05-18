@@ -72,17 +72,16 @@ def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spread
         if not check_worksheet_exists(sheets_file, worksheet_name):
             create_empty_worksheet(service, worksheet_name, spreadsheet_id)
 
-        for chunk in worksheet:
-            value_range_body = {
-                'majorDimension': 'ROWS',
-                'values': chunk
-            }
-            service.spreadsheets().values().append(
-                spreadsheetId=spreadsheet_id,
-                valueInputOption='USER_ENTERED',
-                body=value_range_body,
-                range=f"{worksheet_name}!A1"
-            ).execute()
+        value_range_body = {
+            'majorDimension': 'ROWS',
+            'values': worksheet
+        }
+        service.spreadsheets().values().append(
+            spreadsheetId=spreadsheet_id,
+            valueInputOption='USER_ENTERED',
+            body=value_range_body,
+            range=f"{worksheet_name}!A1"
+        ).execute()
 
     return sheets_file
 
@@ -138,7 +137,6 @@ def create_table(documents, config):
             table_list.append(table_values)
         list_of_tables.append(list(table_list))
     return list_of_tables
-
 
 def chunkify_data(data, chunk_size):
     return [data[x: x + chunk_size] for x in range(0, len(data), chunk_size)]

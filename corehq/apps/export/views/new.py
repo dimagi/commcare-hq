@@ -230,14 +230,14 @@ class BaseExportView(BaseProjectDataView):
             schedule = get_live_google_sheet_schedule(export._id)
             if schedule is None:
                 google_sheet = create_or_update_spreadsheet(
-                    chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
+                    data_table,
                     request.user,
                     export
                 )
                 schedule = create_live_google_sheet_schedule(export._id, google_sheet["spreadsheetId"])
             else:
                 google_sheet = create_or_update_spreadsheet(
-                    chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
+                    data_table,
                     request.user,
                     export,
                     schedule.google_sheet_id
