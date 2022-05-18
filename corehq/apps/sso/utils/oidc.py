@@ -7,6 +7,7 @@ from corehq.apps.sso.exceptions import (
     OidcSsoError,
     SsoLoginFailed,
 )
+from corehq.apps.sso.utils.request_helpers import get_return_to_url_from_request
 from corehq.apps.sso.utils.url_helpers import get_oidc_auth_url
 
 
@@ -31,7 +32,7 @@ def get_client_for_identity_provider(identity_provider):
 def initialize_oidc_session(request):
     request.session["oidc_state"] = rndstr()
     request.session["oidc_nonce"] = rndstr()
-    request.session["oidc_return_to"] = request.GET.get('next')
+    request.session["oidc_return_to"] = get_return_to_url_from_request(request)
 
 
 def get_openid_provider_login_url(client, request):

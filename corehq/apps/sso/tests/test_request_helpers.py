@@ -2,7 +2,7 @@ from testil import eq
 
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import TestCase, RequestFactory, override_settings, SimpleTestCase
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
@@ -19,6 +19,7 @@ from corehq.apps.sso.utils.request_helpers import (
     get_request_data,
     is_request_using_sso,
     is_request_blocked_from_viewing_domain_due_to_sso,
+    get_return_to_url_from_request,
 )
 from corehq.apps.users.models import WebUser
 from corehq.apps.sso.tests import generator
@@ -290,4 +291,27 @@ class TestIsRequestBlockedFromViewingDomainDueToSso(TestCase):
                 self.request,
                 self.external_domain
             )
+        )
+
+
+class TestGetReturnToUrlFromRequest(SimpleTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory().get('/sso/test')
+        self.request.GET = {}
+
+    def test_absolute_url_returns_none(self):
+        self.request.GET['next'] = 'https://google.com/'
+        self.assertIsNone(get_return_to_url_from_request(self.request))
+
+    def test_alt_absolute_url_returns_none(self):
+        self.request.GET['next'] = '//google.com/'
+        self.assertIsNone(get_return_to_url_from_request(self.request))
+
+    def test_relative_url_is_returned(self):
+        self.request.GET['next'] = '/relative/path'
+        self.assertEqual(
+            get_return_to_url_from_request(self.request),
+            '/relative/path'
         )
