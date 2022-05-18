@@ -425,7 +425,6 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
-    @quickcache(['self.location_id', 'include_self'], timeout=30 * 60)
     def get_descendants(self, include_self=False, **kwargs):
         if include_self:
             where = Q(domain=self.domain, id=self.id)
@@ -673,7 +672,6 @@ class SQLLocation(AdjListModel):
         self._path = value
 
     @classmethod
-    @quickcache(['location_id'], timeout=30 * 60)
     def by_location_id(cls, location_id):
         try:
             return cls.objects.get(location_id=location_id)

@@ -273,7 +273,7 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
-def case_property_not_set(case_property_name):
+def _case_property_not_set(case_property_name):
     return filters.NOT(
         queries.nested(
             CASE_PROPERTIES_PATH,
@@ -290,7 +290,7 @@ def case_property_missing(case_property_name):
 
     """
     return filters.OR(
-        case_property_not_set(case_property_name),
+        _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
     )
 
