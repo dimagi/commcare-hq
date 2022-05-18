@@ -43,7 +43,7 @@ from corehq.apps.api.serializers import (
     CommCareCaseSerializer,
     XFormInstanceSerializer,
 )
-from corehq.apps.api.util import get_obj, get_object_or_not_exist
+from corehq.apps.api.util import get_obj, get_object_or_not_exist, object_does_not_exist
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
 )
@@ -212,8 +212,10 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         return list(repeaters)
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=list(get_all_repeater_types()))
+        try:
+            return SQLRepeater.objects.get(repeater_id=kwargs['pk'], domain=kwargs['domain'])
+        except SQLRepeater.DoesNotExist:
+            raise object_does_not_exist(SQLRepeater.repeater_type, kwargs['pk'])
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -222,7 +224,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Repeater.get(kwargs['pk'])
+        bundle.obj = SQLRepeater.objects.get(repeater_id=kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         bundle = self._update(bundle)
         assert bundle.obj.domain == kwargs['domain']
@@ -237,7 +239,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     class Meta(CustomResourceMeta):
         authentication = DomainAdminAuthentication()
-        object_class = Repeater
+        object_class = SQLRepeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
