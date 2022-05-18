@@ -73,7 +73,6 @@ branches:
     - jls/multiple-referrals-eof-nav # Jenny May 5
     - es/datums # Ethan/Jenny May 12
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
-    - gh/use-release-management-permission # [QA] Graham May 10
     - mjr/all_safe_fixes  # Matt May 11
     - rc/case-search-accessiblity-refactor # Robert May 18
     - bmb/sso-staging  # [QA] Biyeun May 18
