@@ -958,15 +958,19 @@ class DataSourceDebuggerView(BaseUserConfigReportsView):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
-    doc_type = request.POST['doc_type']
-    doc_id = request.POST['doc_id']
+    input_type = request.POST['input_type']
     data_source_id = request.POST['data_source']
     expression_text = request.POST['expression']
 
     try:
         factory_context = _get_factory_context(domain, data_source_id)
         parsed_expression = _get_parsed_expression(factory_context, expression_text)
-        doc = _get_document(domain, doc_type, doc_id)
+        if input_type == 'doc':
+            doc_type = request.POST['doc_type']
+            doc_id = request.POST['doc_id']
+            doc = _get_document(domain, doc_type, doc_id)
+        else:
+            doc = json.loads(request.POST['raw_doc'])
         result = parsed_expression(doc, EvaluationContext(doc))
         return JsonResponse({"result": result})
     except HttpException as e:

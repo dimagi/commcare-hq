@@ -7,6 +7,7 @@
 {% endblock %}
 {% block page_content %}
   {% registerurl "expression_evaluator" domain %}
+  {% initial_page_data "input_type" request.GET.input_type %}
   {% initial_page_data "document_type" request.GET.type %}
   {% initial_page_data "document_id" request.GET.id %}
   {% initial_page_data "data_source_id" request.GET.data_source %}
@@ -21,6 +22,27 @@
   <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
   <form id="expression-debugger" class="form-horizontal ko-template" data-bind="submit: evaluateExpression">
     <div class="form-group">
+      <label for="doc_type" class="col-sm-2 control-label">{% trans "Input Type" %}</label>
+      <div class="col-sm-3">
+        <select-toggle data-apply-bindings="false"
+                       params="
+                         options: [
+                           {
+                             'id': 'raw',
+                             'text': '{% trans_html_attr "Raw" %}',
+                           },
+                           {
+                             'id': 'doc',
+                             'text': '{% trans_html_attr "Document" %}',
+                           },
+                         ],
+                         name: 'input_type',
+                         id: 'input_type',
+                         value: inputType,
+                       "></select-toggle>
+      </div>
+    </div>
+    <div class="form-group" data-bind="visible: inputType() === 'doc'">
       <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
       <div class="col-sm-3">
         <select-toggle data-apply-bindings="false"
@@ -41,10 +63,22 @@
                        "></select-toggle>
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group" data-bind="visible: inputType() === 'doc'">
       <label for="doc_id" class="col-sm-2 control-label">{% trans "Document ID" %}</label>
       <div class="col-sm-6">
-        <input type="doc_id" class="form-control" id="doc_id" data-bind="value: documentId">
+        <input type="text" class="form-control" id="doc_id" data-bind="value: documentId">
+      </div>
+    </div>
+     <div class="form-group" data-bind="visible: inputType() === 'raw', css: {'has-error': hasDocParseError}">
+      <label for="" class="col-sm-2 control-label">{% trans "Document JSON" %}</label>
+      <div class="col-sm-10">
+        <textarea id="raw_document" class="form-control jsonwidget" ></textarea>
+        <div class="help-block" data-bind="visible: hasDocParseError">
+          {% blocktrans %}
+            Your document JSON has parse errors!
+            For more details, try pasting into a <a href="http://jsonlint.com/" target="_blank">JSON Validator</a>.
+          {% endblocktrans %}
+        </div>
       </div>
     </div>
     {% if data_sources %}
