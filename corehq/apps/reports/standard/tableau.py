@@ -9,15 +9,18 @@ import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.domain.views.base import BaseDomainView
 
 
-class TableauView(BaseProjectReportSectionView):
+class TableauView(BaseDomainView):
     urlname = 'tableau'
     template_name = 'reports/tableau_template.html'
 
-    # Override BaseProjectReportSectionView, but it'll still link to reports home
     section_name = gettext_lazy("Tableau Reports")
+
+    @property
+    def section_url(self):
+        return reverse('reports_home', args=(self.domain, ))
 
     @property
     def page_title(self):
