@@ -78,4 +78,5 @@ branches:
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso-test-users-pt2  # [QA] Biyeun May 13
     - bmb/sso-oidc-hide-client-secret  # [QA] Biyeun May 17
+    - rc/case-search-accessiblity-refactor # Robert May 18
 submodules: { }
