@@ -67,7 +67,7 @@ fi
 echo "Pulling translations from transifex"
 tx pull -f
 
-./scripts/make-translations.sh $@
+./scripts/make-translations.sh "$@"
 
 echo "Pushing updates to transifex."
 tx push -s -t
