@@ -6,6 +6,11 @@ source ./scripts/bash-utils.sh
 
 log_group_begin "Check: translations"
 
+pip install --upgrade pip
+# install requirements, excluding difficult to install ones
+grep -Ev 'xmlsec|python3-saml' requirements/dev-requirements.txt > ../requirements.txt
+pip install -r ../requirements.txt
+
 ./scripts/make-translations.sh
 git --no-pager diff
 git update-index -q --refresh
