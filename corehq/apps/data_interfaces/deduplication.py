@@ -5,7 +5,7 @@ from django.utils.text import slugify
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import queries
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
@@ -28,7 +28,7 @@ def _get_es_query(domain, case, case_filter_criteria=[]):
             if match_type == MatchPropertyDefinition.MATCH_HAS_NO_VALUE:
                 query_ = query_.case_property_missing(definition.property_name)
             elif match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
-                query_ = query_.NOT(query_.case_property_missing(definition.property_name))
+                query_ = query_.NOT(case_property_missing(definition.property_name))
             elif match_type == MatchPropertyDefinition.MATCH_EQUAL:
                 query_ = query_.case_property_query(
                     definition.property_name,
