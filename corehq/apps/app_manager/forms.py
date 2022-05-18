@@ -36,8 +36,8 @@ class CopyApplicationForm(forms.Form):
                 "<!-- ko ifnot: shouldEnableLinkedAppOption -->"
                 "The selected project space is either not yet linked to the current project space, or you do not"
                 " have the correct permissions in the selected project space. "
-                "<a href=\"https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces\" target=\"_blank\">Learn more</a> "
-                "about Linked Project Spaces."
+                "<a href=\"https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces\" "
+                "target=\"_blank\">Learn more</a> about Linked Project Spaces."
                 "<!-- /ko -->"
             )),  # nosec: no user input
             attrs={"data-bind": "enable: shouldEnableLinkedAppOption, checked: isChecked"},
