@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-18 18:39+0000\n"
+"POT-Creation-Date: 2022-05-18 22:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11349,7 +11349,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/filter_dsl.py:134
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:119
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:111
 msgid ""
 "The related case lookup you are trying to perform would return too many cases"
 msgstr ""
@@ -11577,30 +11577,30 @@ msgstr ""
 msgid "The first argument to '{node.name}' must be a valid case property name"
 msgstr ""
 
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:174
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:166
 #, python-brace-format
 msgid "Unsupported operator for use with 'subcase-count': {op}"
 msgstr ""
 
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:175
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py:183
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:191
 msgid "'subcase-count' must be compared to a positive integer"
 msgstr ""
 
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:197
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:189
 msgid "XPath incorrectly formatted. Expected 'subcase-count'"
 msgstr ""
 
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:204
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:196
 msgid "XPath incorrectly formatted. Expected 'subcase-exists'"
 msgstr ""
 
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:214
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:206
 #, python-brace-format
 msgid "'{name}' expects one or two arguments"
 msgstr ""
 
-#: corehq/apps/case_search/xpath_functions/subcase_functions.py:222
+#: corehq/apps/case_search/xpath_functions/subcase_functions.py:214
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
