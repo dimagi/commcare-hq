@@ -12,10 +12,10 @@ from corehq.apps.domain.models import Domain
 
 
 def create_app_structure_repeat_records(sender, application, **kwargs):
-    from corehq.motech.repeaters.models import AppStructureRepeater
+    from corehq.motech.repeaters.models import SQLAppStructureRepeater
     domain = application.domain
     if domain:
-        repeaters = AppStructureRepeater.by_domain(domain)
+        repeaters = SQLAppStructureRepeater.by_domain(domain)
         for repeater in repeaters:
             repeater.register(application)
 

@@ -49,13 +49,13 @@ def get_case_location_ancestor_repeaters(case):
     Returns a list because more than one OpenmrsRepeater may have the
     same location.
     """
-    from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+    from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 
     case_location = get_case_location(case)
     if not case_location:
         return []
     location_repeaters = defaultdict(list)
-    for repeater in OpenmrsRepeater.by_domain(case.domain):
+    for repeater in SQLOpenmrsRepeater.objects.by_domain(case.domain):
         if repeater.location_id:
             location_repeaters[repeater.location_id].append(repeater)
     for location_id in reversed(case_location.path):
