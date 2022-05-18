@@ -6,8 +6,6 @@ source ./scripts/bash-utils.sh
 
 log_group_begin "Check: translations"
 
-apt-get install gettext
-
 ./scripts/make-translations.sh
 git --no-pager diff
 git update-index -q --refresh
