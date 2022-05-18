@@ -1040,7 +1040,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def when_case_matches(self, case, rule):
         domain = case.domain
         new_duplicate_case_ids = set(find_duplicate_case_ids(
-            domain, case, self.case_properties, self.include_closed, self.match_type, case_filter_criteria=rule.memoized_criteria,
+            domain,
+            case,
+            self.case_properties,
+            self.include_closed,
+            self.match_type,
+            case_filter_criteria=rule.memoized_criteria,
         ))
         # If the case being searched isn't in the case search index
         # (e.g. if this is a case create, and the pillows are racing each other.)

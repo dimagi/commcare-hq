@@ -11,7 +11,6 @@ from corehq.apps.data_interfaces.views import (
 )
 from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.apps.data_interfaces.forms import DedupeCaseFilterForm
 
 
 @es_test(index=CASE_INDEX_INFO)

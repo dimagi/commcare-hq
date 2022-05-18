@@ -16,7 +16,6 @@ from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.quickcache import quickcache
 
 
 class LocationTypeManager(models.Manager):
