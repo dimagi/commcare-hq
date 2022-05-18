@@ -1,3 +1,9 @@
+function abort () {
+    echo $@
+    echo "Aborting."
+    exit 1
+}
+
 echo "Gathering all translation strings.  Note that this will probably take a while"
 ./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' $@
 
