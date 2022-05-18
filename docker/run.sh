@@ -129,8 +129,6 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
-
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
@@ -140,6 +138,7 @@ function run_tests {
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
