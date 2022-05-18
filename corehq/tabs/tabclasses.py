@@ -156,6 +156,10 @@ class ProjectReportsTab(UITab):
         from corehq.apps.reports.views import MySavedReportsView
         if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
+
+        if not user_can_view_reports(self.project, self.couch_user):
+            return []
+
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
