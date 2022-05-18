@@ -112,14 +112,14 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
         )
     )
 
-    if es_query.count() > MAX_RELATED_CASES:
+    counts_by_parent_id = es_query.run().aggregations.indices.matching_indices.referenced_id.counts_by_bucket()
+    if len(counts_by_parent_id) > MAX_RELATED_CASES:
         from ..exceptions import TooManyRelatedCasesError
         raise TooManyRelatedCasesError(
             _("The related case lookup you are trying to perform would return too many cases"),
             serialize(subcase_query.subcase_filter)
         )
 
-    counts_by_parent_id = es_query.run().aggregations.indices.matching_indices.referenced_id.counts_by_bucket()
     if subcase_query.op == '>' and subcase_query.count <= 0:
         return list(counts_by_parent_id)
 
