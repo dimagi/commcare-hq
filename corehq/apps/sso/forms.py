@@ -1,12 +1,13 @@
 import datetime
 import logging
+import re
 
 from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext
 from django.utils.translation import gettext as _
 
 from crispy_forms.helper import FormHelper
@@ -57,6 +58,14 @@ def _check_required_when_active(is_active, value):
     if is_active and not value:
         raise forms.ValidationError(
             _("This is required when Single Sign On is active.")
+        )
+
+
+def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
+    if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
+            and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
+        raise forms.ValidationError(
+            _("This is not a valid One Login URL.")
         )
 
 
@@ -616,6 +625,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         is_active = bool(self.data.get('is_active'))
         entity_id = self.cleaned_data['entity_id']
         _check_required_when_active(is_active, entity_id)
+        _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
         return entity_id
 
     def update_identity_provider(self, admin_user):
@@ -808,6 +818,26 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
         self.fields['entity_id'].label = _("Issuer URL")
 
+        if self.idp.client_secret:
+            client_secret_toggles = crispy.Div(
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text"><a href="#" data-bind="click: showClientSecret, '
+                        'visible: isClientSecretHidden">{}</a></p>',
+                        gettext("Show Secret")
+                    ),
+                ),
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text" data-bind="visible: isClientSecretVisible">'
+                        '<a href="#" data-bind="click: hideClientSecret">{}</a></p>',
+                        gettext("Hide Secret")
+                    ),
+                ),
+            )
+        else:
+            client_secret_toggles = crispy.Div()
+
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -828,7 +858,17 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                     crispy.Fieldset(
                         _('OpenID Provider Configuration'),
                         'client_id',
-                        'client_secret',
+                        hqcrispy.B3MultiField(
+                            gettext("Client Secret"),
+                            crispy.Div(
+                                hqcrispy.InlineField(
+                                    'client_secret',
+                                    data_bind="visible: isClientSecretVisible"
+                                ),
+                                client_secret_toggles,
+                            ),
+                            show_row_class=False,
+                        ),
                         'entity_id',
                     ),
                     css_class="panel-body"

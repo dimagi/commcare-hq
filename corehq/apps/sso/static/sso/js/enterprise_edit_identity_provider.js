@@ -33,5 +33,30 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         });
         $('#sso-test-user-manager').koApplyBindings(ssoTestUserManager);
         ssoTestUserManager.init();
+
+        let oidcClientSecretManager = function () {
+            'use strict';
+            let self = {};
+
+            self.isClientSecretVisible = ko.observable(false);
+            self.isClientSecretHidden = ko.computed(function () {
+                return !self.isClientSecretVisible();
+            });
+
+            self.showClientSecret = function () {
+                self.isClientSecretVisible(true);
+            };
+
+            self.hideClientSecret = function () {
+                self.isClientSecretVisible(false);
+            };
+
+            return self;
+
+        };
+
+        if (initialPageData.get('toggle_client_secret')) {
+            $('#idp').koApplyBindings(oidcClientSecretManager);
+        }
     });
 });
