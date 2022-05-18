@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.contrib import messages
 
@@ -32,6 +34,13 @@ def get_request_data(request):
         'get_data': request.GET.copy(),
         'post_data': request.POST.copy(),
     }
+
+
+def get_return_to_url_from_request(request):
+    next_url = request.GET.get('next')
+    if not urlparse(next_url).netloc:
+        # only accept relative urls
+        return next_url
 
 
 def is_request_using_sso(request):
