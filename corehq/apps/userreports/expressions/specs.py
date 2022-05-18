@@ -28,7 +28,7 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
@@ -816,7 +816,10 @@ class _GroupsExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('user_id',))
     def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
-        user = CommCareUser.get_by_user_id(user_id, domain)
+        try:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+        except CouchUser.AccountTypeError:
+            user = None
         if not user:
             return []
 

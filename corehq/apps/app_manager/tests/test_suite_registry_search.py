@@ -40,7 +40,7 @@ DOMAIN = 'test_domain'
 
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -288,7 +288,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -401,7 +401,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 @patch_get_xform_resource_overrides()
 @flag_enabled('DATA_REGISTRY')
-class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
