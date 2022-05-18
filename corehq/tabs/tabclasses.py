@@ -201,8 +201,7 @@ class ProjectReportsTab(UITab):
                 'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
                 'show_in_dropdown': False,
             }
-            for viz in TableauVisualization.objects.filter(domain=self.domain)
-            if self.couch_user.can_view_tableau_viz(self.domain, f"{viz.id}")
+            for viz in TableauVisualization.for_user(self.domain, self.couch_user)
         ]
 
         return [(_("Tableau Reports"), items)] if items else []
