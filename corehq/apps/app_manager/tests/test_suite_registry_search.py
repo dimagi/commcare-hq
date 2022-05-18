@@ -25,7 +25,6 @@ from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESUL
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     get_simple_form,
     patch_get_xform_resource_overrides,
 )
@@ -463,7 +462,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
 
 @patch_get_xform_resource_overrides()
 @flag_enabled('DATA_REGISTRY')
-class InlineSearchDataRegistryModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):

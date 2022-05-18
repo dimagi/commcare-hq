@@ -20,7 +20,6 @@ from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     get_simple_form,
     patch_get_xform_resource_overrides,
 )
@@ -33,7 +32,7 @@ DOMAIN = 'test_domain'
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
@@ -216,7 +215,7 @@ class InlineSearchSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
@@ -306,7 +305,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
