@@ -442,7 +442,6 @@ class CaseRuleCriteriaForm(forms.Form):
             )
         )
 
-
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
     def user_locations(self):
@@ -624,7 +623,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         if value:
             location_def = value[0]
-            if not location_def['include_child_locations']:
+            if not location_def.get('include_child_locations'):
                 location_def['include_child_locations'] = False
 
             return location_def

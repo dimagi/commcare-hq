@@ -12,7 +12,7 @@ DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
 
 
-def _get_es_query(domain, case, case_filter_criteria=[]):
+def _get_es_filtered_case_query(domain, case, case_filter_criteria=[]):
     # Import here to avoid circular import error
     from corehq.apps.data_interfaces.models import (
         MatchPropertyDefinition,
@@ -60,7 +60,7 @@ def find_duplicate_case_ids(
     match_type="ALL",
     case_filter_criteria=[]
 ):
-    es = _get_es_query(domain, case, case_filter_criteria=case_filter_criteria)
+    es = _get_es_filtered_case_query(domain, case, case_filter_criteria=case_filter_criteria)
 
     if not include_closed:
         es = es.is_closed(False)

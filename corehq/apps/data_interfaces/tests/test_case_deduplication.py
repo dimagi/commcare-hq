@@ -14,7 +14,7 @@ from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.data_interfaces.deduplication import (
     backfill_deduplicate_rule,
     find_duplicate_case_ids,
-    _get_es_query,
+    _get_es_filtered_case_query,
 )
 from corehq.apps.data_interfaces.models import (
     CaseDeduplicationActionDefinition,
@@ -76,7 +76,7 @@ class FindingDuplicatesQueryTest(TestCase):
         ]
         self._prime_es_index(cases)
 
-        query = _get_es_query(self.domain, cases[0])
+        query = _get_es_filtered_case_query(self.domain, cases[0])
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), len(cases))
@@ -108,7 +108,7 @@ class FindingDuplicatesQueryTest(TestCase):
 
         self._prime_es_index(cases)
 
-        query = _get_es_query(self.domain, cases[0], rule.memoized_criteria)
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), 2)
@@ -140,7 +140,7 @@ class FindingDuplicatesQueryTest(TestCase):
         criteria.definition = definition
         criteria.save()
 
-        query = _get_es_query(self.domain, cases[0], rule.memoized_criteria)
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), 2)
@@ -172,7 +172,7 @@ class FindingDuplicatesQueryTest(TestCase):
         criteria.definition = definition
         criteria.save()
 
-        query = _get_es_query(self.domain, cases[0], rule.memoized_criteria)
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), 3)
@@ -202,7 +202,7 @@ class FindingDuplicatesQueryTest(TestCase):
         criteria.definition = definition
         criteria.save()
 
-        query = _get_es_query(self.domain, cases[0], rule.memoized_criteria)
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), 1)
@@ -234,7 +234,7 @@ class FindingDuplicatesQueryTest(TestCase):
         criteria.definition = definition
         criteria.save()
 
-        query = _get_es_query(self.domain, cases[0], rule.memoized_criteria)
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
         retrieved_cases = query.run().hits
 
         self.assertEqual(len(retrieved_cases), 2)
