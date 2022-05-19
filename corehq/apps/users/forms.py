@@ -44,6 +44,7 @@ from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.ota.utils import turn_off_demo_mode, turn_on_demo_mode
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
@@ -508,6 +509,25 @@ class CommCareUserActionForm(BaseUpdateUserForm):
                 )
             )
         )
+
+    def clean_loadtest_factor(self):
+        """
+        If `loadtest_factor` is set on a user that is already a demo
+        user, their status as a demo user is never affected. But if
+        loadtest_factor is set on a non-demo user, then `is_demo_user`
+        will be set for as long as `loadtest_factor` > 1.
+        `is_loadtest_user` is used for determining when to do that.
+        """
+        loadtest_factor = self.cleaned_data.get('loadtest_factor', 1)
+        if loadtest_factor > 1:
+            if not self.existing_user.is_demo_user:
+                self.existing_user.is_loadtest_user = True
+                turn_on_demo_mode(self.existing_user, self.domain)
+        else:
+            if self.existing_user.is_loadtest_user:
+                self.existing_user.is_loadtest_user = False
+                turn_off_demo_mode(self.existing_user)
+        return loadtest_factor
 
 
 class RoleForm(forms.Form):
