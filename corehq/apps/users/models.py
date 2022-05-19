@@ -362,11 +362,8 @@ class UserRolePresets(object):
             cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
                                                    report_an_issue=True,
                                                    access_all_locations=True,
-                                                   access_all_locations=False,
                                                    access_api=False,
-                                                   download_reports=False,
-                                                   report_an_issue=False,
-                                                   access_mobile_endpoints=False)
+                                                   download_reports=False)
         }
 
     @classmethod
