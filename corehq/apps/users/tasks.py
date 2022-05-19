@@ -346,14 +346,3 @@ def process_reporting_metadata_staging():
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
-
-
-@task()
-def reset_loadtest_factor(user_ids):
-    from corehq.apps.users.models import CommCareUser
-
-    for user_id in user_ids:
-        user = CommCareUser.get_by_user_id(user_id)
-        if user.loadtest_factor is not None:
-            user.loadtest_factor = None
-            user.save()
