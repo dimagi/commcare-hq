@@ -75,5 +75,4 @@ branches:
     - rc/case-search-accessiblity-refactor # Robert May 18
     - bmb/sso-staging  # [QA] Biyeun May 18
     - sk/clear-selectd-values  # Simon May 19
-    - jls/another-check # Jenny May 19
 submodules: { }
