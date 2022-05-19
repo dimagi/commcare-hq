@@ -282,7 +282,7 @@ class JsonpathExpressionTest(SimpleTestCase):
         }
         self.assertEqual(["a", "b", "c", "d"], ExpressionFactory.from_spec(spec)(item))
         spec['jsonpath'] = 'form.list[0].case.name'
-        self.assertEqual(["c"], ExpressionFactory.from_spec(spec)(item))
+        self.assertEqual("c", ExpressionFactory.from_spec(spec)(item))
 
     def test_bad_expression(self):
         with self.assertRaises(BadSpecError):
@@ -297,21 +297,35 @@ class JsonpathExpressionTest(SimpleTestCase):
             'type': 'jsonpath',
             'jsonpath': 'a.b.c'
         })
-        self.assertEqual([], expr({
+        self.assertEqual(None, expr({
             'a': {
                 'b': bad_value
             }
         }))
 
     @generate_cases([
-        ({"a": "1"}, "a", "integer", [1]),
+        ({"a": "1"}, "a", "integer", 1),
         ({"a": [{"b": "1"}, {"b": "2"}, {"b": "x"}]}, "a..b", "integer", [1, 2, None]),
+        ({"a": {"b": 1}}, "a..b", "array", [1]),
     ])
-    def test_datatype(self, item, expr, datatype, expected):
+    def test_datatype(self, item, jsonpath, datatype, expected):
         expr = ExpressionFactory.from_spec({
             'type': 'jsonpath',
-            'jsonpath': expr,
+            'jsonpath': jsonpath,
             'datatype': datatype
+        })
+        self.assertEqual(expected, expr(item))
+
+    @generate_cases([
+        ({"a": 1}, "a", 1),
+        ({"a": [1, 2, 3]}, "a", [1, 2, 3]),
+        ({"a": [{"b": 1}, {"b": 2}]}, "a..b", [1, 2]),
+        ({"a": {"b": 1}}, "a..b", 1),
+    ])
+    def test_list_coersion(self, item, jsonpath, expected):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': jsonpath,
         })
         self.assertEqual(expected, expr(item))
 

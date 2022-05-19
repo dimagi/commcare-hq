@@ -491,10 +491,7 @@ class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         }
 
     This above expression will evaluate to ``["a", "b", "c", "d"]``.
-    Another example is ``form.list[0].case.name`` which will evaluate to ``["c"]``
-
-    The result will always be a list even if the expression does not match anything.
-    If ``datatype`` is provided it will be applied to each element of the output list.
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``
 
     For more information consult the following resources:
 
@@ -522,7 +519,12 @@ class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
     def __call__(self, item, context=None):
         transform = transform_for_datatype(self.datatype)
-        return [transform(match.value) for match in self.jsonpath_expr.find(item)]
+        values = [transform(match.value) for match in self.jsonpath_expr.find(item)]
+        if not values:
+            return None
+        if len(values) == 1:
+            return values[0]
+        return values
 
     def __str__(self):
         if self.datatype:
