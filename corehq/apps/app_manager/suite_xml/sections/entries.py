@@ -211,11 +211,8 @@ class EntriesHelper(object):
 
             if form.requires_case() and using_inline_search:
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-                datum = [
-                    d for d in self.get_case_datums_basic_module(module, form)
-                    if d.case_type and d.requires_selection
-                ][0]
-                factory = RemoteRequestFactory(None, module, [], case_session_var=datum.datum.id)
+                case_session_var = self.get_case_session_var_for_form(form)
+                factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
                 e.post = factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
