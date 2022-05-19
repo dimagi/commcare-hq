@@ -394,7 +394,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     auto_case_update_hour = IntegerProperty()
 
     # Allowed number of max OData feeds that this domain can create.
-    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    # NOTE: This value is generally None. If you want the value the system will use,
+    # please use the `get_odata_feed_limit` method instead
     odata_feed_limit = IntegerProperty()
 
     # exchange/domain copying stuff
