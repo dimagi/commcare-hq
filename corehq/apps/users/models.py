@@ -359,10 +359,14 @@ class UserRolePresets(object):
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-            cls.MOBILE_WORKER: lambda: Permissions(Permissions.from_permission_list(
-                                                   Permissions(access_mobile_endpoints=True,
+            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
                                                    report_an_issue=True,
-                                                   access_all_locations=True)))
+                                                   access_all_locations=True,
+                                                   access_all_locations=False,
+                                                   access_api=False,
+                                                   download_reports=False,
+                                                   report_an_issue=False,
+                                                   access_mobile_endpoints=False)
         }
 
     @classmethod
