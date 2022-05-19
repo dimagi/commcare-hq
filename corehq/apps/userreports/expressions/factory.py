@@ -40,6 +40,7 @@ from corehq.apps.userreports.expressions.specs import (
     IdentityExpressionSpec,
     IterationNumberExpressionSpec,
     IteratorExpressionSpec,
+    JsonpathExpressionSpec,
     NamedExpressionSpec,
     NestedExpressionSpec,
     PropertyNameGetterSpec,
@@ -69,6 +70,7 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
+_jsonpath_expression = functools.partial(_simple_expression_generator, JsonpathExpressionSpec)
 _utcnow = functools.partial(_simple_expression_generator, UTCNow)
 
 
@@ -350,6 +352,7 @@ class ExpressionFactory(object):
         'gregorian_date_to_ethiopian_date': _gregorian_date_to_ethiopian_date,
         'identity': _identity_expression,
         'iterator': _iterator_expression,
+        'jsonpath': _jsonpath_expression,
         'map_items': _map_items_expression,
         'month_end_date': _month_end_date_expression,
         'month_start_date': _month_start_date_expression,

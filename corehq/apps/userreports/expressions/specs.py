@@ -1,6 +1,9 @@
-from jsonobject.base_properties import DefaultProperty
-from simpleeval import InvalidExpression
 import textwrap
+from functools import cached_property
+
+from jsonobject.base_properties import DefaultProperty
+from jsonpath_ng.ext import parse as jsonpath_parse
+from simpleeval import InvalidExpression
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -452,6 +455,79 @@ class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     def __str__(self):
         expressions_text = ", ".join(str(e) for e in self._expression_fns)
         return "iterate on [{}] if {}".format(expressions_text, str(self._test))
+
+
+class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    This will execute the jsonpath expression against the current doc
+    and emit the result.
+
+    .. code:: json
+
+       {
+           "type": "jsonpath",
+           "jsonpath": "form..case.name",
+       }
+
+    Given the following doc:
+
+    .. code:: json
+
+        {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+
+    This above expression will evaluate to ``["a", "b", "c", "d"]``.
+    Another example is ``form.list[0].case.name`` which will evaluate to ``["c"]``
+
+    The result will always be a list even if the expression does not match anything.
+    If ``datatype`` is provided it will be applied to each element of the output list.
+
+    For more information consult the following resources:
+
+    * `Article by Stefan Goessner <https://goessner.net/articles/JsonPath/>`__
+    * `JSONPath expression syntax <https://goessner.net/articles/JsonPath/index.html#e2>`__
+    * `JSONPath Online Evaluator <https://jsonpath.com/>`__
+    """
+    type = TypeProperty('jsonpath')
+    jsonpath = StringProperty(str, required=True)
+    datatype = DataTypeProperty(required=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        ret = super().wrap(obj)
+        ret.jsonpath_expr  # noqa: call to validate
+        return ret
+
+    @cached_property
+    def jsonpath_expr(self):
+        try:
+            return jsonpath_parse(self.jsonpath)
+        except Exception as e:
+            raise BadSpecError(f'Error parsing jsonpath expression <pre>{self.jsonpath}</pre>. '
+                               f'Message is {str(e)}')
+
+    def __call__(self, item, context=None):
+        transform = transform_for_datatype(self.datatype)
+        return [transform(match.value) for match in self.jsonpath_expr.find(item)]
+
+    def __str__(self):
+        if self.datatype:
+            return f"({self.datatype}){self.jsonpath}"
+        return self.jsonpath
 
 
 class RootDocExpressionSpec(JsonObject):
