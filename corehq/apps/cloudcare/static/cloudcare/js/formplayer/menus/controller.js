@@ -74,7 +74,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
         var urlObject = Util.currentUrlToObject();
-        if (!isPersistent) {
+        if (!isPersistent && !isMultiSelect) {
             urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
