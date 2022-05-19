@@ -36,10 +36,10 @@
   </td>
   <td class="col-sm-6 query-input-group<% if (hasError) { %> has-error<% } %>">
     <% if (input == "select1") { %>
-    <select name="<%- text ? text : "" %>"
-            id="<%- text ? text : "" %>"
-            class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
-        <option value=""></option>
+    <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
+        <option name="<%- text ? text : "" %>"
+                id="<%- text ? text : "" %>"
+                value=""></option>
         <% for (var i = 0; i < itemsetChoices.length; i++) { %>
         <option value="<%- i %>" <% if (value === String(i)) { %>selected<% } %>>
             <%- itemsetChoices[i] %>
@@ -48,13 +48,14 @@
     <select>
 
     <% } else if (input == "select") { %>
-    <select name="<%- text ? text : "" %>"
-            id="<%- text ? text : "" %>"
-            multiple class="query-field form-control hqwebapp-select2"
+    <select multiple class="query-field form-control hqwebapp-select2"
             data-receive="<%- receive %>"
             <% if (required) { %> aria-required="true"<% } %>>
         <% for (var i = 0; i < itemsetChoices.length; i++) { %>
-        <option value="<%- i %>" <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
+        <option name="<%- text ? text : "" %>"
+                id="<%- text ? text : "" %>"
+                value="<%- i %>"
+                <% if (value && value.indexOf(String(i)) > -1) { %>selected<% } %>>
             <%- itemsetChoices[i] %>
         </option>
         <% } %>
