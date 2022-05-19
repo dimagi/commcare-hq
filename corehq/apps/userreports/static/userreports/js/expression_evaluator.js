@@ -10,6 +10,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         self.documentType = ko.observable(initialData.documentType);
         self.documentId = ko.observable(initialData.documentId);
         self.dataSourceId = ko.observable(initialData.dataSourceId);
+        self.ucrExpressionId = ko.observable(initialData.ucrExpressionId);
         self.expressionText = ko.observable(expressionEditor.getSession().getValue());
         self.docText = ko.observable(docEditor.getSession().getValue());
         self.error = ko.observable();
@@ -68,6 +69,9 @@ hqDefine('userreports/js/expression_evaluator', function () {
             if (self.dataSourceId()) {
                 newParams['data_source'] = self.dataSourceId();
             }
+            if (self.ucrExpressionId()) {
+                newParams['ucr_expression_id'] = self.ucrExpressionId();
+            }
             newParams = $.param(newParams);
             if (currentParams !== newParams) {
                 var newUrl = document.location.pathname + "?" + newParams;
@@ -89,8 +93,12 @@ hqDefine('userreports/js/expression_evaluator', function () {
                 let data = {
                     input_type: self.inputType(),
                     data_source: self.dataSourceId(),
-                    expression: self.expressionText(),
                 };
+                if (self.ucrExpressionId()) {
+                    data.ucr_expression_id = self.ucrExpressionId();
+                } else {
+                    data.expression = self.expressionText();
+                }
                 if (self.inputType() === 'doc') {
                     data.doc_type = self.documentType();
                     data.doc_id = self.documentId();

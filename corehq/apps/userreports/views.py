@@ -943,6 +943,13 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     template_name = 'userreports/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
+    @property
+    def main_context(self):
+        context = super().main_context
+        if toggle_enabled(self.request, toggles.UCR_EXPRESSION_REGISTRY):
+            context['ucr_expressions'] = UCRExpression.objects.filter(domain=self.domain)
+        return context
+
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
@@ -960,11 +967,12 @@ class DataSourceDebuggerView(BaseUserConfigReportsView):
 def evaluate_expression(request, domain):
     input_type = request.POST['input_type']
     data_source_id = request.POST['data_source']
-    expression_text = request.POST['expression']
+    expression_text = request.POST.get('expression')
+    ucr_expression_id = request.POST.get('ucr_expression_id')
 
     try:
         factory_context = _get_factory_context(domain, data_source_id)
-        parsed_expression = _get_parsed_expression(factory_context, expression_text)
+        parsed_expression = _get_parsed_expression(domain, factory_context, expression_text, ucr_expression_id)
         if input_type == 'doc':
             doc_type = request.POST['doc_type']
             doc_id = request.POST['doc_id']
@@ -991,7 +999,16 @@ def _get_factory_context(domain, data_source_id):
     return FactoryContext.empty(domain=domain)
 
 
-def _get_parsed_expression(factory_context, expression_text):
+def _get_parsed_expression(domain, factory_context, expression_text, expression_id):
+    if expression_id:
+        try:
+            expression_model = UCRExpression.objects.get(domain=domain, id=expression_id)
+            return expression_model.wrapped_definition(factory_context)
+        except UCRExpression.DoesNotExist:
+            raise HttpException(404, _("Expression not found"))
+        except BadSpecError as e:
+            raise HttpException(400, _("Problem with expression: {}").format(e))
+
     try:
         expression_json = json.loads(expression_text)
         return ExpressionFactory.from_spec(
