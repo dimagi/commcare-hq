@@ -46,6 +46,18 @@ hqDefine('userreports/js/expression_evaluator', function () {
             return self.getDocJSON() === null;
         }, self);
 
+        self.formatJson = function () {
+            let expr = self.getExpressionJSON();
+            if (expr !== null) {
+                self.expressionEditor.getSession().setValue(JSON.stringify(expr, null, 2));
+            }
+
+            let doc = self.getDocJSON();
+            if (doc !== null) {
+                self.docEditor.getSession().setValue(JSON.stringify(doc, null, 2));
+            }
+        };
+
         self.updateUrl = function () {
             var currentParams = document.location.search.substring(1);
             var newParams = {
