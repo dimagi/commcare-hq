@@ -32,7 +32,7 @@
       <tr>
         <td>{{ indicator.column_id }}</td>
         <td>{{ indicator.comment }}</td>
-        <td><pre>{{ indicator.readable_output|safe }}</pre></td>
+        <td><pre>{{ indicator.readable_output }}</pre></td>
       </tr>
     {% endfor %}
   </table>
@@ -52,7 +52,7 @@
       <tr>
         <td id="{{ named_expression_prefix }}:{{ expression.name }}">{{ expression.name }}</td>
         <td>{{ expression.comment }}</td>
-        <td><pre>{{ expression.readable_output|safe }}</pre></td>
+        <td><pre>{{ expression.readable_output }}</pre></td>
       </tr>
     {% endfor %}
   </table>
@@ -72,7 +72,7 @@
       <tr>
         <td id="{{ named_filter_prefix }}:{{ filter.name }}">{{ filter.name }}</td>
         <td>{{ filter.comment }}</td>
-        <td><pre>{{ filter.readable_output|safe }}</pre></td>
+        <td><pre>{{ filter.readable_output }}</pre></td>
       </tr>
     {% endfor %}
   </table>
