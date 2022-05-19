@@ -475,7 +475,7 @@ class EntriesHelper(object):
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 loads_registry_case = module_loads_registry_case(module)
                 if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_inline_search_datums(module))
+                    result.append(self.get_query_datums(module))
                     result.append(datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
@@ -582,10 +582,10 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_inline_search_datums(self, module):
+    def get_query_datums(self, module):
         """When doing 'inline' search we skip the normal case search
-        workflow and perform the search directly as part of the entry instead of via an action in the
-        details screen. The case details is then populated with data from the results of the query.
+        workflow and put the query directly in the entry.
+        The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
         factory = RemoteRequestFactory(None, module, [])
