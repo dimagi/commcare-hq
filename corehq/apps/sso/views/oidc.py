@@ -1,7 +1,9 @@
 from django.contrib import auth
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.contrib.auth import logout
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 
+from corehq.util.view_utils import reverse
 from corehq.apps.sso.decorators import identity_provider_required
 from corehq.apps.sso.exceptions import SsoLoginFailed, OidcSsoError
 from corehq.apps.sso.utils.login_helpers import process_async_signup_requests
@@ -62,5 +64,6 @@ def sso_oidc_auth(request, idp_slug):
 
 @identity_provider_required
 def sso_oidc_logout(request, idp_slug):
-    # todo this is a temporary placeholder view
-    raise Http404()
+    # Only the OP would ever redirect to this view. We don't handle logging out from the OP.
+    logout(request)
+    return HttpResponseRedirect(reverse('login'))
