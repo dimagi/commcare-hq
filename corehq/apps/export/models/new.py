@@ -89,6 +89,11 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.esaccessors import (
+    get_case_export_base_query,
+    get_form_export_base_query,
+    get_sms_export_base_query
+)
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -1175,11 +1180,11 @@ class CaseExportInstance(ExportInstance):
             for column in table.columns
         )
 
-    def get_query(self):
-        from corehq.apps.export.esaccessors import get_case_export_base_query
+    def get_query(self, include_filters=True):
         query = get_case_export_base_query(self.domain, self.case_type)
-        for filter in self.get_filters():
-            query = query.filter(filter.to_es_filter())
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
 
         return query
 
@@ -1258,11 +1263,11 @@ class FormExportInstance(ExportInstance):
             )
         return []
 
-    def get_query(self):
-        from corehq.apps.export.esaccessors import get_form_export_base_query
-        query = get_form_export_base_query(self.domain, self.app_id, self.xmlns, include_errors=False)
-        for filter in self.get_filters():
-            query = query.filter(filter.to_es_filter())
+    def get_query(self, include_filters=True):
+        query = get_form_export_base_query(self.domain, self.app_id, self.xmlns, self.include_errors)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
 
         return query
 
@@ -1298,6 +1303,14 @@ class SMSExportInstance(ExportInstance):
         instance = cls(domain=schema.domain, tables=[main_table])
         instance._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
+
+    def get_query(self, include_filters=True):
+        query = get_sms_export_base_query(self.domain)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
 
 
 class ExportInstanceDefaults(object):
