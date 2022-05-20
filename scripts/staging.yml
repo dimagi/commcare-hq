@@ -65,7 +65,6 @@ branches:
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
     - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling # Graham May 20
     - ml/dhis2-error-handling # Minha April 21
-    - gh/upgrade-js-dev-dependencies # Graham May 20
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ml/case-property-bug # Minha April 28
