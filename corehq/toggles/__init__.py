@@ -143,7 +143,12 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
-        self.parent_toggles = parent_toggles or []
+
+        parent_toggles = parent_toggles or []
+        for dependency in parent_toggles:
+            parent_toggles.extend(dependency.parent_toggles)
+
+        self.parent_toggles = parent_toggles
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
