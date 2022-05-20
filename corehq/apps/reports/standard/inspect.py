@@ -119,6 +119,8 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             form_values = list(self.all_relevant_forms.values())
             if form_values:
                 query = query.OR(*[self._form_filter(f) for f in form_values])
+        else:
+            query = query.NOT(es_filters.missing("app_id"))
 
         return query
 
