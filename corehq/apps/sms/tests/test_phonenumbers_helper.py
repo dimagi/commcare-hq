@@ -4,6 +4,7 @@ from corehq.apps.sms.phonenumbers_helper import (
     PhoneNumberParseException,
     country_code_for_region,
     country_name_for_country_code,
+    get_country_code_and_national_number,
     parse_phone_number,
 )
 
@@ -59,3 +60,13 @@ class TestPhoneNumbersHelper(SimpleTestCase):
     def test_region_for_country_code_returns_empty_string_if_unknown(self):
         region = country_name_for_country_code(0)
         self.assertEqual(region, '')
+
+    def test_get_country_code_and_national_number_returns_successfully(self):
+        country_code, national_number = get_country_code_and_national_number("+27123456789")
+        self.assertEqual(country_code, 27)
+        self.assertEqual(national_number, "123456789")
+
+    def test_get_country_code_and_national_number_returns_none_if_invalid(self):
+        country_code, national_number = get_country_code_and_national_number("qwerty123456")
+        self.assertIsNone(country_code)
+        self.assertIsNone(national_number)

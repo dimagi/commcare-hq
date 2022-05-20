@@ -31,6 +31,11 @@ def strip_plus(number):
 
 
 def get_country_code_and_national_number(number, failhard=False):
+    """
+    :param number: str representing phone number
+    :param failhard: if True, raise exception upon failure, otherwise return None
+    :return: country_code: int, national_number: str
+    """
     parsed = parse_phone_number(number, failhard=failhard)
     if parsed:
         country_code = parsed.country_code

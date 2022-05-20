@@ -341,8 +341,6 @@ class SmsBillable(models.Model):
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_id,
                          phone_number, direction, couch_id, backend_message_id, domain):
-        country_code, national_number = get_country_code_and_national_number(phone_number)
-
         backend_instance = None
         if backend_id is not None:
             backend_instance = SQLMobileBackend.load(
@@ -371,6 +369,7 @@ class SmsBillable(models.Model):
                         "Could not create direct gateway fee for message %s: no backend_message_id" % couch_id
                     )
 
+            country_code, national_number = get_country_code_and_national_number(phone_number)
             # always grab the gateway fee even if using an api
             gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
