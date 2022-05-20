@@ -1,3 +1,7 @@
+from django.utils.encoding import force_str
+from django_countries.data import COUNTRIES
+
+
 class PhoneNumberParseException(Exception):
     pass
 
@@ -43,3 +47,14 @@ def country_code_for_region(region):
     """
     from phonenumbers import country_code_for_region as phonenumbers_country_code_for_region
     return phonenumbers_country_code_for_region(region)
+
+
+def country_name_for_country_code(country_code):
+    """
+    Blindly returns the first country in a list of countries that the country_code maps to
+    :param country_code: integer representing country code in a phone number
+    :return: first country returned from phonenumbers mapping
+    """
+    from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
+    regions = COUNTRY_CODE_TO_REGION_CODE.get(country_code)
+    return force_str(COUNTRIES.get(regions[0])) if regions else ''

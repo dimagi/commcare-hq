@@ -111,6 +111,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
+from corehq.apps.sms.phonenumbers_helper import country_name_for_country_code
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
@@ -118,8 +119,6 @@ from corehq.apps.sms.util import (
     get_sms_backend_classes,
     is_superuser_or_contractor,
 )
-from corehq.apps.smsbillables.utils import \
-    country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.smsforms.models import (
     SQLXFormsSession,
     XFormsSessionSynchronization,
@@ -1090,7 +1089,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {

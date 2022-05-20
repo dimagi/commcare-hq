@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.sms.phonenumbers_helper import (
     PhoneNumberParseException,
     country_code_for_region,
+    country_name_for_country_code,
     parse_phone_number,
 )
 
@@ -49,3 +50,12 @@ class TestPhoneNumbersHelper(SimpleTestCase):
     def test_county_code_for_region_returns_zero_if_invalid_region(self):
         country_code = country_code_for_region('invalid')
         self.assertEqual(country_code, 0)
+
+    def test_region_for_country_code_returns_country_name(self):
+        # NOTE: returns the first country returned in a list of countries that have this country code
+        region = country_name_for_country_code(1)
+        self.assertEqual(region, 'United States of America')
+
+    def test_region_for_country_code_returns_empty_string_if_unknown(self):
+        region = country_name_for_country_code(0)
+        self.assertEqual(region, '')
