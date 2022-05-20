@@ -13,13 +13,13 @@ def parse_phone_number(number, region=None, failhard=True):
     from phonenumbers.phonenumberutil import parse as phonenumbers_parse, NumberParseException
     try:
         phone = phonenumbers_parse(number, region)
-        if phone:
-            return PhoneNumber(phone.country_code, phone.national_number)
     except NumberParseException:
         if failhard:
             raise PhoneNumberParseException()
         else:
             return None
+
+    return PhoneNumber(phone.country_code, phone.national_number)
 
 
 def strip_plus(number):
