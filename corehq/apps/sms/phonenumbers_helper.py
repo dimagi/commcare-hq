@@ -33,3 +33,13 @@ def get_country_code_and_national_number(number, failhard=False):
         national_number = strip_plus(number)[len(str(country_code)):]
         return country_code, national_number
     return None, None
+
+
+def country_code_for_region(region):
+    """
+    Simple wrapper around phonenumbers country_code_for_region method
+    :param region: str (examples: 'US', 'IN', 'ZA')
+    :return: int
+    """
+    from phonenumbers import country_code_for_region as phonenumbers_country_code_for_region
+    return phonenumbers_country_code_for_region(region)

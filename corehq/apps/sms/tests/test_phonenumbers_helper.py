@@ -1,6 +1,10 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.sms.phonenumbers_helper import parse_phone_number, PhoneNumberParseException
+from corehq.apps.sms.phonenumbers_helper import (
+    PhoneNumberParseException,
+    country_code_for_region,
+    parse_phone_number,
+)
 
 
 class TestPhoneNumbersHelper(SimpleTestCase):
@@ -37,3 +41,11 @@ class TestPhoneNumbersHelper(SimpleTestCase):
             parse_phone_number('+1(123) 45-6789', region="US")
         except PhoneNumberParseException:
             self.fail("Unexpected exception: phonenumbers lib does not validate for a particular region")
+
+    def test_country_code_for_region_returns_int(self):
+        country_code = country_code_for_region('US')
+        self.assertEqual(country_code, 1)
+
+    def test_county_code_for_region_returns_zero_if_invalid_region(self):
+        country_code = country_code_for_region('invalid')
+        self.assertEqual(country_code, 0)
