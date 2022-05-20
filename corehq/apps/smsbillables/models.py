@@ -11,9 +11,7 @@ from corehq.apps.sms.models import (
     DIRECTION_CHOICES,
     SQLMobileBackend,
 )
-from corehq.apps.sms.phonenumbers_helper import (
-    get_country_code_and_national_number,
-)
+from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import (
     AmbiguousPrefixException,
@@ -341,7 +339,7 @@ class SmsBillable(models.Model):
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_id,
                          phone_number, direction, couch_id, backend_message_id, domain):
-        country_code, national_number = get_country_code_and_national_number(phone_number)
+        parsed_number = parse_phone_number(phone_number, failhard=False)
 
         backend_instance = None
         if backend_id is not None:
@@ -376,8 +374,8 @@ class SmsBillable(models.Model):
                 backend_api_id,
                 direction,
                 backend_instance=backend_id,
-                country_code=country_code,
-                national_number=national_number,
+                country_code=parsed_number.country_code,
+                national_number=parsed_number.national_number,
             )
             if gateway_fee:
                 conversion_rate = cls.get_conversion_rate(gateway_fee)
