@@ -78,4 +78,5 @@ branches:
     - sk/system-form-filter  # Simon May 20
     - jls/multi-select-spf # Jenny May 20
     - jls/tableau-permission # Jenny May 20
+    - jls/rename-instance-uri # Jenny May 20
 submodules: { }
