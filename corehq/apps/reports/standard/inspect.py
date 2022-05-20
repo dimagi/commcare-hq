@@ -120,11 +120,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             if form_values:
                 query = query.OR(*[self._form_filter(f) for f in form_values])
 
-        # Exclude system forms unless they selected "Unknown User"
-        if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
-            query = query.NOT(form_es.xmlns(
-                list(SYSTEM_FORM_XMLNS_MAP.keys())
-            ))
         return query
 
     @property
