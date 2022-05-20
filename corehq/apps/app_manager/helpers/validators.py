@@ -44,6 +44,7 @@ from corehq.apps.app_manager.util import (
     split_path,
     xpath_references_case,
     xpath_references_usercase,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -402,6 +403,11 @@ class ModuleBaseValidator(object):
             if self.module.is_multi_select():
                 errors.append({
                     'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+            if module_uses_inline_search(self.module):
+                errors.append({
+                    'type': 'smart links inline search',
                     'module': self.get_module_info(),
                 })
 
