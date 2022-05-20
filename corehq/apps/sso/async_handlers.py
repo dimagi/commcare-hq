@@ -57,6 +57,8 @@ class BaseLinkedObjectAsyncHandler(BaseAsyncHandler):
         return IdentityProvider.objects.get(slug=self.idp_slug)
 
     def check_that_idp_matches_request_account_or_404(self):
+        if self.request.user.is_superuser:
+            return
         if not self.identity_provider.owner == self.request.account:
             raise Http404()
 
