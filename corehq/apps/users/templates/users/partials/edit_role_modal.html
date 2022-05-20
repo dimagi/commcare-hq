@@ -170,12 +170,12 @@
             {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
               <div class="form-group" data-bind="visible: !tableauPermissions.all()">
                 <label class="col-sm-4 control-label">
-                  {% trans "Access Specific Visualizations" %}
+                  {% trans "Access Specific Tableau Reports" %}
                 </label>
                 <div class="col-sm-8 controls">
                   <div class="panel panel-default">
                     <div class="panel-heading">
-                      {% trans "Select which visualizations the role can access:" %}
+                      {% trans "Select which Tableau reports the role can access:" %}
                     </div>
                     <div class="panel-body"
                          data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">

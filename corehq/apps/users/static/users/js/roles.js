@@ -407,10 +407,10 @@ hqDefine('users/js/roles',[
                 if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
                     self.reports.push({
                         visibilityRestraint: true,
-                        text: gettext("Access all Tableau Visualizations"),
+                        text: gettext("Access All Tableau Reports"),
                         checkboxLabel: "view-tableau-checkbox",
                         checkboxPermission: self.tableauPermissions.all,
-                        checkboxText: gettext("Allow role to access all Tableau visualizations."),
+                        checkboxText: gettext("Allow role to access all embedded Tableau reports."),
                     });
                 }
                 if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
