@@ -74,6 +74,12 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _get_users_filter(self, mobile_user_and_group_slugs):
+        if (
+            EMWF.no_filters_selected(mobile_user_and_group_slugs)
+            and self.request.couch_user.has_permission(self.domain, 'access_all_locations')
+        ):
+            return None
+
         user_ids = (EMWF.user_es_query(self.domain,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
@@ -102,8 +108,11 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         query = (form_es.FormES()
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
-                                     lt=self.datespan.enddate_adjusted))
-                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+                                     lt=self.datespan.enddate_adjusted)))
+
+        users_filter = self._get_users_filter(mobile_user_and_group_slugs)
+        if users_filter:
+            query = query.filter(users_filter)
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
