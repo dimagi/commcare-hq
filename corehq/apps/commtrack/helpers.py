@@ -37,7 +37,7 @@ def make_supply_point(domain, location):
         owner_id=owner_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
         update={
-            'location_id': location.location_id,
+            'supply_point_location_id': location.location_id,
         },
         **kwargs
     )
