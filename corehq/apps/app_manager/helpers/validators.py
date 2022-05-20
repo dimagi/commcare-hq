@@ -831,6 +831,8 @@ class FormBaseValidator(object):
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+            elif module.root_module.is_multi_select():
+                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
             if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
                 errors.append(dict(type='previous multi select form links', **meta))
