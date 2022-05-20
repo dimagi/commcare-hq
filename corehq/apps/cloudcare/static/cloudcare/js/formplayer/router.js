@@ -142,10 +142,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.landingPageApp(appId);
     });
 
-    FormplayerFrontend.on("menu:select", function (index) {
+    FormplayerFrontend.on("menu:select", function (index, isMultiSelect) {
         var urlObject = Util.currentUrlToObject();
         if (index === undefined) {
             urlObject.setQueryData(null, false, true);
+        } else if (isMultiSelect) {
+            sessionStorage.selectedValues = index;
         } else {
             urlObject.addSelection(index);
         }
