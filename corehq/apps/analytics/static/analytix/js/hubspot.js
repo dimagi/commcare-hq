@@ -107,7 +107,9 @@ hqDefine('analytix/js/hubspot', [
                     });
             },
         });
-        $form.koApplyBindings(demoForm);
+        if ($form.length) {
+            $form.koApplyBindings(demoForm);
+        }
 
         $modal.on('shown.bs.modal', function () {
             kissmetrics.track.event("Demo Workflow - Viewed Form");
