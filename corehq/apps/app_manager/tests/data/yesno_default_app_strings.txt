@@ -12,7 +12,6 @@ case_autoload.user.case_missing=Unable to find case referenced by auto-select ca
 case_autoload.user.property_missing=The user data key specified for case auto-selecting could not be found: ${0}
 case_autoload.usercase.case_missing=This form affects the user case, but no user case id was found. Please contact your supervisor.
 case_autoload.usercase.property_missing=The user case specified for case auto-selecting could not be found: ${0}
-case_search.claimed_case.case_missing=Unable to find the selected case after performing a sync. Please try again.
 case_sharing.exactly_one_group=The case sharing settings for your user are incorrect. This user must be in exactly one case sharing group. Please contact your supervisor.
 cchq.case=Case
 cchq.referral=Referral

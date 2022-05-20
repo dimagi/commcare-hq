@@ -23,7 +23,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
-    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -200,7 +199,6 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        using_inline_search = module_uses_inline_search(module) and not module_loads_registry_case(module)
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -208,12 +206,6 @@ class EntriesHelper(object):
             if module.report_context_tile:
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
-
-            if form.requires_case() and using_inline_search:
-                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-                case_session_var = self.get_case_session_var_for_form(form)
-                factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
-                e.post = factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -247,9 +239,6 @@ class EntriesHelper(object):
 
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
-
-            if using_inline_search:
-                EntriesHelper.add_case_claim_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
 
@@ -365,18 +354,6 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def add_case_claim_assertion(entry):
-        # TODO: what about multi-selects?
-        case_datums = [datum for datum in entry.datums if datum.nodeset]
-        if case_datums:
-            case_id = f"instance('commcaresession')/session/data/{case_datums[-1].id}"
-            assertion = EntriesHelper.get_assertion(
-                f"count(instance('casedb')/casedb/case[@case_id={case_id}]) = 1",
-                "case_search.claimed_case.case_missing"
-            )
-            entry.assertions.append(assertion)
-
-    @staticmethod
     def get_extra_case_id_datums(form):
         datums = []
         actions = form.active_actions()
@@ -467,18 +444,16 @@ class EntriesHelper(object):
 
     def add_remote_query_datums(self, datums):
         """Add in any `query` datums that are necessary.
-        This only applies to datums that are loaded via inline search or from a data registry.
+        This only applies to datums that are loaded from a data registry.
         """
         result = []
         for datum in datums:
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
-                loads_registry_case = module_loads_registry_case(module)
-                if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_query_datums(module))
+                if module_loads_registry_case(module):
+                    result.append(self.get_data_registry_search_datums(module))
                     result.append(datum)
-                    if loads_registry_case:
-                        result.append(self.get_data_registry_case_datums(datum, module))
+                    result.append(self.get_data_registry_case_datums(datum, module))
                 else:
                     result.append(datum)
             else:
@@ -546,10 +521,8 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_loads_registry_case(detail_module) or module_uses_inline_search(detail_module):
+            if module_loads_registry_case(detail_module):
                 instance_name, root_element = "results", "results"
-                if detail_module.search_config.search_filter:
-                    filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
             nodeset = EntriesHelper._get_nodeset_xpath(
@@ -582,10 +555,10 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_query_datums(self, module):
-        """When doing 'inline' search we skip the normal case search
-        workflow and put the query directly in the entry.
-        The case details is then populated with data from the results of the query.
+    def get_data_registry_search_datums(self, module):
+        """When a data registry is the source of the search results we skip the normal case search
+        workflow and perform the search directly as part of the entry instead of via an action in the
+        details screen. The case details is then populated with data from the results of the query.
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
         factory = RemoteRequestFactory(None, module, [])

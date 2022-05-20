@@ -121,24 +121,8 @@
               </div>
             {% endif %}
           </div>
-          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
-          <div class="form-group" data-bind="visible: inlineSearchVisible">
-            <label class="control-label {% css_label_class %}">
-              {% trans "Make search input available after search" %}
-              <span class="hq-help-template" data-title="{% trans "Make search input available after search" %}"
-                    data-content="{% trans_html_attr "Stores the search input values and makes the available via the 'search-input' instance. This also disables the 'Search Again' workflow." %}">
-              </span>
-            </label>
-            <div class="{% css_field_class %} checkbox">
-              <label>
-                <input type="checkbox" data-bind="checked: inlineSearch" />
-                <input type="hidden" name="search-input" data-bind="value: inlineSearch"/>
-              </label>
-            </div>
-          </div>
-          {% endif %}
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-          <div class="form-group" data-bind="hidden: inlineSearchActive">
+          <div class="form-group">
             <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching" %}"
@@ -148,14 +132,14 @@
               {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
+          <div class="case-search-multimedia-input">
           <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
           <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
-          <div class="form-group" data-bind="hidden: inlineSearchActive">
+          <div class="form-group">
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching Again" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
@@ -165,7 +149,7 @@
               {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
+          <div class="case-search-multimedia-input">
           <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
           <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->

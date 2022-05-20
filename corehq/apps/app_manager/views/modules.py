@@ -247,7 +247,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
             'custom_related_case_property': module.search_config.custom_related_case_property,
-            'inline_search': module.search_config.inline_search,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1283,12 +1282,11 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
-                inline_search=search_properties.get('inline_search', False),
             )
 
     resp = {}
     app.save(resp)
-    return JsonResponse(resp)
+    return json_response(resp)
 
 
 @no_conflict_require_POST
