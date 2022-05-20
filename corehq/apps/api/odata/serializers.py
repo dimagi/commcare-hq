@@ -85,6 +85,13 @@ class ODataBaseSerializer(Serializer):
 
         data = []
         for row_number, document in enumerate(documents):
+            if 'location_id' in document and 'location_id' in document['case_json']:
+                if document['location_id'] is None:
+                    document['location_id'] = document['case_json']['location_id']
+                else:
+                    document['location_id (case property)'] = document['case_json']['location_id']
+                    # tastypie.serializer will overwrite case property 'location_id' with
+                    # 'location_id' used by Location objects.
             rows = table.get_rows(
                 document,
                 document.get('_id'),  # needed because of pagination
