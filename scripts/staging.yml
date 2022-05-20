@@ -75,4 +75,5 @@ branches:
     - bmb/sso-staging  # [QA] Biyeun May 18
     - nh/loadtest_demo_users  # Norman May 20
     - sk/system-form-filter  # Simon May 20
+    - bmb/fix-hubspot-demo-logic  # Biyeun May 20
 submodules: { }
