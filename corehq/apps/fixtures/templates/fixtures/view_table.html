@@ -36,7 +36,7 @@
                 {% for field in report_filters %}
                   <fieldset id="fieldset_{{ field.slug }}">
                     <div class="form-group" id="group_{{ field.slug }}">
-                      {{ field.field|safe }}
+                      {{ field.field }}
                     </div>
                   </fieldset>
                 {% endfor %}
@@ -66,7 +66,7 @@
             <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
               <thead>
               {%  if report_table.headers.complex %}
-                {{ report_table.headers.render_html|safe }}
+                {{ report_table.headers.render_html }}
               {% else %}
                 {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
                 <tr>
