@@ -1,6 +1,6 @@
-from copy import deepcopy
-from django.test import SimpleTestCase
 from unittest.mock import patch
+
+from django.test import SimpleTestCase
 
 from corehq.apps.es import filters, forms, users
 from corehq.apps.es.const import SIZE_LIMIT
@@ -260,37 +260,6 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             {"timeStart": {"order": "asc"}},
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
-
-    def test_cleanup_before_run(self):
-        json_output = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {
-                            "match_all": {}
-                        }
-                    ],
-                    "must": {
-                        "match_all": {}
-                    }
-                }
-            },
-            "size": SIZE_LIMIT,
-            "aggs": {
-                "by_day": {
-                    "date_histogram": {
-                        "field": "date",
-                        "interval": "day",
-                        "time_zone": "-01:00"
-                    }
-                }
-            }
-        }
-        expected_output = deepcopy(json_output)
-        expected_output['size'] = 0
-        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
-        self.checkQuery(query, json_output)
-        self.checkQuery(query._clean_before_run(), expected_output)
 
     def test_exclude_source(self):
         json_output = {
