@@ -1606,6 +1606,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_loadtest_user = BooleanProperty(default=False)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
