@@ -582,6 +582,7 @@ class InvoiceTemplate(object):
         self.draw_footer()
 
     def draw_totals_on_new_page(self):
+        self.canvas.showPage()
         self.canvas.setStrokeColor(STROKE_COLOR)
         self.draw_logo()
         self.draw_from_address()
