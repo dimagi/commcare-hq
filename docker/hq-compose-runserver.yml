@@ -13,6 +13,15 @@ services:
       DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
     privileged: true  # allows mount inside container
     command: [runserver]
+    depends_on:
+      - postgres
+      - couch
+      - redis
+      - elasticsearch2
+      - elasticsearch5
+      - kafka
+      - zookeeper
+      - minio
     expose:
       - 8000
     ports:
@@ -27,6 +36,9 @@ services:
       service: formplayer
     environment:
         COMMCARE_HOST: "http://web:8000"
+    depends_on:
+      - postgres
+      - redis
     ports:
       - "8080:8080"
       - "8081:8081"

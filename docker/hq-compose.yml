@@ -32,6 +32,15 @@ services:
       TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
     privileged: true  # allows mount inside container
+    depends_on:
+      - postgres
+      - couch
+      - redis
+      - elasticsearch2
+      - elasticsearch5
+      - kafka
+      - zookeeper
+      - minio
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib

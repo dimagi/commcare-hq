@@ -5,6 +5,9 @@ services:
     extends:
       file: hq-compose.yml
       service: formplayer
+    depends_on:
+      - postgres
+      - redis
     expose:
       - 8080
     ports:
