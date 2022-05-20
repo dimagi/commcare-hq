@@ -1,7 +1,3 @@
-
-
-
-
 class PhoneNumberParseException(Exception):
     pass
 
