@@ -3,19 +3,17 @@ import uuid
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es import filters
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.exceptions import (
-    CaseNotFound,
-    MissingFormXml,
-)
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
 
 CASEBLOCK_CHUNKSIZE = 100
@@ -23,8 +21,8 @@ SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 
 SYSTEM_FORM_XMLNS_MAP = {
-    SYSTEM_FORM_XMLNS: 'System Form',
-    EDIT_FORM_XMLNS: 'Data Cleaning Form',
+    SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
+    EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
