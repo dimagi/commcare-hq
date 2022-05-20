@@ -331,9 +331,15 @@ class PredictablyRandomToggle(StaticToggle):
         randomness,
         help_link=None,
         description=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      relevant_environments=relevant_environments,
+                                                      notification_emails=notification_emails,
+                                                      parent_toggles=parent_toggles)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(randomness)
         self.randomness = randomness
@@ -394,11 +400,15 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         default_randomness=0.0,
         help_link=None,
         description=None,
-        relevant_environments=None
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
-                                                      relevant_environments=relevant_environments)
+                                                      relevant_environments=relevant_environments,
+                                                      notification_emails=notification_emails,
+                                                      parent_toggles=parent_toggles)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -437,14 +447,18 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
         default_randomness=0.0,
         help_link=None,
         description=None,
-        relevant_environments=None
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super().__init__(
             slug, label, tag, namespaces,
             default_randomness=default_randomness,
             help_link=help_link,
             description=description,
-            relevant_environments=relevant_environments
+            relevant_environments=relevant_environments,
+            notification_emails=notification_emails,
+            parent_toggles=parent_toggles
         )
         self.owner = owner
 
