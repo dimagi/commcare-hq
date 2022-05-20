@@ -44,7 +44,8 @@ def country_code_for_region(region):
     """
     Simple wrapper around phonenumbers country_code_for_region method
     :param region: str (examples: 'US', 'IN', 'ZA')
-    :return: int
+    :return: int, 0 if invalid, country_code if valid
+    NOTE it is possible for this to raise an Exception if phonenumbers region validation has a bug
     """
     from phonenumbers import country_code_for_region as phonenumbers_country_code_for_region
     return phonenumbers_country_code_for_region(region)
