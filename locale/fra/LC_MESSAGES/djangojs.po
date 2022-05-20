@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-18 19:52+0000\n"
+"POT-Creation-Date: 2022-05-20 14:13+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -711,28 +711,28 @@ msgstr "Supprimer"
 msgid "Menu Settings"
 msgstr "Paramètres du menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:109
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:110
 msgid "Case type is required."
 msgstr "Type de dossier est requis."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Les types de dossiers peuvent comporter uniquement les caractères a-z, 0-9 "
 "et '-' and '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:121
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:122
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:168
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:169
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -4186,7 +4186,7 @@ msgstr ""
 msgid "Linked projects"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:73
+#: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:117
 msgid "Unknown error"
 msgstr ""
 
