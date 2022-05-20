@@ -68,7 +68,7 @@ class TableauView(BaseDomainView):
 
     def tableau_server_response(self):
         from requests_toolbelt.adapters import host_header_ssl  # avoid top-level import that breaks docs build
-        context = self.page_context
+        context = self.get_context_data()
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
         post_arguments = {'username': self.visualization.server.domain_username}
         if self.visualization.server.target_site != 'Default':
