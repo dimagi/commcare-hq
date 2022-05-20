@@ -772,7 +772,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         if not module.is_multi_select():
             form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
-        form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
+        if not module.root_module.is_multi_select():
+            form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
     allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
