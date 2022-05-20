@@ -312,23 +312,6 @@ class ESQuery(object):
             queries.search_string_query(search_string, default_fields)
         )
 
-    def _assemble(self):
-        """Build out the es_query dict"""
-        self._filters.extend(list(self._default_filters.values()))
-        if self._start is not None:
-            self.es_query['from'] = self._start
-        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._exclude_source:
-            self.es_query['_source'] = False
-        elif self._source is not None:
-            self.es_query['_source'] = self._source
-        if self.uses_aggregations():
-            self.es_query['size'] = 0
-            self.es_query['aggs'] = {
-                agg.name: agg.assemble()
-                for agg in self._aggregations
-            }
-
     def fields(self, fields):
         """
             Restrict the fields returned from elasticsearch
@@ -376,6 +359,23 @@ class ESQuery(object):
         query = deepcopy(self)
         query._assemble()
         return query.es_query
+
+    def _assemble(self):
+        """Build out the es_query dict"""
+        self._filters.extend(list(self._default_filters.values()))
+        if self._start is not None:
+            self.es_query['from'] = self._start
+        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
+        if self._exclude_source:
+            self.es_query['_source'] = False
+        elif self._source is not None:
+            self.es_query['_source'] = self._source
+        if self.uses_aggregations():
+            self.es_query['size'] = 0
+            self.es_query['aggs'] = {
+                agg.name: agg.assemble()
+                for agg in self._aggregations
+            }
 
     def dumps(self, pretty=False):
         """Returns the JSON query that will be sent to elasticsearch."""
