@@ -121,7 +121,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
-            FormplayerFrontend.trigger("menu:select", caseId);
+            FormplayerFrontend.trigger("menu:select", caseId, isMultiSelect);
             return;
         }
         var detailObject = detailObjects[detailTabIndex];
