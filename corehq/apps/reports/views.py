@@ -215,6 +215,19 @@ def can_view_attachments(request):
     )
 
 
+@login_and_domain_required
+def reports_home(request, domain):
+    if user_can_view_reports(request.project, request.couch_user):
+        return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
+
+    if toggles.EMBEDDED_TABLEAU.enabled_for_request(request):
+        from .standard.tableau import TableauView
+        for viz in TableauVisualization.for_user(domain, request.couch_user):
+            return HttpResponseRedirect(reverse(TableauView.urlname, args=[domain, viz.id]))
+
+    raise Http404()
+
+
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = gettext_lazy("Project Reports")
 
