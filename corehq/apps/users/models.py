@@ -1530,6 +1530,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
+    def can_view_some_tableau_viz(self, domain):
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+
     def can_login_as(self, domain):
         return (
             self.has_permission(domain, 'login_as_all_users')
@@ -2777,6 +2781,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_tableau_viz(self, viz_id):
+        return False
+
+    def can_view_some_tableau_viz(self, viz_id):
         return False
 
     @property

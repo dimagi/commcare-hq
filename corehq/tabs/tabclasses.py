@@ -123,13 +123,14 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (user_can_view_reports(self.project, self.couch_user)
-                and has_privilege(self._request, privileges.PROJECT_ACCESS))
-
-    @property
-    def view(self):
-        from corehq.apps.reports.views import MySavedReportsView
-        return MySavedReportsView.urlname
+        if not has_privilege(self._request, privileges.PROJECT_ACCESS):
+            return False
+        if user_can_view_reports(self.project, self.couch_user):
+            return True
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            if self.couch_user.can_view_some_tableau_viz(self.domain):
+                return True
+        return False
 
     @property
     def sidebar_items(self):
