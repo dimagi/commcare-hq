@@ -21,10 +21,10 @@
 
 <script type="text/template" id="query-view-item-template">
   <td class="col-sm-6 query-caption<% if (required) { %> required<% } %><% if (hasError) { %> has-error<% } %>">
-    <div tabindex="0">
-      <span class="control-label">
+    <div>
+      <label class="control-label" for="<%- text ? text : "" %>">
         <%- text ? text : "" %>
-      </span>
+      </label>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
       <div class="hq-help pull-right">
         <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
@@ -55,7 +55,8 @@
     <select>
 
     <% } else if (input == "daterange") { %>
-    <input aria-label="<%- text ? text : "" %> daterange"
+    <input name="<%- text ? text : "" %>"
+           id="<%- text ? text : "" %>"
            type="text" class="daterange query-field form-control"
            value="<%- value %>"
            <% if (required) { %> aria-required="true"<% } %>>
@@ -65,7 +66,8 @@
     </div>
 
     <% } else { %>
-    <input aria-label="<%- text ? text : "" %> text entry"
+    <input name="<%- text ? text : "" %>"
+           id="<%- text ? text : "" %>"
            type="text"
            class="query-field form-control"
            value="<%- value %>"
