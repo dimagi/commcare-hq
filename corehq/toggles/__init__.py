@@ -915,6 +915,18 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+USH_INLINE_SEARCH = StaticToggle(
+    'inline_case_search',
+    "USH Specific toggle to making case search user input available to other parts of the app.",
+    TAG_CUSTOM,
+    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES]
+)
+
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     'usercases_for_web_users',
     "USH: Enable the creation of usercases for web users.",

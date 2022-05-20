@@ -121,7 +121,7 @@
               </div>
             {% endif %}
           </div>
-          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
           <div class="form-group" data-bind="visible: inlineSearchVisible">
             <label class="control-label {% css_label_class %}">
               {% trans "Make search input available after search" %}
@@ -136,6 +136,8 @@
               </label>
             </div>
           </div>
+          {% endif %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
           <div class="form-group" data-bind="hidden: inlineSearchActive">
             <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}
