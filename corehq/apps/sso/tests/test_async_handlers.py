@@ -17,6 +17,19 @@ from corehq.apps.sso.models import (
 from corehq.apps.sso.tests import generator
 
 
+class FakeSuperuser:
+    def __init__(self, is_superuser):
+        self.is_superuser = is_superuser
+
+
+def _get_request(account, is_superuser=False):
+    request = RequestFactory().get('/sso/test')
+    request.account = account
+    request.method = 'POST'
+    request.user = FakeSuperuser(is_superuser)
+    return request
+
+
 class BaseAsyncHandlerTest(TestCase):
 
     @classmethod
@@ -75,9 +88,8 @@ class TestAsyncHandlerSecurity(BaseAsyncHandlerTest):
 
     def setUp(self):
         super().setUp()
-        self.request = RequestFactory().get('/sso/test')
-        self.request.account = self.second_account
-        self.request.method = 'POST'
+        self.request = _get_request(self.second_account)
+        self.request_superuser = _get_request(self.second_account, is_superuser=True)
 
     def test_get_linked_objects_response_throws_404(self):
         self.request.POST = self._get_post_data()
@@ -91,20 +103,46 @@ class TestAsyncHandlerSecurity(BaseAsyncHandlerTest):
         with self.assertRaises(Http404):
             handler.add_object_response
 
-    def test_remove_object_response_404(self):
+    def test_remove_object_response_throws_404(self):
         self.request.POST = self._get_post_data('vaultwax.nl')
         handler = IdentityProviderAdminAsyncHandler(self.request)
         with self.assertRaises(Http404):
             handler.remove_object_response
+
+    def test_get_linked_objects_response_does_not_throw_404_for_superusers(self):
+        self.request_superuser.POST = self._get_post_data()
+        handler = IdentityProviderAdminAsyncHandler(self.request_superuser)
+        self.assertEqual(
+            handler.get_linked_objects_response,
+            {'linkedObjects': []}
+        )
+
+    def test_add_object_response_does_not_throw_404_for_superusers(self):
+        self.request_superuser.POST = self._get_post_data('vaultwax.nl')
+        handler = IdentityProviderAdminAsyncHandler(self.request_superuser)
+        self.assertEqual(
+            handler.add_object_response,
+            {'linkedObjects': ['vaultwax.nl']}
+        )
+
+    def test_remove_object_response_does_not_throw_404_for_superusers(self):
+        AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.nl'
+        )
+        self.request_superuser.POST = self._get_post_data('vaultwax.nl')
+        handler = IdentityProviderAdminAsyncHandler(self.request_superuser)
+        self.assertEqual(
+            handler.remove_object_response,
+            {'linkedObjects': []}
+        )
 
 
 class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def setUp(self):
         super().setUp()
-        self.request = RequestFactory().get('/sso/test')
-        self.request.account = self.idp.owner
-        self.request.method = 'POST'
+        self.request = _get_request(self.idp.owner)
 
     def tearDown(self):
         AuthenticatedEmailDomain.objects.all().delete()
@@ -256,9 +294,7 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def setUp(self):
         super().setUp()
-        self.request = RequestFactory().get('/sso/test')
-        self.request.account = self.idp.owner
-        self.request.method = 'POST'
+        self.request = _get_request(self.idp.owner)
         self.idp.refresh_from_db()
 
     def tearDown(self):
@@ -453,9 +489,7 @@ class TestSsoTestUserAdminAsyncHandler(BaseAsyncHandlerTest):
 
     def setUp(self):
         super().setUp()
-        self.request = RequestFactory().get('/sso/test')
-        self.request.account = self.idp.owner
-        self.request.method = 'POST'
+        self.request = _get_request(self.idp.owner)
         self.idp.refresh_from_db()
 
     def tearDown(self):
