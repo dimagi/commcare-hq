@@ -30,18 +30,13 @@ def strip_plus(number):
     return number[1:] if number.startswith('+') else number
 
 
-def get_country_code_and_national_number(number, failhard=False):
+def get_country_code_and_national_number(number):
     """
     :param number: str representing phone number
-    :param failhard: if True, raise exception upon failure, otherwise return None
     :return: country_code: int, national_number: str
     """
-    parsed = parse_phone_number(number, failhard=failhard)
-    if parsed:
-        country_code = parsed.country_code
-        national_number = strip_plus(number)[len(str(country_code)):]
-        return country_code, national_number
-    return None, None
+    parsed = parse_phone_number(number, failhard=False)
+    return (parsed.country_code, str(parsed.national_number)) if parsed else (None, None)
 
 
 def country_code_for_region(region):
