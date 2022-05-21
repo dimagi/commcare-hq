@@ -70,6 +70,8 @@ hqDefine("users/js/mobile_workers",[
             force_account_confirmation: false,
             email: '',
             send_account_confirmation_email: false,
+            force_account_confirmation_by_sms: false,
+            phone_number: '',
             is_active: true,
             is_account_confirmed: true,
             deactivate_after_date: '',
@@ -90,6 +92,10 @@ hqDefine("users/js/mobile_workers",[
         self.emailRequired = ko.observable(self.force_account_confirmation());
         self.passwordEnabled = ko.observable(!self.force_account_confirmation());
         self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+
+        // used by two-stage sms provisioning
+        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
+        self.passwordEnabled = ko.observable(!self.force_account_confirmation_by_sms());
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -258,6 +264,10 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.DISABLED;
             }
 
+            if (self.stagedUser().force_account_confirmation_by_sms()) {
+                return self.STATUS.DISABLED;
+            }
+
             if (!self.useStrongPasswords()) {
                 // No validation
                 return self.STATUS.NONE;
@@ -311,6 +321,29 @@ hqDefine("users/js/mobile_workers",[
             } else if (self.emailIsInvalid()) {
                 return gettext('Please enter a valid email address.');
             }
+            return "";
+        });
+
+        self.requiredPhoneMissing = ko.computed(function () {
+            return self.stagedUser() && self.stagedUser().phoneRequired() && !self.stagedUser().phone_number();
+        });
+
+        self.phoneStatus = ko.computed(function () {
+
+            if (!self.stagedUser()) {
+                return self.STATUS.NONE;
+            }
+
+            if (self.requiredPhoneMissing()) {
+                return self.STATUS.ERROR;
+            }
+        });
+
+        self.phoneStatusMessage = ko.computed(function () {
+
+            if (self.requiredPhoneMissing()) {
+                return gettext('Phone number is required when users confirm their own accounts by sms.');
+            } 
             return "";
         });
 
@@ -415,6 +448,21 @@ hqDefine("users/js/mobile_workers",[
                     user.send_account_confirmation_email(false);
                 }
             });
+            user.force_account_confirmation_by_sms.subscribe(function (enabled) {
+                if (enabled) {
+                    // make phone number required
+                    user.phoneRequired(true);
+                    // clear and disable password input
+                    user.password('');
+                    user.passwordEnabled(false);
+                    user.sendConfirmationEmailEnabled(true);
+                } else {
+                    // make phone number optional
+                    user.phoneRequired(false);
+                    // enable password input
+                    user.passwordEnabled(true);
+                }
+            });
         });
 
         self.initializeUser = function () {
@@ -465,6 +513,9 @@ hqDefine("users/js/mobile_workers",[
                 }
             }
             if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+                return false;
+            }
+            if (self.requiredPhoneMissing()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {

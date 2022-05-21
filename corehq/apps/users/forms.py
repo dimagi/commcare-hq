@@ -11,7 +11,7 @@ from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop, ugettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -54,7 +54,7 @@ from corehq.apps.users.util import (
 )
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -76,13 +76,13 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message or
-            _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
+        raise forms.ValidationError(name_too_long_message
+            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
             % {'username': username, 'max_length': max_username_length})
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message or
-            _('The username "%(username)s" is reserved for CommCare.')
+        raise forms.ValidationError(name_reserved_message
+            or _('The username "%(username)s" is reserved for CommCare.')
             % {'username': username})
 
     username = format_username(username, domain)
@@ -92,8 +92,8 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message or
-            _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(name_exists_message
+            or _('This Mobile Worker already exists.'))
 
     return username
 
@@ -677,6 +677,24 @@ class NewMobileWorkerForm(forms.Form):
             "on the first day of the month and year selected."
         ),
     )
+    force_account_confirmation_by_sms = forms.BooleanField(
+        label=ugettext_noop("Require Account Confirmation by SMS?"),
+        help_text=ugettext_noop(
+            "If checked, the user will be sent a confirmation SMS and asked to set their password."
+        ),
+        required=False,
+    )
+    phone_number = forms.CharField(
+        required=False,
+        label=gettext_noop("Phone Number"),
+        help_text="""
+            <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
+            </span>
+        """
+    )
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -758,6 +776,34 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
+        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            confirm_account_by_sms_field = crispy.Field(
+                'force_account_confirmation_by_sms',
+                data_bind='checked: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Div(
+                crispy.Field(
+                    'phone_number',
+                    data_bind="value: phone_number, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.phoneStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+        else:
+            confirm_account_by_sms_field = crispy.Hidden(
+                'force_account_confirmation_by_sms',
+                '',
+                data_bind='value: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Hidden(
+                'phone_number',
+                '',
+                data_bind='value: phone_number',
+            )
+
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -790,6 +836,8 @@ class NewMobileWorkerForm(forms.Form):
                 confirm_account_field,
                 email_field,
                 send_email_field,
+                confirm_account_by_sms_field,
+                phone_number_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
@@ -988,6 +1036,7 @@ class PrimaryLocationWidget(forms.Widget):
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
+
     def __init__(self, css_id, source_css_id, attrs=None):
         """
         args:

@@ -756,6 +756,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
+        #import ipdb
+        #ipdb.set_trace()
+        import logging
+        
+
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
@@ -763,12 +768,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-
+        logging.info(self.new_mobile_worker_form.cleaned_data)
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
-        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_sms']:
+        if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            logging.info(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user, phone_number)
         return {
             'success': True,
@@ -782,7 +788,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+        is_account_confirmed = not (self.new_mobile_worker_form.cleaned_data['force_account_confirmation'] and self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
         commcare_user = CommCareUser.create(
             self.domain,
