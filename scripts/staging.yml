@@ -67,7 +67,7 @@ branches:
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - ml/case-property-bug # Minha April 28
+    # - ml/case-property-bug # Minha April 28
     - es/datums+jls/multiple-referrals-eof-nav
     - jls/multiple-referrals-eof-nav # Jenny May 5
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
@@ -79,4 +79,5 @@ branches:
     - jls/multi-select-spf # Jenny May 20
     - jls/tableau-permission # Jenny May 20
     - mjr/odata_enterprise_report # Matt May 23
+    - ml/case-property-bug-test # Minha May 23
 submodules: { }
