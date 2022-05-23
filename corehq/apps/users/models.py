@@ -145,9 +145,10 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
@@ -185,6 +186,8 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -270,6 +273,9 @@ class Permissions(DocumentSchema):
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
+
+    def view_tableau_viz(self, viz_id):
+        return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
         if data:
@@ -1528,6 +1534,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
+    def can_view_some_tableau_viz(self, domain):
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+
     def can_login_as(self, domain):
         return (
             self.has_permission(domain, 'login_as_all_users')
@@ -2773,6 +2783,12 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_some_reports(self, domain):
+        return False
+
+    def can_view_tableau_viz(self, viz_id):
+        return False
+
+    def can_view_some_tableau_viz(self, viz_id):
         return False
 
     @property
