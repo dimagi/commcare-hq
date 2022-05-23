@@ -79,5 +79,4 @@ branches:
     - jls/multi-select-spf # Jenny May 20
     - jls/tableau-permission # Jenny May 20
     - mjr/odata_enterprise_report # Matt May 23
-    - aj/mobile-worker-signup-sms # Akash May 23
 submodules: { }
