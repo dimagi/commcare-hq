@@ -171,7 +171,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for key, value in update_action.dynamic_properties.items():
             if key == 'location_id':
                 # special treatment of location_id
-                self.case.location_id = value
+                self.case.location_id = self.case.case_json[key] = value
             elif key == 'name':
                 # replicate legacy behaviour
                 self.case.name = _convert_type_check_length(key, value)
