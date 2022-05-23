@@ -733,8 +733,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      */
     function DateTimeEntryBase(question, options) {
         var self = this,
-            thisYear = new Date().getFullYear(),
-            displayOpts = _getDisplayOptions(question);
+            thisYear = new Date().getFullYear();
+            displayOpts = _getDisplayOptions(question),
+            isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -744,7 +745,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
                 format: self.clientFormat,
                 keepInvalid: true,
-                sideBySide: true,
+                collapse: false,
+                sideBySide: !isPhoneMode,
                 parseInputDate: function (date) {
                     var d = moment(date, self.clientFormat);
                     return d.isValid() ? d : null;
