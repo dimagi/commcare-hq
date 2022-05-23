@@ -143,11 +143,6 @@
               {% if error.message %}
                 {% trans "Details:" %}
               {% endif %}
-            {% case "no forms" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has no forms.
-              {% endblocktrans %}
             {% case "no forms or case list" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
@@ -189,6 +184,12 @@
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 loads a case from a data registry and uses a multi-select case list.
+                These two features are not compatible.
+              {% endblocktrans %}
+            {% case "smart links inline search" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                uses smart links and is configured to make search input available after search.
                 These two features are not compatible.
               {% endblocktrans %}
             {% case "circular case hierarchy" %}

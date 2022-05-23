@@ -802,12 +802,17 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return self.get_object_list(bundle.request)
 
     def get_object_list(self, request):
+        feature_flag = request.GET.get("feature_flag")
+        if feature_flag and feature_flag not in toggles.all_toggle_slugs():
+            raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         couch_user = CouchUser.from_django_user(request.user)
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
+            if feature_flag and feature_flag not in toggles.toggles_dict(username=request.user, domain=domain):
+                continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
                 project_name=domain_object.hr_name or domain_object.name

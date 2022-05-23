@@ -121,7 +121,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
-            FormplayerFrontend.trigger("menu:select", caseId);
+            if (isMultiSelect) {
+                var Constants = hqImport("cloudcare/js/formplayer/constants");
+                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [caseId]);
+            } else {
+                FormplayerFrontend.trigger("menu:select", caseId);
+            }
             return;
         }
         var detailObject = detailObjects[detailTabIndex];

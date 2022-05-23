@@ -12,6 +12,7 @@
 .pydevproject
 .idea
 xforms/
+/artifacts/
 /data/
 submissions/
 /formplayer_build

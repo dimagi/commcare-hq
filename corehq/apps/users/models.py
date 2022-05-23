@@ -177,6 +177,7 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
+    access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
@@ -2834,6 +2835,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_roles(self):
+        return False
+
+    def can_access_release_management(self):
         return False
 
 

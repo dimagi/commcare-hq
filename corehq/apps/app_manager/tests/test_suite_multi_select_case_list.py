@@ -4,12 +4,16 @@ from uuid import uuid4
 from django.test import SimpleTestCase
 
 import lxml
+from memoized import memoized
 
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_PREVIOUS,
+)
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -20,9 +24,9 @@ from corehq.apps.app_manager.models import (
     FormLink,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
@@ -278,7 +282,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
 @flag_enabled('USH_CASE_LIST_MULTI_SELECT')
-class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
+class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
 
@@ -305,6 +309,8 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.m3, m3f0 = self.factory.new_basic_module('m3', self.OTHER_CASE_TYPE)
         m3f0.requires = 'case'
 
+        self._render_suite.reset_cache(self)
+
     def set_parent_select(self, module, parent_module):
         module.parent_select.active = True
         module.parent_select.module_id = parent_module.unique_id
@@ -312,15 +318,12 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
 
     def assert_module_datums(self, module_id, datums):
         """Check the datum IDs used in the suite XML"""
-        suite_xml = lxml.etree.XML(self.factory.app.create_suite())
+        suite = self._render_suite()
+        super().assert_module_datums(suite, module_id, datums)
 
-        session_nodes = suite_xml.findall(f"./entry[{module_id + 1}]/session")
-        assert len(session_nodes) == 1
-        actual_datums = [
-            (child.tag, child.attrib['id'])
-            for child in session_nodes[0].getchildren()
-        ]
-        self.assertEqual(datums, actual_datums)
+    @memoized
+    def _render_suite(self):
+        return self.factory.app.create_suite()
 
     def assert_form_datums(self, form, datum_id):
         """Check the datum IDs used in the form XML case preload"""
@@ -341,9 +344,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
     def test_child_of_multiselect(self):
         self.assert_module_datums(self.m0.id, [('instance-datum', 'selected_cases')])
 
-        # datum = selected_cases? Should it be case_id?
-        self.assert_module_datums(self.m1.id, [('datum', 'selected_cases')])
-        # case_id isn't defined in the session
+        self.assert_module_datums(self.m1.id, [('datum', 'case_id')])
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_multiselect(self):
@@ -360,37 +361,31 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m0, self.m2)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'case_id_beneficiary'),
-            ('instance-datum', 'selected_cases')
+            ('datum', 'case_id_beneficiary'),  # m2
+            ('instance-datum', 'selected_cases')  # m0
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id_beneficiary'),  # m2 and m1 merge
         ])
-        # this is an error
-        self.assert_form_datums(self.m1f0, 'case_id')
+        self.assert_form_datums(self.m1f0, 'case_id_beneficiary')
 
     def test_parent_selects_parent_different_type(self):
-        self.set_parent_select(self.m0, self.m2)
+        self.set_parent_select(self.m0, self.m3)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases')
         ])
-        # I'm not sure why this sets it to case_id_beneficiary instead of
-        # selected_cases, as in test_child_of_multiselect
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id'),
         ])
-        # This is an error
         self.assert_form_datums(self.m1f0, 'case_id')
 
     def test_select_parent_that_selects_other_same_case_type(self):
-        # Do we intend to support 3 case selections in a row of the same type?
         self.set_parent_select(self.m0, self.m2)
         self.set_parent_select(self.m1, self.m0)
 
         self.assert_module_datums(self.m0.id, [
-            # I would've guessed this to be parent_selected_cases
             ('datum', 'case_id_beneficiary'),
             ('instance-datum', 'selected_cases')
         ])
@@ -406,13 +401,31 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, TestXmlMixin):
         self.set_parent_select(self.m1, self.m0)
 
         self.assert_module_datums(self.m0.id, [
-            ('datum', 'parent_selected_cases'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases')
         ])
         self.assert_module_datums(self.m1.id, [
-            ('datum', 'parent_selected_cases'),
+            ('datum', 'parent_id'),
             ('instance-datum', 'selected_cases'),
             ('datum', 'case_id'),
+        ])
+        self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_child_module_selects_other_parent_same_type(self):
+        self.set_parent_select(self.m1, self.m2)
+
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'case_id_beneficiary'),
+            ('datum', 'case_id')
+        ])
+        self.assert_form_datums(self.m1f0, 'case_id')
+
+    def test_child_module_selects_other_parent_different_type(self):
+        self.set_parent_select(self.m1, self.m3)
+
+        self.assert_module_datums(self.m1.id, [
+            ('datum', 'parent_id'),
+            ('datum', 'case_id')
         ])
         self.assert_form_datums(self.m1f0, 'case_id')
 

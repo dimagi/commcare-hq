@@ -16,7 +16,7 @@ asgiref==3.5.0
     # via django
 asttokens==2.0.5
     # via stack-data
-attrs==18.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
@@ -490,7 +490,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.55
+reportlab==3.6.9
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -536,7 +536,7 @@ simplejson==3.17.2
     # via
     #   -r base-requirements.in
     #   django-prbac
-six==1.15.0
+six==1.16.0
     # via
     #   -r base-requirements.in
     #   asttokens

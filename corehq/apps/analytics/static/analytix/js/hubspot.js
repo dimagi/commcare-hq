@@ -34,10 +34,10 @@ hqDefine('analytix/js/hubspot', [
         _logger = logging.getLoggerForApi('Hubspot');
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
 
+        // these forms get processed on the backend, so they don't need the hubspot js to be loaded
+        _utils.loadTrialForm();
         if (_get('isDemoVisible')) {
-            // these forms get processed on the backend, so they don't need the hubspot js to be loaded
             _utils.loadDemoForm();
-            _utils.loadTrialForm();
         }
 
     });
@@ -107,7 +107,9 @@ hqDefine('analytix/js/hubspot', [
                     });
             },
         });
-        $form.koApplyBindings(demoForm);
+        if ($form.length) {
+            $form.koApplyBindings(demoForm);
+        }
 
         $modal.on('shown.bs.modal', function () {
             kissmetrics.track.event("Demo Workflow - Viewed Form");

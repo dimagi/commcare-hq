@@ -39,6 +39,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_smart_links,
     module_offers_registry_search,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -77,23 +78,25 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, suite, module, detail_section_elements):
+    def __init__(self, suite, module, detail_section_elements, case_session_var=None):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        if self.module.is_multi_select():
-            # the instance is dynamic and its ID matches the datum ID
-            self.case_session_var = SearchSelectedCasesInstanceXpath.id
+        if case_session_var:
+            self.case_session_var = case_session_var
         else:
-            self.case_session_var = self.module.search_config.case_session_var
+            if self.module.is_multi_select():
+                # the instance is dynamic and its ID matches the datum ID
+                self.case_session_var = SearchSelectedCasesInstanceXpath.id
+            else:
+                self.case_session_var = self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
             post=self.build_remote_request_post(),
             command=self.build_command(),
-            instances=self.build_instances(),
             session=self.build_session(),
             stack=self.build_stack(),
         )
@@ -120,14 +123,6 @@ class RemoteRequestFactory(object):
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
 
-    def _get_multi_select_xpaths(self):
-        if not self.module.is_multi_select():
-            return set()
-        return {
-            self._get_multi_select_nodeset(),
-            self._get_multi_select_exclude(),
-        }
-
     def _get_multi_select_nodeset(self):
         return SearchSelectedCasesInstanceXpath().instance()
 
@@ -135,7 +130,7 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.module.is_multi_select())
+        return self.module.search_config.get_relevant(self.case_session_var, self.module.is_multi_select())
 
     def build_command(self):
         return Command(
@@ -145,42 +140,9 @@ class RemoteRequestFactory(object):
             ),
         )
 
-    def build_instances(self):
-        prompt_select_instances = [
-            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
-            for prop in self.module.search_config.properties
-            if prop.itemset.instance_id
-        ]
-
-        xpaths = {QuerySessionXPath(self.case_session_var).instance()}
-        xpaths.update(datum.ref for datum in self._remote_request_query_datums)
-        xpaths.add(self.get_post_relevant())
-        xpaths = xpaths.union(self._get_multi_select_xpaths())
-        xpaths.add(self.module.search_config.search_filter)
-        xpaths.update(prop.default_value for prop in self.module.search_config.properties)
-        # we use the module's case list/details view to select the datum so also
-        # need these instances to be available
-        xpaths.update(self._get_xpaths_for_module())
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-
-        # exclude remote instances
-        instances = [instance for instance in instances if 'remote' not in instance.src]
-
-        # sorted list to prevent intermittent test failures
-        return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
-
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
-
-    def _get_xpaths_for_module(self):
-        details_by_id = {detail.id: detail for detail in self.detail_section_elements}
-        detail_ids = [self._details_helper.get_detail_id_safe(self.module, detail_type)
-                      for detail_type, detail, enabled in self.module.get_details()
-                      if enabled]
-        detail_ids = [_f for _f in detail_ids if _f]
-        for detail_id in detail_ids:
-            yield from details_by_id[detail_id].get_all_xpaths()
 
     def build_session(self):
         return RemoteRequestSession(
@@ -301,6 +263,8 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
+            if prop.required:
+                kwargs['required'] = interpolate_xpath(prop.required)
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
@@ -433,7 +397,7 @@ class RemoteRequestsHelper(PostProcessor):
     @time_method()
     def update_suite(self, detail_section_elements):
         for module in self.modules:
-            if module_offers_search(module) or module_uses_smart_links(module):
+            if module_offers_search(module) and not module_uses_inline_search(module):
                 self.suite.remote_requests.append(RemoteRequestFactory(
                     self.suite, module, detail_section_elements).build_remote_request()
                 )

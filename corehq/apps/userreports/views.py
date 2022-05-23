@@ -26,9 +26,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.userreports.forms import UCRExpressionForm, UCRExpressionUpdateForm
 
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -42,6 +39,7 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -61,7 +59,7 @@ from corehq.apps.domain.decorators import (
     api_auth_with_scope,
     login_and_domain_required,
 )
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -72,14 +70,15 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
     DATA_SOURCE_TYPE_RAW,
@@ -108,9 +107,14 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.forms import (
+    UCRExpressionForm,
+    UCRExpressionUpdateForm,
+)
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
+    RegistryDataSourceConfiguration,
     RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
@@ -118,6 +122,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     id_is_static,
+    is_data_registry_report,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -938,6 +943,13 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     template_name = 'userreports/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
+    @property
+    def main_context(self):
+        context = super().main_context
+        if toggle_enabled(self.request, toggles.UCR_EXPRESSION_REGISTRY):
+            context['ucr_expressions'] = UCRExpression.objects.filter(domain=self.domain)
+        return context
+
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
@@ -953,56 +965,71 @@ class DataSourceDebuggerView(BaseUserConfigReportsView):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
-    doc_type = request.POST['doc_type']
-    doc_id = request.POST['doc_id']
+    input_type = request.POST['input_type']
     data_source_id = request.POST['data_source']
+    expression_text = request.POST.get('expression')
+    ucr_expression_id = request.POST.get('ucr_expression_id')
+
     try:
-        if data_source_id:
-            data_source = get_datasource_config(data_source_id, domain)[0]
-            factory_context = data_source.get_factory_context()
+        factory_context = _get_factory_context(domain, data_source_id)
+        parsed_expression = _get_parsed_expression(domain, factory_context, expression_text, ucr_expression_id)
+        if input_type == 'doc':
+            doc_type = request.POST['doc_type']
+            doc_id = request.POST['doc_id']
+            doc = _get_document(domain, doc_type, doc_id)
         else:
-            factory_context = FactoryContext.empty(domain=domain)
+            doc = json.loads(request.POST['raw_doc'])
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return JsonResponse({"result": result})
+    except HttpException as e:
+        return JsonResponse({'message': e.message}, status=e.status)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def _get_factory_context(domain, data_source_id):
+    if data_source_id:
+        try:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            return data_source.get_factory_context()
+        except DataSourceConfigurationNotFoundError:
+            raise HttpException(
+                404, _("Data source with id {} not found in domain {}.").format(data_source_id, domain)
+            )
+    return FactoryContext.empty(domain=domain)
+
+
+def _get_parsed_expression(domain, factory_context, expression_text, expression_id):
+    if expression_id:
+        try:
+            expression_model = UCRExpression.objects.get(domain=domain, id=expression_id)
+            return expression_model.wrapped_definition(factory_context)
+        except UCRExpression.DoesNotExist:
+            raise HttpException(404, _("Expression not found"))
+        except BadSpecError as e:
+            raise HttpException(400, _("Problem with expression: {}").format(e))
+
+    try:
+        expression_json = json.loads(expression_text)
+        return ExpressionFactory.from_spec(
+            expression_json,
+            context=factory_context
+        )
+    except BadSpecError as e:
+        raise HttpException(400, _("Problem with expression: {}").format(e))
+
+
+def _get_document(domain, doc_type, doc_id):
+    try:
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
         document_store = get_document_store_for_doc_type(
             domain, usable_type, load_source="eval_expression")
-        doc = document_store.get_document(doc_id)
-        expression_text = request.POST['expression']
-        expression_json = json.loads(expression_text)
-        parsed_expression = ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
-        )
-        result = parsed_expression(doc, EvaluationContext(doc))
-        return json_response({
-            "result": result,
-        })
-    except DataSourceConfigurationNotFoundError:
-        return json_response(
-            {"error": _("Data source with id {} not found in domain {}.").format(
-                data_source_id, domain
-            )},
-            status_code=404,
-        )
+        return document_store.get_document(doc_id)
     except DocumentNotFoundError:
-        return json_response(
-            {"error": _("{} with id {} not found in domain {}.").format(
-                doc_type, doc_id, domain
-            )},
-            status_code=404,
-        )
-    except BadSpecError as e:
-        return json_response(
-            {"error": _("Problem with expression: {}").format(e)},
-            status_code=400,
-        )
-    except Exception as e:
-        return json_response(
-            {"error": str(e)},
-            status_code=500,
-        )
+        raise HttpException(404, _("{} with id {} not found in domain {}.").format(doc_type, doc_id, domain))
 
 
 @login_and_domain_required
@@ -1689,6 +1716,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'type': expression.expression_type,
             'description': expression.description,
             'definition': self._truncate_value(json.dumps(expression.definition)),
+            'upstream_id': expression.upstream_id,
             'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
         }
 
