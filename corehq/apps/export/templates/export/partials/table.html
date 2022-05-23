@@ -52,6 +52,8 @@
       <th class="col-sm-1">
         {% if is_daily_saved_export %}
           {% trans "Edit Columns" %}
+        {% elif is_live_google_sheet%}
+          {% trans 'Edit Feed' %}
         {% elif not is_odata %}
           {% trans 'Edit' %}
         {% else %}
@@ -228,6 +230,29 @@
               </div>
             </div>
           <!-- /ko -->
+        <!-- /ko -->
+
+        <!-- ko if: isLiveGoogleSheet -->
+            <!-- ko with: gsheetUrl -->
+              <p>
+                <div class="input-group">
+                  <span data-bind="css: {
+                                    'input-group-btn': showLink
+                                  },
+                                  click: openRequestedSheet">
+                    <a class="btn btn-default btn-sm">
+                      <i class="fa fa-clipboard"></i>
+                      {% trans "Open Google Sheet" %}
+                    </a>
+                  </span>
+                  <input data-bind="visible: showLink,
+                                    value: url"
+                        type="text"
+                        class="form-control input-sm"
+                        readonly />
+                </div>
+              </p>
+            <!-- /ko -->
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
@@ -560,9 +585,9 @@
           <div data-bind="if: can_edit()">
             <div data-bind="if: isLocationSafeForUser()">
               <a class="btn btn-default"
-                 {% if odata_feeds_over_limit %}
-                 href="#odataFeedLimitReachedModal"
-                 data-toggle="modal"
+                 {% if feeds_over_limit %}
+                  href="#IntegratedExportLimitReachedModal"
+                  data-toggle="modal"
                  {% else %}
                  data-bind="attr: {href: editUrl}"
                  {% endif %}>
@@ -632,9 +657,9 @@
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser()">
             <a class="btn btn-default"
-                    {% if odata_feeds_over_limit %}
-                    href="#odataFeedLimitReachedModal"
-                    data-toggle="modal"
+                    {% if feeds_over_limit %}
+                      href="#IntegratedExportLimitReachedModal"
+                      data-toggle="modal"
                     {% else %}
                     data-bind="click: editExport"
                     {% endif %}>
