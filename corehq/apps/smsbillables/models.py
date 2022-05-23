@@ -279,10 +279,13 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        # HACK: if a gateway_fee.amount exists, we are guaranteed to have used that over direct_gateway_fee
+        # See TestGatewayCharge.test_gateway_fee_is_used_if_specified_on_api_backend
         used_gateway_fee = self.gateway_fee is not None and self.gateway_fee.amount is not None
         if used_gateway_fee:
             return self.multipart_count * self._single_gateway_charge
         else:
+            # See TestGatewayCharge.test_api_fee_ignores_multipart_count
             return self._single_gateway_charge
 
     @property

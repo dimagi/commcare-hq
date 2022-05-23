@@ -1,23 +1,28 @@
+import uuid
+from datetime import datetime
 from decimal import Decimal
-
-from django.test import TestCase
 from unittest.mock import patch
 
+from django.test import TestCase
+
+from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.api import create_billable_for_sms
+from corehq.apps.sms.models import OUTGOING, SMS
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
-from corehq.apps.smsbillables.tests.utils import get_fake_sms, short_text, long_text
+from corehq.apps.smsbillables.tests.utils import long_text, short_text
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+from corehq.util.test_utils import flag_enabled
 
 
-class TestGatewayChargeWithNoAPISupport(TestCase):
+class TestGatewayCharge(TestCase):
     """
     Test SmsBillable.gateway_charge for a backend that does not support an API
     """
 
     @classmethod
     def setUpClass(cls):
-        super(TestGatewayChargeWithNoAPISupport, cls).setUpClass()
+        super().setUpClass()
         cls.domain = 'sms_test_domain'
 
         cls.backend = SQLTestSMSBackend(
@@ -28,261 +33,222 @@ class TestGatewayChargeWithNoAPISupport(TestCase):
         )
         cls.backend.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.backend.delete()
-        super(TestGatewayChargeWithNoAPISupport, cls).tearDownClass()
-
-    def setUp(self):
-        super(TestGatewayChargeWithNoAPISupport, self).setUp()
-        self.billable = self.msg = None
-        self.gateway_fees = []
-
-    def tearDown(self):
-        if self.billable is not None:
-            self.billable.delete()
-        if self.gateway_fees is not None:
-            [gateway_fee.delete() for gateway_fee in self.gateway_fees]
-        if self.msg is not None:
-            self.msg.delete()
-        super(TestGatewayChargeWithNoAPISupport, self).tearDown()
-
-    def test_gateway_charge_general_criteria(self):
-        """
-        Create a gateway fee with no specific criteria and ensure gateway charge is expected
-        """
-        expected_gateway_charge = Decimal('0.01')
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, short_text)
-        self.gateway_fees += [
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, expected_gateway_charge),
-        ]
-        create_billable_for_sms(self.msg, delay=False)
-
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
-
-        actual_fee = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_fee)
-
-    def test_gateway_charge_for_country_code(self):
-        """
-        Create a generic gateway fee and a specific gateway fee with country code
-        """
-        specific_gateway_fee_amount = Decimal('0.01')
-        generic_gateway_fee_amount = Decimal('0.005')
-        expected_gateway_charge = specific_gateway_fee_amount
-
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, short_text)
-        self.gateway_fees += [
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, generic_gateway_fee_amount),
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, specific_gateway_fee_amount,
-                                     country_code=1),
-        ]
-        create_billable_for_sms(self.msg, delay=False)
-
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
-
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
-
-
-class TestGatewayChargeWithAPISupport(TestCase):
-    """
-    Test SmsBillable.gateway_charge for a backend that supports an API
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestGatewayChargeWithAPISupport, cls).setUpClass()
-        cls.domain = 'sms_test_api_domain'
-
-        cls.backend = SQLTwilioBackend(
+        cls.twilio_backend = SQLTwilioBackend(
             name="TEST API BACKEND",
             is_global=True,
             domain=cls.domain,
             hq_api_id=SQLTwilioBackend.get_api_id()
         )
-        cls.backend.save()
+        cls.twilio_backend.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.backend.delete()
-        super(TestGatewayChargeWithAPISupport, cls).tearDownClass()
-
-    def setUp(self):
-        super(TestGatewayChargeWithAPISupport, self).setUp()
-        self.billable = self.msg = None
-        self.gateway_fees = []
-
-    def tearDown(self):
-        if self.billable is not None:
-            self.billable.delete()
-        if self.gateway_fees is not None:
-            [gateway_fee.delete() for gateway_fee in self.gateway_fees]
-        if self.msg is not None:
-            self.msg.delete()
-        super(TestGatewayChargeWithAPISupport, self).tearDown()
-
-    def test_gateway_charge_with_api(self):
-        """
-        A backend that uses an API to fetch prices with a gateway_fee.amount = None should always return
-        the price specified by the API
-        """
-        expected_gateway_charge = Decimal('0.01')
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, short_text)
-        self.gateway_fees += [
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, None),
-        ]
-        with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(expected_gateway_charge, 1)):
-            create_billable_for_sms(self.msg, delay=False)
-
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
+        cls.non_global_backend = SQLTestSMSBackend(
+            name="NON GLOBAL TEST BACKEND",
+            is_global=False,
+            domain=cls.domain,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
         )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
+        cls.non_global_backend.save()
 
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
+    def test_gateway_fee_is_used_for_charge(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-    def test_gateway_charge_with_api_and_matching_gateway_fee(self):
-        """
-        A backend with both a matching gateway_fee and an API should charge using the gateway_fee
-        'Matching' means the message under test fits with the criteria set for the gateway_fee
-        """
-        api_fee = Decimal('0.01')
-        gateway_fee_amount = Decimal('0.0075')
-        # expect to charge the gateway_fee
-        expected_gateway_charge = gateway_fee_amount
+        actual_charge = billable.gateway_charge
 
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, short_text)
-        self.gateway_fees += [
-            # the default number used in this test case has a country code of 1
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, gateway_fee_amount,
-                                     country_code=1),
-        ]
+        self.assertEqual(Decimal('0.01'), actual_charge)
+
+    def test_api_fee_is_used_for_charge(self):
+        msg = self.create_sms(self.twilio_backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, None)
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(api_fee, 1)):
-            create_billable_for_sms(self.msg, delay=False)
+                   return_value=(Decimal('0.01'), 1)):
+            create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
+        actual_charge = billable.gateway_charge
 
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
+        self.assertEqual(Decimal('0.01'), actual_charge)
 
-    def test_gateway_charge_with_api_and_non_matching_gateway_fee(self):
-        """
-        A backend with non-matching gateway_fee and an API should charge using the API
-        'Non-matching' means the message under test does not fit the gateway fee criteria
-        """
-        api_fee = Decimal('0.01')
-        gateway_fee_amount = Decimal('0.0075')
-        # expect to return the api price
-        expected_gateway_charge = api_fee
-
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, short_text)
-
-        self.gateway_fees += [
-            # the default number here has a country code of 1, so make this code different
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, gateway_fee_amount,
-                                     country_code=10),
-        ]
+    def test_gateway_fee_is_used_if_specified_on_api_backend(self):
+        msg = self.create_sms(self.twilio_backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, Decimal('0.005'))
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(api_fee, 1)):
-            create_billable_for_sms(self.msg, delay=False)
+                   return_value=(Decimal('0.01'), 1)):
+            create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
+        actual_charge = billable.gateway_charge
 
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
+        self.assertEqual(Decimal('0.005'), actual_charge)
 
-    def test_gateway_charge_with_api_and_non_matching_gateway_fee_multiple_messages(self):
+    def test_gateway_fee_factors_in_multipart_count(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, long_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_charge = billable.gateway_charge
+
+        # long_text == 2 messages
+        self.assertEqual(Decimal('0.02'), actual_charge)
+
+    def test_api_fee_ignores_multipart_count(self):
         """
-        A backend with non-matching gateway_fee and an API should charge using the API
-        'Non-matching' means the message under test does not fit the gateway fee criteria
-        ASSUMPTION: we assume that the API will return a value accounting for multiple messages if applicable
-        This may be true for Twilio, but as we add other gateways that support an API we should check
+        We assume that the API will return a value accounting for multiple messages if applicable
+        This is true for Twilio, but as we add other gateways that support an API we need to verify this
         """
-        api_fee = Decimal('0.01')
-        gateway_fee_amount = Decimal('0.0075')
-        # expect to return the api fee as is
-        expected_gateway_charge = api_fee
-
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, long_text)
-
-        self.gateway_fees += [
-            # the default number here has a country code of 1, so make this code different
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, gateway_fee_amount,
-                                     country_code=10),
-        ]
+        msg = self.create_sms(self.twilio_backend, '+12223334444', OUTGOING, long_text)
+        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, None)
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(api_fee, 1)):
-            create_billable_for_sms(self.msg, delay=False)
+                   return_value=(Decimal('0.03'), 2)):
+            create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-        sms_billables = SmsBillable.objects.filter(
-            domain=self.domain,
-            log_id=self.msg.couch_id
-        )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
+        actual_charge = billable.gateway_charge
 
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
+        # long_text == 2 messages
+        self.assertEqual(Decimal('0.03'), actual_charge)
 
-    def test_gateway_charge_with_api_and_matching_gateway_fee_multiple_messages(self):
+    def test_gateway_conversion_rate_is_applied(self):
+        currency = Currency.objects.create(name='test', code='TST', rate_to_default=Decimal('0.5'))
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), currency=currency)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_charge = billable.gateway_charge
+
+        # charge / currency_rate
+        self.assertEqual(Decimal('0.02'), actual_charge)
+
+    def test_phone_number_edge_case(self):
         """
-        A backend with non-matching gateway_fee and an API should charge using the API
-        'Matching' means the message under test fits with the criteria set for the gateway_fee
-        If using the gateway fee we need to do the calculation for the cost of multiple messages
+        Discovered with tests generating random input. The number 200270303263 is parsed by the phonenumbers
+        lib to have country_code = 20, and national_number = '270303263', omitting the '0' that follows the
+        country_code. This because the area code in this case is '02', which omits the leading 0 when parsed.
         """
-        api_fee = Decimal('0.01')
-        gateway_fee_amount = Decimal('0.0075')
-        # expect to return the gateway fee x 2 (long_text takes up 2 messages)
-        expected_gateway_charge = gateway_fee_amount * 2
+        msg = self.create_sms(self.backend, '200270303263', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.1'))
+        # NOTE: prefix is '2', not '02' due to how phonenumbers parses the number
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'), country_code=20,
+                                 prefix='2', backend_instance=self.backend.couch_id)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id,
-                                self.backend.couch_id, long_text)
+        actual_gateway_charge = billable.gateway_charge
 
-        self.gateway_fees += [
-            SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, gateway_fee_amount),
-        ]
+        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
+
+    def test_non_global_backend_charge_is_zero(self):
+        msg = self.create_sms(self.non_global_backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.non_global_backend.hq_api_id, msg.direction, Decimal('0.01'))
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+
+        self.assertEqual(Decimal('0.0'), actual_gateway_charge)
+
+    @flag_enabled('ENABLE_INCLUDE_SMS_GATEWAY_CHARGING')
+    def test_non_global_backend_is_charged_if_flag_enabled(self):
+        msg = self.create_sms(self.non_global_backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.non_global_backend.hq_api_id, msg.direction, Decimal('0.01'))
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_charge = billable.gateway_charge
+
+        self.assertEqual(Decimal('0.01'), actual_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
+    def test_country_code_fee_used_over_generic_fee(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'), country_code=1)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+
+        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
+    def test_instance_fee_used_over_generic_fee(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
+                                 backend_instance=self.backend.couch_id)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+
+        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
+    def test_instance_fee_used_over_country_code_fee(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
+                                 backend_instance=self.backend.couch_id)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
+    def test_country_code_and_instance_fee_used_over_instance_fee(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
+                                 backend_instance=self.backend.couch_id)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1,
+                                 backend_instance=self.backend.couch_id)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+        self.assertEqual(Decimal('0.01'), actual_gateway_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
+    def test_country_code_and_instance_fee_with_prefix_used_over_country_code_and_instance_fee(self):
+        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'), country_code=1,
+                                 backend_instance=self.backend.couch_id)
+        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1,
+                                 prefix='222', backend_instance=self.backend.couch_id)
+        create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
+
+        actual_gateway_charge = billable.gateway_charge
+        self.assertEqual(Decimal('0.01'), actual_gateway_charge)
+
+    # TODO: Test on SmsGatewayFeeCriteria.get_by_criteria directly
+    def test_most_recently_created_gateway_is_used(self):
+        msg = self.create_sms(self.twilio_backend, '+12223334444', OUTGOING, short_text)
+        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, None)
+        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, Decimal('0.005'))
         with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(api_fee, None)):
-            create_billable_for_sms(self.msg, delay=False)
+                   return_value=(Decimal('0.01'), 1)):
+            create_billable_for_sms(msg, delay=False)
+        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
 
-        sms_billables = SmsBillable.objects.filter(
+        actual_charge = billable.gateway_charge
+
+        self.assertEqual(Decimal('0.005'), actual_charge)
+
+    def create_sms(self, backend, number, direction, text):
+        msg = SMS(
             domain=self.domain,
-            log_id=self.msg.couch_id
+            phone_number=number,
+            direction=direction,
+            date=datetime.utcnow(),
+            backend_api=backend.hq_api_id,
+            backend_id=backend.couch_id,
+            backend_message_id=uuid.uuid4().hex,
+            text=text
         )
-        self.assertEqual(sms_billables.count(), 1)
-        self.billable = sms_billables[0]
-
-        actual_gateway_charge = self.billable.gateway_charge
-        self.assertEqual(expected_gateway_charge, actual_gateway_charge)
+        msg.save()
+        return msg
