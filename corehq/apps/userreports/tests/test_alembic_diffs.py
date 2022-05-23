@@ -34,7 +34,7 @@ class TestAlembicDiffs(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestAlembicDiffs, cls).setUpClass()
-        cls.engine = connection_manager.get_engine().connect()
+        cls.engine = connection_manager.get_engine()
         cls.metadata = sqlalchemy.MetaData()
         cls.table_name = 'diff_table_' + uuid.uuid4().hex
         sqlalchemy.Table(
