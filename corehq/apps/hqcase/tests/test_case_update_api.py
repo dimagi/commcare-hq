@@ -494,3 +494,15 @@ class TestCaseAPI(TestCase):
             )
             # These requests should return a 400 because of the bad body, not a 301 redirect
             self.assertEqual(res.status_code, 400)
+
+    def test_location_id_case_property(self):
+        case_id = uuid.uuid4().hex
+        location_name = 'location'
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            create=True,
+            update={'location_id': location_name}
+        ).as_text()], domain=self.domain)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        self.assertTrue('location_id' in case.case_json)
+        self.assertEqual(location_name, case.case_json['location_id'])
