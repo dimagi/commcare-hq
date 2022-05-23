@@ -55,9 +55,9 @@
     <select>
 
     <% } else if (input == "daterange") { %>
-    <input name="<%- text ? text : "" %>"
-           id="<%- text ? text : "" %>"
-           type="text" class="daterange query-field form-control"
+    <input id="<%- text ? text : "" %>"
+           type="text"
+           class="daterange query-field form-control"
            value="<%- value %>"
            <% if (required) { %> aria-required="true"<% } %>>
 
@@ -66,8 +66,7 @@
     </div>
 
     <% } else { %>
-    <input name="<%- text ? text : "" %>"
-           id="<%- text ? text : "" %>"
+    <input id="<%- text ? text : "" %>"
            type="text"
            class="query-field form-control"
            value="<%- value %>"
