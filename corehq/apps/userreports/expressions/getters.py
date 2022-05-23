@@ -164,13 +164,13 @@ def transform_for_datatype(datatype):
     """
     identity = lambda x: x
     transform = {
+        'array': transform_array,
         'date': transform_date,
         'datetime': transform_datetime,
         'decimal': transform_decimal,
         'integer': transform_int,
         'small_integer': transform_int,
         'string': transform_unicode,
-        'array': transform_array,
     }.get(datatype) or identity
     return functools.partial(evaluate_lazy_args, transform)
 

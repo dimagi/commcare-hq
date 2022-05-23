@@ -35,7 +35,6 @@
         "datatables-scroller": "DataTables/Scroller#^1.5.1",
         "datatables.net": "1.11.3",
         "datatables.net-dt": "1.11.3",
-        "datetimepicker": "npm:jquery-datetimepicker#2.5.4",
         "detectrtc": "1.4.0",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
         "fast-levenshtein": "2.0.6",

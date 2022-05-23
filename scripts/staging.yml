@@ -63,6 +63,7 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
+    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling # Graham May 20
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
@@ -75,7 +76,7 @@ branches:
     - bmb/sso-staging  # [QA] Biyeun May 18
     - nh/loadtest_demo_users  # Norman May 20
     - sk/system-form-filter  # Simon May 20
-    - bmb/fix-hubspot-demo-logic  # Biyeun May 20
     - jls/multi-select-spf # Jenny May 20
-    - gh/upgrade-js-dev-dependencies # Graham May 20
+    - jls/tableau-permission # Jenny May 20
+    - mjr/odata_enterprise_report # Matt May 23
 submodules: { }
