@@ -889,6 +889,14 @@ def send_confirmation_email(request, domain, user_id):
     return JsonResponse(data={'success': True})
 
 
+@require_POST
+@location_safe
+def send_confirmation_sms(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_sms_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
