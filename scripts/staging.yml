@@ -63,6 +63,7 @@ branches:
     - ml/all-in-one-offboarding # Minha April 13
     - rp/gsheet/create-livegooglesheetview # Rynhard March 23
     - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
+    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling+jls/upgrade-web-apps-datepicker # Jenny May 23
     - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling # Graham May 20
     - ml/dhis2-error-handling # Minha April 21
     - rp/gsheet/update-project-info-form # Rynhard April 22
