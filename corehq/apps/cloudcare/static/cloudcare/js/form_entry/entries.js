@@ -793,6 +793,16 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
 
+    function DateTimeEntry(question, options) {
+        this.templateType = 'datetime';
+        DateTimeEntryBase.call(this, question, options);
+    }
+    DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+    DateTimeEntry.prototype.constructor = DateTimeEntryBase;
+
+    DateTimeEntry.prototype.clientFormat = 'MM/DD/YYYY HH:mm';
+    DateTimeEntry.prototype.serverFormat = 'YYYY-MM-DD HH:mm';
+
     function EthiopianDateEntry(question, options) {
         var self = this,
             ethiopianLanguageMap = {
@@ -1105,6 +1115,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.TIME:
                 entry = new TimeEntry(question, {});
+                break;
+            case Const.DATETIME:
+                entry = new DateTimeEntry(question, {});
                 break;
             case Const.GEO:
                 entry = new GeoPointEntry(question, {});
