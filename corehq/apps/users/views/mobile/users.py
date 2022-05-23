@@ -755,12 +755,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
-
-        #import ipdb
-        #ipdb.set_trace()
-        import logging
-        
-
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
@@ -775,7 +769,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             logging.info(phone_number)
-            send_account_confirmation_sms_if_necessary(couch_user, phone_number)
+            couch_user.set_default_phone_number(phone_number)
+            send_account_confirmation_sms_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -788,7 +783,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not (self.new_mobile_worker_form.cleaned_data['force_account_confirmation'] and self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
+        is_account_confirmed = not (
+            self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
         commcare_user = CommCareUser.create(
             self.domain,
@@ -835,6 +832,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }

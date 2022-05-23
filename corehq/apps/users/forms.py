@@ -11,7 +11,7 @@ from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy, gettext_noop, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -678,8 +678,8 @@ class NewMobileWorkerForm(forms.Form):
         ),
     )
     force_account_confirmation_by_sms = forms.BooleanField(
-        label=ugettext_noop("Require Account Confirmation by SMS?"),
-        help_text=ugettext_noop(
+        label=gettext_noop("Require Account Confirmation by SMS?"),
+        help_text=gettext_noop(
             "If checked, the user will be sent a confirmation SMS and asked to set their password."
         ),
         required=False,
