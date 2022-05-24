@@ -17,7 +17,10 @@ XFORM_DOC_TYPE = 'XFormInstance'
 
 
 class Command(BaseCommand):
-    help = "Queue a UCR to be built through celery"
+    help = """
+        Queue a UCR to be built through celery. This requires the ucr_indicator_queue and
+        background celery queues to be running.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
