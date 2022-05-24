@@ -22,6 +22,8 @@ babel==2.9.1
     # via flower
 backcall==0.2.0
     # via ipython
+beaker==1.11.0
+    # via oic
 billiard==3.5.0.4
     # via -r base-requirements.in
 boto3==1.17.85
@@ -60,6 +62,7 @@ cryptography==3.4.8
     # via
     #   -r prod-requirements.in
     #   jwcrypto
+    #   oic
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -74,7 +77,9 @@ decorator==4.0.11
     #   ipython
     #   jsonpath-ng
 defusedxml==0.7.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   oic
 deprecated==1.2.10
     # via pygithub
 diff-match-patch==20200713
@@ -182,6 +187,8 @@ faker==5.0.2
     # via -r base-requirements.in
 flower==0.9.2
     # via -r prod-requirements.in
+future==0.18.2
+    # via pyjwkest
 gevent==21.8.0
     # via
     #   -r base-requirements.in
@@ -275,7 +282,9 @@ lxml==4.7.1
     #   python3-saml
     #   xmlsec
 mako==1.1.3
-    # via alembic
+    # via
+    #   alembic
+    #   oic
 markdown==3.3.6
     # via -r base-requirements.in
 markupsafe==1.1.1
@@ -290,6 +299,8 @@ oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
+oic==1.3.0
+    # via -r base-requirements.in
 openpyxl==3.0.9
     # via
     #   -r base-requirements.in
@@ -345,12 +356,18 @@ pycparser==2.20
     # via cffi
 pycryptodome==3.10.1
     # via -r base-requirements.in
+pycryptodomex==3.14.1
+    # via
+    #   oic
+    #   pyjwkest
 pygithub==1.54.1
     # via -r base-requirements.in
 pygments==2.11.2
     # via ipython
 pygooglechart==0.4.0
     # via -r base-requirements.in
+pyjwkest==1.4.2
+    # via oic
 pyjwt==1.7.1
     # via
     #   pygithub
@@ -420,7 +437,9 @@ requests==2.25.1
     #   django-oauth-toolkit
     #   dropbox
     #   google-api-core
+    #   oic
     #   pygithub
+    #   pyjwkest
     #   requests-oauthlib
     #   requests-toolbelt
     #   stripe
@@ -475,6 +494,7 @@ six==1.16.0
     #   jsonpath-ng
     #   jsonschema
     #   protobuf
+    #   pyjwkest
     #   pyopenssl
     #   python-dateutil
     #   pyzxcvbn
@@ -524,7 +544,9 @@ turn-python==0.0.1
 twilio==6.5.1
     # via -r base-requirements.in
 typing-extensions==4.1.1
-    # via django-countries
+    # via
+    #   django-countries
+    #   oic
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
