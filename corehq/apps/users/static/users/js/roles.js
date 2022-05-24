@@ -183,7 +183,7 @@ hqDefine('users/js/roles',[
                         showOption: true,
                         editPermission: self.permissions.edit_commcare_users,
                         viewPermission: self.permissions.view_commcare_users,
-                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers."),
+                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers."),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-commcare-users-checkbox",
                         showViewCheckbox: true,
@@ -388,6 +388,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     }];
 
+                var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
                 self.reports = [
                     {
                         visibilityRestraint: self.permissions.access_all_locations,
@@ -398,10 +399,12 @@ hqDefine('users/js/roles',[
                     },
                     {
                         visibilityRestraint: true,
-                        text: gettext("Access All Reports"),
+                        text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
                         checkboxLabel: "access-all-reports-checkbox",
                         checkboxPermission: self.reportPermissions.all,
-                        checkboxText: gettext("Allow role to access all reports."),
+                        checkboxText: hasEmbeddedTableau
+                            ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
+                            : gettext("Allow role to access all reports."),
                     },
                 ];
                 if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
