@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.api import create_billable_for_sms
-from corehq.apps.sms.models import OUTGOING, SMS
+from corehq.apps.sms.models import OUTGOING, SMS, INCOMING
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
 from corehq.apps.smsbillables.tests.utils import long_text, short_text
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
@@ -162,83 +162,6 @@ class TestGatewayCharge(TestCase):
 
         self.assertEqual(Decimal('0.01'), actual_charge)
 
-    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
-    def test_country_code_fee_used_over_generic_fee(self):
-        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'), country_code=1)
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_gateway_charge = billable.gateway_charge
-
-        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
-
-    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
-    def test_instance_fee_used_over_generic_fee(self):
-        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'))
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
-                                 backend_instance=self.backend.couch_id)
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_gateway_charge = billable.gateway_charge
-
-        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
-
-    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
-    def test_instance_fee_used_over_country_code_fee(self):
-        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
-                                 backend_instance=self.backend.couch_id)
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_gateway_charge = billable.gateway_charge
-        self.assertEqual(Decimal('0.005'), actual_gateway_charge)
-
-    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
-    def test_country_code_and_instance_fee_used_over_instance_fee(self):
-        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'),
-                                 backend_instance=self.backend.couch_id)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1,
-                                 backend_instance=self.backend.couch_id)
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_gateway_charge = billable.gateway_charge
-        self.assertEqual(Decimal('0.01'), actual_gateway_charge)
-
-    # TODO: Test on SmsGatewayFeeCriteria.get_most_specific directly
-    def test_country_code_and_instance_fee_with_prefix_used_over_country_code_and_instance_fee(self):
-        msg = self.create_sms(self.backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.005'), country_code=1,
-                                 backend_instance=self.backend.couch_id)
-        SmsGatewayFee.create_new(self.backend.hq_api_id, msg.direction, Decimal('0.01'), country_code=1,
-                                 prefix='222', backend_instance=self.backend.couch_id)
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_gateway_charge = billable.gateway_charge
-        self.assertEqual(Decimal('0.01'), actual_gateway_charge)
-
-    # TODO: Test on SmsGatewayFeeCriteria.get_by_criteria directly
-    def test_most_recently_created_gateway_is_used(self):
-        msg = self.create_sms(self.twilio_backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, None)
-        SmsGatewayFee.create_new(self.twilio_backend.hq_api_id, msg.direction, Decimal('0.005'))
-        with patch('corehq.apps.smsbillables.models.SmsBillable.get_charge_details_through_api',
-                   return_value=(Decimal('0.01'), 1)):
-            create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_charge = billable.gateway_charge
-
-        self.assertEqual(Decimal('0.005'), actual_charge)
-
     def create_sms(self, backend, number, direction, text):
         msg = SMS(
             domain=self.domain,
@@ -252,3 +175,104 @@ class TestGatewayCharge(TestCase):
         )
         msg.save()
         return msg
+
+
+class TestGetByCriteria(TestCase):
+    """
+    There can be multiple matching gateway fees for a message
+    These tests detail various cases in which multiple gateway fees are setup with differing levels of specificity
+    The more specific gateway fee is always used over the less specific one
+    When the level of specificity is the same, the most recently created fee is used
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'sms_test_domain'
+        cls.backend = SQLTestSMSBackend(
+            name="TEST BACKEND",
+            is_global=True,
+            domain=cls.domain,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
+        cls.backend.save()
+
+    def test_most_recently_created_gateway_fee_is_used(self):
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.01'))
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.05'))
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(self.backend.hq_api_id, OUTGOING)
+
+        self.assertEqual(Decimal('0.05'), gateway_fee.amount)
+
+    def test_only_matching_gateways_are_used(self):
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.01'))
+        SmsGatewayFee.create_new(self.backend.hq_api_id, INCOMING, Decimal('0.005'))
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(self.backend.hq_api_id, OUTGOING)
+
+        self.assertEqual(Decimal('0.01'), gateway_fee.amount)
+
+    def test_country_code_fee_used_over_generic_fee(self):
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.01'))
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.005'), country_code=1)
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(self.backend.hq_api_id, OUTGOING, country_code=1)
+
+        self.assertEqual(Decimal('0.005'), gateway_fee.amount)
+
+    def test_instance_fee_used_over_generic_fee(self):
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.01'))
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.005'), backend_instance=self.backend.couch_id
+        )
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(
+            self.backend.hq_api_id, OUTGOING, backend_instance=self.backend.couch_id
+        )
+
+        self.assertEqual(Decimal('0.005'), gateway_fee.amount)
+
+    def test_instance_fee_used_over_country_code_fee(self):
+        SmsGatewayFee.create_new(self.backend.hq_api_id, OUTGOING, Decimal('0.01'), country_code=1)
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.005'), backend_instance=self.backend.couch_id
+        )
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(
+            self.backend.hq_api_id, OUTGOING, country_code=1, backend_instance=self.backend.couch_id
+        )
+
+        self.assertEqual(Decimal('0.005'), gateway_fee.amount)
+
+    def test_country_code_and_instance_fee_used_over_instance_fee(self):
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.005'), backend_instance=self.backend.couch_id
+        )
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.01'), country_code=1,
+            backend_instance=self.backend.couch_id
+        )
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(
+            self.backend.hq_api_id, OUTGOING, country_code=1, backend_instance=self.backend.couch_id
+        )
+
+        self.assertEqual(Decimal('0.01'), gateway_fee.amount)
+
+    def test_country_code_and_instance_fee_with_prefix_used_over_country_code_and_instance_fee(self):
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.005'), country_code=1,
+            backend_instance=self.backend.couch_id
+        )
+        SmsGatewayFee.create_new(
+            self.backend.hq_api_id, OUTGOING, Decimal('0.01'), country_code=1, prefix='222',
+            backend_instance=self.backend.couch_id
+        )
+
+        gateway_fee = SmsGatewayFee.get_by_criteria(
+            self.backend.hq_api_id, OUTGOING, country_code=1, backend_instance=self.backend.couch_id,
+            national_number='2223334444'
+        )
+
+        self.assertEqual(Decimal('0.01'), gateway_fee.amount)
