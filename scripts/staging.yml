@@ -78,6 +78,6 @@ branches:
     - jls/tableau-permission # Jenny May 20
     - mjr/odata_enterprise_report # Matt May 23
     - ml/case-property-bug-test # Minha May 23
-    - jls/upgrade-web-apps-datepicker # Jenny May 23
+    #- jls/upgrade-web-apps-datepicker # Jenny May 23
     - aj/mobile-worker-signup-sms # Akash May 24
 submodules: { }
