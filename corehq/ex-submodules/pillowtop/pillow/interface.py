@@ -495,7 +495,9 @@ def handle_pillow_error(pillow, change, exception):
         'Unexpected error in pillow',
         details={
             'pillow_name': pillow.get_name(),
-            'change_id': change['id']
+            'change_id': change['id'],
+            'domain': change.get('domain'),
+            'doc_type': change.get('document_type'),
         },
         exec_info=(type(exception), exception, traceback)
     )
