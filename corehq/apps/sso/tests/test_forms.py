@@ -165,15 +165,22 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         IdentityProvider.objects.all().delete()
         super().tearDown()
 
-    def _fulfill_all_active_requirements(self, except_entity_id=False, except_login_url=False,
-                                         except_logout_url=False, except_certificate=False,
-                                         except_certificate_date=False):
+    def _fulfill_all_active_saml_requirements(self, except_entity_id=False, except_login_url=False,
+                                              except_logout_url=False, except_certificate=False,
+                                              except_certificate_date=False):
         self.idp.entity_id = None if except_entity_id else 'https://test.org/metadata'
         self.idp.login_url = None if except_login_url else 'https://test.org/sls'
         self.idp.logout_url = None if except_logout_url else 'https://test.org/slo'
         self.idp.idp_cert_public = None if except_certificate else 'TEST CERTIFICATE'
         self.idp.date_idp_cert_expiration = (None if except_certificate_date
                                              else datetime.utcnow() + timedelta(days=30))
+        self.idp.save()
+
+    def _fulfill_all_active_oidc_requirements(self, except_issuer_id=False, except_client_id=False,
+                                              except_client_secret=False):
+        self.idp.entity_id = None if except_issuer_id else 'https://test-dev.onelogin.com/oidc'
+        self.idp.client_id = None if except_client_id else 'clientid'
+        self.idp.client_secret = None if except_client_secret else 'clientsecret'
         self.idp.save()
 
     def _get_post_data(self, name=None, is_editable=False, is_active=False, slug=None):
@@ -280,9 +287,9 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         idp = IdentityProvider.objects.get(id=self.idp.id)
         self.assertTrue(idp.is_editable)
 
-    def test_is_active_has_met_requirements_and_value_updates(self, *args):
+    def test_is_active_has_met_saml_requirements_and_value_updates(self, *args):
         """
-        Ensure that the requirements for `is_active` are met in order for
+        Ensure that the requirements for `is_active` for SAML IdPs are met in order for
         EditIdentityProviderAdminForm to validate and that once it is valid,
         calling update_identity_provider() updates the `is_active` field on
         the IdentityProvider as expected.
@@ -308,27 +315,77 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements(except_entity_id=True)
+        self._fulfill_all_active_saml_requirements(except_entity_id=True)
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements(except_login_url=True)
+        self._fulfill_all_active_saml_requirements(except_login_url=True)
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements(except_logout_url=True)
+        self._fulfill_all_active_saml_requirements(except_logout_url=True)
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements(except_certificate=True)
+        self._fulfill_all_active_saml_requirements(except_certificate=True)
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements(except_certificate_date=True)
+        self._fulfill_all_active_saml_requirements(except_certificate_date=True)
         with self.assertRaises(forms.ValidationError):
             edit_idp_form.clean_is_active()
 
-        self._fulfill_all_active_requirements()
+        self._fulfill_all_active_saml_requirements()
+        self.assertTrue(edit_idp_form.is_valid())
+        edit_idp_form.update_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(id=self.idp.id)
+        self.assertTrue(idp.is_active)
+
+    def test_is_active_has_met_oidc_requirements_and_value_updates(self, *args):
+        """
+        Ensure that the requirements for `is_active` for OIDC IdPs are met in order for
+        EditIdentityProviderAdminForm to validate and that once it is valid,
+        calling update_identity_provider() updates the `is_active` field on
+        the IdentityProvider as expected.
+        """
+        post_data = self._get_post_data(is_active=True)
+        self.idp.protocol = IdentityProviderProtocol.OIDC
+        self.idp.idp_type = IdentityProviderType.ONE_LOGIN
+        self.idp.save()
+        edit_idp_form = EditIdentityProviderAdminForm(self.idp, post_data)
+        edit_idp_form.cleaned_data = post_data
+
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        self._fulfill_all_active_oidc_requirements(except_issuer_id=True)
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        self._fulfill_all_active_oidc_requirements(except_client_id=True)
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        self._fulfill_all_active_oidc_requirements(except_client_secret=True)
+        with self.assertRaises(forms.ValidationError):
+            edit_idp_form.clean_is_active()
+
+        self._fulfill_all_active_oidc_requirements()
         self.assertTrue(edit_idp_form.is_valid())
         edit_idp_form.update_identity_provider(self.accounting_admin)
 

@@ -36,6 +36,9 @@ def test_invalid_geopoint_properties():
             '42.3739063 -71.1109113 0.0 whoops',
             '42.3739063 -71.1109113 0.0',  # only three elements
             3,  # wrong type
+            '24.85676533097921 240.27256620218806 0.0 0.0',  # out of bounds
+            '-11.683438999546881 -184.6692769950829 0.0 0.0',  # out of bounds
+            'NaN -71.669 0.0 0.0',
     ]:
         yield _is_invalid_input, input_string
 

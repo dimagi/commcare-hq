@@ -508,14 +508,21 @@ class EditIdentityProviderAdminForm(forms.Form):
         is_active = self.cleaned_data['is_active']
         if is_active:
             _check_is_editable_requirements(self.idp)
-            required_for_activation = [
-                (self.idp.entity_id, _('Entity ID')),
-                (self.idp.login_url, _('Login URL')),
-                (self.idp.logout_url, _('Logout URL')),
-                (self.idp.idp_cert_public
-                 and self.idp.date_idp_cert_expiration,
-                 _('Public IdP Signing Certificate')),
-            ]
+            if self.idp.protocol == IdentityProviderProtocol.SAML:
+                required_for_activation = [
+                    (self.idp.entity_id, _('Entity ID')),
+                    (self.idp.login_url, _('Login URL')),
+                    (self.idp.logout_url, _('Logout URL')),
+                    (self.idp.idp_cert_public
+                     and self.idp.date_idp_cert_expiration,
+                     _('Public IdP Signing Certificate')),
+                ]
+            else:
+                required_for_activation = [
+                    (self.idp.entity_id, _('Issuer ID')),
+                    (self.idp.client_id, _('Client ID')),
+                    (self.idp.client_secret, _('Client Secret')),
+                ]
             not_filled_out = []
             for requirement, name in required_for_activation:
                 if not requirement:
