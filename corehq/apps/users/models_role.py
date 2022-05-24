@@ -81,7 +81,7 @@ class UserRole(models.Model):
     is_archived = models.BooleanField(null=False, default=False)
     upstream_id = models.CharField(max_length=32, null=True)
     couch_id = models.CharField(max_length=126, null=True, default=_uuid_str)
-    is_commcare_user_default = models.BooleanField(null=False, default=False)
+    is_commcare_user_default = models.BooleanField(null=True, default=False)
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
