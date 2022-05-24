@@ -484,6 +484,7 @@ def handle_pillow_error(pillow, change, exception):
     ))
 
     exception_path = path_from_object(exception)
+    traceback = exception.__traceback__
     metrics_counter('commcare.change_feed.changes.exceptions', tags={
         'pillow_name': pillow.get_name(),
         'exception_type': exception_path
@@ -495,5 +496,5 @@ def handle_pillow_error(pillow, change, exception):
     # always retry document missing errors, because the error is likely with couch
     if pillow.retry_errors or isinstance(exception, DocumentMissingError):
         error = PillowError.get_or_create(change, pillow)
-        error.add_attempt(exception, sys.exc_info()[2], change.metadata)
+        error.add_attempt(exception, traceback, change.metadata)
         error.save()
