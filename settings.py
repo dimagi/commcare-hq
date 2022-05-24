@@ -168,6 +168,7 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -242,6 +243,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
 )
+
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
 
 HQ_APPS = (
     'django_digest',
