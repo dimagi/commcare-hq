@@ -762,13 +762,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-        logging.info(self.new_mobile_worker_form.cleaned_data)
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
-            logging.info(phone_number)
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
         return {
