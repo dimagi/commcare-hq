@@ -24,7 +24,8 @@ from ..dbaccessors import (
     get_users_location_ids,
     mobile_user_ids_at_locations,
     get_user_ids_from_assigned_location_ids,
-    get_user_ids_from_primary_location_ids
+    get_user_ids_from_primary_location_ids,
+    user_ids_at_locations,
 )
 from .util import make_loc, delete_all_locations
 from ..dbaccessors import get_filtered_locations_count
@@ -144,10 +145,16 @@ class TestUsersByLocation(TestCase):
             [self.meereen._id, self.pentos._id]
         )
 
-    def test_user_ids_at_locations(self):
+    def test_mobile_user_ids_at_locations(self):
         self.assertItemsEqual(
             mobile_user_ids_at_locations([self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
+        )
+
+    def test_user_ids_at_locations(self):
+        self.assertItemsEqual(
+            user_ids_at_locations([self.meereen._id]),
+            [self.daenerys._id, self.tyrion._id, self.george._id]
         )
 
 
