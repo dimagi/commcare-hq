@@ -1,7 +1,6 @@
 import itertools
 
 from django.apps import apps
-from testil import eq
 
 from corehq.apps.dump_reload.sql.dump import _get_app_list
 from corehq.apps.dump_reload.util import get_model_label
@@ -102,6 +101,7 @@ UNKNOWN_MODELS = {
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",
     "fhir.ResourceTypeRelationship",
+    "field_audit.AuditEvent",
     "fixtures.UserLookupTableStatus",
     "form_processor.DeprecatedXFormAttachmentSQL",
     "hqwebapp.HQOauthApplication",

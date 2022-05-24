@@ -220,6 +220,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
