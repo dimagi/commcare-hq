@@ -496,7 +496,7 @@ def handle_pillow_error(pillow, change, exception):
         details={
             'pillow_name': pillow.get_name(),
             'change_id': change['id']
-        }
+        },
         exec_info=(type(exception), exception, traceback)
     )
     # keep track of error attempt count
