@@ -10,7 +10,7 @@ def create_view_tableau_permission(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0043_add_release_management_permission'),
+        ('users', '0044_userrole_is_commcare_user_default'),
     ]
 
     operations = [
