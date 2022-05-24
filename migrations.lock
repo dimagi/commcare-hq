@@ -349,6 +349,8 @@ fhir
  0009_resourcetyperelationship_related_resource_is_parent
  0010_fhirimportconfig_frequency_choices
  0011_fhirimportconfig_owner_type
+field_audit
+ 0001_initial
 fixtures
  0001_initial
  0002_rm_blobdb_domain_fixtures
