@@ -41,7 +41,6 @@ class Command(BaseCommand):
         configs = []
         for data_source_id in data_source_ids:
             config, _ = get_datasource_config(data_source_id, domain)
-            assert config.asynchronous
             assert config.referenced_doc_type == self.referenced_type
             configs.append(config)
 
