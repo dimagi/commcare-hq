@@ -11,6 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -689,11 +690,20 @@ class ListRolesView(BaseRoleAccessView):
                 "Any users assigned to roles that are restricted in data access "
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
+
+        tableau_list = []
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            tableau_list = [{
+                'id': viz.id,
+                'name': viz.name,
+            } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
         return {
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
+            'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,

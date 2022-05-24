@@ -1026,6 +1026,7 @@ users
  0042_deactivatemobileworkertrigger
  0043_add_release_management_permission
  0044_userrole_is_commcare_user_default
+ 0045_add_view_tableau_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
