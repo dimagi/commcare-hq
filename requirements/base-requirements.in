@@ -22,6 +22,7 @@ django-compressor
 django-countries
 django-crispy-forms
 django-cte
+django-field-audit @ git+https://github.com/dimagi/django-field-audit.git@5dc28d3f6c27a745f2a146403d27597e2a5229a1
 django-formtools
 django-logentry-admin
 django-oauth-toolkit
