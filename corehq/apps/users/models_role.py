@@ -4,6 +4,7 @@ import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from field_audit import audit_fields
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
@@ -70,6 +71,9 @@ def _uuid_str():
     return uuid.uuid4().hex
 
 
+@audit_fields("domain", "name", "default_landing_page", "is_non_admin_editable",
+              "is_archived", "upstream_id", "couch_id",
+              "is_commcare_user_default")
 class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
@@ -221,6 +225,7 @@ class UserRole(models.Model):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
+@audit_fields("role", "permission_fk", "allow_all", "allowed_items")
 @foreign_value_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
@@ -257,6 +262,7 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
+@audit_fields("value")
 class SQLPermission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
@@ -270,6 +276,7 @@ class SQLPermission(models.Model):
             SQLPermission.objects.get_or_create(value=name)
 
 
+@audit_fields("role", "assignable_by_role")
 class RoleAssignableBy(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     assignable_by_role = models.ForeignKey(
