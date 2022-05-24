@@ -3,8 +3,9 @@ from decimal import Decimal
 from django.test import TestCase
 
 from corehq.apps.sms.api import create_billable_for_sms
+from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
-from corehq.apps.smsbillables.tests.utils import get_fake_sms, short_text, long_text
+from corehq.apps.smsbillables.tests.utils import create_sms, short_text, long_text
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
 
@@ -42,7 +43,7 @@ class TestBillableCreation(TestCase):
         super(TestBillableCreation, self).tearDown()
 
     def test_creation(self):
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, short_text)
+        self.msg = create_sms(self.domain, self.backend, '+12223334444', OUTGOING, short_text)
 
         create_billable_for_sms(self.msg, delay=False)
 
@@ -55,7 +56,7 @@ class TestBillableCreation(TestCase):
         self.assertEqual(self.billable.multipart_count, 1)
 
     def test_long_creation(self):
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, long_text)
+        self.msg = create_sms(self.domain, self.backend, '+12223334444', OUTGOING, long_text)
 
         create_billable_for_sms(self.msg, delay=False)
 
@@ -69,7 +70,7 @@ class TestBillableCreation(TestCase):
 
     def test_gateway_fee_after_creation(self):
         expected_fee = Decimal('0.005')
-        self.msg = get_fake_sms(self.domain, self.backend.hq_api_id, self.backend.couch_id, short_text)
+        self.msg = create_sms(self.domain, self.backend, '+12223334444', OUTGOING, short_text)
         self.gateway_fee = SmsGatewayFee.create_new(self.backend.hq_api_id, self.msg.direction, expected_fee)
 
         create_billable_for_sms(self.msg, delay=False)
