@@ -4,19 +4,18 @@ import attr
 from alembic.migration import MigrationContext
 
 
-def get_migration_context(connection, table_names=None, include_object=None):
+def get_migration_context(connection, table_names=None):
     opts = {'compare_type': True}
-
-    if callable(include_object):
-        opts['include_object'] = include_object
-    else:
-        opts['include_symbol'] = partial(include_symbol, table_names)
-
+    if table_names:
+        opts['include_object'] = partial(include_object, table_names)
     return MigrationContext.configure(connection, opts=opts)
 
 
-def include_symbol(names_to_include, table_name, schema):
-    return table_name in names_to_include
+def include_object(tables_to_include, object, name, type_, reflected, compare_to):
+    if type_ == "table":
+        return name in tables_to_include
+    else:
+        return True
 
 
 def get_tables_to_rebuild(diffs):
