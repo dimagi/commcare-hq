@@ -79,4 +79,5 @@ branches:
     - mjr/odata_enterprise_report # Matt May 23
     - ml/case-property-bug-test # Minha May 23
     - jls/upgrade-web-apps-datepicker # Jenny May 23
+    - akj/mw-signup
 submodules: { }
