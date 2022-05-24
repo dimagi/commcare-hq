@@ -143,6 +143,7 @@ auth
  0009_alter_user_last_name_max_length
  0010_alter_group_name_max_length
  0011_update_proxy_permissions
+ 0012_alter_user_first_name_max_length
 blobs
  0001_squashed_0009_domains
  0002_blobmeta
@@ -278,6 +279,7 @@ data_interfaces
  0023_auto_20210914_1726
  0024_add_automaticupdaterule_upstream_id
  0025_domaincaserulerun_num_errors
+ 0026_automaticupdaterule_criteria_operator
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -512,6 +514,7 @@ linked_domain
  0018_auto_20210806_1526
  0019_update_remote_base_url_help_text
  0020_auto_20211102_1501
+ 0021_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -549,6 +552,7 @@ motech
  0008_requestlog_response_headers
  0009_auto_20211122_2011
  0010_auto_20211124_1931
+ 0011_connectionsettings_is_deleted
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -626,6 +630,7 @@ pillowtop
  0003_auto_20170411_1957
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
+ 0006_add_geopoint_to_case_search_index
 products
  0001_initial
 project_limits
@@ -653,6 +658,8 @@ repeaters
  0003_migrate_connectionsettings
  0004_attempt_strings
  0005_rename_repeaterstub_to_sql_repeater
+ 0006_add_proxy_models
+ 0007_migrate_to_sql
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -909,6 +916,8 @@ sql_proxy_standby_accessors
 sso
  0001_initial
  0002_identityprovider_require_encrypted_assertions
+ 0003_oidc_onelogin_idp_update
+ 0004_login_enforcement_type_sso_test_user
 start_enterprise
  0001_initial
 stock
@@ -962,6 +971,8 @@ userreports
  0015_auto_20190701_2006
  0016_change_primary_key_to_bigint
  0017_index_cleanup
+ 0018_ucrexpression
+ 0019_ucrexpression_upstream_id
 users
  0001_add_location_permission
  0002_domainrequest
@@ -1010,6 +1021,8 @@ users
  0040_add_repr_and_changed_by_repr
  0041_migrate_reprs
  0042_deactivatemobileworkertrigger
+ 0043_add_release_management_permission
+ 0044_userrole_is_commcare_user_default
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

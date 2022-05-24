@@ -100,13 +100,19 @@ class TestIncrementalExport(TestCase):
         )
         self.export_instance.save()
 
+        connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
+            name='test conn',
+            url='http://commcarehq.org',
+            auth_type=BASIC_AUTH,
+            username='user@example.com',
+            password='s3cr3t',
+        )
         self.incremental_export = IncrementalExport.objects.create(
             domain=self.domain,
             name='test_export',
             export_instance_id=self.export_instance.get_id,
-            connection_settings=ConnectionSettings.objects.create(
-                domain=self.domain, name='test conn', url='http://commcarehq.org', auth_type=BASIC_AUTH,
-            )
+            connection_settings=connection_settings,
         )
 
     def tearDown(self):
@@ -117,7 +123,7 @@ class TestIncrementalExport(TestCase):
     def _cleanup_case(self, case_id):
         def _clean():
             interface = ElasticsearchInterface(self.es)
-            interface.delete_doc(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type, case_id)
+            interface.delete_doc(CASE_INDEX_INFO.alias, CASE_INDEX_INFO.type, case_id)
             self.es.indices.refresh(CASE_INDEX_INFO.index)
         return _clean
 

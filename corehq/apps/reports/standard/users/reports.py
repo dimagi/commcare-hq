@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -32,6 +33,7 @@ from corehq.apps.users.audit.change_messages import (
     TWO_FACTOR_FIELD,
     get_messages,
 )
+from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.users.models import UserHistory
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -40,7 +42,10 @@ from corehq.util.timezones.conversions import ServerTime
 class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport, PaginatedReportMixin):
     slug = 'user_history'
     name = gettext_lazy("User History")
-    section_name = gettext_lazy("User Management")
+    section_name = gettext_lazy("Users")
+
+    exportable = True
+    exportable_all = True
 
     dispatcher = UserManagementReportDispatcher
 
@@ -56,6 +61,10 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
     description = gettext_lazy("History of user updates")
     ajax_pagination = True
     default_sort = {'changed_at': 'desc'}
+
+    @property
+    def default_report_url(self):
+        return reverse(DefaultProjectUserSettingsView.urlname, args=[self.domain])
 
     @classmethod
     def get_primary_properties(cls, domain):
@@ -175,7 +184,14 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             self.pagination.start:self.pagination.start + self.pagination.count
         ]
         for record in records:
-            yield self._user_history_row(record, self.domain, self.timezone)
+            yield self._user_history_row(record, self.domain, self.timezone, False)
+
+    # Override parent method to add new lines to cell values of certain columns
+    @property
+    def export_rows(self):
+        records = self._get_queryset().order_by(self.ordering)
+        for record in records:
+            yield self._user_history_row(record, self.domain, self.timezone, True)
 
     @property
     def ordering(self):
@@ -193,14 +209,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             return None
         return location_object.display_name
 
-    def _user_history_row(self, record, domain, timezone):
+    def _user_history_row(self, record, domain, timezone, for_export):
+        if for_export:
+            change_messages = ", \n".join(list(get_messages(record.change_messages)))
+        else:
+            change_messages = self._html_list(list(get_messages(record.change_messages)))
         return [
             record.user_repr,
             record.changed_by_repr,
             _get_action_display(record.action),
             record.changed_via,
-            self._user_history_details_cell(record.changes, domain),
-            self._html_list(list(get_messages(record.change_messages))),
+            self._user_history_details_cell(record.changes, domain, for_export),
+            change_messages,
             ServerTime(record.changed_at).user_time(timezone).ui_string(USER_DATETIME_FORMAT),
         ]
 
@@ -219,7 +239,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             items = ["<li>{}</li>".format(format_html(change)) for change in changes]
         return mark_safe(f"<ul class='list-unstyled'>{''.join(items)}</ul>")
 
-    def _user_history_details_cell(self, changes, domain):
+    def _user_history_details_cell(self, changes, domain, for_export):
         properties = UserHistoryReport.get_primary_properties(domain)
         properties.pop("user_data", None)
         primary_changes = {}
@@ -237,11 +257,18 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 primary_changes[properties[key]] = value
                 all_changes[properties[key]] = value
         more_count = len(all_changes) - len(primary_changes)
-        return render_to_string("reports/standard/partials/user_history_changes.html", {
-            "primary_changes": self._html_list(primary_changes),
-            "all_changes": self._html_list(all_changes),
-            "more_count": more_count,
-        })
+
+        if for_export:
+            # This just adds a comma and newline between each change
+            return ", \n".join(
+                [f"{key}: {value or _('None')}" for key, value in list(all_changes.items())]
+            )
+        else:
+            return render_to_string("reports/standard/partials/user_history_changes.html", {
+                "primary_changes": self._html_list(primary_changes),
+                "all_changes": self._html_list(all_changes),
+                "more_count": more_count,
+            })
 
 
 def _get_action_display(logged_action):

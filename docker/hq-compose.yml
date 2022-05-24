@@ -32,7 +32,7 @@ services:
       TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
     privileged: true  # allows mount inside container
-    links:
+    depends_on:
       - postgres
       - couch
       - redis

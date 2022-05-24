@@ -8,12 +8,15 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sso.forms import (
     CreateIdentityProviderForm,
     EditIdentityProviderAdminForm,
-    SSOEnterpriseSettingsForm,
+    SsoSamlEnterpriseSettingsForm,
+    SsoOidcEnterpriseSettingsForm,
 )
 from corehq.apps.sso.models import (
     IdentityProvider,
     AuthenticatedEmailDomain,
     UserExemptFromSingleSignOn,
+    IdentityProviderType,
+    IdentityProviderProtocol,
 )
 from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import WebUser
@@ -48,32 +51,58 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         IdentityProvider.objects.all().delete()
         super().tearDownClass()
 
+    @staticmethod
+    def _get_post_data(owner, name, slug, idp_type=None, protocol=None):
+        return {
+            'owner': owner,
+            'name': name,
+            'slug': slug,
+            'idp_type': idp_type or IdentityProviderType.AZURE_AD,
+            'protocol': protocol or IdentityProviderProtocol.SAML,
+        }
+
     def test_bad_slug_is_invalid(self):
         """
         Ensure that a poorly formatted slug raises a ValidationError and the
         CreateIdentityProviderForm does not validate.
         """
-        post_data = {
-            'owner': self.account.id,
-            'name': 'test idp',
-            'slug': 'bad slug',
-        }
+        post_data = self._get_post_data(
+            self.account.id,
+            'test idp',
+            'bad slug',
+        )
         create_idp_form = CreateIdentityProviderForm(post_data)
         create_idp_form.cleaned_data = post_data
         with self.assertRaises(forms.ValidationError):
             create_idp_form.clean_slug()
         self.assertFalse(create_idp_form.is_valid())
 
-    def test_created_identity_provider(self):
+    def test_idp_type_and_protocol_mismatch(self):
+        """
+        Ensure that it's not possible to create an Identity Provider that has a mismatch
+        in protocol and type
+        """
+        post_data = self._get_post_data(
+            self.account.id,
+            'Azure AD for Vault Wax',
+            'vaultwax',
+            idp_type=IdentityProviderType.ONE_LOGIN
+        )
+        create_idp_form = CreateIdentityProviderForm(post_data)
+        create_idp_form.cleaned_data = post_data
+        with self.assertRaises(forms.ValidationError):
+            create_idp_form.clean_idp_type()
+
+    def test_created_saml_identity_provider(self):
         """
         Ensure that a valid CreateIdentityProviderForm successfully creates an
-        IdentityProvider.
+        IdentityProvider using SAML.
         """
-        post_data = {
-            'owner': self.account.id,
-            'name': 'Azure AD for Vault Wax',
-            'slug': 'vaultwax',
-        }
+        post_data = self._get_post_data(
+            self.account.id,
+            'Azure AD for Vault Wax',
+            'vaultwax',
+        )
         create_idp_form = CreateIdentityProviderForm(post_data)
         self.assertTrue(create_idp_form.is_valid())
         create_idp_form.create_identity_provider(self.accounting_admin)
@@ -85,6 +114,32 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         self.assertIsNotNone(idp.sp_cert_public)
         self.assertIsNotNone(idp.sp_cert_private)
         self.assertIsNotNone(idp.date_sp_cert_expiration)
+        self.assertEqual(idp.created_by, self.accounting_admin.username)
+        self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
+
+    def test_created_oidc_identity_provider(self):
+        """
+        Ensure that a valid CreateIdentityProviderform successfully creates an
+        IdentityProvider using OIDC
+        """
+        post_data = self._get_post_data(
+            self.account.id,
+            'One Login for Vault Wax',
+            'vaultwax',
+            idp_type=IdentityProviderType.ONE_LOGIN,
+            protocol=IdentityProviderProtocol.OIDC,
+        )
+        create_idp_form = CreateIdentityProviderForm(post_data)
+        self.assertTrue(create_idp_form.is_valid())
+        create_idp_form.create_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(owner=self.account)
+        self.assertEqual(idp.owner, self.account)
+        self.assertEqual(idp.slug, post_data['slug'])
+        self.assertEqual(idp.name, post_data['name'])
+        self.assertIsNone(idp.sp_cert_public)
+        self.assertIsNone(idp.sp_cert_private)
+        self.assertIsNone(idp.date_sp_cert_expiration)
         self.assertEqual(idp.created_by, self.accounting_admin.username)
         self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
 
@@ -280,7 +335,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         self.assertTrue(idp.is_active)
 
 
-class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
+class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
 
     def setUp(self):
         super().setUp()
@@ -323,7 +378,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         """
         Test that if `is_active` is set to true, then related required fields
         raise ValidationErrors if left blank. Once the requirements are met and
-        SSOEnterpriseSettingsForm validates, ensure that
+        SsoSamlEnterpriseSettingsForm validates, ensure that
         update_identity_provider() updates the `is_active` field on
         the IdentityProvider as expected.
         """
@@ -333,7 +388,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             no_login_url=True,
             no_logout_url=True,
         )
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         edit_sso_idp_form.cleaned_data = post_data
 
         with self.assertRaises(forms.ValidationError):
@@ -384,7 +439,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
         )
 
         self.assertFalse(self.idp.is_active)
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
         edit_sso_idp_form.cleaned_data = post_data
@@ -404,13 +459,13 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_that_validation_error_is_raised_when_certificate_file_is_bad(self):
         """
-        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        Ensure that SsoSamlEnterpriseSettingsForm raises a validation error
         when the certificate file contains bad data.
         """
         certificate_file = generator.get_bad_cert_file(b"bad cert")
         post_data = self._get_post_data(certificate=certificate_file)
 
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
         edit_sso_idp_form.cleaned_data = post_data
@@ -420,13 +475,13 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_that_validation_error_is_raised_when_certificate_is_expired(self):
         """
-        Ensure that SSOEnterpriseSettingsForm raises a validation error
+        Ensure that SsoSamlEnterpriseSettingsForm raises a validation error
         when the certificate file contains an expired certificate.
         """
         certificate_file = generator.get_public_cert_file(expiration_in_seconds=0)
         post_data = self._get_post_data(certificate=certificate_file)
 
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(
             self.idp, post_data, self._get_request_files(certificate_file)
         )
 
@@ -438,7 +493,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
     def test_last_modified_by_and_fields_update_when_not_active(self):
         """
         Ensure that fields properly update and that `last_modified_by` updates
-        as expected when SSOEnterpriseSettingsForm validates and
+        as expected when SsoSamlEnterpriseSettingsForm validates and
         update_identity_provider() is called.
         """
         email_domain = AuthenticatedEmailDomain.objects.create(
@@ -450,7 +505,7 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
             email_domain=email_domain,
         )
         post_data = self._get_post_data()
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         self.assertTrue(edit_sso_idp_form.is_valid())
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
 
@@ -467,15 +522,144 @@ class TestSSOEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_require_encrypted_assertions_is_saved(self):
         """
-        Ensure that SSOEnterpriseSettingsForm updates the
+        Ensure that SsoSamlEnterpriseSettingsForm updates the
         `require_encrypted_assertions property` on the IdentityProvider.
         """
         post_data = self._get_post_data(
             require_encrypted_assertions=True,
         )
         self.assertFalse(self.idp.require_encrypted_assertions)
-        edit_sso_idp_form = SSOEnterpriseSettingsForm(self.idp, post_data)
+        edit_sso_idp_form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
         self.assertTrue(edit_sso_idp_form.is_valid())
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
         self.idp.refresh_from_db()
         self.assertTrue(self.idp.require_encrypted_assertions)
+
+
+class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
+
+    def setUp(self):
+        super().setUp()
+        self.idp = IdentityProvider.objects.create(
+            owner=self.account,
+            name='OneLogin for Vault Wax',
+            slug='vaultwax',
+            created_by='otheradmin@dimagi.com',
+            last_modified_by='otheradmin@dimagi.com',
+        )
+        self.idp.is_editable = True
+
+    def tearDown(self):
+        UserExemptFromSingleSignOn.objects.all().delete()
+        AuthenticatedEmailDomain.objects.all().delete()
+        IdentityProvider.objects.all().delete()
+        super().tearDown()
+
+    @staticmethod
+    def _get_post_data(no_entity_id=False, no_client_id=False, no_client_secret=False,
+                       is_active=False):
+        return {
+            'is_active': is_active,
+            'entity_id': '' if no_entity_id else 'https://test.org/oic',
+            'client_id': '' if no_client_id else 'vaultwax',
+            'client_secret': '' if no_client_secret else 'secret',
+        }
+
+    def test_is_active_triggers_form_validation_errors(self):
+        """
+        Test that if `is_active` is set to true, then related required fields
+        raise ValidationErrors if left blank.
+        """
+        post_data = self._get_post_data(
+            is_active=True,
+            no_entity_id=True,
+            no_client_id=True,
+            no_client_secret=True,
+        )
+        edit_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        edit_form.cleaned_data = post_data
+
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_is_active()
+
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_is_active()
+
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        # should not raise exception now
+        edit_form.clean_is_active()
+
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_entity_id()
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_client_id()
+        with self.assertRaises(forms.ValidationError):
+            edit_form.clean_client_secret()
+        self.assertFalse(edit_form.is_valid())
+
+    def test_that_is_active_updates_successfully_when_requirements_are_met(self):
+        """
+        Ensure that update_identity_provider() updates the `is_active` field on
+        the IdentityProvider as expected when requirements are met.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+
+        post_data = self._get_post_data(
+            is_active=True,
+        )
+
+        self.assertFalse(self.idp.is_active)
+        edit_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        edit_form.cleaned_data = post_data
+        self.assertTrue(edit_form.is_valid())
+
+        edit_form.update_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(id=self.idp.id)
+        self.assertTrue(idp.is_editable)
+        self.assertTrue(idp.is_active)
+        self.assertEqual(idp.entity_id, post_data['entity_id'])
+        self.assertEqual(idp.client_id, post_data['client_id'])
+        self.assertEqual(idp.client_secret, post_data['client_secret'])
+
+    def test_last_modified_by_and_fields_update_when_not_active(self):
+        """
+        Ensure that fields properly update and that `last_modified_by` updates
+        as expected when SsoSamlEnterpriseSettingsForm validates and
+        update_identity_provider() is called.
+        """
+        email_domain = AuthenticatedEmailDomain.objects.create(
+            identity_provider=self.idp,
+            email_domain='vaultwax.com',
+        )
+        UserExemptFromSingleSignOn.objects.create(
+            username='b@vaultwax.com',
+            email_domain=email_domain,
+        )
+        post_data = self._get_post_data()
+        edit_sso_idp_form = SsoOidcEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(edit_sso_idp_form.is_valid())
+        edit_sso_idp_form.update_identity_provider(self.accounting_admin)
+
+        idp = IdentityProvider.objects.get(id=self.idp.id)
+        self.assertTrue(idp.is_editable)
+        self.assertFalse(idp.is_active)
+        self.assertEqual(idp.last_modified_by, self.accounting_admin.username)
+        self.assertNotEqual(idp.created_by, self.accounting_admin.username)
+        self.assertEqual(idp.entity_id, post_data['entity_id'])
+        self.assertEqual(idp.client_id, post_data['client_id'])
+        self.assertEqual(idp.client_secret, post_data['client_secret'])

@@ -382,6 +382,7 @@ class CaseUpdateConfig:
         "index_create_case_id": "target_index_create_case_id",
         "index_create_case_type": "target_index_create_case_type",
         "index_create_relationship": "target_index_create_relationship",
+        "index_create_identifier": "target_index_create_identifier",
         # index remove
         "index_remove_case_id": "target_index_remove_case_id",
         "index_remove_identifier": "target_index_remove_identifier",
@@ -412,6 +413,7 @@ class CaseUpdateConfig:
     index_create_case_id = attr.ib()
     index_create_case_type = attr.ib()
     index_create_relationship = attr.ib()
+    index_create_identifier = attr.ib()
     index_remove_case_id = attr.ib()
     index_remove_identifier = attr.ib()
     index_remove_relationship = attr.ib()
@@ -428,17 +430,17 @@ class CaseUpdateConfig:
             for attr, prop_name in cls.PROPS.items()
         }
         kwargs["intent_case"] = payload_doc
-        if "index_create_relationship" not in kwargs:
+
+        if kwargs.get("index_create_relationship") is None:
             kwargs["index_create_relationship"] = "child"
-        if "index_remove_relationship" not in kwargs:
-            kwargs["index_remove_relationship"] = "child"
+        if kwargs.get("index_create_identifier") is None:
+            kwargs["index_create_identifier"] = (
+                "parent" if kwargs["index_create_relationship"] == "child" else "host"
+            )
+
         config = CaseUpdateConfig(**kwargs)
         config.validate()
         return config
-
-    @property
-    def index_create_identifier(self):
-        return "parent" if self.index_create_relationship == "child" else "host"
 
     def validate(self):
         missing = [
@@ -634,17 +636,20 @@ class DataRegistryCaseUpdatePayloadGenerator(BasePayloadGenerator):
         return CouchUser.get_by_username(self.submission_username()).user_id
 
     def _get_configs(self, payload_doc):
-        configs = [CaseUpdateConfig.from_payload(payload_doc)]
-        extensions = payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
-        if extensions:
-            configs.extend([
-                CaseUpdateConfig.from_payload(extension_case)
-                for extension_case in extensions
-            ])
-
+        configs = self._recursive_get_configs(payload_doc)
         domains = {config.domain for config in configs}
         if len(domains) > 1:
             raise DataRegistryCaseUpdateError("Multiple updates must all be in the same domain")
+        return configs
+
+    def _recursive_get_configs(self, payload_doc):
+        configs = [CaseUpdateConfig.from_payload(payload_doc)]
+        extensions = [
+            extension_case for extension_case in payload_doc.get_subcases(CASE_INDEX_IDENTIFIER_HOST)
+            if self.repeater._allowed_case_type(extension_case)
+        ]
+        for extension_case in extensions:
+            configs.extend(self._recursive_get_configs(extension_case))
         return configs
 
     def _get_case_blocks(self, repeat_record, configs, couch_user):

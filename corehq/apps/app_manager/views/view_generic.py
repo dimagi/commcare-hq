@@ -48,7 +48,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_upstream_domain_link,
     is_active_downstream_domain,
 )
-from corehq.apps.linked_domain.util import can_domain_access_release_management
+from corehq.apps.linked_domain.util import can_domain_access_linked_domains
 from corehq.util.soft_assert import soft_assert
 
 
@@ -271,16 +271,16 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 and get_upstream_domain_link(request.domain).master_domain == d.name)
     }
     domain_names.add(request.domain)
-    if can_domain_access_release_management(request.domain):
+    # NOTE: The CopyApplicationForm checks for access to linked domains before displaying
+    linkable_domains = []
+    limit_to_linked_domains = True
+    if can_domain_access_linked_domains(request.domain):
         linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
-    else:
-        # keep behavior the same as before for LINKED_DOMAINS toggle
-        linkable_domains = domain_names
+        limit_to_linked_domains = not request.couch_user.is_superuser
     context.update({
         'domain_names': sorted(domain_names),
         'linkable_domains': sorted(linkable_domains),
-        'limit_to_linked_domains': (can_domain_access_release_management(request.domain)
-                                    and not request.couch_user.is_superuser)
+        'limit_to_linked_domains': limit_to_linked_domains
     })
     context.update({
         'copy_app_form': copy_app_form,

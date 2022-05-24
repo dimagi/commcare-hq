@@ -13,51 +13,36 @@ from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.timezones.conversions import ServerTime
 
 
-def can_user_access_release_management(user, domain, include_lite_version=True, include_toggle=False):
+def can_user_access_linked_domains(user, domain):
     """
-    :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
-    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
-    NOTE: can remove include_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
-    - toggles.LINKED_DOMAINS
-    If yes, and the user meets the criteria needed, returns True
+    Checks if the current user has access to the release management permission, either explicitly or as admin
     """
     if not user or not domain:
         return False
 
-    is_admin = user.is_domain_admin(domain)
-
-    if domain_has_privilege(domain, RELEASE_MANAGEMENT) and is_admin:
-        return True
-    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT) and is_admin:
-        return True
-    if include_toggle and toggles.LINKED_DOMAINS.enabled(domain):
-        return True
-    return False
+    privs_with_linked_domain_access = [RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT]
+    return user_has_access(user, domain) and \
+        any(domain_has_privilege(domain, priv) for priv in privs_with_linked_domain_access)
 
 
-def can_domain_access_release_management(domain, include_lite_version=True, include_toggle=False):
+def can_domain_access_linked_domains(domain, include_lite_version=True):
     """
     :param include_lite_version: set to True if the LITE_RELEASE_MANAGEMENT privilege should be checked
-    :param include_toggle: set to True if the deprecated linked domains toggle should be checked
-    NOTE: can remove include_toggle once the linked domains toggle is deleted
     Checks if the current domain has any of the following enabled:
     - privileges.RELEASE_MANAGEMENT
     - privileges.LITE_RELEASE_MANAGEMENT
-    - toggles.LINKED_DOMAINS
     """
     if not domain:
         return False
 
-    has_access = domain_has_privilege(domain, RELEASE_MANAGEMENT)
-    if include_lite_version:
-        has_access |= domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT)
-    if include_toggle:
-        has_access |= toggles.LINKED_DOMAINS.enabled(domain)
-
-    return has_access
+    if domain_has_privilege(domain, RELEASE_MANAGEMENT):
+        return True
+    if include_lite_version and domain_has_privilege(domain, LITE_RELEASE_MANAGEMENT):
+        return True
+    return False
 
 
 def _clean_json(doc):
@@ -157,7 +142,14 @@ def is_linked_report(report):
     return report.report_meta.master_id
 
 
-def is_domain_available_to_link(upstream_domain_name, candidate_name, user, should_enforce_admin=True):
+def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
+    """
+    User must be an admin or have the release management permission in both domains
+    :param upstream_domain_name: str
+    :param candidate_name: potential domain to link downstream
+    :param user: CouchUser
+    :return: True if available to link, False otherwise
+    """
     if not upstream_domain_name or not candidate_name:
         return False
 
@@ -168,18 +160,15 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user, shou
         # cannot link to an already linked project
         return False
 
-    if should_enforce_admin:
-        return user_has_admin_access_in_all_domains(user, [upstream_domain_name, candidate_name])
-    else:
-        return True
+    return user_has_access_in_all_domains(user, [upstream_domain_name, candidate_name])
 
 
-def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user, should_enforce_admin=True):
+def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user):
     """
+    User must be an admin or have the release management permission in both domains
     :param potential_upstream_domain: potential upstream domain
     :param downstream_domain: domain that would be downstream in this link if able
     :param user: couch user
-    :param should_enforce_admin: enforce user is admin in both domains
     :return: True if the potential upstream domain is eligible to link to the specified downstream domain
     """
     from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
@@ -194,10 +183,7 @@ def is_available_upstream_domain(potential_upstream_domain, downstream_domain, u
         # needs to be an active upstream domain
         return False
 
-    if should_enforce_admin:
-        return user_has_admin_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
-    else:
-        return True
+    return user_has_access_in_all_domains(user, [downstream_domain, potential_upstream_domain])
 
 
 def is_domain_in_active_link(domain_name):
@@ -208,8 +194,12 @@ def is_domain_in_active_link(domain_name):
     return is_active_downstream_domain(domain_name) or is_active_upstream_domain(domain_name)
 
 
-def user_has_admin_access_in_all_domains(user, domains):
-    return all([user.is_domain_admin(domain) for domain in domains])
+def user_has_access(user, domain):
+    return user.is_domain_admin(domain) or user.has_permission(domain, 'access_release_management')
+
+
+def user_has_access_in_all_domains(user, domains):
+    return all([user_has_access(user, domain) for domain in domains])
 
 
 def is_keyword_linkable(keyword):

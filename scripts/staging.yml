@@ -1,0 +1,82 @@
+########################
+#   STAGING WORKFLOW   #
+########################
+
+# GENERAL PROCESS
+# From your commcare-hq directory with the virtualenv turned on and master
+# checked out to safely push your changes to scripts/staging.yml
+#     $ scripts/commit-staging --push
+# to check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuildstaging --no-push
+# to rebuild from your new spec and deploy
+#     $ scripts/rebuildstaging
+#     $ commcare-cloud --control staging deploy
+# Above commands commands can be run without the flag as well.
+
+# CONFLICT RESOLUTION
+# First, determine where the conflict lies.
+# a). branch `foo` conflicts with `master`
+#       $ git checkout -b foo origin/foo
+#       $ git pull origin master
+#     try to resolve conflict
+#       $ git push origin foo
+# b). branch `foo` conflicts with branch `bar`
+#     you can't just merge foo into bar or vice versa, otherwise the PR
+#     for foo will contain commits from bar.  Instead make a third,
+#     conflict-resolution branch:
+#       $ git checkout -b foo+bar --no-track origin/foo
+#       $ git pull origin bar
+#     try to resolve conflict
+#       $ git push origin foo+bar
+#     add the branch `foo+bar` to staging.yml and move branches foo and
+#     bar to right below it
+#
+#     Later on branch B gets merged into master and removed from staging.yml.
+#     Perhaps the person who removes it also notices the A+B and does the
+#     following. Otherwise anyone who comes along and sees A+B but not both
+#     branches can feel free to assume the following need to be done.
+#       * Merge A+B into A. Since B is now gone, you want to merge the
+#         resolution into A, otherwise A will conflict with master.
+#       * Remove A+B from staging.yml. It's no longer necessary since it's
+#         now a subset of A.
+#
+# If you are unsure of how to resolve a conflict, notify the branch owner.
+
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
+
+trunk: master
+name: autostaging
+deploy_env: staging
+branches:
+    # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
+    - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
+    # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
+    - sr/es-alias # Sravan Nov 18
+    - ce/bulk-case-search # Cal July 6
+    # - sr/memoized-toggle # Sravan July 26
+    - smh/remove-extra-spinner-icons # Steph Oct 6
+    # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
+    - es/mobile-auth # Simon Nov 23
+    # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
+    - ml/all-in-one-offboarding # Minha April 13
+    - rp/gsheet/create-livegooglesheetview # Rynhard March 23
+    - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
+    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling+jls/upgrade-web-apps-datepicker # Jenny May 23
+    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling # Graham May 20
+    - ml/dhis2-error-handling # Minha April 21
+    - rp/gsheet/update-project-info-form # Rynhard April 22
+    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
+    # - ml/case-property-bug # Minha April 28
+    - es/datums+jls/multiple-referrals-eof-nav
+    - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
+    - mjr/all_safe_fixes  # Matt May 11
+    - bmb/sso-staging  # [QA] Biyeun May 18
+    - nh/loadtest_demo_users  # Norman May 20
+    - sk/system-form-filter  # Simon May 20
+    - jls/tableau-permission # Jenny May 20
+    - mjr/odata_enterprise_report # Matt May 23
+    - ml/case-property-bug-test # Minha May 23
+    - jls/upgrade-web-apps-datepicker # Jenny May 23
+submodules: { }

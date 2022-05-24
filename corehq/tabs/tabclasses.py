@@ -52,7 +52,7 @@ from corehq.apps.integration.views import (
     GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
-from corehq.apps.linked_domain.util import can_user_access_release_management, can_domain_access_release_management
+from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -893,6 +893,20 @@ class ProjectDataTab(UITab):
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
+
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.views import UCRExpressionListView
+            items.append(
+                [
+                    _("Data Manipulation"),
+                    [
+                        {
+                            "title": _("Filters and Expressions"),
+                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                    ]
+                ]
+            )
         return items
 
     @property
@@ -1093,6 +1107,12 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
+            if self.couch_user.is_superuser or toggles.SUPPORT.enabled_for_request(self._request):
+                reminders_urls.append({
+                    'title': _("Test Inbound SMS"),
+                    'url': reverse("message_test", args=[self.domain]),
+                })
 
         return reminders_urls
 
@@ -1314,6 +1334,7 @@ class ProjectUsersTab(UITab):
     view = "users_default"
 
     url_prefix_formats = (
+        '/a/{domain}/reports/user_management/',
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
@@ -2035,21 +2056,6 @@ def _get_feature_flag_items(domain, couch_user):
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
 
-    # DEPRECATED: only show this if the domain does not have release_management access
-    can_access_linked_domains = (
-        user_is_admin and toggles.LINKED_DOMAINS.enabled(domain)
-        and not can_domain_access_release_management(domain)
-    )
-    if can_access_linked_domains:
-        feature_flag_items.append({
-            'title': _('Linked Project Spaces'),
-            'url': reverse('domain_links', args=[domain])
-        })
-        feature_flag_items.append({
-            'title': _('Linked Project Space History'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
-        })
-
     from corehq.apps.registry.utils import RegistryPermissionCheck
     permission_check = RegistryPermissionCheck(domain, couch_user)
     if toggles.DATA_REGISTRY.enabled(domain) and permission_check.can_manage_some:
@@ -2069,7 +2075,7 @@ def _get_feature_flag_items(domain, couch_user):
 def _get_release_management_items(user, domain):
     items = []
     title = None
-    if not can_user_access_release_management(user, domain):
+    if not can_user_access_linked_domains(user, domain):
         return title, items
 
     if domain_has_privilege(domain, privileges.RELEASE_MANAGEMENT):

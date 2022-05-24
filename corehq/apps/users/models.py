@@ -177,6 +177,7 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
+    access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
@@ -314,6 +315,7 @@ class UserRolePresets(object):
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
+    MOBILE_WORKER = gettext_noop("Mobile Worker")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -327,7 +329,8 @@ class UserRolePresets(object):
         'read-only': READ_ONLY,
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN
+        'billing-admin': BILLING_ADMIN,
+        'mobile-worker': MOBILE_WORKER
     }
 
     # skip legacy duplicate ('no-permissions')
@@ -355,7 +358,12 @@ class UserRolePresets(object):
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
+                                                   report_an_issue=True,
+                                                   access_all_locations=True,
+                                                   access_api=False,
+                                                   download_reports=False)
         }
 
     @classmethod
@@ -588,7 +596,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_domain_admin(domain):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
             return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
@@ -2833,6 +2843,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_roles(self):
+        return False
+
+    def can_access_release_management(self):
         return False
 
 

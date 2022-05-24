@@ -41,7 +41,7 @@ DOMAIN = 'test_domain'
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -107,7 +107,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
-class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -190,18 +190,23 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_search_config_relevant(self, *args):
         config = CaseSearch()
 
-        self.assertEqual(config.get_relevant(), "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
+        self.assertEqual(
+            config.get_relevant(config.case_session_var),
+            "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(), "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
+        self.assertEqual(
+            config.get_relevant(config.case_session_var),
+            "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
 
     def test_search_config_relevant_multi_select(self, *args):
         config = CaseSearch()
 
-        self.assertEqual(config.get_relevant(multi_select=True), None)
+        self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True), "$case_id != ''")
 
         config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(multi_select=True), "double(now()) mod 2 = 0")
+        self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True),
+                         "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_remote_request(self, *args):
@@ -642,7 +647,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id='states',
             instance_uri="jr://fixture/item-list:states",
-            nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']",
+            nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']",
             label='name',
             value='id',
             sort='id',
@@ -656,7 +661,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <itemset nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']">
+            <itemset nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']">
               <label ref="name"/>
               <value ref="id"/>
               <sort ref="id"/>
@@ -671,7 +676,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id='states',
             instance_uri="jr://fixture/item-list:states",
-            nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']",
+            nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']",
             label='name',
             value='id',
             sort='id',
@@ -685,7 +690,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <itemset nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']">
+            <itemset nodeset="instance('item-list:states')/state_list/state[@state_name = 'Uttar Pradesh']">
               <label ref="name"/>
               <value ref="id"/>
               <sort ref="id"/>
@@ -697,13 +702,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         expected_instance = """
         <partial>
-          <instance id="states" src="jr://fixture/item-list:states"/>
+          <instance id="item-list:states" src="jr://fixture/item-list:states"/>
         </partial>
         """
         self.assertXmlPartialEqual(
             expected_instance,
             suite,
-            "./remote-request[1]/instance[@id='states']",
+            "./remote-request[1]/instance[@id='item-list:states']",
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
@@ -763,6 +768,38 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         expected = """
         <partial>
           <prompt key="name" allow_blank_value="true">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_exclude_from_search(self, *args):
+        self.module.search_config.properties[0].exclude = True
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" exclude="true()">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_required(self, *args):
+        self.module.search_config.properties[0].required = "#session/user/data/is_supervisor = 'n'"
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" required="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>

@@ -90,6 +90,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
+            exclude: false,
+            required: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -101,6 +103,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
+        self.exclude = ko.observable(options.exclude);
+        self.required = ko.observable(options.required);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -152,7 +156,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude', 'required',
         ], saveButton);
         return self;
     };
@@ -181,7 +185,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
-        'customRelatedCaseProperty',
+        'customRelatedCaseProperty', 'inlineSearch',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -225,6 +229,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 self.autoLaunch(_.contains(["es_only", "auto_launch"], value));
                 self.defaultSearch(_.contains(["es_only", "see_more"], value));
             },
+        });
+
+        self.inlineSearchVisible = ko.computed(() => {
+            return self.workflow() === "es_only" || self.workflow() === "auto_launch";
+        });
+
+        self.inlineSearchActive = ko.computed(() => {
+            return self.inlineSearchVisible() && self.inlineSearch();
         });
 
         // Allow search filter to be copied from another part of the page
@@ -288,6 +300,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return query.caseIdXpath();
                 }) : [],
                 custom_related_case_property: self.customRelatedCaseProperty(),
+                inline_search: self.inlineSearch(),
             };
         };
 
@@ -331,6 +344,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
+                    exclude: searchProperties[i].exclude,
+                    required: searchProperties[i].required,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -369,6 +384,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
+                        exclude: p.exclude(),
+                        required: p.required(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),

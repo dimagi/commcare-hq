@@ -116,17 +116,17 @@ def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
 
 
 def get_add_case_preloads_case_id_xpath(module, form):
-    xpath = None
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     if 'open_case' in form.active_actions():
-        xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
-    elif module.root_module_id and module.parent_select.active:
-        # This is a submodule. case_id will have changed to avoid a clash with the parent case.
-        # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
-        case_id = '_'.join((CASE_ID, form.get_case_type()))
-        xpath = CaseIDXPath(session_var(case_id))
-    else:
-        xpath = SESSION_CASE_ID
-    return xpath
+        return CaseIDXPath(session_var(form.session_var_for_action('open_case')))
+    elif module.root_module_id or module.parent_select.active:
+        # We could always get the var name from the datums but there's a performance cost
+        # If the above conditions don't apply then it should always be 'case_id'
+        var_name = EntriesHelper(module.get_app()).get_case_session_var_for_form(form)
+        if var_name:
+            return CaseIDXPath(session_var(var_name))
+        raise CaseError("Unable to determine correct session variable for case management")
+    return SESSION_CASE_ID
 
 
 def relative_path(from_path, to_path):
@@ -630,7 +630,7 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(domain, source):
+def validate_xform(source):
     if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
@@ -1402,12 +1402,12 @@ class XForm(WrappedNode):
 
     def add_case_and_meta(self, form):
         form.get_app().assert_app_v2()
-        self._create_casexml_2(form)
+        self._create_casexml(form)
         self._add_usercase(form)
         self._add_meta_2(form)
 
     def add_case_and_meta_advanced(self, form):
-        self._create_casexml_2_advanced(form)
+        self._create_casexml_advanced(form)
         self._add_meta_2(form)
 
     def already_has_meta(self):
@@ -1618,7 +1618,7 @@ class XForm(WrappedNode):
         else:
             return 'false()'
 
-    def _create_casexml_2(self, form):
+    def _create_casexml(self, form):
         actions = form.active_actions()
 
         form_opens_case = 'open_case' in actions
@@ -1626,7 +1626,15 @@ class XForm(WrappedNode):
             raise CaseError("To update a case you must either open a case or require a case to begin with")
 
         module = form.get_module()
-        is_registry_case = _module_loads_registry_case(module) and not form_opens_case
+        if form.get_module().is_multi_select():
+            self.add_instance(
+                'selected_cases',
+                'jr://instance/selected-entities'
+            )
+            default_case_management = False
+        else:
+            default_case_management = not _module_loads_registry_case(module)
+        default_case_management = default_case_management or form_opens_case
         delegation_case_block = None
         if not actions or (form.requires == 'none' and not form_opens_case):
             case_block = None
@@ -1675,10 +1683,10 @@ class XForm(WrappedNode):
                         {'external_id': actions['open_case'].external_id},
                         save_only_if_edited=self.save_only_if_edited
                     )
-            elif not is_registry_case:
+            elif default_case_management:
                 case_block.bind_case_id(case_id_xpath)
 
-            if 'update_case' in actions and not is_registry_case:
+            if 'update_case' in actions and default_case_management:
                 self._add_case_updates(
                     case_block,
                     getattr(actions.get('update_case'), 'update', {}),
@@ -1687,7 +1695,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-            if 'close_case' in actions and not is_registry_case:
+            if 'close_case' in actions and default_case_management:
                 case_block.add_close_block(self.action_relevance(actions['close_case'].condition))
 
             if 'case_preload' in actions:
@@ -1698,7 +1706,7 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath
                 )
 
-        if 'subcases' in actions and not is_registry_case:
+        if 'subcases' in actions and default_case_management:
             subcases = actions['subcases']
 
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
@@ -1818,7 +1826,7 @@ class XForm(WrappedNode):
         )
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
-    def _create_casexml_2_advanced(self, form):
+    def _create_casexml_advanced(self, form):
         self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 
@@ -1914,7 +1922,7 @@ class XForm(WrappedNode):
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             # TODO: this dict needs to be keyed by something unique to the action
             adjusted_datums = {
-                getattr(meta.action, 'case_tag', None): meta.datum.id
+                getattr(meta.action, 'case_tag', None): meta.id
                 for meta in datums_meta
                 if meta.action
             }

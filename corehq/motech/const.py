@@ -1,6 +1,6 @@
-import attr
 from django.utils.translation import gettext_lazy as _
 
+import attr
 
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
@@ -15,6 +15,12 @@ AUTH_TYPES = (
     (OAUTH1, "OAuth1"),
     (OAUTH2_PWD, "OAuth 2.0 Password Grant"),
     (OAUTH2_CLIENT, "OAuth 2.0 Client Grant"),
+)
+AUTH_TYPES_REQUIRE_USERNAME = (
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    BEARER_AUTH,
+    OAUTH2_PWD,
 )
 
 REQUEST_DELETE = "DELETE"

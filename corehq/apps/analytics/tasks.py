@@ -42,6 +42,8 @@ from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
     get_instance_string,
     get_meta,
+    get_client_ip_from_meta,
+    log_response,
 )
 from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
@@ -183,7 +185,7 @@ def _hubspot_post(url, data):
         }
         params = {'hapikey': api_key}
         response = _send_post_data(url, params, data, headers)
-        _log_response('HS', data, response)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -237,15 +239,6 @@ def _get_user_hubspot_id(web_user, retry_num=0):
     return None
 
 
-def _get_client_ip(meta):
-    x_forwarded_for = meta.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = meta.get('REMOTE_ADDR')
-    return ip
-
-
 def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
@@ -263,7 +256,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
     if hubspot_id and hubspot_cookie:
         data = {
             'email': email if email else webuser.username,
-            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
+            'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": get_client_ip_from_meta(meta)}),
         }
         if webuser:
             data.update({
@@ -274,7 +267,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             data.update(extra_fields)
 
         response = _send_hubspot_form_request(hubspot_id, form_id, data)
-        _log_response('HS', data, response)
+        log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -452,7 +445,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
             {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
-        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
@@ -469,7 +462,7 @@ def identify(email, properties):
     if api_key and analytics_enabled_for_email(email):
         km = KISSmetrics.Client(key=api_key)
         res = km.set(email, properties)
-        _log_response("KM", {'email': email, 'properties': properties}, res)
+        log_response("KM", {'email': email, 'properties': properties}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
@@ -669,7 +662,7 @@ def _email_is_valid(email):
     try:
         validate_email(email)
     except EmailNotValidError as e:
-        logger.warn(str(e))
+        logger.warning(str(e))
         return False
 
     return True
@@ -752,23 +745,7 @@ def _track_periodic_data_on_kiss(submit_json):
     os.remove(filename)
 
 
-def _log_response(target, data, response):
-    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
-    try:
-        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
-    except Exception:
-        response_text = status_code
 
-    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
-        target=target,
-        data=json.dumps(data, indent=2, sort_keys=True),
-        response=response_text
-    )
-
-    if 400 <= status_code < 600:
-        logger.error(message)
-    else:
-        logger.debug(message)
 
 
 def get_ab_test_properties(user):

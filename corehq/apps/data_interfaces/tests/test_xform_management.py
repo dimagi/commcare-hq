@@ -39,7 +39,7 @@ class XFormManagementTest(TestCase):
         request = HttpRequest()
         request.POST = QueryDict('select_all=')
         request.couch_user = self.web_user
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(self.fail).process_request(request)
         view = XFormManagementView()
         view.args = (self.domain.name,)
         view.request = request

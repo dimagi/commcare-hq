@@ -6,16 +6,14 @@ from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
+from corehq.apps.sms.phonenumbers_helper import country_name_for_country_code
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
     SmsUsageFee,
 )
-from corehq.apps.smsbillables.utils import (
-    country_name_from_isd_code_or_empty,
-    log_smsbillables_error,
-)
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.util.quickcache import quickcache
 
 NONMATCHING_COUNTRY = 'nonmatching'
@@ -79,7 +77,7 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
         ).values_list('country_code', flat=True).distinct()
         final_codes = []
         for code in country_codes:
-            country_name = country_name_from_isd_code_or_empty(code)
+            country_name = country_name_for_country_code(code)
             final_codes.append((code, country_name))
 
         search_term = self.data.get('searchString')
