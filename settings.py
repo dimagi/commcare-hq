@@ -170,6 +170,7 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     # middleware that adds cookies must come before SecureCookiesMiddleware
     'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -244,6 +245,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
 )
+
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
 
 HQ_APPS = (
     'django_digest',
