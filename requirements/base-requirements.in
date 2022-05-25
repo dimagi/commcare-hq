@@ -1,6 +1,6 @@
 alembic
 architect
-attrs<22
+attrs>=21.4
 boto3
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed

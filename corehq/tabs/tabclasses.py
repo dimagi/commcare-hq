@@ -893,6 +893,20 @@ class ProjectDataTab(UITab):
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
+
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.views import UCRExpressionListView
+            items.append(
+                [
+                    _("Data Manipulation"),
+                    [
+                        {
+                            "title": _("Filters and Expressions"),
+                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                    ]
+                ]
+            )
         return items
 
     @property
@@ -1093,6 +1107,12 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
+            if self.couch_user.is_superuser or toggles.SUPPORT.enabled_for_request(self._request):
+                reminders_urls.append({
+                    'title': _("Test Inbound SMS"),
+                    'url': reverse("message_test", args=[self.domain]),
+                })
 
         return reminders_urls
 

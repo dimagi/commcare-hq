@@ -1,6 +1,9 @@
-from jsonobject.base_properties import DefaultProperty
-from simpleeval import InvalidExpression
 import textwrap
+from functools import cached_property
+
+from jsonobject.base_properties import DefaultProperty
+from jsonpath_ng.ext import parse as jsonpath_parse
+from simpleeval import InvalidExpression
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -28,7 +31,7 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
@@ -454,6 +457,81 @@ class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return "iterate on [{}] if {}".format(expressions_text, str(self._test))
 
 
+class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    This will execute the jsonpath expression against the current doc
+    and emit the result.
+
+    .. code:: json
+
+       {
+           "type": "jsonpath",
+           "jsonpath": "form..case.name",
+       }
+
+    Given the following doc:
+
+    .. code:: json
+
+        {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+
+    This above expression will evaluate to ``["a", "b", "c", "d"]``.
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``
+
+    For more information consult the following resources:
+
+    * `Article by Stefan Goessner <https://goessner.net/articles/JsonPath/>`__
+    * `JSONPath expression syntax <https://goessner.net/articles/JsonPath/index.html#e2>`__
+    * `JSONPath Online Evaluator <https://jsonpath.com/>`__
+    """
+    type = TypeProperty('jsonpath')
+    jsonpath = StringProperty(str, required=True)
+    datatype = DataTypeProperty(required=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        ret = super().wrap(obj)
+        ret.jsonpath_expr  # noqa: call to validate
+        return ret
+
+    @cached_property
+    def jsonpath_expr(self):
+        try:
+            return jsonpath_parse(self.jsonpath)
+        except Exception as e:
+            raise BadSpecError(f'Error parsing jsonpath expression <pre>{self.jsonpath}</pre>. '
+                               f'Message is {str(e)}')
+
+    def __call__(self, item, context=None):
+        transform = transform_for_datatype(self.datatype)
+        values = [transform(match.value) for match in self.jsonpath_expr.find(item)]
+        if not values:
+            return None
+        if len(values) == 1:
+            return values[0]
+        return values
+
+    def __str__(self):
+        if self.datatype:
+            return f"({self.datatype}){self.jsonpath}"
+        return self.jsonpath
+
+
 class RootDocExpressionSpec(JsonObject):
     type = TypeProperty('root_doc')
     expression = DictProperty(required=True)
@@ -816,7 +894,10 @@ class _GroupsExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('user_id',))
     def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
-        user = CommCareUser.get_by_user_id(user_id, domain)
+        try:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+        except CouchUser.AccountTypeError:
+            user = None
         if not user:
             return []
 

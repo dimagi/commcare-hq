@@ -222,6 +222,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
             'exclude_from_search_enabled': app.enable_exclude_from_search,
+            'required_search_fields_enabled': app.enable_required_search_fields,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
@@ -246,6 +247,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'data_registry_workflow': module.search_config.data_registry_workflow,
             'additional_registry_cases': module.search_config.additional_registry_cases,
             'custom_related_case_property': module.search_config.custom_related_case_property,
+            'inline_search': module.search_config.inline_search,
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1028,6 +1030,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['allow_blank_value'] = prop['allow_blank_value']
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
+        if prop['required']:
+            ret['required'] = prop['required']
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1279,11 +1283,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 data_registry_workflow=data_registry_workflow,
                 additional_registry_cases=additional_registry_cases,
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
+                inline_search=search_properties.get('inline_search', False),
             )
 
     resp = {}
     app.save(resp)
-    return json_response(resp)
+    return JsonResponse(resp)
 
 
 @no_conflict_require_POST

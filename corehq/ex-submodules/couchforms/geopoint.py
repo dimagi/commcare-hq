@@ -30,8 +30,8 @@ class GeoPoint:
         try:
             latitude, longitude, altitude, accuracy = _extract_elements(input_string, flexible)
             return cls(
-                _to_decimal(latitude),
-                _to_decimal(longitude),
+                _validate_range(_to_decimal(latitude), -90, 90),
+                _validate_range(_to_decimal(longitude), -180, 180),
                 _to_decimal(altitude),
                 _to_decimal(accuracy),
             )
@@ -63,6 +63,12 @@ def _to_decimal(n):
     if uses_sci_notation and abs(ret) < Decimal("0.001"):
         return Decimal("0")
     return ret
+
+
+def _validate_range(d, lower, upper):
+    if (d.is_nan() or not lower <= d <= upper):
+        raise _GeoPointGenerationError(f"{d} is out of range")
+    return d
 
 
 class _GeoPointGenerationError(Exception):

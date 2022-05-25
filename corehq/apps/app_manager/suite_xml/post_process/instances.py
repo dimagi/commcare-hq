@@ -6,7 +6,10 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
+from corehq.apps.app_manager.exceptions import (
+    DuplicateInstanceIdError,
+    UnknownInstanceError,
+)
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from corehq.util.timer import time_method
@@ -19,17 +22,21 @@ class EntryInstances(PostProcessor):
     def update_suite(self):
         for entry in self.suite.entries:
             self.add_entry_instances(entry)
+        for remote_request in self.suite.remote_requests:
+            self.add_entry_instances(remote_request)
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-        custom_instances, unknown_instance_ids = self._get_custom_instances(
-            entry,
-            known_instances,
-            unknown_instance_ids
-        )
+        custom_instances = set()
+        if hasattr(entry, 'form'):
+            custom_instances, unknown_instance_ids = self._get_custom_instances(
+                entry,
+                known_instances,
+                unknown_instance_ids
+            )
         all_instances = known_instances | custom_instances
-        entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
+        self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
         relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
@@ -49,24 +56,33 @@ class EntryInstances(PostProcessor):
             for prompt in query.prompts:
                 if prompt.itemset:
                     xpaths.add(prompt.itemset.nodeset)
+                if prompt.required:
+                    xpaths.add(prompt.required)
+                if prompt.default_value:
+                    xpaths.add(prompt.default_value)
+        if entry.post:
+            if entry.post.relevant:
+                xpaths.add(entry.post.relevant)
+            for data in entry.post.data:
+                xpaths.update(
+                    xp for xp in [data.ref, data.nodeset, data.exclude] if xp
+                )
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
         entry_id = entry.command.id
-        menu_id = menu_by_command[entry_id]
-        relevances = relevance_by_menu[menu_id]
-        xpaths.update(relevances)
+        if entry_id in menu_by_command:
+            menu_id = menu_by_command[entry_id]
+            relevances = relevance_by_menu[menu_id]
+            xpaths.update(relevances)
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
-        for assertion in entry.assertions:
+        for assertion in getattr(entry, 'assertions', []):
             xpaths.add(assertion.test)
         if entry.stack:
             for frame in entry.stack.frames:
-                xpaths.add(frame.if_clause)
-                if hasattr(frame, 'datums'):
-                    for datum in frame.datums:
-                        xpaths.add(datum.value)
+                xpaths.update(frame.get_xpaths())
         xpaths.discard(None)
         return xpaths
 
@@ -109,6 +125,40 @@ class EntryInstances(PostProcessor):
     def _custom_instances_by_xmlns(self):
         return {form.xmlns: form.custom_instances for form in self.app.get_forms() if form.custom_instances}
 
+    @staticmethod
+    def require_instances(entry, instances=(), instance_ids=()):
+        used = {(instance.id, instance.src) for instance in entry.instances}
+        for instance in instances:
+            if 'remote' in instance.src:
+                continue
+            if (instance.id, instance.src) not in used:
+                entry.instances.append(
+                    # it's important to make a copy,
+                    # since these can't be reused
+                    Instance(id=instance.id, src=instance.src)
+                )
+                # make sure the first instance gets inserted
+                # right after the command
+                # once you "suggest" a placement to eulxml,
+                # it'll follow your lead and place the rest of them there too
+                if len(entry.instances) == 1:
+                    instance_node = entry.node.find('instance')
+                    command_node = entry.node.find('command')
+                    entry.node.remove(instance_node)
+                    entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+        covered_ids = {instance_id for instance_id, _ in used}
+        for instance_id in instance_ids:
+            if instance_id not in covered_ids:
+                raise UnknownInstanceError(
+                    "Instance reference not recognized: {} in XPath \"{}\""
+                    # to get xpath context to show in this error message
+                    # make instance_id a unicode subclass with an xpath property
+                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
+
+        sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
+        if sorted_instances != entry.instances:
+            entry.instances = sorted_instances
+
 
 def get_instance_factory(scheme):
     return get_instance_factory._factory_map.get(scheme, preset_instances)
@@ -134,8 +184,8 @@ INSTANCE_KWARGS_BY_ID = {
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote'),
     'results': dict(id='results', src='jr://instance/remote'),
-    'selected_cases': dict(id='selected_cases', src='jr://instance/selected_cases'),
-    'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected_cases'),
+    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities'),
+    'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected-entities'),
 }
 
 
@@ -159,7 +209,9 @@ def commcare_fixture_instances(app, instance_name):
 
 
 def _commcare_reports_instances(app, instance_name, prefix):
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+        get_uuids_by_instance_id,
+    )
     if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(app.domain):
         instance_id = instance_name[len(prefix):]
         uuid = get_uuids_by_instance_id(app).get(instance_id, [instance_id])[0]

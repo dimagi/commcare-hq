@@ -46,14 +46,14 @@ def bootstrap_smsbillables():
     bootstrap_grapevine_gateway_update(apps)
 
 
-def get_fake_sms(domain, backend_api_id, backend_couch_id, text):
+def create_sms(domain, backend, number, direction, text):
     msg = SMS(
         domain=domain,
-        phone_number='+12223334444',
-        direction=OUTGOING,
+        phone_number=number,
+        direction=direction,
         date=datetime.utcnow(),
-        backend_api=backend_api_id,
-        backend_id=backend_couch_id,
+        backend_api=backend.hq_api_id,
+        backend_id=backend.couch_id,
         backend_message_id=uuid.uuid4().hex,
         text=text
     )

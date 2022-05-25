@@ -14,7 +14,7 @@ architect==0.6.0
     # via -r base-requirements.in
 asgiref==3.5.0
     # via django
-attrs==21.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
@@ -306,7 +306,7 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 packaging==20.9
     # via sphinx
-phonenumberslite==8.12.10
+phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
@@ -410,7 +410,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.55
+reportlab==3.6.9
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -453,7 +453,7 @@ simplejson==3.17.2
     # via
     #   -r base-requirements.in
     #   django-prbac
-six==1.15.0
+six==1.16.0
     # via
     #   -r base-requirements.in
     #   django-braces
