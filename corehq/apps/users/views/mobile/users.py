@@ -1502,6 +1502,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
+    default_expiry_duration_in_hours = 24
 
     @property
     @memoized
@@ -1532,6 +1533,8 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         logging.info("user info hash {}".format(self.user_invite_hash))
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
         logging.info(f"hours_elapsed {hours_elapsed}")
-        if hours_elapsed <= 24:
+        expiry_duration_in_hours = self.domain_object.confirmation_link_expiry_time or self.default_expiry_duration_in_hours
+        logging.info(f"expiry_duration_in_hours {expiry_duration_in_hours}")
+        if hours_elapsed <= expiry_duration_in_hours:
             return True
         return False
