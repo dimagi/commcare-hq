@@ -154,8 +154,6 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
-            return []
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
