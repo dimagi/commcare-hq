@@ -17,14 +17,17 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_report_configs_for_domain,
+    get_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
+    RegistryReportConfiguration,
+    RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 
-from corehq.apps.registry.models import RegistryManager
+from corehq.apps.registry.models import DataRegistry
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
@@ -37,17 +40,21 @@ def create_linked_ucr(domain_link, report_config_id):
     else:
         report_config = ReportConfiguration.get(report_config_id)
         datasource = DataSourceConfiguration.get(report_config.config_id)
+        if not report_config and not datasource:
+            report_config = RegistryReportConfiguration(report_config_id)
+            datasource = RegistryDataSourceConfiguration.get(report_config.config_id)
+            # check if the registry is not avilable to the downstream domain
+            downstream_available_registries = DataRegistry.objects.owned_by_domain(domain_link.linked_domain)
+            registry = DataRegistry.objects.get(slug=report_config.registry_slug)
+            if registry not in downstream_available_registries:
+                message = "This report cannot be linked because the regisrty is not accessible to {}".format(
+                    domain_link.linked_domain
+                )
+                raise RegistryNotAccessible(_(message))
 
     # grab the linked app this linked report references
     try:
         downstream_app_id = get_downstream_app_id(domain_link.linked_domain, datasource.meta.build.app_id)
-        registry = RegistryManager.owned_by_domain(domain_link.master_domain)
-        if registry not in RegistryManager.accessible_to_domain(domain_link.linked_domain):
-            message = "This report cannot be linked because regisrty is not accessible to {}".format(
-                domain_link.linked_domain
-            )
-            raise RegistryNotAccessible(_(message))
-
     except MultipleDownstreamAppsError:
         raise DomainLinkError(_("This report cannot be linked because it references an app that has multiple "
                                 "downstream apps."))
