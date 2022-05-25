@@ -1,17 +1,21 @@
-from django.test import TestCase
 import os
 
+from datetime import datetime
+
+from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml.parser import case_update_from_block
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases
-from datetime import datetime
-from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone import xml
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xml import V2, V2_NAMESPACE
+from casexml.apps.case.xml.parser import case_update_from_block
+
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -144,6 +148,36 @@ class Version2CaseParsingTest(TestCase):
             </case>"""
         check_xml_line_by_line(self, expected_v2_response, v2response)
 
+    def testParseCustomProperties(self):
+        self.domain = 'test-domain'
+        submit_case_blocks([CaseBlock(
+            case_id="case_id",
+            create=True,
+            date_modified="2011-12-07T13:42:50.000000Z",
+            date_opened="2011-12-07",
+            external_id="external_id",
+            update={'location_id': "location"}
+        ).as_text()], domain=self.domain)
+        case = CommCareCase.objects.get_case("case_id", self.domain)
+
+        expected_xml = """
+            <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="case_id" user_id="" date_modified="2011-12-07T13:42:50.000000Z">
+                <create>
+                    <case_type/>
+                    <case_name/>
+                    <owner_id/>
+                </create>
+                <update>
+                    <external_id>external_id</external_id>
+                    <location_id>location</location_id>
+                    <date_opened>2011-12-07</date_opened>
+                </update>
+            </case>"""
+
+        actual_xml = xml.get_case_xml(case, [const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE], V2)
+        print(expected_xml)
+        print(actual_xml)
+        check_xml_line_by_line(self, expected_xml, actual_xml)
 
 class SimpleParsingTests(SimpleTestCase):
     def test_index_block_not_dict(self):
