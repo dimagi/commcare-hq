@@ -28,7 +28,7 @@ from corehq.apps.users.models import CouchUser, Invitation
 from corehq.util.quickcache import quickcache
 
 
-class EnterpriseReport(object):
+class EnterpriseReport:
     DOMAINS = 'domains'
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
@@ -38,9 +38,8 @@ class EnterpriseReport(object):
     title = _('Enterprise Report')
     subtitle = ''
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseReport, self).__init__()
-        self.account = BillingAccount.objects.get(id=account_id)
+    def __init__(self, account, couch_user):
+        self.account = account
         self.couch_user = couch_user
         self.slug = None
 
@@ -54,17 +53,18 @@ class EnterpriseReport(object):
 
     @classmethod
     def create(cls, slug, account_id, couch_user):
+        account = BillingAccount.objects.get(id=account_id)
         report = None
         if slug == cls.DOMAINS:
-            report = EnterpriseDomainReport(account_id, couch_user)
+            report = EnterpriseDomainReport(account, couch_user)
         elif slug == cls.WEB_USERS:
-            report = EnterpriseWebUserReport(account_id, couch_user)
+            report = EnterpriseWebUserReport(account, couch_user)
         elif slug == cls.MOBILE_USERS:
-            report = EnterpriseMobileWorkerReport(account_id, couch_user)
+            report = EnterpriseMobileWorkerReport(account, couch_user)
         elif slug == cls.FORM_SUBMISSIONS:
-            report = EnterpriseFormReport(account_id, couch_user)
+            report = EnterpriseFormReport(account, couch_user)
         elif slug == cls.ODATA_FEEDS:
-            report = EnterpriseODataReport(account_id, couch_user)
+            report = EnterpriseODataReport(account, couch_user)
 
         if report:
             report.slug = slug
@@ -110,12 +110,9 @@ class EnterpriseReport(object):
 class EnterpriseDomainReport(EnterpriseReport):
     title = _('Project Spaces')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseDomainReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseDomainReport, self).headers
+        headers = super().headers
         return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
                 _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
 
@@ -136,12 +133,9 @@ class EnterpriseDomainReport(EnterpriseReport):
 class EnterpriseWebUserReport(EnterpriseReport):
     title = _('Web Users')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseWebUserReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseWebUserReport, self).headers
+        headers = super().headers
         return [_('Email Address'), _('Name'), _('Role'), _('Last Login [UTC]'),
                 _('Last Access Date [UTC]'), _('Status')] + headers
 
@@ -185,12 +179,9 @@ class EnterpriseWebUserReport(EnterpriseReport):
 class EnterpriseMobileWorkerReport(EnterpriseReport):
     title = _('Mobile Workers')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseMobileWorkerReport, self).__init__(account_id, couch_user)
-
     @property
     def headers(self):
-        headers = super(EnterpriseMobileWorkerReport, self).headers
+        headers = super().headers
         return [_('Username'), _('Name'), _('Email Address'), _('Role'), _('Created Date [UTC]'),
                 _('Last Sync [UTC]'), _('Last Submission [UTC]'), _('CommCare Version'), _('User ID')] + headers
 
@@ -219,14 +210,14 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
 
-    def __init__(self, account_id, couch_user):
-        super(EnterpriseFormReport, self).__init__(account_id, couch_user)
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
         self.window = 30
         self.subtitle = _("past {} days").format(self.window)
 
     @property
     def headers(self):
-        headers = super(EnterpriseFormReport, self).headers
+        headers = super().headers
         return [_('Form Name'), _('Submitted [UTC]'), _('App Name'), _('Mobile User')] + headers
 
     @quickcache(['self.account.id', 'domain_name'], timeout=60)
@@ -268,8 +259,8 @@ class EnterpriseODataReport(EnterpriseReport):
     title = _lazy('OData Reports')
     MAXIMUM_EXPECTED_EXPORTS = 150
 
-    def __init__(self, account_id, couch_user):
-        super().__init__(account_id, couch_user)
+    def __init__(self, account, couch_user):
+        super().__init__(account, couch_user)
         self.export_fetcher = ODataExportFetcher()
 
     @property

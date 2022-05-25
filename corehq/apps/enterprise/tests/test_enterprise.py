@@ -99,10 +99,6 @@ class EnterpriseODataReportTests(SimpleTestCase):
         self.addCleanup(count_patcher.stop)
 
         self.billing_account = BillingAccount()
-        billing_account_patcher = patch.object(BillingAccount.objects, 'get', return_value=self.billing_account)
-        billing_account_patcher.start()
-        self.addCleanup(billing_account_patcher.stop)
-
         self.next_id = 1
 
     def _create_export(self, name='TestExport', domain='TestDomain', row_count=10):
