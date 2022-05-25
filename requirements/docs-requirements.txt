@@ -295,7 +295,7 @@ openpyxl==3.0.9
     #   commcaretranslationchecker
 packaging==20.9
     # via sphinx
-phonenumberslite==8.12.10
+phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
