@@ -5,7 +5,7 @@ services:
     extends:
       file: hq-compose.yml
       service: formplayer
-    links:
+    depends_on:
       - postgres
       - redis
     expose:

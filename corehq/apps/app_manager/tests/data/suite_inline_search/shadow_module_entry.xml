@@ -1,0 +1,41 @@
+<partial>
+    <entry>
+        <form>xmlns1.0</form>
+        <post
+            relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0"
+            url="http://localhost:8000/a/test_domain/phone/claim-case/">
+            <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+        </post>
+        <command id="m1-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <instance id="casedb" src="jr://instance/casedb"/>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <query default_search="false" storage-instance="results" template="case"
+                   url="http://localhost:8000/a/test_domain/phone/search/456/">
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                    <display>
+                        <text>
+                            <locale id="search_property.m1.name"/>
+                        </text>
+                    </display>
+                </prompt>
+            </query>
+            <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id"
+                   nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                   value="./@case_id"/>
+        </session>
+        <assertions>
+            <assert
+                test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 1">
+                <text>
+                    <locale id="case_search.claimed_case.case_missing"/>
+                </text>
+            </assert>
+        </assertions>
+    </entry>
+</partial>

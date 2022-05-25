@@ -185,7 +185,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
-        'customRelatedCaseProperty',
+        'customRelatedCaseProperty', 'inlineSearch',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -229,6 +229,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 self.autoLaunch(_.contains(["es_only", "auto_launch"], value));
                 self.defaultSearch(_.contains(["es_only", "see_more"], value));
             },
+        });
+
+        self.inlineSearchVisible = ko.computed(() => {
+            return self.workflow() === "es_only" || self.workflow() === "auto_launch";
+        });
+
+        self.inlineSearchActive = ko.computed(() => {
+            return self.inlineSearchVisible() && self.inlineSearch();
         });
 
         // Allow search filter to be copied from another part of the page
@@ -292,6 +300,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return query.caseIdXpath();
                 }) : [],
                 custom_related_case_property: self.customRelatedCaseProperty(),
+                inline_search: self.inlineSearch(),
             };
         };
 

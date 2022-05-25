@@ -58,6 +58,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 var urlObject = Util.currentUrlToObject();
                 urlObject.setSelections(response.selections);
                 Util.setUrlToObject(urlObject, true);
+                sessionStorage.removeItem('selectedValues');
             }
 
             if (response.commands) {

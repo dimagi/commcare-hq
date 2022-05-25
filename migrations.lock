@@ -659,6 +659,7 @@ repeaters
  0004_attempt_strings
  0005_rename_repeaterstub_to_sql_repeater
  0006_add_proxy_models
+ 0007_migrate_to_sql
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1021,6 +1022,7 @@ users
  0041_migrate_reprs
  0042_deactivatemobileworkertrigger
  0043_add_release_management_permission
+ 0044_userrole_is_commcare_user_default
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
