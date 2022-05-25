@@ -113,7 +113,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, Ge
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS
+    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -384,6 +384,18 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    confirmation_link_expiry = IntegerField(
+        label=gettext_lazy("Account confirmation link expiry"),
+        required=False,
+        min_value=1,
+        help_text=gettext_lazy(
+            """
+            Default time(in hours) for which account confirmation link will be valid.
+            If no value is given, system default of 24 hours will be used.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -423,6 +435,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
+
+        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            del self.fields['confirmation_link_expiry']
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
