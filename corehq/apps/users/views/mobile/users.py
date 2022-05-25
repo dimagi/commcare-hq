@@ -1499,7 +1499,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 @location_safe
-@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
 

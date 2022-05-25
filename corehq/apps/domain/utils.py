@@ -135,8 +135,6 @@ def log_domain_changes(user, domain, new_obj, old_obj):
 
 
 def encrypt_account_confirmation_info(commcare_user):
-    domain_obj = Domain.get_by_name(commcare_user.domain)
-    link_expiry_time = domain_obj.confirmation_link_expiry_time
     import logging
     import json
     import time
