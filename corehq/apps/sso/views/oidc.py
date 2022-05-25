@@ -34,6 +34,7 @@ def sso_oidc_auth(request, idp_slug):
     client = get_client_for_identity_provider(request.idp)
     try:
         user_info = get_user_information_or_throw_error(client, request)
+        request.session['oidcUserData'] = user_info
         user = auth.authenticate(
             request=request,
             username=user_info['email'],

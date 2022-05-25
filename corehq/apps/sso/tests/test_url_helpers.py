@@ -1,29 +1,31 @@
-from django.test import RequestFactory, TestCase
+from unittest import mock
 
-from corehq.apps.sso.models import AuthenticatedEmailDomain
-from corehq.apps.sso.tests import generator
+from django.test import RequestFactory, SimpleTestCase
+
 from corehq.apps.sso.utils.url_helpers import add_username_hint_to_login_url
 
 
-class TestAddUsernameHintToLoginUrl(TestCase):
+class FakeIdp:
+
+    def __init__(self, slug):
+        self.slug = slug
 
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.account = generator.get_billing_account_for_idp()
+    def get_active_idp_by_username(cls, username):
+        if username.endswith('foo.com'):
+            return FakeIdp('loginhint')
 
-        cls.idp = generator.create_idp('loginhint', cls.account)
-        cls.idp.is_active = True
-        cls.idp.save()
-        AuthenticatedEmailDomain.objects.create(
-            email_domain='foo.com',
-            identity_provider=cls.idp,
-        )
+
+@mock.patch(
+    'corehq.apps.sso.utils.url_helpers.IdentityProvider.get_active_identity_provider_by_username',
+    FakeIdp.get_active_idp_by_username
+)
+class TestAddUsernameHintToLoginUrl(SimpleTestCase):
 
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        self.request.idp = self.idp
+        self.request.idp = FakeIdp('loginhint')
         self.request.GET = {}
 
     def test_hint_is_added_to_login_url(self):
