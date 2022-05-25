@@ -9,6 +9,13 @@ from corehq.apps.enterprise.enterprise import EnterpriseODataReport
 
 
 class EnterpriseODataReportTests(SimpleTestCase):
+    def test_headers(self):
+        report = self._create_report_for_domains()
+        self.assertEqual(report.headers, [
+            'Odata feeds used', 'Odata feeds available', 'Report Names', 'Number of rows',
+            'Project Space Name', 'Project Name', 'Project URL'
+        ])
+
     def test_total_number_display_odata_reports_across_enterprise(self):
         domain_one = self._create_domain(name='domain_one')
         domain_two = self._create_domain(name='domain_two')
