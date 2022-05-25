@@ -125,6 +125,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
             processed = table_count * 10 + (10 * item_count / items_in_table)
             DownloadBase.set_progress(task, processed, 10 * total_tables)
 
+    cached_types = []
     existing_data_types_by_tag = {
         data_type.tag: data_type
         for data_type in FixtureDataType.by_domain(domain)
@@ -216,8 +217,9 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
             # delay removing data items for the previously delete type as that requires a
             # couch view hit which introduces another opportunity for failure
             delete_unneeded_fixture_data_item.delay(domain, existing_data_type._id)
-            clear_fixture_quickcache(domain, [existing_data_type])
-        clear_fixture_cache(domain)
+            cached_types.append(existing_data_type)
+    clear_fixture_quickcache(domain, cached_types)
+    clear_fixture_cache(domain)
 
     return return_val
 
@@ -230,7 +232,12 @@ def clear_fixture_quickcache(domain, data_types):
         :domain: The domain that has been updated
         :data_types: List of FixtureDataType objects with stale cache
     """
+    from corehq.apps.fixtures.dbaccessors import (
+        get_fixture_data_types,
+        get_fixture_items_for_data_type
+    )
     if not data_types:
+        get_fixture_data_types.clear(domain)
         return
 
     type_ids = set()
@@ -238,7 +245,6 @@ def clear_fixture_quickcache(domain, data_types):
         type_ids.add(data_type.get_id)
         data_type.clear_caches()
 
-    from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
     for type_id in type_ids:
         get_fixture_items_for_data_type.clear(domain, type_id)
 

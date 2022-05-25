@@ -12,7 +12,10 @@ from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
-from corehq.apps.fixtures.upload.run_upload import _run_fixture_upload
+from corehq.apps.fixtures.upload.run_upload import (
+    _run_fast_fixture_upload,
+    _run_fixture_upload,
+)
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import generate_cases, make_make_path
 
@@ -284,6 +287,7 @@ class TestFixtureWorkbook(SimpleTestCase):
 
 
 class TestFixtureUpload(TestCase):
+    do_upload = _run_fixture_upload
 
     headers = (
         (
@@ -329,7 +333,7 @@ class TestFixtureUpload(TestCase):
     def upload(self, rows):
         data = self.make_rows(rows)
         workbook = self.get_workbook_from_data(self.headers, data)
-        _run_fixture_upload(self.domain, workbook)
+        type(self).do_upload(self.domain, workbook)
 
     def get_rows(self, field='name'):
         # return list of field values of fixture table 'things'
@@ -353,3 +357,7 @@ class TestFixtureUpload(TestCase):
         apple_id = self.get_rows(None)[0]._id
         self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+
+class TestFastFixtureUpload(TestFixtureUpload):
+    do_upload = _run_fast_fixture_upload
