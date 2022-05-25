@@ -1,6 +1,7 @@
 import io
 import json
 import re
+import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -119,6 +120,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq import toggles
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -762,13 +764,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-        logging.info(self.new_mobile_worker_form.cleaned_data)
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
         if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
-            logging.info(phone_number)
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
         return {
@@ -1497,3 +1497,41 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
+
+@location_safe
+@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
+    urlname = "commcare_user_confirm_account_sms"
+
+    @property
+    @memoized
+    def user_invite_hash(self):
+        return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.user_invite_hash.get('user_id')
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            if not self.is_invite_valid():
+                raise ValidationError("Invite is not valid or expired.")
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': self.user.email,
+            })
+
+    def is_invite_valid(self):
+        import logging
+        logging.info("user info hash {}".format(self.user_invite_hash))
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
+        logging.info(f"hours_elapsed {hours_elapsed}")
+        if hours_elapsed <= 24:
+            return True
+        return False
