@@ -1,4 +1,3 @@
-import tempfile
 from io import BytesIO
 
 from django.test import SimpleTestCase, TestCase
@@ -53,18 +52,21 @@ validation_test_cases = [
             (None, 'N', 'State', 'County')
         ],
         'level_2': [
-            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1', 'name: lang 2', 'field: name 2', 'field: level_1'),
+            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1',
+                                                'name: lang 2', 'field: name 2', 'field: level_1'),
             (None, 'N', 'barnstable', 'en', 'Barnstable', 'fra', 'Barnstable', 'MA'),
             (None, 'N', 'berkshire', 'en', 'Berkshire', 'fra', 'Berkshire', 'MA'),
             (None, 'N', 'bristol', 'en', 'Bristol', 'fra', 'Bristol', 'MA'),
             (None, 'N', 'dukes', 'en', 'Dukes', 'fra', 'Dukes', 'MA')
         ],
         'level_1': [
-            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1', 'name: lang 2', 'field: name 2', 'field: country'),
+            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1',
+                                                'name: lang 2', 'field: name 2', 'field: country'),
             (None, 'N', 'MA', 'en', 'Massachusetts', 'fra', 'Massachusetts', 'USA')
         ],
         'types': [
-            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 2', 'field 3', 'field 4', 'field 5', 'field 2 : property 1'),
+            ('Delete(Y/N)', 'table_id', 'is_global?',
+             'field 1', 'field 2', 'field 3', 'field 4', 'field 5', 'field 2 : property 1'),
             ('N', 'level_1', 'yes', 'id', 'name', 'country', 'other', 'fun_fact', 'lang'),
             ('N', 'level_2', 'yes', 'id', 'name', 'level_1', 'other', None, 'lang'),
             ('N', 'level_3', 'yes', 'id', 'name', 'level_2', 'other', None, 'lang')
@@ -233,35 +235,32 @@ validation_test_cases = [
 ]
 
 
-@generate_cases(
-    validation_test_cases
-)
-def test_validation(self, filename, error_messages, file_contents):
-    if file_contents:
-        workbook = openpyxl.Workbook()
-        for title, rows in file_contents.items():
-            if title == 'types':
-                sheet = workbook.create_sheet(title, 0)
-            else:
-                sheet = workbook.create_sheet(title)
-            for row in rows:
-                sheet.append(row)
-        upload_file = tempfile.TemporaryFile()
-        workbook.save(upload_file)
-        upload_file.seek(0)
-    else:
-        upload_file = _make_path('test_upload', '{}.xlsx'.format(filename))
-    if error_messages:
-        with self.assertRaises(FixtureUploadError) as context:
-            validate_fixture_file_format(upload_file)
-        self.assertEqual(context.exception.errors, error_messages)
-    else:
-        # assert doesn't raise anything
-        validate_fixture_file_format(upload_file)
-
-
-class TestValidationComprehensiveness(SimpleTestCase):
+class TestValidation(SimpleTestCase):
     maxDiff = None
+
+    @generate_cases(validation_test_cases)
+    def test_validation(self, filename, error_messages, file_contents):
+        if file_contents:
+            workbook = openpyxl.Workbook()
+            for title, rows in file_contents.items():
+                if title == 'types':
+                    sheet = workbook.create_sheet(title, 0)
+                else:
+                    sheet = workbook.create_sheet(title)
+                for row in rows:
+                    sheet.append(row)
+            upload_file = BytesIO()
+            workbook.save(upload_file)
+            upload_file.seek(0)
+        else:
+            upload_file = _make_path('test_upload', '{}.xlsx'.format(filename))
+        if error_messages:
+            with self.assertRaises(FixtureUploadError) as context:
+                validate_fixture_file_format(upload_file)
+            self.assertEqual(context.exception.errors, error_messages)
+        else:
+            # assert doesn't raise anything
+            validate_fixture_file_format(upload_file)
 
     def test_comprehensiveness(self):
         to_test = set(FAILURE_MESSAGES.keys())
@@ -272,6 +271,16 @@ class TestValidationComprehensiveness(SimpleTestCase):
             "Some fixture upload errors are still untested.\n\n"
             "You have to write a test for the following fixture upload errors:\n{}"
             .format('\n'.join(untested)))
+
+
+class TestFixtureWorkbook(SimpleTestCase):
+
+    def test_indexed_field(self):
+        workbook = get_workbook(_make_path('test_upload', 'ok.xlsx'))
+        type_sheets = workbook.get_all_type_sheets()
+        indexed_field = type_sheets[0].fields[0]
+        self.assertEqual(indexed_field.field_name, 'name')
+        self.assertTrue(indexed_field.is_indexed)
 
 
 class TestFixtureUpload(TestCase):
@@ -293,70 +302,54 @@ class TestFixtureUpload(TestCase):
         return (
             (
                 'types',
-                ('N', 'things', 'yes', 'name', 'yes')
+                [('N', 'things', 'yes', 'name', 'yes')]
             ),
             (
                 'things',
-                tuple(item_rows)
+                item_rows
             )
         )
 
     @classmethod
     def setUpClass(cls):
-        super(TestFixtureUpload, cls).setUpClass()
+        super().setUpClass()
         cls.domain = 'fixture-upload-test'
         cls.project = create_domain(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(TestFixtureUpload, cls).tearDownClass()
+        super().tearDownClass()
 
-    def _get_workbook(self, filename):
-        return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))
-
-    def _get_workbook_from_data(self, headers, rows):
+    def get_workbook_from_data(self, headers, rows):
         file = BytesIO()
         export_raw(headers, rows, file, format=Format.XLS_2007)
-        with tempfile.TemporaryFile(suffix='.xlsx') as f:
-            f.write(file.getvalue())
-            f.seek(0)
-            return get_workbook(f)
+        return get_workbook(file)
 
-    def get_fixture_items(self, attribute):
-        # return list of 'attribute' values of fixture table 'things'
-        fixtures = []
-        for fixture in FixtureDataItem.get_item_list(self.domain, 'things'):
-            fixtures.append(fixture.fields.get(attribute).field_list[0].field_value)
-        return fixtures
+    def upload(self, rows):
+        data = self.make_rows(rows)
+        workbook = self.get_workbook_from_data(self.headers, data)
+        _run_fixture_upload(self.domain, workbook)
 
-    def test_indexed_field(self):
-        # test indexed fields are ready correctly
-        workbook = self._get_workbook('ok')
-        type_sheets = workbook.get_all_type_sheets()
-        indexed_field = type_sheets[0].fields[0]
-        self.assertEqual(indexed_field.field_name, 'name')
-        self.assertTrue(indexed_field.is_indexed)
+    def get_rows(self, field='name'):
+        # return list of field values of fixture table 'things'
+        def get_field(item):
+            return item.fields.get(field).field_list[0].field_value
+
+        def sort_key(item):
+            return item.sort_key, get_field(item)
+
+        items = FixtureDataItem.get_item_list(self.domain, 'things')
+        if field is None:
+            return items
+        return [get_field(item) for item in sorted(items, key=sort_key)]
 
     def test_row_addition(self):
         # upload and then reupload with addition of a new fixture-item should create new items
-
-        initial_rows = [(None, 'N', 'apple')]
-        rows = self.make_rows(initial_rows)
-        workbook = self._get_workbook_from_data(self.headers, rows)
-        _run_fixture_upload(self.domain, workbook)
-
-        self.assertListEqual(
-            self.get_fixture_items('name'),
-            ['apple']
-        )
+        self.upload([(None, 'N', 'apple')])
+        self.assertEqual(self.get_rows(), ['apple'])
 
         # reupload with additional row
-        apple_id = FixtureDataItem.get_item_list(self.domain, 'things')[0]._id
-        new_rows = [(apple_id, 'N', 'apple'), (None, 'N', 'orange')]
-        workbook = self._get_workbook_from_data(self.headers, self.make_rows(new_rows))
-        _run_fixture_upload(self.domain, workbook)
-        self.assertItemsEqual(
-            self.get_fixture_items('name'),
-            ['apple', 'orange']
-        )
+        apple_id = self.get_rows(None)[0]._id
+        self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'orange')])
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
