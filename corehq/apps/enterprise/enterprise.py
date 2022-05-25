@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _lazy
 
-from itertools import chain
 from memoized import memoized
 
 from couchforms.analytics import get_last_form_submission_received
@@ -17,8 +16,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.calculations import sms_in_last
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
-from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
-from corehq.apps.export.dbaccessors import get_brief_exports
+from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors import (
@@ -272,57 +270,46 @@ class EnterpriseODataReport(EnterpriseReport):
 
     def __init__(self, account_id, couch_user):
         super().__init__(account_id, couch_user)
+        self.export_fetcher = ODataExportFetcher()
 
     @property
     def headers(self):
         headers = super().headers
-        return [_('Odata feeds used'), _('Odata feeds available'), _('Export Name'), _('Lines Used')] + headers
+        return [_('Odata feeds used'), _('Odata feeds available'), _('Report Names'),
+            _('Number of rows')] + headers
 
     def total_for_domain(self, domain_obj):
-        return len(self._get_odata_exports(domain_obj))
+        return self.export_fetcher.get_export_count(domain_obj.name)
 
     def rows_for_domain(self, domain_obj):
-        export_docs = self._get_odata_exports(domain_obj)
-        if len(export_docs) > self.MAXIMUM_EXPECTED_EXPORTS:
-            return [self._get_domain_summary_line(domain_obj, export_docs, None)]
+        export_count = self.total_for_domain(domain_obj)
+        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            return [self._get_domain_summary_line(domain_obj, export_count, None)]
 
-        export_line_counts = self._get_export_line_counts(export_docs)
+        exports = self.export_fetcher.get_exports(domain_obj.name)
 
-        domain_summary_line = self._get_domain_summary_line(domain_obj, export_docs, export_line_counts)
-        individual_export_rows = self._get_individual_export_rows(export_docs, export_line_counts)
+        export_line_counts = self._get_export_line_counts(exports)
+
+        domain_summary_line = self._get_domain_summary_line(domain_obj, export_count, export_line_counts)
+        individual_export_rows = self._get_individual_export_rows(exports, export_line_counts)
 
         rows = [domain_summary_line]
         rows.extend(individual_export_rows)
         return rows
 
-    def _get_odata_exports(self, domain_obj):
-        all_domain_exports = get_brief_exports(domain_obj.name)
-        return [export for export in all_domain_exports if export['is_odata_config']]
-
-    def _get_export_line_counts(self, export_docs):
-        exports = self._get_export_objects(export_docs)
+    def _get_export_line_counts(self, exports):
         return {export._id: export.get_count() for export in exports}
 
-    def _get_export_objects(self, export_docs):
-        case_export_ids = [export['_id'] for export in export_docs
-            if export['doc_type'] == CaseExportInstance.__name__]
-        form_export_ids = [export['_id'] for export in export_docs
-            if export['doc_type'] == FormExportInstance.__name__]
-
-        case_exports = CaseExportInstance.view('_all_docs', keys=case_export_ids, include_docs=True)
-        form_exports = FormExportInstance.view('_all_docs', keys=form_export_ids, include_docs=True)
-        return chain(case_exports, form_exports)
-
-    def _get_domain_summary_line(self, domain_obj, export_docs, export_line_counts):
+    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts):
         if export_line_counts:
             total_line_count = sum(export_line_counts.values())
         else:
-            total_line_count = 'ERROR: Unsupported number of exports'
+            total_line_count = _('ERROR: Unsupported number of exports')
 
         return [
-            len(export_docs),
+            export_count,
             domain_obj.get_odata_feed_limit(),
-            None,  # Export Name
+            None,  # Report Name
             total_line_count
         ] + self.domain_properties(domain_obj)
 
@@ -330,11 +317,11 @@ class EnterpriseODataReport(EnterpriseReport):
         rows = []
 
         for export in exports:
-            count = export_line_counts[export['_id']]
+            count = export_line_counts[export._id]
             rows.append([
                 None,  # OData feeds used
                 None,  # OData feeds available
-                export['name'],
+                export.name,
                 count]
             )
 
