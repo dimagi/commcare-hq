@@ -34,7 +34,7 @@
             </text>
           </display>
         </prompt>
-        <prompt key="dob">
+        <prompt key="dob" input="date">
           <display>
             <text>
               <locale id="search_property.{module_id}.dob"/>

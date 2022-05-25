@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <tr>
   <td class="text-center">
@@ -71,7 +72,7 @@
                       <select class="form-control" data-bind="value: appearance">
                         <option value="">{% trans "Text" %}</option>
                         {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-                          {# flag this one because it only works on web apps #}
+                          {# limit to USH since datepicker is only available on web apps #}
                           <option value="date">{% trans "Date" %}</option>
                         {% endif %}
                         <option value="daterange">{% trans "Date Range" %}</option>
