@@ -14,8 +14,7 @@ def get_migration_context(connection, table_names=None):
 def include_object(tables_to_include, object, name, type_, reflected, compare_to):
     if type_ == "table":
         return name in tables_to_include
-    else:
-        return True
+    return True
 
 
 def get_tables_to_rebuild(diffs):
