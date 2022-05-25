@@ -10,6 +10,7 @@ from corehq.apps.linked_domain.applications import (
 from corehq.apps.linked_domain.exceptions import (
     DomainLinkError,
     MultipleDownstreamAppsError,
+    RegistryNotAccessible,
 )
 from corehq.apps.linked_domain.remote_accessors import \
     get_ucr_config as remote_get_ucr_config
@@ -22,6 +23,8 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
+
+from corehq.apps.registry.models import RegistryManager
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
@@ -38,6 +41,13 @@ def create_linked_ucr(domain_link, report_config_id):
     # grab the linked app this linked report references
     try:
         downstream_app_id = get_downstream_app_id(domain_link.linked_domain, datasource.meta.build.app_id)
+        registry = RegistryManager.owned_by_domain(domain_link.master_domain)
+        if registry not in RegistryManager.accessible_to_domain(domain_link.linked_domain):
+            message = "This report cannot be linked because regisrty is not accessible to {}".format(
+                domain_link.linked_domain
+            )
+            raise RegistryNotAccessible(_(message))
+
     except MultipleDownstreamAppsError:
         raise DomainLinkError(_("This report cannot be linked because it references an app that has multiple "
                                 "downstream apps."))

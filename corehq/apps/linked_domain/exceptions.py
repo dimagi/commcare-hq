@@ -49,3 +49,7 @@ class UnsupportedActionError(Exception):
 
 class UserDoesNotHavePermission(Exception):
     pass
+
+
+class RegistryNotAccessible(Exception):
+    pass
