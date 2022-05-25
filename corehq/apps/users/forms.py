@@ -21,17 +21,22 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq import toggles
+from casexml.apps.phone.models import loadtest_users_enabled
+from dimagi.utils.dates import get_date_from_month_and_year_string
+
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import (
-    EnterprisePermissions,
     EnterpriseMobileWorkerSettings,
+    EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
@@ -44,17 +49,15 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import UserRole, DeactivateMobileWorkerTrigger
-from corehq.apps.users.util import (
-    cc_user_domain,
-    format_username,
-    log_user_change,
-)
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+
+
+from .audit.change_messages import UserChangeMessage
+from .dbaccessors import user_exists
+from .models import DeactivateMobileWorkerTrigger, UserRole
+from .util import cc_user_domain, format_username, log_user_change
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -76,13 +79,13 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message or
-            _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
+        raise forms.ValidationError(name_too_long_message
+            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
             % {'username': username, 'max_length': max_username_length})
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message or
-            _('The username "%(username)s" is reserved for CommCare.')
+        raise forms.ValidationError(name_reserved_message
+            or _('The username "%(username)s" is reserved for CommCare.')
             % {'username': username})
 
     username = format_username(username, domain)
@@ -92,8 +95,8 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message or
-            _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(name_exists_message
+            or _('This Mobile Worker already exists.'))
 
     return username
 
@@ -406,13 +409,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+
+    # The value for this field is managed by CommCareUserActionForm. Defining
+    # the field here allows us to use CommCareUserFormSet.update_user() to set
+    # this property on the user.
     loadtest_factor = forms.IntegerField(
-        required=False, min_value=1, max_value=50000,
-        help_text=gettext_lazy(
-            "Multiply this user's case load by a number for load testing on phones. "
-            "Leave blank for normal users."
-        ),
-        widget=forms.HiddenInput())
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     deactivate_after_date = forms.CharField(
         label=gettext_lazy("Deactivate After"),
         required=False,
@@ -430,8 +435,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
         )
-        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
 
         self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
             self.domain
@@ -462,6 +465,51 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
                 self.cleaned_data['deactivate_after_date']
             )
         return super().update_user(**kwargs)
+
+
+class CommCareUserActionForm(BaseUpdateUserForm):
+
+    loadtest_factor = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=LOADTEST_HARD_LIMIT,
+        help_text=gettext_lazy(
+            "Multiply this user's case load by a number for load testing on "
+            "phones."
+        ),
+        widget=forms.TextInput()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initial['loadtest_factor'] = self.existing_user.loadtest_factor or 1
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Load testing"),
+                crispy.Field(
+                    'loadtest_factor',
+                    # This field is being added to the "user_information" form.
+                    # This allows us to reuse CommCareUserFormSet.update_user()
+                    # to set this property on the user. The "user_information"
+                    # form is defined in
+                    # corehq/apps/users/templates/users/partials/basic_info_form.html
+                    form='user_information',
+                ),
+                hqcrispy.FormActions(
+                    crispy.ButtonHolder(
+                        StrictButton(
+                            _('Update user'),
+                            type='submit',
+                            css_class='btn-primary',
+                            # This button submits the "user_information" form.
+                            form='user_information',
+                        )
+                    )
+                )
+            )
+        )
 
 
 class RoleForm(forms.Form):
@@ -677,6 +725,24 @@ class NewMobileWorkerForm(forms.Form):
             "on the first day of the month and year selected."
         ),
     )
+    force_account_confirmation_by_sms = forms.BooleanField(
+        label=gettext_noop("Require Account Confirmation by SMS?"),
+        help_text=gettext_noop(
+            "If checked, the user will be sent a confirmation SMS and asked to set their password."
+        ),
+        required=False,
+    )
+    phone_number = forms.CharField(
+        required=False,
+        label=gettext_noop("Phone Number"),
+        help_text="""
+            <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
+            </span>
+        """
+    )
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -758,6 +824,34 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
+        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            confirm_account_by_sms_field = crispy.Field(
+                'force_account_confirmation_by_sms',
+                data_bind='checked: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Div(
+                crispy.Field(
+                    'phone_number',
+                    data_bind="value: phone_number, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.phoneStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+        else:
+            confirm_account_by_sms_field = crispy.Hidden(
+                'force_account_confirmation_by_sms',
+                '',
+                data_bind='value: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Hidden(
+                'phone_number',
+                '',
+                data_bind='value: phone_number',
+            )
+
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -790,6 +884,8 @@ class NewMobileWorkerForm(forms.Form):
                 confirm_account_field,
                 email_field,
                 send_email_field,
+                confirm_account_by_sms_field,
+                phone_number_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
@@ -988,6 +1084,7 @@ class PrimaryLocationWidget(forms.Widget):
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
+
     def __init__(self, css_id, source_css_id, attrs=None):
         """
         args:
@@ -1370,12 +1467,23 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
+        self.loadtest_users_enabled = loadtest_users_enabled(domain)
 
     @property
     @memoized
     def user_form(self):
         return UpdateCommCareUserInfoForm(
             data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+
+    @property
+    @memoized
+    def action_form(self):
+        return CommCareUserActionForm(
+            data=self.data,
+            domain=self.domain,
+            existing_user=self.editable_user,
+            request=self.request,
+        )
 
     @property
     @memoized
