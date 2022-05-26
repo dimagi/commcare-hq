@@ -202,6 +202,11 @@ def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+@register_factory('search-input')
+def generic_search_input_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/search-input')
+
+
 @register_factory('commcare')
 def commcare_fixture_instances(app, instance_name):
     if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(app.domain):
