@@ -56,11 +56,7 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
 from corehq.apps.oauth_integrations.utils import (
-    chunkify_data,
-    create_or_update_spreadsheet,
-    get_export_data,
     get_token,
-    create_table,
 )
 from couchexport.models import IntegrationFormat
 
