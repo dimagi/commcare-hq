@@ -2088,9 +2088,6 @@ os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'F
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-#Google Sheet Integration testing variable
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
 # Config settings for the google oauth handshake to get a user token
 # Google Cloud Platform secret settings config file
 GOOGLE_OATH_CONFIG = {}
