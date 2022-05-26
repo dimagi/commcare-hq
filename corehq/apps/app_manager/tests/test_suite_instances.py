@@ -135,3 +135,15 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             self.factory.app.create_suite(),
             "entry/instance"
         )
+
+    def test_search_input_instance(self, *args):
+        # instance is not added and no errors
+        self.form.form_filter = "instance('search-input:results')/values/"
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
