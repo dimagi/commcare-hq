@@ -9,7 +9,7 @@ from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.functional import cached_property
@@ -54,9 +54,12 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 )
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
+    ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
@@ -133,7 +136,7 @@ class DataSourceActionLog(models.Model):
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
     ), db_index=True, null=False)
-    migration_diffs = JSONField(null=True, blank=True)
+    migration_diffs = models.JSONField(null=True, blank=True)
 
     # True for actions that were skipped because the data source
     # was marked with ``disable_destructive_rebuild``
@@ -376,14 +379,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
+        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
         while named_expression_specs:
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    named_expressions[name] = ExpressionFactory.from_spec(
-                        expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={})
-                    )
+                    factory_context.named_expressions = named_expressions
+                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]
                 except BadSpecError as bad_spec_error:
@@ -399,11 +401,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
-                for name, filter in self.named_filters.items()}
+        factory_context = FactoryContext(self.named_expression_objects, {}, domain=self.domain)
+        return {
+            name: FilterFactory.from_spec(filter, factory_context)
+            for name, filter in self.named_filters.items()
+        }
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
 
     @property
     @memoized
@@ -907,6 +912,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     def validate(self, required=True):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
             duplicate_items = set(
@@ -953,6 +959,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     def is_static(self):
         return report_config_id_is_static(self._id)
+
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -1344,6 +1351,60 @@ class InvalidUCRData(models.Model):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
 
 
+class UCRExpressionManager(models.Manager):
+    def get_filters_for_domain(self, domain, context):
+        return {
+            f.name: f.wrapped_definition(context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+        }
+
+    def get_expressions_for_domain(self, domain, context):
+        return {
+            f.name: f.wrapped_definition(context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+        }
+
+
+class UCRExpression(models.Model):
+    """
+    A single UCR named expression or named filter that can
+    be shared amongst features that use these
+    """
+    name = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    expression_type = models.CharField(
+        max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
+    )
+    definition = models.JSONField(null=True)
+
+    # For use with linked domains - the upstream UCRExpression
+    upstream_id = models.CharField(max_length=126, null=True)
+    LINKED_DOMAIN_UPDATABLE_PROPERTIES = [
+        "name", "description", "expression_type", "definition"
+    ]
+
+    objects = UCRExpressionManager()
+
+    class Meta:
+        app_label = 'userreports'
+        unique_together = ('name', 'domain')
+
+    def wrapped_definition(self, context):
+        if self.expression_type == UCR_NAMED_EXPRESSION:
+            return ExpressionFactory.from_spec(self.definition, context)
+        elif self.expression_type == UCR_NAMED_FILTER:
+            return FilterFactory.from_spec(self.definition, context)
+
+    def update_from_upstream(self, upstream_ucr_expression):
+        """
+        For use with linked domains. Updates this ucr expression with data from `upstream_ucr_expression`
+        """
+        for prop in self.LINKED_DOMAIN_UPDATABLE_PROPERTIES:
+            setattr(self, prop, getattr(upstream_ucr_expression, prop))
+        self.save()
+
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1404,7 +1465,6 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
 
 
-
 def id_is_static(data_source_id):
     if data_source_id is None:
         return False
@@ -1421,6 +1481,13 @@ def report_config_id_is_static(config_id):
     return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+    )
+
+
+def is_data_registry_report(report_config):
+    return (
+        isinstance(report_config, RegistryReportConfiguration)
+        or report_config.config.meta.build.registry_slug
     )
 
 
@@ -1506,7 +1573,7 @@ class ReportComparisonException(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     exception = models.TextField()
     notes = models.TextField(blank=True)
 
@@ -1516,10 +1583,10 @@ class ReportComparisonDiff(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
-    control = JSONField()
-    candidate = JSONField()
-    diff = JSONField()
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
+    control = models.JSONField()
+    candidate = models.JSONField()
+    diff = models.JSONField()
     notes = models.TextField(blank=True)
 
 
@@ -1528,6 +1595,6 @@ class ReportComparisonTiming(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

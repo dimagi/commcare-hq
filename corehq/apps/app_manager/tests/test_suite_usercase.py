@@ -15,7 +15,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteUsercaseTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteUsercaseTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_usercase_id_added_update(self, *args):

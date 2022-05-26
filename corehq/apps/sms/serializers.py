@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, SQLMobileBackend
 
 
 class SMSSerializer(serializers.ModelSerializer):
@@ -11,3 +11,9 @@ class SMSSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = SMS
         exclude = ('couch_id', 'messaging_subevent')
+
+
+class MobileBackendSerializer(serializers.ModelSerializer):
+    class Meta(object):
+        model = SQLMobileBackend
+        exclude = ('inbound_api_key', 'extra_fields')

@@ -14,6 +14,8 @@ from corehq.apps.userreports.expressions.date_specs import (
     AddDaysExpressionSpec,
     AddMonthsExpressionSpec,
     DiffDaysExpressionSpec,
+    EthiopianDateToGregorianDateSpec,
+    GregorianDateToEthiopianDateSpec,
     MonthEndDateExpressionSpec,
     MonthStartDateExpressionSpec,
     AddHoursExpressionSpec,
@@ -38,6 +40,7 @@ from corehq.apps.userreports.expressions.specs import (
     IdentityExpressionSpec,
     IterationNumberExpressionSpec,
     IteratorExpressionSpec,
+    JsonpathExpressionSpec,
     NamedExpressionSpec,
     NestedExpressionSpec,
     PropertyNameGetterSpec,
@@ -67,6 +70,7 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
+_jsonpath_expression = functools.partial(_simple_expression_generator, JsonpathExpressionSpec)
 _utcnow = functools.partial(_simple_expression_generator, UTCNow)
 
 
@@ -207,6 +211,22 @@ def _diff_days_expression(spec, context):
     return wrapped
 
 
+def _gregorian_date_to_ethiopian_date(spec, context):
+    wrapped = GregorianDateToEthiopianDateSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+    )
+    return wrapped
+
+
+def _ethiopian_date_to_gregorian_date(spec, context):
+    wrapped = EthiopianDateToGregorianDateSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+    )
+    return wrapped
+
+
 def _evaluator_expression(spec, context):
     wrapped = EvalExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -311,39 +331,42 @@ def _coalesce_expression(spec, context):
 
 class ExpressionFactory(object):
     spec_map = {
-        'identity': _identity_expression,
-        'constant': _constant_expression,
-        'property_name': _property_name_expression,
-        'property_path': _property_path_expression,
-        'named': _named_expression,
-        'conditional': _conditional_expression,
-        'array_index': _array_index_expression,
-        'root_doc': _root_doc_expression,
-        'related_doc': _related_doc_expression,
-        'iterator': _iterator_expression,
-        'base_iteration_number': _iteration_number_expression,
-        'switch': _switch_expression,
-        'nested': _nested_expression,
-        'dict': _dict_expression,
         'add_days': _add_days_expression,
         'add_hours': _add_hours_expression,
         'add_months': _add_months_expression,
-        'month_start_date': _month_start_date_expression,
-        'month_end_date': _month_end_date_expression,
+        'array_index': _array_index_expression,
+        'base_iteration_number': _iteration_number_expression,
+        'coalesce': _coalesce_expression,
+        'conditional': _conditional_expression,
+        'constant': _constant_expression,
+        'dict': _dict_expression,
         'diff_days': _diff_days_expression,
-        'utcnow': _utcnow,
+        'ethiopian_date_to_gregorian_date': _ethiopian_date_to_gregorian_date,
         'evaluator': _evaluator_expression,
+        'filter_items': _filter_items_expression,
+        'flatten': _flatten_expression,
         'get_case_forms': _get_forms_expression,
-        'get_subcases': _get_subcases_expression,
         'get_case_sharing_groups': _get_case_sharing_groups_expression,
         'get_reporting_groups': _get_reporting_groups_expression,
-        'filter_items': _filter_items_expression,
+        'get_subcases': _get_subcases_expression,
+        'gregorian_date_to_ethiopian_date': _gregorian_date_to_ethiopian_date,
+        'identity': _identity_expression,
+        'iterator': _iterator_expression,
+        'jsonpath': _jsonpath_expression,
         'map_items': _map_items_expression,
+        'month_end_date': _month_end_date_expression,
+        'month_start_date': _month_start_date_expression,
+        'named': _named_expression,
+        'nested': _nested_expression,
+        'property_name': _property_name_expression,
+        'property_path': _property_path_expression,
         'reduce_items': _reduce_items_expression,
-        'flatten': _flatten_expression,
+        'related_doc': _related_doc_expression,
+        'root_doc': _root_doc_expression,
         'sort_items': _sort_items_expression,
         'split_string': _split_string_expression,
-        'coalesce': _coalesce_expression,
+        'switch': _switch_expression,
+        'utcnow': _utcnow,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

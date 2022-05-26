@@ -1,9 +1,9 @@
-## Setting up CommCare HQ for Developers
+# Setting up CommCare HQ for Developers
 
 This document describes setting up a development environment for working on
 CommCare HQ. Such an environment is not suitable for real projects. Production
 environments should be deployed and managed [using
-commcare-cloud](https://dimagi.github.io/commcare-cloud/)
+commcare-cloud](https://dimagi.github.io/commcare-cloud/).
 
 These instructions are for Mac or Linux computers. For Windows, consider using
 an Ubuntu virtual machine.
@@ -11,7 +11,7 @@ an Ubuntu virtual machine.
 Once your environment is up and running, bookmark the [dev FAQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md)
 for common issues encountered in day-to-day HQ development.
 
-### (Optional) Copying data from an existing HQ install
+## (Optional) Copying data from an existing HQ install
 
 If you're setting up HQ on a new computer, you may have an old, functional
 environment around.  If you don't want to start from scratch, back up your
@@ -35,43 +35,49 @@ Postgres and Couch data.
 
 Save those backups to somewhere you'll be able to access from the new environment.
 
-### Downloading and configuring CommCare HQ
 
-#### Prerequisites
+
+## Prerequisites
+
+NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary Guide for Developers on Mac OS](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
     ```sh
     sudo apt install git
     ```
-- If you have a Mac with the M1 chip and thus the new ARM64 architecture, install Rosetta: 
-    ```sh
-    softwareupdate --install-rosetta
-    ```
-    This allows you to install and run Brew services in x86 fashion. 
-    "Rosetta 2 is an emulator designed to bridge the transition between Intel and Apple processors. In short, it translates apps built for Intel so they will run on Apple Silicon." [Link](https://www.computerworld.com/article/3597949/everything-you-need-to-know-about-rosetta-2-on-apple-silicon-macs.html).
-    While reading through this document, be careful to watch out for specific reccomendations regarding your architecture.
     
-- [Python 3.9](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
-  you will also need to install the modules for pip and venv explicitly.
+- [Python 3.9](https://www.python.org/downloads/)
 
+  - **Linux**:
+
+    In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
     ```sh
     sudo apt install python3.9-dev python3-pip python3-venv
     ```
-    
-    - If you have a Mac with an M1 chip, you can try installing Python 3.8.12 instead using the Rosetta-enabled homebrew (make sure you have enabled the ibrew command using the MacOS notes below):
-    
-        ```sh
-        ibrew install python@3.8
-        ```
-        
-        Then make sure you are using this version of python for your python virtual environment. Otherwise you will likely into problems installing python modules.
 
-- [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+  - **Mac**:
+
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
 
     ```sh
-    sudo python3 -m pip install virtualenvwrapper
+    brew install python@3.9
     ```
+
+- A Python virtual environment manager like `pyenv` or `virtualenvwrapper`. We recommend `pyenv` ([see installation guide](https://github.com/pyenv/pyenv#installation))
+
+    To install python 3.9 with `pyenv`:
+
+    ```sh
+    pyenv install 3.9.11
+    ```
+
+    To set Python 3.9 as the global `python`, run:
+    ```sh
+    pyenv global 3.9.11
+    ```
+    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
+
 
 - Requirements of Python libraries, if they aren't already installed.
 
@@ -86,61 +92,21 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install libmagic libxmlsec1 libxml2 libxslt
     ```
-    
-    If you're using the Rosetta-enabled Homebrew (for Mac M1 chip users), remember to use the command "ibrew" instead.
 
 - Java (JDK 8)
 
-  - **Linux**: install `default-jre` via apt:
+  - **Linux**:
 
-      ```sh
-      sudo apt install default-jre
-      ```
+    install `default-jre` via apt:
+    ```sh
+    sudo apt install default-jre
+    ```
 
-  - **macOS**: install [Java SE Development Kit 8][oracle_jdk8] from Oracle
-    (requires signing in with an Oracle account to download).
-
-    Example setup using jenv:
-
-      1. Download and install Oracle JDK 8 from [oracle.com downloads page][oracle_jdk8].
-      2. Install jenv
-
-          ```sh
-          brew install jenv
-          ```
-          
-          For M1 users:
-          
-          ```sh
-          ibrew install jenv
-          ```
-
-      3. Configure your shell (Bash folks use `~/.bashrc` instead of `~/.zshrc` below):
-
-          ```sh
-          echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc
-          echo 'eval "$(jenv init -)"' >> ~/.zshrc
-          ```
-
-      4. Add JDK 8 to jenv:
-
-          ```sh
-          jenv add $(/usr/libexec/java_home -v 1.8)
-          ```
-
-      5. Verify jenv config:
-
-          ```sh
-          jenv doctor
-          ```
-
-  [oracle_jdk8]: https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html
-
+  - **macOS**:
+    See the [Supplementary Guide for Developers on Mac OS](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md)
+    as this is quite lengthy.
 
 - PostgreSQL
-
-  Installing the `psycopg2` package on macOS (might, see `LDFLAGS` possible
-  alternative below) require postgres binaries.
 
   Executing postgres commands (e.g. `psql`, `createdb`, `pg_dump`, etc) requires
   installing postgres. These commands are not explicitly necessary, but having
@@ -157,11 +123,6 @@ Save those backups to somewhere you'll be able to access from the new environmen
     ```sh
     brew install postgresql
     ```
-    
-    If you're using Rosetta-enabled Homebrew:
-    ```sh
-    ibrew install postgresql
-    ```
 
     Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
     Prior to `pip install` commands (outlined later in this doc):
@@ -173,43 +134,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
     
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### macOS Notes
-
-- [Homebrew](https://brew.sh) (this doc depends heavily on it).
-    
-    - If you have the M1 chip, install Homebrew using Rosetta: 
-        ```sh
-        arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-        ```
-        And let's call this Rosetta-enabled Homebrew "ibrew" for short by adding this to your .zshrc:
-        ```sh
-        alias ibrew="arch -x86_64 /usr/local/bin/brew"
-        ```
-
-- Install pip:
-
-    ```sh
-    sudo python get-pip.py
-    ```
-
-- If using `virtualenvwrapper` instead of `pyenv`:
-
-    ```sh
-    sudo pip install virtualenvwrapper --ignore-installed six
-    ```
-
-- For downloading Python 3.9 consider:
-
-  - Using [pyenv](https://github.com/pyenv/pyenv-installer)
-  - Using Homebrew with this [brew formula](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/python@3.9.rb)
-
-- For using Java, consider:
-  - Using [jenv](https://github.com/jenv/jenv)
-  - Trying Homebrew's [openjdk@8 formula](https://formulae.brew.sh/formula/openjdk)
-    instead of Oracle's Java via PKG install.
-
-
-##### xmlsec
+##### A note on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
@@ -217,7 +142,23 @@ macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 
-#### Set up virtual environment
+## Downloading & Running CommCare HQ
+
+### Step 1: Create your virtual environment and activate it
+
+#### Option A: With `pyenv` and `pyenv-virtualenv`
+
+1. Create the virtualenv `hq` with Python 3.9.11:
+   ```sh
+   pyenv virtualenv 3.9.11 hq
+   ```
+   Then to enter the environment:
+   ```sh
+   pyenv activate hq
+   ```
+   That's it! You may now proceed to Step 2.
+
+#### Option B: With `virtualenvwrapper`
 
 1. Set the `WORKON_HOME` environment variable to the path where you keep
    your virtual environments. If you don't already have a home for your
@@ -273,7 +214,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     ```
 
 
-#### Clone repo and install requirements
+### Step 2: Clone this repo and install requirements
 
 1. Once all the dependencies are in order, please do the following:
 
@@ -285,7 +226,11 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     setvirtualenvproject  # optional - sets this directory as the project root
     ```
 
-1. Next, install the appropriate requirements (only one is necessary).
+2. Next, install the appropriate requirements (**only one is necessary**).
+
+    NOTE: If this fails you may need to [install the prerequisite system dependencies](#prerequisites).
+
+    **Mac OS:** Issues? See the [Supplementary Guide for Developers on Mac OS](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
   - Recommended for those developing CommCare HQ
 
@@ -293,15 +238,12 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     pip install -r requirements/dev-requirements.txt
     ```
 
-  - Recommended for developers or others with custom requirements. Use this `pip
-    install ...` workflow for initial setup only. Then use commands in
-    `local.in`.
-
-    ```sh
-    cp requirements/local.in.sample requirements/local.in
-    # customize requirements/local.in as desired
-    pip install -r requirements/local.in
-    ```
+    - Recommended for developers or others with custom requirements. Use this `pip
+      install ...` workflow for initial setup only. Then create a copy of local.in.sample,
+      ```sh
+      cp requirements/local.in.sample requirements/local.in
+      ```
+      and follow the instructions in `local.in` to keep requirements in sync.
     
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
     
@@ -324,8 +266,6 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     pip install -r requirements/requirements.txt
     ```
 
-    (If this fails you may need to [install the prerequisite system dependencies](#prerequisites).)
-
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
 have found it helpful to automate these tasks. For pulling code, instead of `git pull`,
@@ -335,7 +275,7 @@ will update all code and do a few more tasks like run migrations and update
 libraries, so it's good to run once a month or so, or when you pull code and
 then immediately hit an error.
 
-#### Setup localsettings
+### Step 3: Set up `localsettings.py`
 
 First create your `localsettings.py` file:
 
@@ -352,7 +292,7 @@ mkdir sharedfiles
 ```
 
 
-### Set up Docker services
+### Step 4: Set up Docker services
 
 Once you have completed the above steps, you can use Docker to build and run all
 of the service containers. There are detailed instructions for setting up Docker
@@ -362,10 +302,9 @@ needs of most developers.
 
 1. Install docker packages.
 
-    **Mac**: see [Install Docker Desktop on Mac](https://docs.docker.com/docker-for-mac/install/)
+  - **Mac**: see [Install Docker Desktop on Mac](https://docs.docker.com/docker-for-mac/install/)
     for docker installation and setup.
-
-    **Linux**:
+  - **Linux**:
 
     ```sh
     # install docker
@@ -389,20 +328,20 @@ needs of most developers.
     source $WORKON_HOME/hq/bin/activate
     ```
 
-1. Install the `docker-compose` python library.
+3. Install the `docker-compose` python library
 
     ```sh
     pip install docker-compose
     ```
 
-1. Ensure the elasticsearch config files are world-readable (their containers
+4. Ensure the elasticsearch config files are world-readable (their containers
    will fail to start otherwise).
 
     ```sh
     chmod 0644 ./docker/files/elasticsearch*.yml
     ```
 
-1. Bring up the docker containers.
+5. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -413,7 +352,11 @@ needs of most developers.
     ./scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
     ```
 
-1. If you are planning on running Formplayer from a binary or source, stop the
+   **Mac OS:** Note that you will encounter many issues at this stage.
+   We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
+
+
+6. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
@@ -421,10 +364,10 @@ needs of most developers.
     ```
 
 
-### (Optional) Copying data from an existing HQ install
+### Step 5A: (Optional) Copying data from an existing HQ install
 
 If you previously created backups of another HQ install's data, you can now copy
-that to the new install.
+that to the new install. If not, proceed to Step 5B.
 
 - Postgres
   - Make sure Postgres is running:
@@ -466,34 +409,8 @@ that to the new install.
     directory into the HQ root, otherwise do so into the `SHARED_DRIVE_ROOT`
     directory referenced in `localsettings.py`
 
-### Getting all your services running properly (ARM64 arch users)
 
-Devs using computers with the ARM64 architecture (often Apple computers with the M1 chip) have run into trouble setting up all their services on Docker. See these reccomendations for the following services if they are not working properly:
-
-- Postgres
-
-    The Docker scripts should detect what architecture you have and automatically use the [Postgres image made for ARM64](https://hub.docker.com/r/arm64v8/postgres/). Note that this image doesn't include the pghashlib and plproxy extensions that the [Dimagi Postgres image](https://github.com/dimagi/docker-postgresql) uses, but you shouldn't need these extensions for your development environment (exception: note the `USE_PARTITIONED_DATABASE` setting when running tests in the "Running Tests" section below).
-
-- Elasticsearch
-    
-    Download the TAR for ES 2.4.2 from [here](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2). Open it, and move it somewhere you can reliably remember, maybe your root directory. In a new tab/window:
-    ```sh
-    cd ~/Downloads
-    mv elasticsearch-2.4.2 ~/
-    ```
-    Then go into that folder:
-    ```sh
-    cd ~/elasticsearch-2.4.2
-    ```
-    And start Elastic search:
-    ```sh
-    ./bin/elasticsearch
-    ```
-- Formplayer
-
-    If you are having trouble with Formplayer, try starting it outside of Docker (instructions for this farther down).
-
-### Initial Database Population
+### Step 5B: Initial Database Population
 
 Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
@@ -511,7 +428,14 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-#### Troubleshooting
+#### Troubleshooting Issues with `sync_couch_views`
+
+**Mac OS M1 Users:** If you see the following error, check the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
+```sh
+ImportError: failed to find libmagic.  Check your installation
+```
+
+#### Troubleshooting Issues with `migrate`
 
 If you have an authentication error running `./manage.py migrate` the first
 time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
@@ -555,7 +479,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
   Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 
-### ElasticSearch Setup
+### Step 6: Populate Elasticsearch
 
 To set up elasticsearch indexes run the following:
 
@@ -573,7 +497,7 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### JavaScript
+### Step 7: Installing JavaScript Requirements
 
 #### Installing Yarn
 
@@ -594,6 +518,11 @@ In order to download the required JavaScript packages, you'll need to install
     yarn install --frozen-lockfile
     ```
 
+3. Ensure that `django` translations are compiled for javascript (or it will throw a JS error):
+   ```sh
+   ./manage.py compilejsi18n
+   ```
+
 NOTE: if you are making changes to `package.json`, please run `yarn install`
 without the `--frozen-lockfile` flag so that `yarn.lock` will get updated.
 
@@ -606,22 +535,22 @@ for these packages.
 
 ```sh
 $ npm --version
-6.14.4
+7.24.2
 $ node --version
-v12.18.1
+v14.19.1
 ```
 
 On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v12 is
+easiest way to get onto the current nodejs v14 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-#### Using LESS (2 Options)
+### Step 8: Configure LESS CSS (2 Options)
 
-##### Option 1: Let Client Side Javascript (less.js) handle it for you
+#### Option 1: Let Client Side Javascript (less.js) handle it for you
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
@@ -631,7 +560,7 @@ just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 The disadvantage is that this is a different setup than production, where LESS
 files are compressed.
 
-##### Option 2: Compress OFFLINE, just like production
+#### Option 2: Compress OFFLINE, just like production
 
 This mirrors production's setup, but it's really only useful if you're trying to
 debug issues that mirror production that's related to staticfiles and
@@ -655,19 +584,69 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
 ```
 
 
-### Formplayer
+### Step 9: Browser Settings
 
-Formplayer is a Java service that allows us to use applications on the web
-instead of on a mobile device.
+We recommend disabling the cache. In Chrome, go to **Dev Tools > Settings >
+Preferences > Network** and check the following:
+
+- [x] Disable cache (while DevTools is open)
+
+
+### Step 10: Running CommCare HQ
+
+Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
+Elasticsearch).
+
+```sh
+./manage.py check_services
+```
+
+Some of the services listed there aren't necessary for very basic operation, but
+it can give you a good idea of what's broken.
+
+Then run the django server with the following command:
+
+```sh
+./manage.py runserver localhost:8000
+```
+
+You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
+
+#### Troubleshooting Javascript Errors
+
+If you can load the page, but either the styling is missing or you get JavaScript console errors trying to create an account,
+try running the JavaScript set up steps again. In particular you may need to run:
+
+```sh
+yarn install --frozen-lockfile
+./manage.py compilejsi18n
+./manage.py fix_less_imports_collectstatic
+```
+
+### Step 11: Create a superuser
+
+Once your application is online, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+
+## Running Formplayer and submitting data with Web Apps
+
+Formplayer is a Java service that allows us to use applications on the web  instead of on a mobile device.
 
 In `localsettings.py`:
 
 ```python
 FORMPLAYER_URL = 'http://localhost:8080'
+FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 LOCAL_APPS += ('django_extensions',)
 ```
 
-When running HQ, be sure to use `runserver_plus`:
+**IMPORTANT:** When running HQ, be sure to use `runserver_plus`
 
 ```sh
 ./manage.py runserver_plus localhost:8000
@@ -675,6 +654,7 @@ When running HQ, be sure to use `runserver_plus`:
 
 Then you need to have Formplayer running.
 
+### Running `formplayer` Outside of Docker
 
 #### Prerequisites
 
@@ -685,6 +665,8 @@ The password for the "commcarehq" user is in the localsettings.py file in the
 ```sh
 createdb formplayer -U commcarehq -h localhost
 ```
+
+#### Installation
 
 The fastest way to get Formplayer running outside of docker is to download the
 `application.properties` and `formplayer.jar` files and run it directly. You may
@@ -711,63 +693,18 @@ the `curl` commands above to your `hammer` command (see [hammer.sh](scripts/hamm
 or whatever script you use for updating your dev environment.
 
 
-### Browser Settings
-
-We recommend disabling the cache. In Chrome, go to **Dev Tools > Settings >
-Preferences > Network** and check the following:
-
-- [x] Disable cache (while DevTools is open)
-
-
-## Running CommCare HQ
-
-Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
-Elasticsearch).
-
-```sh
-./manage.py check_services
-```
-
-Some of the services listed there aren't necessary for very basic operation, but
-it can give you a good idea of what's broken.
-
-Then run the django server with the following command:
-
-```sh
-./manage.py runserver localhost:8000
-```
-
-You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
-
-### Troubleshooting
-
-If you can load the page, but either the styling is missing or you get JavaScript console errors trying to create an account,
-try running the JavaScript set up steps again. In particular you may need to run:
-
-```sh
-yarn install --frozen-lockfile
-./manage.py compilejsi18n
-./manage.py fix_less_imports_collectstatic
-```
-
-## Create a superuser
-
-Once your application is online, you'll want to create a superuser, which you can do by running:
-
-```sh
-./manage.py make_superuser <email>
-```
-
-This can also be used to promote a user created by signing up to a superuser.
-
 ## Running CommCare HQ's supporting jobs
 
 The following additional processes are required for certain parts of the application to work.
 They can each be run in separate terminals:
 
-### Pillowtop
+
+### Running Pillowtop
 
 Pillowtop is used to keep elasticsearch indices and configurable reports in sync.
+
+**Mac OS:**  `run_ptop` Will likely not work for you.
+See the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md) for help.
 
 It can be run as follows:
 
@@ -789,7 +726,7 @@ See the command help for details, but it can be used to sync individual indices 
 ./manage.py ptop_reindexer_v2 user --reset
 ```
 
-### Celery
+### Running Celery
 
 Celery is used for background jobs and scheduled tasks.
 You can avoid running it by setting `CELERY_TASK_ALWAYS_EAGER=False` in your `localsettings.py`,
@@ -919,6 +856,60 @@ CCHQ_TESTING=1 ./manage.py dbshell
 
 CCHQ_TESTING=1 ./manage.py shell
 ```
+
+
+### Deprecation warnings
+
+Deprecation warnings are converted to errors when running tests unless the
+warning has been whitelisted (or unless `PYTHONWARNINGS` is set with a value
+that does not convert warnings to errors, more below). The warnings whitelist
+can be found in `corehq/warnings.py`.
+
+The `CCHQ_STRICT_WARNINGS` environment variable can be used to convert
+non-whitelisted deprecation warnings into errors for all management commands
+(in addition to when running tests). It is recommended to add this to your bash
+profile or wherever you set environment variables for your shell:
+
+```sh
+export CCHQ_STRICT_WARNINGS=1
+```
+
+If you don't want strict warnings, but do want to ignore (or perform some other
+action on) whitelisted warnings you can use the `CCHQ_WHITELISTED_WARNINGS`
+environment variable instead. `CCHQ_WHITELISTED_WARNINGS` accepts any of the
+[`PYTHONWARNINGS`](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS)
+action values (`ignore`, `default`, `error`, etc).
+
+```sh
+export CCHQ_WHITELISTED_WARNINGS=ignore
+```
+
+`CCHQ_WHITELISTED_WARNINGS=ignore` is implied when `CCHQ_STRICT_WARNINGS=1` is
+set.
+
+If `PYTHONWARNINGS` is set it may override the default behavior of converting
+warnings to errors. This allows additional local configuration of personal
+whitelist entries, for example. Ensure there is an "error" item as the first
+entry in the value to preserve the default behavior of converting warnings to
+errors. For example:
+
+```sh
+export PYTHONWARNINGS='
+error,
+ignore:Using or importing the ABCs::kombu.utils.functional,
+ignore:Using or importing the ABCs::celery.utils.text,
+ignore:the imp module is deprecated::celery.utils.imports,
+ignore:unclosed:ResourceWarning'
+```
+
+Personal whitelist items may also be added in localsettings.py. For example:
+
+```py
+from warnings import filterwarnings  # noqa: E402
+filterwarnings("ignore", "unclosed", ResourceWarning)
+del filterwarnings
+```
+
 
 ### Running tests by tag
 

@@ -9,7 +9,6 @@ from eulxml.xmlmap import (
 )
 from lxml import etree
 
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
 class XPathField(StringField):
     """
@@ -97,8 +96,8 @@ class XPathEnum(TextXPath):
             parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
-            parts[-1] = parts[-1][:-2] # removes extra comma from last string
-            parts.append("), '\s+', ' ')")
+            parts[-1] = parts[-1][:-2]  # removes extra comma from last string
+            parts.append("), '\\s+', ' ')")
         else:
             parts.append("''")
             parts.append(")" * len(enum))
@@ -128,7 +127,7 @@ class Text(XmlObject):
             <argument key=""/> <!------------ 0 or More. Arguments for the localized string. Key is optional. Arguments can support any child elements that <body> can. -->
         </locale>
     </text>
-    """
+    """  # noqa: E501
 
     ROOT_NAME = 'text'
 
@@ -384,6 +383,10 @@ class SessionDatum(IdNode, OrderedXmlObject):
     autoselect = BooleanField('@autoselect')
 
 
+class InstanceDatum(SessionDatum):
+    ROOT_NAME = 'instance-datum'
+
+
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
@@ -395,6 +398,8 @@ class QueryData(XmlObject):
 
     key = StringField('@key')
     ref = XPathField('@ref')
+    nodeset = StringField('@nodeset')
+    exclude = StringField('@exclude')
 
 
 class StackQuery(StackDatum):
@@ -412,6 +417,12 @@ class StackCommand(XmlObject):
 
 class BaseFrame(XmlObject):
     if_clause = XPathField('@if')
+
+    def get_xpaths(self):
+        xpaths = [child.attrib['value'] for child in self.node.xpath("*") if 'value' in child.attrib]
+        if self.if_clause:
+            xpaths.append(self.if_clause)
+        return xpaths
 
 
 class CreatePushBase(IdNode, BaseFrame):
@@ -500,6 +511,8 @@ class QueryPrompt(DisplayNode):
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
+    exclude = StringField('@exclude', required=False)
+    required = StringField('@required', required=False)
 
     itemset = NodeField('itemset', Itemset)
 
@@ -520,66 +533,6 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
         return self.storage_instance
 
 
-def _wrap_session_datums(datum):
-    return {
-        'datum': SessionDatum,
-        'query': RemoteRequestQuery
-    }[datum.tag](datum)
-
-
-class Entry(OrderedXmlObject, XmlObject):
-    ROOT_NAME = 'entry'
-    ORDER = ('form', 'command', 'instance', 'datums')
-
-    form = StringField('form')
-    command = NodeField('command', Command)
-    instances = NodeListField('instance', Instance)
-
-    datums = NodeListField('session/datum', SessionDatum)
-    queries = NodeListField('session/query', RemoteRequestQuery)
-    session_children = NodeListField('session/*', _wrap_session_datums)
-
-    stack = NodeField('stack', Stack)
-
-    assertions = NodeListField('assertions/assert', Assertion)
-
-
-    def require_instances(self, instances=(), instance_ids=()):
-        used = {(instance.id, instance.src) for instance in self.instances}
-        for instance in instances:
-            if 'remote' in instance.src:
-                continue
-            if (instance.id, instance.src) not in used:
-                self.instances.append(
-                    # it's important to make a copy,
-                    # since these can't be reused
-                    Instance(id=instance.id, src=instance.src)
-                )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(self.instances) == 1:
-                    instance_node = self.node.find('instance')
-                    command_node = self.node.find('command')
-                    self.node.remove(instance_node)
-                    self.node.insert(self.node.index(command_node) + 1,
-                                     instance_node)
-        covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in XPath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
-
-        sorted_instances = sorted(self.instances,
-                                  key=lambda instance: instance.id)
-        if sorted_instances != self.instances:
-            self.instances = sorted_instances
-
-
 class RemoteRequestPost(XmlObject):
     ROOT_NAME = 'post'
 
@@ -588,12 +541,40 @@ class RemoteRequestPost(XmlObject):
     data = NodeListField('data', QueryData)
 
 
+def _wrap_session_datums(datum):
+    return {
+        'datum': SessionDatum,
+        'instance-datum': InstanceDatum,
+        'query': RemoteRequestQuery
+    }[datum.tag](datum)
+
+
+class Entry(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'entry'
+    ORDER = ('form', 'post', 'command', 'instance', 'datums')
+
+    form = StringField('form')
+    post = NodeField('post', RemoteRequestPost)
+    command = NodeField('command', Command)
+    instances = NodeListField('instance', Instance)
+
+    datums = NodeListField('session/datum', SessionDatum)
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    session_children = NodeListField('session/*', _wrap_session_datums)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
+
+    stack = NodeField('stack', Stack)
+
+    assertions = NodeListField('assertions/assert', Assertion)
+
+
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'session'
     ORDER = ('queries', 'data')
 
     queries = NodeListField('query', RemoteRequestQuery)
     data = NodeListField('datum', SessionDatum)
+    instance_data = NodeListField('instance-datum', InstanceDatum)
 
 
 class RemoteRequest(OrderedXmlObject, XmlObject):
@@ -614,6 +595,9 @@ class RemoteRequest(OrderedXmlObject, XmlObject):
     command = NodeField('command', Command)
     session = NodeField('session', RemoteRequestSession)
     stack = NodeField('stack', Stack)
+
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
 
 class MenuMixin(XmlObject):

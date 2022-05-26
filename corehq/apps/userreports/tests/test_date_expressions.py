@@ -151,3 +151,53 @@ def test_add_hours_to_datetime_expression(self, source_doc, count_expression, ex
         'count_expression': count_expression
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'}, date(2022, 9, 30)),
+    ({'dob': '2014-13-05'}, date(2022, 9, 10)),
+    ({'dob': date(2015, 1, 20)}, date(2022, 9, 30)),
+    ({'dob': datetime(2015, 1, 20)}, date(2022, 9, 30)),
+])
+def test_ethiopian_to_gregorian_expression(self, source_doc, expected_value):
+    date_expression = {
+        'type': 'property_name',
+        'property_name': 'dob',
+    }
+    expression = ExpressionFactory.from_spec({
+        'type': 'ethiopian_date_to_gregorian_date',
+        'date_expression': date_expression,
+    })
+    self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({"type": "constant", "constant": '2015-01-20'}, date(2022, 9, 30)),  # Date that looks like gregorian dates
+    ({"type": "constant", "constant": '2014-13-05'}, date(2022, 9, 10)),  # Invalid gregorian date, valid ethiopian
+])
+def test_ethiopian_to_gregorian_expression_constant(self, expression, expected_value):
+    """
+        Used to fail with BadValueError: datetime.date(2020, 9, 9) is not a date-formatted string
+    """
+    wrapped_expression = ExpressionFactory.from_spec({
+        'type': 'ethiopian_date_to_gregorian_date',
+        'date_expression': expression,
+    })
+    self.assertEqual(expected_value, wrapped_expression({"foo": "bar"}))
+
+
+@generate_cases([
+    ({'dob': '2022-09-30'}, '2015-01-20'),
+    ({'dob': date(2022, 9, 30)}, '2015-01-20'),
+    ({'dob': datetime(2022, 9, 30)}, '2015-01-20'),
+])
+def test_gregorian_to_ethiopian_expression(self, source_doc, expected_value):
+    date_expression = {
+        'type': 'property_name',
+        'property_name': 'dob',
+    }
+    expression = ExpressionFactory.from_spec({
+        'type': 'gregorian_date_to_ethiopian_date',
+        'date_expression': date_expression,
+    })
+    self.assertEqual(expected_value, expression(source_doc))

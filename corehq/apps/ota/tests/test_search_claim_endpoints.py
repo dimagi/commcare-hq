@@ -1,5 +1,5 @@
 import re
-from uuid import uuid4
+from uuid import uuid1, uuid4
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -9,6 +9,7 @@ from flaky import flaky
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -32,6 +33,8 @@ from corehq.pillows.mappings.case_search_mapping import (
 )
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled
+
+from unittest.mock import patch
 
 DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
@@ -67,10 +70,38 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
+        self.additional_case_id = uuid4().hex
+        _, [self.additional_case] = post_case_blocks([CaseBlock.deprecated_init(
+            create=True,
+            case_id=self.additional_case_id,
+            case_type=CASE_TYPE,
+            case_name="Bilbo Baggins",
+            external_id="Bilbo Baggins",
+            user_id=OWNER_ID,
+            owner_id=OWNER_ID,
+            update={'opened_by': OWNER_ID},
+        ).as_xml()], {'domain': DOMAIN})
+        self.case_ids = set([self.case_id, self.additional_case_id])
         domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
+        self.client = Client()
+        self.client.login(username=USERNAME, password=PASSWORD)
+        self.url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        self.synclog = SyncLogSQL.objects.bulk_create([
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
+        ])[0]
+        self.synclog.doc['case_ids_on_phone'] = [self.case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            self.synclog.save()
+
+    @classmethod
+    def make_synclog(self, domain, user, date):
+        return SyncLogSQL(
+            domain=domain, user_id=user, request_user_id=None, is_formplayer=True, date=date,
+            case_count=None, auth_type=None, doc={}
+        )
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -84,11 +115,7 @@ class CaseClaimEndpointTests(TestCase):
         A claim case request should create an extension case
         """
         self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)), 0)
-
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('claim_case', kwargs={'domain': DOMAIN})
-        client.post(url, {'case_id': self.case_id})
+        self.client.post(self.url, {'case_id': self.case_id})
 
         claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
         self.assertEqual(len(claim_ids), 1)
@@ -100,46 +127,81 @@ class CaseClaimEndpointTests(TestCase):
         """
         Server should not allow the same client to claim the same case more than once
         """
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('claim_case', kwargs={'domain': DOMAIN})
-        # First claim
-        response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 200)
-        # Dup claim
-        response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
-    def test_duplicate_user_claim(self):
-        """
-        Server should not allow the same user to claim the same case more than once
-        """
-        client1 = Client()
-        client1.login(username=USERNAME, password=PASSWORD)
-        url = reverse('claim_case', kwargs={'domain': DOMAIN})
         # First claim
-        response = client1.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(self.url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 201)
         # Dup claim
-        client2 = Client()
-        client2.login(username=USERNAME, password=PASSWORD)
-        response = client2.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=self.synclog.synclog_id)
+        self.assertEqual(response.status_code, 204)
+
+    def test_duplicate_claim_with_missing_synclog_id(self):
+        """
+        Claiming a case a second time with a non-existent synclog ID should result in a 201 not a 204
+        """
+        # First claim
+        response = self.client.post(self.url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 201)
+        # Dup claim
+        random_id = uuid1()
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=random_id)
+        self.assertEqual(response.status_code, 201)
+
+    def test_duplicate_claim_with_new_synclog_id(self):
+        """
+        Claiming a case a second time but with a different synclog ID should result in a 201 not a 204
+        """
+        # First claim
+        response = self.client.post(self.url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 201)
+
+        # Create a second synclog, mimicing the use of a 2nd device that doesn't have the original case
+        second_synclog = SyncLogSQL.objects.bulk_create([
+            self.make_synclog(self.domain, 'u1', '2022-04-12')
+        ])[0]
+        second_synclog.doc['case_ids_on_phone'] = [self.additional_case_id]
+        with patch('casexml.apps.phone.change_publishers.publish_synclog_saved'):
+            second_synclog.save()
+
+        # Dup claim, with new sync log
+        response = self.client.post(self.url, {'case_id': self.case_id},
+            HTTP_X_COMMCAREHQ_LASTSYNCTOKEN=second_synclog.synclog_id)
+        self.assertEqual(response.status_code, 201)
+
+    def test_multiple_case_claim(self):
+        """
+        Server should handle and claim multiple cases in one request
+        """
+        response = self.client.post(self.url, {'case_id': self.case_ids})
+        self.assertEqual(response.status_code, 201)
+
+    def test_multiple_case_claim_fail(self):
+        """
+        Server should not claim any case after returning a 410 CaseNotFound error
+        """
+        fake_case_id = uuid4().hex
+        case_ids_to_fail = set([self.case_id, fake_case_id])
+        response = self.client.post(self.url, {'case_id': case_ids_to_fail})
+
+        # Assert that no case was claimed
+        claim_ids = CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 0)
+
+        # Assert that a 410 status was returned
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(response.content.decode('utf-8'),
+            f'No cases claimed. Case IDs "{fake_case_id}" not found')
 
     @flaky
     def test_claim_restore_as(self):
         """Server should assign cases to the correct user
         """
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
         other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
         other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD, None, None)
 
-        url = reverse('claim_case', kwargs={'domain': DOMAIN})
-
-        client.post(url, {
+        self.client.post(self.url, {
             'case_id': self.case_id,
             'commcare_login_as': other_user_username
         })
@@ -153,17 +215,13 @@ class CaseClaimEndpointTests(TestCase):
     def test_claim_restore_as_proper_cache(self):
         """Server should assign cases to the correct user
         """
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
         other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
         other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD, None, None)
 
         another_user_username = 'another_user@{}.commcarehq.org'.format(DOMAIN)
         another_user = CommCareUser.create(DOMAIN, another_user_username, PASSWORD, None, None)
 
-        url = reverse('claim_case', kwargs={'domain': DOMAIN})
-
-        client.post(url, {
+        self.client.post(self.url, {
             'case_id': self.case_id,
             'commcare_login_as': other_user_username
         })
@@ -174,7 +232,7 @@ class CaseClaimEndpointTests(TestCase):
         claim_case = CommCareCase.objects.get_case(claim_ids[0], DOMAIN)
         self.assertEqual(claim_case.owner_id, other_user._id)
 
-        client.post(url, {
+        self.client.post(self.url, {
             'case_id': self.case_id,
             'commcare_login_as': another_user_username
         })
@@ -189,8 +247,6 @@ class CaseClaimEndpointTests(TestCase):
 
     def test_search_endpoint(self):
         self.maxDiff = None
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
 
         matching_criteria = [
@@ -201,7 +257,7 @@ class CaseClaimEndpointTests(TestCase):
         ]
         for params in matching_criteria:
             params.update({'case_type': CASE_TYPE})
-            response = client.get(url, params)
+            response = self.client.get(url, params)
             self._assert_known_search_result(response, params)
 
         non_matching_criteria = [
@@ -212,7 +268,7 @@ class CaseClaimEndpointTests(TestCase):
         ]
         for params in non_matching_criteria:
             params.update({'case_type': CASE_TYPE})
-            response = client.get(url, params)
+            response = self.client.get(url, params)
             self._assert_empty_search_result(response, params)
 
     def _assert_known_search_result(self, response, message=None):

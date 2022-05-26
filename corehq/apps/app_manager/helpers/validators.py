@@ -20,6 +20,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -39,10 +40,12 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_loads_registry_case,
     module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -373,6 +376,20 @@ class ModuleBaseValidator(object):
                 'module': self.get_module_info(),
             })
 
+        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
+            if self.module.parent_select.relationship == 'parent':
+                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+                valid_modules = get_modules_with_parent_case_type(app, self.module)
+            else:
+                from corehq.apps.app_manager.views.modules import get_all_case_modules
+                valid_modules = get_all_case_modules(app, self.module)
+            valid_module_ids = [info['unique_id'] for info in valid_modules]
+            if self.module.parent_select.module_id not in valid_module_ids:
+                errors.append({
+                    'type': 'invalid parent select id',
+                    'module': self.get_module_info(),
+                })
+
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
                 errors.append({
@@ -382,6 +399,23 @@ class ModuleBaseValidator(object):
             if self.module.parent_select.active:
                 errors.append({
                     'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+            if module_uses_inline_search(self.module):
+                errors.append({
+                    'type': 'smart links inline search',
+                    'module': self.get_module_info(),
+                })
+
+        if module_loads_registry_case(self.module):
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'data registry multi select',
                     'module': self.get_module_info(),
                 })
 
@@ -773,25 +807,41 @@ class FormBaseValidator(object):
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
+            if self.form.get_module().is_multi_select():
+                errors.append(dict(type="multi select form links", **meta))
             for form_link in self.form.form_links:
+                linked_module = None
                 if form_link.form_id:
                     try:
-                        self.form.get_app().get_form(form_link.form_id)
+                        linked_form = self.form.get_app().get_form(form_link.form_id)
+                        linked_module = linked_form.get_module()
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
                 else:
                     try:
-                        self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
+                        linked_module = self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
                     except ModuleNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
+                if linked_module:
+                    if linked_module.is_multi_select():
+                        errors.append(dict(type="multi select form links", **meta))
+                    if linked_module.root_module and linked_module.root_module.is_multi_select():
+                        errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+            if module.root_module and module.root_module.is_multi_select():
+                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+            elif module.root_module.is_multi_select():
+                errors.append(dict(type='parent multi select form links', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
+            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
+                errors.append(dict(type='previous multi select form links', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

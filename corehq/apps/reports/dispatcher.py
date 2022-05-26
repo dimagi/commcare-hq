@@ -228,7 +228,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import url
+        from django.conf.urls import re_path as url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 
@@ -323,15 +323,6 @@ class AdminReportDispatcher(ReportDispatcher):
         )
 
 
-class QuestionTemplateDispatcher(ProjectReportDispatcher):
-    prefix = 'question_templates'
-    map_name = 'QUESTION_TEMPLATES'
-
-    def get_question_templates(self, domain, report_slug):
-        question_templates = dict(self.get_reports(domain))
-        return question_templates.get(report_slug, None)
-
-
 class UserManagementReportDispatcher(ReportDispatcher):
     prefix = 'user_management_report'
     map_name = 'USER_MANAGEMENT_REPORTS'
@@ -350,7 +341,5 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_access_linked_domains
-        # will eventually only be accessible via the release_management privilege, but shared with linked domains
-        # feature flag for now
-        return can_access_linked_domains(request.couch_user, domain)
+        from corehq.apps.linked_domain.util import can_user_access_linked_domains
+        return can_user_access_linked_domains(request.couch_user, domain)

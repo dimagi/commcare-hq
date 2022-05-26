@@ -8,8 +8,6 @@ from psycogreen.gevent import patch_psycopg
 
 
 def main():
-    patch_pickle()  # should happen before gevent patch, which imports pickle
-
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it
@@ -36,6 +34,9 @@ def main():
 
     init_hq_python_path()
     run_patches()
+
+    from corehq.warnings import configure_warnings
+    configure_warnings(is_testing(sys.argv))
 
     set_default_settings_path(sys.argv)
     set_nosetests_verbosity(sys.argv)
@@ -115,23 +116,7 @@ def run_patches():
     import mimetypes
     mimetypes.init()
 
-    patch_pickle()
     patch_jsonfield()
-
-    import django
-    _setup_once.setup = django.setup
-    django.setup = _setup_once
-
-
-def patch_pickle():
-    """Patch pickle to support protocol 5
-
-    Remove after upgrading to Python 3.8+
-    """
-    import pickle
-    if pickle.HIGHEST_PROTOCOL < 5:
-        import pickle5
-        sys.modules["pickle"] = pickle5
 
 
 def patch_jsonfield():
@@ -154,20 +139,17 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
-# HACK monkey-patch django setup to prevent second setup by django_nose
-def _setup_once(*args, **kw):
-    if not hasattr(_setup_once, "done"):
-        _setup_once.done = True
-        _setup_once.setup(*args, **kw)
-
-
 def set_default_settings_path(argv):
-    if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
+    if is_testing(argv):
         os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
     else:
         module = 'settings'
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
+
+
+def is_testing(argv):
+    return len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1'
 
 
 def set_nosetests_verbosity(argv):

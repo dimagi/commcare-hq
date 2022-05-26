@@ -2,7 +2,6 @@ import uuid
 from collections import namedtuple
 from datetime import timedelta
 
-from django.contrib.postgres.fields import JSONField
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
@@ -12,7 +11,7 @@ from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.mixin import BadSMSConfigException, apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.models import XFormInstance
@@ -20,8 +19,6 @@ from corehq.messaging.scheduling.util import utcnow
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-
-from . import signals  # noqa: F401
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -86,7 +83,7 @@ class SQLXFormsSession(models.Model):
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
     # A reminder in this context just sends the current question of an open survey to the contact
     # in order to remind them to answer it. This can be empty list if no reminders are desired.
-    reminder_intervals = JSONField(default=list)
+    reminder_intervals = models.JSONField(default=list)
 
     # A zero-based index pointing to the entry in reminder_intervals which represents the
     # currently scheduled reminder.
@@ -98,12 +95,12 @@ class SQLXFormsSession(models.Model):
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
-    submit_partially_completed_forms = models.NullBooleanField()
+    submit_partially_completed_forms = models.BooleanField(null=True)
 
     # Only matters when submit_partially_completed_forms is True.
     # If True, any case changes will be included in the submission.
     # If False, any case changes will be removed from the submission.
-    include_case_updates_in_partial_submissions = models.NullBooleanField()
+    include_case_updates_in_partial_submissions = models.BooleanField(null=True)
 
     class Meta(object):
         app_label = 'smsforms'
@@ -371,6 +368,21 @@ class XFormsSessionSynchronization:
                 cls._release_running_session_info_for_channel(running_session_info, channel)
 
     @classmethod
+    def set_channel_for_affinity(cls, session):
+        """
+        Set the channel affinity for the session. This is used for manually setting the affinity.
+
+        Returns True if the affinity was set
+        """
+        channel = session.get_channel()
+        with cls._critical_section(channel):
+            if cls._channel_is_available_for_session(session):
+                session_info = RunningSessionInfo(None, session.connection_id)
+                cls._release_running_session_info_for_channel(session_info, channel)
+                return True
+        return False
+
+    @classmethod
     def clear_stale_channel_claim(cls, channel):
         with cls._critical_section(channel):
             return cls._clear_stale_channel_claim(channel)
@@ -411,12 +423,15 @@ class XFormsSessionSynchronization:
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
-        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{channel.phone_number}'
+        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{apply_leniency(channel.phone_number)}'
 
     @staticmethod
     def _critical_section(channel):
         return CriticalSection([
-            f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/{channel.phone_number}'
+            (
+                f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/'
+                f'{apply_leniency(channel.phone_number)}'
+            )
         ], timeout=5 * 60)
 
 
@@ -432,6 +447,7 @@ def get_channel_for_contact(contact_id, phone_number):
     backend_id = None
     phone_number_record = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
     if phone_number_record:
+        phone_number = phone_number_record.phone_number  # prefer this number since it has leniency applied
         try:
             backend = phone_number_record.backend
         except BadSMSConfigException:

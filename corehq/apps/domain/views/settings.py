@@ -19,6 +19,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -503,3 +504,9 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
                 for app in all_apps
             ), key=lambda x: (-1 * len(x[1]), x[0])),
         }
+
+
+class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Manage Mobile Workers")
+    template_name = 'enterprise/manage_mobile_workers.html'
+    urlname = 'domain_manage_mobile_workers'

@@ -25,7 +25,7 @@ from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 
 @serial_task("{location_type.domain}-{location_type.pk}",
-             default_retry_delay=30, max_retries=3)
+             default_retry_delay=30, max_retries=3, serializer='pickle')
 def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
     for location in SQLLocation.objects.filter(location_type=location_type):

@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -11,7 +11,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -47,7 +47,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
-from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.dates import (
+    force_to_datetime,
+    get_date_from_month_and_year_string,
+)
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
@@ -141,9 +144,10 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
@@ -174,12 +178,15 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
+    access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -266,6 +273,9 @@ class Permissions(DocumentSchema):
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
 
+    def view_tableau_viz(self, viz_id):
+        return self.view_tableau or viz_id in self.view_tableau_list
+
     def has(self, permission, data=None):
         if data:
             return getattr(self, permission)(data)
@@ -311,6 +321,7 @@ class UserRolePresets(object):
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
+    MOBILE_WORKER = gettext_noop("Mobile Worker")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -324,7 +335,8 @@ class UserRolePresets(object):
         'read-only': READ_ONLY,
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN
+        'billing-admin': BILLING_ADMIN,
+        'mobile-worker': MOBILE_WORKER
     }
 
     # skip legacy duplicate ('no-permissions')
@@ -352,7 +364,12 @@ class UserRolePresets(object):
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
+                                                   report_an_issue=True,
+                                                   access_all_locations=True,
+                                                   access_api=False,
+                                                   download_reports=False)
         }
 
     @classmethod
@@ -585,7 +602,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_domain_admin(domain):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+            return True
+        elif self.is_domain_admin(domain):
             return True
 
         dm = self.get_domain_membership(domain, allow_enterprise=True)
@@ -1517,6 +1536,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
             if permission_slug in EXPORT_PERMISSIONS
         ])
+
+    def can_view_some_tableau_viz(self, domain):
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 
     def can_login_as(self, domain):
         return (
@@ -2764,6 +2787,12 @@ class AnonymousCouchUser(object):
     def can_view_some_reports(self, domain):
         return False
 
+    def can_view_tableau_viz(self, viz_id):
+        return False
+
+    def can_view_some_tableau_viz(self, viz_id):
+        return False
+
     @property
     def analytics_enabled(self):
         return False
@@ -2771,7 +2800,7 @@ class AnonymousCouchUser(object):
     def can_edit_data(self):
         return False
 
-    def can_edit_messgaing(self):
+    def can_edit_messaging(self):
         return False
 
     def can_edit_apps(self):
@@ -2831,6 +2860,9 @@ class AnonymousCouchUser(object):
     def can_view_roles(self):
         return False
 
+    def can_access_release_management(self):
+        return False
+
 
 class UserReportingMetadataStaging(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -2845,7 +2877,7 @@ class UserReportingMetadataStaging(models.Model):
 
     # The following properties are null if a user has not submitted a form since their last sync
     xform_version = models.IntegerField(null=True)
-    form_meta = JSONField(null=True)  # This could be filtered to only the parts we need
+    form_meta = models.JSONField(null=True)  # This could be filtered to only the parts we need
     received_on = models.DateTimeField(null=True)
 
     # The following properties are null if a user has not synced since their last form submission
@@ -3070,7 +3102,7 @@ class UserHistory(models.Model):
     # ToDo: remove post migration/reset of existing records
     message = models.TextField(blank=True, null=True)
     # JSON structured replacement for the deprecated text message field
-    change_messages = JSONField(default=dict)
+    change_messages = models.JSONField(default=dict)
     changed_at = models.DateTimeField(auto_now_add=True, editable=False)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     user_upload_record = models.ForeignKey(UserUploadRecord, null=True, on_delete=models.SET_NULL)
@@ -3080,20 +3112,26 @@ class UserHistory(models.Model):
        changed_via: one of the USER_CHANGE_VIA_* constants
        changes: a dict of CouchUser attributes that changed and their new values
     """
-    details = JSONField(default=dict)
+    details = models.JSONField(default=dict)
     # ToDo: remove blank=true post migration/reset of existing records since it will always be present
     # same as the deprecated details.changed_via
     # one of the USER_CHANGE_VIA_* constants
     changed_via = models.CharField(max_length=255, blank=True)
     # same as the deprecated details.changes
     # a dict of CouchUser attributes that changed and their new values
-    changes = JSONField(default=dict, encoder=DjangoJSONEncoder)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     class Meta:
         indexes = [
             models.Index(fields=['by_domain']),
             models.Index(fields=['for_domain']),
         ]
+
+
+class DeactivateMobileWorkerTriggerUpdateMessage:
+    UPDATED = 'updated'
+    CREATED = 'created'
+    DELETED = 'deleted'
 
 
 class DeactivateMobileWorkerTrigger(models.Model):
@@ -3121,3 +3159,41 @@ class DeactivateMobileWorkerTrigger(models.Model):
         for chunked_ids in chunked(user_ids, 100):
             bulk_auto_deactivate_commcare_users(chunked_ids, domain)
             cls.objects.filter(domain=domain, user_id__in=chunked_ids).delete()
+
+    @classmethod
+    def update_trigger(cls, domain, user_id, deactivate_after):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not deactivate_after:
+            if existing_trigger.exists():
+                existing_trigger.delete()
+                return DeactivateMobileWorkerTriggerUpdateMessage.DELETED
+            # noop
+            return
+        if isinstance(deactivate_after, str):
+            try:
+                deactivate_after = get_date_from_month_and_year_string(deactivate_after)
+            except ValueError:
+                raise ValueError("Deactivate After Date is not in MM-YYYY format")
+        if isinstance(deactivate_after, date):
+            if existing_trigger.exists():
+                trigger = existing_trigger.first()
+                if trigger.deactivate_after == deactivate_after:
+                    # don't update or record a message
+                    return
+                trigger.deactivate_after = deactivate_after
+                trigger.save()
+                return DeactivateMobileWorkerTriggerUpdateMessage.UPDATED
+            else:
+                cls.objects.create(
+                    domain=domain,
+                    user_id=user_id,
+                    deactivate_after=deactivate_after,
+                )
+                return DeactivateMobileWorkerTriggerUpdateMessage.CREATED
+
+    @classmethod
+    def get_deactivate_after_date(cls, domain, user_id):
+        existing_trigger = cls.objects.filter(domain=domain, user_id=user_id)
+        if not existing_trigger.exists():
+            return None
+        return existing_trigger.first().deactivate_after

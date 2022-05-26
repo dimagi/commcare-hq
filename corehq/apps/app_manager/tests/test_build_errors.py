@@ -5,8 +5,17 @@ from django.test import SimpleTestCase
 
 from unittest.mock import patch
 
-from corehq.apps.app_manager.models import Application, CaseList, Module
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_LOAD_CASE, REGISTRY_WORKFLOW_SMART_LINK
+from corehq.apps.app_manager.models import (
+    Application,
+    CaseList,
+    CaseSearch,
+    CaseSearchLabel,
+    CaseSearchProperty,
+    Module,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -184,3 +193,50 @@ class BuildErrorsTest(SimpleTestCase):
             'type': 'training module child',
             'module': {'id': 1, 'unique_id': 'training_module', 'name': {'en': 'training module'}}
         }, app.validate_app())
+
+    @flag_enabled('DATA_REGISTRY')
+    @patch.object(Application, 'supports_data_registry', lambda: True)
+    def test_multi_select_module_errors(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        factory.form_requires_case(form, 'person')
+
+        module.case_details.short.multi_select = True
+        module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
+            data_registry="so_many_cases",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+        )
+
+        self.assertIn({
+            'type': 'data registry multi select',
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
+        }, factory.app.validate_app())
+
+        module.search_config.data_registry_workflow = REGISTRY_WORKFLOW_SMART_LINK
+        self.assertIn({
+            'type': 'smart links multi select',
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
+        }, factory.app.validate_app())
+
+    @flag_enabled('DATA_REGISTRY')
+    @patch.object(Application, 'supports_data_registry', lambda: True)
+    def test_inline_search_module_errors(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        factory.form_requires_case(form, 'person')
+
+        module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
+            data_registry="so_many_cases",
+            data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
+            auto_launch=True,
+            inline_search=True,
+        )
+
+        self.assertIn({
+            'type': "smart links inline search",
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
+        }, factory.app.validate_app())

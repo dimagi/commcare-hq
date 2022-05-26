@@ -45,10 +45,10 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
         get_latest_enabled_versions_per_profile.clear(application.copy_of)
 
 
-app_post_save = Signal(providing_args=['application'])
+app_post_save = Signal()  # providing args: application
 
 app_post_save.connect(create_app_structure_repeat_records)
 app_post_save.connect(update_callcenter_config)
 app_post_save.connect(expire_latest_enabled_build_profiles)
 
-app_post_release = Signal(providing_args=['application'])
+app_post_release = Signal()  # providing args: application

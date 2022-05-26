@@ -24,6 +24,7 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
+        'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
     }
 
 
@@ -258,10 +259,10 @@ def banners(request):
 
 
 def get_demo(request):
-    is_user_not_logged_in = getattr(request, 'user', None) and not request.user.is_authenticated
+    is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and is_user_not_logged_in:
+    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

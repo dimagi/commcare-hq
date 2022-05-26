@@ -93,7 +93,7 @@ def _to_kwargs(req):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id):
+def update_tables(request, domain, data_type_id=None):
     """
     receives a JSON-update patch like following
     {

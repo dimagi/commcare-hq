@@ -5,22 +5,25 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
+from couchforms.geopoint import GeoPoint
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.case_search.const import IS_RELATED_CASE, RELEVANCE_SCORE
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_geo_distance,
     case_property_missing,
+    case_property_query,
     case_property_range_query,
     case_property_text_query,
     flatten_result,
     wrap_case_search_hit,
-    case_property_query
 )
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
@@ -29,8 +32,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
 )
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
 @es_test
@@ -566,3 +568,17 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 multivalue_mode='AND'
             )
         )
+
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @patch('corehq.pillows.case_search.get_gps_properties', return_value={'coords'})
+    def test_geopoint_query(self, _):
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'coords': "42.373611 -71.110558 0 0"},
+            {'_id': 'c2', 'coords': "42 Wallaby Way"},
+            {'_id': 'c3', 'coords': "-33.856159 151.215256 0 0"},
+            {'_id': 'c4', 'coords': "-33.8373 151.225"},
+        ])
+        res = CaseSearchES().domain(self.domain).set_query(
+            case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
+        ).get_ids()
+        self.assertItemsEqual(res, ['c3', 'c4'])

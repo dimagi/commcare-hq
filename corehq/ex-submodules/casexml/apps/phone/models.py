@@ -5,7 +5,6 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -430,7 +429,7 @@ class SyncLogSQL(models.Model):
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
     previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
-    doc = JSONField()
+    doc = models.JSONField()
     log_format = models.CharField(
         max_length=10,
         choices=[

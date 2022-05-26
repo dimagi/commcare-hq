@@ -132,6 +132,7 @@ class AllCommCareUsersTest(TestCase):
         delete_all_locations()
         cls.ccdomain.delete()
         cls.other_domain.delete()
+        ensure_index_deleted(USER_INDEX)
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_users_by_filters(self):
@@ -202,6 +203,18 @@ class AllCommCareUsersTest(TestCase):
             [self.ccuser_inactive.username]
         )
 
+        filters = {'user_active_status': True}
+        self.assertItemsEqual(
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
+            [self.ccuser_1.username, self.ccuser_2.username]
+        )
+
+        filters = {'user_active_status': None}
+        self.assertItemsEqual(
+            usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
+            [self.ccuser_1.username, self.ccuser_2.username, self.ccuser_inactive.username]
+        )
+
         # Location restricted user has default access to only users assigned that location
         assigned_location_ids = self.location_restricted_web_user\
             .get_domain_membership(self.ccdomain.name)\
@@ -209,7 +222,6 @@ class AllCommCareUsersTest(TestCase):
         filters = {'web_user_assigned_location_ids': list(assigned_location_ids)}
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 2)
 
-        ensure_index_deleted(USER_INDEX)
 
     def test_get_invitations_by_filters(self):
         invitations = [

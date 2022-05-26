@@ -10,8 +10,8 @@ from django.views import View
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.accounting.utils import domain_has_privilege
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -25,13 +25,10 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.dbaccessors import domain_exists
-from corehq.apps.domain.decorators import (
-    domain_admin_required,
-    login_or_api_key,
-)
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -56,10 +53,14 @@ from corehq.apps.linked_domain.decorators import (
     require_linked_domain,
 )
 from corehq.apps.linked_domain.exceptions import (
+    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
+    DomainLinkNotFound,
+    NoDownstreamDomainsProvided,
     UnsupportedActionError,
+    UserDoesNotHavePermission,
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
@@ -86,10 +87,12 @@ from corehq.apps.linked_domain.tasks import (
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
+    can_domain_access_linked_domains,
     convert_app_for_remote_linking,
     pull_missing_multimedia_for_app,
     server_to_user_time,
-    user_has_admin_access_in_all_domains,
+    user_has_access,
+    user_has_access_in_all_domains,
 )
 from corehq.apps.linked_domain.view_helpers import (
     build_domain_link_view_model,
@@ -99,6 +102,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_fixtures,
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
+    get_upstream_and_downstream_ucr_expressions,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -111,7 +115,6 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, WebUser
-from corehq.privileges import RELEASE_MANAGEMENT
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -267,7 +270,7 @@ def pull_missing_multimedia(request, domain, app_id):
 
 
 @method_decorator(require_access_to_linked_domains, name='dispatch')
-class DomainLinkView(BaseAdminProjectSettingsView):
+class DomainLinkView(BaseProjectSettingsView):
     urlname = 'domain_links'
     page_title = gettext_lazy("Linked Project Spaces")
     template_name = 'linked_domain/domain_links.html'
@@ -279,8 +282,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         """
-        This view services both domains that are master domains and domains that are linked domains
-        (and legacy domains that are both).
+        This view services both domains that are upstream, downstream, and legacy domains that are both
         """
         timezone = get_timezone_for_request()
         upstream_link = get_upstream_domain_link(self.domain)
@@ -289,29 +291,38 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
         upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
         upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
+        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(
+            self.domain
+        )
 
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
-            self.domain, upstream_link, downstream_apps, downstream_fixtures, downstream_reports,
-            downstream_keywords, timezone, is_superuser=is_superuser
-        )
-
-        view_models_to_push = build_view_models_from_data_models(
-            self.domain, upstream_apps, upstream_fixtures, upstream_reports, upstream_keywords,
+            self.domain,
+            upstream_link,
+            downstream_apps,
+            downstream_fixtures,
+            downstream_reports,
+            downstream_keywords,
+            downstream_ucr_expressions,
+            timezone,
             is_superuser=is_superuser
         )
 
-        account = BillingAccount.get_account_by_domain(self.request.domain)
-        available_domains_to_link = get_available_domains_to_link(self.request.domain,
-                                                                  self.request.couch_user,
-                                                                  billing_account=account)
+        view_models_to_push = build_view_models_from_data_models(
+            self.domain,
+            upstream_apps,
+            upstream_fixtures,
+            upstream_reports,
+            upstream_keywords,
+            upstream_ucr_expressions,
+            is_superuser=is_superuser
+        )
+
+        available_domains_to_link = get_available_domains_to_link(self.request.domain, self.request.couch_user)
 
         upstream_domain_urls = []
-        upstream_domains = get_available_upstream_domains(self.request.domain,
-                                                          self.request.couch_user,
-                                                          billing_account=account)
-        for domain in upstream_domains:
+        for domain in get_available_upstream_domains(self.request.domain, self.request.couch_user):
             upstream_domain_urls.append({'name': domain, 'url': reverse('domain_links', args=[domain])})
 
         if upstream_link and upstream_link.is_remote:
@@ -322,9 +333,8 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
-            'has_release_management_privilege': domain_has_privilege(self.domain, RELEASE_MANAGEMENT),
-            'is_superuser': is_superuser,
             'view_data': {
+                'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
                 'available_domains': available_domains_to_link,
@@ -333,11 +343,12 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'view_models_to_push': sorted(view_models_to_push, key=lambda m: m['name']),
                 'linked_domains': sorted(linked_domains, key=lambda d: d['downstream_domain']),
                 'linkable_ucr': remote_linkable_ucr,
+                'has_full_access': can_domain_access_linked_domains(self.domain, include_lite_version=False),
             },
         }
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(require_access_to_linked_domains, name='dispatch')
 class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     urlname = "domain_link_rmi"
 
@@ -347,13 +358,26 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         type_ = model['type']
         detail = model['detail']
         detail_obj = wrap_detail(type_, detail) if detail else None
+        timezone = get_timezone_for_request()
+        domain_link = get_upstream_domain_link(self.domain)
 
-        upstream_link = get_upstream_domain_link(self.domain)
+        try:
+            validate_pull(self.request.couch_user, domain_link)
+        except UserDoesNotHavePermission:
+            notify_exception(self.request, "Triggered UserDoesNotHavePermission exception")
+            return {
+                'success': False,
+                'error': gettext(
+                    "You do not have permission to pull content into this project space."
+                ),
+                'last_update': server_to_user_time(domain_link.last_pull, timezone),
+            }
+
         error = ""
         try:
-            update_model_type(upstream_link, type_, detail_obj)
+            update_model_type(domain_link, type_, detail_obj)
             model_detail = detail_obj.to_json() if detail_obj else None
-            upstream_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
+            domain_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
@@ -363,11 +387,10 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
             {"data_model": type_}
         )
 
-        timezone = get_timezone_for_request()
         return {
             'success': not error,
             'error': error,
-            'last_update': server_to_user_time(upstream_link.last_pull, timezone)
+            'last_update': server_to_user_time(domain_link.last_pull, timezone)
         }
 
     @allow_remote_invocation
@@ -385,6 +408,32 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
+        error_message = ''
+        try:
+            validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
+        except NoDownstreamDomainsProvided:
+            error_message = gettext("No downstream project spaces were selected. Please contact support.")
+        except DomainLinkNotFound:
+            error_message = gettext(
+                "Links between one or more project spaces do not exist. Please contact support."
+            )
+        except AttemptedPushViolatesConstraints:
+            formatted_domains = ', '.join(in_data['linked_domains'])
+            error_message = gettext('''
+                The attempted push from {} to {} is disallowed. Please contact support.
+            '''.format(self.domain, formatted_domains))
+            notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
+        except UserDoesNotHavePermission:
+            error_message = gettext(
+                "You do not have permission to push to all specified downstream project spaces."
+            )
+        finally:
+            if error_message:
+                return {
+                    'success': False,
+                    'message': error_message,
+                }
+
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
 
@@ -445,11 +494,54 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         ).format(downstream_domain, upstream_domain)
         raise DomainLinkAlreadyExists(error)
 
-    if not user_has_admin_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
-        error = gettext("You must be an admin in both project spaces to create a link.")
+    if not user_has_access_in_all_domains(couch_user, [upstream_domain, downstream_domain]):
+        error = gettext("You do not have adequate permissions in both project spaces to create a link.")
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
+
+
+def validate_push(user, domain, downstream_domains):
+    if not downstream_domains:
+        raise NoDownstreamDomainsProvided
+
+    try:
+        domain_links = [
+            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
+        ]
+    except DomainLink.DoesNotExist:
+        raise DomainLinkNotFound
+
+    if not user_has_access_in_all_domains(user, downstream_domains):
+        raise UserDoesNotHavePermission
+
+    check_if_push_violates_constraints(user, domain_links)
+
+
+def check_if_push_violates_constraints(user, domain_links):
+    """
+    Ensures MRM limit of pushing to 1 domain at a time is enforced
+    """
+    if user.is_superuser:
+        return
+
+    if len(domain_links) == 1:
+        # pushing to one domain is fine regardless of access status
+        return
+
+    limited_access_links = list(filter(lambda link: not link.has_full_access(), domain_links))
+
+    if not limited_access_links:
+        # all links are full access
+        return
+
+    raise AttemptedPushViolatesConstraints
+
+
+def validate_pull(user, domain_link):
+    # ensure user has access in the downstream domain
+    if not user_has_access(user, domain_link.linked_domain):
+        raise UserDoesNotHavePermission
 
 
 class DomainLinkHistoryReport(GenericTabularReport):

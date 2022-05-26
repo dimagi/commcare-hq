@@ -96,27 +96,32 @@ a translation flagged value. These will need to be done with `gettext_lazy`.
 ``gettext_lazy``, a cautionary tale
 ************************************
 
-``gettext_lazy`` does not return a string.  This can cause complications.
-
-When using methods to manipulate a string, lazy translated strings will not
-work properly.
+``gettext_lazy`` returns a proxy object, not a string, which can cause
+complications. These proxies will be coerced to a string when used as one, using
+the user's language if a request is active and available, and using the default
+language (English) otherwise.
 
 .. code-block:: python
 
-    group_name = gettext("mobile workers")
-    return group_name.upper()
+    >>> group_name = gettext_lazy("mobile workers")
+    >>> type(group_name)
+    django.utils.functional.lazy.<locals>.__proxy__
+    >>> group_name.upper()
+    'MOBILE WORKERS'
+    >>> type(group_name.upper())
+    str
 
-Converting ``gettext_lazy`` objects to json will crash.  You should use
-``dimagi.utils.web.json_handler`` to properly coerce it to a string.
+Converting ``gettext_lazy`` proxy objects to json will crash. You should use
+``corehq.util.json.CommCareJSONEncoder`` to properly coerce it to a string.
 
 .. code-block:: python
 
     >>> import json
     >>> from django.utils.translation import gettext_lazy
     >>> json.dumps({"message": gettext_lazy("Hello!")})
-    TypeError: <django.utils.functional.__proxy__ object at 0x7fb50766f3d0> is not JSON serializable
-    >>> from dimagi.utils.web import json_handler
-    >>> json.dumps({"message": gettext_lazy("Hello!")}, default=json_handler)
+    TypeError: Object of type __proxy__ is not JSON serializable
+    >>> from corehq.util.json import CommCareJSONEncoder
+    >>> json.dumps({"message": gettext_lazy("Hello!")}, cls=CommCareJSONEncoder)
     '{"message": "Hello!"}'
 
 
@@ -184,18 +189,18 @@ running `makemessages`.
 
 To do this for all langauges::
 
-        $ django-admin.py makemessages --all
+        $ django-admin makemessages --all
 
 It will be quicker for testing during development to only build one language::
 
-        $ django-admin.py makemessages -l fra
+        $ django-admin makemessages -l fra
 
 After this command has run, your .po files will be up to date. To have content
 in this file show up on the website you still need to compile the strings.
 
 .. code-block:: bash
 
-        $ django-admin.py compilemessages
+        $ django-admin compilemessages
 
 You may notice at this point that not all tagged strings with an associated
 translation in the .po shows up translated. That could be because Django made

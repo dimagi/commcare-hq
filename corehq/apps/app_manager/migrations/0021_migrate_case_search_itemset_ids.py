@@ -1,14 +1,6 @@
-from django.core.management import call_command
 from django.db import migrations
 
-from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
-from corehq.util.django_migrations import skip_on_fresh_install
-
-
-@skip_on_fresh_install
-def _migrate_case_search_prompt_itemset_ids(apps, schema_editor):
-    for domain in sorted(SYNC_SEARCH_CASE_CLAIM.get_enabled_domains()):
-        call_command('migrate_case_search_prompt_itemset_ids', domain=domain)
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -18,7 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_migrate_case_search_prompt_itemset_ids,
-                             reverse_code=migrations.RunPython.noop,
-                             elidable=True),
+        prompt_for_historical_migration(
+            'app_manager', get_migration_name(__file__),
+            required_commit='116a6fc9556ac929e29a35fd2dfa673984820561'
+        )
     ]

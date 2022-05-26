@@ -53,6 +53,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
 )
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import SQLCreateCaseRepeater
 
 
 class BaseDumpLoadTest(TestCase):
@@ -144,7 +146,7 @@ class BaseDumpLoadTest(TestCase):
                 receiver_path = receiver.__module__ + '.' + receiver.__name__
                 if receiver_path in whitelist_receivers:
                     continue
-                args = inspect.getargspec(receiver).args
+                args = inspect.signature(receiver).parameters
                 message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
                     receiver, model
                 )
@@ -730,7 +732,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             url='example.com',
             user_id='user_id',
         )
-        self._dump_and_load(Counter({ZapierSubscription: 1}))
+        # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
+        self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
 
 @mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)

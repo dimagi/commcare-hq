@@ -16,28 +16,31 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.es import CaseSearchES
+from corehq.apps.data_dictionary.util import get_gps_properties
+from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
+from corehq.apps.es.client import ElasticManageAdapter
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
 from corehq.toggles import (
     CASE_API_V0_6,
     CASE_LIST_EXPLORER,
-    EXPLORE_CASE_DATA,
     ECD_MIGRATED_DOMAINS,
+    EXPLORE_CASE_DATA,
+    USH_CASE_CLAIM_UPDATES,
 )
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.parsing import json_format_datetime
+from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
@@ -100,11 +103,26 @@ def _get_case_properties(doc_dict):
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
         for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
-    dynamic_case_properties = dict(doc_dict['case_json'])
+    dynamic_properties = [_format_property(key, value, case_id)
+                          for key, value in doc_dict['case_json'].items()]
 
-    dynamic_mapping = [_format_property(key, value, case_id) for key, value in dynamic_case_properties.items()]
+    if USH_CASE_CLAIM_UPDATES.enabled(domain):
+        _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
-    return base_case_properties + dynamic_mapping
+    return base_case_properties + dynamic_properties
+
+
+def _add_smart_types(dynamic_properties, domain, case_type):
+    # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
+    # `value` is a multi-field property that duck types numeric and date values
+    # We can't do that for geo_points in ES v2, as `ignore_malformed` is broken
+    gps_props = get_gps_properties(domain, case_type)
+    for prop in dynamic_properties:
+        if prop['key'] in gps_props:
+            try:
+                prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
+            except BadValueError:
+                prop['geopoint_value'] = None
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
@@ -283,16 +301,7 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    get_es_new().indices.refresh(CASE_SEARCH_INDEX)
+    case_search = ElasticCaseSearch()
+    ElasticManageAdapter().index_refresh(case_search.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-
-    op_kwargs = {
-        "_op_type": "delete",
-        "_index": CASE_SEARCH_INDEX_INFO.alias,
-        "_type": CASE_ES_TYPE,
-    }
-
-    ElasticsearchInterface(get_es_new()).bulk_ops([{
-        **op_kwargs,
-        "_id": case_id,
-    } for case_id in case_ids])
+    case_search.bulk_delete(case_ids)

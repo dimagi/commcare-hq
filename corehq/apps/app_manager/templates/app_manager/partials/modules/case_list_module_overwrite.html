@@ -10,7 +10,7 @@
               <label for="other_module_id">{% trans "Menu(s)" %} </label>
             </div>
             <div class="col-xs-3 col-sm-4">
-              <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple" >
+              <select name='dest_module_unique_ids' class='form-control case-type-dropdown' multiple="multiple" >
                 {% for other_mod in available_modules %}
                   <option value="{{ other_mod.unique_id }}">{{ other_mod.name|html_trans:langs }}</option>
                 {% endfor %}
@@ -71,6 +71,12 @@
                   <label for="search_claim_options">
                     <input type="checkbox" name="search_claim_options" id="search_claim_options"/>
                     {% trans "Search and claim options" %}
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'USH_CASE_LIST_MULTI_SELECT' %}
+                  <label for="multi_select">
+                    <input type="checkbox" name="multi_select" id="multi_select"/>
+                    {% trans "Multi-Select Case List Options" %}
                   </label><br>
                 {% endif %}
             </div>

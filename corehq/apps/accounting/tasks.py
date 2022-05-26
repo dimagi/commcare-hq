@@ -819,3 +819,8 @@ def calculate_users_in_all_domains(today=None):
                 "Something went wrong while creating DomainUserHistory for domain %s: %s" % (domain, e),
                 show_stack_trace=True,
             )
+    # kick off the auto-deactivation of mobile workers after we calculate the
+    # DomainUserHistory for projects. This ensures this feature is never abused
+    # to get around our billing system.
+    from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
+    auto_deactivate_mobile_workers.delay()

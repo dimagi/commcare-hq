@@ -179,6 +179,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+MINIMUM_ZXCVBN_SCORE = 2
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -200,8 +201,10 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
+    'corehq.apps.celery.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -289,8 +292,8 @@ HQ_APPS = (
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.app_manager',
-    'corehq.apps.es',
+    'corehq.apps.app_manager.AppManagerAppConfig',
+    'corehq.apps.es.app_config.ElasticAppConfig',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
@@ -306,7 +309,7 @@ HQ_APPS = (
     'corehq.apps.sso',
     'corehq.apps.ivr',
     'corehq.apps.oauth_integrations',
-    'corehq.messaging',
+    'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -339,7 +342,7 @@ HQ_APPS = (
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
-    'corehq.apps.data_interfaces',
+    'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -371,7 +374,6 @@ HQ_APPS = (
 
     # custom reports
     'custom.reports.mc',
-    'custom.apps.crs_reports',
     'custom.ucla',
 
     'custom.up_nrhm',
@@ -385,7 +387,7 @@ HQ_APPS = (
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
-    'custom.cowin',
+    'custom.cowin.COWINAppConfig',
 
     'custom.ccqa',
 
@@ -801,11 +803,6 @@ RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
 RUN_DEDUPLICATION_PILLOW = True
 
-# Set to True to remove the `actions` and `xform_id` fields from the
-# ES Case index. These fields contribute high load to the shard
-# databases.
-CASE_ES_DROP_FORM_FIELDS = False
-
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.FormRepeater',
@@ -1052,10 +1049,23 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ES_SETTINGS = None
-ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
-ES_XFORM_DISABLE_ALL = False
+ELASTIC_ADAPTER_SETTINGS = {
+    "ElasticCase": {
+        # Set to True to remove the `actions` and `xform_id` fields from the
+        # Elastic "hqcases_..." index. These fields contribute high load to the
+        # shard databases.
+        "DROP_FORM_FIELDS": False,
+    },
+    "ElasticForm": {
+        # TODO: document what this is for
+        "DISABLE_ALL": False,
+    },
+}
+
+# TODO: remove these Elastic settings:
+ES_SETTINGS = None  # [do not use] legacy mechanism for tests
+CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1481,9 +1491,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
@@ -1558,7 +1565,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
 
     # custom reports
@@ -1943,18 +1949,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
-
-    'crs-remind': 'custom.apps.crs_reports',
 
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
@@ -2086,8 +2086,14 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 #Google Sheet Integration testing variable
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
 
 # Scopes to give read/write access to the code that generates the spreadsheets
 GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']

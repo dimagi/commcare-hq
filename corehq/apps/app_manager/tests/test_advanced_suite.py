@@ -25,11 +25,16 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_advanced_suite(self, *args):
         self._test_generic_suite('suite-advanced')
+
+    def test_advanced_suite_multi_select(self, *args):
+        app = Application.wrap(self.get_json("suite-advanced"))
+        app.modules[1].case_details.short.multi_select = True
+        self.assertXmlEqual(self.get_xml("suite-advanced"), app.create_suite())
 
     def test_advanced_suite_details(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))

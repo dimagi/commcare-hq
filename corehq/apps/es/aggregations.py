@@ -39,7 +39,7 @@ import re
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 
-from corehq.elastic import SIZE_LIMIT
+from corehq.apps.es.const import SIZE_LIMIT
 
 MISSING_KEY = None
 
@@ -204,11 +204,15 @@ class TermsAggregation(Aggregation):
     :param name: aggregation name
     :param field: name of the field to bucket on
     :param size:
+    :param missing: define how documents that are missing a value should be treated.
+                    By default, they will be ignored. If a value is supplied here it will be used where
+                    the value is missing.
+
     """
     type = "terms"
     result_class = BucketResult
 
-    def __init__(self, name, field, size=None):
+    def __init__(self, name, field, size=None, missing=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
@@ -216,6 +220,8 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
+        if missing:
+            self.body["missing"] = missing
 
     def order(self, field, order="asc", reset=True):
         query = deepcopy(self)

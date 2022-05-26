@@ -18,6 +18,7 @@ from corehq.sql_db.util import (
     get_replication_delay_for_shard_standbys,
     get_standbys_with_acceptible_delay,
 )
+from .utils import ignore_databases_override_warning
 
 
 def _get_db_config(db_name, master=None, delay=None):
@@ -49,6 +50,7 @@ REPORTING_DATABASES = {
 }
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
     def setUp(self):
@@ -173,6 +175,7 @@ class ConnectionManagerTests(SimpleTestCase):
         )
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
 class TestReadsFromShardStandbys(SimpleTestCase):
     def setUp(self):

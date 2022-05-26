@@ -15,6 +15,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    MODEL_UCR_EXPRESSION,
     SUPERUSER_DATA_MODELS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
@@ -25,10 +26,11 @@ from corehq.apps.linked_domain.models import (
     FixtureLinkDetail,
     KeywordLinkDetail,
     ReportLinkDetail,
+    UCRExpressionLinkDetail,
 )
 from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, UCRExpression
 from corehq.apps.userreports.util import get_existing_reports
 
 
@@ -40,6 +42,7 @@ def build_domain_link_view_model(link, timezone):
         'downstream_url': link.downstream_url,
         'is_remote': link.is_remote,
         'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else _('Never'),
+        'has_full_access': link.has_full_access(),
     }
 
 
@@ -110,6 +113,24 @@ def get_upstream_and_downstream_keywords(domain):
     return upstream_list, downstream_list
 
 
+def get_upstream_and_downstream_ucr_expressions(domain):
+    """
+    Return 2 lists of ucr expressions
+    The upstream_list contains ucr expressions that originated in the specified domain
+    The downstream_list contains ucr expressions that have been pulled from a domain
+    upstream of the specified domain
+    """
+    upstream_list = {}
+    downstream_list = {}
+    ucr_expressions = UCRExpression.objects.filter(domain=domain)
+    for ucr_expression in ucr_expressions:
+        if ucr_expression.upstream_id:
+            downstream_list[str(ucr_expression.id)] = ucr_expression
+        else:
+            upstream_list[str(ucr_expression.id)] = ucr_expression
+    return upstream_list, downstream_list
+
+
 def build_app_view_model(app, last_update=None):
     if not app:
         return None
@@ -157,6 +178,18 @@ def build_keyword_view_model(keyword, last_update=None):
         detail=KeywordLinkDetail(keyword_id=str(keyword.id)).to_json(),
         last_update=last_update,
         is_linkable=is_keyword_linkable(keyword),
+    )
+
+
+def build_ucr_expression_view_model(ucr_expression, last_update=None):
+    if not ucr_expression:
+        return None
+
+    return build_linked_data_view_model(
+        model_type=MODEL_UCR_EXPRESSION,
+        name=f"{LINKED_MODELS_MAP[MODEL_UCR_EXPRESSION]} ({ucr_expression.name})",
+        detail=UCRExpressionLinkDetail(ucr_expression_id=str(ucr_expression.id)).to_json(),
+        last_update=last_update,
     )
 
 
@@ -225,8 +258,9 @@ def build_linked_data_view_model(model_type, name, detail, last_update=None, can
     }
 
 
-def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords, ignore_models=None,
-                                       is_superuser=False):
+def build_view_models_from_data_models(
+    domain, apps, fixtures, reports, keywords, ucr_expressions, ignore_models=None, is_superuser=False
+):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
     :return: list of view models (dicts) used to render elements on the release content page
@@ -263,6 +297,11 @@ def build_view_models_from_data_models(domain, apps, fixtures, reports, keywords
         if keyword_view_model:
             view_models.append(keyword_view_model)
 
+    for ucr_expression in ucr_expressions.values():
+        ucr_expression_view_model = build_ucr_expression_view_model(ucr_expression)
+        if ucr_expression_view_model:
+            view_models.append(ucr_expression_view_model)
+
     return view_models
 
 
@@ -286,36 +325,38 @@ def pop_fixture_for_action(action, fixtures, domain):
     return fixture
 
 
-def pop_report_for_action(action, reports):
-    report_id = action.wrapped_detail.report_id
-    try:
-        report = reports.get(report_id)
-        del reports[report_id]
-        return report
-    except KeyError:
+def pop_report(report_id, reports):
+    report = reports.pop(report_id, None)
+    if report is None:
         report = ReportConfiguration.get(report_id)
         if report.doc_type == "ReportConfiguration-Deleted":
             return None
-        else:
-            return report
+    return report
 
 
-def pop_keyword_for_action(action, keywords):
-    keyword_id = action.wrapped_detail.keyword_id
-    try:
-        keyword = keywords[keyword_id]
-        del keywords[keyword_id]
-    except KeyError:
+def pop_keyword(keyword_id, keywords):
+    keyword = keywords.pop(keyword_id, None)
+    if keyword is None:
         try:
             keyword = Keyword.objects.get(id=keyword_id)
         except Keyword.DoesNotExist:
             keyword = None
-
     return keyword
 
 
-def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fixtures, reports, keywords,
-                                                timezone, is_superuser=False):
+def pop_ucr_expression(ucr_expression_id, ucr_expressions):
+    ucr_expression = ucr_expressions.pop(ucr_expression_id, None)
+    if ucr_expression is None:
+        try:
+            ucr_expression = UCRExpression.objects.get(id=ucr_expression_id)
+        except UCRExpression.DoesNotExist:
+            ucr_expression = None
+    return ucr_expression
+
+
+def build_pullable_view_models_from_data_models(
+    domain, upstream_link, apps, fixtures, reports, keywords, ucr_expressions, timezone, is_superuser=False
+):
     """
     Data models that originated in this domain's upstream domain that are available to pull
     :return: list of view models (dicts) used to render linked data models that can be pulled
@@ -342,11 +383,14 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
             fixture = pop_fixture_for_action(action, fixtures, domain)
             view_model = build_fixture_view_model(fixture, last_update=last_update)
         elif action.model == MODEL_REPORT:
-            report = pop_report_for_action(action, reports)
+            report = pop_report(action.wrapped_detail.report_id, reports)
             view_model = build_report_view_model(report, last_update=last_update)
         elif action.model == MODEL_KEYWORD:
-            keyword = pop_keyword_for_action(action, keywords)
+            keyword = pop_keyword(action.wrapped_detail.keyword_id, keywords)
             view_model = build_keyword_view_model(keyword, last_update=last_update)
+        elif action.model == MODEL_UCR_EXPRESSION:
+            ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
+            view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
         else:
             view_model = build_linked_data_view_model(
                 model_type=action.model,
@@ -362,7 +406,15 @@ def build_pullable_view_models_from_data_models(domain, upstream_link, apps, fix
     # ignoring any models we have already added via domain history
     linked_data_view_models.extend(
         build_view_models_from_data_models(
-            domain, apps, fixtures, reports, keywords, ignore_models=models_seen, is_superuser=is_superuser)
+            domain,
+            apps,
+            fixtures,
+            reports,
+            keywords,
+            ucr_expressions,
+            ignore_models=models_seen,
+            is_superuser=is_superuser
+        )
     )
 
     return linked_data_view_models

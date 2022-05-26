@@ -74,7 +74,6 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import ES_DEFAULT_INSTANCE
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
@@ -1497,10 +1496,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return user_dict
 
     def get_users_by_mobile_workers(self):
-        from corehq.apps.reports.util import _report_user_dict
         user_dict = {}
         for mw in self.mobile_worker_ids:
-            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+            user_dict[mw] = util._report_user(CommCareUser.get_by_user_id(mw))
 
         return user_dict
 
@@ -1521,7 +1519,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
-            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
+            ret = [util._report_user(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
             all_users = flatten_list(list(self.users_by_group.values()))
@@ -1537,12 +1535,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        if self.exporting_as_excel:
-            es_instance_alias = 'export'
-        else:
-            es_instance_alias = ES_DEFAULT_INSTANCE
         return get_last_submission_time_for_users(self.domain, user_ids,
-                                                  self.datespan, es_instance_alias=es_instance_alias)
+                                                  self.datespan,
+                                                  for_export=self.exporting_as_excel)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
@@ -1896,7 +1891,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         from corehq.elastic import iter_es_docs_from_query
         user_iterator = iter_es_docs_from_query(user_es_query)
         for user_chunk in chunked(user_iterator, chunk_size):
-            users = [util._report_user_dict(user) for user in user_chunk]
+            users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)

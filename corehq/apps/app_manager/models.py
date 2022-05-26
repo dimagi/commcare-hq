@@ -53,7 +53,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.web import get_url_base, parse_int
@@ -137,8 +136,10 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids, module_loads_registry_case,
+    update_report_module_ids,
+    module_loads_registry_case,
     wrap_transition_from_old_update_case_action,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -148,7 +149,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
     BuildSpec,
-    CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
@@ -178,7 +178,6 @@ from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -1181,7 +1180,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding='utf-8'))
+                    validate_xform(etree.tostring(form.xml, encoding='utf-8'))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1512,26 +1511,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
     @property
     def default_media_image(self):
         # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_image')
         return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
         # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_audio')
         return self.audio_by_language('')
-
-    def _assert_unexpected_default_media_call(self, media_attr):
-        assert media_attr in ('media_image', 'media_audio')
-        media = getattr(self, media_attr)
-        if isinstance(media, dict) and list(media) == ['default']:
-            from corehq.util.view_utils import get_request
-            request = get_request()
-            url = ''
-            if request:
-                url = request.META.get('HTTP_REFERER')
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
     def icon_by_language(self, lang, strict=False, build_profile_id=None):
         return self._get_media_by_language('media_image', lang, strict=strict, build_profile_id=build_profile_id)
@@ -1884,6 +1869,7 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty(exclude_if_none=True)
     nodeset_case_type = StringProperty(exclude_if_none=True)
+    nodeset_filter = StringProperty(exclude_if_none=True)   # only relevant if nodeset_case_type is populated
 
     # Display condition for the tab
     relevant = StringProperty(exclude_if_none=True)
@@ -2085,7 +2071,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
-        if value_is_the_default and module_loads_registry_case(module):
+        if value_is_the_default and module_loads_registry_case(module) or module_uses_inline_search(module):
             return RESULTS_INSTANCE
         return self.instance_name
 
@@ -2170,12 +2156,6 @@ class Itemset(DocumentSchema):
     value = StringProperty(exclude_if_none=True)
     sort = StringProperty(exclude_if_none=True)
 
-    @classmethod
-    def wrap(cls, data):
-        from corehq.apps.app_manager.management.commands.migrate_case_search_prompt_itemset_ids import wrap_itemset
-        (data, dirty) = wrap_itemset(data)
-        return super().wrap(data)
-
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2189,6 +2169,8 @@ class CaseSearchProperty(DocumentSchema):
     hint = DictProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
+    exclude = BooleanProperty(default=False)
+    required = StringProperty(exclude_if_none=True)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
@@ -2225,8 +2207,7 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    default_relevant = BooleanProperty(default=True)
-    additional_relevant = StringProperty(exclude_if_none=True)
+    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -2235,23 +2216,23 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
+    title_label = DictProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
+
+    inline_search = BooleanProperty(default=False)
 
     @property
     def case_session_var(self):
         return "search_case_id"
 
-    def get_relevant(self):
-        relevant = self.additional_relevant or ""
-        if self.default_relevant:
-            default_condition = CaseClaimXpath(self.case_session_var).default_relevant()
-            if relevant:
-                relevant = f"({default_condition}) and ({relevant})"
-            else:
-                relevant = default_condition
-        return relevant
+    def get_relevant(self, case_session_var, multi_select=False):
+        xpath = CaseClaimXpath(case_session_var)
+        default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
+        if self.additional_relevant:
+            return f"({default_condition}) and ({self.additional_relevant})"
+        return default_condition
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2428,6 +2409,11 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def get_app(self):
         return self._parent
 
+    def is_multi_select(self):
+        if hasattr(self, 'case_details'):
+            return self.case_details.short.multi_select
+        return False
+
     def default_name(self, app=None):
         if not app:
             app = self.get_app()
@@ -2566,7 +2552,7 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        if module_offers_search(self) and not custom_detail:
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -3254,6 +3240,9 @@ class AdvancedModule(ModuleBase):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
 
+    def is_multi_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
@@ -3278,7 +3267,9 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return details
@@ -3908,6 +3899,11 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return []
         return self.source_module.all_forms_require_a_case()
 
+    def is_multi_select(self):
+        if not self.source_module:
+            return False
+        return self.source_module.is_multi_select()
+
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
@@ -4420,97 +4416,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def recovery_measures_url(self):
         return reverse('recovery_measures', args=[self.domain, self._id])
 
-    def get_jar_path(self):
-        spec = {
-            'nokia/s40': 'Nokia/S40',
-            'nokia/s60': 'Nokia/S60',
-            'generic': 'Generic/Default',
-            'winmo': 'Native/WinMo'
-        }[self.platform]
-
-        if self.platform in ('nokia/s40', 'nokia/s60'):
-            spec += {
-                ('native',): '-native-input',
-                ('roman',): '-generic',
-                ('custom-keys',):  '-custom-keys',
-                ('qwerty',): '-qwerty'
-            }[(self.text_input,)]
-
-        return spec
-
-    def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
-
-    def validate_jar_path(self):
-        build = self.get_build()
-        setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
-        value = self.text_input
-        setting_version = setting['since'].get(value)
-
-        if setting_version:
-            setting_version = tuple(map(int, setting_version.split('.')))
-            my_version = build.minor_release()
-
-            if my_version < setting_version:
-                i = setting['values'].index(value)
-                assert i != -1
-                name = _(setting['value_names'][i])
-                raise AppEditingError((
-                    '%s Text Input is not supported '
-                    'in CommCare versions before %s.%s. '
-                    '(You are using %s.%s)'
-                ) % ((name,) + setting_version + my_version))
-
-    @property
-    def jad_settings(self):
-        settings = {
-            'JavaRosa-Admin-Password': self.admin_password,
-            'Profile': self.profile_loc,
-            'MIDlet-Jar-URL': self.jar_url,
-            #'MIDlet-Name': self.name,
-            # e.g. 2011-Apr-11 20:45
-            'CommCare-Release': "true",
-        }
-        if not self.build_version or self.build_version < LooseVersion('2.8'):
-            settings['Build-Number'] = self.version
-        return settings
-
     def create_build_files(self, build_profile_id=None):
         all_files = self.create_all_files(build_profile_id)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
-
-    def create_jadjar_from_build_files(self, save=False):
-        self.validate_jar_path()
-        with CriticalSection(['create_jadjar_' + self._id]):
-            try:
-                return (
-                    self.lazy_fetch_attachment('CommCare.jad'),
-                    self.lazy_fetch_attachment('CommCare.jar'),
-                )
-            except (ResourceNotFound, KeyError):
-                all_files = {
-                    filename[len('files/'):]: self.lazy_fetch_attachment(filename)
-                    for filename in self.blobs if filename.startswith('files/')
-                }
-                all_files = {
-                    name: (contents if isinstance(contents, bytes) else contents.encode('utf-8'))
-                    for name, contents in all_files.items()
-                }
-                release_date = self.built_with.datetime or datetime.datetime.utcnow()
-                jad_settings = {
-                    'Released-on': release_date.strftime("%Y-%b-%d %H:%M"),
-                }
-                jad_settings.update(self.jad_settings)
-                jadjar = self.get_jadjar().pack(all_files, jad_settings)
-
-                if save:
-                    self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
-                    self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
-                    self.built_with.signed = jadjar.signed
-
-                return jadjar.jad, jadjar.jar
 
     @property
     @memoized
@@ -4593,9 +4503,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 return self.generate_shortened_url('download_odk_media_profile', build_profile_id)
             else:
                 return self.generate_shortened_url('download_odk_profile', build_profile_id)
-
-    def fetch_jar(self):
-        return self.get_jadjar().fetch_jar()
 
     @time_method()
     def make_build(self, comment=None, user_id=None):
@@ -4801,11 +4708,9 @@ class SavedAppBuild(ApplicationBase):
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'menu_item_label': menu_item_label,
-            'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
             'include_media': not is_remote_app(self),
-            'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
                 if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else None
@@ -4865,6 +4770,16 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
+
+        translations = data.get('translations')
+        for module in self.modules:
+            if hasattr(module, 'search_config'):
+                label_dict = {lang: label.get('case.search.title')
+                    for lang, label in translations.items() if label}
+                search_config = getattr(module, 'search_config')
+                default_label_dict = getattr(search_config, 'title_label')
+                label_dict.update(default_label_dict)
+                setattr(search_config, 'title_label', label_dict)
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
@@ -4958,9 +4873,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def default_language(self):
         return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, form, build_profile_id=None):
-        return form.validate_form().render_xform(build_profile_id)
-
     @time_method()
     def set_form_versions(self):
         """
@@ -4976,27 +4888,28 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         force_new_version = self.build_profiles != latest_build.build_profiles
         for form_stuff in self.get_forms(bare=False):
             filename = 'files/%s' % self.get_form_filename(**form_stuff)
-            form = form_stuff["form"]
+            current_form = form_stuff["form"]
             if not force_new_version:
                 try:
-                    previous_form = latest_build.get_form(form.unique_id)
+                    previous_form = latest_build.get_form(current_form.unique_id)
                     # take the previous version's compiled form as-is
                     # (generation code may have changed since last build)
                     previous_source = latest_build.fetch_attachment(filename)
                 except (ResourceNotFound, FormNotFoundException):
-                    form.version = None
+                    current_form.version = None
                 else:
                     previous_hash = _hash(previous_source)
 
-                    # hack - temporarily set my version to the previous version
-                    # so that that's not treated as the diff
-                    previous_form_version = previous_form.get_version()
-                    form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form))
-                    if previous_hash != my_hash:
-                        form.version = None
+                    # set form version to previous version, and only update if content has changed
+                    current_form.version = previous_form.get_version()
+                    current_form = current_form.validate_form()
+                    current_hash = _hash(current_form.render_xform())
+                    if previous_hash != current_hash:
+                        current_form.version = None
+                        # clear cache since render_xform was called with a mutated form set to the previous version
+                        current_form.render_xform.reset_cache(current_form)
             else:
-                form.version = None
+                current_form.version = None
 
     @time_method()
     def set_media_versions(self):
@@ -5045,19 +4958,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             return gen.create_default_app_strings(self, build_profile_id)
         else:
             return gen.create_app_strings(self, lang)
-
-    @property
-    def skip_validation(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('cc-content-valid', 'yes')
-
-    @property
-    def jad_settings(self):
-        s = super(Application, self).jad_settings
-        s.update({
-            'Skip-Validation': self.skip_validation,
-        })
-        return s
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
@@ -5238,10 +5138,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
-                    files[filename] = self.fetch_xform(form, build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
+                    files[filename] = form.render_xform(build_profile_id=build_profile_id)
                 except XFormException as e:
                     raise XFormException(_('Error in form "{}": {}').format(trans(form.name), e))
         return files

@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
 
@@ -11,6 +12,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     TooManyRelatedCasesError,
@@ -18,7 +20,6 @@ from corehq.apps.case_search.exceptions import (
 )
 from corehq.apps.case_search.xpath_functions import (
     XPATH_QUERY_FUNCTIONS,
-    XPATH_VALUE_FUNCTIONS,
 )
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
@@ -27,6 +28,12 @@ from corehq.apps.es.case_search import (
     case_property_range_query,
     reverse_index_case_query,
 )
+
+
+@dataclass
+class SearchFilterContext:
+    domain: str
+    fuzzy: bool = False
 
 
 def print_ast(node):
@@ -58,7 +65,7 @@ OPERATOR_MAPPING = {
     'and': filters.AND,
     'or': filters.OR,
 }
-COMPARISON_MAPPING = {
+RANGE_OP_MAPPING = {
     '>': 'gt',
     '>=': 'gte',
     '<': 'lt',
@@ -67,11 +74,12 @@ COMPARISON_MAPPING = {
 
 EQ = "="
 NEQ = "!="
+COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
 
-ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
+ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
 
 
-def build_filter_from_ast(domain, node, fuzzy=False):
+def build_filter_from_ast(node, context):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
 
     If fuzzy is true, all equality operations will be treated as fuzzy.
@@ -118,12 +126,10 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-        new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
-
-        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query, fuzzy=fuzzy)
+        es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
+        es_query = CaseSearchES().domain(context.domain).filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
+            new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
             raise TooManyRelatedCasesError(
                 _("The related case lookup you are trying to perform would return too many cases"),
                 new_query
@@ -134,7 +140,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
         """
-        return CaseSearchES().domain(domain).get_child_cases(case_ids, identifier).scroll_ids()
+        return CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier).scroll_ids()
 
     def _is_ancestor_case_lookup(node):
         """Returns whether a particular AST node is an ancestory case lookup
@@ -151,79 +157,41 @@ def build_filter_from_ast(domain, node, fuzzy=False):
 
         return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
-    def _raise_step_RHS(node):
-        raise CaseFilterError(
-            _("You cannot reference a case property on the right side "
-              "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-              "quotation marks").format(serialize(node.right)),
-            serialize(node)
-        )
+    def _comparison(node):
+        """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
 
-    def _unwrap_function(node):
-        """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
         """
-        if isinstance(node, UnaryExpression) and node.op == '-':
-            return -1 * node.right
-        if not isinstance(node, FunctionCall):
-            return node
-        try:
-            return XPATH_VALUE_FUNCTIONS[node.name](node)
-        except KeyError:
+        return _comparison_raw(node.left, node.op, node.right, node)
+
+    def _comparison_raw(case_property_name_raw, op, value_raw, node):
+        if not isinstance(case_property_name_raw, Step):
             raise CaseFilterError(
-                _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(
-                    node.name,
-                    ", ".join(list(XPATH_VALUE_FUNCTIONS.keys())),
-                ),
+                _("We didn't understand what you were trying to do with {}").format(serialize(node)),
                 serialize(node)
             )
-        except XPathFunctionException as e:
-            raise CaseFilterError(str(e), serialize(node))
 
-    def _equality(node):
-        """Returns the filter for an equality operation (=, !=)
-
-        """
-        acceptable_rhs_types = (int, str, float, FunctionCall, UnaryExpression)
-        if isinstance(node.left, Step) and (
-                isinstance(node.right, acceptable_rhs_types)):
-            # This is a leaf node
-            case_property_name = serialize(node.left)
-            value = _unwrap_function(node.right)
-            q = case_property_query(case_property_name, value, fuzzy=fuzzy)
-
-            if node.op == '!=':
-                return filters.NOT(q)
-
-            return q
-
-        if isinstance(node.right, Step):
-            _raise_step_RHS(node)
-
-        raise CaseFilterError(
-            _("We didn't understand what you were trying to do with {}").format(serialize(node)),
-            serialize(node)
-        )
-
-    def _comparison(node):
-        """Returns the filter for a comparison operation (>, <, >=, <=)
-
-        """
-        try:
-            case_property_name = serialize(node.left)
-            value = _unwrap_function(node.right)
-            return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
-        except (TypeError, ValueError):
-            raise CaseFilterError(
-                _("The right hand side of a comparison must be a number or date. "
-                  "Dates must be surrounded in quotation marks"),
-                serialize(node),
-            )
+        case_property_name = serialize(case_property_name_raw)
+        value = unwrap_value(value_raw, context)
+        if op in [EQ, NEQ]:
+            query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
+            if op == NEQ:
+                query = filters.NOT(query)
+            return query
+        else:
+            try:
+                return case_property_range_query(case_property_name, **{RANGE_OP_MAPPING[op]: value})
+            except (TypeError, ValueError):
+                raise CaseFilterError(
+                    _("The right hand side of a comparison must be a number or date. "
+                      "Dates must be surrounded in quotation marks"),
+                    serialize(node),
+                )
 
     def visit(node):
 
         if isinstance(node, FunctionCall):
             if node.name in XPATH_QUERY_FUNCTIONS:
-                return XPATH_QUERY_FUNCTIONS[node.name](domain, node, fuzzy)
+                return XPATH_QUERY_FUNCTIONS[node.name](node, context)
             else:
                 raise XPathFunctionException(
                     _("'{name}' is not a valid standalone function").format(name=node.name),
@@ -233,7 +201,7 @@ def build_filter_from_ast(domain, node, fuzzy=False):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
                 _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
-                    boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
+                    boolean_ops=", ".join(COMPARISON_OPERATORS),
                 ),
                 serialize(node)
             )
@@ -243,13 +211,9 @@ def build_filter_from_ast(domain, node, fuzzy=False):
             return _walk_ancestor_cases(node)
 
         if _is_subcase_count(node):
-            return XPATH_QUERY_FUNCTIONS['subcase-count'](domain, node, fuzzy)
+            return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
-        if node.op in [EQ, NEQ]:
-            # This node is a leaf
-            return _equality(node)
-
-        if node.op in list(COMPARISON_MAPPING.keys()):
+        if node.op in COMPARISON_OPERATORS:
             # This node is a leaf
             return _comparison(node)
 
@@ -273,8 +237,10 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
+
+    context = SearchFilterContext(domain, fuzzy)
     try:
-        return build_filter_from_ast(domain, parse_xpath(xpath), fuzzy=fuzzy)
+        return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
         text_error = re.search(r"Unknown text '(.+)'", str(e))
         if text_error:

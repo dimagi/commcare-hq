@@ -1,7 +1,4 @@
-import logging
-
-from django.conf.urls import include, url
-from django.core.exceptions import ImproperlyConfigured
+from django.conf.urls import include, re_path as url
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
@@ -26,7 +23,6 @@ from .dispatcher import (
     UserManagementReportDispatcher,
 )
 from .filters import urls as filter_urls
-from .util import get_installed_custom_modules
 from .views import (
     AddSavedReportConfigView,
     CaseAttachmentsView,
@@ -53,6 +49,7 @@ from .views import (
     export_report,
     project_health_user_details,
     rebuild_case_view,
+    reports_home,
     resave_case_view,
     resave_form_view,
     restore_edit,
@@ -90,7 +87,7 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', MySavedReportsView.as_view(), name="reports_home"),
+    url(r'^$', reports_home, name="reports_home"),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', MySavedReportsView.as_view(), name="old_saved_reports"),
 
@@ -167,16 +164,6 @@ urlpatterns = [
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
 ]
-
-for module in get_installed_custom_modules():
-    module_name = module.__name__.split('.')[-1]
-    try:
-        custom_report_urls += [
-             url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
-        ]
-    except ImproperlyConfigured:
-        logging.info("Module %s does not provide urls" % module_name)
-
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query
 # get filtered by the WAF

@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 
 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
@@ -17,6 +17,7 @@ from corehq.apps.data_interfaces.views import (
     find_by_id,
     xform_management_job_poll,
 )
+from corehq.apps.userreports.views import UCRExpressionListView
 
 from .interfaces import FormManagementMode
 
@@ -54,4 +55,5 @@ urlpatterns = [
     url(r'^case_data/', ExploreCaseDataView.as_view(), name=ExploreCaseDataView.urlname),
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
+    url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
 ]

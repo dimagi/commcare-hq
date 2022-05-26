@@ -10,6 +10,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.auth import AuthContext
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase
 
@@ -136,14 +137,29 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
     return claim_id
 
 
-def get_first_claim(domain, user_id, case_id):
+def get_first_claims(domain, user_id, case_ids):
     """
-    Returns the first claim by user_id of case_id, or None
+    Returns the first claim by user_id of case_ids, or None
     """
-    case = CommCareCase.objects.get_case(case_id, domain)
-    identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-    try:
-        return next((c for c in case.get_subcases(identifier)
-                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id and c.closed is False))
-    except StopIteration:
-        return None
+    case_ids_found = CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
+    cases_not_found = [case for case in case_ids if case not in case_ids_found]
+
+    if len(cases_not_found) != 0:
+        raise CaseNotFound(", ".join(cases_not_found))
+
+    potential_claim_cases = CommCareCase.objects.get_reverse_indexed_cases(
+        domain, case_ids_found, case_types=[CLAIM_CASE_TYPE], is_closed=False)
+
+    def _get_host_case_id(case):
+        """The actual index identifier is irrelevant so return the referenced case ID
+        from the first live extension index"""
+        for index in case.live_indices:
+            if index.relationship == CASE_INDEX_EXTENSION:
+                return index.referenced_id
+
+    previously_claimed_ids = {
+        _get_host_case_id(case) for case in potential_claim_cases
+        if case.owner_id == user_id
+    }
+
+    return set(case_id for case_id in previously_claimed_ids if case_id)
