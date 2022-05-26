@@ -472,8 +472,8 @@ class CommCareUserActionForm(BaseUpdateUserForm):
         min_value=1,
         max_value=LOADTEST_HARD_LIMIT,
         help_text=gettext_lazy(
-            "Multiply this user's case load by a number for load testing on "
-            "phones."
+            "Multiply this user's case load by this number for load testing "
+            "on phones."
         ),
         widget=forms.TextInput()
     )
