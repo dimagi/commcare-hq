@@ -59,10 +59,9 @@ def create_linked_ucr(domain_link, report_config_id):
         try:
             DataRegistry.objects.accessible_to_domain(domain_link.linked_domain, slug=report_config.registry_slug)
         except DataRegistry.DoesNotExist:
-            message = _("This report cannot be linked because the registry is not accessible to {}. Please make"
-                " sure the registry invitation has been accepted before linking reports.").format(
-                domain_link.linked_domain
-                )
+            message = _("This report cannot be linked because the registry is not accessible to {}."
+                " Please make sure the registry invitation has been accepted before"
+                " linking reports.").format(domain_link.linked_domain)
             raise RegistryNotAccessible(message)
     # grab the linked app this linked report references
     try:
