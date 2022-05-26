@@ -27,7 +27,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
-from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_restore_cache_key
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1686,7 +1686,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
-        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
+        get_loadtest_factor_for_restore_cache_key.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)

@@ -37,10 +37,7 @@ class _CacheAccessor(object):
 
 
 @quickcache(['domain', 'user_id'], timeout=24 * 60 * 60)
-def get_loadtest_factor_for_user(domain, user_id):
-    # This function is only used for calculating the restore cache key.
-    # It does not determine how many cases a loadtest user will sync.
-    # See `RestoreState.get_safe_loadtest_factor()`
+def get_loadtest_factor_for_restore_cache_key(domain, user_id):
     from corehq.apps.users.models import CouchUser, CommCareUser
 
     if loadtest_users_enabled(domain) and user_id:
@@ -89,7 +86,7 @@ class _RestoreCache(_CacheAccessor):
             user_id,
             sync_log_id or '',
             device_id or '',
-            get_loadtest_factor_for_user(domain, user_id),
+            get_loadtest_factor_for_restore_cache_key(domain, user_id),
             _get_domain_freshness_token(domain),
             _get_user_freshness_token(domain, user_id),
         ]])
