@@ -36,6 +36,7 @@ from corehq.apps.user_importer.validation import (
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
+    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -58,6 +59,7 @@ allowed_headers = set([
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
+    'send_confirmation_sms',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -505,6 +507,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             is_active = spec_value_to_boolean_or_none(row, 'is_active')
             is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
             send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
+            send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
             remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
@@ -598,8 +601,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
                         web_user.save()
                 if web_user_importer:
                     web_user_importer.save_log()
-            if send_account_confirmation_email and not web_user_username:
-                send_account_confirmation_if_necessary(user)
+            if not web_user_username:
+                if send_account_confirmation_email:
+                    send_account_confirmation_if_necessary(user)
+                if send_account_confirmation_sms:
+                    send_account_confirmation_sms_if_necessary(user)
 
             if is_password(password):
                 # Without this line, digest auth doesn't work.
