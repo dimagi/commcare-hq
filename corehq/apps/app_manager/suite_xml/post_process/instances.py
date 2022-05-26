@@ -18,6 +18,11 @@ from corehq.util.timer import time_method
 class EntryInstances(PostProcessor):
     """Adds instance declarations to the suite file"""
 
+    IGNORED_INSTANCES = {
+        'jr://instance/remote',
+        'jr://instance/search-input',
+    }
+
     @time_method()
     def update_suite(self):
         for entry in self.suite.entries:
@@ -129,7 +134,7 @@ class EntryInstances(PostProcessor):
     def require_instances(entry, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in entry.instances}
         for instance in instances:
-            if 'remote' in instance.src:
+            if instance.src in EntryInstances.IGNORED_INSTANCES:
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
