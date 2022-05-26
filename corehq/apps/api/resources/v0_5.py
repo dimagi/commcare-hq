@@ -228,7 +228,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(str(e))
 
         if user_exists(normalized_username).exists:
-            raise BadRequest(f'Username {normalized_username} already exists.')
+            raise BadRequest(_('Username {} already exists.').format(normalized_username))
 
         try:
             bundle.obj = CommCareUser.create(
