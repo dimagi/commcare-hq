@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 
 from django.conf import settings
@@ -222,19 +223,14 @@ class BaseExportView(BaseProjectDataView):
                 )
                 return HttpResponseRedirect(reverse(LiveGoogleSheetListView.urlname, args=[self.domain]))
 
-            export_data = get_export_data(export, self.domain)
-
-            data_table = create_table(export_data, export)
-            google_sheet = create_or_update_spreadsheet(
-                chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
-                request.user,
-                export
-            )
-            new_schedule = LiveGoogleSheetSchedule(
+            start_time = datetime.utcnow()
+            if start_time.minute >= 57:
+                start_time = start_time + timedelta(hour=1)
+            LiveGoogleSheetSchedule.objects.create(
                 export_config_id=export._id,
-                google_sheet_id=google_sheet["spreadsheetId"]
+                start_time=start_time.hour,
+                is_active=True,
             )
-            new_schedule.save()
 
         messages.success(
             request,
