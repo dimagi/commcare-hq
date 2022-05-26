@@ -144,9 +144,10 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
@@ -184,6 +185,8 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -270,6 +273,9 @@ class Permissions(DocumentSchema):
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
 
+    def view_tableau_viz(self, viz_id):
+        return self.view_tableau or viz_id in self.view_tableau_list
+
     def has(self, permission, data=None):
         if data:
             return getattr(self, permission)(data)
@@ -315,6 +321,7 @@ class UserRolePresets(object):
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
+    MOBILE_WORKER = gettext_noop("Mobile Worker")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -328,7 +335,8 @@ class UserRolePresets(object):
         'read-only': READ_ONLY,
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN
+        'billing-admin': BILLING_ADMIN,
+        'mobile-worker': MOBILE_WORKER
     }
 
     # skip legacy duplicate ('no-permissions')
@@ -356,7 +364,12 @@ class UserRolePresets(object):
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
+                                                   report_an_issue=True,
+                                                   access_all_locations=True,
+                                                   access_api=False,
+                                                   download_reports=False)
         }
 
     @classmethod
@@ -1523,6 +1536,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
             if permission_slug in EXPORT_PERMISSIONS
         ])
+
+    def can_view_some_tableau_viz(self, domain):
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 
     def can_login_as(self, domain):
         return (
@@ -2770,6 +2787,12 @@ class AnonymousCouchUser(object):
     def can_view_some_reports(self, domain):
         return False
 
+    def can_view_tableau_viz(self, viz_id):
+        return False
+
+    def can_view_some_tableau_viz(self, viz_id):
+        return False
+
     @property
     def analytics_enabled(self):
         return False
@@ -2777,7 +2800,7 @@ class AnonymousCouchUser(object):
     def can_edit_data(self):
         return False
 
-    def can_edit_messgaing(self):
+    def can_edit_messaging(self):
         return False
 
     def can_edit_apps(self):
