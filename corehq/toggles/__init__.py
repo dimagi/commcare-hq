@@ -1151,14 +1151,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-ENABLE_LOADTEST_USERS = StaticToggle(
-    'enable_loadtest_users',
-    'Enable creating loadtest users on HQ',
-    TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Loadtest+Users',
-)
-
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -2297,5 +2289,12 @@ SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+    'two_stage_user_provisioning_by_sms',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
