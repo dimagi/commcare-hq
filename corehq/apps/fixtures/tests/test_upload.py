@@ -2,6 +2,8 @@ from io import BytesIO
 
 from django.test import SimpleTestCase, TestCase
 
+from nose.tools import nottest
+
 import openpyxl
 
 from couchexport.export import export_raw
@@ -277,6 +279,11 @@ class TestValidation(SimpleTestCase):
             .format('\n'.join(untested)))
 
 
+class Args(tuple):
+    def __repr__(self):
+        return f'({self[0]})'
+
+
 class TestFixtureWorkbook(SimpleTestCase):
 
     def test_indexed_field(self):
@@ -285,6 +292,65 @@ class TestFixtureWorkbook(SimpleTestCase):
         indexed_field = type_sheets[0].fields[0]
         self.assertEqual(indexed_field.field_name, 'name')
         self.assertTrue(indexed_field.is_indexed)
+
+    @generate_cases([Args(a) for a in [
+        (
+            'add to beginning',
+            [(None, 'N', 'apple'), ('b', 'N', 'banana'), ('c', 'N', 'coconut')],
+            {'b': 0, 'c': 1},
+            [(0, 'apple'), (1, 'banana'), (2, 'coconut')],
+        ), (
+            'add to end',
+            [('a', 'N', 'apple'), ('b', 'N', 'banana'), (None, 'N', 'coconut')],
+            {'a': 0, 'b': 1},
+            [(0, 'apple'), (1, 'banana'), (2, 'coconut')],
+        ), (
+            'new first item',
+            [(None, 'N', 'peach'), ('b', 'N', 'banana'), ('c', 'N', 'coconut')],
+            {'a': 0, 'b': 1, 'c': 2},
+            [(0, 'peach'), (1, 'banana'), (2, 'coconut')],
+        ), (
+            'no change',
+            [('a', 'N', 'apple'), ('b', 'N', 'banana'), ('c', 'N', 'coconut')],
+            {'a': 0, 'b': 1, 'c': 2},
+            [(0, 'apple'), (1, 'banana'), (2, 'coconut')],
+        ), (
+            'rearrange',
+            [('b', 'N', 'banana'), ('c', 'N', 'coconut'), ('a', 'N', 'apple')],
+            {'a': 0, 'b': 1, 'c': 2},
+            [(1, 'banana'), (2, 'coconut'), (3, 'apple')],
+        ), (
+            'add and rearrange',
+            [(x, 'N', x) for x in 'abcdefghi'],
+            {'b': 2, 'd': 5, 'f': 3, 'h': 8, 'i': 16},
+            [
+                (0, 'a'),
+                (2, 'b'),
+                (3, 'c'),
+                (5, 'd'),
+                (6, 'e'),
+                (7, 'f'),
+                (8, 'g'),
+                (9, 'h'),
+                (16, 'i'),
+            ],
+        )
+    ]])
+    def test_iter_rows(self, name, sheet_rows, old_keys, expected_rows):
+        book = self.get_workbook(sheet_rows)
+        table, = book.iter_tables('test')
+        rows = book.iter_rows(table, old_keys)
+        actual_rows = [(r.sort_key, row_name(r)) for r in rows]
+        self.assertEqual(actual_rows, expected_rows)
+
+    def get_workbook(self, rows):
+        headers = TestFixtureUpload.headers
+        data = TestFixtureUpload.make_rows(rows)
+        return TestFixtureUpload.get_workbook_from_data(headers, data)
+
+
+def row_name(item):
+    return item.fields.get('name').field_list[0].field_value
 
 
 class TestFixtureUpload(TestCase):
@@ -332,7 +398,8 @@ class TestFixtureUpload(TestCase):
             for dt in FixtureDataType.by_domain(self.domain):
                 dt.recursive_delete(tx)
 
-    def get_workbook_from_data(self, headers, rows):
+    @staticmethod
+    def get_workbook_from_data(headers, rows):
         file = BytesIO()
         export_raw(headers, rows, file, format=Format.XLS_2007)
         return get_workbook(file)
@@ -345,18 +412,15 @@ class TestFixtureUpload(TestCase):
     def get_table(self):
         return FixtureDataType.by_domain_tag(self.domain, 'things').one()
 
-    def get_rows(self, field='name'):
+    def get_rows(self, transform=row_name):
         # return list of field values of fixture table 'things'
-        def get_field(item):
-            return item.fields.get(field).field_list[0].field_value
-
         def sort_key(item):
-            return item.sort_key, get_field(item)
+            return item.sort_key, transform(item)
 
         items = FixtureDataItem.get_item_list(self.domain, 'things')
-        if field is None:
+        if transform is None:
             return items
-        return [get_field(item) for item in sorted(items, key=sort_key)]
+        return [transform(item) for item in sorted(items, key=sort_key)]
 
     def test_row_addition(self):
         # upload and then reupload with addition of a new fixture-item should create new items
@@ -396,9 +460,48 @@ class TestFixtureUpload(TestCase):
         self.upload([(None, 'N', 'apple')], replace=True)
         self.assertEqual(self.get_rows(), ['apple'])
 
+    def test_rearrange_rows(self):
+        self.upload([
+            (None, 'N', 'apple'),
+            (None, 'N', 'banana'),
+            (None, 'N', 'coconut'),
+        ])
+        self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
+
+        ids = {row_name(r): r._id for r in self.get_rows(None)}
+        self.upload([
+            (ids['banana'], 'N', 'banana'),
+            (ids['coconut'], 'N', 'coconut'),
+            (ids['apple'], 'N', 'apple'),
+        ])
+        self.assertEqual(self.get_rows(), ['banana', 'coconut', 'apple'])
+
+    def test_add_rows_without_replace(self):
+        self.upload([(None, 'N', 'orange')])
+
+        self.upload([(None, 'N', 'apple'), (None, 'N', 'banana')])
+        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
+
+    def test_rearrange_rows(self):
+        self.upload([
+            (None, 'N', 'apple'),
+            (None, 'N', 'banana'),
+            (None, 'N', 'coconut'),
+        ])
+        self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
+
+        ids = {row_name(r): r._id for r in self.get_rows(None)}
+        self.upload([
+            (ids['banana'], 'N', 'banana'),
+            (ids['coconut'], 'N', 'coconut'),
+            (ids['apple'], 'N', 'apple'),
+        ])
+        # NOTE old uploader does not respect updated order of rows
+        self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
 
 
 class TestFastFixtureUpload(TestFixtureUpload):
@@ -413,3 +516,7 @@ class TestFastFixtureUpload(TestFixtureUpload):
 
         self.upload([(None, 'N', 'apple')])
         self.assertEqual(self.get_rows(), ['apple'])
+
+    @nottest
+    def test_add_rows_without_replace(self):
+        """Fast fixture uploads always replace"""

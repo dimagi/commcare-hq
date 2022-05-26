@@ -1,4 +1,5 @@
 from uuid import uuid4
+from weakref import WeakKeyDictionary
 
 from django.utils.translation import gettext as _
 
@@ -35,6 +36,7 @@ class _FixtureWorkbook(object):
             self.workbook = excel_get_workbook(file_or_filename)
         except WorkbookJSONError as e:
             raise FixtureUploadError([str(e)])
+        self.meta = WeakKeyDictionary()
 
     def get_types_sheet(self):
         try:
@@ -70,11 +72,13 @@ class _FixtureWorkbook(object):
                 item_attributes=sheet.item_attributes,
             )
 
-    def iter_rows(self, data_type):
+    def iter_rows(self, data_type, sort_keys):
         data_items = list(self.get_data_sheet(data_type.tag))
         type_fields = data_type.fields
-        for sort_key, di in enumerate(data_items):
-            yield FixtureDataItem(
+        sort_key = -1
+        for i, di in enumerate(data_items):
+            sort_key = max(sort_keys.get(di['UID'], i), sort_key + 1)
+            item = FixtureDataItem(
                 domain=data_type.domain,
                 data_type_id=data_type._id,
                 fields={
@@ -82,8 +86,13 @@ class _FixtureWorkbook(object):
                     for field in type_fields
                 },
                 item_attributes=di.get('property', {}),
-                sort_key=sort_key
+                sort_key=sort_key,
             )
+            self.meta[item] = di
+            yield item
+
+    def get_uid(self, obj):
+        return self.meta.get(obj, {}).get('UID')
 
 
 class _FixtureTableDefinition(object):

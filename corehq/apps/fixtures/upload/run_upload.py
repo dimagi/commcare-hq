@@ -45,10 +45,22 @@ def _run_upload(domain, workbook, replace=False, task=None):
     records to optimize database interactions.
     """
     def process_table(table):
-        new_rows = workbook.iter_rows(table)
+        def process_row(row):
+            if not replace:
+                uid = workbook.get_uid(row)
+                if uid in rows_by_id:
+                    rows.to_delete.append(rows_by_id[uid])
+
         old_rows = FixtureDataItem.get_item_list(domain, table.tag)
-        mutation = get_mutation(old_rows, new_rows, row_key)
-        rows.update(mutation)
+        rows_by_id = {r._id: r for r in old_rows}
+        assert None not in rows_by_id, rows_by_id[None]
+        sort_keys = {} if replace else {r._id: r.sort_key for r in old_rows}
+        new_rows = workbook.iter_rows(table, sort_keys)
+        mutation = get_mutation(old_rows, new_rows, row_key, process_row)
+        if replace:
+            rows.update(mutation)
+        else:
+            rows.to_create.extend(mutation.to_create)
 
     old_tables = FixtureDataType.by_domain(domain)
 
