@@ -160,7 +160,12 @@ class EntryInstances(PostProcessor):
             entry.instances = sorted_instances
 
 
-def get_instance_factory(scheme):
+def get_instance_factory(instance_name):
+    try:
+        scheme, _ = instance_name.split(':', 1)
+    except ValueError:
+        scheme = instance_name if instance_name == 'locations' else None
+
     return get_instance_factory._factory_map.get(scheme, preset_instances)
 get_instance_factory._factory_map = {}
 
@@ -252,12 +257,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
 
         instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
-            try:
-                scheme, _ = instance_name.split(':', 1)
-            except ValueError:
-                scheme = instance_name if instance_name == 'locations' else None
-
-            factory = get_instance_factory(scheme)
+            factory = get_instance_factory(instance_name)
             instance = factory(app, instance_name)
             if instance:
                 instances.add(instance)
