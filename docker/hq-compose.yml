@@ -133,6 +133,7 @@ services:
               echo "Wait script download failed"
             fi
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
+          ALLOW_PLAINTEXT_LISTENER: "yes"
       volumes:
         - ${DOCKER_SOCK}:${DOCKER_SOCK}
         - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
