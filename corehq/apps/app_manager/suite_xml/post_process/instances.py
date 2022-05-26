@@ -172,9 +172,13 @@ def get_instance_factory(instance_name):
     try:
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
-        scheme = instance_name if instance_name == 'locations' else None
+        scheme = instance_name
 
-    return _factory_map.get(scheme, preset_instances)
+    return _factory_map.get(scheme, null_factory)
+
+
+def null_factory(app, instance_name):
+    return None
 
 
 class register_factory(object):
@@ -203,9 +207,8 @@ INSTANCE_KWARGS_BY_ID = {
 
 @register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
 def preset_instances(app, instance_name):
-    kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
-    if kwargs:
-        return Instance(**kwargs)
+    kwargs = INSTANCE_KWARGS_BY_ID[instance_name]
+    return Instance(**kwargs)
 
 
 @memoized
