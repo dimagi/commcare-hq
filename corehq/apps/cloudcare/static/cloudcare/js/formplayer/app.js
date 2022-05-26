@@ -378,6 +378,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
             selections: urlObject.selections,
+            queryData:  urlObject.queryData,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,
