@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-26 23:22+0000\n"
+"POT-Creation-Date: 2022-05-26 23:34+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -622,30 +622,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
 msgid "Could not enable user properties, please try again later."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Home Screen"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "First Menu"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Menu: "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Parent Menu: "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Previous Screen"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Link to other form or menu"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
@@ -4146,7 +4122,7 @@ msgstr ""
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
-"settings,deactivate or delete mobile workers."
+"settings, deactivate or delete mobile workers."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -4293,11 +4269,28 @@ msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid "Access All CommCare Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Reports"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"Allow role to view all CommCare reports. Excludes embedded Tableau reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All Tableau Reports"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to access all embedded Tableau reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

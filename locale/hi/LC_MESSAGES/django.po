@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-26 23:21+0000\n"
+"POT-Creation-Date: 2022-05-26 23:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5957,6 +5957,35 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct. It "
+"appears to involve\n"
+"                a multi-select form, which is not supported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct. It "
+"appears to involve\n"
+"                a parent menu that uses multi-select, which is not "
+"supported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct. It "
+"appears to involve\n"
+"                a multi-select case list and the \"Previous Screen\" "
+"workflow, which are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -9959,6 +9988,30 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid "Unable to validate form due to server error."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "Home Screen"
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "First Menu"
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "Menu: "
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "Previous Screen"
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "Parent Menu: "
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "Link to other form or menu"
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
@@ -20355,6 +20408,14 @@ msgstr ""
 msgid "Admin"
 msgstr ""
 
+#: corehq/apps/hqcase/utils.py
+msgid "System Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Data Cleaning Form"
+msgstr ""
+
 #: corehq/apps/hqmedia/cache.py
 #, python-format
 msgid "Not a bulk-upload supported CommCareMedia type: %s"
@@ -21014,7 +21075,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py
+#: corehq/apps/sms/views.py corehq/apps/users/models.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -27643,12 +27704,15 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid ""
-"Known Forms are forms that have IDs which can be matched to existing or "
-"deleted CommCare Applications in your Project."
+"\n"
+"                  These are forms that can be matched to an existing or "
+"deleted CommCare Application\n"
+"                  in your project.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-msgid "Unknown Forms (Possibly Deleted)"
+msgid "Unknown Forms"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
@@ -27657,10 +27721,14 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid ""
-"We tried and tried, but these form IDs did not belong to any CommCare "
-"Applications (existing or deleted) in your Project. It might mean that these "
-"forms once belonged to an application, were deleted from it, and then "
-"replaced by a different form."
+"\n"
+"                  These forms do not belong to a CommCare Application "
+"(existing or deleted) in your project.\n"
+"                  It might mean that these forms once belonged to an "
+"application but the application form\n"
+"                  has since been removed. They may also be 'system forms' or "
+"forms from an integration or API.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
@@ -30936,6 +31004,10 @@ msgid "This is required when Single Sign On is active."
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+msgid "This is not a valid One Login URL."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
 msgid ""
 "<a href=\"{}\">Please read this guide</a> on how to set up CommCare HQ with "
 "{}.<br />You will need the following information:"
@@ -31096,6 +31168,18 @@ msgid "Public IdP Signing Certificate"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+msgid "Issuer ID"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/motech/forms.py
+msgid "Client ID"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/messaging/smsbackends/smsgh/forms.py
+msgid "Client Secret"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
 msgid ""
 "Please make sure an enterprise admin has filled out the following details "
 "before activating SSO globally: {}"
@@ -31161,16 +31245,16 @@ msgstr ""
 msgid "This certificate has already expired!"
 msgstr ""
 
-#: corehq/apps/sso/forms.py corehq/motech/forms.py
-msgid "Client ID"
-msgstr ""
-
-#: corehq/apps/sso/forms.py corehq/messaging/smsbackends/smsgh/forms.py
-msgid "Client Secret"
+#: corehq/apps/sso/forms.py
+msgid "Issuer URL"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-msgid "Issuer URL"
+msgid "Show Secret"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Hide Secret"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
@@ -35190,6 +35274,14 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which reports the role can access:"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Tableau Reports"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which Tableau reports the role can access:"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
