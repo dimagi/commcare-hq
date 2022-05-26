@@ -504,11 +504,16 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
         try:
             password = str(password) if password else None
 
+            send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
             is_active = spec_value_to_boolean_or_none(row, 'is_active')
             is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
             send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
-            send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
+
             remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
+
+            if send_account_confirmation_sms:
+                is_active = False
+                is_account_confirmed = False
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
                                                 web_user_username, password, upload_user)
