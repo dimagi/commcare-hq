@@ -17,13 +17,10 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_report_configs_for_domain,
-    get_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
-    RegistryReportConfiguration,
-    RegistryDataSourceConfiguration,
     is_data_registry_report,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
