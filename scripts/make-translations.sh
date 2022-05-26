@@ -5,10 +5,10 @@ function abort () {
 }
 
 echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' "$@"
+./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' --add-location file "$@"
 
 echo "Gathering javascript translation strings.  This will also probably take a while"
-./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' "$@"
+./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' --add-location file "$@"
 
 echo "Compiling translation files."
 if ! ./manage.py compilemessages; then
