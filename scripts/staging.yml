@@ -73,11 +73,10 @@ branches:
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso-staging  # [QA] Biyeun May 18
     - nh/loadtest_demo_users  # Norman May 20
-    - sk/system-form-filter  # Simon May 20
-    - jls/tableau-permission # Jenny May 20
     - mjr/odata_enterprise_report # Matt May 23
     - jls/upgrade-web-apps-datepicker # Jenny May 23
     - akj/mw-signup # Akash May 25
     - ml/location_id_bug # Minha May 24
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 26
+    - sk/search-input-instances  # Simon May 26
 submodules: { }
