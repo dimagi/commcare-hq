@@ -1,5 +1,8 @@
 import json
 
+from dimagi.utils.logging import notify_exception
+
+from django.db.models import Q
 from django.conf import settings
 
 from datetime import datetime
@@ -8,10 +11,18 @@ from google.oauth2.credentials import Credentials
 
 from corehq.util.couch import get_document_or_404
 
+from corehq.apps.es.exceptions import ESError
 from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
-from corehq.apps.oauth_integrations.models import GoogleApiToken
+from corehq.apps.oauth_integrations.models import (
+    GoogleApiToken,
+    LiveGoogleSheetRefreshStatus,
+    LiveGoogleSheetSchedule,
+    LiveGoogleSheetErrorReason,
+)
 
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from google.auth.exceptions import MutualTLSChannelError
 
 
 def stringify_credentials(credentials):
@@ -56,13 +67,34 @@ def get_query_results(export_instance, domain, id):
     return results
 
 
-def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spreadsheet_id=None):
-    token = GoogleApiToken.objects.get(user=user)
+def create_or_update_spreadsheet(export, schedule):
+    """
+    This interfaces with the Google sheet API to create workbooks based on the export data passed into it.
+    If no workbook id is present, then it will create a new workbook, otherwise it will update the workbook
+    with the suplied ID.
+    :param: spreadsheet_data - Three dimensional list containing export data
+    :param: schedule - Instance of LiveGoogleSheetSchedule
+    :param: export - Instance of ExportInstance
+    """
+
+    try:
+        export_data = get_data_for_gsheet_exports(export, export.domain)
+    except ESError as e:
+        schedule.stop_refresh(
+            LiveGoogleSheetErrorReason.OTHER,
+            "An Elasticsearch error occured, contact support."
+        )
+        notify_exception(None, message=str(e))
+        return
+
+    data_table = create_table(export_data, export)
+
+    token = GoogleApiToken.objects.get(user=schedule.user)
     credentials = load_credentials(token.token)
 
     service = build(settings.GOOGLE_SHEETS_API_NAME, settings.GOOGLE_SHEETS_API_VERSION, credentials=credentials)
-    if spreadsheet_id is None:
-        spreadsheet_name = export_instance.name
+    if schedule.spreadsheet_id is None:
+        spreadsheet_name = export.name
         sheets_file = service.spreadsheets().create(
             body={
                 'properties': {
@@ -75,7 +107,7 @@ def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spread
         sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
         clear_spreadsheet(service, spreadsheet_id)
 
-    for worksheet_number, worksheet in enumerate(spreadsheet_data, start=1):
+    for worksheet_number, worksheet in enumerate(data_table, start=1):
         worksheet_name = f"Sheet{worksheet_number}"
 
         if not check_worksheet_exists(sheets_file, worksheet_name):
@@ -86,13 +118,31 @@ def create_or_update_spreadsheet(spreadsheet_data, user, export_instance, spread
                 'majorDimension': 'ROWS',
                 'values': chunk
             }
-            service.spreadsheets().values().append(
-                spreadsheetId=spreadsheet_id,
-                valueInputOption='USER_ENTERED',
-                body=value_range_body,
-                range=f"{worksheet_name}!A1"
-            ).execute()
+            try:
+                service.spreadsheets().values().append(
+                    spreadsheetId=spreadsheet_id,
+                    valueInputOption='USER_ENTERED',
+                    body=value_range_body,
+                    range=f"{worksheet_name}!A1"
+                ).execute()
+            except HttpError as e:
+                notify_exception(None, message=str(e))
+                #TODO
+                schedule.stop_refresh(
+                    LiveGoogleSheetErrorReason.OTHER,
+                    "Google Raised an HttpError. Contact support."
+                )
+                return
+            except MutualTLSChannelError as e:
+                notify_exception(None, message=str(e))
+                #TODO
+                schedule.stop_refresh(
+                    LiveGoogleSheetErrorReason.OTHER,
+                    "Google Raised an MutualTLSChannelError. Contact support."
+                )
+                return
 
+    schedule.stop_refresh()
     return sheets_file
 
 
@@ -153,7 +203,7 @@ def chunkify_data(data, chunk_size):
     return [data[x: x + chunk_size] for x in range(0, len(data), chunk_size)]
 
 
-def get_export_data(export, domain):
+def get_data_for_gsheet_exports(export, domain):
     if export.type == "case":
         query = get_case_export_base_query(domain, export.case_type)
     else:
@@ -164,3 +214,33 @@ def get_export_data(export, domain):
 
     query = query.run()
     return query.hits
+
+
+def get_scheduled_refreshes(today=None):
+    today = today or datetime.utcnow()
+
+    scheduled_this_hour = LiveGoogleSheetSchedule.objects.filter(
+        start_time=today.hour,
+        is_active=True
+    )
+
+    scheduled_refreshes = []
+    for schedule in scheduled_this_hour:
+        if not LiveGoogleSheetRefreshStatus.objects.filter(
+            schedule=schedule
+        ).exists():
+            scheduled_refreshes.append(schedule)
+        elif not LiveGoogleSheetRefreshStatus.objects.filter(
+            schedule=schedule
+        ).filter(
+            Q(
+                date_end__year=today.year,
+                date_end__month=today.month,
+                date_end__day=today.day,
+                date_end__hour=today.hour
+            ) | Q(date_end=None)
+        ).exists():
+            scheduled_refreshes.append(schedule)
+    print([s.export_config_id for s in scheduled_this_hour])
+
+    return scheduled_refreshes

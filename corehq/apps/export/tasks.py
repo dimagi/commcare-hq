@@ -22,14 +22,9 @@ from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
 
-from corehq.apps.oauth_integrations.models import (
-    LiveGoogleSheetSchedule,
-)
 from corehq.apps.oauth_integrations.utils import (
     create_or_update_spreadsheet,
-    get_export_data,
-    create_table,
-    chunkify_data
+    get_scheduled_refreshes,
 )
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
 from .dbaccessors import (
@@ -246,32 +241,25 @@ def process_incremental_export(incremental_export_id):
 @periodic_task(run_every=crontab(hour="*", minute="2", day_of_week="*"),
             queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def refresh_scheduled_google_sheets():
-    current_hour = datetime.now().hour
-    try:
-        scheduled_refreshes = LiveGoogleSheetSchedule.objects.filter(
-            start_time__hour__gt=current_hour
-        )
+    scheduled_refreshes = get_scheduled_refreshes()
 
-        for scheduled_refresh in scheduled_refreshes:
-            scheduled_refresh.set_task(
-                _create_or_refresh_google_sheet.apply_async(
-                    args=[scheduled_refresh],
-                    queue=SAVED_EXPORTS_QUEUE,
-                )
+    for scheduled_refresh in scheduled_refreshes:
+        scheduled_refresh.set_task(
+            _create_or_refresh_google_sheet.apply_async(
+                args=[scheduled_refresh],
+                queue=SAVED_EXPORTS_QUEUE,
             )
-    except LiveGoogleSheetSchedule.DoesNotExist:
-        return
+        )
+        #TODO cleanup live google sheet refresh statusses
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _create_or_refresh_google_sheet(schedule_instance):
-    export_instance = get_properly_wrapped_export_instance(schedule_instance.export_config_id)
-    export_data = get_export_data(export_instance, export_instance.domain)
-    data_table = create_table(export_data, export_instance)
+def _create_or_refresh_google_sheet(schedule):
+    schedule.start_refresh()
+
+    export = get_properly_wrapped_export_instance(schedule.export_config_id)
 
     return create_or_update_spreadsheet(
-        chunkify_data(data_table, settings.DEFAULT_GSHEET_CHUNK_SIZE),
-        schedule_instance.user,
-        export_instance,
-        schedule_instance.google_sheet_id
+        export,
+        schedule,
     )
