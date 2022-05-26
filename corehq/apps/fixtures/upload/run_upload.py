@@ -47,7 +47,7 @@ def _run_upload(domain, workbook, replace=False, task=None):
     def process_table(table):
         new_rows = workbook.iter_rows(table)
         old_rows = FixtureDataItem.get_item_list(domain, table.tag)
-        mutation = get_mutation(old_rows, new_rows, id)
+        mutation = get_mutation(old_rows, new_rows, row_key)
         rows.update(mutation)
 
     old_tables = FixtureDataType.by_domain(domain)
@@ -70,6 +70,10 @@ def _run_upload(domain, workbook, replace=False, task=None):
 
 def table_key(table):
     return table.tag
+
+
+def row_key(row):
+    return tuple(row.fields.items())
 
 
 def get_mutation(old_items, new_items, key, process_item=lambda item: None):

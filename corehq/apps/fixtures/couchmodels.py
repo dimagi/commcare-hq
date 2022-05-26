@@ -129,6 +129,20 @@ class FixtureItemField(DocumentSchema):
     field_value = StringProperty()
     properties = DictProperty()
 
+    def __eq__(self, other):
+        values = (self.field_value, self.properties)
+        try:
+            other_values = (other.field_value, other.properties)
+        except AttributeError:
+            return NotImplemented
+        return values == other_values
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((self.field_value, tuple(sorted(self.properties.items()))))
+
 
 class FieldList(DocumentSchema):
     """
@@ -142,6 +156,20 @@ class FieldList(DocumentSchema):
         for field in value['field_list']:
             del field['doc_type']
         return value
+
+    def __eq__(self, other):
+        value = self.field_list
+        try:
+            other_value = other.field_list
+        except AttributeError:
+            return NotImplemented
+        return value == other_value
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash(tuple(self.field_list))
 
 
 class FixtureDataItem(Document):

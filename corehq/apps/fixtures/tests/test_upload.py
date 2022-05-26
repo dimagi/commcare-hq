@@ -9,7 +9,7 @@ from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import (
@@ -326,15 +326,24 @@ class TestFixtureUpload(TestCase):
         cls.project.delete()
         super().tearDownClass()
 
+    def tearDown(self):
+        from dimagi.utils.couch.bulk import CouchTransaction
+        with CouchTransaction() as tx:
+            for dt in FixtureDataType.by_domain(self.domain):
+                dt.recursive_delete(tx)
+
     def get_workbook_from_data(self, headers, rows):
         file = BytesIO()
         export_raw(headers, rows, file, format=Format.XLS_2007)
         return get_workbook(file)
 
-    def upload(self, rows):
+    def upload(self, rows, **kw):
         data = self.make_rows(rows)
         workbook = self.get_workbook_from_data(self.headers, data)
-        type(self).do_upload(self.domain, workbook)
+        type(self).do_upload(self.domain, workbook, **kw)
+
+    def get_table(self):
+        return FixtureDataType.by_domain_tag(self.domain, 'things').one()
 
     def get_rows(self, field='name'):
         # return list of field values of fixture table 'things'
@@ -359,10 +368,37 @@ class TestFixtureUpload(TestCase):
         self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertEqual(self.get_rows(), ['apple', 'orange'])
 
+    def test_replace_rows(self):
+        self.upload([(None, 'N', 'apple')])
+
+        self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')], replace=True)
+        self.assertEqual(self.get_rows(), ['orange', 'banana'])
+
+    def test_rows_with_no_changes(self):
+        self.upload([(None, 'N', 'apple')])
+        rows = self.get_rows(None)
+        self.assertEqual(len(rows), 1, rows)
+        table_id = self.get_table()._id
+        apple_id = rows[0]._id
+
+        self.upload([(apple_id, 'N', 'apple')])
+        self.assertEqual(self.get_table()._id, table_id)
+        self.assertEqual(self.get_rows(None)[0]._id, apple_id)
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
 
 
 class TestFastFixtureUpload(TestFixtureUpload):
-    do_upload = _run_fast_fixture_upload
+
+    @staticmethod
+    def do_upload(*args, replace=None):
+        _run_fast_fixture_upload(*args)
+
+    def test_rows_with_no_changes(self):
+        # table and row ids always change
+        self.upload([(None, 'N', 'apple')])
+
+        self.upload([(None, 'N', 'apple')])
+        self.assertEqual(self.get_rows(), ['apple'])
