@@ -26,6 +26,7 @@ from corehq.apps.sso.async_handlers import (
     Select2IdentityProviderHandler,
     IdentityProviderAdminAsyncHandler,
     SSOExemptUsersAdminAsyncHandler,
+    SsoTestUserAdminAsyncHandler,
 )
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol, AuthenticatedEmailDomain
 
@@ -145,6 +146,7 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
     async_handlers = [
         IdentityProviderAdminAsyncHandler,
         SSOExemptUsersAdminAsyncHandler,
+        SsoTestUserAdminAsyncHandler,
     ]
 
     @property
