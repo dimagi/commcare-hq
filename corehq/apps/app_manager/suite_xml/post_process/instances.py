@@ -160,14 +160,16 @@ class EntryInstances(PostProcessor):
             entry.instances = sorted_instances
 
 
+_factory_map = {}
+
+
 def get_instance_factory(instance_name):
     try:
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
         scheme = instance_name if instance_name == 'locations' else None
 
-    return get_instance_factory._factory_map.get(scheme, preset_instances)
-get_instance_factory._factory_map = {}
+    return _factory_map.get(scheme, preset_instances)
 
 
 class register_factory(object):
@@ -177,7 +179,7 @@ class register_factory(object):
 
     def __call__(self, fn):
         for scheme in self.schemes:
-            get_instance_factory._factory_map[scheme] = fn
+            _factory_map[scheme] = fn
         return fn
 
 
