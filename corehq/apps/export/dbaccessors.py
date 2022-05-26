@@ -1,3 +1,4 @@
+from itertools import chain
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.parsing import json_format_datetime
 
@@ -199,3 +200,24 @@ def delete_all_export_instances():
     for row in db.view('export_instances_by_domain/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)
+
+
+class ODataExportFetcher:
+    def get_export_count(self, domain):
+        return len(self._get_odata_exports(domain))
+
+    def get_exports(self, domain):
+        from .models import CaseExportInstance, FormExportInstance
+        export_docs = self._get_odata_exports(domain)
+        case_export_ids = [export['_id'] for export in export_docs
+            if export['doc_type'] == CaseExportInstance.__name__]
+        form_export_ids = [export['_id'] for export in export_docs
+            if export['doc_type'] == FormExportInstance.__name__]
+
+        case_exports = CaseExportInstance.view('_all_docs', keys=case_export_ids, include_docs=True)
+        form_exports = FormExportInstance.view('_all_docs', keys=form_export_ids, include_docs=True)
+        return list(chain(case_exports, form_exports))
+
+    def _get_odata_exports(self, domain):
+        all_domain_exports = get_brief_exports(domain)
+        return [export for export in all_domain_exports if export['is_odata_config']]
