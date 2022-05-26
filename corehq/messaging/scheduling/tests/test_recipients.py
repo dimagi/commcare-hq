@@ -132,6 +132,10 @@ class SchedulingRecipientTest(TestCase):
         cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
         cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
 
+    def run(self, result=None):
+        with self.process_pillow_changes:
+            return super(SchedulingRecipientTest, self).run(result)
+
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
@@ -750,7 +754,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertTwoWayEntry(PhoneNumber.objects.get(owner_id=case.case_id), '12345')
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
-    def _test_two_way_numbers(self, change_context_manager):
+    def test_two_way_numbers(self):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
@@ -761,11 +765,10 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with change_context_manager:
-            with self.create_usercase(user2) as case:
-                self.assertIsNotNone(user2.memoized_usercase)
-                self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
-                self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+        with self.create_usercase(user2) as case:
+            self.assertIsNotNone(user2.memoized_usercase)
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
         with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
@@ -788,14 +791,6 @@ class SchedulingRecipientTest(TestCase):
 
             # Referencing the case directly uses the case's phone number
             self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
-
-    def test_two_way_numbers_with_signal_task(self):
-        nullcontext = contextlib.suppress()
-        self._test_two_way_numbers(nullcontext)
-
-    @patch('corehq.messaging.signals.sync_case_for_messaging')
-    def test_two_way_numbers_with_pillow(self, _):
-        self._test_two_way_numbers(self.process_pillow_changes)
 
     def test_not_using_phone_entries(self):
         with override_settings(USE_PHONE_ENTRIES=False):
