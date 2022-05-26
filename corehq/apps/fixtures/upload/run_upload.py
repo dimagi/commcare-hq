@@ -73,7 +73,10 @@ def table_key(table):
 
 
 def row_key(row):
-    return tuple(row.fields.items())
+    return (
+        tuple(row.fields.items()),
+        row.sort_key,
+    )
 
 
 def get_mutation(old_items, new_items, key, process_item=lambda item: None):

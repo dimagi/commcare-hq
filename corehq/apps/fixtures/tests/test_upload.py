@@ -385,6 +385,17 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_table()._id, table_id)
         self.assertEqual(self.get_rows(None)[0]._id, apple_id)
 
+    def test_replace_duplicate_rows(self):
+        self.upload([
+            (None, 'N', 'apple'),
+            (None, 'N', 'apple'),
+            (None, 'N', 'apple'),
+        ])
+        self.assertEqual(self.get_rows(), ['apple', 'apple', 'apple'])
+
+        self.upload([(None, 'N', 'apple')], replace=True)
+        self.assertEqual(self.get_rows(), ['apple'])
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
