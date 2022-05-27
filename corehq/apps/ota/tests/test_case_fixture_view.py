@@ -18,18 +18,14 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import generate_cases, flag_enabled
 
 
-@flag_enabled("DATA_REGISTRY")
 @flag_enabled("SYNC_SEARCH_CASE_CLAIM")
-class RegistryCaseFixtureViewTests(TestCase):
-    domain = 'registry-case-details'
+class CaseFixtureViewTests(TestCase):
+    domain = 'case-fixture'
 
     @classmethod
     def setUpTestData(cls):
         cls.domain_object = create_domain(cls.domain)
         cls.user = CommCareUser.create(cls.domain, "user", "123", None, None)
-        cls.registry = create_registry_for_test(cls.user.get_django_user(), cls.domain)
-        cls.registry.schema = [{"case_type": "parent"}, {"case_type": "other"}]
-        cls.registry.save()
 
         cls.grand_parent_case_id = 'mona'
         cls.parent_case_id = 'homer'
@@ -84,9 +80,7 @@ class RegistryCaseFixtureViewTests(TestCase):
         self.client.login(username="user", password="123")
 
     def test_get_case_details(self):
-        response_content = self._make_request({
-            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": self.parent_case_id, "case_type": "parent",
-        }, 200)
+        response_content = self._make_request({"case_id": self.parent_case_id, "case_type": "parent"}, 200)
         actual_cases = self._get_cases_in_response(response_content)
         expected_cases = {case.case_id: case for case in self.cases}
         self.assertEqual(set(actual_cases), set(expected_cases))
@@ -97,16 +91,8 @@ class RegistryCaseFixtureViewTests(TestCase):
         expected_domains = {case.case_id: case.domain for case in self.cases}
         self.assertEqual(actual_domains, expected_domains)
 
-        self.assertEqual(1, RegistryAuditLog.objects.filter(
-            registry=self.registry,
-            action=RegistryAuditLog.ACTION_DATA_ACCESSED,
-            related_object_type=RegistryAuditLog.RELATED_OBJECT_APPLICATION,
-            related_object_id=self.app.get_id
-        ).count())
-
     def test_get_case_details_multiple_case_ids(self):
         response_content = self._make_request({
-            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug,
             "case_id": [self.parent_case_id, "unrelated_case"],
             "case_type": ["parent", "other"],
         }, 200)
@@ -116,7 +102,6 @@ class RegistryCaseFixtureViewTests(TestCase):
 
     def test_get_case_details_post_request(self):
         response_content = self._make_request({
-            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug,
             "case_id": self.parent_case_id,
             "case_type": "parent",
         }, 200, method="post")
@@ -125,18 +110,11 @@ class RegistryCaseFixtureViewTests(TestCase):
         self.assertEqual(set(actual_cases), set(expected_cases))
 
     def test_get_case_details_missing_case(self):
-        self._make_request({
-            CASE_SEARCH_REGISTRY_ID_KEY: self.registry.slug, "case_id": "missing", "case_type": "parent",
-        }, 404)
-
-    def test_get_case_details_missing_registry(self):
-        self._make_request({
-            CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
-        }, 404)
+        self._make_request({"case_id": "missing", "case_type": "parent"}, 404)
 
     @generate_cases([
         ({}, "'case_id', 'case_type' are required parameters"),
-        ({"case_id": "a"}, "'case_type' is a required parameters"),
+        ({"case_id": "a"}, "'case_type' is a required parameter"),
     ])
     def test_required_params(self, params, message):
         content = self._make_request(params, 400)
@@ -147,8 +125,7 @@ class RegistryCaseFixtureViewTests(TestCase):
             "get": self.client.get,
             "post": self.client.post,
         }[method]
-        with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
-            response = request_method(reverse('registry_case', args=[self.domain, self.app.get_id]), data=params)
+        response = request_method(reverse('case_fixture', args=[self.domain, self.app.get_id]), data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
         return content.decode('utf8')
@@ -156,6 +133,39 @@ class RegistryCaseFixtureViewTests(TestCase):
     def _get_cases_in_response(self, response_content):
         xml = ElementTree.fromstring(response_content)
         return {node.get('case_id'): _FixtureCase(node) for node in xml.findall("case")}
+
+
+@flag_enabled("DATA_REGISTRY")
+@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
+class RegistryCaseFixtureViewTests(CaseFixtureViewTests):
+    domain = 'registry-case-fixture'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.registry = create_registry_for_test(cls.user.get_django_user(), cls.domain)
+        cls.registry.schema = [{"case_type": "parent"}, {"case_type": "other"}]
+        cls.registry.save()
+
+    def test_get_case_details(self):
+        super().test_get_case_details()
+
+        self.assertEqual(1, RegistryAuditLog.objects.filter(
+            registry=self.registry,
+            action=RegistryAuditLog.ACTION_DATA_ACCESSED,
+            related_object_type=RegistryAuditLog.RELATED_OBJECT_APPLICATION,
+            related_object_id=self.app.get_id
+        ).count())
+
+    def test_get_case_details_missing_registry(self):
+        super()._make_request({
+            CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
+        }, 404)
+
+    def _make_request(self, params, expected_response_code, method="get"):
+        params[CASE_SEARCH_REGISTRY_ID_KEY] = self.registry.slug
+        with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
+            return super()._make_request(params, expected_response_code, method)
 
 
 class _FixtureCase:
