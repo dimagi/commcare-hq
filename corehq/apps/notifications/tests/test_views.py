@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import Subscription, SubscriptionType
 from corehq.apps.groups.models import Group
 
 from ..views import NotificationsServiceRMIView
@@ -13,21 +13,21 @@ def test_should_hide_feature_notifs_for_pro_with_groups():
 
 
 def test_should_hide_feature_notifs_for_pro_without_groups():
-    with case_sharing_groups_patch([]), active_service_type_patch("not_IMPLEMENTATION_or_SANDBOX"):
+    with case_sharing_groups_patch([]), active_service_type_patch(TRIAL):
         hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", "pro")
         assert not hide, "notifications should not be hidden for pro domain without groups"
 
 
 def test_should_hide_feature_notifs_for_implementation_subscription():
-    with active_service_type_patch("IMPLEMENTATION"):
+    with active_service_type_patch(IMPLEMENTATION):
         hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", "basic")
-        assert hide, "notifications should be hidden for IMPLEMENTATION subscription"
+        assert hide, f"notifications should be hidden for {IMPLEMENTATION} subscription"
 
 
 def test_should_hide_feature_notifs_for_sandbox_subscription():
-    with active_service_type_patch("SANDBOX"):
+    with active_service_type_patch(SANDBOX):
         hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", "basic")
-        assert hide, "notifications should be hidden for SANDBOX subscription"
+        assert hide, f"notifications should be hidden for {SANDBOX} subscription"
 
 
 def test_should_hide_feature_notifs_bug():
@@ -49,3 +49,8 @@ def case_sharing_groups_patch(groups):
         assert not wrap, "expected wrap to be false"
         return groups
     return patch.object(Group, "get_case_sharing_groups", getter)
+
+
+IMPLEMENTATION = SubscriptionType.IMPLEMENTATION
+SANDBOX = SubscriptionType.SANDBOX
+TRIAL = SubscriptionType.TRIAL

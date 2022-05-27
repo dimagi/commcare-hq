@@ -9,7 +9,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition, SubscriptionType
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.views import BasePageView
@@ -67,7 +67,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         if plan == 'pro' and Group.get_case_sharing_groups(domain, wrap=False):
             return True
         sub = Subscription.get_active_subscription_by_domain(domain)
-        return sub is not None and sub.service_type in ['IMPLEMENTATION', 'SANDBOX']
+        return sub is not None and sub.service_type in [
+            SubscriptionType.IMPLEMENTATION,
+            SubscriptionType.SANDBOX,
+        ]
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
