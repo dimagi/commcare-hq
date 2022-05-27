@@ -47,19 +47,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         else:
             plan_tier = 'basic'
 
-        def should_hide_feature_notifs(domain, plan):
-            groups = Group.get_case_sharing_groups(domain, wrap=False)
-            subscription_type = Subscription.get_active_subscription_by_domain(domain).service_type
-            if plan == 'pro' and groups != []:
-                return True
-            if subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX':
-                return True
-            return False
-
         notifications = Notification.get_by_user(self.request.user,
                                                  self.request.couch_user,
                                                  plan_tier=plan_tier,
-                                                 hide_features=should_hide_feature_notifs(
+                                                 hide_features=self._should_hide_feature_notifs(
                                                      self.get_domain(), plan_tier))
         has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
@@ -70,6 +61,16 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
             'notifications': notifications,
             'lastSeenNotificationDate': last_seen_notification_date
         }
+
+    @staticmethod
+    def _should_hide_feature_notifs(domain, plan):
+        groups = Group.get_case_sharing_groups(domain, wrap=False)
+        subscription_type = Subscription.get_active_subscription_by_domain(domain).service_type
+        if plan == 'pro' and groups != []:
+            return True
+        if subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX':
+            return True
+        return False
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
