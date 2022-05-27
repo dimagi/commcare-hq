@@ -92,57 +92,64 @@ def create_or_update_spreadsheet(export, schedule):
     token = GoogleApiToken.objects.get(user=schedule.user)
     credentials = load_credentials(token.token)
 
-    service = build(settings.GOOGLE_SHEETS_API_NAME, settings.GOOGLE_SHEETS_API_VERSION, credentials=credentials)
-    if schedule.spreadsheet_id is None:
-        spreadsheet_name = export.name
-        sheets_file = service.spreadsheets().create(
-            body={
-                'properties': {
-                    'title': spreadsheet_name
+    try:
+        service = build(
+            settings.GOOGLE_SHEETS_API_NAME,
+            settings.GOOGLE_SHEETS_API_VERSION,
+            credentials=credentials
+        )
+        if schedule.spreadsheet_id is None:
+            spreadsheet_name = export.name
+            sheets_file = service.spreadsheets().create(
+                body={
+                    'properties': {
+                        'title': spreadsheet_name
+                    }
                 }
+            ).execute()
+            spreadsheet_id = sheets_file['spreadsheetId']
+
+            schedule.spreadsheet_id = spreadsheet_id
+            schedule.save()
+        else:
+            sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+            clear_spreadsheet(service, spreadsheet_id)
+
+        add_last_updated_field_to_spreadsheet(service, spreadsheet_id)
+
+        for worksheet_number, worksheet in enumerate(data_table, start=1):
+            worksheet_name = f"Sheet{worksheet_number}"
+
+            if not check_worksheet_exists(sheets_file, worksheet_name):
+                create_empty_worksheet(service, worksheet_name, spreadsheet_id)
+
+            value_range_body = {
+                'majorDimension': 'ROWS',
+                'values': worksheet,
             }
-        ).execute()
-        spreadsheet_id = sheets_file['spreadsheetId']
 
-        schedule.spreadsheet_id = spreadsheet_id
-        schedule.save()
-    else:
-        sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-        clear_spreadsheet(service, spreadsheet_id)
-
-    for worksheet_number, worksheet in enumerate(data_table, start=1):
-        worksheet_name = f"Sheet{worksheet_number}"
-
-        if not check_worksheet_exists(sheets_file, worksheet_name):
-            create_empty_worksheet(service, worksheet_name, spreadsheet_id)
-
-        value_range_body = {
-            'majorDimension': 'ROWS',
-            'values': worksheet,
-        }
-        try:
             service.spreadsheets().values().append(
                 spreadsheetId=spreadsheet_id,
                 valueInputOption='USER_ENTERED',
                 body=value_range_body,
-                range=f"{worksheet_name}!A1"
+                range=f"{worksheet_name}!B1"
             ).execute()
-        except HttpError as e:
-            notify_exception(None, message=str(e))
-            #TODO
-            schedule.stop_refresh(
-                LiveGoogleSheetErrorReason.OTHER,
-                "Google Raised an HttpError. Contact support."
-            )
-            return
-        except MutualTLSChannelError as e:
-            notify_exception(None, message=str(e))
-            #TODO
-            schedule.stop_refresh(
-                LiveGoogleSheetErrorReason.OTHER,
-                "Google Raised an MutualTLSChannelError. Contact support."
-            )
-            return
+    except HttpError as e:
+        notify_exception(None, message=str(e))
+        #TODO
+        schedule.stop_refresh(
+            LiveGoogleSheetErrorReason.OTHER,
+            "Google Raised an HttpError. Contact support."
+        )
+        return
+    except MutualTLSChannelError as e:
+        notify_exception(None, message=str(e))
+        #TODO
+        schedule.stop_refresh(
+            LiveGoogleSheetErrorReason.OTHER,
+            "Google Raised an MutualTLSChannelError. Contact support."
+        )
+        return
 
     schedule.stop_refresh()
     return sheets_file
@@ -169,6 +176,25 @@ def create_empty_worksheet(service, worksheet_name, spreadsheet_id):
     return service.spreadsheets().batchUpdate(
         spreadsheetId=spreadsheet_id,
         body=request_body
+    ).execute()
+
+
+def add_last_updated_field_to_spreadsheet(service, spreadsheet_id):
+    last_updated = (
+        ('Last Updated'),
+        (datetime.utcnow('%d %B %Y - %H:%M:%S'))
+    )
+
+    value_range_body = {
+        'majorDimension': 'COLUMNS',
+        'values': last_updated
+    }
+
+    service.spreadsheets().values().append(
+        spreadsheetId=spreadsheet_id,
+        valueInputOption='USER_ENTERED',
+        body=value_range_body,
+        range="A1"
     ).execute()
 
 
