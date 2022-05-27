@@ -332,7 +332,7 @@ def batch_cases(accessor, case_ids):
         if not next_ids:
             break
         track_load(len(next_ids))
-        yield CommCareCase.objects.get_cases(next_ids, accessor.domain)
+        yield accessor.get_cases(next_ids)
 
 
 def init_progress(async_task, total):
