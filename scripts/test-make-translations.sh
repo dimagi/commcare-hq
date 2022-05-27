@@ -6,12 +6,12 @@ source ./scripts/bash-utils.sh
 
 log_group_begin "Check: translations"
 
-./scripts/make-translations.sh
+make translations
 git --no-pager diff
 git update-index -q --refresh
 if ! git diff-index --quiet HEAD --; then
     # Changes
-    log_fail "Translations are inconsistent with code.  Did you run './scripts/make-translations.sh'?"
+    log_fail "Translations are inconsistent with code.  Did you run 'make translations'?"
     git checkout -- locale/  # clean up
     exit 1
 fi
