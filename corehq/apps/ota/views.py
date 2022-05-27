@@ -21,6 +21,7 @@ from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.data_providers.case.livequery import get_case_hierarchy
 from casexml.apps.phone.exceptions import MissingSyncLog
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import (
@@ -478,7 +479,7 @@ def _single_domain_case_query(request, domain, app_id, case_types, case_ids, reg
         if case.domain != domain or case.type not in case_types:
             raise Http404(f"Case '{case.case_id}' not found")
 
-    return cases
+    return get_case_hierarchy(domain, cases)
 
 
 @toggles.DATA_REGISTRY.required_decorator()
