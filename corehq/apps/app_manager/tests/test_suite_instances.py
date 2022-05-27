@@ -3,8 +3,13 @@ from unittest import mock
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
+from corehq.apps.app_manager.models import (
+    CaseSearch,
+    CaseSearchProperty,
+    CustomInstance,
+    DefaultCaseSearchProperty,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.models import CustomInstance
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     TestXmlMixin,
@@ -142,6 +147,33 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(
             """
             <partial>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_search_input_instance_remote_request(self, *args):
+        self.form.requires = 'case'
+        self.module.case_type = 'case'
+
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property="_xpath_query",
+                    defaultValue="instance('search-input:results')/input/field[@name = 'first_name']"
+                )
+            ]
+        )
+        self.module.assign_references()
+        self.assertXmlPartialEqual(
+            # 'search-input' instance ignored
+            """
+            <partial>
+                <instance id="casedb" src="jr://instance/casedb"/>
             </partial>
             """,
             self.factory.app.create_suite(),
