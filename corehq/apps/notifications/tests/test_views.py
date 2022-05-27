@@ -7,7 +7,7 @@ from ..views import NotificationsServiceRMIView
 
 
 def test_should_hide_feature_notifs_for_pro_with_groups():
-    with case_sharing_groups_patch(['agroupid']), active_service_type_patch("not_IMPLEMENTATION_or_SANDBOX"):
+    with case_sharing_groups_patch(['agroupid']):
         hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", "pro")
         assert hide, "notifications should be hidden for pro domain with groups"
 
@@ -34,6 +34,12 @@ def test_should_hide_feature_notifs_for_sandbox_subscription():
     with case_sharing_groups_patch([]), active_service_type_patch("SANDBOX"):
         hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", "pro")
         assert hide, "notifications should be hidden for SANDBOX subscription"
+
+
+def test_should_hide_feature_notifs_bug():
+    with case_sharing_groups_patch([]), active_service_type_patch():
+        hide = NotificationsServiceRMIView._should_hide_feature_notifs("test", None)
+        assert not hide, "notifications should not be hidden for null subscription"
 
 
 def active_service_type_patch(service_type=None):

@@ -65,12 +65,10 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @staticmethod
     def _should_hide_feature_notifs(domain, plan):
         groups = Group.get_case_sharing_groups(domain, wrap=False)
-        subscription_type = Subscription.get_active_subscription_by_domain(domain).service_type
-        if plan == 'pro' and groups != []:
+        if plan == 'pro' and groups:
             return True
-        if subscription_type == 'IMPLEMENTATION' or subscription_type == 'SANDBOX':
-            return True
-        return False
+        sub = Subscription.get_active_subscription_by_domain(domain)
+        return sub is not None and sub.service_type in ['IMPLEMENTATION', 'SANDBOX']
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
