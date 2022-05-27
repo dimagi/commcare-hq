@@ -1,3 +1,4 @@
+from unittest import skip
 from unittest.mock import patch
 
 from defusedxml import ElementTree
@@ -112,6 +113,11 @@ class CaseFixtureViewTests(TestCase):
     def test_get_case_details_missing_case(self):
         self._make_request({"case_id": "missing", "case_type": "parent"}, 404)
 
+    def test_get_registry_case_details_feature_flag_not_active(self):
+        self._make_request({
+            CASE_SEARCH_REGISTRY_ID_KEY: "any-registry", "case_id": "missing", "case_type": "parent"
+        }, 404)
+
     @generate_cases([
         ({}, "'case_id', 'case_type' are required parameters"),
         ({"case_id": "a"}, "'case_type' is a required parameter"),
@@ -161,6 +167,10 @@ class RegistryCaseFixtureViewTests(CaseFixtureViewTests):
         super()._make_request({
             CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
+
+    @skip("Does not apply in this suite")
+    def test_get_registry_case_details_feature_flag_not_active(self):
+        pass
 
     def _make_request(self, params, expected_response_code, method="get"):
         params[CASE_SEARCH_REGISTRY_ID_KEY] = self.registry.slug
