@@ -134,6 +134,14 @@ class RegistryCaseFixtureViewTests(TestCase):
             CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
 
+    @generate_cases([
+        ({}, "'case_id', 'case_type' are required parameters"),
+        ({"case_id": "a"}, "'case_type' is a required parameters"),
+    ])
+    def test_required_params(self, params, message):
+        content = self._make_request(params, 400)
+        self.assertEqual(content, message)
+
     def _make_request(self, params, expected_response_code, method="get"):
         request_method = {
             "get": self.client.get,
@@ -163,15 +171,3 @@ class _FixtureCase:
 
     def get_property(self, name):
         return self.xml_element.findtext(name)
-
-
-@generate_cases([
-    ({}, f"'case_id', 'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
-    ({"case_id": "a"}, f"'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
-    ({"case_id": "a", "case_type": "b"}, f"'{CASE_SEARCH_REGISTRY_ID_KEY}' is a required parameter"),
-], RegistryCaseFixtureViewTests)
-@flag_enabled("SYNC_SEARCH_CASE_CLAIM")
-@flag_enabled("DATA_REGISTRY")
-def test_required_params(self, params, message):
-    content = self._make_request(params, 400)
-    self.assertEqual(content, message)
