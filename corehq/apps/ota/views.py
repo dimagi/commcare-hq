@@ -8,7 +8,6 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseNotFound,
     JsonResponse,
 )
 from django.utils.translation import ngettext
@@ -426,7 +425,6 @@ def recovery_measures(request, domain, build_id):
 @csrf_exempt
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
-@toggles.DATA_REGISTRY.required_decorator()
 def registry_case(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
@@ -448,7 +446,19 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
-    helper = DataRegistryHelper(domain, registry_slug=registry)
+    try:
+        cases = _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry)
+    except RegistryAccessException as e:
+        return HttpResponseBadRequest(str(e))
+
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
+
+
+@toggles.DATA_REGISTRY.required_decorator()
+def _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry_slug):
+    helper = DataRegistryHelper(domain, registry_slug=registry_slug)
 
     app = get_app_cached(domain, app_id)
     try:
@@ -457,20 +467,15 @@ def registry_case(request, domain, app_id):
             for case_id in case_ids
         ]
     except RegistryNotFound:
-        return HttpResponseNotFound(f"Registry '{registry}' not found")
+        raise Http404(f"Registry '{registry_slug}' not found")
     except CaseNotFound as e:
-        return HttpResponseNotFound(f"Case '{str(e)}' not found")
-    except RegistryAccessException as e:
-        return HttpResponseBadRequest(str(e))
+        raise Http404(f"Case '{str(e)}' not found")
 
     for case in cases:
         if case.type not in case_types:
-            return HttpResponseNotFound(f"Case '{case.case_id}' not found")
+            raise Http404(f"Case '{case.case_id}' not found")
 
-    all_cases = helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
-    for case in all_cases:
-        case.case_json[COMMCARE_PROJECT] = case.domain
-    return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
+    return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
 
 
 @formplayer_auth
