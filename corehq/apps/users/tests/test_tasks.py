@@ -8,7 +8,7 @@ from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import (
-    loadtest_user_is_demo_user,
+    apply_correct_demo_mode_to_loadtest_user,
     update_domain_date,
 )
 
@@ -68,7 +68,7 @@ class TestLoadtestUserIsDemoUser(TestCase):
 
     def test_set_loadtest_factor_on_demo_user(self):
         with _get_user(loadtest_factor=5, is_demo_user=True) as user:
-            loadtest_user_is_demo_user(user.user_id)
+            apply_correct_demo_mode_to_loadtest_user(user.user_id)
 
             user = CommCareUser.get_by_user_id(user.user_id)
             self.assertTrue(user.is_demo_user)
@@ -76,7 +76,7 @@ class TestLoadtestUserIsDemoUser(TestCase):
 
     def test_set_loadtest_factor_on_non_demo_user(self):
         with _get_user(loadtest_factor=5, is_demo_user=False) as user:
-            loadtest_user_is_demo_user(user.user_id)
+            apply_correct_demo_mode_to_loadtest_user(user.user_id)
 
             user = CommCareUser.get_by_user_id(user.user_id)
             self.assertTrue(user.is_demo_user)
@@ -85,7 +85,7 @@ class TestLoadtestUserIsDemoUser(TestCase):
     def test_unset_loadtest_factor_on_demo_user(self):
         with _get_user(loadtest_factor=None, is_demo_user=True) as user:
             self.assertFalse(user.is_loadtest_user)
-            loadtest_user_is_demo_user(user.user_id)
+            apply_correct_demo_mode_to_loadtest_user(user.user_id)
 
             user = CommCareUser.get_by_user_id(user.user_id)
             self.assertTrue(user.is_demo_user)
@@ -94,7 +94,7 @@ class TestLoadtestUserIsDemoUser(TestCase):
     def test_unset_loadtest_factor_on_non_demo_user(self):
         with _get_user(loadtest_factor=None, is_demo_user=False) as user:
             user.is_loadtest_user = True
-            loadtest_user_is_demo_user(user.user_id)
+            apply_correct_demo_mode_to_loadtest_user(user.user_id)
 
             user = CommCareUser.get_by_user_id(user.user_id)
             self.assertFalse(user.is_demo_user)

@@ -349,7 +349,7 @@ def process_reporting_metadata_staging():
 
 
 @task(queue='background_queue', acks_late=True)
-def loadtest_user_is_demo_user(commcare_user_id):
+def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
     """
     If ``loadtest_factor`` is set on a non-demo user, then that user
     will become a demo user for as long as ``loadtest_factor`` > 1.

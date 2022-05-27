@@ -49,9 +49,9 @@ def update_user_in_es(sender, couch_user, **kwargs):
     )
 
 
-def loadtest_user_is_demo_user(sender, couch_user, **kwargs):
-    from .tasks import loadtest_user_is_demo_user
-    loadtest_user_is_demo_user.delay(couch_user.get_id)
+def apply_correct_demo_mode(sender, couch_user, **kwargs):
+    from .tasks import apply_correct_demo_mode_to_loadtest_user
+    apply_correct_demo_mode_to_loadtest_user.delay(couch_user.get_id)
 
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):
@@ -66,5 +66,5 @@ def connect_user_signals():
                       dispatch_uid="django_user_post_save_signal")
     couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
     couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")
-    commcare_user_post_save.connect(loadtest_user_is_demo_user,
-                                    dispatch_uid='loadtest_user_is_demo_user')
+    commcare_user_post_save.connect(apply_correct_demo_mode,
+                                    dispatch_uid='apply_correct_demo_mode')
