@@ -18,6 +18,11 @@ from corehq.util.timer import time_method
 class EntryInstances(PostProcessor):
     """Adds instance declarations to the suite file"""
 
+    IGNORED_INSTANCES = {
+        'jr://instance/remote',
+        'jr://instance/search-input',
+    }
+
     @time_method()
     def update_suite(self):
         for entry in self.suite.entries:
@@ -129,7 +134,7 @@ class EntryInstances(PostProcessor):
     def require_instances(entry, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in entry.instances}
         for instance in instances:
-            if 'remote' in instance.src:
+            if instance.src in EntryInstances.IGNORED_INSTANCES:
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -160,9 +165,20 @@ class EntryInstances(PostProcessor):
             entry.instances = sorted_instances
 
 
-def get_instance_factory(scheme):
-    return get_instance_factory._factory_map.get(scheme, preset_instances)
-get_instance_factory._factory_map = {}
+_factory_map = {}
+
+
+def get_instance_factory(instance_name):
+    try:
+        scheme, _ = instance_name.split(':', 1)
+    except ValueError:
+        scheme = instance_name
+
+    return _factory_map.get(scheme, null_factory)
+
+
+def null_factory(app, instance_name):
+    return None
 
 
 class register_factory(object):
@@ -172,7 +188,7 @@ class register_factory(object):
 
     def __call__(self, fn):
         for scheme in self.schemes:
-            get_instance_factory._factory_map[scheme] = fn
+            _factory_map[scheme] = fn
         return fn
 
 
@@ -191,15 +207,19 @@ INSTANCE_KWARGS_BY_ID = {
 
 @register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
 def preset_instances(app, instance_name):
-    kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
-    if kwargs:
-        return Instance(**kwargs)
+    kwargs = INSTANCE_KWARGS_BY_ID[instance_name]
+    return Instance(**kwargs)
 
 
 @memoized
 @register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('search-input')
+def search_input_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/search-input')
 
 
 @register_factory('commcare')
@@ -247,12 +267,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
 
         instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
-            try:
-                scheme, _ = instance_name.split(':', 1)
-            except ValueError:
-                scheme = instance_name if instance_name == 'locations' else None
-
-            factory = get_instance_factory(scheme)
+            factory = get_instance_factory(instance_name)
             instance = factory(app, instance_name)
             if instance:
                 instances.add(instance)
