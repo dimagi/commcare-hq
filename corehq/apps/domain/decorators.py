@@ -53,7 +53,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
     IS_CONTRACTOR,
-    PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
@@ -88,11 +87,8 @@ def login_and_domain_required(view_func):
             raise Http404(msg)
 
         if not (user.is_authenticated and user.is_active):
-            if _is_public_custom_report(req.path, domain_name):
-                return call_view()
-            else:
-                login_url = reverse('domain_login', kwargs={'domain': domain_name})
-                return redirect_for_login_or_domain(req, login_url=login_url)
+            login_url = reverse('domain_login', kwargs={'domain': domain_name})
+            return redirect_for_login_or_domain(req, login_url=login_url)
 
         couch_user = _ensure_request_couch_user(req)
         if not domain_obj.is_active:
@@ -133,11 +129,6 @@ def login_and_domain_required(view_func):
             raise Http404
 
     return _inner
-
-
-def _is_public_custom_report(request_path, domain_name):
-    return (request_path.startswith('/a/{}/reports/custom'.format(domain_name))
-            and PUBLISH_CUSTOM_REPORTS.enabled(domain_name))
 
 
 def _inactive_domain_response(request, domain_name):

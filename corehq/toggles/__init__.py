@@ -1546,13 +1546,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
-PUBLISH_CUSTOM_REPORTS = StaticToggle(
-    'publish_custom_reports',
-    "Publish custom reports (No needed Authorization)",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
