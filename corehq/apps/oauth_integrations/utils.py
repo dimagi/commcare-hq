@@ -240,6 +240,5 @@ def get_scheduled_refreshes(today=None):
             ) | Q(date_end=None)
         ).exists():
             scheduled_refreshes.append(schedule)
-    print([s.export_config_id for s in scheduled_this_hour])
 
     return scheduled_refreshes
