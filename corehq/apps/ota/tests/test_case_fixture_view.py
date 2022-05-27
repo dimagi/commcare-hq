@@ -20,7 +20,7 @@ from corehq.util.test_utils import generate_cases, flag_enabled
 
 @flag_enabled("DATA_REGISTRY")
 @flag_enabled("SYNC_SEARCH_CASE_CLAIM")
-class RegistryCaseDetailsTests(TestCase):
+class RegistryCaseFixtureViewTests(TestCase):
     domain = 'registry-case-details'
 
     @classmethod
@@ -169,7 +169,7 @@ class _FixtureCase:
     ({}, f"'case_id', 'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
     ({"case_id": "a"}, f"'case_type', '{CASE_SEARCH_REGISTRY_ID_KEY}' are required parameters"),
     ({"case_id": "a", "case_type": "b"}, f"'{CASE_SEARCH_REGISTRY_ID_KEY}' is a required parameter"),
-], RegistryCaseDetailsTests)
+], RegistryCaseFixtureViewTests)
 @flag_enabled("SYNC_SEARCH_CASE_CLAIM")
 @flag_enabled("DATA_REGISTRY")
 def test_required_params(self, params, message):
