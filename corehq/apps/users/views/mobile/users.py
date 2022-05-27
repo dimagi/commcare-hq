@@ -1440,11 +1440,14 @@ def download_users(request, domain, user_type):
 
 
 @location_safe
-@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
+
+    @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1499,7 +1502,6 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 @location_safe
-@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
     default_expiry_duration_in_hours = 24
