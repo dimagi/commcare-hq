@@ -103,6 +103,9 @@ def create_or_update_spreadsheet(export, schedule):
             }
         ).execute()
         spreadsheet_id = sheets_file['spreadsheetId']
+
+        schedule.spreadsheet_id = spreadsheet_id
+        schedule.save()
     else:
         sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
         clear_spreadsheet(service, spreadsheet_id)
