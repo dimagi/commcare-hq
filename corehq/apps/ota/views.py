@@ -478,6 +478,10 @@ def _single_domain_case_fixture(request, domain, case_types, case_ids):
     for case in cases:
         if case.domain != domain or case.type not in case_types:
             raise Http404(f"Case '{case.case_id}' not found")
+    case_ids_found = {case.case_id for case in cases}
+    missing = set(case_ids) - case_ids_found
+    if missing:
+        raise Http404(f"Cases '{','.join(missing)}' not found")
 
     return get_case_hierarchy(domain, cases)
 
