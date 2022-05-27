@@ -1723,7 +1723,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    meta = form.metadata.to_json()
+    meta = form.metadata.to_json() if form.metadata else {}
     meta['@xmlns'] = form.xmlns
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
