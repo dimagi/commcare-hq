@@ -16,6 +16,7 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
+    get_registry_report_configs_for_domain,
     get_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
@@ -35,7 +36,11 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
 
-from corehq.apps.userreports.util import get_report_config_or_not_found
+from corehq.apps.userreports.util import (
+    get_report_config_or_not_found,
+    wrap_report_config_by_type,
+    _wrap_data_source_by_doc_type
+)
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
 
@@ -76,7 +81,8 @@ def create_linked_ucr(domain_link, report_config_id):
 
 
 def get_downstream_report(downstream_domain, upstream_report_id):
-    for linked_report in get_report_configs_for_domain(downstream_domain):
+    for linked_report in get_report_configs_for_domain(downstream_domain) + \
+            get_report_configs_for_domain(downstream_domain):
         if linked_report.report_meta.master_id == upstream_report_id:
             return linked_report
     return None
@@ -101,7 +107,7 @@ def _get_or_create_datasource_link(domain_link, datasource, app_id):
 
     _replace_master_app_ids(domain_link.linked_domain, datasource_json)
 
-    new_datasource = DataSourceConfiguration.wrap(datasource_json)
+    new_datasource = _wrap_data_source_by_doc_type(datasource_json)
     new_datasource.save()
 
     rebuild_indicators.delay(
@@ -152,7 +158,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
     report_json["_id"] = None
     report_json["_rev"] = None
 
-    new_report = ReportConfiguration.wrap(report_json)
+    new_report = wrap_report_config_by_type(report_json)
     new_report.save()
 
     return new_report
@@ -210,13 +216,13 @@ def _update_linked_report(master_report, linked_report):
 
 
 def get_linked_report_configs(domain, report_id):
-    domain_reports = get_report_configs_for_domain(domain)
+    domain_reports = get_report_configs_for_domain(domain) + get_registry_report_configs_for_domain(domain)
     existing_linked_reports = [r for r in domain_reports if r.report_meta.master_id == report_id]
     return existing_linked_reports
 
 
 def get_linked_reports_in_domain(domain):
-    reports = get_report_configs_for_domain(domain)
+    reports = get_report_configs_for_domain(domain) + get_registry_report_configs_for_domain(domain)
     linked_reports = [report for report in reports if report.report_meta.master_id]
     return linked_reports
 

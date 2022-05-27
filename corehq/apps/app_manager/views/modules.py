@@ -124,6 +124,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
+    RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
 )
@@ -337,7 +338,8 @@ def _get_report_module_context(app, module):
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
-                  StaticReportConfiguration.by_domain(app.domain)
+        StaticReportConfiguration.by_domain(app.domain) + \
+        RegistryReportConfiguration.by_domain(app.domain)
     validity = module.check_report_validity()
 
     # We're now proactively deleting these references, so after that's been

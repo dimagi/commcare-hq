@@ -101,7 +101,10 @@ from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain
+)
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
@@ -516,7 +519,7 @@ def _convert_reports_permissions(domain_link, master_results):
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
     report_map.update({
         c.report_meta.master_id: c._id
-        for c in get_report_configs_for_domain(domain_link.linked_domain)
+        for c in get_report_configs_for_domain(domain_link.linked_domain) + get_registry_report_configs_for_domain(domain_link.linked_domain)
     })
 
     for role_def in master_results:

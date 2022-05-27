@@ -120,7 +120,8 @@ def get_registry_data_sources_modified_since(timestamp):
 def get_all_report_configs():
     all_domains = Domain.get_all()
     for domain_obj in all_domains:
-        for report_config in get_report_configs_for_domain(domain_obj.name):
+        for report_config in get_report_configs_for_domain(domain_obj.name) + \
+                get_registry_report_configs_for_domain(domain_obj.name):
             yield report_config
 
 

@@ -45,7 +45,10 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
 
@@ -357,7 +360,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
         report_map.update({
             c.report_meta.master_id: c._id
-            for c in get_report_configs_for_domain(app.domain)
+            for c in get_report_configs_for_domain(app.domain) + get_registry_report_configs_for_domain(app.domain)
             if c.report_meta.master_id
         })
 

@@ -69,13 +69,13 @@ def get_latest_released_versions_by_app_id(domain_link):
 
 
 def get_ucr_config(domain_link, report_config_id):
-    from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+    from corehq.apps.userreports.util import wrap_report_config_by_type, _wrap_data_source_by_doc_type
     url = reverse('linked_domain:ucr_config', args=[domain_link.master_domain,
                                                     report_config_id])
     response = _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
     return {
-        "report": ReportConfiguration.wrap(response["report"]),
-        "datasource": DataSourceConfiguration.wrap(response["datasource"]),
+        "report": wrap_report_config_by_type(response["report"]),
+        "datasource": _wrap_data_source_by_doc_type(response["datasource"]),
     }
 
 

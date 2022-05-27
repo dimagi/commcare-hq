@@ -102,6 +102,7 @@ from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
     wrap_report_config_by_type,
+    _wrap_data_source_by_doc_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -1088,7 +1089,7 @@ class StaticDataSourceConfiguration(JsonObject):
                     return env.engine_ids
             return []
         doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
-        return DataSourceConfiguration.wrap(doc)
+        return _wrap_data_source_by_doc_type(doc)
 
 
 class StaticReportConfiguration(JsonObject):
@@ -1213,7 +1214,7 @@ class StaticReportConfiguration(JsonObject):
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, static_config.report_id, static_config.custom_configurable_report)
         doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, static_config.data_source_table)
-        return ReportConfiguration.wrap(doc)
+        return wrap_report_config_by_type(doc)
 
 
 class AsyncIndicator(models.Model):
