@@ -28,6 +28,12 @@ class LiveGoogleSheetSchedule(models.Model):
         self.status.refresh_error_note = error_note
         self.status.save()
 
+    def is_currently_refreshing(self):
+        return LiveGoogleSheetRefreshStatus.objects.filter(
+            schedule=self,
+            date_end=None
+        ).exists()
+
 
 class LiveGoogleSheetErrorReason():
     NO_ERROR = None

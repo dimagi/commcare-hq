@@ -2,6 +2,8 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.translation import gettext as _
+from corehq.apps.oauth_integrations.models import LiveGoogleSheetSchedule
 
 from couchexport.models import Format
 from soil import DownloadBase
@@ -263,3 +265,18 @@ def _create_or_refresh_google_sheet(schedule):
         export,
         schedule,
     )
+
+
+def refresh_single_google_sheet(export_config_id):
+    schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export_config_id)
+    if schedule.is_currently_refreshing():
+        return {
+            'error': _("Refresh already underway. Please wait."),
+        }
+    _create_or_refresh_google_sheet.apply_async(
+        args=[schedule],
+        queue=SAVED_EXPORTS_QUEUE,
+    )
+    return {
+        'success': _("Refresh started."),
+    }

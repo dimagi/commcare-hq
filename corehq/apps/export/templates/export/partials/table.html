@@ -231,26 +231,26 @@
         <!-- /ko -->
 
         <!-- ko if: isLiveGoogleSheet -->
+          <p>
             <!-- ko with: gsheetUrl -->
-              <p>
-                <div class="input-group">
-                  <span data-bind="css: {
-                                    'input-group-btn': showLink
-                                  },
-                                  click: openRequestedSheet">
-                    <a class="btn btn-default btn-sm">
-                      <i class="fa fa-clipboard"></i>
-                      {% trans "Open Google Sheet" %}
-                    </a>
-                  </span>
-                  <input data-bind="visible: showLink,
-                                    value: url"
-                        type="text"
-                        class="form-control input-sm"
-                        readonly />
-                </div>
-              </p>
+              <span data-bind="click: openUrl">
+                <a class="btn btn-default btn-sm">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Open" %}
+                </a>
+              </span>
             <!-- /ko -->
+            <span data-bind="click: refreshGoogleSheet">
+              <a class="btn btn-default btn-sm">
+                <i class="fa fa-refresh"></i>
+                {% trans "Refresh" %}
+              </a>
+            </span>
+          </p>
+        <!-- /ko -->
+        <!-- ko if: displayMessage -->
+            <p data-bind="text: displayMessage"
+               class="alert alert-info"></p>
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->

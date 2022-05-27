@@ -78,6 +78,7 @@ hqDefine("export/js/export_list_main", [
                 poll: initialPageData.reverse("get_saved_export_progress"),
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),
+                refreshGSheet: initialPageData.reverse("refresh_google_sheet"),
             },
         }));
 

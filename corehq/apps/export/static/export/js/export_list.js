@@ -76,9 +76,11 @@ hqDefine("export/js/export_list", [
             'editNameUrl',
             'editDescriptionUrl',
         ]);
-        assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update', 'refreshGSheet']);
 
         var self = ko.mapping.fromJS(options);
+
+        self.displayMessage = ko.observable();
 
         self.showSavedFilters = !!options.filters;
         if (self.showSavedFilters) {
@@ -167,6 +169,23 @@ hqDefine("export/js/export_list", [
             return true;    // allow default click action to process so file is downloaded
         };
 
+        self.refreshGoogleSheet = function () {
+            $.ajax({
+                method: 'POST',
+                url: pageOptions.urls.refreshGSheet,
+                data: {
+                    export_id: self.id(),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        self.displayMessage(data.success);
+                    } else if (data.error) {
+                        self.displayMessage(data.error);
+                    }
+                },
+            });
+        };
+
         self.updateDisabledState = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
@@ -215,7 +234,7 @@ hqDefine("export/js/export_list", [
             clipboard.destroy();
         };
 
-        self.openRequestedSheet = function () {
+        self.openUrl = function () {
             window.open(self.url(), '_blank').focus();
         };
 
@@ -366,7 +385,7 @@ hqDefine("export/js/export_list", [
                             is_odata: self.isOData,
                             is_live_google_sheet: self.isLiveGoogleSheet,
                             model_type: self.modelType,
-                            urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update'),
+                            urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update', 'refreshGSheet'),
                         });
                     }));
 
@@ -403,7 +422,7 @@ hqDefine("export/js/export_list", [
         self.isOData = options.isOData;
         self.isLiveGoogleSheet = options.isLiveGoogleSheet;
 
-        assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update', 'refreshGSheet']);
         self.urls = options.urls;
 
         assertProperties.assert(options.headers, ['my_export_type', 'shared_export_type', 'export_type_caps_plural']);

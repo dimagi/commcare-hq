@@ -47,6 +47,7 @@ from corehq.apps.export.views.list import (
     get_app_data_drilldown_values,
     get_exports_page,
     get_saved_export_progress,
+    refresh_google_sheet,
     submit_app_data_drilldown_form,
     toggle_saved_export_enabled,
     update_emailed_export_data,
@@ -229,6 +230,7 @@ urlpatterns = [
     url(r'^submit_app_data_drilldown_form/$', submit_app_data_drilldown_form,
         name='submit_app_data_drilldown_form'),
     url(r'^toggle_saved_export_enabled/$', toggle_saved_export_enabled, name='toggle_saved_export_enabled'),
+    url(r'^refresh_google_sheet/$', refresh_google_sheet, name='refresh_google_sheet'),
     url(r'^update_emailed_export_data/$', update_emailed_export_data, name='update_emailed_export_data'),
 
     # Delete export views

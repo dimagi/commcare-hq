@@ -51,8 +51,10 @@ from corehq.apps.export.forms import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import (
+    create_or_refresh_google_sheet,
     get_saved_export_task_status,
     rebuild_saved_export,
+    refresh_single_google_sheet,
 )
 from corehq.apps.export.views.edit import (
     EditExportDescription,
@@ -617,6 +619,15 @@ def toggle_saved_export_enabled(request, domain):
         'success': True,
         'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
     })
+
+
+@location_safe
+@login_and_domain_required
+@require_POST
+def refresh_google_sheet(request, domain):
+    export_config_id = request.POST.get('export_id')
+    status = refresh_single_google_sheet(export_config_id)
+    return json_response(status)
 
 
 @location_safe
