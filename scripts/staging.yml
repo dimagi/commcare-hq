@@ -78,5 +78,4 @@ branches:
     - akj/mw-signup # Akash May 25
     - ml/location_id_bug # Minha May 24
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 26
-    - sk/search-input-instances  # Simon May 26
 submodules: { }
