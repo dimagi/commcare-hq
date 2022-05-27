@@ -429,18 +429,18 @@ def recovery_measures(request, domain, build_id):
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def registry_case(request, domain, app_id):
     """Legacy endpoint name. Can be removed once no active apps are using it."""
-    return _single_case_query(request, domain, app_id)
+    return _case_fixture(request, domain, app_id)
 
 
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
-def query_case(request, domain, app_id):
-    return _single_case_query(request, domain, app_id)
+def case_fixture(request, domain, app_id):
+    return _case_fixture(request, domain, app_id)
 
 
-def _single_case_query(request, domain, app_id):
+def _case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
@@ -462,18 +462,18 @@ def _single_case_query(request, domain, app_id):
 
     if registry:
         try:
-            cases = _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry)
+            cases = _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry)
         except RegistryAccessException as e:
             return HttpResponseBadRequest(str(e))
     else:
-        cases = _single_domain_case_query(request, domain, app_id, case_types, case_ids)
+        cases = _single_domain_case_fixture(request, domain, case_types, case_ids)
 
     for case in cases:
         case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
 
 
-def _single_domain_case_query(request, domain, app_id, case_types, case_ids, registry_slug):
+def _single_domain_case_fixture(request, domain, case_types, case_ids):
     cases = CommCareCase.objects.get_cases(case_ids)
     for case in cases:
         if case.domain != domain or case.type not in case_types:
@@ -483,7 +483,7 @@ def _single_domain_case_query(request, domain, app_id, case_types, case_ids, reg
 
 
 @toggles.DATA_REGISTRY.required_decorator()
-def _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry_slug):
+def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry_slug):
     helper = DataRegistryHelper(domain, registry_slug=registry_slug)
 
     app = get_app_cached(domain, app_id)
