@@ -39,6 +39,7 @@ from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_histogram, metrics_counter
 from corehq.util.metrics.load_counters import case_load_counter
+from corehq.util.timer import TimingContext
 
 
 def livequery_read_from_standbys(func):
@@ -103,6 +104,20 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                 batch_cases(iaccessor, sync_ids),
                 init_progress(async_task, len(sync_ids)),
             )
+
+
+def get_case_hierarchy(domain, cases):
+    """Get the combined case hierarchy for the input cases"""
+    domains = {case.domain for case in cases}
+    assert domains == {domain}, "All cases must belong to the same domain"
+
+    case_ids = {case.case_id for case in cases}
+
+    all_case_ids, indices = get_live_case_ids_and_indices(domain, case_ids, TimingContext())
+    new_case_ids = list(all_case_ids - case_ids)
+    new_cases = PrefetchIndexCaseAccessor(domain, indices).get_cases(new_case_ids)
+
+    return cases + new_cases
 
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
