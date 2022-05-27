@@ -1,9 +1,10 @@
 from unittest import mock
 from io import BytesIO
 from django.test import TestCase, SimpleTestCase, override_settings
+from casexml.apps.phone.models import SyncLogSQL
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 
@@ -146,7 +147,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
-        self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNone(async_restore_task_id_cache.get_value())
 
     def test_completed_task_creates_sync_log(self):
@@ -154,8 +154,10 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
-        self.assertTrue(restore_config.timing_context.is_finished())
-        self.assertIsNotNone(restore_config.restore_state.current_sync_log)
+        sync_logs = SyncLogSQL.objects.filter(domain='dummy-project')
+        self.assertEqual(len(sync_logs), 1)
+        sync_log = sync_logs[0]
+        self.assertEqual(sync_log.user_id, self.user.user_id)
 
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):
