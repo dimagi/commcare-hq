@@ -1378,6 +1378,12 @@ class UCRExpression(models.Model):
     )
     definition = models.JSONField(null=True)
 
+    # For use with linked domains - the upstream UCRExpression
+    upstream_id = models.CharField(max_length=126, null=True)
+    LINKED_DOMAIN_UPDATABLE_PROPERTIES = [
+        "name", "description", "expression_type", "definition"
+    ]
+
     objects = UCRExpressionManager()
 
     class Meta:
@@ -1389,6 +1395,14 @@ class UCRExpression(models.Model):
             return ExpressionFactory.from_spec(self.definition, context)
         elif self.expression_type == UCR_NAMED_FILTER:
             return FilterFactory.from_spec(self.definition, context)
+
+    def update_from_upstream(self, upstream_ucr_expression):
+        """
+        For use with linked domains. Updates this ucr expression with data from `upstream_ucr_expression`
+        """
+        for prop in self.LINKED_DOMAIN_UPDATABLE_PROPERTIES:
+            setattr(self, prop, getattr(upstream_ucr_expression, prop))
+        self.save()
 
 
 def get_datasource_config_infer_type(config_id, domain):

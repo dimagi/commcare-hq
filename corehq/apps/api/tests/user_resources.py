@@ -1,4 +1,5 @@
 import json
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -35,7 +36,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
-from ..resources.v0_5 import CommCareUserResource
+from ..resources.v0_5 import CommCareUserResource, UserDomainsResource, BadRequest
 from .utils import APIResourceTest
 
 
@@ -589,3 +590,62 @@ class TestCommCareUserResourceUpdate(TestCase):
         errors = CommCareUserResource._update(bundle)
 
         self.assertIn('metadata properties conflict with profile: conflicting_field', errors)
+
+
+class TestUserDomainsResource(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, "test-username", "qwer1234", None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_domain_returned_when_no_filter(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_exception_when_invalid_filter_sent(self, _):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
+        bundle.request.user = self.user
+        with self.assertRaises(BadRequest):
+            UserDomainsResource().obj_get_list(bundle)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"superset-analytics": True})
+    def test_domain_returned_when_valid_flag_sent(self, *args):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertListEqual([self.domain], [d.domain_name for d in resp])
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_domain_not_returned_when_flag_not_enabled(self, *args):
+        bundle = Bundle()
+        bundle.obj = self.user
+        bundle.request = Mock()
+        bundle.request.GET = {"feature_flag": "superset-analytics"}
+        bundle.request.user = self.user
+        resp = UserDomainsResource().obj_get_list(bundle)
+        self.assertEqual(0, len(resp))

@@ -16,7 +16,7 @@ asgiref==3.5.0
     # via django
 asttokens==2.0.5
     # via stack-data
-attrs==18.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
@@ -50,6 +50,7 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
+    #   pynacl
 chardet==3.0.4
     # via
     #   ghdiff
@@ -371,7 +372,7 @@ pep517==0.10.0
     # via pip-tools
 pexpect==4.8.0
     # via ipython
-phonenumberslite==8.12.10
+phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
@@ -430,7 +431,7 @@ pycryptodome==3.10.1
     # via -r base-requirements.in
 pyflakes==2.3.1
     # via flake8
-pygithub==1.54.1
+pygithub==1.55
     # via -r base-requirements.in
 pygments==2.11.2
     # via
@@ -438,10 +439,12 @@ pygments==2.11.2
     #   sphinx
 pygooglechart==0.4.0
     # via -r base-requirements.in
-pyjwt==1.7.1
+pyjwt==2.4.0
     # via
     #   pygithub
     #   twilio
+pynacl==1.5.0
+    # via pygithub
 pyopenssl==20.0.1
     # via -r sso-requirements.in
 pyparsing==2.4.7
@@ -503,7 +506,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.55
+reportlab==3.6.9
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -549,7 +552,7 @@ simplejson==3.17.2
     # via
     #   -r base-requirements.in
     #   django-prbac
-six==1.15.0
+six==1.16.0
     # via
     #   -r base-requirements.in
     #   asttokens

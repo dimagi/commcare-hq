@@ -4,6 +4,7 @@ import uuid
 from django.test import TestCase
 from requests import ConnectionError
 
+from corehq.const import MISSING_APP_ID
 from couchforms.analytics import (
     app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
@@ -130,27 +131,35 @@ class CouchformsESAnalyticsTest(TestCase):
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
 
-        def create_form_and_sync_to_es(received_on):
-            with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
-                with process_pillow_changes('DefaultChangeFeedPillow'):
-                    metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
-                                                xmlns=cls.xmlns, received_on=received_on)
-                    form = get_form_ready_to_save(metadata, is_db_test=True)
-                    form_processor = FormProcessorInterface(domain=cls.domain)
-                    form_processor.save_processed_models([form])
-            return form
-
-        from casexml.apps.case.tests.util import delete_all_xforms
-        delete_all_xforms()
         cls.now = datetime.datetime.utcnow()
         cls._60_days = datetime.timedelta(days=60)
         cls.domain = 'my_crazy_analytics_domain'
         cls.app_id = uuid.uuid4().hex
         cls.xmlns = 'my://crazy.xmlns/'
+
+        def create_form(received_on, app_id=cls.app_id, xmlns=cls.xmlns):
+            metadata = TestFormMetadata(domain=cls.domain, app_id=app_id,
+                                        xmlns=xmlns, received_on=received_on)
+            form = get_form_ready_to_save(metadata, is_db_test=True)
+            form_processor = FormProcessorInterface(domain=cls.domain)
+            form_processor.save_processed_models([form])
+            return form
+
+        def create_forms_and_sync_to_es():
+            forms = []
+            with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
+                with process_pillow_changes('DefaultChangeFeedPillow'):
+                    for received_on in [cls.now, cls.now - cls._60_days]:
+                        forms.append(create_form(received_on))
+                    forms.append(create_form(cls.now, app_id=None, xmlns="system"))
+            return forms
+
+        from casexml.apps.case.tests.util import delete_all_xforms
+        delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             cls.elasticsearch = get_es_new()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now - cls._60_days)]
+            cls.forms = create_forms_and_sync_to_es()
 
         cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.alias)
 
@@ -160,7 +169,7 @@ class CouchformsESAnalyticsTest(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
-    def test_get_number_of_cases_in_domain(self):
+    def test_get_number_of_forms_in_domain(self):
         self.assertEqual(
             get_number_of_forms_in_domain(self.domain),
             len(self.forms)
@@ -187,4 +196,4 @@ class CouchformsESAnalyticsTest(TestCase):
     def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
-            {(self.xmlns, self.app_id)})
+            {(self.xmlns, self.app_id), ("system", MISSING_APP_ID)})
