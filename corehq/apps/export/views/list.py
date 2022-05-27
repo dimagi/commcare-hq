@@ -51,7 +51,6 @@ from corehq.apps.export.forms import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import (
-    create_or_refresh_google_sheet,
     get_saved_export_task_status,
     rebuild_saved_export,
     refresh_single_google_sheet,
