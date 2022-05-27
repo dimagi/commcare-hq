@@ -427,20 +427,7 @@ def recovery_measures(request, domain, build_id):
 @csrf_exempt
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
-def registry_case(request, domain, app_id):
-    """Legacy endpoint name. Can be removed once no active apps are using it."""
-    return _case_fixture(request, domain, app_id)
-
-
-@location_safe_bypass
-@csrf_exempt
-@mobile_auth
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def case_fixture(request, domain, app_id):
-    return _case_fixture(request, domain, app_id)
-
-
-def _case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")

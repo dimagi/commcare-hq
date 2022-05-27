@@ -126,12 +126,13 @@ class CaseFixtureViewTests(TestCase):
         content = self._make_request(params, 400)
         self.assertEqual(content, message)
 
-    def _make_request(self, params, expected_response_code, method="get"):
+    def _make_request(self, params, expected_response_code, method="get", url=None):
         request_method = {
             "get": self.client.get,
             "post": self.client.post,
         }[method]
-        response = request_method(reverse('case_fixture', args=[self.domain, self.app.get_id]), data=params)
+        url = url or reverse('case_fixture', args=[self.domain, self.app.get_id])
+        response = request_method(url, data=params)
         content = response.content
         self.assertEqual(response.status_code, expected_response_code, content)
         return content.decode('utf8')
@@ -168,14 +169,25 @@ class RegistryCaseFixtureViewTests(CaseFixtureViewTests):
             CASE_SEARCH_REGISTRY_ID_KEY: "not-a-registry", "case_id": self.parent_case_id, "case_type": "parent",
         }, 404)
 
+    def test_legacy_registry_details_view(self):
+        url = reverse('case_fixture', args=[self.domain, self.app.get_id])
+        url = url.replace('case_fixture', 'registry_case')
+        self.assertTrue('/phone/registry_case/' in url)
+        response_content = self._make_request(
+            {"case_id": self.parent_case_id, "case_type": "parent"}, 200, url=url
+        )
+        actual_cases = self._get_cases_in_response(response_content)
+        expected_cases = {case.case_id: case for case in self.cases}
+        self.assertEqual(set(actual_cases), set(expected_cases))
+
     @skip("Does not apply in this suite")
     def test_get_registry_case_details_feature_flag_not_active(self):
         pass
 
-    def _make_request(self, params, expected_response_code, method="get"):
+    def _make_request(self, params, expected_response_code, method="get", url=None):
         params[CASE_SEARCH_REGISTRY_ID_KEY] = self.registry.slug
         with patch.object(DataRegistryHelper, '_check_user_has_access', return_value=True):
-            return super()._make_request(params, expected_response_code, method)
+            return super()._make_request(params, expected_response_code, method, url)
 
 
 class _FixtureCase:
