@@ -1,4 +1,6 @@
-.PHONY: requirements upgrade-requirements docs migrations.lock serializer-pickle-files.lock translations
+.PHONY: all requirements upgrade-requirements docs migrations.lock serializer-pickle-files.lock translations
+
+all: requirements serializer-pickle-files.lock translations
 
 requirements:
 	cd requirements && $(MAKE) requirements
