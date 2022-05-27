@@ -10,8 +10,8 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
-from django.utils.translation import ngettext
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -21,8 +21,8 @@ from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -59,6 +59,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
@@ -426,16 +427,28 @@ def recovery_measures(request, domain, build_id):
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def registry_case(request, domain, app_id):
+    """Legacy endpoint name. Can be removed once no active apps are using it."""
+    return _single_case_query(request, domain, app_id)
+
+
+@location_safe_bypass
+@csrf_exempt
+@mobile_auth
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+def query_case(request, domain, app_id):
+    return _single_case_query(request, domain, app_id)
+
+
+def _single_case_query(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
     registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
 
     missing = [
-        name
-        for name, value in zip(
-            ["case_id", "case_type", CASE_SEARCH_REGISTRY_ID_KEY],
-            [case_ids, case_types, registry]
+        name for name, value in zip(
+            ["case_id", "case_type"],
+            [case_ids, case_types]
         )
         if not value
     ]
@@ -446,14 +459,26 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
-    try:
-        cases = _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry)
-    except RegistryAccessException as e:
-        return HttpResponseBadRequest(str(e))
+    if registry:
+        try:
+            cases = _data_registry_case_query(request, domain, app_id, case_types, case_ids, registry)
+        except RegistryAccessException as e:
+            return HttpResponseBadRequest(str(e))
+    else:
+        cases = _single_domain_case_query(request, domain, app_id, case_types, case_ids)
 
     for case in cases:
         case.case_json[COMMCARE_PROJECT] = case.domain
     return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
+
+
+def _single_domain_case_query(request, domain, app_id, case_types, case_ids, registry_slug):
+    cases = CommCareCase.objects.get_cases(case_ids)
+    for case in cases:
+        if case.domain != domain or case.type not in case_types:
+            raise Http404(f"Case '{case.case_id}' not found")
+
+    return cases
 
 
 @toggles.DATA_REGISTRY.required_decorator()
