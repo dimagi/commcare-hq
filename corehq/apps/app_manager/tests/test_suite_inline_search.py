@@ -380,7 +380,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
+class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
@@ -389,7 +389,7 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
         factory.form_requires_case(f0)
 
         m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
-        m1.parent_select = ParentSelect(active=True, relationship="other", module_id=m0.get_or_create_unique_id())
+        m1.parent_select = ParentSelect(active=True, relationship="parent", module_id=m0.get_or_create_unique_id())
         f2 = factory.new_form(m1)
 
         factory.form_requires_case(f1)
@@ -408,8 +408,9 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
         factory.app._id = "123"
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
+        self.m0 = self.app.get_module(0)
 
-    def test_form_link_in_child_module_with_registry_search(self):
+    def test_form_link_in_child_module(self):
         suite = self.app.create_suite()
 
         expected = """
@@ -432,3 +433,71 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
             suite,
             "./entry[2]/stack/create"
         )
+
+    def test_child_module_of_module_with_inline_search(self):
+        self.m0.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+        )
+        self.m0.assign_references()
+        suite = self.app.create_suite()
+
+        m0_expected = """
+        <partial>
+        <session>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="case_id"
+            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+            value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+        </session>
+        </partial>
+        """
+        self.assertXmlPartialEqual(m0_expected, suite, "./entry[1]/session")
+
+        # TODO: the 'query@storage-instance attributes must not be the same for the parent and child search
+        m1_expected = """
+        <partial>
+        <session>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="case_id"
+            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+            value="./@case_id" detail-select="m0_case_short"/>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m1.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="case_id_case"
+            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
+            value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+        </session>
+        </partial>
+        """
+        self.assertXmlPartialEqual(m1_expected, suite, "./entry[2]/session")
