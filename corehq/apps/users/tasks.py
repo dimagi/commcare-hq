@@ -366,9 +366,11 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
     user = CommCareUser.get_by_user_id(commcare_user_id)
     if user.loadtest_factor and user.loadtest_factor > 1:
         if not user.is_demo_user:
-            user.is_loadtest_user = True
+            user.is_loadtest_user = True  # This change gets saved by
+            # turn_on_demo_mode() > reset_demo_user_restore()
             turn_on_demo_mode(user, user.domain)
     else:
         if user.is_loadtest_user:
-            user.is_loadtest_user = False
+            user.is_loadtest_user = False  # This change gets saved by
+            # turn_off_demo_mode()
             turn_off_demo_mode(user)
