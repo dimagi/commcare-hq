@@ -64,8 +64,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @staticmethod
     def _should_hide_feature_notifs(domain, plan):
-        groups = Group.get_case_sharing_groups(domain, wrap=False)
-        if plan == 'pro' and groups:
+        if plan == 'pro' and Group.get_case_sharing_groups(domain, wrap=False):
             return True
         sub = Subscription.get_active_subscription_by_domain(domain)
         return sub is not None and sub.service_type in ['IMPLEMENTATION', 'SANDBOX']
