@@ -6,7 +6,7 @@ source ./scripts/bash-utils.sh
 
 log_group_begin "Check: translations"
 
-make translations
+./scripts/make-translations.sh
 git --no-pager diff
 git update-index -q --refresh
 if ! git diff-index --quiet HEAD --; then
