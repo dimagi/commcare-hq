@@ -7,11 +7,24 @@ from alembic.migration import MigrationContext
 def get_migration_context(connection, table_names=None):
     opts = {'compare_type': True}
     if table_names:
+        opts['include_name'] = partial(include_name, table_names)
         opts['include_object'] = partial(include_object, table_names)
     return MigrationContext.configure(connection, opts=opts)
 
 
+def include_name(tables_to_include, name, type_, parent_names):
+    """Checks if the object should be included. This is called prior
+    to object reflection and is only called for existing database objects"""
+    return _include_table(tables_to_include, type_, name)
+
+
 def include_object(tables_to_include, object, name, type_, reflected, compare_to):
+    """Checks if the object should be included. This runs after reflection and will
+    also be called with new objects that are only in the metadata"""
+    return _include_table(tables_to_include, type_, name)
+
+
+def _include_table(tables_to_include, type_, name):
     if type_ == "table":
         return name in tables_to_include
     return True
