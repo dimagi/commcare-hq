@@ -248,7 +248,7 @@ def refresh_scheduled_google_sheets():
     for scheduled_refresh in scheduled_refreshes:
         scheduled_refresh.set_task(
             _create_or_refresh_google_sheet.apply_async(
-                args=[scheduled_refresh],
+                args=[scheduled_refresh.export_config_id],
                 queue=SAVED_EXPORTS_QUEUE,
             )
         )
@@ -256,7 +256,8 @@ def refresh_scheduled_google_sheets():
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _create_or_refresh_google_sheet(schedule):
+def _create_or_refresh_google_sheet(export_config_id):
+    schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export_config_id)
     schedule.start_refresh()
 
     export = get_properly_wrapped_export_instance(schedule.export_config_id)
@@ -274,7 +275,7 @@ def refresh_single_google_sheet(export_config_id):
             'error': _("Refresh already underway. Please wait."),
         }
     _create_or_refresh_google_sheet.apply_async(
-        args=[schedule],
+        args=[export_config_id],
         queue=SAVED_EXPORTS_QUEUE,
     )
     return {
