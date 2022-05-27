@@ -113,34 +113,33 @@ def create_or_update_spreadsheet(export, schedule):
         if not check_worksheet_exists(sheets_file, worksheet_name):
             create_empty_worksheet(service, worksheet_name, spreadsheet_id)
 
-        for chunk in worksheet:
-            value_range_body = {
-                'majorDimension': 'ROWS',
-                'values': chunk
-            }
-            try:
-                service.spreadsheets().values().append(
-                    spreadsheetId=spreadsheet_id,
-                    valueInputOption='USER_ENTERED',
-                    body=value_range_body,
-                    range=f"{worksheet_name}!A1"
-                ).execute()
-            except HttpError as e:
-                notify_exception(None, message=str(e))
-                #TODO
-                schedule.stop_refresh(
-                    LiveGoogleSheetErrorReason.OTHER,
-                    "Google Raised an HttpError. Contact support."
-                )
-                return
-            except MutualTLSChannelError as e:
-                notify_exception(None, message=str(e))
-                #TODO
-                schedule.stop_refresh(
-                    LiveGoogleSheetErrorReason.OTHER,
-                    "Google Raised an MutualTLSChannelError. Contact support."
-                )
-                return
+        value_range_body = {
+            'majorDimension': 'ROWS',
+            'values': worksheet,
+        }
+        try:
+            service.spreadsheets().values().append(
+                spreadsheetId=spreadsheet_id,
+                valueInputOption='USER_ENTERED',
+                body=value_range_body,
+                range=f"{worksheet_name}!A1"
+            ).execute()
+        except HttpError as e:
+            notify_exception(None, message=str(e))
+            #TODO
+            schedule.stop_refresh(
+                LiveGoogleSheetErrorReason.OTHER,
+                "Google Raised an HttpError. Contact support."
+            )
+            return
+        except MutualTLSChannelError as e:
+            notify_exception(None, message=str(e))
+            #TODO
+            schedule.stop_refresh(
+                LiveGoogleSheetErrorReason.OTHER,
+                "Google Raised an MutualTLSChannelError. Contact support."
+            )
+            return
 
     schedule.stop_refresh()
     return sheets_file
