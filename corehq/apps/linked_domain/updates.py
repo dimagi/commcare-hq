@@ -517,9 +517,11 @@ def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.
     """
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
+    report_configs = get_report_configs_for_domain(domain_link.linked_domain) + \
+        get_registry_report_configs_for_domain(domain_link.linked_domain)
     report_map.update({
         c.report_meta.master_id: c._id
-        for c in get_report_configs_for_domain(domain_link.linked_domain) + get_registry_report_configs_for_domain(domain_link.linked_domain)
+        for c in report_configs
     })
 
     for role_def in master_results:
