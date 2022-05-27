@@ -37,10 +37,20 @@ class Command(BaseCommand):
         if errors:
             raise CommandError(f'The following errors were found in your input file:\n{errors}')
 
+        self.stdout.write("The following users will be logged out and have their passwords force reset.")
+        self.stdout.write("Additionally, they will receive an email directing them to reset their password.")
+        for web_user_username in web_user_usernames:
+            self.stdout.write(f"  - {web_user_username}")
+
+        if 'y' != input('Do you want to proceed? [y/N]'):
+            raise CommandError('You have aborted the command and no action was taken.')
+
         django_users = [web_user.get_django_user() for web_user in web_users]
 
         for user in django_users:
+            self.stdout.write(f"Force resetting password for {user.username}", ending='')
             force_password_reset(user)
+            self.stdout.write(" - Done")
 
 
 def get_lines_from_file(filename):
