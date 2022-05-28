@@ -22,6 +22,8 @@ from corehq.apps.fixtures.upload.run_upload import (
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import generate_cases, make_make_path
 
+from dimagi.utils.couch.database import iter_docs
+
 _make_path = make_make_path(__file__)
 
 
@@ -482,6 +484,31 @@ class TestFixtureUpload(TestCase):
         self.upload([(None, 'N', 'apple'), (None, 'N', 'banana')])
         self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
 
+    def test_delete_table(self):
+        self.upload([(None, 'N', 'apple')])
+        row_ids = {r._id for r in self.get_rows(None)}
+
+        data = [
+            ('types', [('Y', 'things', 'yes', 'name', 'yes')]),
+            ('things', [(None, 'N', 'apple')]),
+        ]
+        workbook = self.get_workbook_from_data(self.headers, data)
+        type(self).do_upload(self.domain, workbook)
+
+        self.assertIsNone(self.get_table())
+        item_ids = {x["_id"] for x in iter_docs(FixtureDataItem.get_db(), row_ids)}
+        self.assertFalse(item_ids.intersection(row_ids))
+
+    def test_delete_missing_table(self):
+        data = [
+            ('types', [('Y', 'things', 'yes', 'name', 'yes')]),
+            ('things', [(None, 'N', 'apple')]),
+        ]
+        workbook = self.get_workbook_from_data(self.headers, data)
+        type(self).do_upload(self.domain, workbook)
+
+        self.assertIsNone(self.get_table())
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
@@ -520,3 +547,11 @@ class TestFastFixtureUpload(TestFixtureUpload):
     @nottest
     def test_add_rows_without_replace(self):
         """Fast fixture uploads always replace"""
+
+    @nottest
+    def test_delete_table(self):
+        """Fast fixture uploads always create"""
+
+    @nottest
+    def test_delete_missing_table(self):
+        """Fast fixture uploads always create"""

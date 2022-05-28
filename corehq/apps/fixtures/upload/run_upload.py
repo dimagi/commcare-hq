@@ -1,5 +1,6 @@
 import uuid
 from itertools import chain
+from operator import attrgetter
 
 from attrs import define, field
 
@@ -19,7 +20,7 @@ from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.location_cache import (
     get_memoized_location_getter,
 )
-from corehq.apps.fixtures.upload.workbook import get_workbook, _process_item_field
+from corehq.apps.fixtures.upload.workbook import Deleted, get_workbook, _process_item_field
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
@@ -70,9 +71,13 @@ def _run_upload(domain, workbook, replace=False, task=None):
         workbook.iter_tables(domain),
         table_key,
         process_table,
+        delete_missing=False,
+        deleted_key=attrgetter("tag"),
     )
 
     with CouchTransaction() as couch:
+        for table in tables.to_delete:
+            table.recursive_delete(couch)
         couch.delete_all(rows.to_delete)
         for doc in chain(tables.to_create, rows.to_create):
             couch.save(doc)
@@ -91,10 +96,23 @@ def row_key(row):
     )
 
 
-def get_mutation(old_items, new_items, key, process_item=lambda item: None):
+def get_mutation(
+    old_items,
+    new_items,
+    key,
+    process_item=lambda item: None,
+    delete_missing=True,
+    deleted_key=attrgetter("_id"),
+):
     mutation = Mutation()
     old_map = {key(old): old for old in old_items}
+    get_deleted_item = {deleted_key(x): x for x in old_items}.get
     for new in new_items:
+        if isinstance(new, Deleted):
+            old = get_deleted_item(new.key)
+            if old is not None:
+                mutation.to_delete.append(old)
+            continue
         old = old_map.pop(key(new), None)
         if old is None:
             mutation.to_create.append(new)
@@ -102,7 +120,8 @@ def get_mutation(old_items, new_items, key, process_item=lambda item: None):
         else:
             item = old
         process_item(item)
-    mutation.to_delete.extend(old_map.values())
+    if delete_missing:
+        mutation.to_delete.extend(old_map.values())
     return mutation
 
 

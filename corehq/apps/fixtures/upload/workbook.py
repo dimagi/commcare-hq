@@ -63,6 +63,9 @@ class _FixtureWorkbook(object):
 
     def iter_tables(self, domain):
         for sheet in self.get_all_type_sheets():
+            if sheet.delete:
+                yield Deleted(sheet.table_id)
+                continue
             yield FixtureDataType(
                 _id=uuid4().hex,
                 domain=domain,
@@ -93,6 +96,11 @@ class _FixtureWorkbook(object):
 
     def get_uid(self, obj):
         return self.meta.get(obj, {}).get('UID')
+
+
+class Deleted:
+    def __init__(self, key):
+        self.key = key
 
 
 class _FixtureTableDefinition(object):
