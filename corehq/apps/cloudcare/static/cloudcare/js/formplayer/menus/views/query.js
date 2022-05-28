@@ -194,6 +194,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         events: {
+            'dp.change @ui.queryField': 'changeQueryField',
             'change @ui.queryField': 'changeQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
