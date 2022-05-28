@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import get_user_pillow_old
+from corehq.pillows.user import get_user_pillow
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
@@ -49,7 +49,7 @@ class UserPillowTest(UserPillowTestBase):
     def setUp(self):
         super().setUp()
         self.user = CommCareUser.create(self.domain, 'test-user', 'secret', None, None)
-        self.user_pillow = get_user_pillow_old(skip_ucr=True)
+        self.user_pillow = get_user_pillow(skip_ucr=True)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
     def test_created_user_sent_to_elasticsearch(self):
