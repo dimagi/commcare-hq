@@ -29,9 +29,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
 
     user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc_dict)
 
-    if (not user_id
-            or user_id in WEIRD_USER_IDS
-            or _user_exists_in_couch(user_id)):
+    if not user_id or user_id in WEIRD_USER_IDS or _user_exists_in_couch(user_id):
         return
 
     if not doc_exists_in_es(USER_INDEX_INFO, user_id):
@@ -117,43 +115,14 @@ def get_user_es_processor():
     )
 
 
-def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
-    """Processes users and sends them to ES.
-
-    Processors:
-      - :py:func:`pillowtop.processors.elastic.ElasticProcessor`
-    """
-    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
-    user_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=USER_INDEX_INFO,
-        doc_prep_fn=transform_user_for_elasticsearch,
-    )
-    change_feed = KafkaChangeFeed(
-        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=user_processor,
-        change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
-        ),
-    )
-
-
 def get_user_pillow(pillow_id='user-pillow', num_processes=1, dedicated_migration_process=False, process_num=0,
-        skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+                    skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE):
     """Processes users and sends them to ES and UCRs.
 
     Processors:
       - :py:func:`pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
     """
-    # Pillow that sends users to ES and UCR
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = get_user_es_processor()
@@ -224,6 +193,6 @@ class UserReindexerFactory(ReindexerFactory):
             elasticsearch=get_es_new(),
             index_info=USER_INDEX_INFO,
             doc_transform=transform_user_for_elasticsearch,
-            pillow=get_user_pillow_old(),
+            pillow=get_user_pillow(),
             **options
         )

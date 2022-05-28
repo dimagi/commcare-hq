@@ -1730,11 +1730,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'UserPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.user.get_user_pillow_old',
-        },
-        {
             'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
