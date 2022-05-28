@@ -727,15 +727,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer(Const.NO_ANSWER);
     };
 
-    $.datetimepicker.setDateFormatter({
-        parseDate: function (date, format) {
-            var d = moment(date, format);
-            return d.isValid() ? d.toDate() : false;
-        },
-        formatDate: function (date, format) {
-            return moment(date).format(format);
-        },
-    });
     /**
      * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
      * date picker between the three types of Entry.
@@ -746,77 +737,30 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             minDate,
             maxDate,
             yearEnd,
-            yearStart,
-            displayOpts = _getDisplayOptions(question),
-            isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
+            yearStart;
 
         EntrySingleAnswer.call(self, question, options);
 
-        // Set year ranges
-        yearEnd = thisYear + 10;
-        yearStart = thisYear - 100;
-        // Set max date to 10 years in the future
-        maxDate = moment(yearEnd, 'YYYY').toDate();
-        // Set min date to 100 years in the past
-        minDate = moment(yearStart, 'YYYY').toDate();
-
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            var datepickerOpts = {
-                timepicker: self.timepicker,
-                datepicker: self.datepicker,
+            self.$picker.datetimepicker({
+                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
                 format: self.clientFormat,
-                formatTime: self.clientTimeFormat,
-                formatDate: self.clientDateFormat,
-                value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
-                maxDate: maxDate,
                 minDate: minDate,
-                yearEnd: yearEnd,
-                yearStart: yearStart,
-                scrollInput: false,
-                onChangeDateTime: function (newDate) {
-                    if (!newDate) {
-                        self.answer(Const.NO_ANSWER);
-                        return;
-                    }
-                    self.answer(moment(newDate).format(self.serverFormat));
+                maxDate: maxDate,
+                keepInvalid: true,
+                parseInputDate: function (date) {
+                    var d = moment(date, self.clientFormat);
+                    return d.isValid() ? d : null;
                 },
-                onGenerate: function () {
-                    var $dt = $(this);
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
-                    }
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
-                    }
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_today_button .fa').length < 1) {
-                        $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
-                    }
-
-                    $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
-
-                    if (isPhoneMode && !self.datepicker && self.timepicker) {
-                        $dt.find('.xdsoft_time_box').addClass('time-box-full');
-                    }
-
-                    if (isPhoneMode && self.timepicker && self.datepicker) {
-                        $dt.find('.xdsoft_save_selected')
-                            .show().text(gettext('Save'))
-                            .addClass('btn btn-primary')
-                            .removeClass('blue-gradient-button');
-                        $dt.find('.xdsoft_save_selected').appendTo($dt);
-                    }
-                },
-            };
-            self.$picker.datetimepicker(datepickerOpts);
+            });
+            self.$picker.on("dp.change", function (e) {
+                if (!e.date) {
+                    self.answer(Const.NO_ANSWER);
+                    return;
+                }
+                self.answer(moment(e.date.toDate()).format(self.serverFormat));
+            });
         };
     }
     DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -826,40 +770,42 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     // Format for time or date or datetime for the browser. Defaults to ISO.
-    // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.clientFormat = undefined;
-    DateTimeEntryBase.prototype.clientTimeFormat = undefined;
-    DateTimeEntryBase.prototype.clientDateFormat = undefined;
 
     // Format for time or date or datetime for the server. Defaults to ISO.
-    // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
     function DateEntry(question, options) {
         this.templateType = 'date';
-        this.timepicker = false;
-        this.datepicker = true;
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     DateEntry.prototype.constructor = DateTimeEntryBase;
     // This is format equates to 12/31/2016 and is used by the datetimepicker
     DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
-    DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
     DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        this.timepicker = true;
-        this.datepicker = false;
         DateTimeEntryBase.call(this, question, options);
     }
     TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     TimeEntry.prototype.constructor = DateTimeEntryBase;
 
-    TimeEntry.prototype.clientTimeFormat = 'HH:mm';
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
+
+    function DateTimeEntry(question, options) {
+        this.templateType = 'datetime';
+        DateTimeEntryBase.call(this, question, options);
+    }
+    DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+    DateTimeEntry.prototype.constructor = DateTimeEntryBase;
+
+    DateTimeEntry.prototype.clientFormat = 'MM/DD/YYYY HH:mm';
+    DateTimeEntry.prototype.serverFormat = 'YYYY-MM-DD HH:mm';
 
     function EthiopianDateEntry(question, options) {
         var self = this,
@@ -1173,6 +1119,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 break;
             case Const.TIME:
                 entry = new TimeEntry(question, {});
+                break;
+            case Const.DATETIME:
+                entry = new DateTimeEntry(question, {});
                 break;
             case Const.GEO:
                 entry = new GeoPointEntry(question, {});
