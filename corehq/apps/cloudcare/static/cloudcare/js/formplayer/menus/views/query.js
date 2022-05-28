@@ -195,11 +195,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         events: {
             'dp.change @ui.queryField': function (e) {
+                var self = this;
                 // Without this, the datepicker popup won't show, because in the datepicker's
                 // `show` function, the dp.change event is emitted before the popup is shown.
                 // The delay makes sure this code doesn't run until the popup is shown.
                 _.delay(function () {
-                    changeQueryField(e);
+                    self.changeQueryField(e);
                 });
             },
             'change @ui.queryField': 'changeQueryField',
