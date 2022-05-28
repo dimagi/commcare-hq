@@ -229,6 +229,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return !this.hasError;
         },
 
+        clear: function () {
+            var self = this;
+            self.model.set('value', '');
+            self.model.set('searchForBlank', false);
+            if (self.ui.date.length) {
+                self.ui.date.data("DateTimePicker").clear();
+            }
+        },
+
         getEncodedValue: function () {
             if (this.model.get('input') === 'address') {
                 return;  // skip geocoder address
@@ -397,11 +406,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            _.each(self.collection.models, function (model) {
-                model.set('value', '');
-                model.set('searchForBlank', false);
-                if (model.get('input') === 'address') {
-                    initMapboxWidget(model);
+            this.children.each(function (childView) {
+                childView.clear();
+                if (childView.model.get('input') === 'address') {
+                    initMapboxWidget(childView.model);
                 }
             });
             self.setStickyQueryInputs();
