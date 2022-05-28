@@ -36,7 +36,7 @@ class _FixtureWorkbook(object):
             self.workbook = excel_get_workbook(file_or_filename)
         except WorkbookJSONError as e:
             raise FixtureUploadError([str(e)])
-        self.meta = WeakKeyDictionary()
+        self.item_keys = WeakKeyDictionary()
 
     def get_types_sheet(self):
         try:
@@ -91,11 +91,11 @@ class _FixtureWorkbook(object):
                 item_attributes=di.get('property', {}),
                 sort_key=sort_key,
             )
-            self.meta[item] = di
+            self.item_keys[item] = di['UID']
             yield item
 
-    def get_uid(self, obj):
-        return self.meta.get(obj, {}).get('UID')
+    def get_key(self, obj):
+        return self.item_keys.get(obj)
 
 
 class Deleted:
