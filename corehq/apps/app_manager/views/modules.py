@@ -1054,8 +1054,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'daterange':
-            ret['input_'] = 'daterange'
+        elif prop.get('appearance', '') in ['date', 'daterange']:
+            ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
             ret['receiver_expression'] = prop.get('receiver_expression', '')
