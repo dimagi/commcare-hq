@@ -15,6 +15,7 @@ from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import (
     _run_fast_fixture_upload,
     _run_fixture_upload,
+    _run_upload,
 )
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import generate_cases, make_make_path
@@ -287,7 +288,7 @@ class TestFixtureWorkbook(SimpleTestCase):
 
 
 class TestFixtureUpload(TestCase):
-    do_upload = _run_fixture_upload
+    do_upload = _run_upload
 
     headers = (
         (
@@ -357,6 +358,10 @@ class TestFixtureUpload(TestCase):
         apple_id = self.get_rows(None)[0]._id
         self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
+
+class TestOldFixtureUpload(TestFixtureUpload):
+    do_upload = _run_fixture_upload
 
 
 class TestFastFixtureUpload(TestFixtureUpload):

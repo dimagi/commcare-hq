@@ -1,4 +1,7 @@
 import uuid
+from itertools import chain
+
+from attrs import define, field
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
@@ -10,18 +13,13 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 
-from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-)
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.location_cache import (
     get_memoized_location_getter,
 )
-from corehq.apps.fixtures.upload.workbook import get_workbook
+from corehq.apps.fixtures.upload.workbook import get_workbook, _process_item_field
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
@@ -38,6 +36,65 @@ def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
     if skip_orm is True:
         return _run_fast_fixture_upload(domain, workbook, task=task)
     return _run_fixture_upload(domain, workbook, replace=replace, task=task)
+
+
+def _run_upload(domain, workbook, replace=False, task=None):
+    """Run lookup table upload
+
+    Performs only deletes and/or inserts on table row and ownership
+    records to optimize database interactions.
+    """
+    def process_table(table):
+        new_rows = workbook.iter_rows(table)
+        old_rows = FixtureDataItem.get_item_list(domain, table.tag)
+        mutation = get_mutation(old_rows, new_rows, id)
+        rows.update(mutation)
+
+    old_tables = FixtureDataType.by_domain(domain)
+
+    rows = Mutation()
+    tables = get_mutation(
+        old_tables,
+        workbook.iter_tables(domain),
+        table_key,
+        process_table,
+    )
+
+    with CouchTransaction() as couch:
+        couch.delete_all(rows.to_delete)
+        for doc in chain(tables.to_create, rows.to_create):
+            couch.save(doc)
+    clear_fixture_quickcache(domain, old_tables)
+    clear_fixture_cache(domain)
+
+
+def table_key(table):
+    return table.tag
+
+
+def get_mutation(old_items, new_items, key, process_item=lambda item: None):
+    mutation = Mutation()
+    old_map = {key(old): old for old in old_items}
+    for new in new_items:
+        old = old_map.pop(key(new), None)
+        if old is None:
+            mutation.to_create.append(new)
+            item = new
+        else:
+            item = old
+        process_item(item)
+    mutation.to_delete.extend(old_map.values())
+    return mutation
+
+
+@define
+class Mutation:
+    to_delete = field(factory=list)
+    to_create = field(factory=list)
+
+    def update(self, mutation):
+        self.to_delete.extend(mutation.to_delete)
+        self.to_create.extend(mutation.to_create)
 
 
 def _run_fixture_upload(domain, workbook, replace=False, task=None):
@@ -298,36 +355,6 @@ def _create_data_type(domain, table_def, replace, transaction):
         data_type = new_data_type
 
     return data_type, False, errors
-
-
-def _process_item_field(field, data_item):
-    """Processes field_list of a data item from fields in the uploaded excel sheet.
-
-    Returns FieldList
-    """
-    # if field doesn't have properties
-    if len(field.properties) == 0:
-        return FieldList(
-            field_list=[FixtureItemField(
-                # using unicode here, to cast ints, and multi-language strings
-                field_value=str(data_item['field'][field.field_name]),
-                properties={}
-            )]
-        )
-
-    field_list = []
-    field_prop_combos = data_item['field'][field.field_name]
-    prop_combo_len = len(field_prop_combos)
-    prop_dict = data_item[field.field_name]
-    for x in range(0, prop_combo_len):
-        fix_item_field = FixtureItemField(
-            field_value=str(field_prop_combos[x]),
-            properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
-        )
-        field_list.append(fix_item_field)
-    return FieldList(
-        field_list=field_list
-    )
 
 
 def _process_data_item(domain, replace, data_type, di, item_fields, item_attributes, sort_key):

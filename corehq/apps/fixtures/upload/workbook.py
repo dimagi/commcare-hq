@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.utils.translation import gettext as _
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
@@ -10,6 +12,13 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
 )
 from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
+
+from ..models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureItemField,
+)
 
 
 def get_workbook(file_or_filename):
@@ -49,6 +58,32 @@ class _FixtureWorkbook(object):
             seen_tags.add(table_definition.table_id)
             type_sheets.append(table_definition)
         return type_sheets
+
+    def iter_tables(self, domain):
+        for sheet in self.get_all_type_sheets():
+            yield FixtureDataType(
+                _id=uuid4().hex,
+                domain=domain,
+                tag=sheet.table_id,
+                is_global=sheet.is_global,
+                fields=sheet.fields,
+                item_attributes=sheet.item_attributes,
+            )
+
+    def iter_rows(self, data_type):
+        data_items = list(self.get_data_sheet(data_type.tag))
+        type_fields = data_type.fields
+        for sort_key, di in enumerate(data_items):
+            yield FixtureDataItem(
+                domain=data_type.domain,
+                data_type_id=data_type._id,
+                fields={
+                    field.field_name: _process_item_field(field, di)
+                    for field in type_fields
+                },
+                item_attributes=di.get('property', {}),
+                sort_key=sort_key
+            )
 
 
 class _FixtureTableDefinition(object):
@@ -135,3 +170,30 @@ class _FixtureTableDefinition(object):
             uid=row_dict.get('UID'),
             delete=(row_dict.get(DELETE_HEADER) or '').lower() == 'y',
         )
+
+
+def _process_item_field(field, data_item):
+    """Processes field_list of a data item from fields in the uploaded excel sheet.
+
+    Returns FieldList
+    """
+    if not field.properties:
+        return FieldList(
+            field_list=[FixtureItemField(
+                # str to cast ints and multi-language strings
+                field_value=str(data_item['field'][field.field_name]),
+                properties={}
+            )]
+        )
+
+    field_list = []
+    field_prop_combos = data_item['field'][field.field_name]
+    prop_combo_len = len(field_prop_combos)
+    prop_dict = data_item[field.field_name]
+    for x in range(0, prop_combo_len):
+        fix_item_field = FixtureItemField(
+            field_value=str(field_prop_combos[x]),
+            properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
+        )
+        field_list.append(fix_item_field)
+    return FieldList(field_list=field_list)
