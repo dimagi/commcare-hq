@@ -82,6 +82,9 @@ class _FixtureWorkbook(object):
         type_fields = data_type.fields
         sort_key = -1
         for i, di in enumerate(data_items):
+            if _is_deleted(di):
+                yield Deleted(di['UID'])
+                continue
             sort_key = max(sort_keys.get(di['UID'], i), sort_key + 1)
             item = FixtureDataItem(
                 domain=data_type.domain,
@@ -187,8 +190,12 @@ class _FixtureTableDefinition(object):
             item_attributes=item_attributes,
             is_global=row_dict.get('is_global', False),
             uid=row_dict.get('UID'),
-            delete=(row_dict.get(DELETE_HEADER) or '').lower() == 'y',
+            delete=_is_deleted(row_dict),
         )
+
+
+def _is_deleted(row_dict):
+    return (row_dict.get(DELETE_HEADER) or '').lower() == 'y'
 
 
 def _process_item_field(field, data_item):

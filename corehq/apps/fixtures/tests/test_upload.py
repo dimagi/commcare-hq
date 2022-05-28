@@ -533,6 +533,16 @@ class TestFixtureUpload(TestCase):
         type(self).do_upload(self.domain, workbook)
         self.assertEqual(self.get_rows(part), ['branch'])
 
+    def test_delete_row(self):
+        self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
+        ids = {row_name(r): r._id for r in self.get_rows(None)}
+
+        self.upload([
+            (ids['apple'], 'Y', 'apple'),
+            (ids['orange'], 'N', 'orange'),
+        ])
+        self.assertEqual(self.get_rows(), ['orange'])
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
@@ -579,3 +589,7 @@ class TestFastFixtureUpload(TestFixtureUpload):
     @nottest
     def test_delete_missing_table(self):
         """Fast fixture uploads always create"""
+
+    @nottest
+    def test_delete_row(self):
+        """Fast fixture uploads ignore the delete column"""
