@@ -73,7 +73,8 @@ def _run_upload(domain, workbook, replace=False, task=None):
     with CouchTransaction() as couch:
         for table in tables.to_delete:
             table.recursive_delete(couch)
-        couch.delete_all(rows.to_delete)
+        deleted_ids = {d._id for dx in couch.docs_to_delete.values() for d in dx}
+        couch.delete_all(r for r in rows.to_delete if r._id not in deleted_ids)
         for doc in chain(tables.to_create, rows.to_create):
             couch.save(doc)
     clear_fixture_quickcache(domain, old_tables)
@@ -81,7 +82,10 @@ def _run_upload(domain, workbook, replace=False, task=None):
 
 
 def table_key(table):
-    return table.tag
+    return (
+        table.tag,
+        tuple(table.fields),
+    )
 
 
 def row_key(row):

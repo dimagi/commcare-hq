@@ -18,6 +18,7 @@ from corehq.apps.fixtures.upload.run_upload import (
     _run_fast_fixture_upload,
     _run_fixture_upload,
     _run_upload,
+    clear_fixture_quickcache,
 )
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import generate_cases, make_make_path
@@ -396,9 +397,13 @@ class TestFixtureUpload(TestCase):
 
     def tearDown(self):
         from dimagi.utils.couch.bulk import CouchTransaction
-        with CouchTransaction() as tx:
-            for dt in FixtureDataType.by_domain(self.domain):
-                dt.recursive_delete(tx)
+        types = FixtureDataType.by_domain(self.domain)
+        try:
+            with CouchTransaction() as tx:
+                for dt in types:
+                    dt.recursive_delete(tx)
+        finally:
+            clear_fixture_quickcache(self.domain, types)
 
     @staticmethod
     def get_workbook_from_data(headers, rows):
@@ -508,6 +513,25 @@ class TestFixtureUpload(TestCase):
         type(self).do_upload(self.domain, workbook)
 
         self.assertIsNone(self.get_table())
+
+    def test_update_table(self):
+        def part(item):
+            return item.fields.get('part').field_list[0].field_value
+
+        self.upload([(None, 'N', 'apple')])
+        apple_id = {row_name(r): r._id for r in self.get_rows(None)}["apple"]
+
+        headers = (
+            self.headers[0],
+            ('things', ('UID', 'Delete(Y/N)', 'field: part')),
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'part', 'yes')]),
+            ('things', [(apple_id, 'N', 'branch')]),
+        ]
+        workbook = self.get_workbook_from_data(headers, data)
+        type(self).do_upload(self.domain, workbook)
+        self.assertEqual(self.get_rows(part), ['branch'])
 
 
 class TestOldFixtureUpload(TestFixtureUpload):

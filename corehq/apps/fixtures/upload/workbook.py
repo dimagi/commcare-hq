@@ -66,7 +66,7 @@ class _FixtureWorkbook(object):
             if sheet.delete:
                 yield Deleted(sheet.table_id)
                 continue
-            yield FixtureDataType(
+            table = FixtureDataType(
                 _id=uuid4().hex,
                 domain=domain,
                 tag=sheet.table_id,
@@ -74,6 +74,8 @@ class _FixtureWorkbook(object):
                 fields=sheet.fields,
                 item_attributes=sheet.item_attributes,
             )
+            self.item_keys[table] = sheet.table_id
+            yield table
 
     def iter_rows(self, data_type, sort_keys):
         data_items = list(self.get_data_sheet(data_type.tag))

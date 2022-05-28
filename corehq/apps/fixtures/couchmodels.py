@@ -41,6 +41,24 @@ class FixtureTypeField(DocumentSchema):
     properties = StringListProperty()
     is_indexed = BooleanProperty(default=False)
 
+    def __eq__(self, other):
+        values = (self.field_name, self.properties, self.is_indexed)
+        try:
+            others = (other.field_name, other.properties, other.is_indexed)
+        except AttributeError:
+            return NotImplemented
+        return values == others
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((
+            self.field_name,
+            tuple(self.properties),
+            self.is_indexed,
+        ))
+
 
 class FixtureDataType(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
