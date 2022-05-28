@@ -163,7 +163,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date")
             ],
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
