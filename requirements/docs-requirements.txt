@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-alembic==1.4.3
+alembic==1.7.7
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
@@ -357,12 +357,9 @@ pysocks==1.7.1
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
-    #   alembic
     #   botocore
     #   django-tastypie
     #   faker
-python-editor==1.0.4
-    # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22
