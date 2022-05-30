@@ -62,7 +62,7 @@ from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary,
+    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -755,7 +755,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
-
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
@@ -763,10 +762,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-
+        logging.info(self.new_mobile_worker_form.cleaned_data)
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            logging.info(phone_number)
+            couch_user.set_default_phone_number(phone_number)
+            send_account_confirmation_sms_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -779,7 +783,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+        is_account_confirmed = not (
+            self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
         commcare_user = CommCareUser.create(
             self.domain,
@@ -826,6 +832,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }
@@ -878,6 +886,14 @@ def _modify_user_status(request, domain, user_id, is_active):
 def send_confirmation_email(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
+@require_POST
+@location_safe
+def send_confirmation_sms(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_sms_if_necessary(user)
     return JsonResponse(data={'success': True})
 
 
