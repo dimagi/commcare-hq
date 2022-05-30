@@ -183,7 +183,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
-        'customRelatedCaseProperty', 'titleLabel'
+        'customRelatedCaseProperty', 'titleLabel',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);

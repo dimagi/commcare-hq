@@ -86,10 +86,8 @@ def _referral_detail_title_locale():
 
 
 @pattern('m%d.%s.title')
-def detail_title_locale(module, detail_type):
-    if detail_type.startswith('search') and module.get_app().enable_case_search_title_translation:
-        return case_search_locale(module)
-    elif detail_type.startswith('case') or detail_type.startswith('search'):
+def detail_title_locale(detail_type):
+    if detail_type.startswith('case') or detail_type.startswith('search'):
         return _case_detail_title_locale()
     elif detail_type.startswith('referral'):
         return _referral_detail_title_locale()

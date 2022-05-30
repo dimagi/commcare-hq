@@ -6,7 +6,7 @@
     <command id="search_command.m1">
       <display>
         <text>
-          <locale id="case_search.m1.inputs"/>
+          <locale id="case_search.m1"/>
         </text>
       </display>
     </command>
@@ -15,6 +15,11 @@
     <instance id="item-list:textures" src="jr://fixture/item-list:textures"/>
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/test_domain/phone/search/456/">
+        <title>
+          <text>
+            <locale id="case_search.m1.inputs"/>
+          </text>
+        </title>
         <data key="case_type" ref="'case'"/>
         <data key="x_commcare_data_registry" ref="'myregistry'"/>
         <prompt key="name">
