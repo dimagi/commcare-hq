@@ -19,6 +19,11 @@
     <instance id="search_selected_cases" src="jr://instance/selected-entities"/>
     <session>
       <query default_search="false" storage-instance="results" template="case" url="https://www.example.com/a/multiple-referrals/phone/search/{app_id}/">
+        <title>
+          <text>
+            <locale id="case_search.m0.inputs"/>
+          </text>
+        </title>
         <data key="case_type" ref="'person'"/>
         <prompt key="name">
           <display>
