@@ -188,11 +188,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
+            date: 'input.date',
             queryField: '.query-field',
             searchForBlank: '.search-for-blank',
         },
 
         events: {
+            'dp.change @ui.queryField': 'changeQueryField',
             'change @ui.queryField': 'changeQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
@@ -263,6 +265,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
+            this.ui.date.datetimepicker({
+                format: dateFormat,
+            });
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
