@@ -374,13 +374,7 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
         )
 
     def build_instances(self):
-        query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
-        query_xpaths.extend([datum.ref for datum in self._remote_request_query_datums])
-        query_xpaths.append(self.get_post_relevant())
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
-
-        # sorted list to prevent intermittent test failures
-        return sorted(instances, key=lambda i: i.id)
+        return []
 
     def build_remote_request_queries(self):
         return []
