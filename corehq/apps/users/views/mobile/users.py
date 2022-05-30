@@ -7,7 +7,6 @@ from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.http import (
     Http404,
     HttpResponse,
@@ -67,10 +66,7 @@ from corehq.apps.users.account_confirmation import (
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.bulk_download import get_domains_from_user_filters
-from corehq.apps.users.dbaccessors import (
-    get_user_docs_by_username,
-    user_exists,
-)
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
@@ -102,6 +98,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    generate_mobile_username,
     log_user_change,
     raw_username,
 )
@@ -705,39 +702,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @allow_remote_invocation
     def check_username(self, in_data):
         try:
-            username = in_data['username'].strip()
-        except KeyError:
-            return HttpResponseBadRequest('You must specify a username')
-        if username == 'admin' or username == 'demo_user':
-            return {'error': _('Username {} is reserved.').format(username)}
-        try:
-            validate_email("{}@example.com".format(username))
-            if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
-                raise ValidationError("Username contained an invalid character")
-        except ValidationError:
-            if '..' in username:
-                return {
-                    'error': _("Username may not contain consecutive . (period).")
-                }
-            if username.endswith('.'):
-                return {
-                    'error': _("Username may not end with a . (period).")
-                }
-            return {
-                'error': _("Username may not contain special characters.")
-            }
-
-        full_username = format_username(username, self.domain)
-        exists = user_exists(full_username)
-        if exists.exists:
-            if exists.is_deleted:
-                result = {'error': _('Username {} belonged to a user that was deleted'
-                                     ' and cannot be reused').format(username)}
-            else:
-                result = {'error': _('Username {} is already taken').format(username)}
+            username = generate_mobile_username(in_data['username'].strip(), self.domain)
+        except ValidationError as e:
+            return {'error': e.message}
         else:
-            result = {'success': _('Username {} is available').format(username)}
-        return result
+            return {'success': _('Username {} is available').format(username)}
+
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
