@@ -98,6 +98,25 @@ class UnknownUsersProcessor(PillowProcessor):
     def __init__(self):
         self._es = get_es_new()
 
+    def __getstate__(self):
+        """
+        ES is not pickleable, and therefore needs to be removed from the state before pickling
+        """
+        state = dict(self.__dict__)
+        for key in list(state):
+            if key in ['_es']:
+                del state[key]
+
+        return state
+
+    def __setstate__(self, state):
+        """
+        ES is not pickleable, and is removed from the state before pickling. This adds it back to the state
+        when unpickling.
+        """
+        super().__setstate__(state)
+        self._es = get_es_new()
+
     def process_change(self, change):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 

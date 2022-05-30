@@ -14,14 +14,6 @@ from corehq.util.metrics import metrics_histogram_timer
 
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
-from pillowtop.utils import (
-    ErrorCollector,
-    build_bulk_payload,
-    bulk_fetch_changes_docs,
-    ensure_document_exists,
-    ensure_matched_revisions,
-    get_errors_with_ids,
-)
 
 from .interface import BulkPillowProcessor, PillowProcessor
 
@@ -59,11 +51,37 @@ class ElasticProcessor(PillowProcessor):
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
 
+    def __getstate__(self):
+        """
+        ES is not pickleable, and therefore needs to be removed from the state before pickling
+        """
+        state = dict(self.__dict__)
+        for key in list(state):
+            if key in ['elasticsearch', 'es_interface']:
+                del state[key]
+
+        return state
+
+    def __setstate__(self, state):
+        """
+        ES is not pickleable, and is removed from the state before pickling. This adds it back to the state
+        when unpickling.
+        """
+        from corehq.elastic import get_es_new
+
+        super().__setstate__(state)
+        self.elasticsearch = get_es_new()
+        self.es_interface = ElasticsearchInterface(self.elasticsearch)
+
     def es_getter(self):
         return self.elasticsearch
 
     def process_change(self, change):
         from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+        from pillowtop.utils import (
+            ensure_document_exists,
+            ensure_matched_revisions,
+        )
 
         if self.change_filter_fn and self.change_filter_fn(change):
             return
@@ -140,6 +158,12 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        from pillowtop.utils import (
+            ErrorCollector,
+            build_bulk_payload,
+            bulk_fetch_changes_docs,
+            get_errors_with_ids,
+        )
         if self.change_filter_fn:
             changes_chunk = [
                 change for change in changes_chunk

@@ -104,7 +104,7 @@ class PillowBase(metaclass=ABCMeta):
         """
         Main entry point for running pillows forever.
         """
-        pillow_logging.info("Starting pillow %s" % self.__class__)
+        pillow_logging.info("Starting pillow %s" % self.get_name())
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:

@@ -33,7 +33,6 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=SMS_INDEX_INFO,
-        doc_prep_fn=lambda x: x
     )
     change_feed = KafkaChangeFeed(
         topics=[topics.SMS], client_id='sql-sms-to-es',

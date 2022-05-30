@@ -1,6 +1,7 @@
-import sys
-from pillowtop import get_all_pillow_instances
 import multiprocessing
+import sys
+
+from pillowtop import get_all_pillow_instances
 
 
 def _do_run_pillow(pillow_class):
@@ -15,8 +16,13 @@ def start_pillows(pillows=None):
     """
     Actual runner for running pillow processes. Use this to run pillows.
     """
-    run_pillows = pillows or get_all_pillow_instances()
 
+    # NOTE: multiprocessing defaults to spawn on macOS now with fork (previous method) being deemed unsafe
+    # Another option is forkserver, but it seems spawn is most widely available
+    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    multiprocessing.set_start_method('spawn')
+
+    run_pillows = pillows or get_all_pillow_instances()
     try:
         while True:
             jobs = []
