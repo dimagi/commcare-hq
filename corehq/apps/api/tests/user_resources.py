@@ -188,7 +188,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "Username jdoe@qwerty.commcarehq.org already exists."}'
+            '{"error": "Username \'jdoe\' is already taken."}'
         )
 
     def test_update(self):

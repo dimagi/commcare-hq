@@ -225,7 +225,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         try:
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
         except ValidationError as e:
-            raise BadRequest(str(e))
+            raise BadRequest(e.message)
 
         try:
             bundle.obj = CommCareUser.create(
