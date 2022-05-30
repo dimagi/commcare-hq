@@ -214,6 +214,7 @@ class EntriesHelper(object):
                 case_session_var = self.get_case_session_var_for_form(form)
                 factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
                 e.post = factory.build_remote_request_post()
+                e.instances = factory.build_instances()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
