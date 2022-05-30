@@ -15,6 +15,7 @@ class LiveGoogleSheetSchedule(models.Model):
     is_active = models.BooleanField(default=True)
     start_time = models.IntegerField(default=200)
     google_sheet_id = models.CharField(max_length=250)
+    user = models.CharField(max_length=80, null=True)
 
     def start_refresh(self):
         self.status = LiveGoogleSheetRefreshStatus.objects.create(

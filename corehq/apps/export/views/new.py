@@ -226,6 +226,7 @@ class BaseExportView(BaseProjectDataView):
                 export_config_id=export._id,
                 start_time=start_time.hour,
                 is_active=True,
+                user=request.user,
             )
 
         messages.success(

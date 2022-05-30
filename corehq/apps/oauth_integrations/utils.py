@@ -89,7 +89,7 @@ def create_or_update_spreadsheet(export, schedule):
 
     data_table = create_table(export_data, export)
 
-    token = GoogleApiToken.objects.get(user=schedule.user)
+    token = GoogleApiToken.objects.get(user__username=schedule.user)
     credentials = load_credentials(token.token)
 
     try:
@@ -98,7 +98,7 @@ def create_or_update_spreadsheet(export, schedule):
             settings.GOOGLE_SHEETS_API_VERSION,
             credentials=credentials
         )
-        if schedule.spreadsheet_id is None:
+        if not schedule.google_sheet_id:
             spreadsheet_name = export.name
             sheets_file = service.spreadsheets().create(
                 body={
@@ -109,9 +109,10 @@ def create_or_update_spreadsheet(export, schedule):
             ).execute()
             spreadsheet_id = sheets_file['spreadsheetId']
 
-            schedule.spreadsheet_id = spreadsheet_id
+            schedule.google_sheet_id = spreadsheet_id
             schedule.save()
         else:
+            spreadsheet_id = schedule.google_sheet_id
             sheets_file = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
             clear_spreadsheet(service, spreadsheet_id)
 
@@ -119,6 +120,8 @@ def create_or_update_spreadsheet(export, schedule):
 
         for worksheet_number, worksheet in enumerate(data_table, start=1):
             worksheet_name = f"Sheet{worksheet_number}"
+
+            starting_cell = "A3" if worksheet_number == 1 else "A1"
 
             if not check_worksheet_exists(sheets_file, worksheet_name):
                 create_empty_worksheet(service, worksheet_name, spreadsheet_id)
@@ -132,7 +135,7 @@ def create_or_update_spreadsheet(export, schedule):
                 spreadsheetId=spreadsheet_id,
                 valueInputOption='USER_ENTERED',
                 body=value_range_body,
-                range=f"{worksheet_name}!B1"
+                range=f"{worksheet_name}!{starting_cell}"
             ).execute()
     except HttpError as e:
         notify_exception(None, message=str(e))
@@ -159,7 +162,7 @@ def clear_spreadsheet(service, spreadsheet_id):
     service.spreadsheets().values().clear(
         spreadsheetId=spreadsheet_id,
         range='A1'
-    )
+    ).execute()
 
 
 def create_empty_worksheet(service, worksheet_name, spreadsheet_id):
@@ -181,8 +184,8 @@ def create_empty_worksheet(service, worksheet_name, spreadsheet_id):
 
 def add_last_updated_field_to_spreadsheet(service, spreadsheet_id):
     last_updated = (
-        ('Last Updated'),
-        (datetime.utcnow('%d %B %Y - %H:%M:%S'))
+        ('Last Updated',),
+        (datetime.utcnow().strftime('%d %B %Y - %H:%M:%S'),),
     )
 
     value_range_body = {
