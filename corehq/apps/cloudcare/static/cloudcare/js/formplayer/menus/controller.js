@@ -72,14 +72,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    var selectDetail = function (caseId, detailIndex, isPersistent) {
+    var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
         var urlObject = Util.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
         var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {
-            showDetail(detailResponse, detailIndex, caseId);
+            showDetail(detailResponse, detailIndex, caseId, isMultiSelect);
         }).fail(function () {
             FormplayerFrontend.trigger('navigateHome');
         });
@@ -117,12 +117,16 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         FormplayerFrontend.regions.getRegion('persistentCaseTile').show(detailView.render());
     };
 
-    var showDetail = function (model, detailTabIndex, caseId) {
-        var isMultiSelect = false; // TODO: add logic
+    var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
-            FormplayerFrontend.trigger("menu:select", caseId);
+            if (isMultiSelect) {
+                var Constants = hqImport("cloudcare/js/formplayer/constants");
+                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [caseId]);
+            } else {
+                FormplayerFrontend.trigger("menu:select", caseId);
+            }
             return;
         }
         var detailObject = detailObjects[detailTabIndex];
@@ -142,6 +146,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
         var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
             model: model,
+            caseId: caseId,
             isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
@@ -149,12 +154,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
-        $('#select-case').off('click').click(function () {
-            FormplayerFrontend.trigger("menu:select", caseId);
-        });
-        $('#select-case-for-multi-select').off('click').click(function () {
-            // todo: add logic to select case id via checkbox
-        });
     };
 
     var getDetailList = function (detailObject) {

@@ -27,7 +27,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
-from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_restore_cache_key
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -144,9 +144,10 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
@@ -177,12 +178,15 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
+    access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=True)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -269,6 +273,9 @@ class Permissions(DocumentSchema):
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
 
+    def view_tableau_viz(self, viz_id):
+        return self.view_tableau or viz_id in self.view_tableau_list
+
     def has(self, permission, data=None):
         if data:
             return getattr(self, permission)(data)
@@ -314,6 +321,7 @@ class UserRolePresets(object):
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
+    MOBILE_WORKER = gettext_noop("Mobile Worker")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -327,7 +335,8 @@ class UserRolePresets(object):
         'read-only': READ_ONLY,
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN
+        'billing-admin': BILLING_ADMIN,
+        'mobile-worker': MOBILE_WORKER
     }
 
     # skip legacy duplicate ('no-permissions')
@@ -355,7 +364,12 @@ class UserRolePresets(object):
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
+                                                   report_an_issue=True,
+                                                   access_all_locations=True,
+                                                   access_api=False,
+                                                   download_reports=False)
         }
 
     @classmethod
@@ -1523,6 +1537,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
+    def can_view_some_tableau_viz(self, domain):
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+
     def can_login_as(self, domain):
         return (
             self.has_permission(domain, 'login_as_all_users')
@@ -1601,6 +1619,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_loadtest_user = BooleanProperty(default=False)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
@@ -1687,7 +1706,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
-        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
+        get_loadtest_factor_for_restore_cache_key.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)
@@ -2734,107 +2753,6 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
-
-
-class AnonymousCouchUser(object):
-
-    username = "public_user"
-    doc_type = "CommCareUser"
-    _id = 'anonymous_couch_user'
-
-    @property
-    def get_id(self):
-        return self._id
-
-    @property
-    def is_active(self):
-        return True
-
-    @property
-    def is_staff(self):
-        return False
-
-    def is_domain_admin(self):
-        return False
-
-    def is_member_of(self, domain):
-        return True
-
-    def has_permission(self, domain, perm=None, data=None):
-        return False
-
-    def can_view_report(self, domain, report):
-        return False
-
-    def can_view_some_reports(self, domain):
-        return False
-
-    @property
-    def analytics_enabled(self):
-        return False
-
-    def can_edit_data(self):
-        return False
-
-    def can_edit_messgaing(self):
-        return False
-
-    def can_edit_apps(self):
-        return False
-
-    def can_view_apps(self):
-        return False
-
-    def can_edit_reports(self):
-        return False
-
-    def can_download_reports(self):
-        return False
-
-    def is_eula_signed(self, version=None):
-        return True
-
-    def is_commcare_user(self):
-        return True
-
-    def is_web_user(self):
-        return False
-
-    def can_access_any_exports(self, domain):
-        return False
-
-    def can_edit_commcare_users(self):
-        return False
-
-    def can_view_commcare_users(self):
-        return False
-
-    def can_edit_groups(self):
-        return False
-
-    def can_view_groups(self):
-        return False
-
-    def can_edit_users_in_groups(self):
-        return False
-
-    def can_edit_locations(self):
-        return False
-
-    def can_view_locations(self):
-        return False
-
-    def can_edit_users_in_locations(self):
-        return False
-
-    def can_edit_web_users(self):
-        return False
-
-    def can_view_web_uers(self):
-        return False
-
-    def can_view_roles(self):
-        return False
 
 
 class UserReportingMetadataStaging(models.Model):

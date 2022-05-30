@@ -25,7 +25,6 @@ from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESUL
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     get_simple_form,
     patch_get_xform_resource_overrides,
 )
@@ -40,7 +39,7 @@ DOMAIN = 'test_domain'
 
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -294,7 +293,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_get_xform_resource_overrides()
 @patch.object(Application, 'supports_data_registry', lambda: True)
-class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -407,7 +406,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 @patch_get_xform_resource_overrides()
 @flag_enabled('DATA_REGISTRY')
-class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_registry')
 
     def setUp(self):
@@ -465,3 +464,72 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, TestXmlMixin, Su
             suite,
             "./entry[2]/stack/create"
         )
+
+
+@patch_get_xform_resource_overrides()
+@flag_enabled('DATA_REGISTRY')
+class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
+    file_path = ('data', 'suite_inline_search')
+
+    def setUp(self):
+        factory = AppFactory(DOMAIN, "App with inline search and DR", build_version='2.53.0')
+        m0, f0 = factory.new_basic_module("case list", "case")
+        factory.form_requires_case(f0)
+        f0.source = get_simple_form("xmlns1.0")
+
+        m0.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+            data_registry="myregistry",
+            data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
+        )
+
+        factory.app._id = "123"
+        # wrap to have assign_references called
+        m0.assign_references()
+        self.app = factory.app
+
+    def test_inline_search_with_data_registry(self):
+        suite = self.app.create_suite()
+
+        expected_entry_query = f"""
+        <partial>
+          <entry>
+            <form>xmlns1.0</form>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
+                    template="case" default_search="false">
+                  <data key="case_type" ref="'case'"/>
+                  <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+                <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
+                storage-instance="registry" template="case" default_search="true">
+                  <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
+                  <data key="case_type" ref="'case'"/>
+                  <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+                </query>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
+
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_case_short']/action")
+        self.assertXmlDoesNotHaveXpath(suite, "./remote-request")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
+        self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")

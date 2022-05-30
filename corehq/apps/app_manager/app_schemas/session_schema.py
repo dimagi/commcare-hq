@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 
-from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.suite_xml.xml_models import InstanceDatum
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import is_usercase_in_use
 
@@ -12,11 +12,8 @@ def get_session_schema(form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     app = form.get_app()
     structure = {}
-    datums = EntriesHelper(app).get_datums_meta_for_form_generic(form)
-    datums = [
-        d for d in datums
-        if d.requires_selection and d.case_type and not d.is_new_case_id
-    ]
+    datums = EntriesHelper(app).get_case_datums_meta_for_form(form)
+    datums = [d for d in datums if not d.is_new_case_id]
 
     def _get_structure(datum, data_registry, source=None):
         id_source = f":{slugify(source)}" if source else ""
@@ -42,16 +39,18 @@ def get_session_schema(form):
 
     data_structure = {}
     for i, datum in enumerate(reversed(datums)):
+        if isinstance(datum.datum, InstanceDatum):
+            continue
         module_id = datum.module_id
         module = app.get_module_by_unique_id(module_id) if module_id else None
         data_registry = module.search_config.data_registry if module else None
         if i == 0:
             # always add the datum for this module
-            data_structure[datum.datum.id] = _get_structure(datum, data_registry)
+            data_structure[datum.id] = _get_structure(datum, data_registry)
         else:
             if module and module_id in unrelated_parents:
                 source = clean_trans(module.name, app.langs)  # ensure that this structure reference is unique
-                data_structure[datum.datum.id] = _get_structure(datum, data_registry, source)
+                data_structure[datum.id] = _get_structure(datum, data_registry, source)
 
     if data_structure:
         structure["data"] = {

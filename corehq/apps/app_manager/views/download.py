@@ -38,6 +38,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -145,65 +146,6 @@ def download_xform(request, domain, app_id, module_id, form_id):
         response = validate_form_for_build(request, domain, app_id, form_unique_id, ajax=False)
         response.status_code = 404
         return response
-
-
-@safe_cached_download
-def download_jad(request, domain, app_id):
-    """
-    See ApplicationBase.create_jadjar_from_build_files
-
-    """
-    app = request.app
-    if not app.copy_of:
-        app.set_media_versions()
-    jad, _ = app.create_jadjar_from_build_files()
-    try:
-        response = HttpResponse(jad)
-    except Exception:
-        messages.error(request, BAD_BUILD_MESSAGE)
-        return back_to_main(request, domain, app_id=app_id)
-    set_file_download(response, "CommCare.jad")
-    response["Content-Type"] = "text/vnd.sun.j2me.app-descriptor"
-    response["Content-Length"] = len(jad)
-    return response
-
-
-@safe_cached_download
-def download_jar(request, domain, app_id):
-    """
-    See ApplicationBase.create_jadjar_from_build_files
-
-    This is the only view that will actually be called
-    in the process of downloading a complete CommCare.jar
-    build (i.e. over the air to a phone).
-
-    """
-    response = HttpResponse(content_type="application/java-archive")
-    app = request.app
-    if not app.copy_of:
-        app.set_media_versions()
-    _, jar = app.create_jadjar_from_build_files()
-    set_file_download(response, 'CommCare.jar')
-    response['Content-Length'] = len(jar)
-    try:
-        response.write(jar)
-    except Exception:
-        messages.error(request, BAD_BUILD_MESSAGE)
-        return back_to_main(request, domain, app_id=app_id)
-    return response
-
-
-@safe_cached_download
-def download_raw_jar(request, domain, app_id):
-    """
-    See ApplicationBase.fetch_jar
-
-    """
-    response = HttpResponse(
-        request.app.fetch_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
 
 
 class DownloadCCZ(DownloadMultimediaZip):
@@ -316,17 +258,6 @@ def download_file(request, domain, app_id, path):
                 # which wasn't made on build for a long time
                 add_odk_profile_after_build(request.app)
                 request.app.save()
-                return download_file(request, domain, app_id, path)
-            elif path in ('CommCare.jad', 'CommCare.jar'):
-                if not request.app.build_spec.supports_j2me():
-                    raise Http404()
-                request.app.create_jadjar_from_build_files(save=True)
-                try:
-                    request.app.save(increment_version=False)
-                except ResourceConflict:
-                    # Likely that somebody tried to download the jad and jar
-                    # files for the first time simultaneously.
-                    pass
                 return download_file(request, domain, app_id, path)
             else:
                 try:
@@ -445,7 +376,6 @@ def download_index(request, domain, app_id):
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
-        'supports_j2me': request.app.build_spec.supports_j2me(),
         'build_profiles': build_profiles,
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
@@ -471,6 +401,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
+            'toggles': toggles_enabled_for_request(request),
         })
 
     if ajax:

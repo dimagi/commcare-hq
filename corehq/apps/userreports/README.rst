@@ -277,6 +277,11 @@ Property Path Expression
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.PropertyPathGetterSpec
 
+Jsonpath Expression
+''''''''''''''''''''''''
+
+.. autoclass:: corehq.apps.userreports.expressions.specs.JsonpathExpressionSpec
+
 Conditional Expression
 ''''''''''''''''''''''
 

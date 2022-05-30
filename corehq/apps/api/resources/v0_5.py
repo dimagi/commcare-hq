@@ -1,13 +1,13 @@
 import json
 from collections import namedtuple
-from itertools import chain
 
 from django.conf.urls import re_path as url
 from django.contrib.auth.models import User
-from django.forms import ValidationError
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.translation import gettext_noop, gettext as _
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from memoized import memoized_property
 from tastypie import fields, http
@@ -18,7 +18,6 @@ from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
-from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -43,7 +42,6 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.esaccessors import (
@@ -60,15 +58,14 @@ from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
-from corehq.apps.sms.util import strip_plus
-from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
-    report_config_id_is_static, DataSourceConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -77,8 +74,10 @@ from corehq.apps.userreports.reports.view import (
     get_filter_values,
     query_dict_to_dict,
 )
-from corehq.apps.userreports.util import get_configurable_and_static_reports, get_report_config_or_not_found
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.userreports.util import (
+    get_configurable_and_static_reports,
+    get_report_config_or_not_found,
+)
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
 )
@@ -104,6 +103,8 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
+from ..exceptions import InvalidFormatException, InvalidFieldException, UpdateConflictException
+from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
 
@@ -220,87 +221,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self._meta.api_name,
                                                           pk=obj._id))
 
-    def _update(self, bundle, user_change_logger=None):
-        should_save = False
-        for key, value in bundle.data.items():
-            if getattr(bundle.obj, key, None) != value:
-                if key == 'phone_numbers':
-                    old_phone_numbers = set(bundle.obj.phone_numbers)
-                    new_phone_numbers = set()
-                    bundle.obj.phone_numbers = []
-                    for idx, phone_number in enumerate(bundle.data.get('phone_numbers', [])):
-                        formatted_phone_number = strip_plus(phone_number)
-                        new_phone_numbers.add(formatted_phone_number)
-                        bundle.obj.add_phone_number(formatted_phone_number)
-                        if idx == 0:
-                            bundle.obj.set_default_phone_number(formatted_phone_number)
-                        should_save = True
-
-                    if user_change_logger:
-                        (numbers_added, numbers_removed) = find_differences_in_list(
-                            target=list(new_phone_numbers),
-                            source=list(old_phone_numbers)
-                        )
-
-                        change_messages = {}
-                        if numbers_removed:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_removed(list(numbers_removed))["phone_numbers"]
-                            )
-
-                        if numbers_added:
-                            change_messages.update(
-                                UserChangeMessage.phone_numbers_added(list(numbers_added))["phone_numbers"]
-                            )
-
-                        if change_messages:
-                            user_change_logger.add_change_message({'phone_numbers': change_messages})
-                elif key == 'groups':
-                    group_ids = bundle.data.get("groups", [])
-                    groups_updated = bundle.obj.set_groups(group_ids)
-                    if user_change_logger and groups_updated:
-                        groups = []
-                        if group_ids:
-                            groups = [Group.wrap(doc) for doc in get_docs(Group.get_db(), group_ids)]
-                        user_change_logger.add_info(UserChangeMessage.groups_info(groups))
-                    should_save = True
-                elif key in ['email', 'username']:
-                    lowercase_value = value.lower()
-                    if user_change_logger and getattr(bundle.obj, key) != lowercase_value:
-                        user_change_logger.add_changes({key: lowercase_value})
-                    setattr(bundle.obj, key, lowercase_value)
-                    should_save = True
-                elif key == 'password':
-                    domain = Domain.get_by_name(bundle.obj.domain)
-                    if domain.strong_mobile_passwords:
-                        try:
-                            clean_password(bundle.data.get("password"))
-                        except ValidationError as e:
-                            if not hasattr(bundle.obj, 'errors'):
-                                bundle.obj.errors = []
-                            bundle.obj.errors.append(str(e))
-                            return False
-                    bundle.obj.set_password(bundle.data.get("password"))
-                    if user_change_logger:
-                        user_change_logger.add_change_message(UserChangeMessage.password_reset())
-                    should_save = True
-                elif key == 'user_data':
-                    try:
-                        original_user_data = bundle.obj.metadata.copy()
-                        bundle.obj.update_metadata(value)
-                        # check changes post update to account for any changes in update_metadata
-                        if user_change_logger and original_user_data != bundle.obj.user_data:
-                            user_change_logger.add_changes({'user_data': bundle.obj.user_data})
-                    except ValueError as e:
-                        raise BadRequest(str(e))
-                else:
-                    # first_name, last_name, language
-                    if user_change_logger and getattr(bundle.obj, key) != value:
-                        user_change_logger.add_changes({key: value})
-                    setattr(bundle.obj, key, value)
-                    should_save = True
-        return should_save
-
     def obj_create(self, bundle, **kwargs):
         try:
             bundle.obj = CommCareUser.create(
@@ -311,7 +231,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
-            del bundle.data['password']
+            # password was just set
+            bundle.data.pop('password', None)
+            # do not call update with username key
+            bundle.data.pop('username', None)
             self._update(bundle)
             bundle.obj.save()
         except Exception:
@@ -331,13 +254,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         bundle.obj = CommCareUser.get(kwargs['pk'])
         assert bundle.obj.domain == kwargs['domain']
         user_change_logger = self._get_user_change_logger(bundle)
-        if self._update(bundle, user_change_logger):
-            assert bundle.obj.domain == kwargs['domain']
-            bundle.obj.save()
-            user_change_logger.save()
-            return bundle
-        else:
-            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            formatted_errors = ', '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
+        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
 
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
@@ -345,6 +269,21 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
+    @classmethod
+    def _update(cls, bundle, user_change_logger=None):
+        errors = []
+        for key, value in bundle.data.items():
+            try:
+                update(bundle.obj, key, value, user_change_logger)
+            except InvalidFieldException as e:
+                errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
+            except InvalidFormatException as e:
+                errors.append(_('{} must be a {}').format(e.field, e.expected_type))
+            except (UpdateConflictException, ValidationError) as e:
+                errors.append(e.message)
+
+        return errors
 
 
 class WebUserResource(v0_1.WebUserResource):
@@ -863,12 +802,18 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return self.get_object_list(bundle.request)
 
     def get_object_list(self, request):
+        feature_flag = request.GET.get("feature_flag")
+        if feature_flag and feature_flag not in toggles.all_toggle_slugs():
+            raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         couch_user = CouchUser.from_django_user(request.user)
+        username = request.user.username
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
+            if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
                 project_name=domain_object.hr_name or domain_object.name

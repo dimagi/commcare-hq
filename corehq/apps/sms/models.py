@@ -786,7 +786,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         try:
             return cls.objects.get(
                 owner_id=owner_id,
-                phone_number=phone_number
+                phone_number=apply_leniency(phone_number)
             )
         except cls.DoesNotExist:
             return None
@@ -1686,6 +1686,11 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     class ExpectedDomainLevelBackend(Exception):
         pass
+
+    def to_json(self):
+        from corehq.apps.sms.serializers import MobileBackendSerializer
+        data = MobileBackendSerializer(self).data
+        return data
 
     def __str__(self):
         if self.is_global:

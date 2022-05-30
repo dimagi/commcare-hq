@@ -255,6 +255,11 @@ class GregorianDateToEthiopianDateSpec(JsonObject):
         }
 
     """
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty("gregorian_date_to_ethiopian_date")
     date_expression = DefaultProperty(required=True)
 
@@ -283,6 +288,11 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
         }
 
     """
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty("ethiopian_date_to_gregorian_date")
     date_expression = DefaultProperty(required=True)
 
@@ -290,4 +300,7 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
         self._date_expression = date_expression
 
     def __call__(self, item, context=None):
-        return transform_date(get_ethiopian_to_gregorian(self._date_expression(item, context)))
+        unwrapped_date = self._date_expression(item, context)
+        if isinstance(unwrapped_date, (datetime.datetime, datetime.date)):
+            unwrapped_date = unwrapped_date.strftime('%Y-%m-%d')
+        return transform_date(get_ethiopian_to_gregorian(unwrapped_date))

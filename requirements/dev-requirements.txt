@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-alembic==1.4.3
+alembic==1.7.7
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
@@ -16,7 +16,7 @@ asgiref==3.5.0
     # via django
 asttokens==2.0.5
     # via stack-data
-attrs==18.2.0
+attrs==21.4.0
     # via
     #   -r base-requirements.in
     #   jsonschema
@@ -50,6 +50,7 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
+    #   pynacl
 chardet==3.0.4
     # via
     #   ghdiff
@@ -278,8 +279,6 @@ iso8601==0.1.13
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
-jdcal==1.4.1
-    # via openpyxl
 jedi==0.18.1
     # via ipython
 jinja2==2.11.3
@@ -349,7 +348,7 @@ oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
     #   requests-oauthlib
-openpyxl==3.0.6
+openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
@@ -363,7 +362,7 @@ pep517==0.10.0
     # via pip-tools
 pexpect==4.8.0
     # via ipython
-phonenumberslite==8.12.10
+phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
@@ -420,7 +419,7 @@ pycryptodome==3.10.1
     # via -r base-requirements.in
 pyflakes==2.3.1
     # via flake8
-pygithub==1.54.1
+pygithub==1.55
     # via -r base-requirements.in
 pygments==2.11.2
     # via
@@ -428,10 +427,12 @@ pygments==2.11.2
     #   sphinx
 pygooglechart==0.4.0
     # via -r base-requirements.in
-pyjwt==1.7.1
+pyjwt==2.4.0
     # via
     #   pygithub
     #   twilio
+pynacl==1.5.0
+    # via pygithub
 pyopenssl==20.0.1
     # via -r sso-requirements.in
 pyparsing==2.4.7
@@ -447,13 +448,10 @@ pysocks==1.7.1
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
-    #   alembic
     #   botocore
     #   django-tastypie
     #   faker
     #   freezegun
-python-editor==1.0.4
-    # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22
@@ -492,7 +490,7 @@ redis==3.5.3
     #   django-redis
     #   django-redis-sessions
     #   django-websocket-redis
-reportlab==3.5.55
+reportlab==3.6.9
     # via -r base-requirements.in
 requests==2.25.1
     # via
@@ -538,7 +536,7 @@ simplejson==3.17.2
     # via
     #   -r base-requirements.in
     #   django-prbac
-six==1.15.0
+six==1.16.0
     # via
     #   -r base-requirements.in
     #   asttokens

@@ -72,7 +72,7 @@ def get_multimedia_sizes(request, domain, app_id, build_profile_id=None):
         return JsonResponse({
             "message": _("Multimedia size comparison is only available for app builds")
         }, status=400)
-    mm_sizes = get_multimedia_sizes_for_build(domain, build, build_profile_id=build_profile_id)
+    mm_sizes = get_multimedia_sizes_for_build(build, build_profile_id=build_profile_id)
     if mm_sizes:
         mm_sizes = _update_mm_sizes(mm_sizes)
     return JsonResponse(mm_sizes)

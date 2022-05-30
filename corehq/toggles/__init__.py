@@ -143,7 +143,12 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
-        self.parent_toggles = parent_toggles or []
+
+        parent_toggles = parent_toggles or []
+        for dependency in parent_toggles:
+            parent_toggles.extend(dependency.parent_toggles)
+
+        self.parent_toggles = parent_toggles
 
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -326,9 +331,15 @@ class PredictablyRandomToggle(StaticToggle):
         randomness,
         help_link=None,
         description=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      relevant_environments=relevant_environments,
+                                                      notification_emails=notification_emails,
+                                                      parent_toggles=parent_toggles)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(randomness)
         self.randomness = randomness
@@ -389,11 +400,15 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         default_randomness=0.0,
         help_link=None,
         description=None,
-        relevant_environments=None
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
-                                                      relevant_environments=relevant_environments)
+                                                      relevant_environments=relevant_environments,
+                                                      notification_emails=notification_emails,
+                                                      parent_toggles=parent_toggles)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -432,14 +447,18 @@ class FeatureRelease(DynamicallyPredictablyRandomToggle):
         default_randomness=0.0,
         help_link=None,
         description=None,
-        relevant_environments=None
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None
     ):
         super().__init__(
             slug, label, tag, namespaces,
             default_randomness=default_randomness,
             help_link=help_link,
             description=description,
-            relevant_environments=relevant_environments
+            relevant_environments=relevant_environments,
+            notification_emails=notification_emails,
+            parent_toggles=parent_toggles
         )
         self.owner = owner
 
@@ -494,6 +513,13 @@ def all_toggles():
     Loads all toggles
     """
     return list(all_toggles_by_name().values())
+
+
+def all_toggle_slugs():
+    """
+    Provides all toggles by their slug as a list
+    """
+    return [toggle.slug for toggle in all_toggles()]
 
 
 @memoized
@@ -561,6 +587,30 @@ def toggles_enabled_for_user(username):
         for toggle_name, toggle in all_toggles_by_name().items()
         if toggle.enabled(username, NAMESPACE_USER)
     }
+
+
+@quickcache(["email"], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def toggles_enabled_for_email_domain(email):
+    """Return set of toggle names that are enabled for the given email"""
+    return {
+        toggle_name
+        for toggle_name, toggle in all_toggles_by_name().items()
+        if toggle.enabled(email, NAMESPACE_EMAIL_DOMAIN)
+    }
+
+
+def toggles_enabled_for_request(request):
+    """Return set of toggle names that are enabled for a particular request"""
+    toggles = set()
+
+    if hasattr(request, 'domain'):
+        toggles = toggles | toggles_enabled_for_domain(request.domain)
+
+    if hasattr(request, 'user'):
+        toggles = toggles | toggles_enabled_for_user(request.user.username)
+        toggles = toggles | toggles_enabled_for_email_domain(getattr(request.user, 'email', request.user.username))
+
+    return toggles
 
 
 def _ensure_valid_namespaces(namespaces):
@@ -884,6 +934,18 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+USH_INLINE_SEARCH = StaticToggle(
+    'inline_case_search',
+    "USH Specific toggle to making case search user input available to other parts of the app.",
+    TAG_CUSTOM,
+    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
+    """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES]
+)
+
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     'usercases_for_web_users',
     "USH: Enable the creation of usercases for web users.",
@@ -943,13 +1005,6 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     description='Domains that have undergone migration for Explore Case Data and have a '
     'CaseSearch elasticsearch index created.\n\n'
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
-)
-
-CASE_SEARCH_SMART_TYPES = StaticToggle(
-    'case_search_smart_types',
-    'USH: Intelligently index specific case properties using the data dictionary',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 WEB_USER_ACTIVITY_REPORT = StaticToggle(
@@ -1094,14 +1149,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GS/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-ENABLE_LOADTEST_USERS = StaticToggle(
-    'enable_loadtest_users',
-    'Enable creating loadtest users on HQ',
-    TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -1491,13 +1538,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
-PUBLISH_CUSTOM_REPORTS = StaticToggle(
-    'publish_custom_reports',
-    "Publish custom reports (No needed Authorization)",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
@@ -1594,17 +1634,6 @@ COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
     default_randomness=0.001,  # 1 in 1000
     description='Reports for comparison must be listed in settings.UCR_COMPARISONS.'
-)
-
-LINKED_DOMAINS = StaticToggle(
-    'linked_domains',
-    'DEPRECATED: Allow linking project spaces (successor to linked apps). Moved to permission.',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Replaced by Enterprise Release Management (release_management privilege)."
-    ),
-    help_link='https://confluence.dimagi.com/display/saas/Linked+Project+Spaces',
 )
 
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
@@ -2143,6 +2172,14 @@ EXPRESSION_REPEATER = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
+)
+
+UCR_EXPRESSION_REGISTRY = StaticToggle(
+    'expression_registry',
+    'Store named UCR expressions and filters in the database to be referenced elsewhere',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
 TURN_IO_BACKEND = StaticToggle(
