@@ -16,6 +16,11 @@
         <session>
             <query default_search="false" storage-instance="results" template="case"
                    url="http://localhost:8000/a/test_domain/phone/search/456/">
+                <title>
+                    <text>
+                        <locale id="case_search.m1.inputs"/>
+                    </text>
+                </title>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                     <display>
