@@ -97,6 +97,7 @@ class RemoteRequestFactory(object):
         return RemoteRequest(
             post=self.build_remote_request_post(),
             command=self.build_command(),
+            instances=self.build_instances(),
             session=self.build_session(),
             stack=self.build_stack(),
         )
@@ -143,6 +144,20 @@ class RemoteRequestFactory(object):
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
+
+    def build_instances(self):
+        """Add in instance IDs configured in itemsets directly. This is to work around
+        a legacy issue where the instance IDs didn't conform to the
+        ID convention: 'commcare-reports:uuid' and were instead just the 'uuid'.
+        """
+        prompt_select_instances = [
+            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
+            for prop in self.module.search_config.properties
+            if prop.itemset.instance_id
+        ]
+
+        # sorted list to prevent intermittent test failures
+        return sorted(set(prompt_select_instances), key=lambda i: i.id)
 
     def build_session(self):
         return RemoteRequestSession(
