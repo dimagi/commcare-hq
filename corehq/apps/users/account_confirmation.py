@@ -2,7 +2,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import override, gettext_lazy as _
 
-from corehq.apps.domain.utils import guess_domain_language
+from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language
 from corehq.apps.sms.api import send_sms
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
@@ -50,7 +50,8 @@ def should_send_account_confirmation(couch_user):
 
 def send_account_confirmation(commcare_user):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
-    template_params = _get_account_confirmation_template_params(commcare_user)
+    from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
+    template_params = _get_account_confirmation_template_params(commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname)
 
     lang = guess_domain_language(commcare_user.domain)
     with override(lang):
@@ -65,11 +66,15 @@ def send_account_confirmation(commcare_user):
 
 
 def send_account_confirmation_sms(commcare_user):
-    template_params = _get_account_confirmation_template_params(commcare_user)
+    from corehq.apps.users.views.mobile import CommCareUserConfirmAccountBySMSView
+    encrypted_user_info = encrypt_account_confirmation_info(commcare_user)
+    template_params = _get_account_confirmation_template_params(commcare_user, encrypted_user_info, CommCareUserConfirmAccountBySMSView.urlname)
     lang = guess_domain_language(commcare_user.domain)
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
+    import logging
+    logging.info(text_content)
     send_sms(
         domain=commcare_user.domain,
         contact=None,
@@ -77,10 +82,8 @@ def send_account_confirmation_sms(commcare_user):
         text=text_content)
 
 
-def _get_account_confirmation_template_params(commcare_user):
-    from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
-    url = absolute_reverse(CommCareUserConfirmAccountView.urlname,
-                           args=[commcare_user.domain, commcare_user.get_id])
+def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
+    url = absolute_reverse(url_name, args=[commcare_user.domain, message_token])
     return {
         'domain': commcare_user.domain,
         'username': commcare_user.raw_username,
