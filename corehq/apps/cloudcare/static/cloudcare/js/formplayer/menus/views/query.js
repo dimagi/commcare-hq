@@ -194,7 +194,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         events: {
-            'dp.change @ui.queryField': 'changeQueryField',
+            'dp.change @ui.queryField': function (e) {
+                var self = this;
+                // Without this, the datepicker popup won't show, because in the datepicker's
+                // `show` function, the dp.change event is emitted before the popup is shown.
+                // The delay makes sure this code doesn't run until the popup is shown.
+                _.delay(function () {
+                    self.changeQueryField(e);
+                });
+            },
             'change @ui.queryField': 'changeQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
@@ -219,6 +227,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.render();
             }
             return !this.hasError;
+        },
+
+        clear: function () {
+            var self = this;
+            self.model.set('value', '');
+            self.model.set('searchForBlank', false);
+            if (self.ui.date.length) {
+                self.ui.date.data("DateTimePicker").clear();
+            }
         },
 
         getEncodedValue: function () {
@@ -389,11 +406,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            _.each(self.collection.models, function (model) {
-                model.set('value', '');
-                model.set('searchForBlank', false);
-                if (model.get('input') === 'address') {
-                    initMapboxWidget(model);
+            this.children.each(function (childView) {
+                childView.clear();
+                if (childView.model.get('input') === 'address') {
+                    initMapboxWidget(childView.model);
                 }
             });
             self.setStickyQueryInputs();
