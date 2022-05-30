@@ -711,6 +711,53 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]/instance[@id='item-list:states']",
         )
 
+    def test_prompt_itemset_mobile_report_legacy(self):
+        self._test_prompt_itemset_mobile_report('abcdef')
+
+    def test_prompt_itemset_mobile_report(self):
+        self._test_prompt_itemset_mobile_report('commcare-reports:abcdef')
+
+    @flag_enabled('MOBILE_UCR')
+    def _test_prompt_itemset_mobile_report(self, instance_id):
+        self.module.search_config.properties[0].input_ = 'select1'
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id=instance_id,
+            instance_uri="jr://fixture/commcare-reports:abcdef",
+            nodeset=f"instance('{instance_id}')/rows/row",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = f"""
+        <partial>
+          <prompt key="name" input="select1">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <itemset nodeset="instance('{instance_id}')/rows/row">
+              <label ref="name"/>
+              <value ref="id"/>
+              <sort ref="id"/>
+            </itemset>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        expected_instance = f"""
+        <partial>
+          <instance id="{instance_id}" src="jr://fixture/commcare-reports:abcdef"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            f"./remote-request[1]/instance[@id='{instance_id}']",
+        )
+
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
