@@ -484,7 +484,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
             value="./@case_id" detail-select="m0_case_short"/>
           <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                storage-instance="results" template="case" default_search="false">
+                storage-instance="results:case" template="case" default_search="false">
             <data key="case_type" ref="'case'"/>
             <prompt key="name">
               <display>
@@ -495,7 +495,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
             </prompt>
           </query>
           <datum id="case_id_case"
-            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
+            nodeset="instance('results:case')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
             value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
         </session>
         </partial>
