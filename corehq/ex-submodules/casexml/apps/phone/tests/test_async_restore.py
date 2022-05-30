@@ -150,6 +150,8 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         self.assertIsNone(async_restore_task_id_cache.get_value())
 
     def test_completed_task_creates_sync_log(self):
+        sync_logs = SyncLogSQL.objects.filter(domain='dummy-project')
+        self.assertEqual(len(sync_logs), 0)
         restore_config = self._restore_config(is_async=True)
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
