@@ -169,6 +169,7 @@ class EntryInstances(PostProcessor):
     @staticmethod
     def require_instances(entry, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in entry.instances}
+        instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
             if instance.src in EntryInstances.IGNORED_INSTANCES:
                 continue
@@ -178,15 +179,8 @@ class EntryInstances(PostProcessor):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(entry.instances) == 1:
-                    instance_node = entry.node.find('instance')
-                    command_node = entry.node.find('command')
-                    entry.node.remove(instance_node)
-                    entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+                if not instance_order_updated:
+                    instance_order_updated = EntryInstances.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
@@ -199,6 +193,18 @@ class EntryInstances(PostProcessor):
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
             entry.instances = sorted_instances
+
+    @staticmethod
+    def update_instance_order(entry):
+        """Make sure the first instance gets inserted right after the command.
+        Once you "suggest" a placement to eulxml, it'll follow your lead and place
+        the rest of them there too"""
+        if entry.instances:
+            instance_node = entry.node.find('instance')
+            command_node = entry.node.find('command')
+            entry.node.remove(instance_node)
+            entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+            return True
 
 
 _factory_map = {}
