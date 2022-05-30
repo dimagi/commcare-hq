@@ -200,7 +200,8 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        using_inline_search = module_uses_inline_search(module) and not module_loads_registry_case(module)
+        loads_registry_case = module_loads_registry_case(module)
+        using_inline_search = module_uses_inline_search(module) and not loads_registry_case
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -209,11 +210,14 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
 
-            if form.requires_case() and using_inline_search:
+            if form.requires_case():
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
                 case_session_var = self.get_case_session_var_for_form(form)
-                factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
-                e.post = factory.build_remote_request_post()
+                remote_request_factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
+                if using_inline_search:
+                    e.post = remote_request_factory.build_remote_request_post()
+                if using_inline_search or loads_registry_case:
+                    e.instances = remote_request_factory.build_instances()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
