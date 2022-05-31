@@ -49,7 +49,6 @@ class BaseLinkedObjectAsyncHandler(BaseAsyncHandler):
         raise NotImplementedError("please implement add_object")
 
     @property
-    @memoized
     def idp_slug(self):
         return self.data.get('requestContext[idpSlug]')
 

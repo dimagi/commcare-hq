@@ -385,13 +385,14 @@ class IdentityProvider(models.Model):
         """
         idp = cls.get_active_identity_provider_by_username(username)
         if not idp:
-            return
+            return None
         if (idp.login_enforcement_type == LoginEnforcementType.GLOBAL
                 and not UserExemptFromSingleSignOn.objects.filter(username=username).exists()):
             return idp
         if (idp.login_enforcement_type == LoginEnforcementType.TEST
                 and SsoTestUser.objects.filter(username=username).exists()):
             return idp
+        return None
 
 
 @receiver(post_save, sender=Subscription)

@@ -144,10 +144,6 @@ class TestIdentityProviderAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = _get_request(self.idp.owner)
 
-    def tearDown(self):
-        AuthenticatedEmailDomain.objects.all().delete()
-        super().tearDown()
-
     def test_get_linked_objects(self):
         """
         Ensure that get_linked_objects() returns all AuthenticatedEmailDomains
@@ -296,10 +292,6 @@ class TestSSOExemptUsersAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = _get_request(self.idp.owner)
         self.idp.refresh_from_db()
-
-    def tearDown(self):
-        UserExemptFromSingleSignOn.objects.all().delete()
-        super().tearDown()
 
     def test_get_linked_objects(self):
         """
@@ -491,10 +483,6 @@ class TestSsoTestUserAdminAsyncHandler(BaseAsyncHandlerTest):
         super().setUp()
         self.request = _get_request(self.idp.owner)
         self.idp.refresh_from_db()
-
-    def tearDown(self):
-        SsoTestUser.objects.all().delete()
-        super().tearDown()
 
     def test_get_linked_objects(self):
         """
