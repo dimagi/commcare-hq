@@ -2271,7 +2271,7 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     'google-sheet-integration',
     'Unlock the Google Sheets view in Exports',
     TAG_SAAS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="""
     Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
     on the Exports page.
