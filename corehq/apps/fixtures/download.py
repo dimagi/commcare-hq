@@ -105,7 +105,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     excel_sheets = {}
 
     def empty_padding_list(length):
-        return ["" for x in range(0, length)]
+        return [""] * length
 
     max_fields = 0
     max_item_attributes = 0
@@ -312,7 +312,7 @@ def get_indexed_field_numbers(tables):
 
 
 def iter_types_headers(max_fields, indexed_field_numbers):
-    for x in range(1, max_fields + 1):
-        yield "field %d" % x
-        if x - 1 in indexed_field_numbers:
-            yield "field %d: is_indexed?" % x
+    for i in range(max_fields):
+        yield f"field {i + 1}"
+        if i in indexed_field_numbers:
+            yield f"field {i + 1}: is_indexed?"
