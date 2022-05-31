@@ -752,11 +752,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
             self.$picker.datetimepicker({
-                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
+                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
                 maxDate: maxDate,
                 keepInvalid: true,
+                showClear: true,
                 parseInputDate: function (date) {
                     var d = moment(date, self.clientFormat);
                     return d.isValid() ? d : null;
