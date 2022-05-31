@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 
 from django.contrib.auth.models import User
@@ -14,6 +15,25 @@ class LiveGoogleSheetSchedule(models.Model):
     is_active = models.BooleanField(default=True)
     start_time = models.IntegerField(default=200)
     google_sheet_id = models.CharField(max_length=250)
+    user = models.CharField(max_length=80, null=True)
+
+    def start_refresh(self):
+        self.status = LiveGoogleSheetRefreshStatus.objects.create(
+            schedule=self,
+            date_start=datetime.utcnow()
+        )
+
+    def stop_refresh(self, error_reason=None, error_note=None):
+        self.status.date_end = datetime.utcnow()
+        self.status.refresh_error_reason = error_reason
+        self.status.refresh_error_note = error_note
+        self.status.save()
+
+    def is_currently_refreshing(self):
+        return LiveGoogleSheetRefreshStatus.objects.filter(
+            schedule=self,
+            date_end=None
+        ).exists()
 
 
 class LiveGoogleSheetErrorReason():
