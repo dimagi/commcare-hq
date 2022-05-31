@@ -1,3 +1,5 @@
+from gettext import gettext
+
 from django.http import Http404
 from memoized import memoized
 
@@ -97,8 +99,9 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
     def add_object(self):
         if AuthenticatedEmailDomain.objects.filter(email_domain=self.email_domain).exists():
             raise AsyncHandlerError(
-                f"Email domain {self.email_domain} is already associated"
-                f"with an identity provider."
+                gettext(
+                    "Email domain '{}' is already associated with an identity provider."
+                ).format(self.email_domain)
             )
         AuthenticatedEmailDomain.objects.create(
             identity_provider=self.identity_provider,
@@ -112,7 +115,7 @@ class IdentityProviderAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
         )
         if not existing_email_domain.exists():
             raise AsyncHandlerError(
-                f"No email domain exists with the name {self.email_domain}."
+                gettext("No email domain exists with the name {}.").format(self.email_domain)
             )
         existing_email_domain.delete()
 
@@ -144,9 +147,10 @@ class BaseSsoUsersAdminAsyncHandler(BaseLinkedObjectAsyncHandler):
         )
         if not auth_email_domain.exists():
             raise AsyncHandlerError(
-                f"Please ensure that '{self.email_domain}' is added as an "
-                f"Authenticated Email Domain for this Identity Provider "
-                f"before proceeding."
+                gettext(
+                    "Please ensure that '{}' is added as an Authenticated Email Domain for this "
+                    "Identity Provider before proceeding."
+                ).format(self.email_domain)
             )
         return auth_email_domain
 
@@ -162,7 +166,7 @@ class SSOExemptUsersAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
     def add_object(self):
         if UserExemptFromSingleSignOn.objects.filter(username=self.username).exists():
             raise AsyncHandlerError(
-                f"User {self.username} is already exempt from SSO",
+                gettext("User {} is already exempt from SSO").format(self.username),
             )
         auth_email_domain = self._get_authenticated_email_domain()
         test_user = SsoTestUser.objects.filter(
@@ -170,8 +174,10 @@ class SSOExemptUsersAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
         )
         if test_user.exists():
             raise AsyncHandlerError(
-                f"There is already a testing user {self.username}. "
-                f"A user cannot both be a testing user and exempt from SSO."
+                gettext(
+                    "There is already a testing user {}. A user cannot both be a testing user and "
+                    "exempt from SSO."
+                ).format(self.username)
             )
         UserExemptFromSingleSignOn.objects.create(
             username=self.username,
@@ -181,8 +187,10 @@ class SSOExemptUsersAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
     def remove_object(self):
         if len(self.get_linked_objects()) == 1 and self.identity_provider.is_editable:
             raise AsyncHandlerError(
-                "At least one admin must be exempt from SSO in case of "
-                "failure connecting with an Identity Provider."
+                gettext(
+                    "At least one admin must be exempt from SSO in case of "
+                    "failure connecting with an Identity Provider."
+                )
             )
         existing_exempt_user = UserExemptFromSingleSignOn.objects.filter(
             username=self.username,
@@ -190,9 +198,9 @@ class SSOExemptUsersAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
         )
         if not existing_exempt_user.exists():
             raise AsyncHandlerError(
-                f"The user {self.username} was never exempt from SSO with "
-                f"this Identity Provider and the {self.email_domain} "
-                f"Email Domain."
+                gettext(
+                    "The user {} was never exempt from SSO with this Identity Provider and the {} Email Domain."
+                ).format(self.username, self.email_domain)
             )
         existing_exempt_user.delete()
 
@@ -208,7 +216,7 @@ class SsoTestUserAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
     def add_object(self):
         if SsoTestUser.objects.filter(username=self.username).exists():
             raise AsyncHandlerError(
-                f"User {self.username} is already a test user.",
+                gettext("User {} is already a test user.").format(self.username),
             )
         auth_email_domain = self._get_authenticated_email_domain()
         exempt_user = UserExemptFromSingleSignOn.objects.filter(
@@ -216,8 +224,10 @@ class SsoTestUserAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
         )
         if exempt_user.exists():
             raise AsyncHandlerError(
-                f"There is already a user exempt from SSO with the username '{self.username}'. "
-                f"A user cannot both be a test user and exempt from SSO."
+                gettext(
+                    "There is already a user exempt from SSO with the username '{}'. "
+                    "A user cannot both be a test user and exempt from SSO."
+                ).format(self.username)
             )
         SsoTestUser.objects.create(
             username=self.username,
@@ -231,8 +241,8 @@ class SsoTestUserAdminAsyncHandler(BaseSsoUsersAdminAsyncHandler):
         )
         if not existing_test_user.exists():
             raise AsyncHandlerError(
-                f"The user {self.username} was never a test user for "
-                f"this Identity Provider and the {self.email_domain} "
-                f"Email Domain."
+                gettext(
+                    "The user {} was never a test user for this Identity Provider and the {} Email Domain."
+                ).format(self.username, self.email_domain)
             )
         existing_test_user.delete()
