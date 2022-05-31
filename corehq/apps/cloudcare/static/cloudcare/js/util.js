@@ -283,6 +283,7 @@ hqDefine('cloudcare/js/util', [
         return {
             useCurrent: false,
             showClear: true,
+            showClose: true,
             showTodayButton: true,
             debug: true,
             icons: {
