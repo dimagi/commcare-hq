@@ -204,6 +204,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     @classmethod
     def by_user_id(cls, user_id, wrap=True):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
+        print(results)
         if wrap:
             return results
         else:
