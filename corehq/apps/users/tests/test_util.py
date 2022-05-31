@@ -252,3 +252,9 @@ class TestGenerateMobileUsername(TestCase):
             generate_mobile_username('admin', self.domain)
 
         self.assertEqual(cm.exception.message, "Username 'admin' is reserved.")
+
+    def test_username_is_none_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username(None, self.domain)
+
+        self.assertEqual(cm.exception.message, "Must specify a username.")

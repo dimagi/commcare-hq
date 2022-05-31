@@ -77,6 +77,8 @@ def generate_mobile_username(username, domain):
             error = _("Username '{}' is already taken.").format(username)
     except ReservedUsernameException:
         error = _("Username '{}' is reserved.").format(username)
+    except ValueError:
+        error = _("Must specify a username.")
     finally:
         if error:
             raise ValidationError(error)
