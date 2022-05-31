@@ -21,7 +21,6 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.exceptions import (
     InvalidUsernameException,
     InvalidDomainException,
