@@ -4,7 +4,7 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-alembic==1.4.3
+alembic==1.7.7
     # via -r base-requirements.in
 amqp==2.6.1
     # via kombu
@@ -38,6 +38,7 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
+    #   pynacl
 chardet==3.0.4
     # via
     #   ghdiff
@@ -271,7 +272,7 @@ openpyxl==3.0.9
     # via
     #   -r base-requirements.in
     #   commcaretranslationchecker
-phonenumberslite==8.12.10
+phonenumberslite==8.12.48
     # via -r base-requirements.in
 pickle5==0.0.11
     # via -r base-requirements.in
@@ -308,14 +309,16 @@ pycparser==2.20
     # via cffi
 pycryptodome==3.10.1
     # via -r base-requirements.in
-pygithub==1.54.1
+pygithub==1.55
     # via -r base-requirements.in
 pygooglechart==0.4.0
     # via -r base-requirements.in
-pyjwt==1.7.1
+pyjwt==2.4.0
     # via
     #   pygithub
     #   twilio
+pynacl==1.5.0
+    # via pygithub
 pyopenssl==20.0.1
     # via -r sso-requirements.in
 pyparsing==3.0.7
@@ -329,12 +332,9 @@ pysocks==1.7.1
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
-    #   alembic
     #   botocore
     #   django-tastypie
     #   faker
-python-editor==1.0.4
-    # via alembic
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22

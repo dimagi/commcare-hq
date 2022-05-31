@@ -214,6 +214,19 @@ def can_view_attachments(request):
     )
 
 
+@login_and_domain_required
+def reports_home(request, domain):
+    if user_can_view_reports(request.project, request.couch_user):
+        return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
+
+    if toggles.EMBEDDED_TABLEAU.enabled_for_request(request):
+        from .standard.tableau import TableauView
+        for viz in TableauVisualization.for_user(domain, request.couch_user):
+            return HttpResponseRedirect(reverse(TableauView.urlname, args=[domain, viz.id]))
+
+    raise Http404()
+
+
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = gettext_lazy("Project Reports")
 
@@ -1710,7 +1723,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    meta = form.metadata.to_json()
+    meta = form.metadata.to_json() if form.metadata else {}
     meta['@xmlns'] = form.xmlns
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''

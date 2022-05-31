@@ -1,3 +1,39 @@
+"""
+Notes on instances
+==================
+
+Instances are used to reference data beyond the scope of the current XML document.
+Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
+
+When running applications instances are initialized using an instance declaration which ties the
+instance ID to the actual instance model:
+
+    <instance id="my-instance" ref="jr://fixture/my-fixture" />
+
+This allows using the fixture with the specified ID:
+
+    instance('my-instance')path/to/node
+
+From the mobile code point of view the ID is completely user defined and used only to 'register'
+the instance current context.
+
+Instances in CommCare HQ
+------------------------
+In CommCare HQ we allow app builders to reference instance in many places in the application
+but don't require that the app builder define the full instance declaration.
+
+When 'building' the app we rely on instance ID conventions to enable the build process to
+determine what 'ref' to use for the instances used in the app.
+
+For static instances like 'casedb' the instance ID must match a pre-defined name. For example
+* casedb
+* commcaresession
+* groups
+
+Other instances use a namespaced convention: "type:sub-type". For example:
+* commcare-reports:<uuid>
+* item-list:<fixture name>
+"""
 import re
 from collections import defaultdict
 
@@ -17,6 +53,11 @@ from corehq.util.timer import time_method
 
 class EntryInstances(PostProcessor):
     """Adds instance declarations to the suite file"""
+
+    IGNORED_INSTANCES = {
+        'jr://instance/remote',
+        'jr://instance/search-input',
+    }
 
     @time_method()
     def update_suite(self):
@@ -128,8 +169,9 @@ class EntryInstances(PostProcessor):
     @staticmethod
     def require_instances(entry, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in entry.instances}
+        instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
-            if 'remote' in instance.src:
+            if instance.src in EntryInstances.IGNORED_INSTANCES:
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -137,15 +179,8 @@ class EntryInstances(PostProcessor):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(entry.instances) == 1:
-                    instance_node = entry.node.find('instance')
-                    command_node = entry.node.find('command')
-                    entry.node.remove(instance_node)
-                    entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+                if not instance_order_updated:
+                    instance_order_updated = EntryInstances.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
@@ -159,10 +194,33 @@ class EntryInstances(PostProcessor):
         if sorted_instances != entry.instances:
             entry.instances = sorted_instances
 
+    @staticmethod
+    def update_instance_order(entry):
+        """Make sure the first instance gets inserted right after the command.
+        Once you "suggest" a placement to eulxml, it'll follow your lead and place
+        the rest of them there too"""
+        if entry.instances:
+            instance_node = entry.node.find('instance')
+            command_node = entry.node.find('command')
+            entry.node.remove(instance_node)
+            entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+            return True
 
-def get_instance_factory(scheme):
-    return get_instance_factory._factory_map.get(scheme, preset_instances)
-get_instance_factory._factory_map = {}
+
+_factory_map = {}
+
+
+def get_instance_factory(instance_name):
+    try:
+        scheme, _ = instance_name.split(':', 1)
+    except ValueError:
+        scheme = instance_name
+
+    return _factory_map.get(scheme, null_factory)
+
+
+def null_factory(app, instance_name):
+    return None
 
 
 class register_factory(object):
@@ -172,7 +230,7 @@ class register_factory(object):
 
     def __call__(self, fn):
         for scheme in self.schemes:
-            get_instance_factory._factory_map[scheme] = fn
+            _factory_map[scheme] = fn
         return fn
 
 
@@ -191,15 +249,19 @@ INSTANCE_KWARGS_BY_ID = {
 
 @register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
 def preset_instances(app, instance_name):
-    kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
-    if kwargs:
-        return Instance(**kwargs)
+    kwargs = INSTANCE_KWARGS_BY_ID[instance_name]
+    return Instance(**kwargs)
 
 
 @memoized
 @register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('search-input')
+def search_input_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/search-input')
 
 
 @register_factory('commcare')
@@ -247,12 +309,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
 
         instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
-            try:
-                scheme, _ = instance_name.split(':', 1)
-            except ValueError:
-                scheme = instance_name if instance_name == 'locations' else None
-
-            factory = get_instance_factory(scheme)
+            factory = get_instance_factory(instance_name)
             instance = factory(app, instance_name)
             if instance:
                 instances.add(instance)

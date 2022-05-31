@@ -631,7 +631,7 @@ class TestUserDomainsResource(TestCase):
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
     @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"superset-analytics": True})
-    def test_domain_returned_when_valid_flag_sent(self, _, __):
+    def test_domain_returned_when_valid_flag_sent(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
         bundle.request = Mock()
@@ -641,8 +641,7 @@ class TestUserDomainsResource(TestCase):
         self.assertListEqual([self.domain], [d.domain_name for d in resp])
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
-    @patch('corehq.apps.api.resources.v0_5.toggles.toggles_dict', return_value={"normalset-analytics": True})
-    def test_domain_not_returned_when_invalid_flag_sent(self, _, __):
+    def test_domain_not_returned_when_flag_not_enabled(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
         bundle.request = Mock()

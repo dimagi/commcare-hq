@@ -15,6 +15,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
 )
+from casexml.apps.case.views import CaseDisplayWrapper
 from corehq.util.test_utils import disable_quickcache, flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
@@ -495,3 +496,16 @@ class TestCaseAPI(TestCase):
             )
             # These requests should return a 400 because of the bad body, not a 301 redirect
             self.assertEqual(res.status_code, 400)
+
+    def test_location_id_case_property(self):
+        case_id = uuid.uuid4().hex
+        location_name = 'location'
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            create=True,
+            update={'location_id': location_name}
+        ).as_text()], domain=self.domain)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_properties = CaseDisplayWrapper(case).dynamic_properties()
+        self.assertTrue('location_id' in case_properties)
+        self.assertEqual(location_name, case_properties['location_id'])
