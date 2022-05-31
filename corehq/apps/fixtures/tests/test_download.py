@@ -6,12 +6,12 @@ from ..models import FixtureDataType, FixtureTypeField
 
 def test_get_indexed_field_numbers():
     table = create_index_tables()[1]
-    eq(mod.get_indexed_field_numbers([table], 5), {0, 2, 4})
+    eq(mod.get_indexed_field_numbers([table]), {0, 2, 4})
 
 
 def test_get_indexed_field_numbers_for_multiple_tables():
     tables = create_index_tables()
-    eq(mod.get_indexed_field_numbers(tables, 7), {0, 1, 2, 4, 6})
+    eq(mod.get_indexed_field_numbers(tables), {0, 1, 2, 4, 6})
 
 
 def test_iter_types_headers():

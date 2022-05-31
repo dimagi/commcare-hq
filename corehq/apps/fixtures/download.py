@@ -177,7 +177,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
-    indexed_field_numbers = get_indexed_field_numbers(data_types_view, max_fields)
+    indexed_field_numbers = get_indexed_field_numbers(data_types_view)
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
     types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
@@ -304,7 +304,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     return data_types_book, excel_sheets
 
 
-def get_indexed_field_numbers(tables, max_fields):
+def get_indexed_field_numbers(tables):
     class no_index:
         is_indexed = False
     field_lists = zip_longest(*(t.fields for t in tables), fillvalue=no_index)
