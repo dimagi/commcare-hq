@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, timedelta
+from itertools import zip_longest
 
 from django.template.defaultfilters import yesno
 from django.utils.translation import gettext as _
@@ -304,14 +305,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
 
 def get_indexed_field_numbers(tables, max_fields):
-    indexed = set()
-    for x in range(1, max_fields + 1):
-        try:
-            if any(data_type.fields[x - 1].is_indexed for data_type in tables):
-                indexed.add(x - 1)
-        except IndexError:
-            continue
-    return indexed
+    class no_index:
+        is_indexed = False
+    field_lists = zip_longest(*(t.fields for t in tables), fillvalue=no_index)
+    return {i for i, fields in enumerate(field_lists) if any(f.is_indexed for f in fields)}
 
 
 def iter_types_headers(max_fields, indexed_field_numbers):
