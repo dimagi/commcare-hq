@@ -1,4 +1,4 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from unittest.mock import patch, MagicMock
 
 from corehq.apps.export.models.new import FormExportInstance
@@ -8,6 +8,7 @@ from corehq.apps.export.dbaccessors import ODataExportFetcher
 from corehq.apps.enterprise.enterprise import EnterpriseODataReport
 
 
+@override_settings(BASE_ADDRESS='localhost:8000')
 class EnterpriseODataReportTests(SimpleTestCase):
     def test_headers(self):
         report = self._create_report_for_domains()
@@ -71,7 +72,7 @@ class EnterpriseODataReportTests(SimpleTestCase):
 
         self.assertEqual(report.rows, [
             [151, 200, None,
-            'ERROR: Unsupported number of exports',
+            'ERROR: Too many exports. Please contact customer service',
             'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/']
         ])
 

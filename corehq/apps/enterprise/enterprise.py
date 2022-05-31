@@ -295,7 +295,7 @@ class EnterpriseODataReport(EnterpriseReport):
         if export_line_counts:
             total_line_count = sum(export_line_counts.values())
         else:
-            total_line_count = _('ERROR: Unsupported number of exports')
+            total_line_count = _('ERROR: Too many exports. Please contact customer service')
 
         return [
             export_count,
