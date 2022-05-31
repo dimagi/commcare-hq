@@ -277,6 +277,10 @@ class ProjectReportsTab(UITab):
     def dropdown_items(self):
         items = self._get_saved_reports_dropdown()
 
+        if not self.can_access_all_locations:
+            items.extend(self._get_all_sidebar_items_as_dropdown())
+            return items
+
         tableau_reports = []
         if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
             from corehq.apps.reports.models import TableauVisualization
@@ -291,15 +295,12 @@ class ProjectReportsTab(UITab):
                     } for i, report in enumerate(reports)
                 ])]
 
-        if self.can_access_all_locations:
-            reports = sidebar_to_dropdown(
-                tableau_reports
-                + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
-                current_url=self.url
-            )
-            items.extend(reports)
-        else:
-            items.extend(self._get_all_sidebar_items_as_dropdown())
+        reports = sidebar_to_dropdown(
+            tableau_reports
+            + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
+            current_url=self.url
+        )
+        items.extend(reports)
 
         return items
 
