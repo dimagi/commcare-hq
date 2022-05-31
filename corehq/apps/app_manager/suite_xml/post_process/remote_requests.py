@@ -89,7 +89,7 @@ class RemoteRequestFactory(object):
         else:
             if self.module.is_multi_select():
                 # the instance is dynamic and its ID matches the datum ID
-                self.case_session_var = SearchSelectedCasesInstanceXpath.id
+                self.case_session_var = SearchSelectedCasesInstanceXpath.default_id
             else:
                 self.case_session_var = self.module.search_config.case_session_var
 
@@ -125,7 +125,7 @@ class RemoteRequestFactory(object):
         return data
 
     def _get_multi_select_nodeset(self):
-        return SearchSelectedCasesInstanceXpath().instance()
+        return SearchSelectedCasesInstanceXpath(self.case_session_var).instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
