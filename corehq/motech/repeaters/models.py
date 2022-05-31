@@ -100,7 +100,7 @@ from dimagi.utils.couch.migration import (
     SyncSQLToCouchMixin,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
@@ -218,7 +218,13 @@ class RepeaterSuperProxy(models.Model):
             else:
                 repeater_class = REPEATER_CLASS_MAP.get(proxy_class_name)
                 if repeater_class is None:
-                    raise UnknownRepeater(proxy_class_name)
+                    details = {
+                        'args': args,
+                        'kwargs': kwargs
+                    }
+                    notify_error(UnknownRepeater(proxy_class_name), details=details)
+                    # Fallback to creating SQLRepeater if repeater class is not found
+                    repeater_class = cls
 
         return super().__new__(repeater_class)
 
