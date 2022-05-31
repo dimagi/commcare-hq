@@ -43,7 +43,8 @@ class Command(BaseCommand):
                 web_users_to_reset.append(web_user)
 
         if errors:
-            raise CommandError(f'The following errors were found in your input file:\n{errors}')
+            errors_string = '\n'.join(f'  - {error}' for error in errors)
+            raise CommandError(f'The following errors were found in your input file:\n{errors_string}')
 
         if web_users_to_skip_due_to_recent_reset:
             self.stdout.write("The following users will be skipped "
