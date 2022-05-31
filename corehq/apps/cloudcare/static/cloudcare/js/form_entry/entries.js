@@ -757,6 +757,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 minDate: minDate,
                 maxDate: maxDate,
                 keepInvalid: true,
+                showClear: true,
                 parseInputDate: function (date) {
                     var d = moment(date, self.clientFormat);
                     return d.isValid() ? d : null;

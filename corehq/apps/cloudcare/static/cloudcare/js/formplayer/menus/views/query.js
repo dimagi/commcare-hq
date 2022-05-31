@@ -283,6 +283,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.ui.hqHelp.hqHelp();
             this.ui.date.datetimepicker({
                 format: dateFormat,
+                showClear: true,
             });
             this.ui.dateRange.daterangepicker({
                 locale: {
