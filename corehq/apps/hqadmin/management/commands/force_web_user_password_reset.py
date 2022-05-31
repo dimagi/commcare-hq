@@ -45,11 +45,9 @@ class Command(BaseCommand):
         if 'y' != input('Do you want to proceed? [y/N]'):
             raise CommandError('You have aborted the command and no action was taken.')
 
-        django_users = [web_user.get_django_user() for web_user in web_users]
-
-        for user in django_users:
-            self.stdout.write(f"Force resetting password for {user.username}", ending='')
-            force_password_reset(user)
+        for web_user in web_users:
+            self.stdout.write(f"Force resetting password for {web_user.username}", ending='')
+            force_password_reset(web_user)
             self.stdout.write(" - Done")
 
 
@@ -58,13 +56,14 @@ def get_lines_from_file(filename):
         return [line.strip() for line in f.readlines()]
 
 
-def force_password_reset(user):
+def force_password_reset(web_user):
+    user = web_user.get_django_user()
     user.set_password(uuid.uuid4().hex)
     user.save()
     url = f"{get_url_base()}{reverse('password_reset_email')}"
     send_html_email_async.delay(
         'Reset Password on CommCare HQ',
-        user.get_email(),
+        web_user.get_email(),
         (f'Your system administrator has forced a password reset. '
          f'Before you will be able to continue to use CommCare, '
          f'you must reset your password by navigating to {url} and following the instructions.'),
