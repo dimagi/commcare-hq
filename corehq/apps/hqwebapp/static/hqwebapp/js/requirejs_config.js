@@ -50,6 +50,9 @@ requirejs.config({
         "datatables.colReorder": {
             "datatables.net": "datatables",
         },
+        "*": {
+            "jsonlint": "jsonlint/lib/jsonlint"
+        }
     },
 
     // This is really build config, but it's easier to define a js function here than in requirejs.yml
