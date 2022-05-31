@@ -194,16 +194,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         events: {
-            'dp.change @ui.queryField': function (e) {
-                var self = this;
-                // Without this, the datepicker popup won't show, because in the datepicker's
-                // `show` function, the dp.change event is emitted before the popup is shown.
-                // The delay makes sure this code doesn't run until the popup is shown.
-                _.delay(function () {
-                    self.changeQueryField(e);
-                });
-            },
             'change @ui.queryField': 'changeQueryField',
+            'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -248,13 +240,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
-            if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+            if (this.model.get('input') === 'date') {
+                // Skip because dates get handled by changeDateQueryField
+                return;
+            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.parentView.setStickyQueryInputs();
+        },
+        changeDateQueryField: function (e) {
+            this.changeQueryField(e);
             this.parentView.setStickyQueryInputs();
         },
 
