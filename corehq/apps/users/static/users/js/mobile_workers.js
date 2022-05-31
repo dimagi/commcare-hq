@@ -352,13 +352,17 @@ hqDefine("users/js/mobile_workers",[
             return self.stagedUser() && self.stagedUser().phoneRequired() && !self.stagedUser().phone_number();
         });
 
+        self.phoneIsInvalid = ko.computed(function () {
+            return self.stagedUser() && self.stagedUser().phone_number() && !self.stagedUser().phone_number().match(/^[0-9]+$/);
+        });
+
         self.phoneStatus = ko.computed(function () {
 
             if (!self.stagedUser()) {
                 return self.STATUS.NONE;
             }
 
-            if (self.requiredPhoneMissing()) {
+            if (self.requiredPhoneMissing() || self.phoneIsInvalid()) {
                 return self.STATUS.ERROR;
             }
         });
@@ -368,6 +372,11 @@ hqDefine("users/js/mobile_workers",[
             if (self.requiredPhoneMissing()) {
                 return gettext('Phone number is required when users confirm their own accounts by sms.');
             } 
+
+            if (self.phoneIsInvalid()) {
+                return gettext('Phone number should contain only digits 0-9.');
+            }
+
             return "";
         });
 
@@ -539,7 +548,7 @@ hqDefine("users/js/mobile_workers",[
             if (self.requiredEmailMissing() || self.emailIsInvalid()) {
                 return false;
             }
-            if (self.requiredPhoneMissing()) {
+            if (self.requiredPhoneMissing() || self.phoneIsInvalid()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
