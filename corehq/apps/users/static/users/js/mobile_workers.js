@@ -90,12 +90,12 @@ hqDefine("users/js/mobile_workers",[
 
         // used by two-stage provisioning
         self.emailRequired = ko.observable(self.force_account_confirmation());
-        self.passwordEnabled = ko.observable(!self.force_account_confirmation());
         self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
 
         // used by two-stage sms provisioning
         self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
-        self.passwordEnabled = ko.observable(!self.force_account_confirmation_by_sms());
+        
+        self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
