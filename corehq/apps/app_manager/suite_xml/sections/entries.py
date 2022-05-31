@@ -291,8 +291,7 @@ class EntriesHelper(object):
                     media_audio=module.case_list.default_media_audio,
                 )
             if isinstance(module, Module):
-                for datum_meta in self.get_case_datums_basic_module(module):
-                    e.datums.append(datum_meta.datum)
+                self.configure_entry_module_form(module, e)
             elif isinstance(module, AdvancedModule):
                 detail_inline = self.get_detail_inline_attr(module, module, "case_short")
                 detail_confirm = None

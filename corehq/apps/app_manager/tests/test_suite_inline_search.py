@@ -131,6 +131,38 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    def test_inline_search_case_list_item(self):
+        self.module.case_list.show = True
+        suite = self.app.create_suite()
+
+        expected_entry_query = """
+            <partial>
+              <entry>
+                <command id="m0-case-list">
+                  <text>
+                    <locale id="case_lists.m0"/>
+                  </text>
+                </command>
+                <session>
+                    <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
+                        template="case" default_search="false">
+                      <data key="case_type" ref="'case'"/>
+                      <prompt key="name">
+                        <display>
+                          <text>
+                            <locale id="search_property.m0.name"/>
+                          </text>
+                        </display>
+                      </prompt>
+                    </query>
+                    <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                        value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+                </session>
+              </entry>
+            </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
+
     def test_case_detail_tabs_with_inline_search(self):
         """Test that the detail nodeset uses the correct instance (results not casedb)"""
         self.app.get_module(0).case_details.long.tabs = [
