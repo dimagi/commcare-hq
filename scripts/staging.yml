@@ -70,11 +70,11 @@ branches:
     - es/datums+jls/multiple-referrals-eof-nav
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
-    - bmb/sso-staging  # [QA] Biyeun May 18
     - mjr/odata_enterprise_report # Matt May 23
     - jls/upgrade-web-apps-datepicker # Jenny May 23
     - akj/mw-signup # Akash May 25
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
     - sk/multi-select-inline-search  # Simon May 30
+    - bmb/sso-test-users-pt2  # Biyeun May 31
 submodules: { }
