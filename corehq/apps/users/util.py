@@ -23,7 +23,6 @@ from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.exceptions import (
     InvalidUsernameException,
-    InvalidDomainException,
     UsernameAlreadyExists,
     ReservedUsernameException,
 )
@@ -66,11 +65,11 @@ def generate_mobile_username(username, domain):
     try:
         return validate_mobile_username(username, domain)
     except InvalidUsernameException:
-        error = _("Username may not contain special characters.")
+        error = _("Username '{}' may not contain special characters.").format(username)
         if '..' in username:
-            error = _("Username may not contain consecutive . (period).")
+            error = _("Username '{}' may not contain consecutive '.' (period).").format(username)
         elif username.endswith('.'):
-            error = _("Username may not end with a . (period).")
+            error = _("Username '{}' may not end with a '.' (period).").format(username)
     except UsernameAlreadyExists as e:
         if e.is_deleted:
             error = _("Username '{}' belonged to a user that was deleted and cannot be reused.").format(username)
@@ -78,8 +77,6 @@ def generate_mobile_username(username, domain):
             error = _("Username '{}' is already taken.").format(username)
     except ReservedUsernameException:
         error = _("Username '{}' is reserved.").format(username)
-    except InvalidDomainException:
-        error = _("Domain is required.")
     finally:
         if error:
             raise ValidationError(error)

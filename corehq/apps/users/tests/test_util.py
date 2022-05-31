@@ -201,10 +201,8 @@ class TestGenerateMobileUsername(TestCase):
         cls.domain_obj = create_domain('test-domain')
         cls.addClassCleanup(cls.domain_obj.delete)
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.user = CommCareUser.create(self.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
-        self.addCleanup(self.user.delete, self.domain, None)
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
 
     def test_successfully_generated_username(self):
         try:
@@ -215,59 +213,42 @@ class TestGenerateMobileUsername(TestCase):
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
     def test_invalid_username_double_period_message(self):
-        try:
+        with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test..user', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, 'Username may not contain consecutive . (period).')
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+
+        self.assertEqual(cm.exception.message, "Username 'test..user' may not contain consecutive '.' (period).")
 
     def test_invalid_username_trailing_period_message(self):
-        try:
+        with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test.user.', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, 'Username may not end with a . (period).')
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+
+        self.assertEqual(cm.exception.message, "Username 'test.user.' may not end with a '.' (period).")
 
     def test_invalid_username_generic_message(self):
-        try:
+        with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test%user', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, 'Username may not contain special characters.')
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+
+        self.assertEqual(cm.exception.message, "Username 'test%user' may not contain special characters.")
 
     def test_username_actively_in_use_message(self):
-        try:
+        with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test-user', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, "Username 'test-user' is already taken.")
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+
+        self.assertEqual(cm.exception.message, "Username 'test-user' is already taken.")
 
     def test_username_was_previously_in_use_message(self):
-        self.user.retire(self.domain, None)
-        try:
-            generate_mobile_username('test-user', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, "Username 'test-user' belonged to a user that was deleted and "
-                                        "cannot be reused.")
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
+        self.addCleanup(retired_user.delete, self.domain, None)
+        retired_user.retire(self.domain, None)
+
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('retired', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'retired' belonged to a user that was deleted and "
+                                               "cannot be reused.")
 
     def test_username_is_reserved_message(self):
-        try:
+        with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('admin', self.domain)
-        except ValidationError as e:
-            self.assertEqual(e.message, "Username 'admin' is reserved.")
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
 
-    def test_invalid_domain_message(self):
-        try:
-            generate_mobile_username('test-user-1', None)
-        except ValidationError as e:
-            self.assertEqual(e.message, "Domain is required.")
-        else:
-            self.fail(f'Expected raised exception: {ValidationError}')
+        self.assertEqual(cm.exception.message, "Username 'admin' is reserved.")

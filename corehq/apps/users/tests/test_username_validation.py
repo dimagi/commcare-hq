@@ -2,7 +2,6 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.exceptions import (
-    InvalidDomainException,
     InvalidUsernameException,
     UsernameAlreadyExists,
 )
@@ -25,22 +24,16 @@ class TestMobileUsernameValidation(TestCase):
         cls.domain_obj = create_domain('test-domain')
         cls.addClassCleanup(cls.domain_obj.delete)
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.user = CommCareUser.create(self.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
-        self.addCleanup(self.user.delete, self.domain, None)
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
 
     def test_valid_username_returns_successfully(self):
         username = validate_mobile_username('test-user-1', self.domain)
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
     def test_none_username_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+        with self.assertRaises(ValueError):
             validate_mobile_username(None, self.domain)
-
-    def test_none_domain_raises_exception(self):
-        with self.assertRaises(InvalidDomainException):
-            validate_mobile_username('test-user-1', None)
 
     def test_reserved_username_raises_exception(self):
         with self.assertRaises(ReservedUsernameException):
@@ -106,10 +99,8 @@ class TestEnsureUsernameIsAvailable(TestCase):
         cls.domain_obj = create_domain('test-domain')
         cls.addClassCleanup(cls.domain_obj.delete)
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.user = CommCareUser.create(self.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
-        self.addCleanup(self.user.delete, self.domain, None)
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
 
     def test_username_is_available(self):
         try:
@@ -118,18 +109,16 @@ class TestEnsureUsernameIsAvailable(TestCase):
             self.fail(f'Unexpected raised exception: {InvalidUsernameException}')
 
     def test_username_is_actively_in_use(self):
-        try:
+        with self.assertRaises(UsernameAlreadyExists) as cm:
             _ensure_username_is_available('test-user@test-domain.commcarehq.org')
-        except UsernameAlreadyExists as e:
-            self.assertFalse(e.is_deleted)
-        else:
-            self.fail(f'Expected raised exception: {UsernameAlreadyExists}')
+        self.assertFalse(cm.exception.is_deleted)
 
     def test_username_was_previously_used(self):
-        self.user.retire(self.domain, None)
-        try:
-            _ensure_username_is_available('test-user@test-domain.commcarehq.org')
-        except UsernameAlreadyExists as e:
-            self.assertTrue(e.is_deleted)
-        else:
-            self.fail(f'Expected raised exception: {UsernameAlreadyExists}')
+        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
+        self.addCleanup(retired_user.delete, self.domain, None)
+        retired_user.retire(self.domain, None)
+
+        with self.assertRaises(UsernameAlreadyExists) as cm:
+            _ensure_username_is_available('retired@test-domain.commcarehq.org')
+
+        self.assertTrue(cm.exception.is_deleted)
