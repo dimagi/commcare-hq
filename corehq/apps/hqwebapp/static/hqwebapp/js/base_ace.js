@@ -16,6 +16,8 @@ hqDefine('hqwebapp/js/base_ace', [
     searchBox  // eslint-disable-line no-unused-vars
 ) {
 
+    self.editor = [];
+
     var initAceEditor = function (element, mode, options, value) {
         var defaultOptions = {
             showPrintMargin: false,
@@ -53,6 +55,9 @@ hqDefine('hqwebapp/js/base_ace', [
         });
     };
 
+    var returnEditors = function() {
+        return self.editor;
+    }
 
     /**
      * initObservableJsonWidget allows the ACE editor to be applied to
@@ -93,6 +98,7 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             observable(editor.getSession().getValue());
         });
+        self.editor.push(editor);
     };
 
 
@@ -108,5 +114,6 @@ hqDefine('hqwebapp/js/base_ace', [
         initJsonWidget: initJsonWidget,
         initObservableJsonWidget: initObservableJsonWidget,
         initAceEditor: initAceEditor,
+        returnEditors: returnEditors,
     };
 });
