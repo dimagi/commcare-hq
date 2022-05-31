@@ -617,7 +617,7 @@ class EntriesHelper(object):
 
         return FormDatumMeta(
             datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                url=absolute_reverse('case_fixture', args=[self.app.domain, self.app.get_id]),
                 storage_instance=REGISTRY_INSTANCE,
                 template='case',
                 data=data,

@@ -182,7 +182,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <create>
             <command value="'m0'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
@@ -234,7 +234,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <partial>
               <create>
                 <command value="'m1'"/>
-                <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="case_type" ref="'case'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
                 </query>
@@ -418,7 +418,7 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
             <command value="'m0'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
