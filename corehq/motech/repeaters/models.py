@@ -398,6 +398,7 @@ class SQLFormRepeater(SQLRepeater):
 
     include_app_id_param = OptionValue(default=True)
     white_listed_form_xmlns = OptionValue(default=list)
+    user_blocklist = OptionValue(default=list)
 
     class Meta:
         proxy = True
