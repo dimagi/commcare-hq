@@ -455,7 +455,11 @@ class SQLFormRepeater(SQLRepeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["include_app_id_param", "white_listed_form_xmlns"]
+        return super()._migration_get_fields() + [
+            "include_app_id_param",
+            "white_listed_form_xmlns",
+            "user_blocklist"
+        ]
 
 
 class SQLCaseRepeater(SQLRepeater):
@@ -1156,7 +1160,11 @@ class FormRepeater(Repeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["include_app_id_param", "white_listed_form_xmlns"]
+        return super()._migration_get_fields() + [
+            "include_app_id_param",
+            "white_listed_form_xmlns",
+            "user_blocklist"
+        ]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
