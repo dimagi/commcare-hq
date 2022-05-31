@@ -1,39 +1,3 @@
-"""
-Notes on instances
-==================
-
-Instances are used to reference data beyond the scope of the current XML document.
-Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
-
-When running applications instances are initialized using an instance declaration which ties the
-instance ID to the actual instance model:
-
-    <instance id="my-instance" ref="jr://fixture/my-fixture" />
-
-This allows using the fixture with the specified ID:
-
-    instance('my-instance')path/to/node
-
-From the mobile code point of view the ID is completely user defined and used only to 'register'
-the instance current context.
-
-Instances in CommCare HQ
-------------------------
-In CommCare HQ we allow app builders to reference instance in many places in the application
-but don't require that the app builder define the full instance declaration.
-
-When 'building' the app we rely on instance ID conventions to enable the build process to
-determine what 'ref' to use for the instances used in the app.
-
-For static instances like 'casedb' the instance ID must match a pre-defined name. For example
-* casedb
-* commcaresession
-* groups
-
-Other instances use a namespaced convention: "type:sub-type". For example:
-* commcare-reports:<uuid>
-* item-list:<fixture name>
-"""
 import re
 from collections import defaultdict
 
@@ -52,7 +16,9 @@ from corehq.util.timer import time_method
 
 
 class EntryInstances(PostProcessor):
-    """Adds instance declarations to the suite file"""
+    """Adds instance declarations to the suite file
+
+    See docs/instances.rst"""
 
     IGNORED_INSTANCES = {
         'jr://instance/remote',
@@ -211,6 +177,10 @@ _factory_map = {}
 
 
 def get_instance_factory(instance_name):
+    """Get the instance factory for an instance name (ID).
+    This relies on a naming convention for instances: "scheme:id"
+
+    See docs/instances.rst"""
     try:
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
