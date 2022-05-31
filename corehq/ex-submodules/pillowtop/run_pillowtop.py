@@ -17,10 +17,10 @@ def start_pillows(pillows=None):
     Actual runner for running pillow processes. Use this to run pillows.
     """
 
-    # NOTE: multiprocessing defaults to spawn on macOS now with fork (previous method) being deemed unsafe
-    # Another option is forkserver, but it seems spawn is most widely available
+    # NOTE: multiprocessing defaults to 'spawn' on macOS now with 'fork' being deemed unsafe
+    # Given this hasn't worked on macOS, continue using 'fork'
     # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
-    multiprocessing.set_start_method('spawn')
+    multiprocessing.set_start_method('fork')
 
     run_pillows = pillows or get_all_pillow_instances()
     try:

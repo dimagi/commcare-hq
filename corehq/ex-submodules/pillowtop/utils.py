@@ -15,6 +15,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 
 from corehq.apps.change_feed.connection import get_kafka_consumer
+from corehq.apps.es.client import BulkActionItem
 
 
 def _get_pillow_instance(full_class_str):
@@ -234,7 +235,6 @@ def build_bulk_payload(changes, doc_transform=None, error_collector=None):
     # TODO: do not transform the docs to be indexed (DocumentAdapter will
     #       perform this task in the future)
     from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-    from corehq.apps.es.client import BulkActionItem
 
     if doc_transform is None:
         def doc_transform(doc):
