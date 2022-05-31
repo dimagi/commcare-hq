@@ -72,6 +72,7 @@ branches:
     - mjr/all_safe_fixes  # Matt May 11
     - mjr/odata_enterprise_report # Matt May 23
     - jls/upgrade-web-apps-datepicker # Jenny May 23
+    - jls/tableau-view-all # Jenny May 31
     - akj/mw-signup # Akash May 25
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
