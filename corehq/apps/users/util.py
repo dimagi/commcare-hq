@@ -22,7 +22,12 @@ from casexml.apps.case.const import (
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.exceptions import InvalidUsernameException, UsernameAlreadyExists, ReservedUsernameException
+from corehq.apps.users.exceptions import (
+    InvalidUsernameException,
+    InvalidDomainException,
+    UsernameAlreadyExists,
+    ReservedUsernameException,
+)
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -74,6 +79,8 @@ def generate_mobile_username(username, domain):
             error = _("Username '{}' is already taken.").format(username)
     except ReservedUsernameException:
         error = _("Username '{}' is reserved.").format(username)
+    except InvalidDomainException:
+        error = _("Domain is required.")
     finally:
         if error:
             raise ValidationError(error)

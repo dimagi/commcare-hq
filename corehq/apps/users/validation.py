@@ -3,6 +3,7 @@ from django.core.validators import validate_email
 
 from corehq.apps.users.dbaccessors import user_exists
 from corehq.apps.users.exceptions import (
+    InvalidDomainException,
     InvalidUsernameException,
     ReservedUsernameException,
     UsernameAlreadyExists,
@@ -12,6 +13,11 @@ from corehq.apps.users.views.mobile import BAD_MOBILE_USERNAME_REGEX
 
 
 def validate_mobile_username(username, domain):
+    if username is None:
+        raise InvalidUsernameException
+    if domain is None:
+        raise InvalidDomainException
+
     _check_for_reserved_usernames(username)
     username_as_email = format_username(username, domain)
     _ensure_valid_username(username_as_email)

@@ -263,3 +263,11 @@ class TestGenerateMobileUsername(TestCase):
             self.assertEqual(e.message, "Username 'admin' is reserved.")
         else:
             self.fail(f'Expected raised exception: {ValidationError}')
+
+    def test_invalid_domain_message(self):
+        try:
+            generate_mobile_username('test-user-1', None)
+        except ValidationError as e:
+            self.assertEqual(e.message, "Domain is required.")
+        else:
+            self.fail(f'Expected raised exception: {ValidationError}')

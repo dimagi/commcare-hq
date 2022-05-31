@@ -2,6 +2,7 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.exceptions import (
+    InvalidDomainException,
     InvalidUsernameException,
     UsernameAlreadyExists,
 )
@@ -33,9 +34,21 @@ class TestMobileUsernameValidation(TestCase):
         username = validate_mobile_username('test-user-1', self.domain)
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
+    def test_none_username_raises_exception(self):
+        with self.assertRaises(InvalidUsernameException):
+            validate_mobile_username(None, self.domain)
+
+    def test_none_domain_raises_exception(self):
+        with self.assertRaises(InvalidDomainException):
+            validate_mobile_username('test-user-1', None)
+
     def test_reserved_username_raises_exception(self):
         with self.assertRaises(ReservedUsernameException):
             validate_mobile_username('admin', self.domain)
+
+    def test_empty_username_raises_exception(self):
+        with self.assertRaises(InvalidUsernameException):
+            validate_mobile_username('', self.domain)
 
     def test_invalid_email_raises_exception(self):
         with self.assertRaises(InvalidUsernameException):
