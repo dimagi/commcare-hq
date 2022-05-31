@@ -104,6 +104,9 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     """
     excel_sheets = {}
 
+    def get_field_prop_format(field_number, property_number):
+        return f"field {field_number} : property {property_number}"
+
     def empty_padding_list(length):
         return [""] * length
 
@@ -127,7 +130,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
           }
     """
     type_field_properties = {}
-    get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
@@ -201,8 +203,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                 field_vals.append('yes' if field.is_indexed else 'no')
                 indexed_field_count += 1
         field_vals.extend(empty_padding_list(
-            max_fields - len(data_type.fields) +
-            len(indexed_field_numbers) - indexed_field_count
+            max_fields - len(data_type.fields)
+            + len(indexed_field_numbers) - indexed_field_count
         ))
         item_att_vals = (data_type.item_attributes + empty_padding_list(
             max_item_attributes - len(data_type.item_attributes)
