@@ -281,10 +281,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            this.ui.date.datetimepicker({
+            this.ui.date.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
                 format: dateFormat,
-                showClear: true,
-            });
+            }));
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,

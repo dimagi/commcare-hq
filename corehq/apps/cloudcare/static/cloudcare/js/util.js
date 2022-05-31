@@ -279,7 +279,20 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
+    var dateTimePickerOptions = function () {
+        return {
+            useCurrent: false,
+            showClear: true,
+            showTodayButton: true,
+            debug: true,
+            icons: {
+                today: 'glyphicon glyphicon-calendar',
+            },
+        };
+    };
+
     return {
+        dateTimePickerOptions: dateTimePickerOptions,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,

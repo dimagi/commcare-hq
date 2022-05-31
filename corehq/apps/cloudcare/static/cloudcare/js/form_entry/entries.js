@@ -751,18 +751,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            self.$picker.datetimepicker({
+            self.$picker.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
                 maxDate: maxDate,
                 keepInvalid: true,
-                showClear: true,
                 parseInputDate: function (date) {
                     var d = moment(date, self.clientFormat);
                     return d.isValid() ? d : null;
                 },
-            });
+            }));
             self.$picker.on("dp.change", function (e) {
                 if (!e.date) {
                     self.answer(Const.NO_ANSWER);
