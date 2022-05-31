@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.util.argparse_types import utc_timestamp
 from dimagi.utils.web import get_url_base
 
 
@@ -20,32 +21,50 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('web_users_file')
+        parser.add_argument('--skip-if-reset-since', type=utc_timestamp,
+                            help="Timestamp of the last_password_set after which we will not force a reset."
+                                 " Format as YYYY-MM-DD HH:MM:SS")
 
-    def handle(self, web_users_file, **options):
+    def handle(self, web_users_file, skip_if_reset_since, **options):
         web_user_usernames = get_lines_from_file(web_users_file)
         errors = []
-        web_users = []
+        web_users_to_reset = []
+        web_users_to_skip_due_to_recent_reset = []
         for web_user_username in web_user_usernames:
             web_user = WebUser.get_by_username(web_user_username)
             if web_user is None:
                 errors.append(f'No user named {web_user_username}')
             elif not web_user.is_web_user():
                 errors.append(f'{web_user_username} is not a WebUser')
+            elif skip_if_reset_since and web_user.last_password_set \
+                    and web_user.last_password_set > skip_if_reset_since:
+                web_users_to_skip_due_to_recent_reset.append(web_user)
             else:
-                web_users.append(web_user)
+                web_users_to_reset.append(web_user)
 
         if errors:
             raise CommandError(f'The following errors were found in your input file:\n{errors}')
 
+        if web_users_to_skip_due_to_recent_reset:
+            self.stdout.write("The following users will be skipped "
+                              "because they have reset their passwords since {skip_if_reset_since}")
+
+            for web_user in web_users_to_skip_due_to_recent_reset:
+                self.stdout.write(f"  - {web_user.username} (password last set on {web_user.last_password_set})")
+
+        if not web_users_to_reset:
+            print("No web users to reset passwords for. No action taken.")
+            return
+
         self.stdout.write("The following users will be logged out and have their passwords force reset.")
         self.stdout.write("Additionally, they will receive an email directing them to reset their password.")
-        for web_user_username in web_user_usernames:
-            self.stdout.write(f"  - {web_user_username}")
+        for web_user in web_users_to_reset:
+            self.stdout.write(f"  - {web_user.username}")
 
         if 'y' != input('Do you want to proceed? [y/N]'):
             raise CommandError('You have aborted the command and no action was taken.')
 
-        for web_user in web_users:
+        for web_user in web_users_to_reset:
             self.stdout.write(f"Force resetting password for {web_user.username}", ending='')
             force_password_reset(web_user)
             self.stdout.write(" - Done")
