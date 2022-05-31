@@ -126,7 +126,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
           }
     """
     type_field_properties = {}
-    indexed_field_numbers = set()
     get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
@@ -177,16 +176,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
+    indexed_field_numbers = get_indexed_field_numbers(data_types_view, max_fields)
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
-    for x in range(1, max_fields + 1):
-        types_sheet["headers"].append("field %d" % x)
-        try:
-            if any(data_type.fields[x - 1].is_indexed for data_type in data_types_view):
-                indexed_field_numbers.add(x - 1)
-                types_sheet["headers"].append("field %d: is_indexed?" % x)
-        except IndexError:
-            continue
+    types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
     types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
@@ -308,3 +301,21 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         excel_sheets[data_type.tag] = item_sheet
 
     return data_types_book, excel_sheets
+
+
+def get_indexed_field_numbers(tables, max_fields):
+    indexed = set()
+    for x in range(1, max_fields + 1):
+        try:
+            if any(data_type.fields[x - 1].is_indexed for data_type in tables):
+                indexed.add(x - 1)
+        except IndexError:
+            continue
+    return indexed
+
+
+def iter_types_headers(max_fields, indexed_field_numbers):
+    for x in range(1, max_fields + 1):
+        yield "field %d" % x
+        if x - 1 in indexed_field_numbers:
+            yield "field %d: is_indexed?" % x
