@@ -1,3 +1,39 @@
+"""
+Notes on instances
+==================
+
+Instances are used to reference data beyond the scope of the current XML document.
+Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
+
+When running applications instances are initialized using an instance declaration which ties the
+instance ID to the actual instance model:
+
+    <instance id="my-instance" ref="jr://fixture/my-fixture" />
+
+This allows using the fixture with the specified ID:
+
+    instance('my-instance')path/to/node
+
+From the mobile code point of view the ID is completely user defined and used only to 'register'
+the instance current context.
+
+Instances in CommCare HQ
+------------------------
+In CommCare HQ we allow app builders to reference instance in many places in the application
+but don't require that the app builder define the full instance declaration.
+
+When 'building' the app we rely on instance ID conventions to enable the build process to
+determine what 'ref' to use for the instances used in the app.
+
+For static instances like 'casedb' the instance ID must match a pre-defined name. For example
+* casedb
+* commcaresession
+* groups
+
+Other instances use a namespaced convention: "type:sub-type". For example:
+* commcare-reports:<uuid>
+* item-list:<fixture name>
+"""
 import re
 from collections import defaultdict
 
@@ -133,6 +169,7 @@ class EntryInstances(PostProcessor):
     @staticmethod
     def require_instances(entry, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in entry.instances}
+        instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
             if instance.src in EntryInstances.IGNORED_INSTANCES:
                 continue
@@ -142,15 +179,8 @@ class EntryInstances(PostProcessor):
                     # since these can't be reused
                     Instance(id=instance.id, src=instance.src)
                 )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(entry.instances) == 1:
-                    instance_node = entry.node.find('instance')
-                    command_node = entry.node.find('command')
-                    entry.node.remove(instance_node)
-                    entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+                if not instance_order_updated:
+                    instance_order_updated = EntryInstances.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
@@ -163,6 +193,18 @@ class EntryInstances(PostProcessor):
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
             entry.instances = sorted_instances
+
+    @staticmethod
+    def update_instance_order(entry):
+        """Make sure the first instance gets inserted right after the command.
+        Once you "suggest" a placement to eulxml, it'll follow your lead and place
+        the rest of them there too"""
+        if entry.instances:
+            instance_node = entry.node.find('instance')
+            command_node = entry.node.find('command')
+            entry.node.remove(instance_node)
+            entry.node.insert(entry.node.index(command_node) + 1, instance_node)
+            return True
 
 
 _factory_map = {}
