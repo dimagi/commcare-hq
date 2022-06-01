@@ -761,7 +761,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     var d = moment(date, self.clientFormat);
                     return d.isValid() ? d : null;
                 },
-            }));
+            }, self.extraOptions));
             self.$picker.on("dp.change", function (e) {
                 if (!e.date) {
                     self.answer(Const.NO_ANSWER);
@@ -785,6 +785,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
+    // Extra options to pass to datetimepicker widget
+    DateTimeEntryBase.prototype.extraOptions = {};
+
     function DateEntry(question, options) {
         this.templateType = 'date';
         DateTimeEntryBase.call(this, question, options);
@@ -804,6 +807,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
+    TimeEntry.prototype.extraOptions = {showTodayButton: false};
 
     function EthiopianDateEntry(question, options) {
         var self = this,
