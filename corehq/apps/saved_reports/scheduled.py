@@ -95,14 +95,32 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
             # Don't care if not on hour
             continue
         keys = _make_all_notification_view_keys(period, target_point_in_time)
-        for key in keys:
-            for result in ReportNotification.view(
-                "reportconfig/all_notifications",
-                reduce=False,
-                include_docs=False,
-                **key
-            ).all():
-                yield result['id']
+
+        if period == 'hourly':
+            # Probably not the best way; should rather update the view and set up the query to
+            # only fetch docs in couch which satisfies the criteria.
+            for key in keys:
+                for result in ReportNotification.view(
+                    "reportconfig/all_notifications",
+                    reduce=False,
+                    include_docs=True,
+                    **key
+                ).all():
+                    # Backwards compatibility and general safety measure
+                    if type(result.hour) != int or type(result.stop_hour) != int:
+                        yield result['_id']
+
+                    if result.hour <= target_point_in_time.hour <= result.stop_hour:
+                        yield result['_id']
+        else:
+            for key in keys:
+                for result in ReportNotification.view(
+                    "reportconfig/all_notifications",
+                    reduce=False,
+                    include_docs=False,
+                    **key
+                ).all():
+                    yield result['id']
 
 
 def guess_reporting_minute(now=None):
