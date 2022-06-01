@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-26 23:34+0000\n"
+"POT-Creation-Date: 2022-06-01 17:13+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
@@ -2475,6 +2475,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_dictionary/models.py
 #: corehq/apps/export/views/incremental.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -10361,10 +10362,10 @@ msgid "Group already has node for lang: {0}"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
-#, python-format
+#, python-brace-format
 msgid ""
-"The form is missing some instance declarations that can't be automatically "
-"added: '%(instance_ids)s'"
+"The form '{form}' in '{module}' is missing some instance declarations that "
+"can't be automatically added: '{instance_ids}'"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py
@@ -16926,6 +16927,28 @@ msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "App not found"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Odata feeds used"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Odata feeds available"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+#, fuzzy
+#| msgid "Saved Report Name"
+msgid "Report Names"
+msgstr "Nome do Relatório Salvo"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "Number of rows"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "ERROR: Too many exports. Please contact customer service"
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
@@ -24699,6 +24722,7 @@ msgstr "Informação para o novo Usuário da Web"
 
 #: corehq/apps/registration/forms.py
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
 msgid "Add User"
 msgstr ""
 
@@ -31190,6 +31214,58 @@ msgstr ""
 msgid "Not Finished"
 msgstr ""
 
+#: corehq/apps/sso/async_handlers.py
+msgid "Email domain '{}' is already associated with an identity provider."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid "No email domain exists with the name {}."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"Please ensure that '{}' is added as an Authenticated Email Domain for this "
+"Identity Provider before proceeding."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid "User {} is already exempt from SSO"
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"There is already a testing user {}. A user cannot both be a testing user and "
+"exempt from SSO."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"At least one admin must be exempt from SSO in case of failure connecting "
+"with an Identity Provider."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"The user {} was never exempt from SSO with this Identity Provider and the {} "
+"Email Domain."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid "User {} is already a test user."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"There is already a user exempt from SSO with the username '{}'. A user "
+"cannot both be a test user and exempt from SSO."
+msgstr ""
+
+#: corehq/apps/sso/async_handlers.py
+msgid ""
+"The user {} was never a test user for this Identity Provider and the {} "
+"Email Domain."
+msgstr ""
+
 #: corehq/apps/sso/backends.py
 msgid "User account for {} created."
 msgstr ""
@@ -31409,6 +31485,24 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+msgid "Login Enforcement"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Global: All users must use SSO unless exempt"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Test: Only Test Users are required to use SSO"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"When the Identity Provider is active, this determines how users will be "
+"required to login at the homepage."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
 msgid "Linked Email Domains"
 msgstr ""
 
@@ -31499,6 +31593,14 @@ msgid "SSO Exempt Users"
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/edit_identity_provider.html
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+#, fuzzy
+#| msgid "Web Users"
+msgid "SSO Test Users"
+msgstr "Usuários da Web"
+
+#: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 msgid "Danger Zone"
 msgstr ""
 
@@ -31543,7 +31645,7 @@ msgid ""
 "\n"
 "                  Please <a href=\"%(docs_link)s\">review our documentation</"
 "a>\n"
-"                  for setting up SSO with %(idp_type)s.\n"
+"                  for setting up SSO with %(idp_service_name)s.\n"
 "                "
 msgstr ""
 
@@ -31596,6 +31698,14 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"                  There was an issue logging in with %(service)s:\n"
+"                "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+#, python-format
+msgid ""
+"\n"
 "                  It looks like there is an issue with %(idp_name)s's "
 "configuration.\n"
 "                "
@@ -31604,7 +31714,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/config_errors.html
 msgid ""
 "\n"
-"                  Please reach out to support so we can quickly resolve "
+"                  Please reach out to support, so we can quickly resolve "
 "this\n"
 "                  problem. Thank you!\n"
 "                "
@@ -31645,6 +31755,60 @@ msgid ""
 "                    SSO setup.  Please review the\n"
 "                    <a href=\"%(docs_link)s\">documentation</a>\n"
 "                    for setting up SSO.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+msgid ""
+"\n"
+"                    Obtaining User Information Was Not Possible\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+#, python-format
+msgid ""
+"\n"
+"                    It looks like there was an issue obtaining the user's "
+"information from\n"
+"                    your Identity Provider. Please review the <a href="
+"\"%(docs_link)s\">documentation</a>\n"
+"                    for setting up SSO.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+msgid ""
+"\n"
+"                    OpenID Connect Session Unknown\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+#, python-format
+msgid ""
+"\n"
+"                    It looks like you tried to authenticate without a valid "
+"OpenID Connect Session.\n"
+"                    Please review the <a href=\"%(docs_link)s"
+"\">documentation</a> for setting up SSO.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+msgid ""
+"\n"
+"                    OIDC Method Not Allowed\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/config_errors.html
+#, python-format
+msgid ""
+"\n"
+"                    You did not complete a full SSO handshake.\n"
+"                    Please review the <a href=\"%(docs_link)s"
+"\">documentation</a> for setting up SSO.\n"
 "                  "
 msgstr ""
 
@@ -31818,6 +31982,22 @@ msgid ""
 "          "
 msgstr ""
 
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+msgid ""
+"\n"
+"            When the Identity Provider is in \"Test\" mode for Login "
+"Enforcement, only\n"
+"            the users in this list will be directed to sign in with SSO.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+msgid ""
+"\n"
+"            No users are marked as test users.\n"
+"          "
+msgstr ""
+
 #: corehq/apps/sso/templates/sso/permissions/untrusted_identity_provider_for_domain.html
 #, python-format
 msgid ""
@@ -31876,6 +32056,12 @@ msgstr ""
 msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
 msgstr ""
 
+#: corehq/apps/sso/utils/login_helpers.py
+msgid ""
+"We were unable to create your requested project because the name was already "
+"taken.Please contact support."
+msgstr ""
+
 #: corehq/apps/sso/utils/message_helpers.py
 #, python-brace-format
 msgid ""
@@ -31903,12 +32089,6 @@ msgstr ""
 #: corehq/apps/sso/views/accounting_admin.py
 #: corehq/apps/sso/views/enterprise_admin.py
 msgid "Identity Provider updated!"
-msgstr ""
-
-#: corehq/apps/sso/views/saml.py
-msgid ""
-"We were unable to create your requested project because the name was already "
-"taken.Please contact support."
 msgstr ""
 
 #: corehq/apps/styleguide/example_forms.py
@@ -34255,12 +34435,6 @@ msgid "Update My Information"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid ""
-"Multiply this user's case load by a number for load testing on phones. Leave "
-"blank for normal users."
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "Deactivate After"
 msgstr ""
 
@@ -34276,6 +34450,21 @@ msgid ""
 "be entering data using <a href=\"https://wiki.commcarehq.org/display/"
 "commcarepublic/Web+Apps\">Web Apps</a>"
 msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"Multiply this user's case load by this number for load testing on phones."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "Load testing"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+#, fuzzy
+#| msgid "Update"
+msgid "Update user"
+msgstr "Atualizar"
 
 #: corehq/apps/users/forms.py
 msgid "Reset Password for Mobile Worker"
@@ -34820,8 +35009,20 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid ""
-"This user is marked as a demo user.  All forms submitted by this user will "
-"be ignored and not appear in reports or data exports"
+"\n"
+"      This user is a loadtest user. All forms submitted by this user will "
+"be\n"
+"      ignored and not appear in reports or data exports.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/users/templates/users/edit_commcare_user.html
+msgid ""
+"\n"
+"      This user is marked as a demo user. All forms submitted by this user "
+"will\n"
+"      be ignored and not appear in reports or data exports.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html

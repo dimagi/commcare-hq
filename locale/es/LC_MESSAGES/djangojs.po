@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-26 23:34+0000\n"
+"POT-Creation-Date: 2022-06-01 17:13+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -1575,7 +1575,6 @@ msgid "Add Expression"
 msgstr "Agregue Expresión"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 #: corehq/apps/export/static/export/js/models.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
 msgid "Save"
