@@ -23,7 +23,7 @@ from corehq.util.timer import time_method
 class EntryInstances(PostProcessor):
     """Adds instance declarations to the suite file
 
-    See docs/instances.rst"""
+    See docs/apps/instances.rst"""
 
     IGNORED_INSTANCES = {
         'jr://instance/remote',
@@ -215,7 +215,7 @@ def get_instance_factory(instance_name):
     """Get the instance factory for an instance name (ID).
     This relies on a naming convention for instances: "scheme:id"
 
-    See docs/instances.rst"""
+    See docs/apps/instances.rst"""
     try:
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
