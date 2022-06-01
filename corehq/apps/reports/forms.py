@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
@@ -132,6 +134,11 @@ class ScheduledReportForm(forms.Form):
         coerce=int,
         choices=ReportNotification.hour_choices())
 
+    stop_hour = forms.TypedChoiceField(
+        label=_('To Time'),
+        coerce=int,
+        choices=ReportNotification.hour_choices())
+
     start_date = forms.DateField(
         label=_('Report Start Date'),
         required=False
@@ -187,6 +194,7 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
+                    'stop_hour',
                     'start_date',
                     crispy.Field(
                         'email_subject',
@@ -216,9 +224,16 @@ class ScheduledReportForm(forms.Form):
             del cleaned_data["day"]
         if cleaned_data.get("interval") == "hourly":
             del cleaned_data["day"]
-            del cleaned_data["hour"]
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def clean_stop_hour(self):
+        cleaned_data = super(ScheduledReportForm, self).clean()
+        if cleaned_data.get("interval") == "hourly":
+            if cleaned_data['hour'] > cleaned_data['stop_hour']:
+                self.add_error('stop_hour', "Must be after 'From Time'")
+
+        return cleaned_data.get('stop_hour')
 
 
 class EmailReportForm(forms.Form):

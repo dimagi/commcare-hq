@@ -702,6 +702,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 config_ids=[],
                 hour=8,
                 minute=0,
+                stop_hour=20,
+                stop_minute=0,
                 send_to_owner=True,
                 recipient_emails=[],
                 language=None,
@@ -764,6 +766,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def scheduled_report_form(self):
         initial = self.report_notification.to_json()
+
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
@@ -787,6 +790,10 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
+                                        (Domain.get_by_name(self.domain)['default_timezone'],
+                                        get_timezone_difference(self.domain)[:3] + ':'
+                                        + get_timezone_difference(self.domain)[3:])
+        form.fields['stop_hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
                                         get_timezone_difference(self.domain)[:3] + ':'
                                         + get_timezone_difference(self.domain)[3:])
