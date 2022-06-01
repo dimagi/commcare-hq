@@ -64,11 +64,6 @@ class OptionValue(property):
         obj.options[self.name] = value
 
 
-@attr.s
-class OptionSchema:
-    options = attr.ib()
-
-
 def _assert_options(obj):
     assert hasattr(obj, 'options') and isinstance(obj.options, dict), \
         f"{obj!r} needs an 'options' dict to use OptionValue"
