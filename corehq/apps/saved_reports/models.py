@@ -613,6 +613,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def owner_email(self):
+        if self.owner is None:
+            return None
         if self.owner.is_web_user():
             return self.owner.username
 
