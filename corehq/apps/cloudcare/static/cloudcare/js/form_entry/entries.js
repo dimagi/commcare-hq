@@ -805,7 +805,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (question.style) {
             style = ko.utils.unwrapObservable(question.style.raw);
             if (style === Const.TIME_12_HOUR) {
-                this.clientFormat = 'HH:mm a';
+                this.clientFormat = 'h:mm a';
                 is12Hour = true;
             }
         }
