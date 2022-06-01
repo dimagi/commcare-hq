@@ -15,5 +15,8 @@ from psycogreen.gevent import patch_psycopg
 patch_all(subprocess=True)
 patch_psycopg()
 
+from manage import run_patches
+run_patches()
+
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
