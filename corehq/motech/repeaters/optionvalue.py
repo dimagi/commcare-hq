@@ -4,7 +4,7 @@ The OptionValue property
 
 ``OptionValue`` is a subclass of ``property``. It is used for managing
 the values in a dictionary named "options" belonging to the object that
-it is a property of.
+the OptionValue is a property of.
 
 That sounds more complicated than it is. An example can help. Imagine
 the following ``Meal`` class to manage meals on an airline::
