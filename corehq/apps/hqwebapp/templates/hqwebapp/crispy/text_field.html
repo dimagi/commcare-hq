@@ -5,7 +5,7 @@
 {% else %}
     <div class="form-group">
         <label for="{{ field.id_for_label }}" class="control-label {{ label_class }}">
-            {{ field.label|safe }}
+            {{ field.label }}
         </label>
         <div class="controls {{ field_class }}">
             <input type="hidden"
@@ -13,7 +13,7 @@
                    id="{{ field.auto_id }}"
                    value="{{ field.value|default_if_none:"" }}" />
             <div class="form-control-text">
-                {{ field_text|safe }}
+                {{ field_text }}
             </div>
         </div>
     </div>
