@@ -22,6 +22,7 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils import url_helpers
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
@@ -565,6 +566,19 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             "to log in with SSO."
         ),
     )
+    login_enforcement_type = forms.CharField(
+        label=gettext_lazy("Login Enforcement"),
+        max_length=10,
+        required=False,
+        widget=forms.Select(choices=(
+            (LoginEnforcementType.GLOBAL, gettext_lazy("Global: All users must use SSO unless exempt")),
+            (LoginEnforcementType.TEST, gettext_lazy("Test: Only Test Users are required to use SSO")),
+        )),
+        help_text=gettext_lazy(
+            "When the Identity Provider is active, this determines how users will be "
+            "required to login at the homepage."
+        )
+    )
     linked_email_domains = forms.CharField(
         label=gettext_lazy("Linked Email Domains"),
         required=False,
@@ -593,6 +607,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                             ", ".join(self.idp.get_email_domains()),
                         ),
                         twbscrispy.PrependedText('is_active', ''),
+                        'login_enforcement_type',
                     ),
                     css_class="panel-body"
                 ),
@@ -656,13 +671,13 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     )
 
     def __init__(self, identity_provider, *args, **kwargs):
-        kwargs['initial'] = {
-            'is_active': identity_provider.is_active,
-            'entity_id': identity_provider.entity_id,
-            'login_url': identity_provider.login_url,
-            'logout_url': identity_provider.logout_url,
-            'require_encrypted_assertions': identity_provider.require_encrypted_assertions,
-        }
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
+        initial.setdefault('entity_id', identity_provider.entity_id)
+        initial.setdefault('login_url', identity_provider.login_url)
+        initial.setdefault('logout_url', identity_provider.logout_url)
+        initial.setdefault('require_encrypted_assertions', identity_provider.require_encrypted_assertions)
         super().__init__(identity_provider, *args, **kwargs)
 
         sp_details_form = ServiceProviderDetailsForm(identity_provider)
@@ -771,6 +786,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
     def update_identity_provider(self, admin_user):
         self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.login_url = self.cleaned_data['login_url']
         self.idp.logout_url = self.cleaned_data['logout_url']
@@ -798,6 +814,7 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     def __init__(self, identity_provider, *args, **kwargs):
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
         initial.setdefault('entity_id', identity_provider.entity_id)
         initial.setdefault('client_id', identity_provider.client_id)
         initial.setdefault('client_secret', identity_provider.client_secret)
@@ -882,6 +899,7 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
     def update_identity_provider(self, admin_user):
         self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.client_id = self.cleaned_data['client_id']
         self.idp.client_secret = self.cleaned_data['client_secret']
