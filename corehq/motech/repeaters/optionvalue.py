@@ -1,4 +1,48 @@
-import attr
+"""
+The OptionValue property
+========================
+
+``OptionValue`` is a subclass of ``property``. It is used for managing
+the values in a dictionary named "options" belonging to the object that
+it is a property of.
+
+That sounds more complicated than it is. An example can help. Imagine
+the following ``Meal`` class to manage meals on an airline::
+
+    >>> @define
+    ... class Meal:
+    ...     options = field(factory=dict)
+    ...     dish = OptionValue()
+    ...     category = OptionValue(choices=["chicken", "beef", "vegan"])
+
+The ``dish`` and ``category`` OptionValues will manage values in the
+``options`` dictionary named ``dish`` and ``category`` respectively.
+
+Usage would work like this::
+
+    >>> my_meal = Meal()
+    >>> my_meal.dish = "Coronation Chicken"
+    >>> my_meal.options
+    {'dish': 'Coronation Chicken'}
+    >>> my_meal.category = "chicken"
+    >>> my_meal.options
+    {'dish': 'Coronation Chicken', 'category': 'chicken'}
+
+
+Why?
+----
+
+The purpose of the ``OptionValue`` class is to allow arbitrary
+properties on Django models and their subclasses to be stored in a
+JSON field. You can find examples in ``SQLCaseRepeater``, which has
+options "version", "white_listed_case_types" and "black_listed_users",
+and its subclass ``SQLDhis2EntityRepeater``, which has an additional
+option, "dhis2_entity_config". Values for all of these options are
+persisted by their base class, ``SQLRepeater.options``, defined as
+``JSONField(default=dict)``.
+
+"""
+from attrs import define, field  # noqa  # Required by docstring above
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 

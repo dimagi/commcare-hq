@@ -1,3 +1,5 @@
+import doctest
+
 import attr
 from testil import assert_raises, eq
 
@@ -61,6 +63,12 @@ def test_raises_on_bad_options_type():
     order = AlsoBadFoodOptions()
     with assert_raises(AssertionError):
         order.dish = 'Albatross'
+
+
+def test_doctests():
+    import corehq.motech.repeaters.optionvalue
+    results = doctest.testmod(corehq.motech.repeaters.optionvalue)
+    assert results.failed == 0
 
 
 @attr.s
