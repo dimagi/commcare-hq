@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from django.test import SimpleTestCase, RequestFactory
+from django.test import SimpleTestCase, RequestFactory, override_settings
 
 from ..context_processors import js_api_keys
 
@@ -18,6 +18,11 @@ def _mock_is_hubspot_js_allowed_for_request(request):
     return request.is_hubspot_js_allowed_for_request
 
 
+@override_settings(ANALYTICS_IDS={
+    'GOOGLE_ANALYTICS_API_ID': 'UA-for-tests-only',
+    'HUBSPOT_API_ID': 'test_api_id',
+    'HUBSPOT_API_KEY': 'test_api_key',
+})
 class TestJsApiKeys(SimpleTestCase):
 
     def test_blocked_couch_user_returns_nothing(self):

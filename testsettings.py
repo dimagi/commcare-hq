@@ -123,10 +123,3 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
-
-
-ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_API_ID': 'UA-for-tests-only',
-    'HUBSPOT_API_ID': 'test_api_id',
-    'HUBSPOT_API_KEY': 'test_api_key',
-}
