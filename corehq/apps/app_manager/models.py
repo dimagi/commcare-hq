@@ -2496,6 +2496,17 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         return True
 
+    def can_auto_link(self, source_module):
+        """Determine if forms in this module can be automatically linked from a form in the source module.
+
+        Forms can be linked automatically if their module is the same case type the source module,
+        or if they belong to the source module's parent module. All other forms must be linked manually.
+        """
+        case_type_match = self.case_type == source_module.case_type
+        is_parent = self.unique_id == source_module.root_module_id
+        return case_type_match or is_parent
+
+
 class ModuleDetailsMixin(object):
 
     @classmethod

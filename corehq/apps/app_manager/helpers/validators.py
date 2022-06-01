@@ -827,6 +827,8 @@ class FormBaseValidator(object):
                         errors.append(dict(type="multi select form links", **meta))
                     if linked_module.root_module and linked_module.root_module.is_multi_select():
                         errors.append(dict(type='parent multi select form links', **meta))
+                    if not linked_module.can_auto_link(module) and not form_link.datums:
+                        errors.append(dict(type='manual form linking required', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))

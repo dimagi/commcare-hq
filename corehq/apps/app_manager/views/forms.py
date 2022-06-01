@@ -915,15 +915,13 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
+
+        auto_link = candidate_module.can_auto_link(module)
         for candidate_form in candidate_module.get_forms():
-            # Forms can be linked automatically if their module is the same case type as this module,
-            # or if they belong to this module's parent module. All other forms can be linked manually.
-            case_type_match = candidate_module.case_type == module.case_type
-            is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
                 'name': _form_name(candidate_form),
-                'auto_link': case_type_match or is_parent,
+                'auto_link': auto_link,
                 'allow_manual_linking': True,
             })
 
