@@ -81,6 +81,7 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
+    is_dimagi_email,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -990,11 +991,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def is_dimagi(self):
-        return self.is_dimagi_email(self.username)
-
-    @staticmethod
-    def is_dimagi_email(email):
-        return email.endswith('@dimagi.com')
+        return is_dimagi_email(self.username)
 
     def is_locked_out(self):
         return self.supports_lockout() and self.should_be_locked_out()
@@ -2431,7 +2428,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
-            if CouchUser.is_dimagi_email(user_doc['email']):
+            if is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):

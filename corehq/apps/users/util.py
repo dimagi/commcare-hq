@@ -451,3 +451,7 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
         # FYI we don't call the save() method individually because
         # it is ridiculously inefficient! Unfortunately, it's harder to get
         # around caches and signals in a bulk way.
+
+
+def is_dimagi_email(email):
+    return email.endswith('@dimagi.com')

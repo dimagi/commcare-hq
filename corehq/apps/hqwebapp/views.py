@@ -97,7 +97,7 @@ from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
@@ -831,7 +831,7 @@ class BugReportView(View):
 
         # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if CouchUser.is_dimagi_email(report['username']) and not is_icds_env:
+        if is_dimagi_email(report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.SUPPORT_EMAIL

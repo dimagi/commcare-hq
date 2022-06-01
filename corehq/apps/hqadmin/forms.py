@@ -1,5 +1,3 @@
-import re
-
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -10,7 +8,7 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import is_dimagi_email
 
 
 class EmailForm(forms.Form):
@@ -80,7 +78,7 @@ class SuperuserManagementForm(forms.Form):
 
         users = []
         for username in csv_email_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and not CouchUser.is_dimagi_email(username):
+            if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
                 raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
             try:
                 users.append(User.objects.get(username=username))

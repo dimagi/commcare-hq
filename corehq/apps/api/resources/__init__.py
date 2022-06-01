@@ -12,7 +12,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.util import get_obj
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import is_dimagi_email
 
 
 class DictObject(object):
@@ -105,7 +105,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
             if isinstance(self, DomainSpecificResourceMixin):
                 track_workflow(request.user.username, "API Request", properties={
                     'domain': request.domain,
-                    'is_dimagi': CouchUser.is_dimagi_email(request.user.username),
+                    'is_dimagi': is_dimagi_email(request.user.username),
                 })
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
