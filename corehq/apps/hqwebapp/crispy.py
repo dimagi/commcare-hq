@@ -76,16 +76,17 @@ class FormActions(OriginalFormActions):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = ''
+        fields_html = ''
         for field in self.fields:
-            html += render_field(
+            fields_html += render_field(
                 field, form, form_style, context,
                 template_pack=template_pack,
             )
+        fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
         offsets = _get_offsets(context)
         return render_to_string(self.template, {
             'formactions': self,
-            'fields_output': html,
+            'fields_output': fields_html,
             'offsets': offsets,
             'field_class': context.get('field_class', '')
         })
