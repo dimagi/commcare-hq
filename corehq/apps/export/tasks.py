@@ -2,6 +2,8 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.translation import gettext as _
+from corehq.apps.oauth_integrations.models import LiveGoogleSheetSchedule
 
 from couchexport.models import Format
 from soil import DownloadBase
@@ -22,6 +24,10 @@ from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
 
+from corehq.apps.oauth_integrations.utils import (
+    create_or_update_spreadsheet,
+    get_scheduled_refreshes,
+)
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
@@ -232,3 +238,46 @@ def process_incremental_export(incremental_export_id):
     last_valid_checkpoint = incremental_export.last_valid_checkpoint
     last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
     generate_and_send_incremental_export(incremental_export, last_doc_date)
+
+
+@periodic_task(run_every=crontab(hour="*", minute="2", day_of_week="*"),
+            queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def refresh_scheduled_google_sheets():
+    scheduled_refreshes = get_scheduled_refreshes()
+
+    for scheduled_refresh in scheduled_refreshes:
+        scheduled_refresh.set_task(
+            _create_or_refresh_google_sheet.apply_async(
+                args=[scheduled_refresh.export_config_id],
+                queue=SAVED_EXPORTS_QUEUE,
+            )
+        )
+        #TODO cleanup live google sheet refresh statusses
+
+
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
+def _create_or_refresh_google_sheet(export_config_id):
+    schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export_config_id)
+    schedule.start_refresh()
+
+    export = get_properly_wrapped_export_instance(schedule.export_config_id)
+
+    return create_or_update_spreadsheet(
+        export,
+        schedule,
+    )
+
+
+def refresh_single_google_sheet(export_config_id):
+    schedule = LiveGoogleSheetSchedule.objects.get(export_config_id=export_config_id)
+    if schedule.is_currently_refreshing():
+        return {
+            'error': _("Refresh already underway. Please wait."),
+        }
+    _create_or_refresh_google_sheet.apply_async(
+        args=[export_config_id],
+        queue=SAVED_EXPORTS_QUEUE,
+    )
+    return {
+        'success': _("Refresh started."),
+    }
