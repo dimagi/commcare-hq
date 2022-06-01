@@ -289,6 +289,33 @@ hqDefine('cloudcare/js/util', [
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
+            tooltips: {     // use default text, but enable translations
+                today: gettext('Go to today'),
+                clear: gettext('Clear selection'),
+                close: gettext('Close the picker'),
+                selectMonth: gettext('Select Month'),
+                prevMonth: gettext('Previous Month'),
+                nextMonth: gettext('Next Month'),
+                selectYear: gettext('Select Year'),
+                prevYear: gettext('Previous Year'),
+                nextYear: gettext('Next Year'),
+                selectDecade: gettext('Select Decade'),
+                prevDecade: gettext('Previous Decade'),
+                nextDecade: gettext('Next Decade'),
+                prevCentury: gettext('Previous Century'),
+                nextCentury: gettext('Next Century'),
+                pickHour: gettext('Pick Hour'),
+                incrementHour: gettext('Increment Hour'),
+                decrementHour: gettext('Decrement Hour'),
+                pickMinute: gettext('Pick Minute'),
+                incrementMinute: gettext('Increment Minute'),
+                decrementMinute: gettext('Decrement Minute'),
+                pickSecond: gettext('Pick Second'),
+                incrementSecond: gettext('Increment Second'),
+                decrementSecond: gettext('Decrement Second'),
+                togglePeriod: gettext('Toggle Period'),
+                selectTime: gettext('Select Time'),
+            },
         };
     };
 
