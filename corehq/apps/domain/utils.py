@@ -11,6 +11,7 @@ from memoized import memoized
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.extension_points import custom_domain_module
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util.test_utils import unit_testing_only
 
 from corehq.apps.domain.models import Domain
@@ -131,3 +132,17 @@ def get_serializable_wire_invoice_general_credit(general_credit):
 
 def log_domain_changes(user, domain, new_obj, old_obj):
     logger.info(f"{user} changed UCR permsissions {old_obj} to {new_obj} for domain {domain} ")
+
+
+def encrypt_account_confirmation_info(commcare_user):
+    import logging
+    import json
+    import time
+    data = {"user_id": commcare_user.get_id, "time": int(time.time())}
+    logging.info(data)
+    encrypted = b64_aes_encrypt(json.dumps(data))
+    logging.info("encrypt" + encrypted)
+    logging.info("decrypt {}".format(b64_aes_decrypt(encrypted)))
+
+    return encrypted
+    
