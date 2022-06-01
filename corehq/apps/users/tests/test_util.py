@@ -257,4 +257,4 @@ class TestGenerateMobileUsername(TestCase):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username(None, self.domain)
 
-        self.assertEqual(cm.exception.message, "Must specify a username.")
+        self.assertEqual(cm.exception.message, "Username is required.")
