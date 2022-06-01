@@ -4,7 +4,7 @@ from smtplib import SMTPSenderRefused
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
 from corehq.apps.reports import views
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
 from ..models import ReportNotification, ReportConfig
 
@@ -43,6 +43,12 @@ class TestReportNotification(SimpleTestCase):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=['test@dimagi.com'])
         subscribed_user = self._create_user(email='test@dimagi.com')
         self.assertTrue(report.can_be_viewed_by(subscribed_user))
+
+    def test_report_with_unknown_owner_has_null_owner_email(self):
+        report = ReportNotification(owner_id='5', domain='test_domain')
+        with patch.object(CouchUser, "get_by_user_id", lambda uid: None):
+            self.assertIsNone(report.owner)
+            self.assertIsNone(report.owner_email)
 
     def _create_user(self, id='100', email='not-included', is_domain_admin=False):
         user_template = WebUser(domain='test_domain', username='test_user')
