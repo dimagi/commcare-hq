@@ -277,25 +277,30 @@ class ProjectReportsTab(UITab):
     def dropdown_items(self):
         items = self._get_saved_reports_dropdown()
 
+        if not self.can_access_all_locations:
+            items.extend(self._get_all_sidebar_items_as_dropdown())
+            return items
+
+        tableau_reports = []
         if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
             from corehq.apps.reports.models import TableauVisualization
             from corehq.apps.reports.standard.tableau import TableauView
-            reports = TableauVisualization.for_user(self.domain, self.couch_user)[:2]
+            reports = TableauVisualization.for_user(self.domain, self.couch_user)
             if reports:
-                items.append(dropdown_dict(_('Tableau Reports'), is_header=True))
-                items.extend([
-                    dropdown_dict(report.name, url=reverse(TableauView.urlname, args=[self.domain, report.id]))
-                    for report in reports
-                ])
+                tableau_reports = [(_('Tableau Reports'), [
+                    {
+                        'show_in_dropdown': i < 2,
+                        'title': report.name,
+                        'url': reverse(TableauView.urlname, args=[self.domain, report.id]),
+                    } for i, report in enumerate(reports)
+                ])]
 
-        if self.can_access_all_locations:
-            reports = sidebar_to_dropdown(
-                ProjectReportDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain),
-                current_url=self.url)
-            items.extend(reports)
-        else:
-            items.extend(self._get_all_sidebar_items_as_dropdown())
+        reports = sidebar_to_dropdown(
+            tableau_reports
+            + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
+            current_url=self.url
+        )
+        items.extend(reports)
 
         return items
 
