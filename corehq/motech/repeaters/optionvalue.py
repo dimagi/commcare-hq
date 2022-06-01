@@ -4,11 +4,12 @@ The OptionValue property
 
 ``OptionValue`` is a subclass of ``property``. It is used for managing
 the values in a dictionary named "options" belonging to the object that
-the OptionValue is a property of.
+the ``OptionValue`` is a property of.
 
 That sounds more complicated than it is. An example can help. Imagine
 the following ``Meal`` class to manage meals on an airline::
 
+    >>> from attrs import define, field
     >>> @define
     ... class Meal:
     ...     options = field(factory=dict)
@@ -16,7 +17,7 @@ the following ``Meal`` class to manage meals on an airline::
     ...     category = OptionValue(choices=["chicken", "beef", "vegan"])
 
 The ``dish`` and ``category`` OptionValues will manage values in the
-``options`` dictionary named ``dish`` and ``category`` respectively.
+``options`` dictionary named ``'dish'`` and ``'category'`` respectively.
 
 Usage would work like this::
 
@@ -42,8 +43,6 @@ persisted by their base class, ``SQLRepeater.options``, defined as
 ``JSONField(default=dict)``.
 
 """
-from attrs import define, field  # noqa  # Required by docstring above
-
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 
