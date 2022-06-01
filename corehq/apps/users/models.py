@@ -275,6 +275,8 @@ class Permissions(DocumentSchema):
         return self.view_reports or report in self.view_report_list
 
     def view_tableau_viz(self, viz_id):
+        if not self.access_all_locations:
+            return False
         return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
@@ -1542,6 +1544,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_view_some_tableau_viz(self, domain):
+        if not self.can_access_all_locations(domain):
+            return False
+
         from corehq.apps.reports.models import TableauVisualization
         return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 
