@@ -1,39 +1,3 @@
-"""
-Notes on instances
-==================
-
-Instances are used to reference data beyond the scope of the current XML document.
-Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
-
-When running applications instances are initialized using an instance declaration which ties the
-instance ID to the actual instance model:
-
-    <instance id="my-instance" ref="jr://fixture/my-fixture" />
-
-This allows using the fixture with the specified ID:
-
-    instance('my-instance')path/to/node
-
-From the mobile code point of view the ID is completely user defined and used only to 'register'
-the instance current context.
-
-Instances in CommCare HQ
-------------------------
-In CommCare HQ we allow app builders to reference instance in many places in the application
-but don't require that the app builder define the full instance declaration.
-
-When 'building' the app we rely on instance ID conventions to enable the build process to
-determine what 'ref' to use for the instances used in the app.
-
-For static instances like 'casedb' the instance ID must match a pre-defined name. For example
-* casedb
-* commcaresession
-* groups
-
-Other instances use a namespaced convention: "type:sub-type". For example:
-* commcare-reports:<uuid>
-* item-list:<fixture name>
-"""
 import re
 from collections import defaultdict
 
@@ -42,17 +6,24 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (
     DuplicateInstanceIdError,
     UnknownInstanceError,
 )
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.util import (
+    module_offers_search,
+    module_uses_inline_search,
+)
 from corehq.util.timer import time_method
 
 
 class EntryInstances(PostProcessor):
-    """Adds instance declarations to the suite file"""
+    """Adds instance declarations to the suite file
+
+    See docs/apps/instances.rst"""
 
     IGNORED_INSTANCES = {
         'jr://instance/remote',
@@ -69,13 +40,11 @@ class EntryInstances(PostProcessor):
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-        custom_instances = set()
-        if hasattr(entry, 'form'):
-            custom_instances, unknown_instance_ids = self._get_custom_instances(
-                entry,
-                known_instances,
-                unknown_instance_ids
-            )
+        custom_instances, unknown_instance_ids = self._get_custom_instances(
+            entry,
+            known_instances,
+            unknown_instance_ids
+        )
         all_instances = known_instances | custom_instances
         self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
 
@@ -146,25 +115,57 @@ class EntryInstances(PostProcessor):
         return relevance_by_menu, menu_by_command
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
-        known_instance_ids = [instance.id for instance in known_instances]
-        try:
-            custom_instances = self._custom_instances_by_xmlns()[entry.form]
-        except KeyError:
-            custom_instances = []
+        if entry.command.id not in self._form_module_by_command_id:
+            return set(), required_instances
 
-        for instance in custom_instances:
-            if instance.instance_id in known_instance_ids:
-                raise DuplicateInstanceIdError(
-                    _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.instance_id))
+        known_instance_ids = {instance.id: instance for instance in known_instances}
+        form, module = self._form_module_by_command_id[entry.command.id]
+        custom_instances = []
+        if hasattr(entry, 'form'):
+            custom_instances.extend(
+                Instance(id=instance.instance_id, src=instance.instance_path)
+                for instance in form.custom_instances
+            )
+        if entry.queries:
+            custom_instances.extend([
+                Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
+                for prop in module.search_config.properties
+                if prop.itemset.instance_id
+            ])
+
+        # sorted list to prevent intermittent test failures
+        custom_instances = set(sorted(custom_instances, key=lambda i: i.id))
+
+        for instance in list(custom_instances):
+            existing = known_instance_ids.get(instance.id)
+            if existing:
+                if existing.src != instance.src:
+                    raise DuplicateInstanceIdError(
+                        _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.id))
+
+                # we already have this one, so we can ignore it
+                custom_instances.discard(instance)
+
             # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
-            required_instances.discard(instance.instance_id)
-        return {
-            Instance(id=instance.instance_id, src=instance.instance_path) for instance in custom_instances
-        }, required_instances
+            required_instances.discard(instance.id)
+        return custom_instances, required_instances
 
+    @property
     @memoized
-    def _custom_instances_by_xmlns(self):
-        return {form.xmlns: form.custom_instances for form in self.app.get_forms() if form.custom_instances}
+    def _form_module_by_command_id(self):
+        """Map the command ID to the form and module.
+
+        Module must be included since ``form.get_module()`` does not return the correct
+        module for ``ShadowModule`` forms
+        """
+        by_command = {}
+        for module in self.app.get_modules():
+            if module_offers_search(module) and not module_uses_inline_search(module):
+                by_command[id_strings.search_command(module)] = (None, module)
+
+            for form in module.get_suite_forms():
+                by_command[id_strings.form_command(form, module)] = (form, module)
+        return by_command
 
     @staticmethod
     def require_instances(entry, instances=(), instance_ids=()):
@@ -211,6 +212,10 @@ _factory_map = {}
 
 
 def get_instance_factory(instance_name):
+    """Get the instance factory for an instance name (ID).
+    This relies on a naming convention for instances: "scheme:id"
+
+    See docs/apps/instances.rst"""
     try:
         scheme, _ = instance_name.split(':', 1)
     except ValueError:
