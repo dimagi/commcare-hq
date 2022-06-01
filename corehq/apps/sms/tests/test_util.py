@@ -14,6 +14,7 @@ from corehq.apps.sms.util import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.test_utils import create_test_case, flag_enabled
 
 
@@ -56,6 +57,7 @@ class UtilTestCase(TestCase):
         with create_test_case(self.domain, 'contact', 'test-case') as case:
             self.assertTrue(is_contact_active(self.domain, 'CommCareCase', case.case_id))
             update_case(self.domain, case.case_id, close=True)
+            sync_case_for_messaging(self.domain, case.case_id)
             self.assertFalse(is_contact_active(self.domain, 'CommCareCase', case.case_id))
 
     def test_is_contact_active_for_user(self):
