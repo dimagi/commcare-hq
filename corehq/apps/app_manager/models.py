@@ -2180,7 +2180,7 @@ class CaseSearchProperty(DocumentSchema):
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
     property = StringProperty()
-    default_value = StringProperty(exclude_if_none=True)
+    defaultValue = StringProperty(exclude_if_none=True)
 
 
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):

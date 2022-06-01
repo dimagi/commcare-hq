@@ -871,10 +871,11 @@ class XForm(WrappedNode):
 
         if missing_unknown_instances:
             instance_ids = "', '".join(missing_unknown_instances)
+            module = form.get_module()
             raise XFormValidationError(_(
-                "The form is missing some instance declarations "
-                "that can't be automatically added: '%(instance_ids)s'"
-            ) % {'instance_ids': instance_ids})
+                "The form '{form}' in '{module}' is missing some instance declarations "
+                "that can't be automatically added: '{instance_ids}'"
+            ).format(form=form.default_name(), module=module.default_name(app), instance_ids=instance_ids))
 
         for instance in instances:
             if instance.id not in instance_declarations:

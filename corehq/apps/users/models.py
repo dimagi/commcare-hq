@@ -27,7 +27,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
-from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_restore_cache_key
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1619,6 +1619,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_loadtest_user = BooleanProperty(default=False)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
@@ -1705,7 +1706,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
-        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
+        get_loadtest_factor_for_restore_cache_key.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)
@@ -2752,116 +2753,6 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
-
-
-class AnonymousCouchUser(object):
-
-    username = "public_user"
-    doc_type = "CommCareUser"
-    _id = 'anonymous_couch_user'
-
-    @property
-    def get_id(self):
-        return self._id
-
-    @property
-    def is_active(self):
-        return True
-
-    @property
-    def is_staff(self):
-        return False
-
-    def is_domain_admin(self):
-        return False
-
-    def is_member_of(self, domain):
-        return True
-
-    def has_permission(self, domain, perm=None, data=None):
-        return False
-
-    def can_view_report(self, domain, report):
-        return False
-
-    def can_view_some_reports(self, domain):
-        return False
-
-    def can_view_tableau_viz(self, viz_id):
-        return False
-
-    def can_view_some_tableau_viz(self, viz_id):
-        return False
-
-    @property
-    def analytics_enabled(self):
-        return False
-
-    def can_edit_data(self):
-        return False
-
-    def can_edit_messaging(self):
-        return False
-
-    def can_edit_apps(self):
-        return False
-
-    def can_view_apps(self):
-        return False
-
-    def can_edit_reports(self):
-        return False
-
-    def can_download_reports(self):
-        return False
-
-    def is_eula_signed(self, version=None):
-        return True
-
-    def is_commcare_user(self):
-        return True
-
-    def is_web_user(self):
-        return False
-
-    def can_access_any_exports(self, domain):
-        return False
-
-    def can_edit_commcare_users(self):
-        return False
-
-    def can_view_commcare_users(self):
-        return False
-
-    def can_edit_groups(self):
-        return False
-
-    def can_view_groups(self):
-        return False
-
-    def can_edit_users_in_groups(self):
-        return False
-
-    def can_edit_locations(self):
-        return False
-
-    def can_view_locations(self):
-        return False
-
-    def can_edit_users_in_locations(self):
-        return False
-
-    def can_edit_web_users(self):
-        return False
-
-    def can_view_web_uers(self):
-        return False
-
-    def can_view_roles(self):
-        return False
-
-    def can_access_release_management(self):
-        return False
 
 
 class UserReportingMetadataStaging(models.Model):

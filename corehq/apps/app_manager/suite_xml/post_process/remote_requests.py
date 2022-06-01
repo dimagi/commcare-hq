@@ -89,7 +89,7 @@ class RemoteRequestFactory(object):
         else:
             if self.module.is_multi_select():
                 # the instance is dynamic and its ID matches the datum ID
-                self.case_session_var = SearchSelectedCasesInstanceXpath.id
+                self.case_session_var = SearchSelectedCasesInstanceXpath.default_id
             else:
                 self.case_session_var = self.module.search_config.case_session_var
 
@@ -124,7 +124,7 @@ class RemoteRequestFactory(object):
         return data
 
     def _get_multi_select_nodeset(self):
-        return SearchSelectedCasesInstanceXpath().instance()
+        return SearchSelectedCasesInstanceXpath(self.case_session_var).instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
@@ -357,15 +357,6 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
             id=f"claim_command.{self.endpoint_id}.{self.case_session_var}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
-
-    def build_instances(self):
-        query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
-        query_xpaths.extend([datum.ref for datum in self._remote_request_query_datums])
-        query_xpaths.append(self.get_post_relevant())
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
-
-        # sorted list to prevent intermittent test failures
-        return sorted(instances, key=lambda i: i.id)
 
     def build_remote_request_queries(self):
         return []

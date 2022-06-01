@@ -7,12 +7,11 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 import architect
 import six
-from django.db.models import Q
 from memoized import memoized
-from toposort import toposort_flatten
 
 from casexml.apps.case import const
 from casexml.apps.phone.change_publishers import publish_synclog_saved
@@ -21,7 +20,6 @@ from casexml.apps.phone.exceptions import (
     IncompatibleSyncLogType,
     MissingSyncLog,
 )
-from corehq import toggles
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -39,10 +37,12 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.logging import notify_exception
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
-from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT, NAMESPACE_OTHER
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
+from toposort import toposort_flatten
 
 
 def _get_logger():
@@ -72,11 +72,13 @@ class OTARestoreUser(object):
     @property
     def loadtest_factor(self):
         """
-        Gets the loadtest factor for a domain and user. Is always 1 unless
-        both the toggle is enabled for the domain, and the user has a non-zero,
-        non-null factor set.
+        Gets the loadtest factor for a domain and user. Is always 1
+        unless both the LOADTEST_USER privilege is available for the
+        domain, and the user has a non-zero, non-null factor set.
         """
-        if ENABLE_LOADTEST_USERS.enabled(self.domain):
+        # This method is called by `RestoreState.get_safe_loadtest_factor()`,
+        # which sets guard rails by checking the user's case load.
+        if loadtest_users_enabled(self.domain):
             return self._loadtest_factor or 1
         return 1
 
@@ -354,7 +356,10 @@ def delete_synclogs(current_synclog):
             date__lt=current_synclog.date,
         )
         device_id_filter = Q(device_id=current_synclog.device_id)
-        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(current_synclog.user_id, NAMESPACE_OTHER):
+        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(
+                current_synclog.user_id,
+                toggles.NAMESPACE_OTHER
+        ):
             # see comment in get_alt_device_id about the purpose of this short-lived code
             alt_device_id = get_alt_device_id(current_synclog.device_id)
             device_id_filter = device_id_filter | Q(device_id=alt_device_id)
@@ -1022,11 +1027,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.purge(dependent_case_id)
 
 
+def loadtest_users_enabled(domain: str) -> bool:
+    return domain_has_privilege(domain, privileges.LOADTEST_USERS)
+
+
 def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
     # so can still modify cases that should no longer be on the phone.
     domain = get_request_domain()
-    return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
+    return toggles.LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
 def get_properly_wrapped_sync_log(doc_id):

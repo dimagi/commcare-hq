@@ -200,7 +200,8 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        using_inline_search = module_uses_inline_search(module) and not module_loads_registry_case(module)
+        loads_registry_case = module_loads_registry_case(module)
+        using_inline_search = module_uses_inline_search(module) and not loads_registry_case
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -212,8 +213,8 @@ class EntriesHelper(object):
             if form.requires_case() and using_inline_search:
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
                 case_session_var = self.get_case_session_var_for_form(form)
-                factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
-                e.post = factory.build_remote_request_post()
+                remote_request_factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
+                e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -287,8 +288,7 @@ class EntriesHelper(object):
                     media_audio=module.case_list.default_media_audio,
                 )
             if isinstance(module, Module):
-                for datum_meta in self.get_case_datums_basic_module(module):
-                    e.datums.append(datum_meta.datum)
+                self.configure_entry_module_form(module, e)
             elif isinstance(module, AdvancedModule):
                 detail_inline = self.get_detail_inline_attr(module, module, "case_short")
                 detail_confirm = None
@@ -614,7 +614,7 @@ class EntriesHelper(object):
 
         return FormDatumMeta(
             datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                url=absolute_reverse('case_fixture', args=[self.app.domain, self.app.get_id]),
                 storage_instance=REGISTRY_INSTANCE,
                 template='case',
                 data=data,

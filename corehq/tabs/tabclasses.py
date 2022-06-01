@@ -79,7 +79,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -155,8 +154,6 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
-            return []
 
         if not user_can_view_reports(self.project, self.couch_user):
             return []
@@ -1062,7 +1059,6 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and not isinstance(self.couch_user, AnonymousCouchUser)
             and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
