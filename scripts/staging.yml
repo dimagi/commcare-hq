@@ -72,7 +72,6 @@ branches:
     - akj/mw-signup # Akash May 25
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
-    - bmb/sso-test-users-pt2  # Biyeun May 31
     - gh/upgrade-twilio # Graham May 31
     - ap/celery-upgrade-patch # Amit June 1
 submodules: { }
