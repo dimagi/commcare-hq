@@ -800,6 +800,18 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
+        var style = "",
+            is12Hour = false;
+        if (question.style) {
+            style = ko.utils.unwrapObservable(question.style.raw);
+            if (style === Const.TIME_12_HOUR) {
+                this.clientFormat = 'HH:mm a';
+                is12Hour = true;
+            }
+        }
+        this.helpText = function () {
+            return is12Hour ? gettext("12-hour clock") : gettext("24-hour clock");
+        };
         DateTimeEntryBase.call(this, question, options);
     }
     TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
