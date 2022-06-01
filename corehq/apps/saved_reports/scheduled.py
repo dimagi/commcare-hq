@@ -109,8 +109,7 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
                     # Backwards compatibility and general safety measure
                     if type(result.hour) != int or type(result.stop_hour) != int:
                         yield result['_id']
-
-                    if result.hour <= target_point_in_time.hour <= result.stop_hour:
+                    elif result.hour <= target_point_in_time.hour <= result.stop_hour:
                         yield result['_id']
         else:
             for key in keys:
