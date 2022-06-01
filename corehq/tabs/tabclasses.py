@@ -201,9 +201,9 @@ class ProjectReportsTab(UITab):
             {
                 'title': viz.name,
                 'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-                'show_in_dropdown': False,
+                'show_in_dropdown': i < 2,
             }
-            for viz in TableauVisualization.for_user(self.domain, self.couch_user)
+            for i, viz in enumerate(TableauVisualization.for_user(self.domain, self.couch_user))
         ]
 
         return [(_("Tableau Reports"), items)] if items else []
@@ -281,22 +281,8 @@ class ProjectReportsTab(UITab):
             items.extend(self._get_all_sidebar_items_as_dropdown())
             return items
 
-        tableau_reports = []
-        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
-            from corehq.apps.reports.models import TableauVisualization
-            from corehq.apps.reports.standard.tableau import TableauView
-            reports = TableauVisualization.for_user(self.domain, self.couch_user)
-            if reports:
-                tableau_reports = [(_('Tableau Reports'), [
-                    {
-                        'show_in_dropdown': i < 2,
-                        'title': report.name,
-                        'url': reverse(TableauView.urlname, args=[self.domain, report.id]),
-                    } for i, report in enumerate(reports)
-                ])]
-
         reports = sidebar_to_dropdown(
-            tableau_reports
+            self._get_tableau_items()
             + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
             current_url=self.url
         )
