@@ -2504,7 +2504,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         """
         case_type_match = self.case_type == source_module.case_type
         is_parent = self.unique_id == source_module.root_module_id
-        return case_type_match or is_parent
+        return self.is_surveys or case_type_match or is_parent
 
 
 class ModuleDetailsMixin(object):
