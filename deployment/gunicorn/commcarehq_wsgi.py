@@ -1,6 +1,6 @@
 # flake8: noqa: E402
 import os
-from manage import _set_source_root_parent, _set_source_root
+from manage import _set_source_root_parent, _set_source_root, run_patches
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
@@ -15,7 +15,6 @@ from psycogreen.gevent import patch_psycopg
 patch_all(subprocess=True)
 patch_psycopg()
 
-from manage import run_patches
 run_patches()
 
 from django.core.wsgi import get_wsgi_application
