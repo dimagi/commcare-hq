@@ -135,7 +135,7 @@ def process_email_request(domain, download_id, email_address):
 
 
 def get_task(task_id):
-    from celery.task.base import Task
+    from celery import Task
     return Task.AsyncResult(task_id)
 
 
