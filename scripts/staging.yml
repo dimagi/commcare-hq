@@ -67,7 +67,7 @@ branches:
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
-    - mjr/odata_enterprise_report # Matt May 23
+#    - mjr/odata_enterprise_report # Matt May 23
     - jls/tableau-view-all # Jenny May 31
     #- jls/12-hour-time # Jenny June 1
     - akj/mw-signup # Akash May 25
