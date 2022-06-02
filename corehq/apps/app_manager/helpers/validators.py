@@ -421,13 +421,17 @@ class ModuleBaseValidator(object):
 
         return errors
 
-    def validate_detail_columns(self, columns):
+    def validate_detail_columns(self, detail):
         from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
+        from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
         from corehq.apps.locations.util import parent_child
         from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
 
         hierarchy = None
-        for column in columns:
+        is_search_detail = detail.get_instance_name(self.module) == RESULTS_INSTANCE
+        auto_launch_search = self.module.search_config.auto_launch
+        for column in detail.columns:
             if column.field_type == FIELD_TYPE_LOCATION:
                 domain = self.module.get_app().domain
                 domain_obj = Domain.get_by_name(domain)
@@ -444,6 +448,18 @@ class ModuleBaseValidator(object):
                     yield {
                         'type': 'invalid location xpath',
                         'details': str(e),
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+            if column.useXpathExpression:
+                search_instances = {
+                    name for name in get_instance_names(column.field)
+                    if name.split(':')[0] in {'results', 'search-input'}
+                }
+                if search_instances and not is_search_detail and not auto_launch_search:
+                    yield {
+                        'type': 'case search instance used in casedb case details',
+                        'details': ','.join(search_instances),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -516,10 +532,11 @@ class ModuleDetailValidatorMixin(object):
                     'type': 'no case detail',
                     'module': module_info,
                 }
-            columns = self.module.case_details.short.columns + self.module.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
+            for detail_type, detail, enabled in self.module.get_details():
+                if not enabled:
+                    continue
+                errors = self.validate_detail_columns(detail)
+                yield from errors
 
         if needs_referral_detail and not self.module.ref_details.short.columns:
             yield {
@@ -664,12 +681,14 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                             'module': module_info,
                         }
                         break
-            columns = self.module.case_details.short.columns + self.module.case_details.long.columns
+            errors = []
+            for detail_type, detail, enabled in self.module.get_details():
+                if not enabled:
+                    continue
+                errors.extend(self.validate_detail_columns(detail))
             if self.module.get_app().commtrack_enabled:
-                columns += self.module.product_details.short.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
+                errors.extend(self.validate_detail_columns(self.module.product_details.short))
+            yield from errors
 
 
 class ReportModuleValidator(ModuleBaseValidator):
