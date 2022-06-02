@@ -297,7 +297,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number': self.test_phone_number,
                     'contact_phone_number_is_verified': '1',
                 },
-                drop_signals=False):
+                drop_signals=False) as case:
+            sync_case_for_messaging(case.domain, case.case_id)
             response = Client().post(url, payload, content_type=content_type)
 
         self.assertEqual(response.status_code, 200)
@@ -324,7 +325,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number': contact_phone_prefix + self.test_phone_number,
                     'contact_phone_number_is_verified': '1',
                 },
-                drop_signals=False):
+                drop_signals=False) as case:
+            sync_case_for_messaging(case.domain, case.case_id)
             response = fcn(url, payload)
 
         self.assertEqual(response.status_code, expected_response_code)
