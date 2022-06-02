@@ -472,6 +472,13 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             'row': row,
         }
 
+        send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
+
+        if send_account_confirmation_sms and not row.get('password'):
+            string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
+            password = ''.join(random.choices(string_set, k=10))
+            row['password'] = password
+
         try:
             domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
                                         group_memoizer)
@@ -505,8 +512,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
         try:
             password = str(password) if password else None
-
-            send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
             is_active = spec_value_to_boolean_or_none(row, 'is_active')
             is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
             send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
@@ -516,9 +521,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if send_account_confirmation_sms:
                 is_active = False
                 is_account_confirmed = False
-                if not password:
-                    string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
-                    password = ''.join(random.choices(string_set, k=10))
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
                                                 web_user_username, password, upload_user)
