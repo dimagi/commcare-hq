@@ -8,6 +8,7 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseNotFound,
     JsonResponse,
 )
 from django.utils.translation import gettext as _
@@ -456,6 +457,9 @@ def case_fixture(request, domain, app_id):
             cases = _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry)
         except RegistryAccessException as e:
             return HttpResponseBadRequest(str(e))
+        except Http404 as e:
+            # convert to a simple response to avoid the HTML error page
+            return HttpResponseNotFound(str(e))
     else:
         cases = _single_domain_case_fixture(request, domain, case_types, case_ids)
 
