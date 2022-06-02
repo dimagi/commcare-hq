@@ -317,7 +317,6 @@ class UserRolePresets(object):
     # todo: apply translation to these in the UI
     # note: these are also tricky to change because these are just some default names,
     # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
     APP_EDITOR = gettext_noop("App Editor")
     READ_ONLY = gettext_noop("Read Only")
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
@@ -341,27 +340,6 @@ class UserRolePresets(object):
                                            access_api=False,
                                            download_reports=False)
     }
-
-    ID_NAME_MAP = {
-        'read-only-no-reports': READ_ONLY_NO_REPORTS,
-        'no-permissions': READ_ONLY,
-        'read-only': READ_ONLY,
-        'field-implementer': FIELD_IMPLEMENTER,
-        'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN,
-        'mobile-worker': MOBILE_WORKER,
-    }
-
-    # skip legacy duplicate ('no-permissions')
-    NAME_ID_MAP = {name: id for id, name in ID_NAME_MAP.items() if id != 'no-permissions'}
-
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return cls.NAME_ID_MAP.get(name, None)
-
-    @classmethod
-    def get_preset_role_name(cls, role_id):
-        return cls.ID_NAME_MAP.get(role_id, None)
 
 
 class DomainMembershipError(Exception):
