@@ -125,7 +125,7 @@ django-braces==1.14.0
     # via -r base-requirements.in
 django-bulk-update==2.2.0
     # via -r base-requirements.in
-django-celery-results @ https://github.com/AmitPhulera/django-celery-results/zipball/master
+django-celery-results @ https://github.com/dimagi/django-celery-results/raw/v2.3.1-patch/releases/django_celery_results-2.3.1_patch-py3-none-any.whl
     # via -r base-requirements.in
 django-compressor==2.4
     # via -r base-requirements.in
