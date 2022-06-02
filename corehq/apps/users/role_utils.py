@@ -1,18 +1,14 @@
 from corehq.apps.users.models import UserRole, Permissions
-from django.utils.translation import gettext_noop
 
 
 class UserRolePresets:
-    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
-    # because these are in JSON and cannot be serialized
-    # todo: apply translation to these in the UI
-    # note: these are also tricky to change because these are just some default names,
-    # that end up being stored in the database. Think about the consequences of changing these before you do.
-    APP_EDITOR = gettext_noop("App Editor")
-    READ_ONLY = gettext_noop("Read Only")
-    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
-    BILLING_ADMIN = gettext_noop("Billing Admin")
-    MOBILE_WORKER = gettext_noop("Mobile Worker")
+    # These names are stored in the DB and used as identifiers, I'd avoid renaming
+    APP_EDITOR = "App Editor"
+    READ_ONLY = "Read Only"
+    FIELD_IMPLEMENTER = "Field Implementer"
+    BILLING_ADMIN = "Billing Admin"
+    MOBILE_WORKER = "Mobile Worker"
+
     INITIAL_ROLES = {
         READ_ONLY: lambda: Permissions(view_reports=True),
         APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
