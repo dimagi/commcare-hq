@@ -337,6 +337,12 @@
                 Details: {{ details }}
                 <a href="{{ module_url }}">{{ module_name }}</a>
               {% endblocktrans %}
+            {% case "case search instance used in casedb case details" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.column.field_property details=error.details %}
+                Case List uses an instance that is only available for case search <code>{{ property }}</code>.
+                Details: The {{ details }} instance(s) are only available in case lists using case search.
+                <a href="{{ module_url }}">{{ module_name }}</a>
+              {% endblocktrans %}
             {% case "subcase has no case type" %}
               Child case specifies no case list in form {% include "app_manager/partials/form_error_message.html" %}
             {% case "form error" %}
