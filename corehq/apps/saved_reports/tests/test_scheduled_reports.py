@@ -92,9 +92,14 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=1, minute=None, interval='hourly').save()
         self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
 
-    def testHourlyReportWithoutStopHour(self):
-        ReportNotification(hour=0, stop_hour=23, interval='hourly').save()
-        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+    def testHourlyReportWithoutSpecifyingStopHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithNoneStopHour(self):
+        # It should return every hour if stop_hour not valid
+        ReportNotification(hour=0, stop_hour=None, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
 
     def testHourlyReportWithInterval_everyHour(self):
         ReportNotification(hour=0, interval='hourly').save()
