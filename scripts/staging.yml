@@ -77,4 +77,5 @@ branches:
     - ap/celery-upgrade-patch # Amit June 1
     - cs/SC-2078-hourly-time-filter # June 2
     - cs/SC-1821-script_for_sizing_model_params # June 2
+    - sk/validate-details-instances  # Simon June 2
 submodules: { }
