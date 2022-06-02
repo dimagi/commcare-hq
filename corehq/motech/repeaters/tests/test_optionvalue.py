@@ -85,6 +85,18 @@ def test_raises_on_invalid_schema():
         order.packaged_water = {"somedict": "hola"}
 
 
+def test_raises_on_no_options():
+    order = BadFoodOptions()
+    with assert_raises(AssertionError):
+        order.dish = 'Rhino'
+
+
+def test_raises_on_bad_options_type():
+    order = AlsoBadFoodOptions()
+    with assert_raises(AssertionError):
+        order.dish = 'Albatross'
+
+
 class WaterBottle(OptionSchema):
     qty = OptionValue(default="1")
 
@@ -96,3 +108,16 @@ class FoodOptions:
     food_option = OptionValue(default="veg", choices=["veg", "non-veg"])
     condiments = OptionValue(default=list)
     packaged_water = OptionValue(schema=WaterBottle)
+
+
+class BadFoodOptions:
+    dish = OptionValue()
+
+
+class AlsoBadFoodOptions:
+    options = (
+        ('ALB', 'Albatross'),
+        ('BON', 'Bonobo'),
+        ('DOL', 'Dolphin'),
+    )
+    dish = OptionValue()

@@ -64,9 +64,10 @@ def item_lists_by_app(app):
     ]
     ret = list()
     for config in report_configs:
-        uri = 'jr://fixture/commcare-reports:%s' % (config.uuid)
+        instance_id = f'commcare-reports:{config.uuid}'  # follow HQ instance ID convention
+        uri = f'jr://fixture/{instance_id}'
         ret.append({
-            'id': config.uuid,
+            'id': instance_id,
             'uri': uri,
             'path': "/rows/row",
             'name': config.header.get(app.default_language),

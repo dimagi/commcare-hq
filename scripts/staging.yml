@@ -61,21 +61,18 @@ branches:
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - ml/all-in-one-offboarding # Minha April 13
-    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling+jls/upgrade-web-apps-datepicker # Jenny May 23
-    - gh/upgrade-js-dev-dependencies+ml/dhis2-error-handling # Graham May 20
     #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - es/datums+jls/multiple-referrals-eof-nav
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
-    - bmb/sso-staging  # [QA] Biyeun May 18
-    - nh/loadtest_demo_users  # Norman May 20
     - mjr/odata_enterprise_report # Matt May 23
-    - jls/upgrade-web-apps-datepicker # Jenny May 23
+    - jls/tableau-view-all # Jenny May 31
+    - jls/12-hour-time # Jenny June 1
     - akj/mw-signup # Akash May 25
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
-    - sk/report-instance-fix # Simon/Jenny May 30
+    - gh/upgrade-twilio # Graham May 31
+    - ap/celery-upgrade-patch # Amit June 1
 submodules: { }

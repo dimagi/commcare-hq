@@ -394,7 +394,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     auto_case_update_hour = IntegerProperty()
 
     # Allowed number of max OData feeds that this domain can create.
-    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    # NOTE: This value is generally None. If you want the value the system will use,
+    # please use the `get_odata_feed_limit` method instead
     odata_feed_limit = IntegerProperty()
 
     # exchange/domain copying stuff
@@ -814,6 +815,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def get_odata_feed_limit(self):
+        return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)

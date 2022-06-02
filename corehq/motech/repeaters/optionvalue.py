@@ -36,6 +36,7 @@ class OptionValue(property):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
+        _assert_options(obj)
         if self.schema:
             return self.schema(obj.options.setdefault(self.name, {}))
         if self.name in obj.options:
@@ -51,6 +52,7 @@ class OptionValue(property):
     def __set__(self, obj, value):
         if self.choices and value not in self.choices:
             raise ValueError(f"{value!r} not in {self.choices!r}")
+        _assert_options(obj)
         if self.schema:
             if not isinstance(value, self.schema):
                 raise TypeError(
@@ -65,3 +67,8 @@ class OptionValue(property):
 @attr.s
 class OptionSchema:
     options = attr.ib()
+
+
+def _assert_options(obj):
+    assert hasattr(obj, 'options') and isinstance(obj.options, dict), \
+        f"{obj!r} needs an 'options' dict to use OptionValue"

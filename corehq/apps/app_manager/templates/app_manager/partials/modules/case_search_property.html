@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <tr>
   <td class="text-center">
@@ -70,6 +71,10 @@
                     <div class="col-xs-12 col-sm-9">
                       <select class="form-control" data-bind="value: appearance">
                         <option value="">{% trans "Text" %}</option>
+                        {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+                          {# limit to USH since datepicker is only available on web apps #}
+                          <option value="date">{% trans "Date" %}</option>
+                        {% endif %}
                         <option value="daterange">{% trans "Date Range" %}</option>
                         <option value="barcode_scan">{% trans "Barcode" %}</option>
                         {% if js_options.has_lookup_tables %}
@@ -179,7 +184,7 @@
                             {% trans "Required" %}
                           </label>
                           <div class="col-xs-12 col-sm-9">
-                            <input type="text" class="form-control" data-bind="value: required" placeholder="true()" />
+                            <textarea class="form-control vertical-resize" data-bind="value: required" placeholder="true()"></textarea>
                           </div>
                         </div>
                       {% endif %}
