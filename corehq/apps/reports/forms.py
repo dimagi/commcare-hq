@@ -229,7 +229,7 @@ class ScheduledReportForm(forms.Form):
         cleaned_data = super(ScheduledReportForm, self).clean()
         if cleaned_data.get("interval") == "hourly":
             if cleaned_data['hour'] > cleaned_data['stop_hour']:
-                self.add_error('stop_hour', "Must be after 'From Time'")
+                self.add_error('stop_hour', _("Must be after 'From Time'"))
 
         return cleaned_data.get('stop_hour')
 
