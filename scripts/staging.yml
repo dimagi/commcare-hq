@@ -75,5 +75,6 @@ branches:
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
     - gh/upgrade-twilio # Graham May 31
     - ap/celery-upgrade-patch # Amit June 1
-    - cs/SC-2078-hourly-time-filter
+    - cs/SC-2078-hourly-time-filter # June 2
+    - cs/SC-1821-script_for_sizing_model_params # June 2
 submodules: { }
