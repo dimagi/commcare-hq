@@ -327,7 +327,8 @@ class UserRolePresets(object):
         READ_ONLY,
         APP_EDITOR,
         FIELD_IMPLEMENTER,
-        BILLING_ADMIN
+        BILLING_ADMIN,
+        MOBILE_WORKER,
     )
 
     ID_NAME_MAP = {
@@ -337,7 +338,7 @@ class UserRolePresets(object):
         'field-implementer': FIELD_IMPLEMENTER,
         'edit-apps': APP_EDITOR,
         'billing-admin': BILLING_ADMIN,
-        'mobile-worker': MOBILE_WORKER
+        'mobile-worker': MOBILE_WORKER,
     }
 
     # skip legacy duplicate ('no-permissions')

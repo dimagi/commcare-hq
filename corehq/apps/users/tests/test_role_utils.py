@@ -53,12 +53,12 @@ class RoleUtilsTests(TestCase):
         initialize_domain_with_default_roles(self.domain)
 
         roles = UserRole.objects.get_by_domain(self.domain, include_archived=True)
-        self.assertEqual(len(roles), 5)
+        self.assertEqual(len(roles), 6)
 
         archive_custom_roles_for_domain(self.domain)
 
         roles = UserRole.objects.get_by_domain(self.domain, include_archived=False)
-        self.assertEqual(len(roles), 4)
+        self.assertEqual(len(roles), 5)
 
     def test_unarchive_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
@@ -74,7 +74,7 @@ class RoleUtilsTests(TestCase):
         unarchive_roles_for_domain(self.domain)
 
         unarchived_role_count = len(UserRole.objects.get_by_domain(self.domain, include_archived=False))
-        self.assertEqual(unarchived_role_count, 5)
+        self.assertEqual(unarchived_role_count, 6)
 
     def test_get_custom_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
