@@ -155,8 +155,9 @@ def test_add_hours_to_datetime_expression(self, source_doc, count_expression, ex
 
 @generate_cases([
     ({'dob': '2015-01-20'}, date(2022, 9, 30)),
-    ({'dob': date(2015, 1, 20)}, None),  # Cannot convert a native date
-    ({'dob': datetime(2015, 1, 20)}, None),
+    ({'dob': '2014-13-05'}, date(2022, 9, 10)),
+    ({'dob': date(2015, 1, 20)}, date(2022, 9, 30)),
+    ({'dob': datetime(2015, 1, 20)}, date(2022, 9, 30)),
 ])
 def test_ethiopian_to_gregorian_expression(self, source_doc, expected_value):
     date_expression = {
@@ -168,6 +169,21 @@ def test_ethiopian_to_gregorian_expression(self, source_doc, expected_value):
         'date_expression': date_expression,
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({"type": "constant", "constant": '2015-01-20'}, date(2022, 9, 30)),  # Date that looks like gregorian dates
+    ({"type": "constant", "constant": '2014-13-05'}, date(2022, 9, 10)),  # Invalid gregorian date, valid ethiopian
+])
+def test_ethiopian_to_gregorian_expression_constant(self, expression, expected_value):
+    """
+        Used to fail with BadValueError: datetime.date(2020, 9, 9) is not a date-formatted string
+    """
+    wrapped_expression = ExpressionFactory.from_spec({
+        'type': 'ethiopian_date_to_gregorian_date',
+        'date_expression': expression,
+    })
+    self.assertEqual(expected_value, wrapped_expression({"foo": "bar"}))
 
 
 @generate_cases([
@@ -185,3 +201,18 @@ def test_gregorian_to_ethiopian_expression(self, source_doc, expected_value):
         'date_expression': date_expression,
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({"type": "constant", "constant": '2021-10-11'}, '2014-02-01'),
+    ({"type": "constant", "constant": '2021-10-9'}, '2014-01-29'),
+])
+def test_gregorian_to_ethiopian_expression_constant(self, expression, expected_value):
+    """
+        Used to fail with BadValueError: datetime.date(2020, 9, 9) is not a date-formatted string
+    """
+    wrapped_expression = ExpressionFactory.from_spec({
+        'type': 'gregorian_date_to_ethiopian_date',
+        'date_expression': expression,
+    })
+    self.assertEqual(expected_value, wrapped_expression({"foo": "bar"}))

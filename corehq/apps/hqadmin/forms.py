@@ -1,5 +1,3 @@
-import re
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -12,7 +10,7 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
-
+from corehq.apps.users.util import is_dimagi_email
 from email.utils import parseaddr
 
 
@@ -150,7 +148,7 @@ def clean_data(cleaned_data, invert=False, offboarding_list=False):
     validationErrors = []
     for username in csv_email_list:
         if not offboarding_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
+            if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
                 validationErrors.append(ValidationError(_("Email address '{}' is not a "
                                                           "dimagi email address".format(username))))
                 continue

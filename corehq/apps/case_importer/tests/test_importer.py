@@ -99,7 +99,8 @@ class ImporterTest(TestCase):
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,
-            meta=get_interned_exception('Sorry, your session has expired. Please start over and try again.'))
+            meta=get_interned_exception('There was an unexpected error retrieving the file you uploaded. '
+                                        'Please try again and contact support if the problem persists.'))
         self.assertEqual(0, len(CommCareCase.objects.get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):

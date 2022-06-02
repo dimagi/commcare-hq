@@ -25,7 +25,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_advanced_suite(self, *args):

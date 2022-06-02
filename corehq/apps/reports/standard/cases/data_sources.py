@@ -99,13 +99,15 @@ class CaseDisplay:
     @property
     @quickcache(['self.owner_id', 'self.user_id'])
     def owner(self):
+        if not self.owner_id:
+            return 'user', {'id': self.owner_id, 'name': self.owner_id}
         if self.owning_group and self.owning_group.name:
-            return ('group', {'id': self.owning_group._id, 'name': self.owning_group.name})
+            return 'group', {'id': self.owning_group._id, 'name': self.owning_group.name}
         elif self.location:
             return ('location', {'id': self.location.location_id,
                                  'name': self.location.display_name})
         else:
-            return ('user', self._user_meta(self.user_id))
+            return 'user', self._user_meta(self.user_id)
 
     @property
     def owner_type(self):

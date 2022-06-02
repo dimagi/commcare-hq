@@ -44,10 +44,6 @@ from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-from corehq.apps.export.esaccessors import (
-    get_case_export_base_query,
-    get_form_export_base_query,
-)
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
@@ -802,12 +798,18 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return self.get_object_list(bundle.request)
 
     def get_object_list(self, request):
+        feature_flag = request.GET.get("feature_flag")
+        if feature_flag and feature_flag not in toggles.all_toggle_slugs():
+            raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         couch_user = CouchUser.from_django_user(request.user)
+        username = request.user.username
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
+            if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
                 project_name=domain_object.hr_name or domain_object.name
@@ -979,9 +981,8 @@ class ODataCaseResource(BaseODataResource):
                     "You do not have permission to view this feed."
                 ))
             )
-        query = get_case_export_base_query(domain, config.case_type)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
@@ -1018,9 +1019,7 @@ class ODataFormResource(BaseODataResource):
                 ))
             )
 
-        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'

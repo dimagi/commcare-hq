@@ -55,31 +55,27 @@ branches:
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
     - sr/es-alias # Sravan Nov 18
     - ce/bulk-case-search # Cal July 6
-    #- sr/memoized-toggle # Sravan July 26
+    # - sr/memoized-toggle # Sravan July 26
     - smh/remove-extra-spinner-icons # Steph Oct 6
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    #- jm/elastic-client-adapter  # Joel Mar 1
-    - nh/loadtest_users_postmigration  # Norman March 25
-    - es/es/gps-prop+jm/elastic-mapping-util  # Ethan Apr 7
-    - gh/erm/remove-linked-domain-ff+fr/ucr-registry-linked # Graham April 18
-    - fr/ucr-registry-linked  # Farid April 12
-    - ml/all-in-one-offboarding # Minha April 13
-    - rp/gsheet/create-livegooglesheetview # Rynhard March 23
-    - rp/gsheet/create-refresh-google-sheet-task # Rynhard Apr 19
-    - sk/remove-feature-phone-support  # Simon April 20
-    - bmb/trial-signup-bug  # Biyeun April 21
-    - ml/dhis2-error-handling # Minha April 21
-    - jm/elastic-client-adapter  # Joel April 21
+    # - ml/all-in-one-offboarding # Minha April 13
+    #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
+    #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     - rp/gsheet/update-project-info-form # Rynhard April 22
-    - cs/SC-1945-ability-to-add-filter-to-rules+ad/autoupdate-criteria-operator # Addison April 26
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - ad/autoupdate-criteria-operator # Addison April 26
-    - bmb/sso-oidc-endpoints  # Biyeun May 2 DO NOT REMOVE. PEN TEST IN PROGRESS!!
-    - ml/case-property-bug # Minha April 28
-    - jls/tab-nodeset-filter # Jenny May 2
-    - rc/case-search-accessibility+jls/conditional-case-search #Robert May 3
-    - jls/conditional-case-search # Jenny May 3
-    - rc/case-search-accessibility # Robert May 3
+    - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
+    - mjr/all_safe_fixes  # Matt May 11
+#    - mjr/odata_enterprise_report # Matt May 23
+    - jls/tableau-view-all # Jenny May 31
+    #- jls/12-hour-time # Jenny June 1
+    - akj/mw-signup # Akash May 25
+    - ml/mobile-worker-download-bug # Minha May 27
+    - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
+    - gh/upgrade-twilio # Graham May 31
+    - ap/celery-upgrade-patch # Amit June 1
+    - cs/SC-2078-hourly-time-filter # June 2
+    - cs/SC-1821-script_for_sizing_model_params # June 2
+    - sk/validate-details-instances  # Simon June 2
 submodules: { }

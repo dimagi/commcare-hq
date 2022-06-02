@@ -21,30 +21,31 @@ def get_select_chain_with_sessions(app, module, include_self=True):
             select_chain.append((module, 'selected_cases'))
         else:
             select_chain.append((module, 'case_id'))
-    current_module = module
+    previous_module = module
     case_type = module.case_type
     i = len(select_chain)
-    while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
-        is_other_relation = current_module.parent_select.relationship is None
-        parent_module = app.get_module_by_unique_id(
-            current_module.parent_select.module_id,
+    while hasattr(previous_module, 'parent_select') and previous_module.parent_select.active:
+        is_other_relation = previous_module.parent_select.relationship is None
+        current_module = app.get_module_by_unique_id(
+            previous_module.parent_select.module_id,
             error=_("Case list used by parent child selection in '{}' not found").format(
-                current_module.default_name()),
+                previous_module.default_name()),
         )
-        if is_other_relation and case_type == parent_module.case_type:
+
+        if current_module.is_multi_select():
+            session_var = ('parent_' * i) + 'selected_cases'
+        elif is_other_relation and case_type == current_module.case_type:
             session_var = 'case_id_' + case_type
         else:
-            if current_module.is_multi_select():
-                session_var = ('parent_' * i) + 'selected_cases'
-            else:
-                session_var = ('parent_' * i or 'case_') + 'id'
-        if parent_module in [m for (m, _) in select_chain]:
+            session_var = ('parent_' * i or 'case_') + 'id'
+
+        if current_module in [m for (m, _) in select_chain]:
             raise SuiteValidationError("Circular reference in case hierarchy")
-        select_chain.append((parent_module, session_var))
+        select_chain.append((current_module, session_var))
 
         # update vars for next loop
-        current_module = parent_module
-        case_type = parent_module.case_type
+        previous_module = current_module
+        case_type = current_module.case_type
         i += 1
     return select_chain
 

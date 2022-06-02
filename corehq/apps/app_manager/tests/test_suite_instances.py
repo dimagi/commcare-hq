@@ -3,11 +3,17 @@ from unittest import mock
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
+from corehq.apps.app_manager.models import (
+    CaseSearch,
+    CaseSearchProperty,
+    CustomInstance,
+    DefaultCaseSearchProperty,
+    Itemset,
+    ShadowModule,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.models import CustomInstance
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -15,7 +21,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class SuiteInstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -134,4 +140,97 @@ class SuiteInstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """,
             self.factory.app.create_suite(),
             "entry/instance"
+        )
+
+    def test_search_input_instance(self, *args):
+        # instance is not added and no errors
+        self.form.form_filter = "instance('search-input:results')/values/"
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_search_input_instance_remote_request(self, *args):
+        self.form.requires = 'case'
+        self.module.case_type = 'case'
+
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property="_xpath_query",
+                    defaultValue="instance('search-input:results')/input/field[@name = 'first_name']"
+                )
+            ]
+        )
+        self.module.assign_references()
+        self.assertXmlPartialEqual(
+            # 'search-input' instance ignored
+            """
+            <partial>
+                <instance id="casedb" src="jr://instance/casedb"/>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_shadow_module_custom_instances(self):
+        instance_id = "foo"
+        instance_path = "jr://foo/bar"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+
+        shadow_module = self.factory.app.add_module(ShadowModule.new_module("shadow", "en"))
+        shadow_module.source_module_id = self.module.get_or_create_unique_id()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <instance id='{}' src='{}' />
+            </partial>
+            """.format(instance_id, instance_path),
+            self.factory.app.create_suite(),
+            "entry[2]/instance"
+        )
+
+    def test_search_prompt_itemset_instance(self):
+        self._test_search_prompt_itemset_instance(self.module)
+
+    def test_shadow_module_search_prompt_itemset_instance(self):
+        shadow_module = self.factory.app.add_module(ShadowModule.new_module("shadow", "en"))
+        shadow_module.source_module_id = self.module.get_or_create_unique_id()
+        self._test_search_prompt_itemset_instance(shadow_module)
+
+    def _test_search_prompt_itemset_instance(self, module):
+        instance_id = "123"
+        module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}, input_="select1", itemset=Itemset(
+                    instance_id=instance_id,
+                    instance_uri="jr://fixture/custom_fixture",
+                    nodeset=f"instance('{instance_id}')/rows/row",
+                    label='name',
+                    value='id',
+                    sort='id',
+                )),
+            ],
+        )
+        module.assign_references()
+        suite = self.factory.app.create_suite()
+
+        expected_instance = f"""
+                <partial>
+                  <instance id="{instance_id}" src="jr://fixture/custom_fixture"/>
+                </partial>
+                """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            f"./remote-request[1]/instance[@id='{instance_id}']",
         )

@@ -79,7 +79,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -123,13 +122,14 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (user_can_view_reports(self.project, self.couch_user)
-                and has_privilege(self._request, privileges.PROJECT_ACCESS))
-
-    @property
-    def view(self):
-        from corehq.apps.reports.views import MySavedReportsView
-        return MySavedReportsView.urlname
+        if not has_privilege(self._request, privileges.PROJECT_ACCESS):
+            return False
+        if user_can_view_reports(self.project, self.couch_user):
+            return True
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            if self.couch_user.can_view_some_tableau_viz(self.domain):
+                return True
+        return False
 
     @property
     def sidebar_items(self):
@@ -154,8 +154,10 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+
+        if not user_can_view_reports(self.project, self.couch_user):
             return []
+
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
@@ -195,11 +197,14 @@ class ProjectReportsTab(UITab):
 
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
-        items = [{
-            'title': viz.name,
-            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-            'show_in_dropdown': False,
-        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+        items = [
+            {
+                'title': viz.name,
+                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+                'show_in_dropdown': False,
+            }
+            for viz in TableauVisualization.for_user(self.domain, self.couch_user)
+        ]
 
         return [(_("Tableau Reports"), items)] if items else []
 
@@ -270,16 +275,29 @@ class ProjectReportsTab(UITab):
 
     @property
     def dropdown_items(self):
+        items = self._get_saved_reports_dropdown()
+
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            from corehq.apps.reports.models import TableauVisualization
+            from corehq.apps.reports.standard.tableau import TableauView
+            reports = TableauVisualization.for_user(self.domain, self.couch_user)[:2]
+            if reports:
+                items.append(dropdown_dict(_('Tableau Reports'), is_header=True))
+                items.extend([
+                    dropdown_dict(report.name, url=reverse(TableauView.urlname, args=[self.domain, report.id]))
+                    for report in reports
+                ])
+
         if self.can_access_all_locations:
             reports = sidebar_to_dropdown(
                 ProjectReportDispatcher.navigation_sections(
                     request=self._request, domain=self.domain),
                 current_url=self.url)
-            return self._get_saved_reports_dropdown() + reports
-
+            items.extend(reports)
         else:
-            return (self._get_saved_reports_dropdown()
-                    + self._get_all_sidebar_items_as_dropdown())
+            items.extend(self._get_all_sidebar_items_as_dropdown())
+
+        return items
 
     def _get_all_sidebar_items_as_dropdown(self):
         def show(page):
@@ -1041,7 +1059,6 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and not isinstance(self.couch_user, AnonymousCouchUser)
             and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
@@ -1107,6 +1124,12 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
+            if self.couch_user.is_superuser or toggles.SUPPORT.enabled_for_request(self._request):
+                reminders_urls.append({
+                    'title': _("Test Inbound SMS"),
+                    'url': reverse("message_test", args=[self.domain]),
+                })
 
         return reminders_urls
 

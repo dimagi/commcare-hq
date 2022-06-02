@@ -116,15 +116,16 @@ def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
 
 
 def get_add_case_preloads_case_id_xpath(module, form):
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     if 'open_case' in form.active_actions():
         return CaseIDXPath(session_var(form.session_var_for_action('open_case')))
-    elif module.root_module_id and module.parent_select.active:
-        parent_module = module.get_app().get_module_by_unique_id(module.parent_select.module_id)
-        if not parent_module.is_multi_select():
-            # This is a submodule. case_id will have changed to avoid a clash with the parent case.
-            # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
-            case_id = '_'.join((CASE_ID, form.get_case_type()))
-            return CaseIDXPath(session_var(case_id))
+    elif module.root_module_id or module.parent_select.active:
+        # We could always get the var name from the datums but there's a performance cost
+        # If the above conditions don't apply then it should always be 'case_id'
+        var_name = EntriesHelper(module.get_app()).get_case_session_var_for_form(form)
+        if var_name:
+            return CaseIDXPath(session_var(var_name))
+        raise CaseError("Unable to determine correct session variable for case management")
     return SESSION_CASE_ID
 
 
@@ -870,10 +871,11 @@ class XForm(WrappedNode):
 
         if missing_unknown_instances:
             instance_ids = "', '".join(missing_unknown_instances)
+            module = form.get_module()
             raise XFormValidationError(_(
-                "The form is missing some instance declarations "
-                "that can't be automatically added: '%(instance_ids)s'"
-            ) % {'instance_ids': instance_ids})
+                "The form '{form}' in '{module}' is missing some instance declarations "
+                "that can't be automatically added: '{instance_ids}'"
+            ).format(form=form.default_name(), module=module.default_name(app), instance_ids=instance_ids))
 
         for instance in instances:
             if instance.id not in instance_declarations:
@@ -1628,7 +1630,7 @@ class XForm(WrappedNode):
         if form.get_module().is_multi_select():
             self.add_instance(
                 'selected_cases',
-                'jr://instance/selected_cases'
+                'jr://instance/selected-entities'
             )
             default_case_management = False
         else:
@@ -1921,7 +1923,7 @@ class XForm(WrappedNode):
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             # TODO: this dict needs to be keyed by something unique to the action
             adjusted_datums = {
-                getattr(meta.action, 'case_tag', None): meta.datum.id
+                getattr(meta.action, 'case_tag', None): meta.id
                 for meta in datums_meta
                 if meta.action
             }

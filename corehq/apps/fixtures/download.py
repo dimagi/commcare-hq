@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, timedelta
+from itertools import zip_longest
 
 from django.template.defaultfilters import yesno
 from django.utils.translation import gettext as _
@@ -103,8 +104,11 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     """
     excel_sheets = {}
 
+    def get_field_prop_format(field_number, property_number):
+        return f"field {field_number} : property {property_number}"
+
     def empty_padding_list(length):
-        return ["" for x in range(0, length)]
+        return [""] * length
 
     max_fields = 0
     max_item_attributes = 0
@@ -126,8 +130,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
           }
     """
     type_field_properties = {}
-    indexed_field_numbers = set()
-    get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
@@ -177,16 +179,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
+    indexed_field_numbers = get_indexed_field_numbers(data_types_view)
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
-    for x in range(1, max_fields + 1):
-        types_sheet["headers"].append("field %d" % x)
-        try:
-            if any(data_type.fields[x - 1].is_indexed for data_type in data_types_view):
-                indexed_field_numbers.add(x - 1)
-                types_sheet["headers"].append("field %d: is_indexed?" % x)
-        except IndexError:
-            continue
+    types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
     types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
@@ -207,8 +203,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                 field_vals.append('yes' if field.is_indexed else 'no')
                 indexed_field_count += 1
         field_vals.extend(empty_padding_list(
-            max_fields - len(data_type.fields) +
-            len(indexed_field_numbers) - indexed_field_count
+            max_fields - len(data_type.fields)
+            + len(indexed_field_numbers) - indexed_field_count
         ))
         item_att_vals = (data_type.item_attributes + empty_padding_list(
             max_item_attributes - len(data_type.item_attributes)
@@ -308,3 +304,17 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         excel_sheets[data_type.tag] = item_sheet
 
     return data_types_book, excel_sheets
+
+
+def get_indexed_field_numbers(tables):
+    class no_index:
+        is_indexed = False
+    field_lists = zip_longest(*(t.fields for t in tables), fillvalue=no_index)
+    return {i for i, fields in enumerate(field_lists) if any(f.is_indexed for f in fields)}
+
+
+def iter_types_headers(max_fields, indexed_field_numbers):
+    for i in range(max_fields):
+        yield f"field {i + 1}"
+        if i in indexed_field_numbers:
+            yield f"field {i + 1}: is_indexed?"
