@@ -16,6 +16,8 @@
 <!--
 Describe how you became confident in this change, such as
 local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
+
+In particular consider how existing data may be impacted by this change.
 -->
 
 ### Automated test coverage
