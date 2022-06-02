@@ -60,7 +60,7 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    # - ml/all-in-one-offboarding # Minha April 13
+    - ml/all-in-one-offboarding # Minha April 13
     #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     - rp/gsheet/update-project-info-form # Rynhard April 22

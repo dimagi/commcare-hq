@@ -1,3 +1,4 @@
+import html
 import re
 from collections import defaultdict
 
@@ -311,6 +312,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
         if not xpath:
             continue
 
+        xpath = html.unescape(xpath)
         instance_names = get_instance_names(xpath)
         for instance_name in instance_names:
             factory = get_instance_factory(instance_name)
