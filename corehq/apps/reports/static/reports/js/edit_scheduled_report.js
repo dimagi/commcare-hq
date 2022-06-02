@@ -46,7 +46,7 @@ hqDefine("reports/js/edit_scheduled_report", [
             $('#div_id_stop_hour').show();
         }
         else {
-            $("label[for='id_hour']").text('Time*')
+            $("label[for='id_hour']").text('Time*');
         }
     };
 

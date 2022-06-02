@@ -1,5 +1,3 @@
-import datetime
-
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
@@ -10,7 +8,7 @@ from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
