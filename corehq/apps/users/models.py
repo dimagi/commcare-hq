@@ -18,7 +18,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -309,37 +308,6 @@ class Permissions(DocumentSchema):
         for name in Permissions.permission_names():
             setattr(perms, name, value)
         return perms
-
-
-class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
-    # because these are in JSON and cannot be serialized
-    # todo: apply translation to these in the UI
-    # note: these are also tricky to change because these are just some default names,
-    # that end up being stored in the database. Think about the consequences of changing these before you do.
-    APP_EDITOR = gettext_noop("App Editor")
-    READ_ONLY = gettext_noop("Read Only")
-    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
-    BILLING_ADMIN = gettext_noop("Billing Admin")
-    MOBILE_WORKER = gettext_noop("Mobile Worker")
-    INITIAL_ROLES = {
-        READ_ONLY: lambda: Permissions(view_reports=True),
-        APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-        FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
-                                               view_commcare_users=True,
-                                               edit_groups=True,
-                                               view_groups=True,
-                                               edit_locations=True,
-                                               view_locations=True,
-                                               edit_shared_exports=True,
-                                               view_reports=True),
-        BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-        MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
-                                           report_an_issue=True,
-                                           access_all_locations=True,
-                                           access_api=False,
-                                           download_reports=False)
-    }
 
 
 class DomainMembershipError(Exception):

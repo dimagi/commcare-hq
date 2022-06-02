@@ -1,9 +1,8 @@
 import uuid
 from datetime import date, time
+from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
-
-from unittest.mock import Mock, call, patch
 
 from dimagi.utils.parsing import json_format_date
 
@@ -31,10 +30,12 @@ from corehq.apps.users.models import (
     CommCareUser,
     Permissions,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,

@@ -1,12 +1,13 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import UserRole, Permissions, UserRolePresets
+from corehq.apps.users.models import Permissions, UserRole
 from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    archive_custom_roles_for_domain,
+    get_custom_roles_for_domain,
     initialize_domain_with_default_roles,
     reset_initial_roles_for_domain,
-    archive_custom_roles_for_domain,
     unarchive_roles_for_domain,
-    get_custom_roles_for_domain
 )
 
 
