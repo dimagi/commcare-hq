@@ -1,4 +1,6 @@
 import logging
+import string
+import random
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
@@ -514,6 +516,9 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             if send_account_confirmation_sms:
                 is_active = False
                 is_account_confirmed = False
+                if not password:
+                    string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
+                    password = ''.join(random.choices(string_set, k=10))
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
                                                 web_user_username, password, upload_user)
