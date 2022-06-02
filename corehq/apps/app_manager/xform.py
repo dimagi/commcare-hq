@@ -1029,7 +1029,12 @@ class XForm(WrappedNode):
           "country": "jr://fixture/item-list:country"
         }
         """
-        instance_nodes = self.model_node.findall('{f}instance')
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+        instance_nodes = _get_instances()
         instance_dict = {}
         for instance_node in instance_nodes:
             instance_id = instance_node.attrib.get('id')
