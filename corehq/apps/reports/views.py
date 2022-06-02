@@ -2,7 +2,7 @@ import copy
 import io
 import json
 import re
-from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
 from wsgiref.util import FileWrapper
@@ -352,8 +352,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
         time_difference = get_timezone_difference(self.domain)
         (report.hour, day_change) = recalculate_hour(
             report.hour,
-            int(time_difference[:3]),
-            int(time_difference[3:])
+            int(time_difference.hours),
+            int(time_difference.minutes)
         )
         report.minute = 0
         if day_change:
@@ -554,6 +554,11 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+@dataclass
+class Timezone:
+    hours: str = "+00"
+    minutes: str = "00"
+
 
 @login_and_domain_required
 @datespan_default
@@ -646,7 +651,8 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    tz_diff = datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    return Timezone(tz_diff[:3], tz_diff[3:])
 
 
 def calculate_day(interval, day, day_change):
@@ -686,8 +692,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             time_difference = get_timezone_difference(self.domain)
             (instance.hour, day_change) = recalculate_hour(
                 instance.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
+                int(time_difference.hours),
+                int(time_difference.minutes)
             )
             instance.minute = 0
             if day_change:
@@ -791,12 +797,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain)[:3] + ':'
-                                        + get_timezone_difference(self.domain)[3:])
+                                        get_timezone_difference(self.domain).hours + ':'
+                                        + get_timezone_difference(self.domain).minutes)
         form.fields['stop_hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain)[:3] + ':'
-                                        + get_timezone_difference(self.domain)[3:])
+                                        get_timezone_difference(self.domain).hours + ':'
+                                        + get_timezone_difference(self.domain).minutes)
         return form
 
     @property
@@ -845,9 +851,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
+                self.report_notification.hour, int(time_difference.hours), int(time_difference.minutes)
             )
-            self.report_notification.minute = int(time_difference[3:])
+            self.report_notification.minute = int(time_difference.minutes)
             if day_change:
                 self.report_notification.day = calculate_day(
                     self.report_notification.interval,
