@@ -323,13 +323,24 @@ class UserRolePresets(object):
     FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
     BILLING_ADMIN = gettext_noop("Billing Admin")
     MOBILE_WORKER = gettext_noop("Mobile Worker")
-    INITIAL_ROLES = (
-        READ_ONLY,
-        APP_EDITOR,
-        FIELD_IMPLEMENTER,
-        BILLING_ADMIN,
-        MOBILE_WORKER,
-    )
+    INITIAL_ROLES = {
+        READ_ONLY: lambda: Permissions(view_reports=True),
+        APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
+        FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
+                                               view_commcare_users=True,
+                                               edit_groups=True,
+                                               view_groups=True,
+                                               edit_locations=True,
+                                               view_locations=True,
+                                               edit_shared_exports=True,
+                                               view_reports=True),
+        BILLING_ADMIN: lambda: Permissions(edit_billing=True),
+        MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
+                                           report_an_issue=True,
+                                           access_all_locations=True,
+                                           access_api=False,
+                                           download_reports=False)
+    }
 
     ID_NAME_MAP = {
         'read-only-no-reports': READ_ONLY_NO_REPORTS,
@@ -351,35 +362,6 @@ class UserRolePresets(object):
     @classmethod
     def get_preset_role_name(cls, role_id):
         return cls.ID_NAME_MAP.get(role_id, None)
-
-    @classmethod
-    def get_preset_map(cls):
-        return {
-            cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
-            cls.READ_ONLY: lambda: Permissions(view_reports=True),
-            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
-                                                       view_commcare_users=True,
-                                                       edit_groups=True,
-                                                       view_groups=True,
-                                                       edit_locations=True,
-                                                       view_locations=True,
-                                                       edit_shared_exports=True,
-                                                       view_reports=True),
-            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
-                                                   report_an_issue=True,
-                                                   access_all_locations=True,
-                                                   access_api=False,
-                                                   download_reports=False)
-        }
-
-    @classmethod
-    def get_permissions(cls, preset):
-        preset_map = cls.get_preset_map()
-        if preset not in preset_map:
-            return None
-        return preset_map[preset]()
 
 
 class DomainMembershipError(Exception):

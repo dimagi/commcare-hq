@@ -25,15 +25,13 @@ def unarchive_roles_for_domain(domain):
 
 
 def reset_initial_roles_for_domain(domain):
-    initial_roles = [
-        role for role in UserRole.objects.get_by_domain(domain)
-        if role.name in UserRolePresets.INITIAL_ROLES
-    ]
-    for role in initial_roles:
-        role.set_permissions(UserRolePresets.get_permissions(role.name).to_list())
+    for role in UserRole.objects.get_by_domain(domain):
+        if role.name in UserRolePresets.INITIAL_ROLES:
+            preset_permissions = UserRolePresets.INITIAL_ROLES.get(role.name)()
+            role.set_permissions(preset_permissions.to_list())
 
 
 def initialize_domain_with_default_roles(domain):
     """Outside of tests this is only called when creating a new domain"""
-    for role_name in UserRolePresets.INITIAL_ROLES:
-        UserRole.create(domain, role_name, permissions=UserRolePresets.get_permissions(role_name))
+    for role_name, permissions_fn in UserRolePresets.INITIAL_ROLES.items():
+        UserRole.create(domain, role_name, permissions=permissions_fn())

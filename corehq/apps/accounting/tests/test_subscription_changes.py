@@ -166,7 +166,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
-                UserRolePresets.get_permissions(user_role.name)
+                UserRolePresets.INITIAL_ROLES[user_role.name](),
             )
 
     def _assertStdUsers(self):
