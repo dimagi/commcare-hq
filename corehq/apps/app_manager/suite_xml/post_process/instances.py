@@ -312,7 +312,6 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
         if not xpath:
             continue
 
-        xpath = html.unescape(xpath)
         instance_names = get_instance_names(xpath)
         for instance_name in instance_names:
             factory = get_instance_factory(instance_name)
@@ -332,4 +331,5 @@ instance_re = re.compile(r"""instance\(['"]([\w\-:]+)['"]\)""", re.UNICODE)
 
 
 def get_instance_names(xpath):
-    return set(re.findall(instance_re, xpath))
+    unescaped = html.unescape(xpath)
+    return set(re.findall(instance_re, unescaped))
