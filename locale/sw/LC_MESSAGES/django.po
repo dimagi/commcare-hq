@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-01 17:13+0000\n"
+"POT-Creation-Date: 2022-06-03 13:39+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: esoergel, 2015\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -5726,6 +5726,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/views/modules.py
 #: corehq/apps/reports/standard/cases/basic.py
 msgid "Case List"
@@ -5744,6 +5745,7 @@ msgid "Identify clients by fingerprint."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Advanced Menu"
 msgstr ""
 
@@ -5752,6 +5754,7 @@ msgid "Complex case management."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Report Menu"
 msgstr ""
 
@@ -5760,6 +5763,7 @@ msgid "Worker performance."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Shadow Menu"
 msgstr ""
 
@@ -6600,6 +6604,7 @@ msgid "You are about to delete this application"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
@@ -7621,17 +7626,19 @@ msgid "This is menu %(index)s"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid ""
-"\n"
-"                  Are you sure you want to delete this survey folder?\n"
-"                  "
+msgid "Survey Menu"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+msgid "menu"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#, python-format
 msgid ""
 "\n"
-"                  Are you sure you want to delete this case list?\n"
-"                  "
+"                Are you sure you want to delete this %(menu)s?\n"
+"              "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
@@ -7639,27 +7646,11 @@ msgid "You are about to delete"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#, python-format
 msgid ""
 "\n"
-"                    This action will also delete all forms in this survey "
-"folder.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid ""
-"\n"
-"                    This action will also delete all forms in this case "
-"list.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Delete Surveys"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Delete Case List"
+"                This action will also delete all forms in this %(menu)s.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
@@ -11533,10 +11524,6 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html

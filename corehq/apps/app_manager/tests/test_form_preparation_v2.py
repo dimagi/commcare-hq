@@ -1,6 +1,6 @@
-from django.test import SimpleTestCase
-
 from unittest.mock import patch
+
+from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import (
     XFormException,
@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     AdvancedOpenCaseAction,
     Application,
     CaseIndex,
+    ConditionalCaseUpdate,
     FormAction,
     FormActionCondition,
     LoadUpdateAction,
@@ -19,11 +20,12 @@ from corehq.apps.app_manager.models import (
     OpenCaseAction,
     OpenSubCaseAction,
     PreloadAction,
-    UpdateCaseAction, ConditionalCaseUpdate,
+    UpdateCaseAction,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.util.test_utils import flag_enabled
 
 
@@ -163,6 +165,20 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         exception_message = str(cm.exception)
         self.assertIn('casebd', exception_message)
         self.assertIn('custom2', exception_message)
+
+    def test_add_instances_quotes(self):
+        """Ensure that instances using double quotations get recognised. This is an issue
+        because the quotes get encoded as ``&quot;`` in XML attributes"""
+        builder = XFormBuilder()
+        builder.new_question("test1", "name1", value='instance("casedb")/casedb/case')
+        builder.new_question("test2", "name2", value="instance('item-list:country')/casedb/case")
+        xml = builder.tostring(pretty_print=True)
+        x_form = XForm(xml)
+        x_form.add_missing_instances(self.form, self.app)
+        self.assertEqual(
+            {"casedb", "item-list:country"},
+            set(x_form.get_external_instances().keys())
+        )
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):

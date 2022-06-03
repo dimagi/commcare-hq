@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-01 17:13+0000\n"
+"POT-Creation-Date: 2022-06-03 13:39+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -45,7 +45,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
+"1000000 == 0 ? 1 : 2;\n"
 
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
@@ -526,6 +527,7 @@ msgid_plural ""
 "{num_days} days of {plan_name} Software Plan.{subscription_date_range}"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -542,6 +544,7 @@ msgid_plural ""
 "{prorated_notice}"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -549,6 +552,7 @@ msgid "{num_sms} SMS Message"
 msgid_plural "{num_sms} SMS Messages"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -569,6 +573,7 @@ msgid_plural ""
 "included{date_range}."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/models.py
 #, python-brace-format
@@ -749,6 +754,7 @@ msgid_plural ""
 "select this plan."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -762,6 +768,9 @@ msgstr[0] ""
 "Vous avez %(num_fix)s table de recherche installée. Sélectionner ce plan "
 "effacera cette table de recherche."
 msgstr[1] ""
+"Vous avez %(num_fix)s tables de recherche installées. Sélectionner ce plan "
+"effacera ces tables de recherche."
+msgstr[2] ""
 "Vous avez %(num_fix)s tables de recherche installées. Sélectionner ce plan "
 "effacera ces tables de recherche."
 
@@ -782,6 +791,7 @@ msgid_plural ""
 "plan will deactivate them."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -793,6 +803,7 @@ msgid_plural ""
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -804,6 +815,9 @@ msgstr[0] ""
 "Vous avez %(num)d téléchargement dé-identifié. Choisir ce plan entrainera sa "
 "suppression."
 msgstr[1] ""
+"Vous avez %(num)d téléchargements dé-identifiés. Choisir ce plan entrainera "
+"leur suppression."
+msgstr[2] ""
 "Vous avez %(num)d téléchargements dé-identifiés. Choisir ce plan entrainera "
 "leur suppression."
 
@@ -821,6 +835,7 @@ msgid_plural ""
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -840,6 +855,7 @@ msgid_plural ""
 "per month."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -856,6 +872,10 @@ msgstr[0] ""
 "ce plan, tous les utilisateurs ayant ce rôle, verront leur droit d’accès "
 "changé en mode lecture seulement."
 msgstr[1] ""
+"Vous avez %(num_roles)d rôles personnalisés pour ce projet. Si vous "
+"choisissez ce plan, tous les utilisateurs ayant ces rôles, verront leur "
+"droit d’accès changé en mode lecture seulement."
+msgstr[2] ""
 "Vous avez %(num_roles)d rôles personnalisés pour ce projet. Si vous "
 "choisissez ce plan, tous les utilisateurs ayant ces rôles, verront leur "
 "droit d’accès changé en mode lecture seulement."
@@ -881,6 +901,9 @@ msgstr[0] ""
 "Vous avez %(rule_count)d règle d'actualisation automatique de dossier dans "
 "votre projet . Si vous selectionnez ce plan, cette règle sera desactivée."
 msgstr[1] ""
+"Vous avez %(rule_count)d règles d'actualisation automatique de dossier dans "
+"votre projet . Si vous selectionnez ce plan, ces règles seront desactivées."
+msgstr[2] ""
 "Vous avez %(rule_count)d règles d'actualisation automatique de dossier dans "
 "votre projet . Si vous selectionnez ce plan, ces règles seront desactivées."
 
@@ -939,6 +962,7 @@ msgid_plural ""
 "configured, it will be unset on downgrade."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -6068,6 +6092,7 @@ msgstr "Recueillir des données une fois."
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/views/modules.py
 #: corehq/apps/reports/standard/cases/basic.py
 msgid "Case List"
@@ -6086,6 +6111,7 @@ msgid "Identify clients by fingerprint."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Advanced Menu"
 msgstr "Menu avancé"
 
@@ -6094,6 +6120,7 @@ msgid "Complex case management."
 msgstr "Gestion des dossiers complexes"
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Report Menu"
 msgstr "Menu de rapports"
 
@@ -6102,6 +6129,7 @@ msgid "Worker performance."
 msgstr "Performance des utilisateurs."
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "Shadow Menu"
 msgstr "Menu ombre"
 
@@ -6944,6 +6972,7 @@ msgid "You are about to delete this application"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
@@ -7987,46 +8016,46 @@ msgid "This is menu %(index)s"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid ""
-"\n"
-"                  Are you sure you want to delete this survey folder?\n"
-"                  "
+#, fuzzy
+#| msgid "Source Menu"
+msgid "Survey Menu"
+msgstr "Menu source"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+msgid "menu"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
 msgid ""
 "\n"
-"                  Are you sure you want to delete this case list?\n"
-"                  "
+"                Are you sure you want to delete this %(menu)s?\n"
+"              "
 msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "You are about to delete"
 msgstr "Vous êtes sur le point de supprimer"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            Snapshot of %(snap_name)s\n"
+#| "                        "
 msgid ""
 "\n"
-"                    This action will also delete all forms in this survey "
-"folder.\n"
-"                    "
+"                This action will also delete all forms in this %(menu)s.\n"
+"                "
 msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid ""
 "\n"
-"                    This action will also delete all forms in this case "
-"list.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Delete Surveys"
-msgstr "Supprimer les enquêtes"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Delete Case List"
-msgstr "Supprimer la liste des dossiers"
+"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
 msgid "Graph"
@@ -11479,12 +11508,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/util.py
-#, fuzzy
-#| msgid "There was an unexpected error! Please try again or report an issue."
 msgid ""
 "There was an unexpected error retrieving the file you uploaded. Please try "
 "again and contact support if the problem persists."
-msgstr "Une erreur s'est produite! Veuillez réessayer ou signaler le problème."
+msgstr ""
 
 #: corehq/apps/case_importer/util.py
 msgid ""
@@ -12071,10 +12098,6 @@ msgstr ""
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Effacer"
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "24-hour clock"
-msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
 msgid "List is empty."
@@ -16941,6 +16964,7 @@ msgid_plural ""
 "          "
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html
 msgid "Show Codes"
@@ -20643,6 +20667,7 @@ msgid "%(num_users)s member"
 msgid_plural "%(num_users)s members"
 msgstr[0] "%(num_users)s membres"
 msgstr[1] "%(num_users)s membres"
+msgstr[2] "%(num_users)s membres"
 
 #: corehq/apps/groups/templates/groups/group_members.html
 msgid ""
@@ -22204,6 +22229,7 @@ msgid_plural ""
 "          "
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/downgrade_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/prepaid_modal.html
@@ -22956,6 +22982,7 @@ msgid_plural ""
 "          "
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/prepaid_modal.html
 #, python-format
@@ -23513,10 +23540,8 @@ msgid "Keyword"
 msgstr "Mot-clé"
 
 #: corehq/apps/linked_domain/const.py
-#, fuzzy
-#| msgid "Data Collection and Reminders"
 msgid "Data Expressions and Filters"
-msgstr "Collecte de données et rappels"
+msgstr ""
 
 #: corehq/apps/linked_domain/const.py
 msgid "Custom User Data Fields"
@@ -23944,10 +23969,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr_expressions.py
-#, fuzzy
-#| msgid "Gateway could not be found."
 msgid "Linked Expression could not be found"
-msgstr "Passerelle n'a pas été trouvée"
+msgstr ""
 
 #: corehq/apps/linked_domain/ucr_expressions.py
 msgid "Upstream Expression could not be found. Maybe it has been deleted?"
@@ -23980,10 +24003,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You do not have permission to pull content into this project space."
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/linked_domain/views.py
 msgid "No downstream project spaces were selected. Please contact support."
@@ -24004,12 +24025,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid ""
 "You do not have permission to push to all specified downstream project "
 "spaces."
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/linked_domain/views.py
 msgid ""
@@ -24033,11 +24052,9 @@ msgid "The project space {} is already a downstream project space of {}."
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid ""
 "You do not have adequate permissions in both project spaces to create a link."
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/linked_domain/views.py
 msgid "Unknown App"
@@ -25125,6 +25142,7 @@ msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format
@@ -26861,6 +26879,7 @@ msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -31367,10 +31386,8 @@ msgid "Send Message"
 msgstr "Envoyer message"
 
 #: corehq/apps/sms/forms.py
-#, fuzzy
-#| msgid "Phone number added."
 msgid "Phone number with country code"
-msgstr "Numéro de téléphone ajouté."
+msgstr ""
 
 #: corehq/apps/sms/forms.py
 msgid "Attempt to claim the channel for this number."
@@ -32158,16 +32175,10 @@ msgid "Test message received."
 msgstr "Message teste reçu "
 
 #: corehq/apps/sms/views.py
-#, fuzzy
-#| msgid ""
-#| "Invalid phone number being simulated. Please choose a two-way phone "
-#| "number belonging to a contact in your project."
 msgid ""
 "Invalid phone number. Please choose a two-way phone number belonging to a "
 "contact in your project."
 msgstr ""
-"Numéro de téléphone non valide en simulation.  Choisissez un numéro de "
-"téléphone bidirectionnel appartenant à un contact dans votre projet. "
 
 #: corehq/apps/sms/views.py
 msgid ""
@@ -37492,6 +37503,7 @@ msgid_plural ""
 "it. Remove all users assigned to the role before deleting it."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/users/views/__init__.py
 msgid "Invite Web User to Project"
@@ -41420,10 +41432,8 @@ msgid "New Application"
 msgstr "Nouvelle application"
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Troubleshoot Inbound SMS"
 msgid "Test Inbound SMS"
-msgstr "Résoudre les problèmes des SMS entrants "
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Subscribe to SMS Reports"
@@ -42559,41 +42569,11 @@ msgstr "Le Score à la Fonctionnalité"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
+#~ msgid "Delete Surveys"
+#~ msgstr "Supprimer les enquêtes"
+
+#~ msgid "Delete Case List"
+#~ msgstr "Supprimer la liste des dossiers"
+
 #~ msgid "Unknown Forms (Possibly Deleted)"
 #~ msgstr "Formulaires inconnus (possiblement supprimés)"
-
-#~ msgid "Download to Java Phone"
-#~ msgstr "Télécharger sur téléphone Java"
-
-#~ msgid "Download <strong>both</strong> of the following files:"
-#~ msgstr "Télécharger <strong>les deux</strong> fichiers suivants :"
-
-#~ msgid "For help on how to install, see"
-#~ msgstr "Pour obtenir de l'aide sur la manière d'installer, consultez :"
-
-#~ msgid "Set Up Feature Phones"
-#~ msgstr "Régler les téléphones portables grand public"
-
-#~ msgid "If you have any issues with the installation, please refer to"
-#~ msgstr ""
-#~ "Si vous éprouvez des problèmes lors de l'installation, veuillez consulter"
-
-#~ msgid "Troubleshooting Phone Problems"
-#~ msgstr "Dépannage pour problèmes avec téléphones"
-
-#~ msgid "Send Java Phone app"
-#~ msgstr "Envoyer l'application pour téléphone Java"
-
-#~ msgid "Send Android app"
-#~ msgstr "Envoyer l'application Android"
-
-#~ msgid "Sorry, your session has expired. Please start over and try again."
-#~ msgstr ""
-#~ "Désolé, votre session est expirée. Veuillez redémarrer et essayer à "
-#~ "nouveau."
-
-#~ msgid "Simulate Inbound Message from"
-#~ msgstr "Simuler un message entrant venant de "
-
-#~ msgid "Message:"
-#~ msgstr "Message :"

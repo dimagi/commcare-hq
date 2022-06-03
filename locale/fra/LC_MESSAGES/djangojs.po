@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-01 17:13+0000\n"
+"POT-Creation-Date: 2022-06-03 13:40+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -29,7 +29,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
+"1000000 == 0 ? 1 : 2;\n"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
@@ -1435,6 +1436,7 @@ msgid "Warning: {errs} is still referenced by other questions."
 msgid_plural "Warning: {errs} are still referenced by other questions."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "New Form"
@@ -2678,6 +2680,14 @@ msgid "Not a valid choice"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "12-hour clock"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "24-hour clock"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2907,6 +2917,126 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Go to today"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Calculation"
+msgid "Clear selection"
+msgstr "Calcul"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Close the picker"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Select None"
+msgid "Select Month"
+msgstr "Sélectionner aucun"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Previous Screen"
+msgid "Previous Month"
+msgstr "Écran précédent"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Next Month"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Select One"
+msgid "Select Year"
+msgstr "Sélectionner un"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Previous Screen"
+msgid "Previous Year"
+msgstr "Écran précédent"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Next"
+msgid "Next Year"
+msgstr "Suivant"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Select One"
+msgid "Select Decade"
+msgstr "Sélectionner un"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Previous Screen"
+msgid "Previous Decade"
+msgstr "Écran précédent"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Next Decade"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Previous Screen"
+msgid "Previous Century"
+msgstr "Écran précédent"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Next Century"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Pick Hour"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Increment Hour"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Decrement Hour"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Pick Minute"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Increment Minute"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Decrement Minute"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Pick Second"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Increment Second"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Decrement Second"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+msgid "Toggle Period"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#, fuzzy
+#| msgid "Select File"
+msgid "Select Time"
+msgstr "Sélectionner un fichier"
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid ""
@@ -3614,24 +3744,28 @@ msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"
@@ -4609,6 +4743,3 @@ msgstr ""
 
 #~ msgid "Parent Menu: "
 #~ msgstr "Menu parent:"
-
-#~ msgid "Previous Screen"
-#~ msgstr "Écran précédent"
