@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
+"POT-Creation-Date: 2022-06-03 18:02+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Zsolt Bölöny <bolony.zsolt@gmail.com>, 2013\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -16839,10 +16839,8 @@ msgid "Odata feeds available"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Report: {0}"
 msgid "Report Names"
-msgstr "रिपोर्ट : {0}"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Number of rows"
@@ -27736,10 +27734,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-#, fuzzy
-#| msgid "Unknown user"
 msgid "Unknown Forms"
-msgstr "अनजान उपयोगकर्ता"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid "What are Unknown Forms?"

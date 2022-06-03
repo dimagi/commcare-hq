@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:40+0000\n"
+"POT-Creation-Date: 2022-06-03 18:02+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -2939,10 +2939,8 @@ msgid "Select Month"
 msgstr "Sélectionner aucun"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Month"
-msgstr "Écran précédent"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Month"
@@ -2955,10 +2953,8 @@ msgid "Select Year"
 msgstr "Sélectionner un"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Year"
-msgstr "Écran précédent"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 #, fuzzy
@@ -2973,20 +2969,16 @@ msgid "Select Decade"
 msgstr "Sélectionner un"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Decade"
-msgstr "Écran précédent"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Decade"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Century"
-msgstr "Écran précédent"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Century"
@@ -4462,10 +4454,8 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-#, fuzzy
-#| msgid "Available Reports"
 msgid "Access All Tableau Reports"
-msgstr "Rapports disponibles"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
@@ -4555,6 +4545,10 @@ msgstr "Supprimer la requête"
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Are you sure you want to delete this request?"
 msgstr "Êtes-vous certain de vouloir supprimer cette requête?"
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "s email server"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
@@ -4731,15 +4725,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Home Screen"
-#~ msgstr "Écran d'accueil"
-
-#~ msgid "First Menu"
-#~ msgstr "Premier Menu"
-
-#~ msgid "Menu: "
-#~ msgstr "Menu: "
-
-#~ msgid "Parent Menu: "
-#~ msgstr "Menu parent:"

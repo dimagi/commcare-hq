@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
+"POT-Creation-Date: 2022-06-03 18:02+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -8027,35 +8027,24 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#| msgid "Are you sure you want to delete this version"
 msgid ""
 "\n"
 "                Are you sure you want to delete this %(menu)s?\n"
 "              "
-msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
+msgstr "Êtes-vous certain de vouloir supprimer cette version ?"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "You are about to delete"
 msgstr "Vous êtes sur le point de supprimer"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                This action will also delete all forms in this %(menu)s.\n"
 "                "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/add_property_button.html
 msgid "Graph"
@@ -10486,34 +10475,24 @@ msgid "Unable to validate form due to server error."
 msgstr "Impossible de valider les formulaires dû à une erreur de serveur. "
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "CommCare Home Screen Logo"
 msgid "Home Screen"
-msgstr "Logo du CommCare Home Screen"
+msgstr "Écran d'accueil"
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "First Name"
 msgid "First Menu"
-msgstr "Prénom"
+msgstr "Premier Menu"
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Menu"
 msgid "Menu: "
-msgstr "Menu"
+msgstr "Menu: "
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Previous"
 msgid "Previous Screen"
-msgstr "Précédent"
+msgstr "Écran précédent"
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Parent Menu"
 msgid "Parent Menu: "
-msgstr "Menu parent"
+msgstr "Menu parent:"
 
 #: corehq/apps/app_manager/views/forms.py
 msgid "Link to other form or menu"
@@ -10803,16 +10782,11 @@ msgid "Group already has node for lang: {0}"
 msgstr "Le groupe a déjà node for lang: {0}"
 
 #: corehq/apps/app_manager/xform.py
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "The form is missing some instance declarations that can't be "
-#| "automatically added: '%(instance_ids)s'"
+#, python-brace-format
 msgid ""
 "The form '{form}' in '{module}' is missing some instance declarations that "
 "can't be automatically added: '{instance_ids}'"
 msgstr ""
-"Il manque des déclarations d'instance qui peuvent être rajouter "
-"automatiquement:'%(instance_ids)s'"
 
 #: corehq/apps/app_manager/xform.py
 msgid "There's no language called '{}'"
@@ -17600,22 +17574,16 @@ msgid "Odata feeds used"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "No Data Available"
 msgid "Odata feeds available"
-msgstr "Aucune donnée disponible"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Report Name"
 msgid "Report Names"
-msgstr "Nom du rapport "
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Number of Days"
 msgid "Number of rows"
-msgstr "Nombre de jours"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "ERROR: Too many exports. Please contact customer service"
@@ -21302,16 +21270,12 @@ msgid "Admin"
 msgstr "Admin"
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "System Info"
 msgid "System Form"
-msgstr "Infos sur le système"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "Resaving Forms"
 msgid "Data Cleaning Form"
-msgstr "Réenregistrement des Formulaires"
+msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
 #, python-format
@@ -28887,10 +28851,6 @@ msgid "What are Known Forms?"
 msgstr "Qu'est qu'un 'formulaire connu' ?"
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-#, fuzzy
-#| msgid ""
-#| "Known Forms are forms that have IDs which can be matched to existing or "
-#| "deleted CommCare Applications in your Project."
 msgid ""
 "\n"
 "                  These are forms that can be matched to an existing or "
@@ -28898,27 +28858,16 @@ msgid ""
 "                  in your project.\n"
 "                "
 msgstr ""
-"Les formulaires connus sont des formulaires dotés d'identifiants qui peuvent "
-"être jumelés à des applications CommCare existantes ou supprimées de votre "
-"Projet."
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-#, fuzzy
-#| msgid "Unknown Form"
 msgid "Unknown Forms"
-msgstr "Formulaire inconnu"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid "What are Unknown Forms?"
 msgstr "Qu'est qu'un 'formulaire inconnu' ?"
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-#, fuzzy
-#| msgid ""
-#| "We tried and tried, but these form IDs did not belong to any CommCare "
-#| "Applications (existing or deleted) in your Project. It might mean that "
-#| "these forms once belonged to an application, were deleted from it, and "
-#| "then replaced by a different form."
 msgid ""
 "\n"
 "                  These forms do not belong to a CommCare Application "
@@ -28929,11 +28878,6 @@ msgid ""
 "forms from an integration or API.\n"
 "                  "
 msgstr ""
-"Nous avons essayé à maintes reprises, mais ces identifiants de formulaires "
-"n'appartiennent à aucune application CommCare (existante ou supprimée) dans "
-"votre Projet. Cela pourrait signifier que ces formulaires ont déjà appartenu "
-"à une application, ont été supprimées, puis remplacées par un autre "
-"formulaire."
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid "Choose Unknown Form"
@@ -32353,10 +32297,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/async_handlers.py
-#, fuzzy
-#| msgid "Username {} is already taken"
 msgid "User {} is already exempt from SSO"
-msgstr "Le nom d'utilisateur {} existe déjà"
+msgstr ""
 
 #: corehq/apps/sso/async_handlers.py
 msgid ""
@@ -32377,10 +32319,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/async_handlers.py
-#, fuzzy
-#| msgid "Username {} is already taken"
 msgid "User {} is already a test user."
-msgstr "Le nom d'utilisateur {} existe déjà"
+msgstr ""
 
 #: corehq/apps/sso/async_handlers.py
 msgid ""
@@ -32425,10 +32365,8 @@ msgid "This is required when Single Sign On is active."
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "This is not a valid sub-area for the area %s"
 msgid "This is not a valid One Login URL."
-msgstr "Cette sous-zone n'est pas valide pour la zone %s"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -32591,10 +32529,8 @@ msgid "Public IdP Signing Certificate"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "User ID"
 msgid "Issuer ID"
-msgstr "Identifiant d'utilisateur"
+msgstr ""
 
 #: corehq/apps/sso/forms.py corehq/motech/forms.py
 msgid "Client ID"
@@ -32693,16 +32629,12 @@ msgid "Issuer URL"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Webhook Secret"
 msgid "Show Secret"
-msgstr "Secret Webhook"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Client Secret"
 msgid "Hide Secret"
-msgstr "Secret client"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "Application Details for {}"
@@ -32731,10 +32663,8 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
-#, fuzzy
-#| msgid "Restore User"
 msgid "SSO Test Users"
-msgstr "Restaurer l'utilisateur"
+msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 msgid "Danger Zone"
@@ -32831,18 +32761,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/config_errors.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                  There was an issue logging in with %(service)s:\n"
 "                "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/sso/templates/sso/config_errors.html
 #, python-format
@@ -32854,12 +32778,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/config_errors.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                  Please reach out to support, so we can quickly resolve "
@@ -32867,8 +32785,6 @@ msgid ""
 "                  problem. Thank you!\n"
 "                "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/sso/templates/sso/config_errors.html
 msgid ""
@@ -32909,18 +32825,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/config_errors.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Obtaining User Information Was Not Possible\n"
 "                  "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/sso/templates/sso/config_errors.html
 #, python-format
@@ -32935,18 +32844,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/config_errors.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                    OpenID Connect Session Unknown\n"
 "                  "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/sso/templates/sso/config_errors.html
 #, python-format
@@ -32960,18 +32862,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/config_errors.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                    OIDC Method Not Allowed\n"
 "                  "
 msgstr ""
-"\n"
-"                            Instantané de %(snap_name)s"
 
 #: corehq/apps/sso/templates/sso/config_errors.html
 #, python-format
@@ -34758,10 +34653,8 @@ msgstr ""
 "résultat de cette expression évaluée sur le document."
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "Parent Type"
 msgid "Input Type"
-msgstr "Type de parent"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
 msgid "Document Type"
@@ -34772,10 +34665,8 @@ msgid "Document ID"
 msgstr "Identifiant du document"
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "Document ID"
 msgid "Document JSON"
-msgstr "Identifiant du document"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
 msgid ""
@@ -34803,10 +34694,8 @@ msgstr ""
 "peuvent être utilisés."
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "XPath expression"
 msgid "Saved expression"
-msgstr "Expression de XPath"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
 #, python-format
@@ -34835,10 +34724,8 @@ msgid "Evaluate!"
 msgstr "Évaluer!"
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "Format"
 msgid "Format JSON"
-msgstr "Format"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/import_report.html
 msgid "Report spec"
@@ -35473,10 +35360,8 @@ msgstr ""
 "Source de données avec l'identifiant {} non trouvée dans le domaine {}."
 
 #: corehq/apps/userreports/views.py
-#, fuzzy
-#| msgid "Export not found"
 msgid "Expression not found"
-msgstr "Téléchargement non trouvé"
+msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "Problem with expression: {}"
@@ -35712,28 +35597,17 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid ""
-#| "Multiply this user's case load by a number for load testing on phones. "
-#| "Leave blank for normal users."
 msgid ""
 "Multiply this user's case load by this number for load testing on phones."
 msgstr ""
-"Multipliez la charge de dossiers de cet utilisateur par un numéro pour le "
-"test de charge sur les téléphones. Laissez vide pour les utilisateurs "
-"normaux."
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Load questions"
 msgid "Load testing"
-msgstr "Charger les questions"
+msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Update Role"
 msgid "Update user"
-msgstr "Mettre à jour le rôle"
+msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Reset Password for Mobile Worker"
@@ -36292,10 +36166,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#, fuzzy
-#| msgid ""
-#| "This user is marked as a demo user.  All forms submitted by this user "
-#| "will be ignored and not appear in reports or data exports"
 msgid ""
 "\n"
 "      This user is a loadtest user. All forms submitted by this user will "
@@ -36303,15 +36173,8 @@ msgid ""
 "      ignored and not appear in reports or data exports.\n"
 "      "
 msgstr ""
-"Cet utilisateur est marqué comme utilisateur démo. Tous les formulaires "
-"soumis par cet utilisateur seront ignorés et ne figureront pas dans les "
-"exportations de rapports ou de données."
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#, fuzzy
-#| msgid ""
-#| "This user is marked as a demo user.  All forms submitted by this user "
-#| "will be ignored and not appear in reports or data exports"
 msgid ""
 "\n"
 "      This user is marked as a demo user. All forms submitted by this user "
@@ -36319,9 +36182,6 @@ msgid ""
 "      be ignored and not appear in reports or data exports.\n"
 "      "
 msgstr ""
-"Cet utilisateur est marqué comme utilisateur démo. Tous les formulaires "
-"soumis par cet utilisateur seront ignorés et ne figureront pas dans les "
-"exportations de rapports ou de données."
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Security"
@@ -42574,6 +42434,3 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "Delete Case List"
 #~ msgstr "Supprimer la liste des dossiers"
-
-#~ msgid "Unknown Forms (Possibly Deleted)"
-#~ msgstr "Formulaires inconnus (possiblement supprimés)"

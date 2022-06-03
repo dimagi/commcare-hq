@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:40+0000\n"
+"POT-Creation-Date: 2022-06-03 18:02+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Séfora Vazirna <seforan@gmail.com>, 2022\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -2908,10 +2908,8 @@ msgid "Select Month"
 msgstr "Selecionar Nenhum"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Month"
-msgstr "Tela Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Month"
@@ -2924,10 +2922,8 @@ msgid "Select Year"
 msgstr "Selecionar Nenhum"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Year"
-msgstr "Tela Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 #, fuzzy
@@ -2942,20 +2938,16 @@ msgid "Select Decade"
 msgstr "Selecionar Nenhum"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Decade"
-msgstr "Tela Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Decade"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Century"
-msgstr "Tela Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Century"
@@ -4420,10 +4412,8 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-#, fuzzy
-#| msgid "Available Reports"
 msgid "Access All Tableau Reports"
-msgstr "Relatórios Disponíveis"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
@@ -4512,6 +4502,10 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Are you sure you want to delete this request?"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "s email server"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users_list.js
@@ -4689,6 +4683,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Home Screen"
-#~ msgstr "Tela Inicial"

@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
+"POT-Creation-Date: 2022-06-03 18:02+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
@@ -10061,31 +10061,23 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid "Home Screen"
+msgstr "Tela Inicial"
+
+#: corehq/apps/app_manager/views/forms.py
+msgid "First Menu"
 msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "First Name"
-msgid "First Menu"
-msgstr "Primeiro nome"
-
-#: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Menu"
 msgid "Menu: "
-msgstr "Menu"
+msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Previous"
 msgid "Previous Screen"
-msgstr "Anterior"
+msgstr "Tela Anterior"
 
 #: corehq/apps/app_manager/views/forms.py
-#, fuzzy
-#| msgid "Parent Level"
 msgid "Parent Menu: "
-msgstr "Nível Ascendente"
+msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid "Link to other form or menu"
@@ -16941,10 +16933,8 @@ msgid "Odata feeds available"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Saved Report Name"
 msgid "Report Names"
-msgstr "Nome do Relatório Salvo"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Number of rows"
@@ -20591,10 +20581,8 @@ msgid "Admin"
 msgstr "Administrador"
 
 #: corehq/apps/hqcase/utils.py
-#, fuzzy
-#| msgid "System Info"
 msgid "System Form"
-msgstr "Informação do Sistema"
+msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
@@ -31601,10 +31589,8 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
-#, fuzzy
-#| msgid "Web Users"
 msgid "SSO Test Users"
-msgstr "Usuários da Web"
+msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 msgid "Danger Zone"
@@ -33545,10 +33531,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "Account Type"
 msgid "Input Type"
-msgstr "Tipo de Conta"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
 msgid "Document Type"
@@ -33586,10 +33570,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "My Saved Reports"
 msgid "Saved expression"
-msgstr "Meus Relatórios Salvos"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
 #, python-format
@@ -33618,10 +33600,8 @@ msgid "Evaluate!"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#, fuzzy
-#| msgid "Form Name"
 msgid "Format JSON"
-msgstr "Nome do formulário"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/import_report.html
 msgid "Report spec"
@@ -34465,10 +34445,8 @@ msgid "Load testing"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Update"
 msgid "Update user"
-msgstr "Atualizar"
+msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "Reset Password for Mobile Worker"
