@@ -1,12 +1,29 @@
 from django.db import migrations
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseTimedScheduleInstance,
+    TimedScheduleInstance,
+    CaseAlertScheduleInstance,
+    AlertScheduleInstance,
+)
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+
+MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT = 'MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT'
+CASE_OWNER_LOCATION_PARENT = "CASE_OWNER_LOCATION_PARENT"
 
 
 def update_custom_recipient_ids(*args, **kwargs):
     for db in get_db_aliases_for_partitioned_query():
-        CaseTimedScheduleInstance.objects.using(db).filter(recipient_id="CASE_OWNER_LOCATION_PARENT").update(
-            recipient_id='MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT'
+        CaseTimedScheduleInstance.objects.using(db).filter(recipient_id=CASE_OWNER_LOCATION_PARENT).update(
+            recipient_id=MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT
+        )
+        TimedScheduleInstance.objects.using(db).filter(recipient_id=CASE_OWNER_LOCATION_PARENT).update(
+            recipient_id=MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT
+        )
+        CaseAlertScheduleInstance.objects.using(db).filter(recipient_id=CASE_OWNER_LOCATION_PARENT).update(
+            recipient_id=MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT
+        )
+        AlertScheduleInstance.objects.using(db).filter(recipient_id=CASE_OWNER_LOCATION_PARENT).update(
+            recipient_id=MOBILE_WORKER_CASE_OWNER_LOCATION_PARENT
         )
 
 
