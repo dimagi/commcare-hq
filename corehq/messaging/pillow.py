@@ -51,7 +51,7 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
     def process_change(self, change):
         if is_couch_change_for_sql_domain(change):
             return
-        sync_case_for_messaging(change.id, change.metadata.domain, self._get_rules)
+        sync_case_for_messaging(change.metadata.domain, change.id, self._get_rules)
 
     def process_changes_chunk(self, changes_chunk):
         errors = []
