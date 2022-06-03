@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 from django.urls import reverse
 
+from corehq.apps.hqadmin.utils import unset_password
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.util.argparse_types import utc_timestamp
@@ -78,7 +79,7 @@ def get_lines_from_file(filename):
 
 def force_password_reset(web_user):
     user = web_user.get_django_user()
-    user.set_password(uuid.uuid4().hex)
+    unset_password(user)
     user.save()
     url = f"{get_url_base()}{reverse('password_reset_email')}"
     send_html_email_async.delay(
