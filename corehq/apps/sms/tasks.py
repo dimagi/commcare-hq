@@ -11,10 +11,10 @@ from corehq.util.metrics import metrics_gauge_task, metrics_counter
 from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import (
     CriticalSection,
-    get_redis_client,
     get_redis_lock,
     release_lock,
 )
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
 
 from corehq import privileges
