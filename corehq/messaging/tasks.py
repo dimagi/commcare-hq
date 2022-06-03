@@ -87,7 +87,7 @@ def run_auto_update_rules_for_case(case, get_rules=None):
         rules = get_rules(case.domain, case.type)
     else:
         all_rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-        rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
+        rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
         rules = rules_by_case_type.get(case.type, [])
     for rule in rules:
         rule.run_rule(case, utcnow())
