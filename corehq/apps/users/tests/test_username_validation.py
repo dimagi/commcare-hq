@@ -32,7 +32,7 @@ class TestMobileUsernameValidation(TestCase):
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
     def test_none_username_raises_exception(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidUsernameException):
             validate_mobile_username(None, self.domain)
 
     def test_reserved_username_raises_exception(self):

@@ -20,8 +20,8 @@ def validate_mobile_username(username, domain):
     :return: str, email formatted mobile username
     Example: validate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
-    if username is None:
-        raise ValueError
+    if not username:
+        raise InvalidUsernameException(username)
 
     _check_for_reserved_usernames(username)
     username_as_email = format_username(username, domain)

@@ -66,7 +66,9 @@ def generate_mobile_username(username, domain):
         return validate_mobile_username(username, domain)
     except InvalidUsernameException:
         error = _("Username '{}' may not contain special characters.").format(username)
-        if '..' in username:
+        if not username:
+            error = _("Username is required.")
+        elif '..' in username:
             error = _("Username '{}' may not contain consecutive '.' (period).").format(username)
         elif username.endswith('.'):
             error = _("Username '{}' may not end with a '.' (period).").format(username)
@@ -77,8 +79,6 @@ def generate_mobile_username(username, domain):
             error = _("Username '{}' is already taken.").format(username)
     except ReservedUsernameException:
         error = _("Username '{}' is reserved.").format(username)
-    except ValueError:
-        error = _("Username is required.")
     finally:
         if error:
             raise ValidationError(error)
