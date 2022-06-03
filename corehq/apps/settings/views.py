@@ -44,7 +44,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.utils import sign, update_session_language
+from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
@@ -248,10 +248,11 @@ class MyAccountSettingsView(BaseMyAccountView):
         if self.form_type and self.form_type in self.form_actions:
             return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
-            old_lang = self.request.couch_user.language
             self.settings_form.update_user()
-            new_lang = self.request.couch_user.language
-            update_session_language(request, old_lang, new_lang)
+
+            res = redirect(reverse(MyAccountSettingsView.urlname))
+            res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language)
+            return res
 
         return self.get(request, *args, **kwargs)
 
