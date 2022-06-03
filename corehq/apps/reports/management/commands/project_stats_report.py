@@ -393,7 +393,7 @@ class Command(BaseCommand):
                     SELECT COUNT(*) as num_forms, sum(d.count) as num_updates
                     FROM (
                         SELECT COUNT(*) as count
-                        FROM form_processor_casetransaction t 
+                        FROM form_processor_casetransaction t
                         JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
                         WHERE c.domain = %s
                         GROUP BY form_id
@@ -409,7 +409,7 @@ class Command(BaseCommand):
 
                 cursor.execute("""
                     SELECT COUNT(*) as count
-                    FROM form_processor_casetransaction t 
+                    FROM form_processor_casetransaction t
                     JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
                     WHERE c.domain = %s
                 """, [self.domain])
