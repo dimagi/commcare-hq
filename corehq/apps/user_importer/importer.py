@@ -472,8 +472,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             'row': row,
         }
 
+        # Set a dummy password to pass the validation, similar to GUI user creation
         send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
-
         if send_account_confirmation_sms and not row.get('password'):
             string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
             password = ''.join(random.choices(string_set, k=10))
@@ -520,7 +520,8 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
 
             if send_account_confirmation_sms:
                 is_active = False
-                is_account_confirmed = False
+                if not user_id:
+                    is_account_confirmed = False
 
             user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
                                                 web_user_username, password, upload_user)
