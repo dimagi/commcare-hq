@@ -1,6 +1,7 @@
 import io
 import json
 import re
+import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -62,7 +63,7 @@ from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary,
+    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -119,6 +120,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq import toggles
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -755,7 +757,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
-
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
@@ -763,10 +764,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            couch_user.set_default_phone_number(phone_number)
+            send_account_confirmation_sms_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -779,7 +783,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+        is_account_confirmed = not (
+            self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
         commcare_user = CommCareUser.create(
             self.domain,
@@ -826,6 +832,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }
@@ -878,6 +886,14 @@ def _modify_user_status(request, domain, user_id, is_active):
 def send_confirmation_email(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
+@require_POST
+@location_safe
+def send_confirmation_sms(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_sms_if_necessary(user)
     return JsonResponse(data={'success': True})
 
 
@@ -1424,11 +1440,14 @@ def download_users(request, domain, user_type):
 
 
 @location_safe
-@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
+
+    @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1481,3 +1500,44 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
+
+@location_safe
+class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
+    urlname = "commcare_user_confirm_account_sms"
+    default_expiry_duration_in_hours = 24
+
+    @property
+    @memoized
+    def user_invite_hash(self):
+        return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.user_invite_hash.get('user_id')
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            if not self.is_invite_valid():
+                raise ValidationError("Invite is not valid or expired.")
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': self.user.email,
+            })
+
+    def is_invite_valid(self):
+        import logging
+        logging.info("user info hash {}".format(self.user_invite_hash))
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
+        logging.info(f"hours_elapsed {hours_elapsed}")
+        invite_expiry_in_hours = self.domain_object.confirmation_link_expiry_time
+        invite_expiry_duration_in_hours = invite_expiry_in_hours or self.default_expiry_duration_in_hours
+        logging.info(f"expiry_duration_in_hours {invite_expiry_duration_in_hours}")
+        if hours_elapsed <= invite_expiry_duration_in_hours:
+            return True
+        return False
