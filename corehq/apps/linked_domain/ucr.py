@@ -82,7 +82,7 @@ def create_linked_ucr(domain_link, report_config_id):
 
 def get_downstream_report(downstream_domain, upstream_report_id):
     for linked_report in get_report_configs_for_domain(downstream_domain) + \
-            get_report_configs_for_domain(downstream_domain):
+            get_registry_report_configs_for_domain(downstream_domain):
         if linked_report.report_meta.master_id == upstream_report_id:
             return linked_report
     return None
