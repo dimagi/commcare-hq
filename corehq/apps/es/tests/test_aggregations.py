@@ -68,7 +68,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 }
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
 
         query = HQESQuery('cases').aggregations([
@@ -195,7 +195,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             RangeAggregation('by_date', 'name', [
@@ -229,7 +229,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             StatsAggregation('name_stats', 'name', script='MY weird script')
@@ -258,7 +258,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             ExtendedStatsAggregation('name_stats', 'name', script='MY weird script')
@@ -296,7 +296,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     },
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             TopHitsAggregation(
@@ -329,7 +329,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             MissingAggregation(
@@ -362,7 +362,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 }
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
         self.checkQuery(query, json_output)
@@ -411,7 +411,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             NestedAggregation(
@@ -446,7 +446,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     },
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             TermsAggregation('name', 'name').order('sort_field')
