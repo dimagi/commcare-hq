@@ -945,6 +945,11 @@ class EntriesHelper(object):
             _update_refs(datums_by_case_tag[case_tag], datum_meta.datum.id, new_id)
             datum_meta.datum.id = new_id
 
+        def add_case_type_to_instance_name(datum_meta, nodeset):
+            index_to_insert_case_type_at = nodeset.index('results') + len('results')
+            datum_meta.datum.nodeset = nodeset[0: index_to_insert_case_type_at] + ":" + \
+                datum_meta.case_type + nodeset[index_to_insert_case_type_at:]
+
         ret = []
         datums_remaining = list(datums)
         for parent_datum_meta in parent_datums:
@@ -952,6 +957,9 @@ class EntriesHelper(object):
                 # We assume that a conflict is unwanted and rename. This may get undone below.
                 datum = datum_ids[parent_datum_meta.id]
                 set_id(datum, f'{datum.id}_{datum.case_type}')
+                nodeset = datum.datum.nodeset
+                if "results" in nodeset:
+                    add_case_type_to_instance_name(datum, (nodeset))
 
             if not parent_datum_meta.requires_selection:
                 ret.append(attr.evolve(parent_datum_meta, from_parent=True))
