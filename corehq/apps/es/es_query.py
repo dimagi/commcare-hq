@@ -265,7 +265,8 @@ class ESQuery(object):
         return self.aggregation(agg)
 
     def date_histogram(self, name, datefield, interval, timezone=None):
-        return self.aggregation(aggregations.DateHistogram(name, datefield, interval, timezone=timezone))
+        return self.aggregation(aggregations.DateHistogram(
+            name, datefield, interval, timezone=timezone, date_format='date'))
 
     @property
     def _query(self):

@@ -516,17 +516,21 @@ class DateHistogram(Aggregation):
     :param interval: the date interval to use: "year", "quarter", "month",
         "week", "day", "hour", "minute", "second"
     :param timezone: do bucketing using this time zone instead of UTC
+    :param date_format: What format to use in the results - ES's default is stupid
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html
     """
     type = "date_histogram"
     result_class = BucketResult
 
-    def __init__(self, name, datefield, interval, timezone=None):
+    def __init__(self, name, datefield, interval, timezone=None, date_format=None):
         self.name = name
         self.body = {
             'field': datefield,
             'interval': interval,
         }
 
+        if date_format:
+            self.body['format'] = date_format
         if timezone:
             self.body['time_zone'] = timezone
 

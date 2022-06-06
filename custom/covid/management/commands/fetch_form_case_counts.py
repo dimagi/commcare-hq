@@ -94,7 +94,7 @@ def _get_case_update_counts(domain, start, end):
                TermsAggregation('case_types', 'type.exact')
                .aggregation(
                    NestedAggregation('actions', 'actions').aggregation(
-                       DateHistogram('case_count', 'actions.server_date', interval='day')
+                       DateHistogram('case_count', 'actions.server_date', interval='day', date_format='date')
                    )
                )
            )
