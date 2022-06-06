@@ -165,11 +165,11 @@ class RemoteRequestFactory(object):
             data=self.build_remote_request_datums(),
         )
 
-    def build_remote_request_queries(self):
+    def build_remote_request_queries(self, storage_instance=RESULTS_INSTANCE):
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
-                storage_instance=RESULTS_INSTANCE,
+                storage_instance=storage_instance,
                 template='case',
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),

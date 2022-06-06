@@ -478,7 +478,7 @@ class EntriesHelper(object):
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 loads_registry_case = module_loads_registry_case(module)
                 if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_query_datums(module))
+                    result.append(self.get_query_datums(module, datum))
                     result.append(datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
@@ -585,14 +585,22 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_query_datums(self, module):
+    def get_query_datums(self, module, datum):
         """When doing 'inline' search we skip the normal case search
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+            RemoteRequestFactory,
+            RESULTS_INSTANCE
+        )
+
+        storage_instance = RESULTS_INSTANCE
+        if 'case_id_' in datum.id:
+            storage_instance = RESULTS_INSTANCE + ":" + datum.id[len('case_id_'):]
+
         factory = RemoteRequestFactory(None, module, [])
-        query = factory.build_remote_request_queries()[0]
+        query = factory.build_remote_request_queries(storage_instance)[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
     def get_data_registry_case_datums(self, datum, module):
