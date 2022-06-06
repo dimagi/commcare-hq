@@ -45,6 +45,7 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
+    CommCareUserConfirmAccountBySMSView,
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
@@ -74,6 +75,7 @@ from .views.mobile.users import (
     user_download_job_poll,
     CommCareUserConfirmAccountView,
     send_confirmation_email,
+    send_confirmation_sms,
     CommcareUserUploadJobPollView)
 from ..hqwebapp.decorators import waf_allow
 
@@ -179,6 +181,10 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname),
+    url(r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$', send_confirmation_sms,
+        name='send_confirmation_sms'),
+    url(r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$', CommCareUserConfirmAccountBySMSView.as_view(),
+        name=CommCareUserConfirmAccountBySMSView.urlname),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),

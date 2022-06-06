@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:40+0000\n"
+"POT-Creation-Date: 2022-06-06 03:13+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Séfora Vazirna <seforan@gmail.com>, 2022\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -4216,6 +4216,14 @@ msgid "Please enter a valid email address."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
 msgstr ""
 
@@ -4512,6 +4520,10 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users.js
 msgid "Are you sure you want to delete this request?"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users.js
+msgid "s email server"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/web_users_list.js
