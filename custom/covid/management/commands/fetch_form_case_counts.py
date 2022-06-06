@@ -1,3 +1,4 @@
+import csv
 import itertools
 from datetime import date, datetime, timedelta
 
@@ -24,9 +25,12 @@ class Command(BaseCommand):
     def handle(self, domains, **options):
         filename = "form_case_counts_{}".format(datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S"))
         case_types = sorted(_get_case_types(domains))
-        for row in self.get_rows(domains, case_types, options['num_days']):
-            if row['forms_submitted']:
-                print(row)
+        with open(filename, 'w', encoding='utf-8') as csv_file:
+            field_names = ['domain', 'date', 'form_submissions'] + case_types
+            csv_writer = csv.DictWriter(csv_file, field_names)
+            csv_writer.writeheader()
+            for row in self.get_rows(domains, case_types, options['num_days']):
+                csv_writer.writerow(row)
 
     def get_rows(self, domains, case_types, num_days):
         end = date.today()
@@ -40,9 +44,9 @@ class Command(BaseCommand):
                 yield {
                     'domain': domain,
                     'date': day.isoformat(),
-                    'forms_submitted': submissions_counts.get(day, 0),
+                    'form_submissions': submissions_counts.get(day, 0),
                     **{
-                        f'{case_type} updates': case_update_counts.get((case_type, day), 0)
+                        case_type: case_update_counts.get((case_type, day), 0)
                         for case_type in case_types
                     }
                 }
