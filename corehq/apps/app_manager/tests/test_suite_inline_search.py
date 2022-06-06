@@ -115,13 +115,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
-            <assertions>
-              <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 1">
-                <text>
-                  <locale id="case_search.claimed_case.case_missing"/>
-                </text>
-              </assert>
-            </assertions>
           </entry>
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
