@@ -503,11 +503,11 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                         }
                                     ],
                                     "must": {
-                                        "match": {
+                                        "fuzzy": {
                                             "case_properties.value": {
-                                                "query": "Jon John Jhon",
-                                                "operator": "or",
-                                                "fuzziness": "AUTO"
+                                                "value": "Jon John Jhon",
+                                                "fuzziness": "AUTO",
+                                                "max_expansions": 100
                                             }
                                         }
                                     }
