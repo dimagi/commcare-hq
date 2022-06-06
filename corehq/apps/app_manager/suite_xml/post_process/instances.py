@@ -241,7 +241,6 @@ INSTANCE_KWARGS_BY_ID = {
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote'),
-    'results': dict(id='results', src='jr://instance/remote'),
     'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities'),
     'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected-entities'),
 }
@@ -297,6 +296,11 @@ def location_fixture_instances(app, instance_name):
             and not LocationFixtureConfiguration.for_domain(app.domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('results')
+def results_instances(app, instance_name):
+    return Instance(id=instance_name, src='jr://instance/remote')
 
 
 def get_all_instances_referenced_in_xpaths(app, xpaths):
