@@ -210,8 +210,8 @@ hqDefine("users/js/web_users",[
                 "rejected it. This usually means either the email address is incorrect or your organization " +
                 "is blocking emails from our address (<%- fromAddress %>)."
             ))({
-                fromAddress: initialPageData.get('fromAddress')
-            })
+                fromAddress: initialPageData.get('fromAddress'),
+            }),
         });
     });
 });
