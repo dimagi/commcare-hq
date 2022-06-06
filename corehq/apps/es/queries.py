@@ -99,6 +99,8 @@ def ids_query(doc_ids):
 def match(search_string, field, fuzziness="AUTO", operator=None):
     if operator not in [None, 'and', 'or']:
         raise ValueError(" 'operator' argument should be one of: 'and', 'or' ")
+    if fuzziness != "0":
+        return fuzzy(search_string, field, fuzziness)
     return {
         "match": {
             field: {
@@ -106,6 +108,18 @@ def match(search_string, field, fuzziness="AUTO", operator=None):
                 # OR is the accepted default for the operator on an ES match query
                 "operator": 'and' if operator == 'and' else 'or',
                 "fuzziness": fuzziness,
+            }
+        }
+    }
+
+
+def fuzzy(search_string, field, fuzziness="AUTO"):
+    return {
+        "fuzzy": {
+            field: {
+                "value": search_string.lower(),
+                "fuzziness": fuzziness,
+                "max_expansions": 100
             }
         }
     }
