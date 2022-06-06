@@ -440,14 +440,19 @@ class EntriesHelper(object):
 
     def get_case_datums_basic_module(self, module, form=None):
         datums = []
+
+        # Add parent datums first (if any) because they're not dependent on children, but
+        # children are dependent on parents.
+        datums.extend(self.get_parent_datums(module))
+
         if not form or form.requires_case():
-            datums.extend(self.get_datum_meta_module(module, use_filter=True))
+            datums.extend(self.get_datum_meta_module(module, use_filter=True, parent_datums=datums))
 
         if form:
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
             datums.extend(EntriesHelper.get_extra_case_id_datums(form))
 
-        return self.add_parent_datums(datums, module)
+        return datums
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -478,7 +483,7 @@ class EntriesHelper(object):
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 loads_registry_case = module_loads_registry_case(module)
                 if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_query_datums(module))
+                    result.append(self.get_query_datums(module, datum))
                     result.append(datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
@@ -488,7 +493,7 @@ class EntriesHelper(object):
                 result.append(datum)
         return result
 
-    def get_datum_meta_module(self, module, use_filter=False):
+    def get_datum_meta_module(self, module, use_filter=False, parent_datums=None):
         datums = []
         datum_module = module.source_module if module.module_type == 'shadow' else module
         datums_meta = get_select_chain_meta(self.app, datum_module)
@@ -551,9 +556,16 @@ class EntriesHelper(object):
             instance_name, root_element = "casedb", "casedb"
             if module_loads_registry_case(detail_module) or module_uses_inline_search(detail_module):
                 instance_name, root_element = "results", "results"
+
                 if detail_module.search_config.search_filter:
                     filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
+
+            # parent_datum_ids = [d.id for d in parent_datums]
+            for parent_datum in parent_datums:
+                if datum_id == parent_datum.id and not datum["case_type"] == parent_datum.datum.case_type:
+                    datum_id += datum["case_type"]
+                    instance_name = instance_name + ":" + datum["case_type"]
 
             nodeset = EntriesHelper._get_nodeset_xpath(
                 instance_name, root_element,
@@ -562,10 +574,12 @@ class EntriesHelper(object):
                 additional_types=datum['module'].additional_case_types
             )
 
+            print('id: ' + datum['session_var'])
+            print('nodeset: ' + nodeset)
             datum_cls = InstanceDatum if datum['module'].is_multi_select() else SessionDatum
             datums.append(FormDatumMeta(
                 datum=datum_cls(
-                    id=datum['session_var'],
+                    id=datum_id,
                     nodeset=nodeset + parent_filter + fixture_select_filter,
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
@@ -585,14 +599,23 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_query_datums(self, module):
+    def get_query_datums(self, module, datum):
         """When doing 'inline' search we skip the normal case search
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+            RemoteRequestFactory,
+            RESULTS_INSTANCE
+        )
+
+        storage_instance = RESULTS_INSTANCE
+        if 'case_id_' in datum.id:
+            storage_instance = "results:" + datum.id[len('case_id_'):]
+            # if datum.id == 'parent_id':
+            #     storage_instance = "results:parent"
         factory = RemoteRequestFactory(None, module, [])
-        query = factory.build_remote_request_queries()[0]
+        query = factory.build_remote_request_queries(storage_instance)[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
     def get_data_registry_case_datums(self, datum, module):
@@ -918,10 +941,16 @@ class EntriesHelper(object):
             return []
         return self.get_datums_meta_for_form_generic(form)
 
-    def add_parent_datums(self, datums, module):
+    def add_parent_datums(self, module):
         parent_datums = self._get_first_forms_datums(module.root_module)
-        if not parent_datums:
-            return datums
+
+        ret = []
+        # datums_remaining = list(datums)
+        for parent_datum_meta in parent_datums:
+            if not parent_datum_meta.requires_selection:
+                ret.append(attr.evolve(parent_datum_meta, from_parent=True))
+
+        return ret
 
         # we need to try and match the datums to the root module so that
         # the navigation on the phone works correctly
@@ -929,26 +958,26 @@ class EntriesHelper(object):
         # 2. Match the datum ID for datums that appear in the same position and
         #    will be loading the same case type
         # see advanced_app_features#child-modules in docs
-        datum_ids = {d.id: d for d in datums}
-        datums_by_case_tag = _get_datums_by_case_tag(datums)
+        # datum_ids = {d.id: d for d in datums}
+        # datums_by_case_tag = _get_datums_by_case_tag(datums)
 
         def set_id(datum_meta, new_id):
             case_tag = getattr(datum_meta.action, 'case_tag', 'basic')
             _update_refs(datums_by_case_tag[case_tag], datum_meta.datum.id, new_id)
             datum_meta.datum.id = new_id
 
-        ret = []
-        datums_remaining = list(datums)
-        for parent_datum_meta in parent_datums:
+        
+
+            # Move to get_datum_meta_module
+            # If parent datum ID is the same as child, rename child datum ID
             if parent_datum_meta.id in datum_ids:
                 # We assume that a conflict is unwanted and rename. This may get undone below.
                 datum = datum_ids[parent_datum_meta.id]
                 set_id(datum, f'{datum.id}_{datum.case_type}')
 
-            if not parent_datum_meta.requires_selection:
-                ret.append(attr.evolve(parent_datum_meta, from_parent=True))
-                continue
-
+            
+            # Move to get_datum_meta_module
+            # If parent datum and child datum have the same case type and node type and the child has an action, ensure that the child has the same datum ID
             if datums_remaining:
                 this_datum_meta = datums_remaining[0]
                 if _same_case(this_datum_meta, parent_datum_meta) and this_datum_meta.action:
