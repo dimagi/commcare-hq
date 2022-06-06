@@ -5,6 +5,11 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import CaseES, FormES
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    NestedAggregation,
+    TermsAggregation,
+)
 
 
 class Command(BaseCommand):
@@ -18,15 +23,17 @@ class Command(BaseCommand):
 
     def handle(self, domains, **options):
         filename = "form_case_counts_{}".format(datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S"))
-        for row in self.get_rows(domains, options['num_days']):
+        case_types = sorted(_get_case_types(domains))
+        for row in self.get_rows(domains, case_types, options['num_days']):
             if row['forms_submitted']:
                 print(row)
 
-    def get_rows(self, domains, num_days):
+    def get_rows(self, domains, case_types, num_days):
         end = date.today()
         start = end - timedelta(days=num_days)
         for domain in _expand_domains(domains):
             submissions_counts = _get_submissions_counts(domain, start, end)
+            case_update_counts = _get_case_update_counts(domain, start, end)
 
             day = start
             while day <= end:
@@ -34,6 +41,10 @@ class Command(BaseCommand):
                     'domain': domain,
                     'date': day.isoformat(),
                     'forms_submitted': submissions_counts.get(day, 0),
+                    **{
+                        f'{case_type} updates': case_update_counts.get((case_type, day), 0)
+                        for case_type in case_types
+                    }
                 }
                 day += timedelta(days=1)
 
@@ -51,6 +62,14 @@ def _get_datetime_range(num_days):
     start = end - timedelta(days=num_days)
     return start, end
 
+
+def _get_case_types(domains):
+    return (CaseES()
+            .domain(domains)
+            .terms_aggregation("type.exact", "case_types")
+            .run().aggregations.case_types.keys)
+
+
 def _get_submissions_counts(domain, start, end):
     res = (FormES()
            .domain(domain)
@@ -61,3 +80,25 @@ def _get_submissions_counts(domain, start, end):
         date.fromisoformat(bucket['key_as_string']): bucket['doc_count']
         for bucket in res.normalized_buckets
     }
+
+
+def _get_case_update_counts(domain, start, end):
+    res = (CaseES()
+           .domain(domain)
+           .active_in_range(gte=start, lte=end)
+           .aggregation(
+               TermsAggregation('case_types', 'type.exact')
+               .aggregation(
+                   NestedAggregation('actions', 'actions').aggregation(
+                       DateHistogram('case_count', 'actions.server_date', interval='day')
+                   )
+               )
+           )
+           .run())
+
+    ret = {}
+    for case_type in res.aggregations.case_types.buckets_list:
+        for case_count in case_type.actions.case_count.normalized_buckets:
+            day = date.fromisoformat(case_count['key_as_string'])
+            ret[(case_type.key, day)] = case_count['doc_count']
+    return ret
