@@ -7,8 +7,6 @@ import settings
 from corehq.apps.callcenter.utils import get_call_center_domains
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 
-from corehq.apps.userreports.util import _wrap_data_source_by_doc_type
-
 MODULE_PATH = os.path.dirname(__file__)
 DATA_SOURCES_PATH = os.path.join(MODULE_PATH, 'data_sources')
 FORM_DATA_SOURCE_PATH = os.path.join(DATA_SOURCES_PATH, 'call_center_forms.json')
@@ -77,7 +75,7 @@ def _make_data_source_for_domain(data_source_json, domain_name):
     doc = deepcopy(data_source_json)
     doc['domain'] = domain_name
     doc['_id'] = StaticDataSourceConfiguration.get_doc_id(domain_name, doc['table_id'])
-    return _wrap_data_source_by_doc_type(doc)
+    return DataSourceConfiguration.wrap(doc)
 
 
 def _get_json(path):
