@@ -1,8 +1,10 @@
+import uuid
 from copy import deepcopy
+from datetime import datetime
 
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.es import filters
+from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import (
     AggregationRange,
     AggregationTerm,
@@ -20,7 +22,13 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es.tests.utils import (
+    ElasticTestMixin,
+    es_test,
+    populate_es_index,
+)
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
@@ -452,3 +460,44 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             TermsAggregation('name', 'name').order('sort_field')
         )
         self.checkQuery(query, json_output)
+
+
+@es_test
+class TestDateHistogram(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        forms = [{
+            '_id': str(uuid.uuid4()),
+            'received_on': datetime.fromisoformat(d),
+        } for d in [
+            '2021-12-09',
+            '2022-01-01',
+            '2022-01-18',
+            '2022-02-23',
+            '2022-03-01',
+            '2022-03-05',
+            '2022-03-13',
+            '2022-03-13',
+            '2022-03-16',
+            '2022-04-25',
+            '2022-05-04',
+            '2022-05-04',
+            '2022-05-09',
+            '2022-05-10',
+            '2022-05-20',
+            '2022-05-27',
+            '2022-06-07',
+        ]]
+        populate_es_index(forms, 'forms')
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        super().tearDownClass()
+
+    def test_current_functionality(self):
+        res = FormES().remove_default_filters().date_histogram('date_histogram', 'received_on', 'day').run()
+        counts = res.aggregations.date_histogram.counts_by_bucket()
+        # A timestamp is not especially convenient
+        self.assertEqual(2, counts[int(datetime(2022, 3, 13).timestamp() * 1000)])
