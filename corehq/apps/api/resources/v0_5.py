@@ -99,7 +99,12 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import InvalidFormatException, InvalidFieldException, UpdateConflictException
+from ..exceptions import (
+    AmbiguousRoleException,
+    InvalidFormatException,
+    InvalidFieldException,
+    UpdateConflictException,
+)
 from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
@@ -114,16 +119,6 @@ def user_es_call(domain, q, fields, size, start_at):
     if q is not None:
         query.set_query({"query_string": {"query": q}})
     return query.run().hits
-
-
-def _set_role_for_bundle(kwargs, bundle):
-    # check for roles associated with the domain
-    domain_roles = UserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
-    if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
-        bundle.obj.set_role(kwargs['domain'], qualified_role_id)
-    else:
-        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -281,6 +276,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
             except InvalidFormatException as e:
                 errors.append(_('{} must be a {}').format(e.field, e.expected_type))
+            except UserRole.DoesNotExist:
+                errors.append(
+                    _("Attempted to update to a role '{}' that does not exist").format(value)
+                )
+            except AmbiguousRoleException as e:
+                errors.append(
+                    _("There are multiple roles with the name '{}' in the domain '{}'").format(e.role)
+                )
             except (UpdateConflictException, ValidationError) as e:
                 errors.append(e.message)
 

@@ -2,8 +2,9 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from corehq.apps.api.exceptions import (
-    InvalidFormatException,
+    AmbiguousRoleException,
     InvalidFieldException,
+    InvalidFormatException,
     UpdateConflictException,
 )
 from corehq.apps.api.user_updates import update
@@ -19,8 +20,10 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.audit.change_messages import (
     GROUPS_FIELD,
     PASSWORD_FIELD,
+    ROLE_FIELD,
 )
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 
@@ -129,6 +132,29 @@ class TestUpdateUserMethods(TestCase):
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(InvalidFieldException):
             update(self.user, 'username', 'new-username')
+
+    def test_update_user_role_succeeds(self):
+        UserRole.create(
+            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+        )
+        update(self.user, 'role', 'edit-data')
+        roles = UserRole.objects.by_domain_and_name(self.domain, 'edit-data')
+        self.assertEqual(self.user.get_role(self.domain).get_qualified_id(), roles[0].get_qualified_id())
+
+    def test_update_user_role_raises_exception_if_does_not_exist(self):
+        with self.assertRaises(UserRole.DoesNotExist):
+            update(self.user, 'role', 'edit-data')
+
+    def test_update_user_role_raises_exception_if_ambiguous(self):
+        UserRole.create(
+            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+        )
+        UserRole.create(
+            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+        )
+
+        with self.assertRaises(AmbiguousRoleException):
+            update(self.user, 'role', 'edit-data')
 
     def _setup_profile(self):
         definition = CustomDataFieldsDefinition(domain=self.domain,
@@ -275,3 +301,20 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id], user_change_logger=self.user_change_logger)
         self.assertNotIn(GROUPS_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_user_role_logs_change(self):
+        UserRole.create(
+            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+        )
+        update(self.user, 'role', 'edit-data', user_change_logger=self.user_change_logger)
+        self.assertIn(ROLE_FIELD, self.user_change_logger.change_messages.keys())
+
+    def test_update_user_role_does_not_logs_change(self):
+        role = UserRole.create(
+            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+        )
+        self.user.set_role(self.domain, role.get_qualified_id())
+
+        update(self.user, 'role', 'edit-data', user_change_logger=self.user_change_logger)
+
+        self.assertNotIn(ROLE_FIELD, self.user_change_logger.change_messages.keys())

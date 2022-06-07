@@ -15,3 +15,10 @@ class UpdateConflictException(Exception):
 
     def __init__(self, message):
         self.message = message
+
+
+class AmbiguousRoleException(Exception):
+    """Raised when multiple roles with the same name exist within the same domain"""
+
+    def __init__(self, role):
+        self.role = role
