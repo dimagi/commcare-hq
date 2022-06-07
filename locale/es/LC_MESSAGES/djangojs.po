@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-06 20:51+0000\n"
+"POT-Creation-Date: 2022-06-07 17:42+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3031,70 +3031,52 @@ msgid "Go to today"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Calculation"
 msgid "Clear selection"
-msgstr "Cálculo"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Close the picker"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Select None"
 msgid "Select Month"
-msgstr "Seleccionar Ninguno"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Month"
-msgstr "Pantallla Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Month"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Select One"
 msgid "Select Year"
-msgstr "Seleccione Uno"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Year"
-msgstr "Pantallla Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Next"
 msgid "Next Year"
-msgstr "Siguiente"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Select One"
 msgid "Select Decade"
-msgstr "Seleccione Uno"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Decade"
-msgstr "Pantallla Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Decade"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Previous Screen"
 msgid "Previous Century"
-msgstr "Pantallla Anterior"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
 msgid "Next Century"
@@ -3141,10 +3123,8 @@ msgid "Toggle Period"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
-#, fuzzy
-#| msgid "Select File"
 msgid "Select Time"
-msgstr "Seleccionar Archivo"
+msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid ""
@@ -4613,10 +4593,8 @@ msgid "Allow role to access all reports."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
-#, fuzzy
-#| msgid "Available Reports"
 msgid "Access All Tableau Reports"
-msgstr "Reportes Disponibles"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
@@ -4889,15 +4867,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Home Screen"
-#~ msgstr "Pantalla Principal"
-
-#~ msgid "First Menu"
-#~ msgstr "Primer Menú"
-
-#~ msgid "Menu: "
-#~ msgstr "Menú:"
-
-#~ msgid "Parent Menu: "
-#~ msgstr "Menú Padre:"
