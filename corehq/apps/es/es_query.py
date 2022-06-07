@@ -264,10 +264,6 @@ class ESQuery(object):
             agg = agg.order(sort_field, order)
         return self.aggregation(agg)
 
-    def date_histogram(self, name, datefield, interval, timezone=None):
-        return self.aggregation(aggregations.DateHistogram(
-            name, datefield, interval, timezone=timezone, date_format='date'))
-
     @property
     def _query(self):
         return self.es_query['query']['bool']['must']
