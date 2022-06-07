@@ -374,4 +374,5 @@ class ConfirmationSmsValidator(ImportValidator):
                 if is_account_confirmed is not None:
                     error_values.append(f"{self.account_confirmed_header} must be empty")
                 if error_values:
-                    return self.error_existing_user.format(self.confirmation_sms_header, ' and '.join(error_values))
+                    errors_formatted = ' and '.join(error_values)
+                    return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
