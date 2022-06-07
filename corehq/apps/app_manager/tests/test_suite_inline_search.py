@@ -126,6 +126,14 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
 
     def test_inline_search_multi_select(self):
         self.module.case_details.short.multi_select = True
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "parent name"},
+                model="case",
+                format="plain",
+                field="parent/name"
+            ))
+        )
         suite = self.app.create_suite()
 
         instance_id = "selected_cases"
@@ -164,6 +172,14 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
           </entry>
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
+
+        expected_detail_columns = f"""
+        <partial>
+          <xpath function="case_name"/>
+          <xpath function="instance('{instance_id}')/results/case[@case_id=current()/index/parent]/case_name"/>
+        </partial>"""
+        self.assertXmlPartialEqual(
+            expected_detail_columns, suite, "./detail[@id='m0_case_short']/field/template/text/xpath")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_inline_search_case_list_item(self):

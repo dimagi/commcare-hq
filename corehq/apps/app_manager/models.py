@@ -2072,7 +2072,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default and module_loads_registry_case(module) or module_uses_inline_search(module):
-            return RESULTS_INSTANCE
+            return "selected_cases" if module.is_multi_select() else RESULTS_INSTANCE
         return self.instance_name
 
     def get_tab_spans(self):
