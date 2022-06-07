@@ -11,8 +11,8 @@ from django.http import (
     HttpResponseNotFound,
     JsonResponse,
 )
-from django.utils.translation import ngettext
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -22,8 +22,9 @@ from tastypie.http import HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.phone.models import get_properly_wrapped_sync_log
+from casexml.apps.phone.data_providers.case.livequery import get_case_hierarchy
 from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -60,6 +61,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
@@ -279,6 +281,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not since:
         skip_fixtures = False
 
+    # If loadtest user, do a full restore
+    if restore_user.loadtest_factor > 1:
+        since = None
+
     app = get_app_cached(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
@@ -426,18 +432,16 @@ def recovery_measures(request, domain, build_id):
 @csrf_exempt
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
-@toggles.DATA_REGISTRY.required_decorator()
-def registry_case(request, domain, app_id):
+def case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
     registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
 
     missing = [
-        name
-        for name, value in zip(
-            ["case_id", "case_type", CASE_SEARCH_REGISTRY_ID_KEY],
-            [case_ids, case_types, registry]
+        name for name, value in zip(
+            ["case_id", "case_type"],
+            [case_ids, case_types]
         )
         if not value
     ]
@@ -448,7 +452,38 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
-    helper = DataRegistryHelper(domain, registry_slug=registry)
+    if registry:
+        try:
+            cases = _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry)
+        except RegistryAccessException as e:
+            return HttpResponseBadRequest(str(e))
+        except Http404 as e:
+            # convert to a simple response to avoid the HTML error page
+            return HttpResponseNotFound(str(e))
+    else:
+        cases = _single_domain_case_fixture(request, domain, case_types, case_ids)
+
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
+
+
+def _single_domain_case_fixture(request, domain, case_types, case_ids):
+    cases = CommCareCase.objects.get_cases(case_ids)
+    for case in cases:
+        if case.domain != domain or case.type not in case_types:
+            raise Http404(f"Case '{case.case_id}' not found")
+    case_ids_found = {case.case_id for case in cases}
+    missing = set(case_ids) - case_ids_found
+    if missing:
+        raise Http404(f"Cases '{','.join(missing)}' not found")
+
+    return get_case_hierarchy(domain, cases)
+
+
+@toggles.DATA_REGISTRY.required_decorator()
+def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry_slug):
+    helper = DataRegistryHelper(domain, registry_slug=registry_slug)
 
     app = get_app_cached(domain, app_id)
     try:
@@ -457,20 +492,15 @@ def registry_case(request, domain, app_id):
             for case_id in case_ids
         ]
     except RegistryNotFound:
-        return HttpResponseNotFound(f"Registry '{registry}' not found")
+        raise Http404(f"Registry '{registry_slug}' not found")
     except CaseNotFound as e:
-        return HttpResponseNotFound(f"Case '{str(e)}' not found")
-    except RegistryAccessException as e:
-        return HttpResponseBadRequest(str(e))
+        raise Http404(f"Case '{str(e)}' not found")
 
     for case in cases:
         if case.type not in case_types:
-            return HttpResponseNotFound(f"Case '{case.case_id}' not found")
+            raise Http404(f"Case '{case.case_id}' not found")
 
-    all_cases = helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
-    for case in all_cases:
-        case.case_json[COMMCARE_PROJECT] = case.domain
-    return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
+    return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
 
 
 @formplayer_auth

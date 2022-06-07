@@ -200,7 +200,8 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        using_inline_search = module_uses_inline_search(module) and not module_loads_registry_case(module)
+        loads_registry_case = module_loads_registry_case(module)
+        using_inline_search = module_uses_inline_search(module) and not loads_registry_case
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
@@ -212,8 +213,8 @@ class EntriesHelper(object):
             if form.requires_case() and using_inline_search:
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
                 case_session_var = self.get_case_session_var_for_form(form)
-                factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
-                e.post = factory.build_remote_request_post()
+                remote_request_factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
+                e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -247,9 +248,6 @@ class EntriesHelper(object):
 
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
-
-            if using_inline_search:
-                EntriesHelper.add_case_claim_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
 
@@ -287,8 +285,7 @@ class EntriesHelper(object):
                     media_audio=module.case_list.default_media_audio,
                 )
             if isinstance(module, Module):
-                for datum_meta in self.get_case_datums_basic_module(module):
-                    e.datums.append(datum_meta.datum)
+                self.configure_entry_module_form(module, e)
             elif isinstance(module, AdvancedModule):
                 detail_inline = self.get_detail_inline_attr(module, module, "case_short")
                 detail_confirm = None
@@ -363,18 +360,6 @@ class EntriesHelper(object):
                                                 "[hq_user_id=instance('commcaresession')/session/context/userid])"
                                                 " = 1", "case_autoload.usercase.case_missing")
         entry.assertions.append(assertion)
-
-    @staticmethod
-    def add_case_claim_assertion(entry):
-        # TODO: what about multi-selects?
-        case_datums = [datum for datum in entry.datums if datum.nodeset]
-        if case_datums:
-            case_id = f"instance('commcaresession')/session/data/{case_datums[-1].id}"
-            assertion = EntriesHelper.get_assertion(
-                f"count(instance('casedb')/casedb/case[@case_id={case_id}]) = 1",
-                "case_search.claimed_case.case_missing"
-            )
-            entry.assertions.append(assertion)
 
     @staticmethod
     def get_extra_case_id_datums(form):
@@ -614,7 +599,7 @@ class EntriesHelper(object):
 
         return FormDatumMeta(
             datum=RemoteRequestQuery(
-                url=absolute_reverse('registry_case', args=[self.app.domain, self.app.get_id]),
+                url=absolute_reverse('case_fixture', args=[self.app.domain, self.app.get_id]),
                 storage_instance=REGISTRY_INSTANCE,
                 template='case',
                 data=data,

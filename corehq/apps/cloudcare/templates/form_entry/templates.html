@@ -529,12 +529,12 @@
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
-  <span class="help-block sr-only">{% trans "24-hour clock" %}</span>
+  <span class="help-block sr-only" data-bind="text: helpText()"></span>
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
-  <span class="help-block" aria-hidden="true">{% trans "24-hour clock" %}</span>
+  <span class="help-block" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">

@@ -17,7 +17,10 @@ XFORM_DOC_TYPE = 'XFormInstance'
 
 
 class Command(BaseCommand):
-    help = "Queue a UCR to be built through celery"
+    help = """
+        Queue a UCR to be built through celery. This requires the ucr_indicator_queue and
+        background celery queues to be running.
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -41,7 +44,6 @@ class Command(BaseCommand):
         configs = []
         for data_source_id in data_source_ids:
             config, _ = get_datasource_config(data_source_id, domain)
-            assert config.asynchronous
             assert config.referenced_doc_type == self.referenced_type
             configs.append(config)
 
