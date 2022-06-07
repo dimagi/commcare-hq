@@ -505,7 +505,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                     "must": {
                                         "fuzzy": {
                                             "case_properties.value": {
-                                                "value": "Jon John Jhon",
+                                                "value": "jon john jhon",
                                                 "fuzziness": "AUTO",
                                                 "max_expansions": 100
                                             }
