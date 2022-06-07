@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
+"POT-Creation-Date: 2022-06-07 15:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22988,6 +22988,17 @@ msgid ""
 "      "
 msgstr ""
 
+#: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
+msgid "The data source referenced by this report could not be found."
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid ""
+"This report cannot be linked because the registry is not accessible to {}. "
+"Please make sure the registry invitation has been accepted before linking "
+"reports."
+msgstr ""
+
 #: corehq/apps/linked_domain/ucr.py
 msgid ""
 "This report cannot be linked because it references an app that has multiple "
@@ -32842,10 +32853,6 @@ msgstr ""
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
-msgstr ""
-
-#: corehq/apps/userreports/models.py
-msgid "The data source referenced by this report could not be found."
 msgstr ""
 
 #: corehq/apps/userreports/models.py
