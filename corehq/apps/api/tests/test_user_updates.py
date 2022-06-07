@@ -134,12 +134,11 @@ class TestUpdateUserMethods(TestCase):
             update(self.user, 'username', 'new-username')
 
     def test_update_user_role_succeeds(self):
-        UserRole.create(
+        new_role = UserRole.create(
             self.domain, 'edit-data', permissions=Permissions(edit_data=True)
         )
         update(self.user, 'role', 'edit-data')
-        roles = UserRole.objects.by_domain_and_name(self.domain, 'edit-data')
-        self.assertEqual(self.user.get_role(self.domain).get_qualified_id(), roles[0].get_qualified_id())
+        self.assertEqual(self.user.get_role(self.domain).get_qualified_id(), new_role.get_qualified_id())
 
     def test_update_user_role_raises_exception_if_does_not_exist(self):
         with self.assertRaises(UserRole.DoesNotExist):
