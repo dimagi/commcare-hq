@@ -8,6 +8,7 @@ from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import (
     AggregationRange,
     AggregationTerm,
+    DateHistogram2,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
@@ -501,3 +502,27 @@ class TestDateHistogram(SimpleTestCase):
         counts = res.aggregations.date_histogram.counts_by_bucket()
         # A timestamp is not especially convenient
         self.assertEqual(2, counts[int(datetime(2022, 3, 13).timestamp() * 1000)])
+
+    def test_year_histogram(self):
+        res = (FormES()
+               .remove_default_filters()
+               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.YEAR))
+               .run())
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(16, counts['2022'])
+
+    def test_month_histogram(self):
+        res = (FormES()
+               .remove_default_filters()
+               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.MONTH))
+               .run())
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(5, counts['2022-03'])
+
+    def test_day_histogram(self):
+        res = (FormES()
+               .remove_default_filters()
+               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.DAY))
+               .run())
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(2, counts['2022-03-13'])
