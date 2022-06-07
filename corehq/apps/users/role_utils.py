@@ -62,4 +62,9 @@ def reset_initial_roles_for_domain(domain):
 def initialize_domain_with_default_roles(domain):
     """Outside of tests this is only called when creating a new domain"""
     for role_name, permissions_fn in UserRolePresets.INITIAL_ROLES.items():
-        UserRole.create(domain, role_name, permissions=permissions_fn())
+        UserRole.create(
+            domain,
+            role_name,
+            permissions=permissions_fn(),
+            is_commcare_user_default=role_name is UserRolePresets.MOBILE_WORKER,
+        )

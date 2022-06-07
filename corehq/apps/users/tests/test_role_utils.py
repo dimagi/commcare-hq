@@ -31,6 +31,9 @@ class RoleUtilsTests(TestCase):
         role_names = set(UserRole.objects.filter(domain=self.domain).values_list("name", flat=True))
         self.assertEqual(role_names, set(UserRolePresets.INITIAL_ROLES) | {'role1'})
 
+        cc_user_default = UserRole.objects.get(domain=self.domain, name=UserRolePresets.MOBILE_WORKER)
+        self.assertTrue(cc_user_default.is_commcare_user_default)
+
     def test_reset_initial_roles_for_domain(self):
         self.addCleanup(self._delete_presets)
         initialize_domain_with_default_roles(self.domain)
