@@ -469,11 +469,14 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
 
 @es_test
 class TestDateHistogram(SimpleTestCase):
+    domain = str(uuid.uuid4())
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         forms = [{
             '_id': str(uuid.uuid4()),
+            'domain': cls.domain,
             'received_on': datetime.fromisoformat(d),
         } for d in [
             '2021-12-09',
@@ -501,34 +504,33 @@ class TestDateHistogram(SimpleTestCase):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         super().tearDownClass()
 
+    def _run_aggregation(self, aggregation):
+        return (FormES()
+                .remove_default_filters()
+                .domain(self.domain)
+                .aggregation(aggregation)
+                .run())
+
     def test_year_histogram(self):
-        res = (FormES()
-               .remove_default_filters()
-               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.YEAR))
-               .run())
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.YEAR))
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(16, counts['2022'])
 
     def test_month_histogram(self):
-        res = (FormES()
-               .remove_default_filters()
-               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.MONTH))
-               .run())
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.MONTH))
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(5, counts['2022-03'])
 
     def test_day_histogram(self):
-        res = (FormES()
-               .remove_default_filters()
-               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.DAY))
-               .run())
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.DAY))
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(2, counts['2022-03-13'])
 
     def test_only_nonzero_buckets_returned(self):
-        res = (FormES()
-               .remove_default_filters()
-               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.DAY))
-               .run())
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.DAY))
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(15, len(counts))
