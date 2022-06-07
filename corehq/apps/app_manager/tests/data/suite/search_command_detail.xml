@@ -178,7 +178,7 @@
       </header>
       <template>
         <text>
-          <xpath function="instance('results')/results/case[@case_id=current()/index/parent]/whatever"/>
+          <xpath function="instance('search_results')/results/case[@case_id=current()/index/parent]/whatever"/>
         </text>
       </template>
     </field>

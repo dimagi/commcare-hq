@@ -572,9 +572,10 @@ class EntriesHelper(object):
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+            RemoteRequestFactory, RESULTS_INSTANCE)
         factory = RemoteRequestFactory(None, module, [])
-        query = factory.build_remote_request_queries()[0]
+        query = factory.build_remote_request_queries(RESULTS_INSTANCE)[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
     def get_data_registry_case_datums(self, datum, module):

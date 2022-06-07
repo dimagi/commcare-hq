@@ -20,7 +20,7 @@
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
-             storage-instance="results"
+             storage-instance="search_results"
              template="case">
         <data key="case_type" ref="'case'"/>
         <data key="&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;"/>
@@ -41,7 +41,7 @@
         </prompt>
       </query>
       <datum id="search_case_id"
-             nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name][not(commcare_is_related_case=true())]"
+             nodeset="instance('search_results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name][not(commcare_is_related_case=true())]"
              value="./@case_id"
              detail-confirm="m0_case_long"
              detail-select="m0_case_short"/>

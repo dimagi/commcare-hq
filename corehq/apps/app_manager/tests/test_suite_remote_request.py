@@ -21,13 +21,12 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RESULTS_INSTANCE,
+    SEARCH_RESULTS_INSTANCE,
     RemoteRequestFactory,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     parse_normalize,
     patch_get_xform_resource_overrides,
 )
@@ -91,7 +90,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
         self.assertEqual([v.name for v in vars], ['domain', 'case_id', 'case_id_leaf'])
         session_case_id = "instance('commcaresession')/session/data/search_case_id"
         self.assertEqual([v.xpath.function for v in vars], [
-            f"instance('results')/results/case[@case_id={session_case_id}]/commcare_project",
+            f"instance('{SEARCH_RESULTS_INSTANCE}')/results/case[@case_id={session_case_id}]/commcare_project",
             "instance('commcaresession')/session/data/case_id",
             "instance('commcaresession')/session/data/search_case_id",
         ])
@@ -292,8 +291,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
             "instance('{}')/{}/case[@case_type='{}'][{}]{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
+                SEARCH_RESULTS_INSTANCE,
+                "results",
                 self.module.case_type,
                 search_filter,
                 EXCLUDE_RELATED_CASES_FILTER
@@ -310,8 +309,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
             "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
+                SEARCH_RESULTS_INSTANCE,
+                "results",
                 self.module.case_type,
                 another_case_type,
                 self.module.search_config.search_filter,
@@ -352,8 +351,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         ref_path = './remote-request[2]/session/datum/@nodeset'
         self.assertEqual(
             "instance('{}')/{}/case[@case_type='{}' or @case_type='{}']{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
+                SEARCH_RESULTS_INSTANCE,
+                "results",
                 self.module.case_type,
                 another_case_type,
                 EXCLUDE_RELATED_CASES_FILTER
