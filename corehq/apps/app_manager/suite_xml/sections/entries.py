@@ -429,7 +429,7 @@ class EntriesHelper(object):
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
             datums.extend(EntriesHelper.get_extra_case_id_datums(form))
 
-        return self.add_parent_datums(datums, module)
+        return self.rename_datums_for_root_module(datums, module)
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
@@ -889,7 +889,7 @@ class EntriesHelper(object):
             except IndexError:
                 pass
 
-        return self.add_parent_datums(datums, module), assertions
+        return self.rename_datums_for_root_module(datums, module), assertions
 
     def _get_first_forms_datums(self, module):
         """
@@ -908,7 +908,7 @@ class EntriesHelper(object):
             return []
         return self.get_datums_meta_for_form_generic(form)
 
-    def add_parent_datums(self, datums, module):
+    def rename_datums_for_root_module(self, datums, module):
         parent_datums = self._get_first_forms_datums(module.root_module)
         if not parent_datums:
             return datums
