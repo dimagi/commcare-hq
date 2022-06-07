@@ -105,6 +105,7 @@ def match(search_string, field, operator=None):
                 "query": search_string,
                 # OR is the accepted default for the operator on an ES match query
                 "operator": 'and' if operator == 'and' else 'or',
+                "fuzziness": "0",
             }
         }
     }
