@@ -463,7 +463,7 @@ class EntriesHelper(object):
                 if loads_registry_case or module_uses_inline_search(module):
                     query_datum = self.get_query_datum(module, datum)
                     result.append(query_datum)
-                    result.append(self.rename_datum_nodeset(datum, query_datum))
+                    result.append(self.rename_datum_nodeset_for_query(datum, query_datum))
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
                 else:
@@ -472,7 +472,7 @@ class EntriesHelper(object):
                 result.append(datum)
         return result
 
-    def rename_datum_nodeset(self, datum, query_datum):
+    def rename_datum_nodeset_for_query(self, datum, query_datum):
         """Rename the instance in the case datum to match the instance used by the query datum
         The logic here is heavily reliant on the logic in ``get_select_chain_with_sessions``
         """
@@ -594,7 +594,7 @@ class EntriesHelper(object):
 
         storage_instance = self.get_query_storage_instance(datum.id)
 
-        factory = RemoteRequestFactory(None, module, [])
+        factory = RemoteRequestFactory(None, module, [], case_session_var=datum.id)
         query = factory.build_remote_request_queries(storage_instance)[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
@@ -604,6 +604,8 @@ class EntriesHelper(object):
         )
         if datum_id == 'case_id':
             return RESULTS_INSTANCE
+        if datum_id == 'selected_cases':
+            return 'selected_cases'
         if 'case_id_' in datum_id:
             # e.g. case_id_{case_type}
             return RESULTS_INSTANCE + ":" + datum_id[len('case_id_'):]
