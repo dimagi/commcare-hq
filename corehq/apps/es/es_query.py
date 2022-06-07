@@ -196,21 +196,14 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    def run(self, include_hits=False):
+    def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        query = self._clean_before_run(include_hits)
         raw = run_query(
-            query.index,
-            query.raw_query,
+            self.index,
+            self.raw_query,
             for_export=self.for_export,
         )
-        return ESQuerySet(raw, deepcopy(query))
-
-    def _clean_before_run(self, include_hits=False):
-        query = deepcopy(self)
-        if not include_hits and query.uses_aggregations():
-            query = query.size(0)
-        return query
+        return ESQuerySet(raw, deepcopy(self))
 
     def scroll(self):
         """
@@ -319,22 +312,6 @@ class ESQuery(object):
             queries.search_string_query(search_string, default_fields)
         )
 
-    def _assemble(self):
-        """Build out the es_query dict"""
-        self._filters.extend(list(self._default_filters.values()))
-        if self._start is not None:
-            self.es_query['from'] = self._start
-        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._exclude_source:
-            self.es_query['_source'] = False
-        elif self._source is not None:
-            self.es_query['_source'] = self._source
-        if self._aggregations:
-            self.es_query['aggs'] = {
-                agg.name: agg.assemble()
-                for agg in self._aggregations
-            }
-
     def fields(self, fields):
         """
             Restrict the fields returned from elasticsearch
@@ -382,6 +359,23 @@ class ESQuery(object):
         query = deepcopy(self)
         query._assemble()
         return query.es_query
+
+    def _assemble(self):
+        """Build out the es_query dict"""
+        self._filters.extend(list(self._default_filters.values()))
+        if self._start is not None:
+            self.es_query['from'] = self._start
+        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
+        if self._exclude_source:
+            self.es_query['_source'] = False
+        elif self._source is not None:
+            self.es_query['_source'] = self._source
+        if self.uses_aggregations():
+            self.es_query['size'] = 0
+            self.es_query['aggs'] = {
+                agg.name: agg.assemble()
+                for agg in self._aggregations
+            }
 
     def dumps(self, pretty=False):
         """Returns the JSON query that will be sent to elasticsearch."""
@@ -512,11 +506,10 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        raw_hits = self.raw_hits
-        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
-            raise ESError("no hits, did you forget about no_hits_with_aggs?")
+        if self.query.uses_aggregations():
+            raise ESError("We exclude hits for aggregation queries")
 
-        return [self.normalize_result(self.query, r) for r in raw_hits]
+        return [self.normalize_result(self.query, r) for r in self.raw_hits]
 
     @property
     def total(self):

@@ -188,12 +188,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
+            date: 'input.date',
             queryField: '.query-field',
             searchForBlank: '.search-for-blank',
         },
 
         events: {
             'change @ui.queryField': 'changeQueryField',
+            'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -219,6 +221,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return !this.hasError;
         },
 
+        clear: function () {
+            var self = this;
+            self.model.set('value', '');
+            self.model.set('searchForBlank', false);
+            if (self.ui.date.length) {
+                self.ui.date.data("DateTimePicker").clear();
+            }
+        },
+
         getEncodedValue: function () {
             if (this.model.get('input') === 'address') {
                 return;  // skip geocoder address
@@ -229,13 +240,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
-            if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+            if (this.model.get('input') === 'date') {
+                // Skip because dates get handled by changeDateQueryField
+                return;
+            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.parentView.setStickyQueryInputs();
+        },
+        changeDateQueryField: function (e) {
+            this.changeQueryField(e);
             this.parentView.setStickyQueryInputs();
         },
 
@@ -263,6 +281,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
+            this.ui.date.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+                format: dateFormat,
+            }));
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -384,11 +405,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            _.each(self.collection.models, function (model) {
-                model.set('value', '');
-                model.set('searchForBlank', false);
-                if (model.get('input') === 'address') {
-                    initMapboxWidget(model);
+            this.children.each(function (childView) {
+                childView.clear();
+                if (childView.model.get('input') === 'address') {
+                    initMapboxWidget(childView.model);
                 }
             });
             self.setStickyQueryInputs();

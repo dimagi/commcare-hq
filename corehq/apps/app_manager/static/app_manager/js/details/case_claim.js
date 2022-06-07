@@ -333,8 +333,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].appearance === "address") {
                     appearance = "address";
                 }
-                if (searchProperties[i].input_ === "daterange") {
-                    appearance = "daterange";
+                if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
+                    appearance = searchProperties[i].input_;
                 }
                 var isMultiselect = searchProperties[i].input_ === "select";
                 self.searchProperties.push(searchPropertyModel({

@@ -115,13 +115,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
-            <assertions>
-              <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 1">
-                <text>
-                  <locale id="case_search.claimed_case.case_missing"/>
-                </text>
-              </assert>
-            </assertions>
           </entry>
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
@@ -162,6 +155,32 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
               </entry>
             </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
+
+    def test_inline_search_multi_select(self):
+        self.module.case_details.short.multi_select = True
+
+        suite = self.app.create_suite()
+
+        expected_entry_post = """
+        <partial>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="$case_id != ''">
+             <data key="case_id"
+                nodeset="instance('selected_cases')/results/value" ref="."
+                exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"/>
+            </post>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_post, suite, "./entry[1]/post")
+
+        expected_entry_datum = """
+                <partial>
+                    <instance-datum id="selected_cases"
+                        nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                        value="./@case_id"
+                        detail-confirm="m0_case_long"
+                        detail-select="m0_case_short"/>
+                </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry_datum, suite, "./entry[1]/session/instance-datum")
 
     def test_case_detail_tabs_with_inline_search(self):
         """Test that the detail nodeset uses the correct instance (results not casedb)"""

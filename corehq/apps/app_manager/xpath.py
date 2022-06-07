@@ -405,8 +405,12 @@ class IndicatorXpath(InstanceXpath):
 
 
 class SearchSelectedCasesInstanceXpath(InstanceXpath):
-    id = "search_selected_cases"
+    default_id = "search_selected_cases"
     path = "results/value"
+
+    @property
+    def id(self):
+        return self or self.default_id
 
 
 class CommCareSession(object):

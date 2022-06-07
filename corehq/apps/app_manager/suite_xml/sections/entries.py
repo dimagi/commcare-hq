@@ -210,14 +210,11 @@ class EntriesHelper(object):
                 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
 
-            if form.requires_case():
+            if form.requires_case() and using_inline_search:
                 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
                 case_session_var = self.get_case_session_var_for_form(form)
                 remote_request_factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
-                if using_inline_search:
-                    e.post = remote_request_factory.build_remote_request_post()
-                if using_inline_search or loads_registry_case:
-                    e.instances = remote_request_factory.build_instances()
+                e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -251,9 +248,6 @@ class EntriesHelper(object):
 
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
-
-            if using_inline_search:
-                EntriesHelper.add_case_claim_assertion(e)
 
             EntriesHelper.add_custom_assertions(e, form)
 
@@ -366,18 +360,6 @@ class EntriesHelper(object):
                                                 "[hq_user_id=instance('commcaresession')/session/context/userid])"
                                                 " = 1", "case_autoload.usercase.case_missing")
         entry.assertions.append(assertion)
-
-    @staticmethod
-    def add_case_claim_assertion(entry):
-        # TODO: what about multi-selects?
-        case_datums = [datum for datum in entry.datums if datum.nodeset]
-        if case_datums:
-            case_id = f"instance('commcaresession')/session/data/{case_datums[-1].id}"
-            assertion = EntriesHelper.get_assertion(
-                f"count(instance('casedb')/casedb/case[@case_id={case_id}]) = 1",
-                "case_search.claimed_case.case_missing"
-            )
-            entry.assertions.append(assertion)
 
     @staticmethod
     def get_extra_case_id_datums(form):

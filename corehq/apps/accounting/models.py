@@ -65,6 +65,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -2126,7 +2127,7 @@ class Invoice(InvoiceBase):
 
         if filter_out_dimagi:
             emails_with_dimagi = contact_emails
-            contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            contact_emails = [e for e in contact_emails if not is_dimagi_email(e)]
             if not contact_emails:
                 # make sure at least someone (even if it's dimagi)
                 # gets this communication. Also helpful with QA when the only

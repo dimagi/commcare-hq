@@ -138,6 +138,7 @@ function run_tests {
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-translations.sh
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
