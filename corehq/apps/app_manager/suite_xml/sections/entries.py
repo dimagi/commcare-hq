@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from itertools import zip_longest
 
@@ -460,8 +461,9 @@ class EntriesHelper(object):
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 loads_registry_case = module_loads_registry_case(module)
                 if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_query_datums(module, datum))
-                    result.append(datum)
+                    query_datum = self.get_query_datum(module, datum)
+                    result.append(query_datum)
+                    result.append(self.rename_datum_nodeset(datum, query_datum))
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
                 else:
@@ -469,6 +471,18 @@ class EntriesHelper(object):
             else:
                 result.append(datum)
         return result
+
+    def rename_datum_nodeset(self, datum, query_datum):
+        """Rename the instance in the case datum to match the instance used by the query datum"""
+        instance_name = query_datum.datum.storage_instance
+        if instance_name == "results":
+            return datum
+
+        instance_re = r"""instance\(['"]results['"]\)"""
+        new_instance = f"instance('{instance_name}')"
+        renamed = re.sub(instance_re, new_instance, datum.datum.nodeset)
+        datum.datum.nodeset = renamed
+        return datum
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
@@ -567,7 +581,7 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_query_datums(self, module, datum):
+    def get_query_datum(self, module, datum):
         """When doing 'inline' search we skip the normal case search
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
@@ -927,11 +941,6 @@ class EntriesHelper(object):
             _update_refs(datums_by_case_tag[case_tag], datum_meta.datum.id, new_id)
             datum_meta.datum.id = new_id
 
-        def add_case_type_to_instance_name(datum_meta, nodeset):
-            index_to_insert_case_type_at = nodeset.index('results') + len('results')
-            datum_meta.datum.nodeset = nodeset[0: index_to_insert_case_type_at] + ":" + \
-                datum_meta.case_type + nodeset[index_to_insert_case_type_at:]
-
         ret = []
         datums_remaining = list(datums)
         for parent_datum_meta in parent_datums:
@@ -939,9 +948,6 @@ class EntriesHelper(object):
                 # We assume that a conflict is unwanted and rename. This may get undone below.
                 datum = datum_ids[parent_datum_meta.id]
                 set_id(datum, f'{datum.id}_{datum.case_type}')
-                nodeset = datum.datum.nodeset
-                if "results" in nodeset:
-                    add_case_type_to_instance_name(datum, (nodeset))
 
             if not parent_datum_meta.requires_selection:
                 ret.append(attr.evolve(parent_datum_meta, from_parent=True))
