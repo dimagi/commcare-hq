@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import CaseES, FormES
 from corehq.apps.es.aggregations import (
-    DateHistogram2 as DateHistogram,
+    DateHistogram,
     NestedAggregation,
     TermsAggregation,
 )

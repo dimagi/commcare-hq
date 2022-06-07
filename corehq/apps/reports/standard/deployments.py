@@ -23,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram2 as DateHistogram
+from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe

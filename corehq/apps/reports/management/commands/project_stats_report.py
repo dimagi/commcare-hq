@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.es import CaseES, FormES, UserES
 from corehq.apps.es.aggregations import (
-    DateHistogram2 as DateHistogram,
+    DateHistogram,
     NestedAggregation,
     TermsAggregation,
 )

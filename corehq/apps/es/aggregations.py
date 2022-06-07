@@ -504,37 +504,6 @@ class RangeAggregation(Aggregation):
         return self
 
 
-class DateHistogram(Aggregation):
-    """
-    Aggregate by date range.  This can answer questions like "how many forms
-    were created each day?".
-
-    This class can be instantiated by the ``ESQuery.date_histogram`` method.
-
-    :param name: what do you want to call this aggregation
-    :param datefield: the document's date field to look at
-    :param interval: the date interval to use: "year", "quarter", "month",
-        "week", "day", "hour", "minute", "second"
-    :param timezone: do bucketing using this time zone instead of UTC
-    :param date_format: What format to use in the results - ES's default is stupid
-        https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html
-    """
-    type = "date_histogram"
-    result_class = BucketResult
-
-    def __init__(self, name, datefield, interval, timezone=None, date_format=None):
-        self.name = name
-        self.body = {
-            'field': datefield,
-            'interval': interval,
-        }
-
-        if date_format:
-            self.body['format'] = date_format
-        if timezone:
-            self.body['time_zone'] = timezone
-
-
 class DateHistogramResult(BucketResult):
 
     @property
@@ -548,14 +517,14 @@ class DateHistogramResult(BucketResult):
 _Interval = namedtuple('_Interval', 'interval result_format')
 
 
-class DateHistogram2(Aggregation):
+class DateHistogram(Aggregation):
     """
     Aggregate by date range.  This can answer questions like "how many forms
     were created each day?".
 
     :param name: what do you want to call this aggregation
     :param datefield: the document's date field to look at
-    :param interval: the date interval to use - from DateHistogram2.Interval
+    :param interval: the date interval to use - from DateHistogram.Interval
     :param timezone: do bucketing using this time zone instead of UTC
     """
     type = "date_histogram"

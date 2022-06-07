@@ -8,7 +8,7 @@ from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import (
     AggregationRange,
     AggregationTerm,
-    DateHistogram2 as DateHistogram,
+    DateHistogram,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,

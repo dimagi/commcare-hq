@@ -18,7 +18,7 @@ from corehq.apps.es import (
 )
 from corehq.apps.es.aggregations import (
     MISSING_KEY,
-    DateHistogram2 as DateHistogram,
+    DateHistogram,
     ExtendedStatsAggregation,
     MissingAggregation,
     TermsAggregation,
