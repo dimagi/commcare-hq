@@ -574,6 +574,7 @@ class DateHistogram2(Aggregation):
             'field': datefield,
             'interval': interval.interval,
             'format': interval.result_format,
+            'min_doc_count': 1,  # Only include buckets with results
         }
 
         if timezone:

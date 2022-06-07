@@ -526,3 +526,11 @@ class TestDateHistogram(SimpleTestCase):
                .run())
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(2, counts['2022-03-13'])
+
+    def test_only_nonzero_buckets_returned(self):
+        res = (FormES()
+               .remove_default_filters()
+               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.DAY))
+               .run())
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(15, len(counts))
