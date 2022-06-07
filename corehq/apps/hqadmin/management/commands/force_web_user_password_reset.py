@@ -47,8 +47,8 @@ class Command(BaseCommand):
             raise CommandError(f'The following errors were found in your input file:\n{errors_string}')
 
         if web_users_to_skip_due_to_recent_reset:
-            self.stdout.write("The following users will be skipped "
-                              "because they have reset their passwords since {skip_if_reset_since}")
+            self.stdout.write(f"The following users will be skipped "
+                              f"because they have reset their passwords since {skip_if_reset_since}")
 
             for web_user in web_users_to_skip_due_to_recent_reset:
                 self.stdout.write(f"  - {web_user.username} (password last set on {web_user.last_password_set})")
