@@ -307,6 +307,112 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             f"./entry[1]/instance[@id='{instance_id}']",
         )
 
+    def test_parent_select(self):
+        self._configure_parent_select_module()
+        suite = self.app.create_suite()
+
+        expected_session = """
+        <partial>
+        <session>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+            storage-instance="results:parent" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="parent_id"
+            nodeset="instance('results:parent')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+            value="./@case_id" detail-select="m0_case_short"/>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+            storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m2.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="case_id"
+            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_id]"
+            value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+        </session>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_session, suite, "./entry[3]/session")
+
+        # TODO - claim multiple cases
+        # expected_post = """
+        # <partial>
+        # <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+        #     relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0 or count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/parent_id]) = 0">
+        #   <data key="case_id" ref="instance('commcaresession')/session/data/parent_id"/>
+        #   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+        # </post>
+        # </partial>"""
+        # self.assertXmlPartialEqual(expected_post, suite, "./entry[3]/post")
+
+    def test_parent_select_multi_select(self):
+        self._configure_parent_select_module()
+
+        # make parent module use 'multi-select'
+        self.module.case_details.short.multi_select = True
+        suite = self.app.create_suite()
+
+        expected_session = """
+        <partial>
+        <session>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+            storage-instance="results:parent_selected_cases" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m0.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <instance-datum id="parent_selected_cases"
+            nodeset="instance('results:parent_selected_cases')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+            value="./@case_id" detail-select="m0_case_short"/>
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+            storage-instance="results" template="case" default_search="false">
+            <data key="case_type" ref="'case'"/>
+            <prompt key="name">
+              <display>
+                <text>
+                  <locale id="search_property.m2.name"/>
+                </text>
+              </display>
+            </prompt>
+          </query>
+          <datum id="case_id"
+            nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_selected_cases]"
+            value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+        </session>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(expected_session, suite, "./entry[3]/session")
+
+    def _configure_parent_select_module(self):
+        other_module = self.app.add_module(Module.new_module("Followup", None))
+        form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
+        form.requires = 'case'
+        other_module.case_type = 'case'
+        other_module.parent_select.active = True
+        other_module.parent_select.module_id = self.module.unique_id
+        other_module.search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+            auto_launch=True,
+            inline_search=True,
+        )
+        other_module.assign_references()
+
 
 @patch_get_xform_resource_overrides()
 class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):

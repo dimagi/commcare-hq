@@ -473,7 +473,9 @@ class EntriesHelper(object):
         return result
 
     def rename_datum_nodeset(self, datum, query_datum):
-        """Rename the instance in the case datum to match the instance used by the query datum"""
+        """Rename the instance in the case datum to match the instance used by the query datum
+        The logic here is heavily reliant on the logic in ``get_select_chain_with_sessions``
+        """
         instance_name = query_datum.datum.storage_instance
         if instance_name == "results":
             return datum
@@ -588,16 +590,29 @@ class EntriesHelper(object):
         """
         from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
             RemoteRequestFactory,
-            RESULTS_INSTANCE
         )
 
-        storage_instance = RESULTS_INSTANCE
-        if 'case_id_' in datum.id:
-            storage_instance = RESULTS_INSTANCE + ":" + datum.id[len('case_id_'):]
+        storage_instance = self.get_query_storage_instance(datum.id)
 
         factory = RemoteRequestFactory(None, module, [])
         query = factory.build_remote_request_queries(storage_instance)[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
+
+    def get_query_storage_instance(self, datum_id):
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+            RESULTS_INSTANCE
+        )
+        if datum_id == 'case_id':
+            return RESULTS_INSTANCE
+        if 'case_id_' in datum_id:
+            # e.g. case_id_{case_type}
+            return RESULTS_INSTANCE + ":" + datum_id[len('case_id_'):]
+        elif datum_id.endswith('_id'):
+            # e.g. parent_id, parent_parent_id
+            return RESULTS_INSTANCE + ":" + datum_id[:-3]
+        else:
+            # e.g. parent_selected_cases
+            return RESULTS_INSTANCE + ":" + datum_id
 
     def get_data_registry_case_datums(self, datum, module):
         """When a data registry is the source of the search results we can't assume that the case
