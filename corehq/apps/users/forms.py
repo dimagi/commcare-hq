@@ -930,7 +930,8 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_email=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming their account email."),
                             disabled_phone=_("Setting a password is disabled. "
-                                            "The user will set their own password on confirming their account phone number."),
+                                            "The user will set their own password on confirming "
+                                            "their account phone number."),
                         )),
                         required=True,
                     ),

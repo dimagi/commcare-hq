@@ -1,4 +1,3 @@
-import logging
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 
@@ -351,8 +350,8 @@ class ConfirmationSmsValidator(ImportValidator):
     confirmation_sms_header = "send_confirmation_sms"
     account_confirmed_header = "is_account_confirmed"
     active_status_header = "is_active"
-    error_message_new_user = _("When '{}' is True for a new user, {} must be either empty or set to False.")
-    error_message_existing_user = _("When '{}' is True for an existing user, {}.")
+    error_new_user = _("When '{}' is True for a new user, {} must be either empty or set to False.")
+    error_existing_user = _("When '{}' is True for an existing user, {}.")
 
     def validate_spec(self, spec):
         send_account_confirmation_sms = spec_value_to_boolean_or_none(spec, self.confirmation_sms_header)
@@ -361,7 +360,6 @@ class ConfirmationSmsValidator(ImportValidator):
             is_active = spec_value_to_boolean_or_none(spec, self.active_status_header)
             is_account_confirmed = spec_value_to_boolean_or_none(spec, self.account_confirmed_header)
             user_id = spec.get('user_id')
-            logging.info(f"username: {spec.get('username')} is_active {is_active} is_account_confirmed {is_account_confirmed} user_id {user_id}")
             error_values = []
             if not user_id:
                 if is_active:
@@ -369,13 +367,11 @@ class ConfirmationSmsValidator(ImportValidator):
                 if is_account_confirmed:
                     error_values.append(self.account_confirmed_header)
                 if error_values:
-                    logging.info(f"error_values {error_values}")
-                    return self.error_message_new_user.format(self.confirmation_sms_header, ' and '.join(error_values))
+                    return self.error_new_user.format(self.confirmation_sms_header, ' and '.join(error_values))
             else:
                 if is_active:
                     error_values.append(f"{self.active_status_header} must be empty or set to False")
                 if is_account_confirmed is not None:
                     error_values.append(f"{self.account_confirmed_header} must be empty")
                 if error_values:
-                    logging.info(f"error_values {error_values}")
-                    return self.error_message_existing_user.format(self.confirmation_sms_header, ' and '.join(error_values))
+                    return self.error_existing_user.format(self.confirmation_sms_header, ' and '.join(error_values))
