@@ -323,6 +323,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_parent_select(self):
+        """test that instance IDs are correct and not duplicated"""
         self._configure_parent_select_module()
         suite = self.app.create_suite()
 
@@ -575,6 +576,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_child_module_of_module_with_inline_search(self):
+        # TODO - claim multiple cases
         self.m0.search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
             auto_launch=True,
@@ -641,3 +643,23 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(m1_expected, suite, "./entry[2]/session")
+
+        expected_stack = """
+        <partial>
+         <create>
+           <command value="'m0'"/>
+           <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+             <data key="case_type" ref="'case'"/>
+             <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+           </query>
+           <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+           <command value="'m1'"/>
+           <query id="results:case" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+             <data key="case_type" ref="'case'"/>
+             <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+           </query>
+           <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
+           <command value="'m1-f1'"/>
+         </create>
+        </partial>"""
+        self.assertXmlPartialEqual(expected_stack, suite, "./entry[2]/stack/create")
