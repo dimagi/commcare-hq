@@ -31,6 +31,7 @@ class Command(BaseCommand):
             csv_writer.writeheader()
             for row in self.get_rows(domains, case_types, options['num_days']):
                 csv_writer.writerow(row)
+        print(f"Result saved to {filename}")
 
     def get_rows(self, domains, case_types, num_days):
         end = date.today()
