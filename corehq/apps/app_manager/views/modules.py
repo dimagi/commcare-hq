@@ -791,7 +791,7 @@ def _new_report_module(request, domain, app, name, lang):
             header={lang: report.title},
             description={lang: report.description} if report.description else None,
         )
-        for report in ReportConfiguration.by_domain(domain)
+        for report in ReportConfiguration.by_domain(domain) + RegistryReportConfiguration.by_domain(domain)
     ]
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)

@@ -192,7 +192,7 @@ def _update_linked_datasource(master_datasource, linked_datasource):
     _replace_master_app_ids(linked_datasource_json["domain"], master_datasource_json)
 
     linked_datasource_json.update(master_datasource_json)
-    DataSourceConfiguration.wrap(linked_datasource_json).save()
+    _wrap_data_source_by_doc_type(linked_datasource_json).save()
 
     rebuild_indicators.delay(
         linked_datasource.get_id,
@@ -212,7 +212,7 @@ def _update_linked_report(master_report, linked_report):
     master_report_json["report_meta"]["master_id"] = linked_report_json["report_meta"]["master_id"]
 
     linked_report_json.update(master_report_json)
-    ReportConfiguration.wrap(linked_report_json).save()
+    wrap_report_config_by_type(linked_report_json).save()
 
 
 def get_linked_report_configs(domain, report_id):

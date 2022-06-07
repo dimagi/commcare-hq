@@ -1208,6 +1208,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
         reports += ReportConfiguration.by_domain(self.domain)
+        reports += RegistryReportConfiguration.by_domain(self.domain)
         ret = []
         for report in reports:
             try:

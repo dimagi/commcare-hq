@@ -151,8 +151,12 @@ def get_configurable_and_static_reports(domain):
 
 
 def get_existing_reports(domain):
-    from corehq.apps.userreports.models import ReportConfiguration
-    existing_reports = ReportConfiguration.by_domain(domain)
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    existing_reports = ReportConfiguration.by_domain(domain) + \
+        RegistryReportConfiguration.by_domain(domain)
     return [
         report for report in existing_reports
         if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
