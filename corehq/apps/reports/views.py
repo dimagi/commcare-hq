@@ -556,8 +556,8 @@ class AddSavedReportConfigView(View):
 
 @dataclass
 class Timezone:
-    hours: str = "+00"
-    minutes: str = "00"
+    hours: int
+    minutes: int
 
     def __str__(self):
         return f"{self.hours:+03}:{self.minutes:02}"
@@ -654,7 +654,8 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    tz_diff = datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    domain_obj = Domain.get_by_name(domain)
+    tz_diff = datetime.now(pytz.timezone(domain_obj.default_timezone)).strftime('%z')
     return Timezone(int(tz_diff[:3]), int(tz_diff[3:]))
 
 
