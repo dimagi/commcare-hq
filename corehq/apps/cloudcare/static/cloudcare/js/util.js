@@ -286,6 +286,7 @@ hqDefine('cloudcare/js/util', [
             showClose: true,
             showTodayButton: true,
             debug: true,
+            extraFormats: ["MM/DD/YYYY"],
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
