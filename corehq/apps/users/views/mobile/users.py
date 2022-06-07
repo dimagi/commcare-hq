@@ -2,6 +2,7 @@ import io
 import json
 import re
 import time
+import logging
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -1531,13 +1532,11 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             })
 
     def is_invite_valid(self):
-        import logging
-        logging.info("user info hash {}".format(self.user_invite_hash))
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
-        logging.info(f"hours_elapsed {hours_elapsed}")
+        logging.debug(f"hours_elapsed {hours_elapsed}")
         invite_expiry_in_hours = self.domain_object.confirmation_link_expiry_time
         invite_expiry_duration_in_hours = invite_expiry_in_hours or self.default_expiry_duration_in_hours
-        logging.info(f"expiry_duration_in_hours {invite_expiry_duration_in_hours}")
+        logging.debug(f"expiry_duration_in_hours {invite_expiry_duration_in_hours}")
         if hours_elapsed <= invite_expiry_duration_in_hours:
             return True
         return False

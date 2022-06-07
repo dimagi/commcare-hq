@@ -73,8 +73,6 @@ def send_account_confirmation_sms(commcare_user):
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
-    import logging
-    logging.info(text_content)
     send_sms(
         domain=commcare_user.domain,
         contact=None,

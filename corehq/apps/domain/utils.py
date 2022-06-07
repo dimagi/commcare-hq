@@ -2,6 +2,8 @@ import logging
 import os
 import re
 import sys
+import json
+import time
 from collections import Counter
 
 import simplejson
@@ -135,14 +137,7 @@ def log_domain_changes(user, domain, new_obj, old_obj):
 
 
 def encrypt_account_confirmation_info(commcare_user):
-    import logging
-    import json
-    import time
     data = {"user_id": commcare_user.get_id, "time": int(time.time())}
-    logging.info(data)
     encrypted = b64_aes_encrypt(json.dumps(data))
-    logging.info("encrypt" + encrypted)
-    logging.info("decrypt {}".format(b64_aes_decrypt(encrypted)))
-
     return encrypted
     
