@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.es import CaseES, FormES, UserES
 from corehq.apps.es.aggregations import (
-    DateHistogram,
+    DateHistogram2 as DateHistogram,
     NestedAggregation,
     TermsAggregation,
 )
@@ -143,7 +143,7 @@ class Command(BaseCommand):
             .opened_range(gte=self.date_start, lt=self.date_end)
             .aggregation(
                 TermsAggregation('cases_per_user', 'owner_id', size=100)
-                .aggregation(DateHistogram('cases_by_date', 'opened_on', interval='month')))
+                .aggregation(DateHistogram('cases_by_date', 'opened_on', DateHistogram.Interval.MONTH)))
         )
         if case_type:
             query = query.case_type(case_type)
@@ -151,11 +151,9 @@ class Command(BaseCommand):
         results = query.size(0).run()
 
         stats = defaultdict(list)
-        cases_per_user = results.aggregations.cases_per_user
-        for bucket in cases_per_user.buckets_list:
-            counts_by_date = {b['key_as_string']: b['doc_count'] for b in bucket.cases_by_date.normalized_buckets}
-            for key, count in counts_by_date.items():
-                stats[key].append(count)
+        for bucket in results.aggregations.cases_per_user.buckets_list:
+            for month, count in bucket.cases_by_date.counts_by_bucket().items():
+                stats[month].append(count)
 
         final_stats = []
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
@@ -189,19 +187,14 @@ class Command(BaseCommand):
             .active_in_range(gte=self.date_start, lt=self.date_end)
             .aggregation(TermsAggregation('cases_per_user', 'owner_id', size=100).aggregation(
                 NestedAggregation('actions', 'actions').aggregation(
-                    DateHistogram('cases_by_date', 'server_date', interval='month')
+                    DateHistogram('cases_by_date', 'server_date', DateHistogram.Interval.MONTH)
                 )
             )).size(0).run())
 
         stats = defaultdict(list)
-        cases_per_user = results.aggregations.cases_per_user
-        for bucket in cases_per_user.buckets_list:
-            counts_by_date = {
-                b['key_as_string']: b['doc_count']
-                for b in bucket.actions.cases_by_date.normalized_buckets
-            }
-            for key, count in counts_by_date.items():
-                stats[key].append(count)
+        for bucket in results.aggregations.cases_per_user.buckets_list:
+            for month, count in bucket.actions.cases_by_date.counts_by_bucket().items():
+                stats[month].append(count)
 
         final_stats = []
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):

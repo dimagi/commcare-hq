@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import CaseES, FormES
 from corehq.apps.es.aggregations import (
-    DateHistogram,
+    DateHistogram2 as DateHistogram,
     NestedAggregation,
     TermsAggregation,
 )
@@ -78,10 +78,11 @@ def _get_submissions_counts(domain, start, end):
     res = (FormES()
            .domain(domain)
            .submitted(gte=start, lte=end)
-           .submitted_histogram()
+           .aggregation(
+               DateHistogram('date_histogram', 'received_on', DateHistogram.Interval.DAY))
            .run().aggregations.date_histogram)
     return {
-        date.fromisoformat(bucket['key_as_string']): bucket['doc_count']
+        date.fromisoformat(bucket['key']): bucket['doc_count']
         for bucket in res.normalized_buckets
     }
 
@@ -94,7 +95,7 @@ def _get_case_update_counts(domain, start, end):
                TermsAggregation('case_types', 'type.exact')
                .aggregation(
                    NestedAggregation('actions', 'actions').aggregation(
-                       DateHistogram('case_count', 'actions.server_date', interval='day', date_format='date')
+                       DateHistogram('case_count', 'actions.server_date', DateHistogram.Interval.DAY)
                    )
                )
            )
@@ -103,6 +104,6 @@ def _get_case_update_counts(domain, start, end):
     ret = {}
     for case_type in res.aggregations.case_types.buckets_list:
         for case_count in case_type.actions.case_count.normalized_buckets:
-            day = date.fromisoformat(case_count['key_as_string'])
+            day = date.fromisoformat(case_count['key'])
             ret[(case_type.key, day)] = case_count['doc_count']
     return ret

@@ -8,7 +8,7 @@ from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import (
     AggregationRange,
     AggregationTerm,
-    DateHistogram2,
+    DateHistogram2 as DateHistogram,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
@@ -367,13 +367,16 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "date_histogram": {
                         "field": "date",
                         "interval": "day",
-                        "time_zone": "-01:00"
+                        "time_zone": "-01:00",
+                        'format': 'yyyy-MM-dd',
+                        'min_doc_count': 1,
                     }
                 }
             },
             "size": 0
         }
-        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
+        query = HQESQuery('forms').aggregation(
+            DateHistogram('by_day', 'date', DateHistogram.Interval.DAY, '-01:00'))
         self.checkQuery(query, json_output)
 
     def test_histogram_aggregation(self):
@@ -394,7 +397,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             }
         }
         expected_output = example_response['aggregations']['forms_by_date']['buckets']
-        query = HQESQuery('forms').date_histogram('forms_by_date', '', '')
+        query = HQESQuery('forms').aggregation(
+            DateHistogram('forms_by_date', '', DateHistogram.Interval.DAY))
         res = ESQuerySet(example_response, query)
         output = res.aggregations.forms_by_date.raw_buckets
         self.assertEqual(output, expected_output)
@@ -497,16 +501,10 @@ class TestDateHistogram(SimpleTestCase):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         super().tearDownClass()
 
-    def test_current_functionality(self):
-        res = FormES().remove_default_filters().date_histogram('date_histogram', 'received_on', 'day').run()
-        counts = res.aggregations.date_histogram.counts_by_bucket()
-        # A timestamp is not especially convenient
-        self.assertEqual(2, counts[int(datetime(2022, 3, 13).timestamp() * 1000)])
-
     def test_year_histogram(self):
         res = (FormES()
                .remove_default_filters()
-               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.YEAR))
+               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.YEAR))
                .run())
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(16, counts['2022'])
@@ -514,7 +512,7 @@ class TestDateHistogram(SimpleTestCase):
     def test_month_histogram(self):
         res = (FormES()
                .remove_default_filters()
-               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.MONTH))
+               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.MONTH))
                .run())
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(5, counts['2022-03'])
@@ -522,7 +520,7 @@ class TestDateHistogram(SimpleTestCase):
     def test_day_histogram(self):
         res = (FormES()
                .remove_default_filters()
-               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.DAY))
+               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.DAY))
                .run())
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(2, counts['2022-03-13'])
@@ -530,7 +528,7 @@ class TestDateHistogram(SimpleTestCase):
     def test_only_nonzero_buckets_returned(self):
         res = (FormES()
                .remove_default_filters()
-               .aggregation(DateHistogram2('submissions', 'received_on', DateHistogram2.Interval.DAY))
+               .aggregation(DateHistogram('submissions', 'received_on', DateHistogram.Interval.DAY))
                .run())
         counts = res.aggregations.submissions.counts_by_bucket()
         self.assertEqual(15, len(counts))
