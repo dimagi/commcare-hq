@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.reports.models import TableauServer, TableauVisualization
@@ -14,78 +13,79 @@ from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.util.test_utils import flag_enabled
 
 
-class TestUpdateRoles(BaseLinkedDomainTest):
-    @classmethod
-    def setUpClass(cls):
-        super(TestUpdateRoles, cls).setUpClass()
-        permissions = HqPermissions(
-            edit_data=True,
-            edit_reports=True,
-            view_report_list=[
-                'corehq.reports.DynamicReportmaster_report_id'
-            ]
+class TestUpdateRoles(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain_link = DomainLink(master_domain='upstream-domain', linked_domain='downstream-domain')
+        self.upstream_domain = self.domain_link.master_domain
+        self.downstream_domain = self.domain_link.linked_domain
+
+    def test_update_report_list_preserves_properties(self):
+        self._create_user_role(self.upstream_domain, name='test',
+            permissions=HqPermissions(
+                edit_data=True,
+                edit_reports=True,
+            ),
+            is_non_admin_editable=True
         )
-        cls.role = UserRole.create(cls.domain, 'test', permissions, is_non_admin_editable=True)
-        cls.other_role = UserRole.create(
-            cls.domain, 'other_test', HqPermissions(edit_web_users=True, view_locations=True)
-        )
-        cls.other_role.set_assignable_by([cls.role.id])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.role.delete()
-        cls.other_role.delete()
-        super(TestUpdateRoles, cls).tearDownClass()
+        update_user_roles(self.domain_link)
 
-    def tearDown(self):
-        for role in UserRole.objects.get_by_domain(self.linked_domain):
-            role.delete()
-        super(TestUpdateRoles, self).tearDown()
+        synced_role = UserRole.objects.get_by_domain(self.downstream_domain)[0]
+        self.assertTrue(synced_role.name, 'test')
+        self.assertTrue(synced_role.permissions.edit_data)
+        self.assertTrue(synced_role.permissions.edit_reports)
+        self.assertTrue(synced_role.is_non_admin_editable)
 
-    def test_update_report_list(self):
-        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
+    def test_viewable_reports_are_preserved(self):
+        self._create_user_role(self.upstream_domain, permissions=HqPermissions(
+            view_report_list=[get_ucr_class_name('master_report_id')]
+        ))
 
         report_mapping = {'master_report_id': 'linked_report_id'}
         with patch('corehq.apps.linked_domain.updates.get_static_report_mapping', return_value=report_mapping):
             update_user_roles(self.domain_link)
 
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
-        self.assertEqual(2, len(roles))
-        self.assertEqual(roles['test'].permissions.view_report_list, [get_ucr_class_name('linked_report_id')])
-        self.assertTrue(roles['test'].is_non_admin_editable)
+        roles = UserRole.objects.get_by_domain(self.downstream_domain)
+        self.assertEqual(len(roles), 1)
+        self.assertEqual(roles[0].permissions.view_report_list, [get_ucr_class_name('linked_report_id')])
 
-        self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].assignable_by, [roles['test'].get_id])
-
-    def test_match_names(self):
-        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
-
-        # create role in linked domain with the same name but no 'upstream_id'
-        UserRole.create(
-            self.linked_domain, 'other_test', HqPermissions(edit_web_users=True, view_locations=True)
-        )
+    def test_assignable_by_is_preserved(self):
+        supervisor_role = self._create_user_role(self.upstream_domain, name='supervisor')
+        self._create_user_role(self.upstream_domain, name='managed', assignable_by_ids=[supervisor_role.id])
 
         update_user_roles(self.domain_link)
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
-        self.assertEqual(2, len(roles))
-        self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(roles['managed'].assignable_by, [roles['supervisor'].get_id])
 
-    def test_match_ids(self):
-        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
-
-        # create role in linked domain with upstream_id and name not matching upstream name
-        UserRole.create(
-            self.linked_domain, 'id_test', HqPermissions(edit_web_users=False, view_locations=True),
-            upstream_id=self.other_role.get_id
-        )
+    def test_matching_names_are_overwritten(self):
+        upstream_role = self._create_user_role(self.upstream_domain, name='test')
+        self._create_user_role(self.downstream_domain, name='test')
 
         update_user_roles(self.domain_link)
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
-        self.assertEqual(2, len(roles), roles.keys())
-        self.assertIsNotNone(roles.get('other_test'))
-        self.assertTrue(roles['other_test'].permissions.edit_web_users)
-        self.assertEqual(roles['other_test'].upstream_id, self.other_role.get_id)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(1, len(roles))
+        self.assertTrue(roles['test'].permissions.edit_web_users)
+        self.assertEqual(roles['test'].upstream_id, upstream_role.get_id)
+
+    def test_matching_ids_are_overwritten(self):
+        upstream_role = self._create_user_role(self.upstream_domain, name='test')
+        self._create_user_role(self.downstream_domain, 'conflicting_name', upstream_id=upstream_role.get_id)
+
+        update_user_roles(self.domain_link)
+
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(1, len(roles))
+        self.assertIsNotNone(roles.get('test'))
+
+    def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
+        if not permissions:
+            permissions = HqPermissions(edit_web_users=True, view_locations=True)
+        role = UserRole.create(domain, name, permissions, **kwargs)
+        if assignable_by_ids:
+            role.set_assignable_by(assignable_by_ids)
+        return role
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):
