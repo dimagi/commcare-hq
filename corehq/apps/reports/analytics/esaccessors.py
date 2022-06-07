@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
@@ -17,6 +18,7 @@ from corehq.apps.es import (
 )
 from corehq.apps.es.aggregations import (
     MISSING_KEY,
+    DateHistogram2 as DateHistogram,
     ExtendedStatsAggregation,
     MissingAggregation,
     TermsAggregation,
@@ -264,37 +266,19 @@ def get_completed_counts_by_date(domain, user_ids, datespan, timezone):
 
 
 def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission_time):
-    form_query = (FormES()
-                  .domain(domain)
-                  .user_id(user_ids))
-    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
-        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
-
-    if is_submission_time:
-        form_query = (form_query
-            .submitted(gte=datespan.startdate.date(),
-                     lte=datespan.enddate.date())
-            .submitted_histogram(timezone.zone))
-
-    else:
-        form_query = (form_query
-            .completed(gte=datespan.startdate.date(),
-                     lte=datespan.enddate.date())
-            .completed_histogram(timezone.zone))
-
-    form_query = form_query.size(0)
-
-    results = form_query.run().aggregations.date_histogram.buckets_list
-
-    # Convert timestamp from millis -> seconds -> aware datetime
-    # ES bucket key is an epoch timestamp relative to the timezone specified,
-    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
-    results = list(map(
-        lambda result:
-            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
-        results,
-    ))
-    return dict(results)
+    date_field = 'received_on' if is_submission_time else 'form.meta.timeEnd'
+    return (FormES()
+            .domain(domain)
+            .user_id(user_ids)
+            .NOT(xmlns_filter(list(SYSTEM_FORM_XMLNS_MAP)))
+            .date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())
+            .aggregation(DateHistogram(
+                'date_histogram',
+                date_field,
+                DateHistogram.Interval.DAY,
+                timezone=timezone.zone,
+            ))
+            .run().aggregations.date_histogram.counts_by_bucket())
 
 
 def get_group_stubs(group_ids):
