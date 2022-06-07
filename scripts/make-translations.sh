@@ -25,12 +25,13 @@ if ! ./manage.py compilemessages; then
 fi
 
 # Remove diffs for files where the only thing that changed was POT-Creation-Date
-# Todo: It's a bit hacky that this relies on git state to undo unncessary changes
+# Todo: It's a bit hacky that this relies on git state to undo unnecessary changes
 # Todo: Ideally we'd change the management commands above to just not produce the diff in the first place
 git diff --name-only | grep '^locale/' | while read -r filename
 do
     if ! git diff -U0 -- "$filename" | tail -n +6 | grep -v '^[+-]"POT-Creation-Date:\s' > /dev/null
     then
-        git checkout -- "$filename"
+        # disable hooks for this command
+        git -c core.hooksPath=/dev/null checkout -- "$filename"
     fi
 done
