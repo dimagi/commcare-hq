@@ -324,7 +324,15 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
 
     def test_parent_select(self):
         """test that instance IDs are correct and not duplicated"""
-        self._configure_parent_select_module()
+        self._configure_parent_select_module_with_inline_search()
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "parent name"},
+                model="case",
+                format="plain",
+                field="parent/name"
+            ))
+        )
         suite = self.app.create_suite()
 
         expected_session = """
@@ -373,8 +381,20 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         # </partial>"""
         # self.assertXmlPartialEqual(expected_post, suite, "./entry[3]/post")
 
+        # TODO: results instance in detail
+        # this is an issue because the same detail gets used with the 'results' instance and the
+        # 'results:parent' instance. I think the only solution is to create a new details which is
+        # used for the 'parent select' that uses the 'results:parent' instance
+        expected_detail_columns = """
+        <partial>
+          <xpath function="case_name"/>
+          <xpath function="instance('results')/results/case[@case_id=current()/index/parent]/case_name"/>
+        </partial>"""
+        self.assertXmlPartialEqual(
+            expected_detail_columns, suite, "./detail[@id='m0_case_short']/field/template/text/xpath")
+
     def test_parent_select_multi_select(self):
-        self._configure_parent_select_module()
+        self._configure_parent_select_module_with_inline_search()
 
         # make parent module use 'multi-select'
         self.module.case_details.short.multi_select = True
@@ -415,7 +435,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_session, suite, "./entry[3]/session")
 
-    def _configure_parent_select_module(self):
+    def _configure_parent_select_module_with_inline_search(self):
         other_module = self.app.add_module(Module.new_module("Followup", None))
         form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
         form.requires = 'case'
