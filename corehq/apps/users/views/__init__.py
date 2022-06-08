@@ -510,7 +510,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            UserRole.objects.get_by_domain(self.domain),
+            [role for role in UserRole.objects.get_by_domain(self.domain) if role.name != "Mobile Worker"],
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
