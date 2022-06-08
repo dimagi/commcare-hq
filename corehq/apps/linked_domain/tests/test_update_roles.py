@@ -58,17 +58,6 @@ class TestUpdateRoles(TestCase):
         roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
         self.assertEqual(roles['managed'].assignable_by, [roles['supervisor'].get_id])
 
-    def test_matching_names_are_overwritten(self):
-        upstream_role = self._create_user_role(self.upstream_domain, name='test')
-        self._create_user_role(self.downstream_domain, name='test')
-
-        update_user_roles(self.domain_link)
-
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
-        self.assertEqual(1, len(roles))
-        self.assertTrue(roles['test'].permissions.edit_web_users)
-        self.assertEqual(roles['test'].upstream_id, upstream_role.get_id)
-
     def test_matching_ids_are_overwritten(self):
         upstream_role = self._create_user_role(self.upstream_domain, name='test')
         self._create_user_role(self.downstream_domain, 'conflicting_name', upstream_id=upstream_role.get_id)
@@ -89,53 +78,51 @@ class TestUpdateRoles(TestCase):
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):
-        self.assertEqual([], UserRole.objects.get_by_domain(self.linked_domain))
-
         server = TableauServer.objects.create(
-            domain=self.domain,
+            domain=self.upstream_domain,
             server_type='server',
             server_name='my_server',
             target_site='my_site',
         )
 
         upstream_viz_1 = TableauVisualization.objects.create(
-            domain=self.domain,
+            domain=self.upstream_domain,
             server=server,
         )
 
         upstream_viz_2 = TableauVisualization.objects.create(
-            domain=self.domain,
+            domain=self.upstream_domain,
             server=server,
         )
 
         downstream_viz_1 = TableauVisualization.objects.create(
-            domain=self.linked_domain,
+            domain=self.downstream_domain,
             upstream_id=upstream_viz_1.id,
             server=server,
         )
         downstream_viz_2 = TableauVisualization.objects.create(
-            domain=self.linked_domain,
+            domain=self.downstream_domain,
             upstream_id=upstream_viz_2.id,
             server=server,
         )
         downstream_viz_3 = TableauVisualization.objects.create(
-            domain=self.linked_domain,
+            domain=self.downstream_domain,
             upstream_id=None,
             server=server,
         )
 
-        self.upstream_tableau_role = UserRole.create(self.domain,
+        self.upstream_tableau_role = UserRole.create(self.upstream_domain,
                                    'tableau_test',
                                    HqPermissions(view_tableau_list=[str(upstream_viz_1.id)]))
         # Downstream role
         UserRole.create(
-            self.linked_domain, 'tableau_test', HqPermissions(
+            self.downstream_domain, 'tableau_test', HqPermissions(
                 view_tableau_list=[str(downstream_viz_1.id), str(downstream_viz_2.id), str(downstream_viz_3.id)]),
             upstream_id=self.upstream_tableau_role.get_id
         )
 
         update_user_roles(self.domain_link)
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.linked_domain)}
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
         # viz_1 should be included because it's linked upstream viz was in upstream role's permission list, and
         # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
