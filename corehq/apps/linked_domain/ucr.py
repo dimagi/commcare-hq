@@ -212,7 +212,7 @@ def _update_linked_report(master_report, linked_report):
     master_report_json["report_meta"]["master_id"] = linked_report_json["report_meta"]["master_id"]
 
     linked_report_json.update(master_report_json)
-    wrap_report_config_by_type(linked_report_json).save()
+    wrap_report_config_by_type(linked_report_json, allow_deleted=True).save()
 
 
 def get_linked_report_configs(domain, report_id):

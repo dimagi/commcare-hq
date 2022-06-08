@@ -330,15 +330,19 @@ def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
     }[doc_type].wrap(doc)
 
 
-def wrap_report_config_by_type(config):
+def wrap_report_config_by_type(config, allow_deleted=False):
     from corehq.apps.userreports.models import (
         ReportConfiguration,
         RegistryReportConfiguration,
     )
+    if is_deleted(config) and not allow_deleted:
+        raise ReportConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(config["doc_type"])
     try:
         return {
             "ReportConfiguration": ReportConfiguration,
             "RegistryReportConfiguration": RegistryReportConfiguration,
-        }[config["doc_type"]].wrap(config)
+        }[doc_type].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
