@@ -258,13 +258,13 @@ def update_user_roles(domain_link):
 
     _convert_reports_permissions(domain_link, master_results)
 
-    local_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
-    local_roles_by_name = {}
-    local_roles_by_upstream_id = {}
-    for role in local_roles:
-        local_roles_by_name[role.name] = role
+    downstream_roles = UserRole.objects.get_by_domain(domain_link.linked_domain, include_archived=True)
+    downstream_roles_by_name = {}
+    downstream_roles_by_upstream_id = {}
+    for role in downstream_roles:
+        downstream_roles_by_name[role.name] = role
         if role.upstream_id:
-            local_roles_by_upstream_id[role.upstream_id] = role
+            downstream_roles_by_upstream_id[role.upstream_id] = role
 
     is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
     if is_embedded_tableau_enabled:
@@ -272,34 +272,42 @@ def update_user_roles(domain_link):
             domain=domain_link.linked_domain)
 
     # Update downstream roles based on upstream roles
-    for role_def in master_results:
-        role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
+    for upstream_role_def in master_results:
+        role = _get_matching_downstream_entry(upstream_role_def, downstream_roles)
         if not role:
             role = UserRole(domain=domain_link.linked_domain)
-        local_roles_by_upstream_id[role_def['_id']] = role
-        role.upstream_id = role_def['_id']
+        downstream_roles_by_upstream_id[upstream_role_def['_id']] = role
+        role.upstream_id = upstream_role_def['_id']
 
-        role.name = role_def["name"]
-        role.default_landing_page = role_def["default_landing_page"]
-        role.is_non_admin_editable = role_def["is_non_admin_editable"]
+        _copy_role_attributes(upstream_role_def, role)
         role.save()
 
-        permissions = HqPermissions.wrap(role_def["permissions"])
+        permissions = HqPermissions.wrap(upstream_role_def["permissions"])
         if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    for role_def in master_results:
-        local_role = local_roles_by_upstream_id[role_def['_id']]
+    for upstream_role_def in master_results:
+        downstream_role = downstream_roles_by_upstream_id[upstream_role_def['_id']]
         assignable_by = []
-        if role_def["assignable_by"]:
+        if upstream_role_def["assignable_by"]:
             assignable_by = [
-                local_roles_by_upstream_id[role_id].id
-                for role_id in role_def["assignable_by"]
+                downstream_roles_by_upstream_id[role_id].id
+                for role_id in upstream_role_def["assignable_by"]
             ]
-        local_role.set_assignable_by(assignable_by)
+        downstream_role.set_assignable_by(assignable_by)
+
+
+def _get_matching_downstream_entry(upstream_role_json, downstream_roles):
+    return next((role for role in downstream_roles if role.upstream_id == upstream_role_json['_id']), None)
+
+
+def _copy_role_attributes(source_role_json, dest_role):
+    dest_role.name = source_role_json['name']
+    dest_role.default_landing_page = source_role_json['default_landing_page']
+    dest_role.is_non_admin_editable = source_role_json['is_non_admin_editable']
 
 
 def update_case_search_config(domain_link):
