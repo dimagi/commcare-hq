@@ -211,9 +211,12 @@ class EntriesHelper(object):
                 e.datums.append(get_report_context_tile_datum())
 
             if form.requires_case() and using_inline_search:
-                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
+                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+                    RemoteRequestFactory, RESULTS_INSTANCE_INLINE
+                )
                 case_session_var = self.get_case_session_var_for_form(form)
-                remote_request_factory = RemoteRequestFactory(None, module, [], case_session_var=case_session_var)
+                remote_request_factory = RemoteRequestFactory(
+                    None, module, [], case_session_var=case_session_var, storage_instance=RESULTS_INSTANCE_INLINE)
                 e.post = remote_request_factory.build_remote_request_post()
 
             # Ideally all of this version check should happen in Command/Display class
@@ -459,8 +462,9 @@ class EntriesHelper(object):
             if datum.module_id and datum.case_type:
                 module = self.app.get_module_by_unique_id(datum.module_id)
                 loads_registry_case = module_loads_registry_case(module)
-                if loads_registry_case or module_uses_inline_search(module):
-                    result.append(self.get_query_datums(module))
+                uses_inline_search = module_uses_inline_search(module)
+                if loads_registry_case or uses_inline_search:
+                    result.append(self.get_query_datums(module, uses_inline_search))
                     result.append(datum)
                     if loads_registry_case:
                         result.append(self.get_data_registry_case_datums(datum, module))
@@ -531,8 +535,13 @@ class EntriesHelper(object):
             filter_xpath = EntriesHelper.get_filter_xpath(detail_module) if use_filter else ''
 
             instance_name, root_element = "casedb", "casedb"
-            if module_loads_registry_case(detail_module) or module_uses_inline_search(detail_module):
-                instance_name, root_element = "results", "results"
+            loads_registry_case = module_loads_registry_case(detail_module)
+            uses_inline_search = module_uses_inline_search(detail_module)
+            if loads_registry_case or uses_inline_search:
+                if uses_inline_search:
+                    instance_name, root_element = "search_results", "results"
+                elif loads_registry_case:
+                    instance_name, root_element = "results", "results"
                 if detail_module.search_config.search_filter:
                     filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
@@ -567,13 +576,16 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_query_datums(self, module):
+    def get_query_datums(self, module, uses_inline_search):
         """When doing 'inline' search we skip the normal case search
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RemoteRequestFactory
-        factory = RemoteRequestFactory(None, module, [])
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+            RemoteRequestFactory, RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE
+        )
+        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
 
