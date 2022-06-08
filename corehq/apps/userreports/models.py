@@ -1514,10 +1514,9 @@ def get_report_configs(config_ids, domain):
 
     dynamic_report_configs = []
     if dynamic_report_config_ids:
-        configs = get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
-        configs += get_docs(RegistryReportConfiguration.get_db(), dynamic_report_config_ids)
         dynamic_report_configs = [
-            wrap_report_config_by_type(doc) for doc in configs
+            wrap_report_config_by_type(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 
     if len(dynamic_report_configs) != len(dynamic_report_config_ids):
