@@ -16839,10 +16839,8 @@ msgid "Odata feeds available"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
-#, fuzzy
-#| msgid "Report: {0}"
 msgid "Report Names"
-msgstr "रिपोर्ट : {0}"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Number of rows"
@@ -27747,10 +27745,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
-#, fuzzy
-#| msgid "Unknown user"
 msgid "Unknown Forms"
-msgstr "अनजान उपयोगकर्ता"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/form_app_module_drilldown.html
 msgid "What are Unknown Forms?"
