@@ -405,6 +405,13 @@ class ModuleBaseValidator(object):
                         'module': self.get_module_info(),
                     })
 
+            if uses_inline_search:
+                if self.module.parent_select.relationship:
+                    errors.append({
+                        'type': 'inline search parent select relationship',
+                        'module': self.get_module_info(),
+                    })
+
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
                 errors.append({
