@@ -429,7 +429,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
+class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
@@ -438,7 +438,7 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
         factory.form_requires_case(f0)
 
         m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
-        m1.parent_select = ParentSelect(active=True, relationship="other", module_id=m0.get_or_create_unique_id())
+        m1.parent_select = ParentSelect(active=True, relationship=None, module_id=m0.get_or_create_unique_id())
         f2 = factory.new_form(m1)
 
         factory.form_requires_case(f1)
@@ -450,17 +450,57 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
             inline_search=True,
         )
 
-        # link from f1 to f2 (both in the child module)
-        f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
-
         factory.app._id = "123"
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_form_link_in_child_module_with_inline_search(self):
+    def test_child_module_with_inline_search_entry(self):
         suite = self.app.create_suite()
 
+        expected_entry = f"""
+        <partial>
+          <entry>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+            </post>
+            <command id="m1-f0">
+              <text>
+                <locale id="forms.m1f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <session>
+              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+                value="./@case_id" detail-select="m0_case_short"/>
+              <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m1.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id_case"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+            </session>
+          </entry>
+        </partial>
+        """  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry, suite, "./entry[2]")
+
+    def test_form_link_in_child_module_with_inline_search(self):
+        form1 = self.app.get_module(1).get_form(0)
+        form2 = self.app.get_module(1).get_form(1)
+        # link from f1 to f2 (both in the child module)
+        form1.post_form_workflow = WORKFLOW_FORM
+        form1.form_links = [FormLink(form_id=form2.get_unique_id())]
+        suite = self.app.create_suite()
         expected = f"""
         <partial>
           <create>
@@ -476,8 +516,4 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
           </create>
         </partial>"""  # noqa: E501
 
-        self.assertXmlPartialEqual(
-            expected,
-            suite,
-            "./entry[2]/stack/create"
-        )
+        self.assertXmlPartialEqual(expected, suite, "./entry[2]/stack/create")
