@@ -370,11 +370,18 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        if self.module.put_in_root and self.module.session_endpoint_id:
-            errors.append({
-                'type': 'endpoint to display only forms',
-                'module': self.get_module_info(),
-            })
+        uses_inline_search = module_uses_inline_search(self.module)
+        if self.module.put_in_root:
+            if self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'endpoint to display only forms',
+                    'module': self.get_module_info(),
+                })
+            if uses_inline_search:
+                errors.append({
+                    'type': 'inline search to display only forms',
+                    'module': self.get_module_info(),
+                })
 
         if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
             if self.module.parent_select.relationship == 'parent':
@@ -406,7 +413,7 @@ class ModuleBaseValidator(object):
                     'type': 'smart links multi select',
                     'module': self.get_module_info(),
                 })
-            if module_uses_inline_search(self.module):
+            if uses_inline_search:
                 errors.append({
                     'type': 'smart links inline search',
                     'module': self.get_module_info(),

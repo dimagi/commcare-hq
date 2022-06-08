@@ -51,6 +51,21 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
 
         self.assertIn("smart links inline search", _get_error_types(factory.app))
 
+    def test_inline_search_display_only_forms(self, *args):
+        factory = AppFactory(build_version='2.51.0')
+        m0, _ = factory.new_basic_module('first', 'case')
+        m0.put_in_root = True
+
+        m0.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
+            auto_launch=True,
+            inline_search=True,
+        )
+
+        self.assertIn("inline search to display only forms", _get_error_types(factory.app))
+
+
 
 def _get_error_types(app):
     return [error['type'] for error in app.validate_app()]
