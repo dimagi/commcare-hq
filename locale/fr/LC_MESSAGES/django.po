@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
+"POT-Creation-Date: 2022-06-06 03:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -567,6 +567,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 #: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
@@ -13729,6 +13730,19 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Account confirmation link expiry"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Default time(in hours) for which account confirmation link will "
+"be valid.\n"
+"            If no value is given, system default of 24 hours will be used.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr ""
 
@@ -15113,6 +15127,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr ""
 
@@ -24857,6 +24872,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -24864,6 +24880,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -24882,10 +24899,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr ""
@@ -24934,6 +24953,15 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare HQ"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Once you confirm your account you will be able to access and submit data in "
+"the \"%(domain)s\" project on %(hq_name)s.\n"
+"Your username to login is %(username)s\n"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
@@ -32743,6 +32771,15 @@ msgstr ""
 msgid "Target domain {} does not use enterprise permissions of {}"
 msgstr ""
 
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"When '{}' is True for a new user, {} must be either empty or set to False."
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid "When '{}' is True for an existing user, {}."
+msgstr ""
+
 #: corehq/apps/userreports/columns.py
 #, python-brace-format
 msgid ""
@@ -34261,6 +34298,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "Require Account Confirmation by SMS?"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"If checked, the user will be sent a confirmation SMS and asked to set their "
+"password."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
@@ -34282,6 +34329,12 @@ msgstr ""
 msgid ""
 "Setting a password is disabled. The user will set their own password on "
 "confirming their account email."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"Setting a password is disabled. The user will set their own password on "
+"confirming their account phone number."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -35249,6 +35302,10 @@ msgid "Send Confirmation Email"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr ""
 
@@ -35288,25 +35345,41 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+#, python-format
 msgid ""
 "\n"
 "                            Would you like to send the account confirmation "
-"email to this account?\n"
+"%('email' if request|toggle_enabled:\"TWO_STAGE_USER_PROVISIONING\" else 'sms')s "
+"to this account?\n"
 "                          "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            The user will be sent an email with instructions "
-"to\n"
-"                            set a password and be able to login to this "
+"                              The user will be sent an email with "
+"instructions to\n"
+"                              set a password and be able to login to this "
 "project.\n"
-"                          "
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions "
+"to\n"
+"                              set a password and be able to login to this "
+"project.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Send Account Confirmaton Email"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
