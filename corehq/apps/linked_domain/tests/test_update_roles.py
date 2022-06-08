@@ -56,17 +56,6 @@ class TestUpdateRoles(TestCase):
         roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
         self.assertEqual(roles['managed'].assignable_by, [roles['supervisor'].get_id])
 
-    def test_matching_names_are_overwritten(self):
-        upstream_role = self._create_user_role(self.upstream_domain, name='test')
-        self._create_user_role(self.downstream_domain, name='test')
-
-        update_user_roles(self.domain_link)
-
-        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
-        self.assertEqual(1, len(roles))
-        self.assertTrue(roles['test'].permissions.edit_web_users)
-        self.assertEqual(roles['test'].upstream_id, upstream_role.get_id)
-
     def test_matching_ids_are_overwritten(self):
         upstream_role = self._create_user_role(self.upstream_domain, name='test')
         self._create_user_role(self.downstream_domain, 'conflicting_name', upstream_id=upstream_role.get_id)
