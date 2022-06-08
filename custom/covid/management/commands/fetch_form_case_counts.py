@@ -99,7 +99,7 @@ def _get_case_update_counts(domain, start, end):
                        DateHistogram('case_count', 'actions.server_date', DateHistogram.Interval.DAY)
                    )
                )
-        )
+           )
            .run())
 
     ret = {}
