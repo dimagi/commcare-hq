@@ -306,15 +306,13 @@ def location_fixture_instances(app, instance_name):
 
 
 def get_all_instances_referenced_in_xpaths(app, xpaths):
-    instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
     for xpath in set(xpaths):
         if not xpath:
             continue
 
-        xpath = html.unescape(xpath)
-        instance_names = re.findall(instance_re, xpath, re.UNICODE)
+        instance_names = get_instance_names(xpath)
         for instance_name in instance_names:
             factory = get_instance_factory(instance_name)
             instance = factory(app, instance_name)
@@ -327,3 +325,11 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
                 instance_name.xpath = xpath
                 unknown_instance_ids.add(instance_name)
     return instances, unknown_instance_ids
+
+
+instance_re = re.compile(r"""instance\(['"]([\w\-:]+)['"]\)""", re.UNICODE)
+
+
+def get_instance_names(xpath):
+    unescaped = html.unescape(xpath)
+    return set(re.findall(instance_re, unescaped))
