@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-07 15:32+0000\n"
+"POT-Creation-Date: 2022-06-09 08:54+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: esoergel, 2015\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -6165,6 +6165,50 @@ msgid ""
 "                uses smart links and is configured to make search input "
 "available after search.\n"
 "                These two features are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has a Parent Menu configured with \"make search input "
+"available after search\",\n"
+"                This workflow is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses \"Display only forms\" and is also configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection but parent case list is using\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection and is configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
 "              "
 msgstr ""
 
