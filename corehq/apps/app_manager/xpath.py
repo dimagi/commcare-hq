@@ -210,7 +210,7 @@ class CaseSelectionXPath(XPath):
     @staticmethod
     def get_instance_root(instance_name):
         return {
-            "search_results": "results"
+            "results:inline": "results"
         }.get(instance_name, instance_name)
 
 

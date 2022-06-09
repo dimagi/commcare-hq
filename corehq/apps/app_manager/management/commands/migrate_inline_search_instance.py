@@ -5,9 +5,10 @@ from corehq.apps.app_manager.management.commands.helpers import (
 )
 from corehq.toggles import USH_INLINE_SEARCH
 
-results_instance_re = re.compile(r"""instance\(['"]results['"]\)""", re.UNICODE)
-input_instance_re = re.compile(r"""instance\(['"]search-input:results['"]\)""", re.UNICODE)
-new_instance = "search_results"
+old_instance = "search_results"
+new_instance = "results:inline"
+results_instance_re = re.compile(rf"""instance\(['"]{old_instance}['"]\)""", re.UNICODE)
+input_instance_re = re.compile(rf"""instance\(['"]search-input:{old_instance}['"]\)""", re.UNICODE)
 results_new = f"instance('{new_instance}')"
 input_new = f"instance('search-input:{new_instance}')"
 

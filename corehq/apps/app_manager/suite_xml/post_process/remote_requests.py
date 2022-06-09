@@ -62,7 +62,7 @@ from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
-RESULTS_INSTANCE_INLINE = 'search_results'
+RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
 REGISTRY_INSTANCE = 'registry'

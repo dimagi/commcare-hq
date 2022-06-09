@@ -539,7 +539,7 @@ class EntriesHelper(object):
             uses_inline_search = module_uses_inline_search(detail_module)
             if loads_registry_case or uses_inline_search:
                 if uses_inline_search:
-                    instance_name, root_element = "search_results", "results"
+                    instance_name, root_element = "results:inline", "results"
                 elif loads_registry_case:
                     instance_name, root_element = "results", "results"
                 if detail_module.search_config.search_filter:

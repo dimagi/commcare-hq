@@ -213,7 +213,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             expected_detail_columns, suite, "./detail[@id='m0_case_short']/field/template/text/xpath")
 
     def test_case_detail_tabs_with_inline_search(self):
-        """Test that the detail nodeset uses the correct instance (search_results not casedb)"""
+        """Test that the detail nodeset uses the correct instance (results:inline not casedb)"""
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
             DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
@@ -355,7 +355,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
 
         suite = self.app.create_suite()
 
-        expected_entry = """
+        expected_entry = f"""
         <partial>
           <entry>
             <form>xmlns1.0</form>
@@ -375,7 +375,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
                 value="./@case_id" detail-select="m2_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
-                storage-instance="search_results" template="case" default_search="false">
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
@@ -386,7 +386,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id"
-                nodeset="instance('search_results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
