@@ -46,6 +46,12 @@ class AppMigrationCommandBase(BaseCommand):
             '--domain',
             help='Migrate only this domain',
         )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            help="Perform the migration but don't save any changes",
+        )
 
     def handle(self, **options):
         self.options = options
@@ -59,6 +65,18 @@ class AppMigrationCommandBase(BaseCommand):
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
         logger.info('done')
 
+    @property
+    def is_dry_run(self):
+        return self.options.get('dry_run', False)
+
+    @property
+    def log_info(self):
+        return self.options["verbosity"] > 1
+
+    @property
+    def log_debug(self):
+        return self.options["verbosity"] > 2
+
     def _doc_types(self):
         doc_types = ["Application", "Application-Deleted"]
         if self.include_linked_apps:
@@ -69,7 +87,7 @@ class AppMigrationCommandBase(BaseCommand):
         try:
             if app_doc["doc_type"] in self._doc_types():
                 migrated_app = self.migrate_app(app_doc)
-                if migrated_app:
+                if migrated_app and not self.is_dry_run:
                     return DocUpdate(migrated_app)
         except Exception as e:
             logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
