@@ -172,7 +172,7 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if fuzzy:
         return filters.OR(
             # fuzzy match
-            case_property_text_query(case_property_name, value, fuzziness='AUTO', operator=multivalue_mode),
+            case_property_fuzzy_query(case_property_name, value, fuzziness='AUTO'),
             # non-fuzzy match. added to improve the score of exact matches
             case_property_text_query(case_property_name, value, operator=multivalue_mode),
         )
@@ -200,7 +200,21 @@ def exact_case_property_text_query(case_property_name, value):
     )
 
 
-def case_property_text_query(case_property_name, value, fuzziness='0', operator=None):
+def case_property_fuzzy_query(case_property_name, value, fuzziness='AUTO'):
+    """Filter by case_properties.key and do a fuzzy search on case_properties.value
+
+    This does not do exact matches on the multi-words case property values. If the value has
+    multiple words, they will be OR'd together in this query. You may want to
+    use the `exact_case_property_text_query` instead.
+
+    """
+    return _base_property_query(
+        case_property_name,
+        queries.fuzzy(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
+    )
+
+
+def case_property_text_query(case_property_name, value, operator=None):
     """Filter by case_properties.key and do a text search in case_properties.value
 
     This does not do exact matches on the case property value. If the value has
@@ -210,7 +224,7 @@ def case_property_text_query(case_property_name, value, fuzziness='0', operator=
     """
     return _base_property_query(
         case_property_name,
-        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness, operator=operator)
+        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), operator=operator)
     )
 
 
