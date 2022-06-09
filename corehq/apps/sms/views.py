@@ -27,6 +27,7 @@ from django.views.generic import View
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -1387,6 +1388,13 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not request.couch_user.is_staff:
+            return HttpResponseRedirect(
+                reverse(
+                    SMSAdminInterfaceDispatcher.name(),
+                    kwargs={'report_slug': 'sms_billables'}
+                )
+            )
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1534,6 +1542,8 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not request.couch_user.is_staff:
+            return HttpResponseRedirect(reverse("no_permissions"))
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
 
