@@ -130,7 +130,10 @@ class UcrTableManager(ABC):
         """Returns True if the manager needs to be bootstrapped"""
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+            or (
+                datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+                and self.run_migrations
+            )
         )
 
     def bootstrap_if_needed(self):
@@ -273,7 +276,8 @@ class ConfigurableReportTableManager(UcrTableManager):
             for provider in self.data_source_providers
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
-        self._add_data_sources_to_table_adapters(new_data_sources)
+        filtered_data_sources = self.get_filtered_configs(new_data_source)
+        self._add_data_sources_to_table_adapters(filtered_data_sources)
 
     def _add_data_sources_to_table_adapters(self, new_data_sources):
         for new_data_source in new_data_sources:
@@ -573,7 +577,6 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
 
     def bootstrap_if_needed(self):
         self.table_manager.bootstrap_if_needed()
-
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
