@@ -6661,6 +6661,50 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has a Parent Menu configured with \"make search input "
+"available after search\",\n"
+"                This workflow is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses \"Display only forms\" and is also configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection but parent case list is using\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection and is configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "                The case hierarchy for <a href=\"%(module_url)s\">"
 "%(module_name)s</a> contains a circular reference.\n"
 "              "
