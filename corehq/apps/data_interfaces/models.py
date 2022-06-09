@@ -686,7 +686,7 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
 class LocationFilterDefinition(CaseRuleCriteriaDefinition):
 
     location_id = models.CharField(max_length=255)
-    include_child_locations = models.BooleanField(default=False)
+    include_child_locations = models.BooleanField(default=True)
 
     def matches(self, case, now):
         if case.owner_id:
