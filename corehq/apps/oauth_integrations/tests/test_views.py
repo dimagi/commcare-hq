@@ -8,37 +8,37 @@ from django.contrib.auth.models import User
 from google.oauth2.credentials import Credentials
 from corehq.apps.oauth_integrations.utils import get_token, load_credentials, stringify_credentials
 
-from corehq.apps.oauth_integrations.views.google import redirect_oauth_view, call_back_view
+from corehq.apps.oauth_integrations.views.google import google_sheet_oauth_redirect, google_sheet_oauth_callback
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.oauth_integrations.models import GoogleApiToken
 
 
 class TestViews(TestCase):
 
-    def test_redirect_oauth_view_without_credentials(self):
+    def test_google_sheet_oauth_redirect_without_credentials(self):
         self.mocked_get_url.return_value = "googleredirecturl.com"
         request = self.factory.get('')
         request.user = self.user
 
-        response = redirect_oauth_view(request, self.domain)
+        response = google_sheet_oauth_redirect(request, self.domain)
 
         self.assertEqual(response.url, 'googleredirecturl.com')
 
-    def test_redirect_oauth_view_with_credentials(self):
+    def test_google_sheet_oauth_redirect_with_credentials(self):
         self.setUp_credentials()
         self.mocked_refresh_credentials.return_value = self.create_new_credentials(token="new_token")
         self.mocked_get_url.return_value = "googleredirecturl.com"
         request = self.factory.get('')
         request.user = self.user
 
-        response = redirect_oauth_view(request, self.domain)
+        response = google_sheet_oauth_redirect(request, self.domain)
         stringified_creds = get_token(self.user)
         creds = load_credentials(stringified_creds.token)
 
         self.assertEqual(response.url, "placeholder.com")
         self.assertEqual(creds.token, 'new_token')
 
-    @override_settings(GOOGLE_OATH_CONFIG={
+    @override_settings(GOOGLE_OAUTH_CONFIG={
         "web": {
             "client_id": "test_id",
             "project_id": "test_project_id",
@@ -47,20 +47,20 @@ class TestViews(TestCase):
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": "test_client_secret"}
     })
-    def test_call_back_view_with_token_updates_credentials(self):
+    def test_google_sheet_oauth_callback_with_token_updates_credentials(self):
         self.setUp_credentials()
         self.mocked_get_token.return_value = stringify_credentials(self.create_new_credentials("new_token"))
         request = self.factory.get('', {'state': 101})
         request.user = self.user
 
-        call_back_view(request, self.domain)
+        google_sheet_oauth_callback(request, self.domain)
 
         stringified_creds = get_token(self.user)
         creds = load_credentials(stringified_creds.token)
 
         self.assertEqual(creds.token, "new_token")
 
-    @override_settings(GOOGLE_OATH_CONFIG={
+    @override_settings(GOOGLE_OAUTH_CONFIG={
         "web": {
             "client_id": "test_id",
             "project_id": "test_project_id",
@@ -69,12 +69,12 @@ class TestViews(TestCase):
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": "test_client_secret"}
     })
-    def test_call_back_view_without_token_creates_credentials(self):
+    def test_google_sheet_oauth_callback_without_token_creates_credentials(self):
         self.mocked_get_token.return_value = stringify_credentials(self.create_new_credentials("new_token"))
         request = self.factory.get('', {'state': 101})
         request.user = self.user
 
-        call_back_view(request, self.domain)
+        google_sheet_oauth_callback(request, self.domain)
 
         creds = get_token(self.user)
 
