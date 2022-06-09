@@ -76,6 +76,17 @@ class EnterpriseODataReportTests(SimpleTestCase):
             'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/']
         ])
 
+    @patch.object(ODataExportFetcher, 'get_export_count')
+    def test_no_exports_for_domain_shows_0_rowcount(self, mock_export_count):
+        mock_export_count.return_value = 0
+        domain_one = self._create_domain(name='domain_one', max_exports=25)
+
+        report = self._create_report_for_domains(domain_one)
+
+        self.assertEqual(report.rows, [
+            [0, 25, None, 0, 'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/']
+        ])
+
 # setup / helpers
 
     def setUp(self):

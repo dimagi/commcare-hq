@@ -38,9 +38,8 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -88,10 +87,7 @@ from corehq.apps.hqwebapp.forms import (
 )
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
-from corehq.apps.hqwebapp.utils import (
-    get_environment_friendly_name,
-    update_session_language,
-)
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -378,13 +374,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         with mutable_querydict(req.POST):
             req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
 
-    if 'auth-username' in req.POST:
-        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
-        if couch_user:
-            new_lang = couch_user.language
-            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
-            update_session_language(req, old_lang, new_lang)
-
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
@@ -419,6 +408,12 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
 
     if settings.IS_SAAS_ENVIRONMENT:
         demo_workflow_ab_v2.update_response(response)
+
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
+        if couch_user:
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            activate(couch_user.language)
 
     return response
 

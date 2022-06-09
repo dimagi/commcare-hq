@@ -274,8 +274,8 @@ class EnterpriseODataReport(EnterpriseReport):
 
     def rows_for_domain(self, domain_obj):
         export_count = self.total_for_domain(domain_obj)
-        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
-            return [self._get_domain_summary_line(domain_obj, export_count, None)]
+        if export_count == 0 or export_count > self.MAXIMUM_EXPECTED_EXPORTS:
+            return [self._get_domain_summary_line(domain_obj, export_count)]
 
         exports = self.export_fetcher.get_exports(domain_obj.name)
 
@@ -291,11 +291,11 @@ class EnterpriseODataReport(EnterpriseReport):
     def _get_export_line_counts(self, exports):
         return {export._id: export.get_count() for export in exports}
 
-    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts):
-        if export_line_counts:
-            total_line_count = sum(export_line_counts.values())
-        else:
+    def _get_domain_summary_line(self, domain_obj, export_count, export_line_counts={}):
+        if export_count > self.MAXIMUM_EXPECTED_EXPORTS:
             total_line_count = _('ERROR: Too many exports. Please contact customer service')
+        else:
+            total_line_count = sum(export_line_counts.values())
 
         return [
             export_count,

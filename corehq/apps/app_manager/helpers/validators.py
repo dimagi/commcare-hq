@@ -370,11 +370,18 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        if self.module.put_in_root and self.module.session_endpoint_id:
-            errors.append({
-                'type': 'endpoint to display only forms',
-                'module': self.get_module_info(),
-            })
+        uses_inline_search = module_uses_inline_search(self.module)
+        if self.module.put_in_root:
+            if self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'endpoint to display only forms',
+                    'module': self.get_module_info(),
+                })
+            if uses_inline_search:
+                errors.append({
+                    'type': 'inline search to display only forms',
+                    'module': self.get_module_info(),
+                })
 
         if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
             if self.module.parent_select.relationship == 'parent':
@@ -389,6 +396,21 @@ class ModuleBaseValidator(object):
                     'type': 'invalid parent select id',
                     'module': self.get_module_info(),
                 })
+            else:
+                module_id = self.module.parent_select.module_id
+                parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+                if parent_select_module and module_uses_inline_search(parent_select_module):
+                    errors.append({
+                        'type': 'parent select is inline search module',
+                        'module': self.get_module_info(),
+                    })
+
+            if uses_inline_search:
+                if self.module.parent_select.relationship:
+                    errors.append({
+                        'type': 'inline search parent select relationship',
+                        'module': self.get_module_info(),
+                    })
 
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
@@ -406,7 +428,7 @@ class ModuleBaseValidator(object):
                     'type': 'smart links multi select',
                     'module': self.get_module_info(),
                 })
-            if module_uses_inline_search(self.module):
+            if uses_inline_search:
                 errors.append({
                     'type': 'smart links inline search',
                     'module': self.get_module_info(),
@@ -416,6 +438,14 @@ class ModuleBaseValidator(object):
             if self.module.is_multi_select():
                 errors.append({
                     'type': 'data registry multi select',
+                    'module': self.get_module_info(),
+                })
+
+        if self.module.root_module_id:
+            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
+            if root_module and module_uses_inline_search(root_module):
+                errors.append({
+                    'type': 'inline search as parent module',
                     'module': self.get_module_info(),
                 })
 

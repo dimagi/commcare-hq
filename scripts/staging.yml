@@ -74,8 +74,13 @@ branches:
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
     - gh/upgrade-twilio # Graham May 31
-    - ap/celery-upgrade-patch # Amit June 1
     - cs/SC-2078-hourly-time-filter # June 2
     - cs/SC-1821-script_for_sizing_model_params # June 2
     - sk/validate-details-instances  # Simon June 2
+    - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
+    - ap/celery-upgrade-patch # Amit June 1
+    - dependabot/pip/requirements/djangorestframework-3.13.1 # Graham June 7
+    - dependabot/pip/requirements/lxml-4.8.0 # Graham June 7
+    - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
+    - sk/rename-inline-search-instance  # Simon June 9
 submodules: { }

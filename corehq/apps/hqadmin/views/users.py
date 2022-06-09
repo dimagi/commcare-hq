@@ -35,6 +35,7 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.hqadmin.utils import unset_password
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -398,7 +399,7 @@ class DisableUserView(FormView):
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
-            self.user.set_password(uuid.uuid4().hex)
+            unset_password(self.user)
             change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state

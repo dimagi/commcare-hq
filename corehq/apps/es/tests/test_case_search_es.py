@@ -165,11 +165,11 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                 }
                                                             ],
                                                             "must": {
-                                                                "match": {
+                                                                "fuzzy": {
                                                                     "case_properties.value": {
-                                                                        "query": "polly",
-                                                                        "operator": "or",
-                                                                        "fuzziness": "AUTO"
+                                                                        "value": "polly",
+                                                                        "fuzziness": "AUTO",
+                                                                        "max_expansions": 100
                                                                     }
                                                                 }
                                                             }
