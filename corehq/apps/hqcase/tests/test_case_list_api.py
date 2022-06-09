@@ -98,7 +98,6 @@ class TestCaseListAPI(TestCase):
         self.assertNotIn('next', res)  # No pages after this one
 
 
-
 @generate_cases([
     ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("limit=2", ['good_guys', 'bad_guys']),
@@ -115,6 +114,7 @@ class TestCaseListAPI(TestCase):
     ("date_opened.lte=1878-02-19T00:00:00", ["mattie", "rooster"]),
     ("date_opened.gt=1878-02-18&date_opened.lt=1878-02-20", ["laboeuf"]),
     ("date_opened.gt=1878-02-19T11:00:00&date_opened.lt=1878-02-19T13:00:00", ["laboeuf"]),
+    ("date_opened.gt=1878-02-19T08:00:00-03:00&date_opened.lt=1878-02-19T10:00:00-03:00", ["laboeuf"]),
     ("date_opened.lt=1878-02-18&date_opened.gt=1878-02-19", []),
     ("property.alias=Rooster", ["rooster"]),
     ("property.alias=rooster", []),
