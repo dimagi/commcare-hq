@@ -274,7 +274,6 @@ def remote_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://instance/remote')
 
 
-
 @register_factory('commcare')
 def commcare_fixture_instances(app, instance_name):
     if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(app.domain):
