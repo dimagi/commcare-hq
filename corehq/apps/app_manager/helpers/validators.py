@@ -441,7 +441,7 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        if hasattr(self.module, 'root_module_id') and self.module.root_module_id:
+        if self.module.root_module_id:
             root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
             if root_module and module_uses_inline_search(root_module):
                 errors.append({
