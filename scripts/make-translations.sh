@@ -27,6 +27,5 @@ fi
 # Remove POT-Creation-Date which changes every time and is conflict-prone
 git diff --name-only | grep '^locale/' | while read -r filename
 do
-    sed -i.bak '/^"POT-Creation-Date: .*"$/d' $filename
-    rm ${filename}.bak
+    sed -i '' '/^"POT-Creation-Date: .*"$/d' $filename
 done
