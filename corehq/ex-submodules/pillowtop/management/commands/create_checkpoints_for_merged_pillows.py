@@ -81,7 +81,8 @@ class Command(BaseCommand):
     def handle(self, **options):
         confirm = input(
             """
-            Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.
+            Please make sure you have read
+            https://commcare-cloud.readthedocs.io/en/latest/changelog/0007-reorganize-pillows.html.
 
             Have you stopped all the to be merged pillows and added new pillows
             to this environment's app-processes.yml? y/N?
