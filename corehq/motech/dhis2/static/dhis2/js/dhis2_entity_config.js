@@ -5,13 +5,15 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/base_ace',
+    'dhis2/js/json_syntax_parse',
 ], function (
     $,
     _,
     ko,
     initialPageData,
     alertUser,
-    baseAce
+    baseAce,
+    jsonParse
 ) {
     var caseConfig = function (data) {
         var self = {};
@@ -56,6 +58,14 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         self.submit = function (form) {
             var editors = baseAce.returnEditors();
             for (let i = 0; i < editors.length; i++) {
+                var value = editors[i].getValue();
+                try {
+                  var result = jsonParse.parseJson(value, null, 30)
+                } catch (error) {
+                  self.errorMessage(error)
+                  return self;
+                }
+
                 var annotations = editors[i].getSession().getAnnotations()
                 if (annotations.length > 0) {
                     for (let i = 0; i < annotations.length; i++) {
@@ -67,7 +77,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                     return self;
                 };
             };
-
+            self.errorMessage("")
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},
