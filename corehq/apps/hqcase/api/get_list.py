@@ -126,8 +126,8 @@ def _get_query(domain, params):
 def _get_filter(domain, key, val):
     if key == 'limit':
         pass
-    elif key == 'xpath':
-        return _get_xpath_filter(domain, val)
+    elif key == 'query':
+        return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
         return SIMPLE_FILTERS[key](val)
     elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
@@ -137,8 +137,8 @@ def _get_filter(domain, key, val):
         raise UserError(f"'{key}' is not a valid parameter.")
 
 
-def _get_xpath_filter(domain, xpath):
+def _get_query_filter(domain, query):
     try:
-        return build_filter_from_xpath(domain, xpath)
+        return build_filter_from_xpath(domain, query)
     except CaseFilterError as e:
-        raise UserError(f'Bad XPath: {e}')
+        raise UserError(f'Bad query: {e}')

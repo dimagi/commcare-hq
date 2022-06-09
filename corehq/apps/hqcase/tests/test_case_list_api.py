@@ -121,7 +121,7 @@ class TestCaseListAPI(TestCase):
     ('property.foo {"test": "json"}=bar', []),  # This is escaped as expected
     ('property.foo={"test": "json"}', []),  # This is escaped as expected
     ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
-    ('xpath=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
+    ('query=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
@@ -140,8 +140,8 @@ def test_case_list_queries(self, querystring, expected):
     ("case_name.gte=a", "'case_name.gte' is not a valid parameter."),
     ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
     ("date_opened.start=2020-01-30", "'start' is not a valid type of date range."),
-    ('xpath=gibberish',
-     "Bad XPath: Your search query is required to have at least one boolean "
+    ('query=gibberish',
+     "Bad query: Your search query is required to have at least one boolean "
      "operator (=, !=, >, >=, <, <=)"),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
