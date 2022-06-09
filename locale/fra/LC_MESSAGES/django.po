@@ -21959,7 +21959,7 @@ msgid "Case Group"
 msgstr "Groupes de dossiers"
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr "Utilisateur mobile"
 
@@ -35804,26 +35804,6 @@ msgid "No landing page found with id {page_id}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr "Lecture seule (sans rapports)"
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr "Editeur d'application"
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr "Lecture seule"
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr "Exécutant sur le terrain"
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
-msgstr "Administrateur Facturation"
-
-#: corehq/apps/users/models.py
 msgid "Unknown User"
 msgstr "Utilisateur inconnu"
 
@@ -42425,3 +42405,18 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Read Only (No Reports)"
+#~ msgstr "Lecture seule (sans rapports)"
+
+#~ msgid "App Editor"
+#~ msgstr "Editeur d'application"
+
+#~ msgid "Read Only"
+#~ msgstr "Lecture seule"
+
+#~ msgid "Field Implementer"
+#~ msgstr "Exécutant sur le terrain"
+
+#~ msgid "Billing Admin"
+#~ msgstr "Administrateur Facturation"

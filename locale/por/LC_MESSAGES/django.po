@@ -21247,7 +21247,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -34637,26 +34637,6 @@ msgid "No landing page found with id {page_id}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr "Editor da Aplicação"
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr "Somente Leitura"
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr "Implementador no Terreno"
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
-msgstr "Administrador do Faturamento"
-
-#: corehq/apps/users/models.py
 msgid "Unknown User"
 msgstr ""
 
@@ -41179,3 +41159,15 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "App Editor"
+#~ msgstr "Editor da Aplicação"
+
+#~ msgid "Read Only"
+#~ msgstr "Somente Leitura"
+
+#~ msgid "Field Implementer"
+#~ msgstr "Implementador no Terreno"
+
+#~ msgid "Billing Admin"
+#~ msgstr "Administrador do Faturamento"

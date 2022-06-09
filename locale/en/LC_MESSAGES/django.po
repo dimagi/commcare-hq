@@ -21082,7 +21082,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -34407,26 +34407,6 @@ msgstr ""
 #: corehq/apps/users/landing_pages.py
 #, python-brace-format
 msgid "No landing page found with id {page_id}"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
 msgstr ""
 
 #: corehq/apps/users/models.py
