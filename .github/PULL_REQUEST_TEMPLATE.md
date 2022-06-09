@@ -34,6 +34,7 @@ In particular consider how existing data may be impacted by this change.
 
 ### Migrations
 <!-- Delete this section if the PR does not contain any migrations -->
+<!-- https://commcare-hq.readthedocs.io/migrations_in_practice.html -->
 - [ ] The migrations in this code can be safely applied first independently of the code
 
 <!-- Please link to any past code changes that are coordinated with this migration -->
