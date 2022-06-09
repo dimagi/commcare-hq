@@ -109,7 +109,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -198,7 +198,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     Get context items that are used by both basic and advanced modules.
     '''
-    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
@@ -224,8 +224,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'exclude_from_search_enabled': app.enable_exclude_from_search,
             'required_search_fields_enabled': app.enable_required_search_fields,
             'item_lists': item_lists,
-            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
-            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
             'default_search': module.search_config.default_search if module_offers_search(module) else False,
@@ -1054,8 +1054,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'daterange':
-            ret['input_'] = 'daterange'
+        elif prop.get('appearance', '') in ['date', 'daterange']:
+            ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
             ret['receiver_expression'] = prop.get('receiver_expression', '')
