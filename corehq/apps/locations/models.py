@@ -647,6 +647,13 @@ class SQLLocation(AdjListModel):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
 
+    def descendants_include_location(self, location_id):
+        return (
+            self.get_descendants(include_self=True)
+            .filter(location_id=location_id)
+            .exists()
+        )
+
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain)
