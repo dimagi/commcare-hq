@@ -116,11 +116,11 @@ class TestCaseListAPI(TestCase):
     ("date_opened.gt=1878-02-19T11:00:00&date_opened.lt=1878-02-19T13:00:00", ["laboeuf"]),
     ("date_opened.gt=1878-02-19T08:00:00-03:00&date_opened.lt=1878-02-19T10:00:00-03:00", ["laboeuf"]),
     ("date_opened.lt=1878-02-18&date_opened.gt=1878-02-19", []),
-    ("property.alias=Rooster", ["rooster"]),
-    ("property.alias=rooster", []),
-    ('property.foo {"test": "json"}=bar', []),  # This is escaped as expected
-    ('property.foo={"test": "json"}', []),  # This is escaped as expected
-    ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
+    ("properties.alias=Rooster", ["rooster"]),
+    ("properties.alias=rooster", []),
+    ('properties.foo {"test": "json"}=bar', []),  # This is escaped as expected
+    ('properties.foo={"test": "json"}', []),  # This is escaped as expected
+    ("case_type=person&properties.alias=", ["mattie", "laboeuf"]),
     ('query=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)

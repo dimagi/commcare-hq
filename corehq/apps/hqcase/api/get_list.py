@@ -58,7 +58,7 @@ SIMPLE_FILTERS = {
 # Compound filters take the form `prefix.qualifier=value`
 # These filter functions are called with qualifier and value
 COMPOUND_FILTERS = {
-    'property': case_search.case_property_query,
+    'properties': case_search.case_property_query,
     'last_modified': _make_date_filter(case_es.modified_range),
     'server_last_modified': _make_date_filter(case_es.server_modified_range),
     'date_opened': _make_date_filter(case_es.opened_range),
