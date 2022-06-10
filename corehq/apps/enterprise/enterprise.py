@@ -256,7 +256,7 @@ class EnterpriseFormReport(EnterpriseReport):
 
 
 class EnterpriseODataReport(EnterpriseReport):
-    title = _lazy('OData Reports')
+    title = _lazy('OData Feeds')
     MAXIMUM_EXPECTED_EXPORTS = 150
 
     def __init__(self, account, couch_user):
