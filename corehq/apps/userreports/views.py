@@ -95,7 +95,10 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     TEMP_REPORT_PREFIX,
 )
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_and_registry_report_configs_for_domain
+)
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -1207,8 +1210,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
-        reports += ReportConfiguration.by_domain(self.domain)
-        reports += RegistryReportConfiguration.by_domain(self.domain)
+        reports += get_report_and_registry_report_configs_for_domain(self.domain)
         ret = []
         for report in reports:
             try:

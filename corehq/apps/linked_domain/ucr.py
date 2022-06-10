@@ -16,8 +16,7 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
-    get_registry_report_configs_for_domain,
-    get_report_configs_for_domain,
+    get_report_and_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -84,8 +83,7 @@ def create_linked_ucr(domain_link, report_config_id):
 
 
 def get_downstream_report(downstream_domain, upstream_report_id):
-    for linked_report in get_report_configs_for_domain(downstream_domain) + \
-            get_registry_report_configs_for_domain(downstream_domain):
+    for linked_report in get_report_and_registry_report_configs_for_domain(downstream_domain):
         if linked_report.report_meta.master_id == upstream_report_id:
             return linked_report
     return None
@@ -219,13 +217,13 @@ def _update_linked_report(master_report, linked_report):
 
 
 def get_linked_report_configs(domain, report_id):
-    domain_reports = get_report_configs_for_domain(domain) + get_registry_report_configs_for_domain(domain)
+    domain_reports = get_report_and_registry_report_configs_for_domain(domain)
     existing_linked_reports = [r for r in domain_reports if r.report_meta.master_id == report_id]
     return existing_linked_reports
 
 
 def get_linked_reports_in_domain(domain):
-    reports = get_report_configs_for_domain(domain) + get_registry_report_configs_for_domain(domain)
+    reports = get_report_and_registry_report_configs_for_domain(domain)
     linked_reports = [report for report in reports if report.report_meta.master_id]
     return linked_reports
 
