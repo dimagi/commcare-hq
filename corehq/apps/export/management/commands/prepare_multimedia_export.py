@@ -19,6 +19,15 @@ def _forms_with_attachments(es_query):
             pass
 
 
+def convert_bytes(size):
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            return "%3.1f %s" % (size, x)
+        size /= 1024.0
+
+    return size
+
+
 class Command(BaseCommand):
     help = "Gets multimedia files linked to export instance id"
 
@@ -36,16 +45,20 @@ class Command(BaseCommand):
             query = get_export_query(export, filters)
 
             size = 0
+            file_count = 0
             for form in _forms_with_attachments(query):
                 for attachment in form.get('external_blobs', {}).values():
-                    size += attachment.get('content_length', 0)
-                    print("attachment size: {}".format(attachment.get('content_length', 0)))
-                    print("current multimedia size: {}".format(size))
+                    attachment_size = attachment.get('content_length', 0)
+                    size += attachment_size
+                    file_count = file_count + 1
+                    print("file number : {}".format(file_count))
+                    print("attachment size: {}".format(convert_bytes(attachment_size)))
+                    print("current multimedia size: {}".format(convert_bytes(size)))
                     if size > MAX_MULTIMEDIA_EXPORT_SIZE:
                         print(
                             "multimedia export size {} is larger than the limit of {}".format(
-                                size,
-                                MAX_MULTIMEDIA_EXPORT_SIZE
+                                convert_bytes(size),
+                                convert_bytes(MAX_MULTIMEDIA_EXPORT_SIZE)
                             )
                         )
                         return
