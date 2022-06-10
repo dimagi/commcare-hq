@@ -249,9 +249,6 @@ class EntriesHelper(object):
             }[form.form_type]
             config_entry(module, e, form)
 
-            if form.uses_usercase():
-                EntriesHelper.add_usercase_id_assertion(e)
-
             EntriesHelper.add_custom_assertions(e, form)
 
             if (
@@ -452,6 +449,9 @@ class EntriesHelper(object):
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             EntriesHelper.add_case_sharing_assertion(e)
+
+        if form and EntriesHelper.any_usercase_datums(all_datums):
+            EntriesHelper.add_usercase_id_assertion(e)
 
     def add_remote_query_datums(self, datums):
         """Add in any `query` datums that are necessary.
@@ -832,7 +832,8 @@ class EntriesHelper(object):
             auto_select = action.auto_select
             load_case_from_fixture = action.load_case_from_fixture
             if auto_select and auto_select.mode:
-                datum, assertions = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
+                datum, assertions_ = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
+                assertions.extend(assertions_)
                 datums.append(FormDatumMeta(
                     datum=datum,
                     case_type=None,
