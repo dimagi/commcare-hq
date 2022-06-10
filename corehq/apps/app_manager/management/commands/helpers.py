@@ -107,4 +107,5 @@ class AppMigrationCommandBase(BaseCommand):
         return None
 
     def migrate_app(self, app):
+        """Return the app dict if the doc is to be saved else None"""
         raise NotImplementedError()
