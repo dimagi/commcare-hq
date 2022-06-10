@@ -20,13 +20,19 @@ class Command(AppMigrationCommandBase):
     def migrate_app(self, app_doc):
         should_save = False
         for module in app_doc.get('modules', []):
+            mod_should_save = False
             if module.get('search_config'):
                 properties = module.get('search_config').get('properties')
                 if not properties:
                     continue
                 for prop in properties:
-                    should_save |= update_itemset(prop, self.log_debug)
+                    mod_should_save |= update_itemset(prop, self.log_debug)
 
+            if mod_should_save and self.log_info:
+                print(f"Module '{module['unique_id']}' updated in app '{app_doc['_id']}'"
+                      f" in domain '{app_doc['domain']}'")
+
+            should_save |= mod_should_save
         return app_doc if should_save else None
 
     def get_domains(self):
@@ -55,6 +61,6 @@ def update_itemset(prop, debug):
         itemset['nodeset'] = new_nodeset
 
         if debug:
-            print(instance_id, "", new_instance_id)
-            print(nodeset, "", new_nodeset)
+            print("   ", instance_id, "-->", new_instance_id)
+            print("   ", nodeset, "-->", new_nodeset)
     return should_save
