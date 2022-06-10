@@ -81,7 +81,6 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Permissions,
-    UserRole,
     WebUser,
 )
 from corehq.apps.users.util import raw_username, generate_mobile_username
@@ -99,12 +98,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import (
-    AmbiguousRoleException,
-    InvalidFormatException,
-    InvalidFieldException,
-    UpdateConflictException,
-)
+from ..exceptions import UpdateUserException
 from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
@@ -272,19 +266,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         for key, value in bundle.data.items():
             try:
                 update(bundle.obj, key, value, user_change_logger)
-            except InvalidFieldException as e:
-                errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
-            except InvalidFormatException as e:
-                errors.append(_('{} must be a {}').format(e.field, e.expected_type))
-            except UserRole.DoesNotExist:
-                errors.append(
-                    _("Attempted to update to a role '{}' that does not exist").format(value)
-                )
-            except AmbiguousRoleException as e:
-                errors.append(
-                    _("There are multiple roles with the name '{}' in the domain '{}'").format(e.role)
-                )
-            except (UpdateConflictException, ValidationError) as e:
+            except UpdateUserException as e:
                 errors.append(e.message)
 
         return errors
