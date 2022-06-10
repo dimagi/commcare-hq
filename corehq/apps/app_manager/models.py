@@ -2823,7 +2823,11 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         return any(action for action in self.actions.load_update_cases if match(action.case_type))
 
     def uses_usercase(self):
-        return self.uses_case_type(USERCASE_TYPE)
+        return (
+            self.uses_case_type(USERCASE_TYPE)
+            or any(action for action in self.actions.load_update_cases
+                   if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE)
+        )
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
