@@ -1,16 +1,19 @@
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
-    user_display_string,
-    username_to_user_id,
-    user_id_to_username,
-    cached_user_id_to_user_display,
-    bulk_auto_deactivate_commcare_users,
     SYSTEM_USER_ID,
+    bulk_auto_deactivate_commcare_users,
+    cached_user_id_to_user_display,
+    generate_mobile_username,
+    user_display_string,
+    user_id_to_username,
+    username_to_user_id,
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 
@@ -187,3 +190,71 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
+
+
+class TestGenerateMobileUsername(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain('test-domain')
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+    def test_successfully_generated_username(self):
+        try:
+            username = generate_mobile_username('test-user-1', self.domain)
+        except ValidationError:
+            self.fail(f'Unexpected raised exception: {ValidationError}')
+
+        self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
+
+    def test_invalid_username_double_period_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('test..user', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'test..user' may not contain consecutive '.' (period).")
+
+    def test_invalid_username_trailing_period_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('test.user.', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'test.user.' may not end with a '.' (period).")
+
+    def test_invalid_username_generic_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('test%user', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'test%user' may not contain special characters.")
+
+    def test_username_actively_in_use_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('test-user', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'test-user' is already taken.")
+
+    def test_username_was_previously_in_use_message(self):
+        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
+        self.addCleanup(retired_user.delete, self.domain, None)
+        retired_user.retire(self.domain, None)
+
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('retired', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'retired' belonged to a user that was deleted and "
+                                               "cannot be reused.")
+
+    def test_username_is_reserved_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('admin', self.domain)
+
+        self.assertEqual(cm.exception.message, "Username 'admin' is reserved.")
+
+    def test_username_is_none_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username(None, self.domain)
+
+        self.assertEqual(cm.exception.message, "Username is required.")
