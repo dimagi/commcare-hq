@@ -88,6 +88,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     save_xform,
     module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -769,7 +770,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if not module.root_module_id or not module.root_module.is_multi_select():
         if not module.put_in_root:
             form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
-        if not module.is_multi_select():
+        if not (module.is_multi_select() or module_uses_inline_search(module)):
             form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():

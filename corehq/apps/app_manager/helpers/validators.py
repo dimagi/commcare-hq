@@ -872,6 +872,8 @@ class FormBaseValidator(object):
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
             if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
                 errors.append(dict(type='previous multi select form links', **meta))
+            if self.form.requires_case() and module_uses_inline_search(module):
+                errors.append(dict(type='workflow previous inline search', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:
