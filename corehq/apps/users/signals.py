@@ -1,26 +1,11 @@
 from django.conf import settings
-from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
-from django.dispatch import Signal, receiver
+from django.dispatch import Signal
 
 from corehq.elastic import send_to_elasticsearch
 
 commcare_user_post_save = Signal()  # providing args: couch_user
 couch_user_post_save = Signal()  # providing args: couch_user
-
-
-@receiver(user_logged_in)
-def set_language(sender, **kwargs):
-    """
-    Whenever a user logs in, attempt to set their browser session
-    to the right language.
-    HT: http://mirobetm.blogspot.com/2012/02/django-language-set-in-database-field.html
-    """
-    from corehq.apps.users.models import CouchUser
-    user = kwargs['user']
-    couch_user = CouchUser.from_django_user(user)
-    if couch_user and couch_user.language:
-        kwargs['request'].session['django_language'] = couch_user.language
 
 
 # Signal that syncs django_user => couch_user
