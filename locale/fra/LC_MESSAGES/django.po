@@ -3499,14 +3499,6 @@ msgid "The request resulted in the following errors: {}"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Attempted to update unknown or non-editable field '{}'"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
-msgid "{} must be a {}"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -3518,6 +3510,34 @@ msgstr ""
 #: corehq/apps/api/resources/v0_5.py
 msgid "You do not have permission to view this feed."
 msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Attempted to update unknown or non-editable field '{}'"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid ""
+#| "Password is not strong enough. Try making your password more complex."
+msgid "Password is not strong enough."
+msgstr ""
+"Le mot de passe n'est pas assez fort. Essayez de le rendre plus complexe. "
+
+#: corehq/apps/api/user_updates.py
+msgid "'default_phone_number' must be a string"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid "Error! The selected form does not exist."
+msgid "The role '{}' does not exist"
+msgstr "Erreur! Le formulaire sélectionné n'existe pas"
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid "There are {} locations with the name '{}' under the parent '{}'"
+msgid "There are multiple roles with the name '{}' in the domain '{}'"
+msgstr "Il y a des {} sites avec le nom '{}' sous le parent '{}'"
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -37316,6 +37336,42 @@ msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 msgid "Copy and paste admin emails"
 msgstr "Copier et coller des messages électroniques d'admin"
 
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username contains invalid characters."
+msgid "Username '{}' may not contain special characters."
+msgstr "Le nom d'utilisateur comporte des caractères no valides."
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username is required."
+msgstr "Le nom d'utilisateur {} est réservé."
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is already taken"
+msgid "Username '{}' is already taken."
+msgstr "Le nom d'utilisateur {} existe déjà"
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username '{}' is reserved."
+msgstr "Le nom d'utilisateur {} est réservé."
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -37603,30 +37659,6 @@ msgid ""
 msgstr ""
 "Formulaire non valide. Il se peut qu'un groupe ait été supprimé pendant que "
 "vous visualisiez cette page. Veuillez essayer à nouveau."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr "Le nom d'utilisateur {} est réservé."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
-msgstr "Le nom d'utilisateur {} existe déjà"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Username {} is available"

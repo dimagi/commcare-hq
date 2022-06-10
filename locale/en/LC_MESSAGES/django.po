@@ -3223,14 +3223,6 @@ msgid "The request resulted in the following errors: {}"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Attempted to update unknown or non-editable field '{}'"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
-msgid "{} must be a {}"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -3241,6 +3233,26 @@ msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You do not have permission to view this feed."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Attempted to update unknown or non-editable field '{}'"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Password is not strong enough."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "'default_phone_number' must be a string"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "The role '{}' does not exist"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "There are multiple roles with the name '{}' in the domain '{}'"
 msgstr ""
 
 #: corehq/apps/api/util.py
@@ -35892,6 +35904,34 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain special characters."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username is required."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is already taken."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is reserved."
+msgstr ""
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -36152,30 +36192,6 @@ msgstr ""
 msgid ""
 "Form not valid. A group may have been deleted while you were viewing this "
 "pagePlease try again."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
