@@ -6554,6 +6554,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List uses an instance that is only available for case "
+"search <code>%(property)s</code>.\n"
+"                Details: The %(details)s instance(s) are only available in "
+"case lists using case search.\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
 "                One or more forms are invalid: check all your forms for "
