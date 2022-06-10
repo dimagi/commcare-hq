@@ -285,10 +285,7 @@ def case_property_missing(case_property_name):
         filters.NOT(
             queries.nested(
                 CASE_PROPERTIES_PATH,
-                queries.filtered(
-                    queries.match_all(),
-                    filters.term(PROPERTY_KEY, case_property_name),
-                )
+                filters.term(PROPERTY_KEY, case_property_name),
             )
         ),
         exact_case_property_text_query(case_property_name, '')
