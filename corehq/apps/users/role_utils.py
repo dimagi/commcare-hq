@@ -7,7 +7,7 @@ class UserRolePresets:
     READ_ONLY = "Read Only"
     FIELD_IMPLEMENTER = "Field Implementer"
     BILLING_ADMIN = "Billing Admin"
-    MOBILE_WORKER = "Mobile Worker"
+    MOBILE_WORKER = "Mobile Worker Default"
 
     INITIAL_ROLES = {
         READ_ONLY: lambda: Permissions(view_reports=True),
