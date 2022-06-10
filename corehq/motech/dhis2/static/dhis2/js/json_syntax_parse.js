@@ -27,8 +27,23 @@ hqDefine('dhis2/js/json_syntax_parse', [
           JSON.stringify(badToken[1])
         }`)
         : e.message
-      if (badToken[1] === '\n') {
+      if (badToken != null && badToken[1] === '\n') {
         msg = msg.replace(/[\n\r]/, 'at end of row')
+      }
+
+      // To clean up/refactor later
+      // Not sure this is even right
+      var helpText = "";
+      if (e.message.startsWith('Unexpected token')) {
+        if (badToken[1] === '\n') {
+            helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, ['
+        }
+        else {
+            helpText = "Expected: }, ',', ]"
+        }
+      }
+      else {
+        helpText = "Expected: }, :, ',', ]"
       }
 
       var errorRow = txt.slice(0, errIdx).split('\n').length - 1
@@ -43,7 +58,7 @@ hqDefine('dhis2/js/json_syntax_parse', [
 
         var near = txt === slice ? '' : 'near '
         return {
-          message: msg + ` while parsing ${near}\n${slice}`,
+          message: msg + ` while parsing ${near}\n${slice}\n` + helpText,
           position: errIdx,
         }
       }
