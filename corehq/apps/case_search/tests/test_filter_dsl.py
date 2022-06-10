@@ -267,17 +267,8 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                         "nested": {
                                             "path": "case_properties",
                                             "query": {
-                                                "bool": {
-                                                    "filter": [
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "property"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "must": {
-                                                        "match_all": {}
-                                                    }
+                                                "term": {
+                                                    "case_properties.key.exact": "property"
                                                 }
                                             }
                                         }
@@ -488,21 +479,21 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_selected_any(self):
         parsed = parse_xpath("selected-any(first_name, 'Jon John Jhon')")
         expected_filter = {
-            "bool": {
-                "should": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "first_name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "first_name"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "bool": {
+                                "should": [
+                                    {
                                         "fuzzy": {
                                             "case_properties.value": {
                                                 "value": "jon john jhon",
@@ -510,24 +501,8 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                                 "max_expansions": 100
                                             }
                                         }
-                                    }
-                                }
-                            }
-                        },
-                    },
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "first_name"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
+                                    },
+                                    {
                                         "match": {
                                             "case_properties.value": {
                                                 "query": "Jon John Jhon",
@@ -536,11 +511,11 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                             }
                                         }
                                     }
-                                }
+                                ]
                             }
                         }
                     }
-                ]
+                }
             }
         }
 
