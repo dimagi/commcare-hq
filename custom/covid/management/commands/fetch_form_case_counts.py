@@ -70,6 +70,7 @@ def _get_case_types(domains):
 
 def _get_submissions_counts(domain, start, end):
     res = (FormES()
+           .remove_default_filters()
            .domain(domain)
            .submitted(gte=start, lte=end)
            .aggregation(
