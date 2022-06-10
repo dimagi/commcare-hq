@@ -54,6 +54,7 @@ IGNORE_MODELS = {
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
+    'field_audit.AuditEvent',
     'fixtures.UserLookupTableStatus',
     'sms.MigrationStatus',
     'util.BouncedEmail',
