@@ -321,7 +321,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter, query, is_raw_query=True)
+        self.checkQuery(query, expected_filter, is_raw_query=True)
 
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
@@ -453,7 +453,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter_single, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter_single, is_raw_query=True)
 
         parsed = parse_xpath("selected(first_name, 'Jon John Jhon')")
         expected_filter_many = {
@@ -483,7 +483,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter_many, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter_many, is_raw_query=True)
 
     def test_selected_any(self):
         parsed = parse_xpath("selected-any(first_name, 'Jon John Jhon')")
@@ -546,7 +546,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
         # Note fuzzy is on for this one
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain", fuzzy=True))
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_selected_all(self):
         parsed = parse_xpath("selected-all(first_name, 'Jon John Jhon')")
@@ -577,7 +577,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_self_reference(self):
         with self.assertRaises(CaseFilterError):
@@ -617,7 +617,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     @freeze_time('2021-08-02')
     def test_filter_date_today(self):
@@ -647,7 +647,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_within_distance_filter(self):
         self._test_xpath_query(
@@ -665,7 +665,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         parsed = parse_xpath(query_string)
         context = context or SearchFilterContext("domain")
         built_filter = build_filter_from_ast(parsed, context)
-        self.checkQuery(expected_filter, built_filter, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
 @es_test
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
