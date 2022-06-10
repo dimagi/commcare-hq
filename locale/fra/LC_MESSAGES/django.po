@@ -37329,6 +37329,42 @@ msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 msgid "Copy and paste admin emails"
 msgstr "Copier et coller des messages électroniques d'admin"
 
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username contains invalid characters."
+msgid "Username '{}' may not contain special characters."
+msgstr "Le nom d'utilisateur comporte des caractères no valides."
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username is required."
+msgstr "Le nom d'utilisateur {} est réservé."
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is already taken"
+msgid "Username '{}' is already taken."
+msgstr "Le nom d'utilisateur {} existe déjà"
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username '{}' is reserved."
+msgstr "Le nom d'utilisateur {} est réservé."
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -37616,30 +37652,6 @@ msgid ""
 msgstr ""
 "Formulaire non valide. Il se peut qu'un groupe ait été supprimé pendant que "
 "vous visualisiez cette page. Veuillez essayer à nouveau."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr "Le nom d'utilisateur {} est réservé."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
-msgstr "Le nom d'utilisateur {} existe déjà"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Username {} is available"
