@@ -88,11 +88,17 @@ class AppMigrationCommandBase(BaseCommand):
             if app_doc["doc_type"] in self._doc_types():
                 migrated_app = self.migrate_app(app_doc)
                 if migrated_app and not self.is_dry_run:
-                    return DocUpdate(migrated_app)
+                    return DocUpdate(self.increment_app_version(migrated_app))
         except Exception as e:
             logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
             if self.options['failfast']:
                 raise e
+
+    @staticmethod
+    def increment_app_version(app_doc):
+        if not app_doc.get('copy_of') and app_doc.get('version'):
+            app_doc['version'] = app_doc['version'] + 1
+        return app_doc
 
     def get_app_ids(self, domain=None):
         return get_all_app_ids(domain=domain, include_builds=self.include_builds)

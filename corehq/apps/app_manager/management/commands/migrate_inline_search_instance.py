@@ -33,8 +33,6 @@ class Command(AppMigrationCommandBase):
                 should_save |= self._migrate_detail(app_doc, module, 'short')
                 should_save |= self._migrate_detail(app_doc, module, 'long')
 
-        if should_save and not app_doc.get('copy_of') and app_doc.get('version'):
-            app_doc['version'] = app_doc['version'] + 1
         return app_doc if should_save else None
 
     def get_domains(self):
