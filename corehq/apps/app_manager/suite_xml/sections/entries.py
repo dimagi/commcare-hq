@@ -832,7 +832,8 @@ class EntriesHelper(object):
             auto_select = action.auto_select
             load_case_from_fixture = action.load_case_from_fixture
             if auto_select and auto_select.mode:
-                datum, assertions = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
+                datum, assertions_ = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
+                assertions.extend(assertions_)
                 datums.append(FormDatumMeta(
                     datum=datum,
                     case_type=None,
