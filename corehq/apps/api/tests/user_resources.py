@@ -293,7 +293,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(
             response.content.decode('utf-8'),
             "{\"error\": \"The request resulted in the following errors: Attempted to update unknown or "
-            "non-editable field 'username', default_phone_number must be a string\"}"
+            "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
 
