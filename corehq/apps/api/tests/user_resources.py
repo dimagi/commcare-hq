@@ -25,10 +25,12 @@ from corehq.apps.users.models import (
     CommCareUser,
     UserHistory,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.elastic import send_to_elasticsearch
@@ -36,7 +38,11 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
-from ..resources.v0_5 import CommCareUserResource, UserDomainsResource, BadRequest
+from ..resources.v0_5 import (
+    BadRequest,
+    CommCareUserResource,
+    UserDomainsResource,
+)
 from .utils import APIResourceTest
 
 

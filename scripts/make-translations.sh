@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 function abort () {
     echo $@
     echo "Aborting."
