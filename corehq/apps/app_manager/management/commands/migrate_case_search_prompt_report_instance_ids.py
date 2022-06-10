@@ -14,8 +14,8 @@ class Command(AppMigrationCommandBase):
     report instance IDs in case search itemset prompts"""
 
     chunk_size = 1
-    include_builds = True
-    include_linked_apps = True
+    include_builds = False
+    include_linked_apps = False
 
     def migrate_app(self, app_doc):
         should_save = False
