@@ -214,3 +214,39 @@ class ModelAttrEqualityHelper(SimpleTestCase):
     def _new_attrs_in_sql(self):
         return {}
 
+
+class TestRepeaterClassesAttrEquality(ModelAttrEqualityHelper):
+
+    def test_have_same_attrs(self):
+        couch_attrs = self._cleaned_couch_attrs(Repeater)
+        sql_attrs = self._get_user_defined_attrs(SQLRepeater, self.DummySQLModel)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+    def _extra_attrs_in_couch_model(self):
+        return {
+            # removed
+            'last_success_at',
+            'sql_repeater',
+            'failure_streak',
+            'started_at',
+            # renamed
+            'paused',
+            # connection setting props
+            'plaintext_password', 'username', 'notify_addresses_str', 'create_connection_settings', 'name', 'url',
+            'verify', 'skip_cert_verify', 'password', 'auth_type',
+            # not required in sql
+            'by_domain', 'base_doc',
+            'get_class_from_doc_type', 'started_at', '_get_connection_settings',
+            'clear_caches',  # will see if we need it as per requirement
+            # not used
+            'get_attempt_info'
+        }
+
+    def _new_attrs_in_sql(self):
+        return {
+            'repeater_id', 'set_next_attempt', 'next_attempt_at',
+            'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
+            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
+            'get_request_method_display'  # added by django choicefield in models
+        }
