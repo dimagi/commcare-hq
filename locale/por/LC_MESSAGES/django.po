@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-09 08:54+0000\n"
+"POT-Creation-Date: 2022-06-10 17:02+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
@@ -23197,6 +23197,10 @@ msgid ""
 "+Project+Spaces\" target=\"_blank\">Learn more</a> about pushing content "
 "with Linked Project Spaces.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid "{} is not a valid data source type!"
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py

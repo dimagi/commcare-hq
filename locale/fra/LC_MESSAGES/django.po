@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-09 08:54+0000\n"
+"POT-Creation-Date: 2022-06-10 17:02+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -23946,6 +23946,12 @@ msgid ""
 "with Linked Project Spaces.\n"
 "      "
 msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+#, fuzzy
+#| msgid "This is not a valid sub-area for the area %s"
+msgid "{} is not a valid data source type!"
+msgstr "Cette sous-zone n'est pas valide pour la zone %s"
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
 msgid "The data source referenced by this report could not be found."

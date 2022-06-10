@@ -57,7 +57,8 @@ def create_linked_ucr(domain_link, report_config_id):
         try:
             datasource = get_ucr_datasource_config_by_id(report_config.config_id)
             if datasource.is_static:
-                raise InvalidDataSourceType('{} is not a valid data source type!'.format(datasource.doc_type))
+                message = _('{} is not a valid data source type!').format(datasource.doc_type)
+                raise InvalidDataSourceType(message)
         except DataSourceConfigurationNotFoundError:
             raise DataSourceConfigurationNotFoundError(_(
                 'The data source referenced by this report could not be found.'
