@@ -20,7 +20,6 @@ from corehq.apps.userreports.dbaccessors import (
     get_report_configs_for_domain,
 )
 from corehq.apps.userreports.models import (
-    DataSourceConfiguration,
     ReportConfiguration,
     is_data_registry_report,
 )
@@ -34,12 +33,14 @@ from tastypie.exceptions import NotFound
 
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
+    InvalidDataSourceType,
 )
 
 from corehq.apps.userreports.util import (
     get_report_config_or_not_found,
     wrap_report_config_by_type,
-    _wrap_data_source_by_doc_type
+    _wrap_data_source_by_doc_type,
+    get_ucr_datasource_config_by_id
 )
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource report")
@@ -55,7 +56,9 @@ def create_linked_ucr(domain_link, report_config_id):
         except DocumentNotFound:
             raise NotFound
         try:
-            datasource = DataSourceConfiguration.get(report_config.config_id)
+            datasource = get_ucr_datasource_config_by_id(report_config.config_id)
+            if datasource.is_static:
+                raise InvalidDataSourceType('{} is not a valid data source type!'.format(datasource.doc_type))
         except DataSourceConfigurationNotFoundError:
             raise DataSourceConfigurationNotFoundError(_(
                 'The data source referenced by this report could not be found.'
