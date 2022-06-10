@@ -2240,18 +2240,19 @@ class SMSAdminTab(UITab):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        items.append((_('SMS Connectivity'), [
-            {'title': _('Gateways'),
-             'url': reverse(GlobalSmsGatewayListView.urlname),
-             'subpages': [
-                 {'title': _('Add Gateway'),
-                  'urlname': AddGlobalGatewayView.urlname},
-                 {'title': _('Edit Gateway'),
-                  'urlname': EditGlobalGatewayView.urlname},
-            ]},
-            {'title': _('Default Gateways'),
-             'url': reverse('global_backend_map')},
-        ]))
+        if self.couch_user.is_staff:
+            items.append((_('SMS Connectivity'), [
+                {'title': _('Gateways'),
+                'url': reverse(GlobalSmsGatewayListView.urlname),
+                'subpages': [
+                    {'title': _('Add Gateway'),
+                    'urlname': AddGlobalGatewayView.urlname},
+                    {'title': _('Edit Gateway'),
+                    'urlname': EditGlobalGatewayView.urlname},
+                ]},
+                {'title': _('Default Gateways'),
+                'url': reverse('global_backend_map')},
+            ]))
         return items
 
     @property
