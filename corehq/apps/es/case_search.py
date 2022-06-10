@@ -170,11 +170,14 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
-        return filters.OR(
-            # fuzzy match
-            case_property_fuzzy_query(case_property_name, value, fuzziness='AUTO'),
-            # non-fuzzy match. added to improve the score of exact matches
-            case_property_text_query(case_property_name, value, operator=multivalue_mode),
+        return _base_property_query(
+            case_property_name,
+            filters.OR(
+                # fuzzy match
+                queries.fuzzy(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness='AUTO'),
+                # non-fuzzy match. added to improve the score of exact matches
+                queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), operator=multivalue_mode)
+            ),
         )
     if not fuzzy and multivalue_mode in ['or', 'and']:
         return case_property_text_query(case_property_name, value, operator=multivalue_mode)
@@ -197,20 +200,6 @@ def exact_case_property_text_query(case_property_name, value):
                 filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
             )
         )
-    )
-
-
-def case_property_fuzzy_query(case_property_name, value, fuzziness='AUTO'):
-    """Filter by case_properties.key and do a fuzzy search on case_properties.value
-
-    This does not do exact matches on the multi-words case property values. If the value has
-    multiple words, they will be OR'd together in this query. You may want to
-    use the `exact_case_property_text_query` instead.
-
-    """
-    return _base_property_query(
-        case_property_name,
-        queries.fuzzy(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
     )
 
 
