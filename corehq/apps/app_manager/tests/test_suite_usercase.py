@@ -21,28 +21,28 @@ class SuiteUsercaseTest(SimpleTestCase, SuiteMixin):
     def test_usercase_id_added_update(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
+        module = app.add_module(Module.new_module("Untitled Module", None))
+        module.case_type = 'child'
 
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.usercase_update = UpdateCaseAction(
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m1-f0'
+        form.requires = 'case'
+        form.actions.usercase_update = UpdateCaseAction(
             update={'name': ConditionalCaseUpdate(question_path='/data/question1')})
-        child_form.actions.usercase_update.condition.type = 'always'
+        form.actions.usercase_update.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_usercase_id_added_preload(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
-        child_module = app.add_module(Module.new_module("Untitled Module", None))
-        child_module.case_type = 'child'
+        module = app.add_module(Module.new_module("Untitled Module", None))
+        module.case_type = 'child'
 
-        child_form = app.new_form(0, "Untitled Form", None)
-        child_form.xmlns = 'http://id_m1-f0'
-        child_form.requires = 'case'
-        child_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'name'})
-        child_form.actions.usercase_preload.condition.type = 'always'
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m1-f0'
+        form.requires = 'case'
+        form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'name'})
+        form.actions.usercase_preload.condition.type = 'always'
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
