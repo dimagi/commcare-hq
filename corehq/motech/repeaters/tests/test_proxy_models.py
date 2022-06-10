@@ -1,5 +1,7 @@
+import inspect
 from uuid import uuid4
-from django.test import TestCase
+from django.db import models
+from django.test import SimpleTestCase, TestCase
 from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
 
 from corehq.motech.models import ConnectionSettings
@@ -9,7 +11,8 @@ from corehq.motech.repeaters.dbaccessors import (
     get_all_repeater_docs,
 )
 from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeater
-
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
+from dimagi.ext.couchdbkit import Document
 from ..models import (
     Repeater,
     SQLAppStructureRepeater,
@@ -183,3 +186,31 @@ class TestSQLRepeaterSubClasses(RepeaterProxyTests):
             {Repeater.wrap(r).repeater_type for r in repeaters},
             {r.repeater_type for r in self.all_repeaters}
         )
+
+
+class ModelAttrEqualityHelper(SimpleTestCase):
+    class DummySQLModel(models.Model, SyncSQLToCouchMixin):
+        pass
+
+    class DummyCouchModel(Document, SyncCouchToSQLMixin):
+        pass
+
+    @classmethod
+    def _get_user_defined_attrs(cls, model_cls, dummy_model):
+        model_attrs = dir(dummy_model)
+        return {item[0]
+                for item in inspect.getmembers(model_cls)
+                if item[0] not in model_attrs}
+
+    def _cleaned_couch_attrs(self, couch_model_cls):
+        couch_attrs = self._get_user_defined_attrs(couch_model_cls, self.DummyCouchModel)
+        extra_attrs = self._extra_attrs_in_couch_model()
+        new_attrs = self._new_attrs_in_sql()
+        return (couch_attrs - extra_attrs).union(new_attrs)
+
+    def _extra_attrs_in_couch_model(self):
+        return {}
+
+    def _new_attrs_in_sql(self):
+        return {}
+
