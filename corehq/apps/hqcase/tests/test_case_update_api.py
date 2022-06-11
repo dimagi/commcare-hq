@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from unittest.mock import patch
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
@@ -52,7 +52,7 @@ class TestCaseAPI(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def _make_case(self):
+    def _make_case(self, parent_id=None):
         xform, cases = submit_case_blocks([CaseBlock(
             case_id=str(uuid.uuid4()),
             case_type='player',
@@ -64,7 +64,10 @@ class TestCaseAPI(TestCase):
                 'sport': 'chess',
                 'rank': '1600',
                 'dob': '1948-11-02',
-            }
+            },
+            index={
+                'parent': IndexAttrs('player', parent_id, 'child'),
+            } if parent_id else None,
         ).as_text()], domain=self.domain)
         return cases[0]
 
@@ -291,6 +294,21 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].referenced_type, 'player')
         self.assertEqual(case.indices[0].relationship, 'child')
         self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
+
+    def test_cannot_remove_child_case(self):
+        # Documenting that this does not yet work
+        parent_case = self._make_case()
+        child_case = self._make_case(parent_id=parent_case.case_id)
+        res = self._update_case(child_case.case_id, {
+            'indices': {
+                'parent': {
+                    'case_id': '',
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertItemsEqual(res['error'], "You must set either case_id or temporary_id, and not both.")
 
     def test_bulk_action(self):
         existing_case = self._make_case()
