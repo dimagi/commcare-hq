@@ -95,6 +95,13 @@
                 a multi-select case list and the "Previous Screen" workflow, which are not compatible.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "workflow previous inline search" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct.
+                Modules configured to "make search input available after search" do not support
+                the "Previous Screen" workflow.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
             {% case "manual form linking required" %}
               {% blocktrans %}
                 Please check that end of form navigation is correct. It involves a form

@@ -5992,6 +5992,16 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
+"                Please check that end of form navigation is correct.\n"
+"                Modules configured to \"make search input available after "
+"search\" do not support\n"
+"                the \"Previous Screen\" workflow.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
 "                Please check that end of form navigation is correct. It "
 "involves a form\n"
 "                that requires manual linking which has not been configured.\n"
