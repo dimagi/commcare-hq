@@ -175,7 +175,8 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
         return _base_property_query(
             case_property_name,
             filters.OR(
-                # fuzzy match
+                # fuzzy match. This portion of this query OR's together multi-word case
+                # property values and doesn't respect multivalue_mode
                 queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO'),
                 # non-fuzzy match. added to improve the score of exact matches
                 queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
