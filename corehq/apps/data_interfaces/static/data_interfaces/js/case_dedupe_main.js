@@ -4,6 +4,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets',
+    'data_interfaces/js/case_rule_criteria',
 ], function ($, ko, _, initialPageData) {
     var caseDedupe = function (
         initialName,
@@ -82,6 +83,11 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     };
 
     $(function () {
+        // This is a little hacky; it prevents the "multiple bindings to same
+        // element" error.
+        var caseFilterElement = $("#caseFiltersForm");
+        caseFilterElement.detach();
+
         $("#case-dedupe-rule-definition").koApplyBindings(
             caseDedupe(
                 initialPageData.get('name'),
@@ -93,5 +99,8 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
                 initialPageData.get('properties_to_update')
             )
         );
+
+        $("#caseFilters").append(caseFilterElement);
     });
 });
+
