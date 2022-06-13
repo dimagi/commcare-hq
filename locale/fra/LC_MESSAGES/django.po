@@ -11887,10 +11887,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
-#, fuzzy
-#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr "Le formulaire ne valide pas"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""
