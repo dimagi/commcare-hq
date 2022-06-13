@@ -11342,6 +11342,12 @@ msgstr ""
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 
+#: corehq/apps/case_search/xpath_functions/utils.py
+#, python-brace-format
+msgid ""
+"The '{node.name}' function accepts exactly {expected} arguments, got {actual}"
+msgstr ""
+
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
 msgstr ""
