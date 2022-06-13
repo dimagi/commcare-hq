@@ -25,10 +25,12 @@ from corehq.apps.users.models import (
     CommCareUser,
     UserHistory,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.elastic import send_to_elasticsearch
@@ -36,7 +38,11 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from corehq.util.es.testing import sync_users_to_es
 
-from ..resources.v0_5 import CommCareUserResource, UserDomainsResource, BadRequest
+from ..resources.v0_5 import (
+    BadRequest,
+    CommCareUserResource,
+    UserDomainsResource,
+)
 from .utils import APIResourceTest
 
 
@@ -163,7 +169,8 @@ class TestCommCareUserResource(APIResourceTest):
         self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
         self.addCleanup(lambda: send_to_elasticsearch('users', user_back.to_json(), delete=True))
 
-        self.assertEqual(user_back.username, "jdoe")
+        # tests username is normalized before saving
+        self.assertEqual(user_back.username, "jdoe@qwerty.commcarehq.org")
         self.assertEqual(user_back.first_name, "John")
         self.assertEqual(user_back.last_name, "Doe")
         self.assertEqual(user_back.email, "jdoe@example.org")
@@ -171,6 +178,24 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
+
+    def test_bad_request_if_username_already_exists(self):
+        # create user with same username first
+        og_user = CommCareUser.create(self.domain.name, 'jdoe@qwerty.commcarehq.org', 'abc123', None, None)
+        self.addCleanup(og_user.delete, self.domain.name, deleted_by=None)
+
+        user_json = {
+            "username": "jdoe",
+            "password": "qwer1234",
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Username \'jdoe\' is already taken."}'
+        )
 
     def test_update(self):
 

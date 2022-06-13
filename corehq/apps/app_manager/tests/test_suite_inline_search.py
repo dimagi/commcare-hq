@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-    RESULTS_INSTANCE,
+    RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -85,7 +85,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
     def test_inline_search(self):
         suite = self.app.create_suite()
 
-        expected_entry_query = """
+        expected_entry_query = f"""
         <partial>
           <entry>
             <form>xmlns1.0</form>
@@ -101,8 +101,8 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
             <session>
-                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
-                    template="case" default_search="false">
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -112,16 +112,9 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
-            <assertions>
-              <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 1">
-                <text>
-                  <locale id="case_search.claimed_case.case_missing"/>
-                </text>
-              </assert>
-            </assertions>
           </entry>
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
@@ -136,61 +129,91 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.module.case_list.show = True
         suite = self.app.create_suite()
 
-        expected_entry_query = """
-            <partial>
-              <entry>
-                <command id="m0-case-list">
-                  <text>
-                    <locale id="case_lists.m0"/>
-                  </text>
-                </command>
-                <session>
-                    <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
-                        template="case" default_search="false">
-                      <data key="case_type" ref="'case'"/>
-                      <prompt key="name">
-                        <display>
-                          <text>
-                            <locale id="search_property.m0.name"/>
-                          </text>
-                        </display>
-                      </prompt>
-                    </query>
-                    <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
-                        value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-                </session>
-              </entry>
-            </partial>"""  # noqa: E501
+        expected_entry_query = f"""
+        <partial>
+          <entry>
+            <command id="m0-case-list">
+              <text>
+                <locale id="case_lists.m0"/>
+              </text>
+            </command>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                    storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                  <data key="case_type" ref="'case'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
 
     def test_inline_search_multi_select(self):
         self.module.case_details.short.multi_select = True
-
+        self.module.case_details.short.columns.append(
+            DetailColumn.wrap(dict(
+                header={"en": "parent name"},
+                model="case",
+                format="plain",
+                field="parent/name"
+            ))
+        )
         suite = self.app.create_suite()
 
-        expected_entry_post = """
+        expected_entry_query = f"""
         <partial>
+          <entry>
+            <form>xmlns1.0</form>
             <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
                 relevant="$case_id != ''">
-             <data key="case_id"
-                nodeset="instance('selected_cases')/results/value" ref="."
-                exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"/>
+             <data exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"
+                key="case_id" nodeset="instance('selected_cases')/results/value" ref="."/>
             </post>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="selected_cases" src="jr://instance/selected-entities"/>
+            <session>
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                    storage-instance="{RESULTS_INSTANCE_INLINE}"
+                    template="case" default_search="false">
+                  <data key="case_type" ref="'case'"/>
+                  <prompt key="name">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                  </prompt>
+                </query>
+                <instance-datum id="selected_cases" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            </session>
+          </entry>
         </partial>"""  # noqa: E501
-        self.assertXmlPartialEqual(expected_entry_post, suite, "./entry[1]/post")
+        self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]")
 
-        expected_entry_datum = """
-                <partial>
-                    <instance-datum id="selected_cases"
-                        nodeset="instance('results')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
-                        value="./@case_id"
-                        detail-confirm="m0_case_long"
-                        detail-select="m0_case_short"/>
-                </partial>"""  # noqa: E501
-        self.assertXmlPartialEqual(expected_entry_datum, suite, "./entry[1]/session/instance-datum")
+        expected_detail_columns = f"""
+        <partial>
+          <xpath function="case_name"/>
+          <xpath function="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_id=current()/index/parent]/case_name"/>
+        </partial>"""  # noqa: E501
+        self.assertXmlPartialEqual(
+            expected_detail_columns, suite, "./detail[@id='m0_case_short']/field/template/text/xpath")
 
     def test_case_detail_tabs_with_inline_search(self):
-        """Test that the detail nodeset uses the correct instance (results not casedb)"""
+        """Test that the detail nodeset uses the correct instance (results:inline not casedb)"""
         self.app.get_module(0).case_details.long.tabs = [
             DetailTab(starting_index=0),
             DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
@@ -204,11 +227,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
     def test_form_linking_to_inline_search_module_from_registration_form(self):
         self.module.search_config.additional_case_types = ["other_case"]
         suite = self.app.create_suite()
-        expected = """
+        expected = f"""
         <partial>
           <create>
             <command value="'m0'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+            <query id="{RESULTS_INSTANCE_INLINE}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
@@ -216,7 +239,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
             <command value="'m0-f0'"/>
           </create>
-        </partial>"""
+        </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(
             expected,
             suite,
@@ -256,18 +279,18 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         app._id = "123"
         suite = app.create_suite()
         self.assertXmlPartialEqual(
-            """
+            f"""
             <partial>
               <create>
                 <command value="'m1'"/>
-                <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+                <query id="{RESULTS_INSTANCE_INLINE}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="case_type" ref="'case'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
                 </query>
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
               </create>
             </partial>
-            """,
+            """,  # noqa: E501
             suite,
             "./entry[2]/stack/create"
         )
@@ -313,6 +336,63 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             suite,
             f"./entry[1]/instance[@id='{instance_id}']",
         )
+
+    def test_inline_search_with_parent_select(self):
+        """Inline search module can have 'parent select' as long as the
+        relationship is 'other' (None).
+        Inline search modules can never be the parent select module.
+          * post requests aren't included in the entries for the module with parent select
+          * parent filtering doesn't work since the 'case claim' isn't triggered before filtering
+        """
+        module = self.app.add_module(Module.new_module("Followup2", None))
+        form = self.app.new_form(2, "Untitled Form", None, attachment=get_simple_form("xmlns1.0"))
+        form.requires = 'case'
+        module.case_type = 'case'
+
+        self.module.parent_select.active = True
+        self.module.parent_select.relationship = None
+        self.module.parent_select.module_id = module.unique_id
+
+        suite = self.app.create_suite()
+
+        expected_entry = f"""
+        <partial>
+          <entry>
+            <form>xmlns1.0</form>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+            </post>
+            <command id="m0-f0">
+              <text>
+                <locale id="forms.m0f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <session>
+              <datum id="case_id_case"
+                nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+                value="./@case_id" detail-select="m2_case_short"/>
+              <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m0.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            </session>
+          </entry>
+        </partial>"""  # noqa: E501
+
+        self.assertXmlPartialEqual(expected_entry, suite, "./entry[1]")
 
 
 @patch_get_xform_resource_overrides()
@@ -385,8 +465,8 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
         suite = parse_normalize(suite_xml, to_string=False)
         self.assertEqual(
             "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][@status='open']{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
+                RESULTS_INSTANCE_INLINE,
+                "results",
                 self.module.case_type,
                 another_case_type,
                 EXCLUDE_RELATED_CASES_FILTER
@@ -406,7 +486,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
+class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite_inline_search')
 
     def setUp(self):
@@ -415,7 +495,7 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
         factory.form_requires_case(f0)
 
         m1, f1 = factory.new_basic_module("child case list", "case", parent_module=m0)
-        m1.parent_select = ParentSelect(active=True, relationship="other", module_id=m0.get_or_create_unique_id())
+        m1.parent_select = ParentSelect(active=True, relationship=None, module_id=m0.get_or_create_unique_id())
         f2 = factory.new_form(m1)
 
         factory.form_requires_case(f1)
@@ -427,34 +507,76 @@ class InlineSearchFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
             inline_search=True,
         )
 
-        # link from f1 to f2 (both in the child module)
-        f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
-
         factory.app._id = "123"
         # wrap to have assign_references called
         self.app = Application.wrap(factory.app.to_json())
 
-    def test_form_link_in_child_module_with_registry_search(self):
+    def test_child_module_with_inline_search_entry(self):
+        """An inline search module can be a child module
+            * as long as there is no parent selection or parent_select.relationship = None
+
+        An inline search module can never be a parent module
+          * post requests aren't included in the entries for the child module
+        """
         suite = self.app.create_suite()
 
-        expected = """
+        expected_entry = f"""
+        <partial>
+          <entry>
+            <post url="http://localhost:8000/a/test_domain/phone/claim-case/"
+                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case]) = 0">
+              <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
+            </post>
+            <command id="m1-f0">
+              <text>
+                <locale id="forms.m1f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <session>
+              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']"
+                value="./@case_id" detail-select="m0_case_short"/>
+              <query url="http://localhost:8000/a/test_domain/phone/search/123/"
+                storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <data key="case_type" ref="'case'"/>
+                <prompt key="name">
+                  <display>
+                    <text>
+                      <locale id="search_property.m1.name"/>
+                    </text>
+                  </display>
+                </prompt>
+              </query>
+              <datum id="case_id_case"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+            </session>
+          </entry>
+        </partial>
+        """  # noqa: E501
+        self.assertXmlPartialEqual(expected_entry, suite, "./entry[2]")
+
+    def test_form_link_in_child_module_with_inline_search(self):
+        form1 = self.app.get_module(1).get_form(0)
+        form2 = self.app.get_module(1).get_form(1)
+        # link from f1 to f2 (both in the child module)
+        form1.post_form_workflow = WORKFLOW_FORM
+        form1.form_links = [FormLink(form_id=form2.get_unique_id())]
+        suite = self.app.create_suite()
+        expected = f"""
         <partial>
           <create>
             <command value="'m0'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
+            <query id="{RESULTS_INSTANCE_INLINE}" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
             <command value="'m1-f1'"/>
           </create>
-        </partial>"""
+        </partial>"""  # noqa: E501
 
-        self.assertXmlPartialEqual(
-            expected,
-            suite,
-            "./entry[2]/stack/create"
-        )
+        self.assertXmlPartialEqual(expected, suite, "./entry[2]/stack/create")

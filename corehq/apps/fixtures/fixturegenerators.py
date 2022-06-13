@@ -17,6 +17,9 @@ from corehq.util.metrics import metrics_histogram
 from corehq.util.xml_utils import serialize
 from .utils import clean_fixture_field_name, get_index_schema_node
 
+LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
+REPORT_FIXTURE = 'report_fixture'
+
 
 def item_lists_by_domain(domain, namespace_ids=False):
     ret = list()
@@ -50,9 +53,7 @@ def item_lists_by_domain(domain, namespace_ids=False):
     return ret
 
 
-def item_lists_by_app(app):
-    LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
-    REPORT_FIXTURE = 'report_fixture'
+def item_lists_by_app(app, module):
     lookup_lists = item_lists_by_domain(app.domain, namespace_ids=True).copy()
     for item in lookup_lists:
         item['fixture_type'] = LOOKUP_TABLE_FIXTURE
@@ -62,18 +63,33 @@ def item_lists_by_app(app):
         for module in app.get_report_modules()
         for report_config in module.report_configs
     ]
+    if not report_configs:
+        return lookup_lists
+
+    legacy_instance_ids = {
+        prop.itemset.instance_id
+        for prop in module.search_config.properties
+        if prop.itemset.instance_id and 'commcare-reports:' not in prop.itemset.instance_id
+    }
     ret = list()
     for config in report_configs:
         instance_id = f'commcare-reports:{config.uuid}'  # follow HQ instance ID convention
         uri = f'jr://fixture/{instance_id}'
-        ret.append({
+        item = {
             'id': instance_id,
             'uri': uri,
             'path': "/rows/row",
             'name': config.header.get(app.default_language),
             'structure': {},
             'fixture_type': REPORT_FIXTURE,
-        })
+        }
+        ret.append(item)
+        if config.uuid in legacy_instance_ids:
+            # add in item with the legacy ID to support apps using the old ID format
+            legacy_item = item.copy()
+            legacy_item['id'] = config.uuid
+            legacy_item['name'] = f"{item['name']} (legacy)"
+            ret.append(legacy_item)
     return lookup_lists + ret
 
 

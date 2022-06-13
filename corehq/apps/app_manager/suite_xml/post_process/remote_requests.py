@@ -62,6 +62,7 @@ from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
+RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
 REGISTRY_INSTANCE = 'registry'
@@ -78,12 +79,14 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, suite, module, detail_section_elements, case_session_var=None):
+    def __init__(self, suite, module, detail_section_elements,
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
+        self.storage_instance = storage_instance
         if case_session_var:
             self.case_session_var = case_session_var
         else:
@@ -97,7 +100,6 @@ class RemoteRequestFactory(object):
         return RemoteRequest(
             post=self.build_remote_request_post(),
             command=self.build_command(),
-            instances=self.build_instances(),
             session=self.build_session(),
             stack=self.build_stack(),
         )
@@ -145,20 +147,6 @@ class RemoteRequestFactory(object):
     def _details_helper(self):
         return DetailsHelper(self.app)
 
-    def build_instances(self):
-        """Add in instance IDs configured in itemsets directly. This is to work around
-        a legacy issue where the instance IDs didn't conform to the
-        ID convention: 'commcare-reports:uuid' and were instead just the 'uuid'.
-        """
-        prompt_select_instances = [
-            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
-            for prop in self.module.search_config.properties
-            if prop.itemset.instance_id
-        ]
-
-        # sorted list to prevent intermittent test failures
-        return sorted(set(prompt_select_instances), key=lambda i: i.id)
-
     def build_session(self):
         return RemoteRequestSession(
             queries=self.build_remote_request_queries(),
@@ -169,7 +157,7 @@ class RemoteRequestFactory(object):
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
-                storage_instance=RESULTS_INSTANCE,
+                storage_instance=self.storage_instance,
                 template='case',
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
@@ -185,12 +173,12 @@ class RemoteRequestFactory(object):
             short_detail_id = 'search_short'
             long_detail_id = 'search_long'
 
-        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
-                    additional_types, instance_name=RESULTS_INSTANCE)
+                    additional_types, instance_name=self.storage_instance)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
@@ -352,7 +340,7 @@ class RemoteRequestFactory(object):
 
     def _get_case_domain_xpath(self):
         case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
-        return case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
+        return case_id_xpath.case(instance_name=self.storage_instance).slash(COMMCARE_PROJECT)
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
@@ -372,9 +360,6 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
             id=f"claim_command.{self.endpoint_id}.{self.case_session_var}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
-
-    def build_instances(self):
-        return []
 
     def build_remote_request_queries(self):
         return []
