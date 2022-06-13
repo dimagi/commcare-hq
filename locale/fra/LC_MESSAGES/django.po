@@ -6372,6 +6372,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct. It "
+"involves a form\n"
+"                that requires manual linking which has not been configured.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -11878,8 +11887,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
+#, fuzzy
+#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr ""
+msgstr "Le formulaire ne valide pas"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""

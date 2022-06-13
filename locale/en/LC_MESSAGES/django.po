@@ -5999,6 +5999,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct. It "
+"involves a form\n"
+"                that requires manual linking which has not been configured.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"

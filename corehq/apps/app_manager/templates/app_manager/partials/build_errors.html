@@ -102,6 +102,12 @@
                 the "Previous Screen" workflow.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "manual form linking required" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct. It involves a form
+                that requires manual linking which has not been configured.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
             {% case "endpoint to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
