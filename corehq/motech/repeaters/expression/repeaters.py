@@ -92,6 +92,8 @@ class SQLBaseExpressionRepeater(SQLRepeater):
 
     configured_filter = OptionValue(default=dict)
     configured_expression = OptionValue(default=dict)
+    url_template = OptionValue()
+
     payload_generator_classes = (ExpressionPayloadGenerator,)
 
     @property
