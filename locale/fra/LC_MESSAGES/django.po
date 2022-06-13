@@ -17642,6 +17642,10 @@ msgstr ""
 msgid "App not found"
 msgstr ""
 
+#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/list.py
+msgid "OData Feeds"
+msgstr ""
+
 #: corehq/apps/enterprise/enterprise.py
 msgid "Odata feeds used"
 msgstr ""
@@ -19897,10 +19901,6 @@ msgstr ""
 
 #: corehq/apps/export/views/list.py
 msgid "OData feed"
-msgstr ""
-
-#: corehq/apps/export/views/list.py
-msgid "OData Feeds"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
