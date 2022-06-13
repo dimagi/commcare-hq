@@ -202,17 +202,24 @@ class ModelAttrEqualityHelper(SimpleTestCase):
                 for item in inspect.getmembers(model_cls)
                 if item[0] not in model_attrs}
 
-    def _cleaned_couch_attrs(self, couch_model_cls):
-        couch_attrs = self._get_user_defined_attrs(couch_model_cls, self.DummyCouchModel)
-        extra_attrs = self._extra_attrs_in_couch_model()
-        new_attrs = self._new_attrs_in_sql()
+    @classmethod
+    def get_sql_attrs(cls, model_cls):
+        return cls._get_user_defined_attrs(model_cls, cls.DummySQLModel)
+
+    @classmethod
+    def get_cleaned_couch_attrs(cls, couch_model_cls):
+        couch_attrs = cls._get_user_defined_attrs(couch_model_cls, cls.DummyCouchModel)
+        extra_attrs = cls._extra_attrs_in_couch_model()
+        new_attrs = cls._new_attrs_in_sql()
         return (couch_attrs - extra_attrs).union(new_attrs)
 
-    def _extra_attrs_in_couch_model(self):
-        return {}
+    @classmethod
+    def _extra_attrs_in_couch_model(cls):
+        return set()
 
-    def _new_attrs_in_sql(self):
-        return {}
+    @classmethod
+    def _new_attrs_in_sql(cls):
+        return set()
 
 
 class TestRepeaterClassesAttrEquality(ModelAttrEqualityHelper):
