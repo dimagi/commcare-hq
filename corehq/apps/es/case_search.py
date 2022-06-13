@@ -52,6 +52,7 @@ class CaseSearchES(CaseES):
             blacklist_owner_id,
             external_id,
             indexed_on,
+            case_property_missing,
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -278,17 +279,21 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
+def _case_property_not_set(case_property_name):
+    return filters.NOT(
+        queries.nested(
+            CASE_PROPERTIES_PATH,
+            filters.term(PROPERTY_KEY, case_property_name),
+        )
+    )
+
+
 def case_property_missing(case_property_name):
     """case_property_name isn't set or is the empty string
 
     """
     return filters.OR(
-        filters.NOT(
-            queries.nested(
-                CASE_PROPERTIES_PATH,
-                filters.term(PROPERTY_KEY, case_property_name),
-            )
-        ),
+        _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
     )
 

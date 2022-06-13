@@ -226,3 +226,24 @@ class TestDeleteLocations(LocationHierarchyPerTest):
             SQLLocation.objects.all().values_list('name', flat=True),
             ['Massachusetts', 'Middlesex', 'Somerville']
         )
+
+    def test_location_filter_criteria_removed(self):
+        from corehq.apps.data_interfaces.models import LocationFilterDefinition
+
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        location_to_delete = locations[0]
+
+        LocationFilterDefinition.objects.create(
+            location_id=location_to_delete.location_id
+        )
+
+        self.assertEqual(
+            len(LocationFilterDefinition.objects.filter(location_id=location_to_delete.location_id)),
+            1
+        )
+
+        location_to_delete.delete()
+        self.assertEqual(
+            len(LocationFilterDefinition.objects.filter(location_id=location_to_delete.location_id)),
+            0
+        )
