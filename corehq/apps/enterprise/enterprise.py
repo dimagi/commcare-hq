@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy as _lazy
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -256,7 +256,7 @@ class EnterpriseFormReport(EnterpriseReport):
 
 
 class EnterpriseODataReport(EnterpriseReport):
-    title = _lazy('OData Feeds')
+    title = gettext_lazy('OData Feeds')
     MAXIMUM_EXPECTED_EXPORTS = 150
 
     def __init__(self, account, couch_user):
