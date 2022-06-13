@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils.translation import gettext as _
 
 from dimagi.utils.couch.bulk import get_docs
@@ -42,7 +43,12 @@ def update(user, field, value, user_change_logger=None):
 
 
 def _update_email(user, email, user_change_logger):
-    _simple_update(user, 'email', email.lower(), user_change_logger)
+    email = email.lower()
+    try:
+        validate_email(email)
+    except ValidationError:
+        raise UpdateUserException(_("The value '{}' for 'email' must be a valid email address").format(email))
+    _simple_update(user, 'email', email, user_change_logger)
 
 
 def _update_first_name(user, first_name, user_change_logger):

@@ -62,6 +62,12 @@ class TestUpdateUserMethods(TestCase):
         update(self.user, 'email', 'updated@dimagi.com')
         self.assertEqual(self.user.email, 'updated@dimagi.com')
 
+    def test_update_email_raises_exception_if_invalid_email(self):
+        with self.assertRaises(UpdateUserException) as cm:
+            update(self.user, 'email', 'updated@dimagi@com')
+        self.assertEqual(cm.exception.message,
+                         "The value 'updated@dimagi@com' for 'email' must be a valid email address")
+
     def test_update_first_name_succeeds(self):
         self.user.first_name = 'Initial'
         update(self.user, 'first_name', 'Updated')

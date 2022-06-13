@@ -219,7 +219,6 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
-                email=bundle.data.get('email', '').lower(),
             )
             # password was just set
             bundle.data.pop('password', None)
