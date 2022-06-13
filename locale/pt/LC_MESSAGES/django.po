@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-09 08:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11327,12 +11326,6 @@ msgstr ""
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
-msgstr ""
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got {actual}"
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
