@@ -40,10 +40,7 @@ class TestUpdateUserMethods(TestCase):
         self.domain_obj.strong_mobile_passwords = False
         self.domain_obj.save()
 
-        try:
-            update(self.user, 'password', 'abc123')
-        except UpdateUserException:
-            self.fail('Unexpected ValidationError raised.')
+        update(self.user, 'password', 'abc123')  # should not raise
 
     def test_update_password_with_strong_passwords_raises_exception(self):
         self.domain_obj.strong_mobile_passwords = True
@@ -58,10 +55,7 @@ class TestUpdateUserMethods(TestCase):
         self.domain_obj.strong_mobile_passwords = True
         self.domain_obj.save()
 
-        try:
-            update(self.user, 'password', 'a7d8fhjkdf8d')
-        except UpdateUserException:
-            self.fail('Unexpected ValidationError raised.')
+        update(self.user, 'password', 'a7d8fhjkdf8d')  # should not raise
 
     def test_update_email_succeeds(self):
         self.user.email = 'initial@dimagi.com'
