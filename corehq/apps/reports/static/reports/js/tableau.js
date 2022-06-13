@@ -11,13 +11,9 @@ hqDefine("report/js/tableau", function () {
             view_url: initialPageData.get("view_url"),
         });
 
-        var options = {
+        new tableau.Viz(containerDiv, url, {
             hideTabs: true,
-            width: "800px",
-            height: "700px",
-        };
-
-        var viz = new tableau.Viz(containerDiv, url, options);
+        });
     };
 
     $(document).ready(function() {
