@@ -2,10 +2,12 @@ hqDefine("report/js/tableau", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
+    layout
 ) {
     var self = {};
 
@@ -20,8 +22,8 @@ hqDefine("report/js/tableau", [
 
         var options = {
             hideTabs: true,
-            width: "800px",
-            height: "700px",
+            width: layout.getAvailableContentWidth() + "px",
+            height: layout.getAvailableContentHeight() + "px",
         };
 
         var viz = new tableau.Viz(containerDiv, url, options);
