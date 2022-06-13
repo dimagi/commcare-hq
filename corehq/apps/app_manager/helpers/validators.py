@@ -876,6 +876,8 @@ class FormBaseValidator(object):
                         errors.append(dict(type="multi select form links", **meta))
                     if linked_module.root_module and linked_module.root_module.is_multi_select():
                         errors.append(dict(type='parent multi select form links', **meta))
+                    if not linked_module.can_auto_link(module) and not form_link.datums:
+                        errors.append(dict(type='manual form linking required', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
@@ -891,6 +893,8 @@ class FormBaseValidator(object):
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
             if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
                 errors.append(dict(type='previous multi select form links', **meta))
+            if self.form.requires_case() and module_uses_inline_search(module):
+                errors.append(dict(type='workflow previous inline search', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

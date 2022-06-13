@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
+from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK, WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -66,6 +66,21 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
         )
 
         self.assertIn("inline search to display only forms", _get_error_types(factory.app))
+
+    def test_inline_search_previous_screen(self, *args):
+        factory = AppFactory(build_version='2.51.0')
+        m0, m0f0 = factory.new_basic_module('first', 'case')
+        factory.form_requires_case(m0f0)
+
+        m0.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
+            auto_launch=True,
+            inline_search=True,
+        )
+        m0f0.post_form_workflow = WORKFLOW_PREVIOUS
+
+        self.assertIn("workflow previous inline search", _get_error_types(factory.app))
 
     def test_parent_select_to_inline_search(self, *args):
         """an inline module can't be the target of parent select"""

@@ -88,6 +88,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     save_xform,
     module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -769,7 +770,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if not module.root_module_id or not module.root_module.is_multi_select():
         if not module.put_in_root:
             form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
-        if not module.is_multi_select():
+        if not (module.is_multi_select() or module_uses_inline_search(module)):
             form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
@@ -915,15 +916,13 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
+
+        auto_link = candidate_module.can_auto_link(module)
         for candidate_form in candidate_module.get_forms():
-            # Forms can be linked automatically if their module is the same case type as this module,
-            # or if they belong to this module's parent module. All other forms can be linked manually.
-            case_type_match = candidate_module.case_type == module.case_type
-            is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
                 'name': _form_name(candidate_form),
-                'auto_link': case_type_match or is_parent,
+                'auto_link': auto_link,
                 'allow_manual_linking': True,
             })
 
