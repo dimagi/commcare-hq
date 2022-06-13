@@ -34,6 +34,8 @@ class AppMigrationCommandBase(BaseCommand):
     include_builds = False
     include_linked_apps = False
 
+    options = {}
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--failfast',
@@ -71,11 +73,11 @@ class AppMigrationCommandBase(BaseCommand):
 
     @property
     def log_info(self):
-        return self.options["verbosity"] > 1
+        return self.options.get("verbosity", 0) > 1
 
     @property
     def log_debug(self):
-        return self.options["verbosity"] > 2
+        return self.options.get("verbosity", 0) > 2
 
     def _doc_types(self):
         doc_types = ["Application", "Application-Deleted"]
