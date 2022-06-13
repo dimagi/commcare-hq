@@ -222,15 +222,16 @@ class ModelAttrEqualityHelper(SimpleTestCase):
         return set()
 
 
-class TestRepeaterClassesAttrEquality(ModelAttrEqualityHelper):
+class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
 
     def test_have_same_attrs(self):
-        couch_attrs = self._cleaned_couch_attrs(Repeater)
-        sql_attrs = self._get_user_defined_attrs(SQLRepeater, self.DummySQLModel)
+        couch_attrs = self.get_cleaned_couch_attrs(Repeater)
+        sql_attrs = self.get_sql_attrs(SQLRepeater)
         self.assertSetEqual(couch_attrs - sql_attrs, set())
         self.assertSetEqual(sql_attrs - couch_attrs, set())
 
-    def _extra_attrs_in_couch_model(self):
+    @classmethod
+    def _extra_attrs_in_couch_model(cls):
         return {
             # removed
             'last_success_at',
@@ -250,7 +251,8 @@ class TestRepeaterClassesAttrEquality(ModelAttrEqualityHelper):
             'get_attempt_info'
         }
 
-    def _new_attrs_in_sql(self):
+    @classmethod
+    def _new_attrs_in_sql(cls):
         return {
             'repeater_id', 'set_next_attempt', 'next_attempt_at',
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
