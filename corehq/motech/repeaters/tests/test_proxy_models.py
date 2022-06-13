@@ -14,11 +14,14 @@ from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeat
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.ext.couchdbkit import Document
 from ..models import (
+    CaseRepeater,
+    FormRepeater,
     Repeater,
     SQLAppStructureRepeater,
     SQLCaseRepeater,
     SQLCreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
+    SQLFormRepeater,
     SQLLocationRepeater,
     SQLReferCaseRepeater,
     SQLRepeater,
@@ -259,3 +262,19 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
             'get_request_method_display'  # added by django choicefield in models
         }
+
+
+class TestCaseRepeaterAttrEquality(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(CaseRepeater)
+        sql_attrs = self.get_sql_attrs(SQLCaseRepeater, self.DummySQLModel)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestFormRepeaterAttrEquality(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(FormRepeater)
+        sql_attrs = self.get_sql_attrs(SQLFormRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
