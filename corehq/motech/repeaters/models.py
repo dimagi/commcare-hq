@@ -1291,7 +1291,6 @@ class CaseRepeater(Repeater):
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
     black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
     friendly_name = _("Forward Cases")
-    _migration_couch_id_name = 'repeater_id'
 
     def allowed_to_forward(self, payload):
         return self._allowed_case_type(payload) and self._allowed_user(payload)
