@@ -1529,6 +1529,7 @@ class UserFilterForm(forms.Form):
         roles = UserRole.objects.get_by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role.get_id, role.name or _('(No Name)')) for role in roles
+            if not role.is_commcare_user_default
         ]
 
         subdomains = EnterprisePermissions.get_domains(self.domain)

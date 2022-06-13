@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    DetailColumn,
     FormDatum,
     FormLink,
     Module,
@@ -224,6 +225,42 @@ class BuildErrorsTest(SimpleTestCase):
             'type': 'smart links multi select',
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
         }, factory.app.validate_app())
+
+    def test_search_module_errors__instances(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        factory.form_requires_case(form, 'person')
+
+        module.case_details.long.columns.extend([
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                useXpathExpression=True,
+                field="instance('results')/results",
+            )),
+            DetailColumn.wrap(dict(
+                header={"en": "age"},
+                model="case",
+                format="plain",
+                useXpathExpression=True,
+                field="instance('search-input:results')/input",
+            ))
+        ])
+        module.search_config = CaseSearch(
+            search_label=CaseSearchLabel(label={'en': 'Search'}),
+            properties=[CaseSearchProperty(name='name')],
+        )
+
+        errors = [(error['type'], error.get('details', '')) for error in factory.app.validate_app()]
+        self.assertIn(('case search instance used in casedb case details', 'results'), errors)
+        self.assertIn(('case search instance used in casedb case details', 'search-input:results'), errors)
+
+        module.search_config.auto_launch = True
+        self.assertNotIn(
+            'case search instance used in casedb case details',
+            [error['type'] for error in factory.app.validate_app()]
+        )
 
     def test_manual_form_linking(self, *args):
         factory = AppFactory(include_xmlns=True)

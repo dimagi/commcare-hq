@@ -14,7 +14,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-09 12:04+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Sravan Reddy <sreddy@dimagi.com>, 2017\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -6984,6 +6983,18 @@ msgid ""
 "                Case List has invalid location reference <code>%(property)s</"
 "code>.\n"
 "                Details: %(details)s\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List uses an instance that is only available for case "
+"search <code>%(property)s</code>.\n"
+"                Details: The %(details)s instance(s) are only available in "
+"case lists using case search.\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "              "
 msgstr ""
@@ -22116,7 +22127,7 @@ msgid "Case Group"
 msgstr "Grupo de Casos"
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr "Usuario Móvil"
 
@@ -35966,26 +35977,6 @@ msgid "No landing page found with id {page_id}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr "Solo Lectura (No Reportes)"
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr "Editor de App"
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr "Solo Lectura"
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr "Implementador de Campo"
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
-msgstr "Administrador de Facturación"
-
-#: corehq/apps/users/models.py
 msgid "Unknown User"
 msgstr "Usuario Desconocido"
 
@@ -37423,6 +37414,42 @@ msgstr "¿Está seguro que desea eliminar esta invitación?"
 msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username contains invalid characters."
+msgid "Username '{}' may not contain special characters."
+msgstr "El nombre de usuario contiene caracteres inválidos."
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username is required."
+msgstr "Nombre de usuario {} está reservado. "
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is already taken"
+msgid "Username '{}' is already taken."
+msgstr "Nombre de usuario {} ya está tomado"
+
+#: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
+msgid "Username '{}' is reserved."
+msgstr "Nombre de usuario {} está reservado. "
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -37708,30 +37735,6 @@ msgid ""
 msgstr ""
 "Formulario no válido. Se pudo haber eliminado un grupo mientras usted "
 "visualizaba esta página. Por favor intente de nuevo."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr "Nombre de usuario {} está reservado. "
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
-msgstr "Nombre de usuario {} ya está tomado"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Username {} is available"
@@ -42550,3 +42553,18 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "Read Only (No Reports)"
+#~ msgstr "Solo Lectura (No Reportes)"
+
+#~ msgid "App Editor"
+#~ msgstr "Editor de App"
+
+#~ msgid "Read Only"
+#~ msgstr "Solo Lectura"
+
+#~ msgid "Field Implementer"
+#~ msgstr "Implementador de Campo"
+
+#~ msgid "Billing Admin"
+#~ msgstr "Administrador de Facturación"

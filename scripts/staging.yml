@@ -83,4 +83,5 @@ branches:
     - dependabot/pip/requirements/lxml-4.8.0 # Graham June 7
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - sk/rename-inline-search-instance  # Simon June 9
+    - ml/dhis2-better-errors # Minha June 9
 submodules: { }

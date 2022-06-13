@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-09 12:04+0000\n"
+"POT-Creation-Date: 2022-06-09 08:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -6490,6 +6490,18 @@ msgid ""
 "                Case List has invalid location reference <code>%(property)s</"
 "code>.\n"
 "                Details: %(details)s\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List uses an instance that is only available for case "
+"search <code>%(property)s</code>.\n"
+"                Details: The %(details)s instance(s) are only available in "
+"case lists using case search.\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "              "
 msgstr ""
@@ -21136,7 +21148,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -34462,26 +34474,6 @@ msgid "No landing page found with id {page_id}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
-msgstr ""
-
-#: corehq/apps/users/models.py
 msgid "Unknown User"
 msgstr ""
 
@@ -35889,6 +35881,34 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain special characters."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username is required."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is already taken."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is reserved."
+msgstr ""
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -36149,30 +36169,6 @@ msgstr ""
 msgid ""
 "Form not valid. A group may have been deleted while you were viewing this "
 "pagePlease try again."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
