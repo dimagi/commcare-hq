@@ -171,7 +171,7 @@ operations like deploying new code, rolling out new server hosts, or running mai
 resharding distributed database. CommCare uses these tools as the foundation for our cloud management toolkit,
 which allows us to have predictable and consistent maintenance across a large datacenter.
 
-Dimagi's tool suite, `commcare-cloud <https://dimagi.github.io/commcare-cloud/>`_ is also available on Github
+Dimagi's tool suite, `commcare-cloud <https://commcare-cloud.readthedocs.io/en/latest/index.html>`_ is also available on Github
 
 Other services
 --------------

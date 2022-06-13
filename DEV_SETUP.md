@@ -3,7 +3,7 @@
 This document describes setting up a development environment for working on
 CommCare HQ. Such an environment is not suitable for real projects. Production
 environments should be deployed and managed [using
-commcare-cloud](https://dimagi.github.io/commcare-cloud/).
+commcare-cloud](https://commcare-cloud.readthedocs.io/).
 
 These instructions are for Mac or Linux computers. For Windows, consider using
 an Ubuntu virtual machine.

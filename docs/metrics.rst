@@ -7,7 +7,7 @@ Metrics
 
 CommCare Infrastructure Metrics
 -------------------------------
-CommCare uses `Datadog <https://dimagi.github.io/commcare-cloud/monitoring/setup_datadog.html>`_ and
+CommCare uses `Datadog <https://commcare-cloud.readthedocs.io/en/latest/operations/3-monitoring.html#datadog>`_ and
 `Prometheus <https://prometeus.io/>`_ for monitoring various system, application and custom metrics. Datadog
 supports a variety of applications and is easily extendable.
 
