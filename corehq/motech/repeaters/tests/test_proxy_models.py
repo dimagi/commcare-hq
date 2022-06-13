@@ -297,7 +297,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
 class TestCaseRepeaterAttrEquality(TestRepeaterModelsAttrEquality):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(CaseRepeater)
-        sql_attrs = self.get_sql_attrs(SQLCaseRepeater, self.DummySQLModel)
+        sql_attrs = self.get_sql_attrs(SQLCaseRepeater)
         self.assertSetEqual(couch_attrs - sql_attrs, set())
         self.assertSetEqual(sql_attrs - couch_attrs, set())
 
@@ -306,5 +306,125 @@ class TestFormRepeaterAttrEquality(TestRepeaterModelsAttrEquality):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(FormRepeater)
         sql_attrs = self.get_sql_attrs(SQLFormRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestCreateCaseRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(CreateCaseRepeater)
+        sql_attrs = self.get_sql_attrs(SQLCreateCaseRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestUpdateCaseRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(UpdateCaseRepeater)
+        sql_attrs = self.get_sql_attrs(SQLUpdateCaseRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestReferCaseRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(ReferCaseRepeater)
+        sql_attrs = self.get_sql_attrs(SQLReferCaseRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestDataRegistryRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(DataRegistryCaseUpdateRepeater)
+        sql_attrs = self.get_sql_attrs(SQLDataRegistryCaseUpdateRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestShorFormRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(ShortFormRepeater)
+        sql_attrs = self.get_sql_attrs(SQLShortFormRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestAppStructureRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(AppStructureRepeater)
+        sql_attrs = self.get_sql_attrs(SQLAppStructureRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestUserRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(UserRepeater)
+        sql_attrs = self.get_sql_attrs(SQLUserRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestLocationRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(LocationRepeater)
+        sql_attrs = self.get_sql_attrs(SQLLocationRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestDhsi2Repeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(Dhis2Repeater)
+        sql_attrs = self.get_sql_attrs(SQLDhis2Repeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestDhis2EntityRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(Dhis2EntityRepeater)
+        sql_attrs = self.get_sql_attrs(SQLDhis2EntityRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestOpenMRSRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(OpenmrsRepeater)
+        sql_attrs = self.get_sql_attrs(SQLOpenmrsRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestCaseExpresionRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(CaseExpressionRepeater)
+        sql_attrs = self.get_sql_attrs(SQLCaseExpressionRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestFHIRRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(FHIRRepeater)
+        sql_attrs = self.get_sql_attrs(SQLFHIRRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestBeneficiaryRegistrationRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(BeneficiaryRegistrationRepeater)
+        sql_attrs = self.get_sql_attrs(SQLBeneficiaryRegistrationRepeater)
+        self.assertSetEqual(couch_attrs - sql_attrs, set())
+        self.assertSetEqual(sql_attrs - couch_attrs, set())
+
+
+class TestBeneficiaryVaccinationRepeater(TestRepeaterModelsAttrEquality):
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs(BeneficiaryVaccinationRepeater)
+        sql_attrs = self.get_sql_attrs(SQLBeneficiaryVaccinationRepeater)
         self.assertSetEqual(couch_attrs - sql_attrs, set())
         self.assertSetEqual(sql_attrs - couch_attrs, set())
