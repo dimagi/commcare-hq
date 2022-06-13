@@ -24085,6 +24085,25 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
+#, fuzzy
+#| msgid "This is not a valid sub-area for the area %s"
+msgid "{} is not a valid data source type!"
+msgstr "Esta no es una sub-área válida para el área %s"
+
+#: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
+msgid "The data source referenced by this report could not be found."
+msgstr ""
+"La fuente de datos a la que se hace referencia en este reporte no pudo ser "
+"encontrada. "
+
+#: corehq/apps/linked_domain/ucr.py
+msgid ""
+"This report cannot be linked because the registry is not accessible to {}. "
+"Please make sure the registry invitation has been accepted before linking "
+"reports."
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
 msgid ""
 "This report cannot be linked because it references an app that has multiple "
 "downstream apps."
@@ -34330,12 +34349,6 @@ msgstr ""
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
 msgstr "El reporte contiene un tipo_doc_de referencia inválido: {}"
-
-#: corehq/apps/userreports/models.py
-msgid "The data source referenced by this report could not be found."
-msgstr ""
-"La fuente de datos a la que se hace referencia en este reporte no pudo ser "
-"encontrada. "
 
 #: corehq/apps/userreports/models.py
 #, python-format
