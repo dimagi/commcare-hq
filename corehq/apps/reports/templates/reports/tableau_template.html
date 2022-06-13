@@ -4,27 +4,17 @@
 {% load i18n %}
 
 {% block page_content %}
+
+{% initial_page_data "server_type" server_type %}
+{% initial_page_data "ticket" ticket %}
+{% initial_page_data "validate_hostname" validate_hostname %}
+{% initial_page_data "view_url" view_url %}
+
+<!-- TODO: requirejs? -->
 <script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
+<script src="{% static 'reports/js/tableau.js' %}"></script>
 
-<script type="text/javascript">
-    function initViz() {
-        var containerDiv = document.getElementById("vizContainer");
-
-        var url = "https://{{ validate_hostname }}/".concat(
-                  "{{ server_type }}" == "server" ? "trusted/{{ ticket }}/" : "",
-                  "{{ view_url }}");
-
-        var options = {
-            hideTabs: true,
-            width: "800px",
-            height: "700px",
-        };
-
-        var viz = new tableau.Viz(containerDiv, url, options);
-    }
-</script>
-
-<body onload="initViz();">
+<body>
     <div id="vizContainer"></div>
 </body>
 {% endblock %}
