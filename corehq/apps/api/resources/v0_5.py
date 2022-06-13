@@ -224,7 +224,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.data.pop('password', None)
             # do not call update with username key
             bundle.data.pop('username', None)
-            self._update(bundle)
+            errors = self._update(bundle)
+            if errors:
+                formatted_errors = ', '.join(errors)
+                raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
