@@ -1,7 +1,9 @@
+import doctest
+
 import attr
 from testil import assert_raises, eq
 
-from corehq.motech.repeaters.optionvalue import OptionSchema, OptionValue
+from corehq.motech.repeaters.optionvalue import OptionValue
 
 
 def test_basic_option_value():
@@ -51,42 +53,22 @@ def test_option_with_callable_default():
     eq(order.options, {'condiments': ["ketchup"]})
 
 
-def test_schema_passed_in_option():
-    order = FoodOptions()
-    order.packaged_water = WaterBottle({"qty": 2})
-    eq(order.options["packaged_water"], {"qty": 2})
+def test_raises_on_no_options():
+    order = BadFoodOptions()
+    with assert_raises(AssertionError):
+        order.dish = 'Rhino'
 
 
-def test_schema_default_value():
-    order = FoodOptions()
-    eq(order.packaged_water, WaterBottle({}))
-    eq(order.packaged_water.qty, "1")
-    eq(order.packaged_water, WaterBottle({"qty": "1"}))
+def test_raises_on_bad_options_type():
+    order = AlsoBadFoodOptions()
+    with assert_raises(AssertionError):
+        order.dish = 'Albatross'
 
 
-def test_schema_with_default():
-    with assert_raises(ValueError):
-        OptionValue(schema=WaterBottle, default={})
-
-
-def test_schema_value_equality():
-    order = FoodOptions()
-    order.packaged_water = WaterBottle({"qty": 2})
-    water = order.packaged_water
-    eq(water.qty, 2)
-    water.qty = 3
-    eq(order.packaged_water.qty, 3)
-    eq(order.packaged_water, water)
-
-
-def test_raises_on_invalid_schema():
-    order = FoodOptions()
-    with assert_raises(TypeError):
-        order.packaged_water = {"somedict": "hola"}
-
-
-class WaterBottle(OptionSchema):
-    qty = OptionValue(default="1")
+def test_doctests():
+    import corehq.motech.repeaters.optionvalue
+    results = doctest.testmod(corehq.motech.repeaters.optionvalue)
+    assert results.failed == 0
 
 
 @attr.s
@@ -95,4 +77,16 @@ class FoodOptions:
     dish = OptionValue()
     food_option = OptionValue(default="veg", choices=["veg", "non-veg"])
     condiments = OptionValue(default=list)
-    packaged_water = OptionValue(schema=WaterBottle)
+
+
+class BadFoodOptions:
+    dish = OptionValue()
+
+
+class AlsoBadFoodOptions:
+    options = (
+        ('ALB', 'Albatross'),
+        ('BON', 'Bonobo'),
+        ('DOL', 'Dolphin'),
+    )
+    dish = OptionValue()

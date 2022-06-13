@@ -282,9 +282,13 @@ class AppStringsBase(object):
                     'This user must have access to exactly one lookup table row for the table: ${0}')
 
         if 'case_autoload.usercase.case_missing' not in messages:
-            messages['usercase.missing_id'] = \
+            messages['case_autoload.usercase.case_missing'] = \
                 ('This form affects the user case, but no user case id was found. '
                     'Please contact your supervisor.')
+
+        if 'case_search.claimed_case.case_missing' not in messages:
+            messages['case_search.claimed_case.case_missing'] = \
+                'Unable to find the selected case after performing a sync. Please try again.'
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,

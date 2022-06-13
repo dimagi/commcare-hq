@@ -10,7 +10,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
-class SuiteDetailTabsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteDetailTabsTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_case_detail_tabs(self, *args):

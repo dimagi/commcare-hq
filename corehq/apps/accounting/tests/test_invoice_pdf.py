@@ -2,7 +2,7 @@ import os
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
-from itertools import product
+from itertools import chain, product
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
@@ -81,9 +81,15 @@ class InvoiceRenderer:
             """
             return b""
 
-        for invoice_id, kwargs in enumerate(self.iter_all_kwargs()):
+        for invoice_id, (kwargs, items) in enumerate(chain(
+            self.iter_all_kwarg_configs(),
+            self.iter_multi_page_configs(),
+        )):
             invoice_name = f"invoice_{invoice_id:03}.pdf"
-            print(f"rendering invoice {invoice_name!r} with kwargs: {kwargs}")
+            print(
+                f"rendering invoice {invoice_name!r} with {len(items)} items "
+                f"and kwargs: {kwargs}"
+            )
             invoice_path = os.path.join(self.TEST_DATA_DIR, invoice_name)
             rendered = BytesIO()
             # Patch these so the rendered PDF doesn't change even if the
@@ -96,16 +102,9 @@ class InvoiceRenderer:
                 # create a new invoice
                 invoice = self.get_invoice(rendered, **kwargs)
 
-                # add some line items
-                for item in range(4):
-                    invoice.add_item(
-                        f"Week {item + 1}",  # description
-                        "1",  # quantity
-                        Decimal("11.0"),  # unit_cost
-                        Decimal("11.0"),  # subtotal
-                        Decimal("-0.50"),  # credits
-                        Decimal("10.50"),  # total
-                    )
+                # add the line items
+                for item in items:
+                    invoice.add_item(*item)
 
                 # Prevent /CreationDate and /ModDate metadata values
                 # see: https://stackoverflow.com/a/52359214
@@ -119,16 +118,49 @@ class InvoiceRenderer:
                 invoice.get_pdf()
             yield invoice_path, rendered
 
-    def iter_all_kwargs(self):
+    def iter_all_kwarg_configs(self):
         """Yields every combination of kwargs possible from
         ``INVOICE_KWARG_CHOICES`` excluding those in ``INVALID_INVOICE_KWARGS``.
         """
+        # use the same line items for all kwarg configs
+        line_items = []
+        for item in range(4):
+            line_items.append((
+                f"Week {item + 1}",  # description
+                "1",  # quantity
+                Decimal("11.0"),  # unit_cost
+                Decimal("11.0"),  # subtotal
+                Decimal("-0.50"),  # credits
+                Decimal("10.50"),  # total
+            ))
         # NOTE: depends on the fact that python dicts are ordered
         keys = list(self.INVOICE_KWARG_CHOICES)
         for argv in product(*self.INVOICE_KWARG_CHOICES.values()):
             kwargs = {keys[i]: v for i, v in enumerate(argv)}
             if kwargs not in self.INVALID_INVOICE_KWARGS:
-                yield kwargs
+                yield kwargs, line_items
+
+    def iter_multi_page_configs(self):
+        # use the same kwargs for all multi-page configs
+        kwargs = {"is_wire": False, "is_customer": True, "is_prepayment": False}
+        per_line_credit = Decimal("-0.05")
+        for item_desc, item_count in [
+            ("Multi-page", 5),
+            ("Long line descriptions coupled with lots of items", 18),
+        ]:
+            items = []
+            # the test PDF has a "TOTAL" of 42.00, make the lines add up to that
+            per_line = Decimal(f"{42.0 / item_count:.2f}")
+            for item_index in range(item_count):
+                items.append((
+                    f"{item_desc} {item_index + 1}",  # description
+                    "1",  # quantity
+                    per_line,  # unit_cost
+                    per_line,  # subtotal
+                    per_line_credit,  # credits
+                    per_line + per_line_credit,  # total
+                ))
+            yield kwargs, items
 
     def get_invoice(self, file_or_path, *, is_wire, is_customer, is_prepayment):
         """Returns an invoice instantiated with all available args passed

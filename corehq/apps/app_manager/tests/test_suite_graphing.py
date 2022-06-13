@@ -12,7 +12,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteGraphingTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteGraphingTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_graphing(self, *args):

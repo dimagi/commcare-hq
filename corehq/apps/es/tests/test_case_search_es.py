@@ -150,46 +150,30 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                             ],
                             "should": [
                                 {
-                                    "bool": {
-                                        "should": [
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
-                                                                    }
-                                                                }
-                                                            ],
-                                                            "must": {
-                                                                "match": {
-                                                                    "case_properties.value": {
-                                                                        "query": "polly",
-                                                                        "operator": "or",
-                                                                        "fuzziness": "AUTO"
-                                                                    }
-                                                                }
-                                                            }
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
                                                         }
                                                     }
-                                                }
-                                            },
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
+                                                ],
+                                                "must": {
+                                                    "bool": {
+                                                        "should": [
+                                                            {
+                                                                "fuzzy": {
+                                                                    "case_properties.value": {
+                                                                        "value": "polly",
+                                                                        "fuzziness": "AUTO",
+                                                                        "max_expansions": 100
                                                                     }
                                                                 }
-                                                            ],
-                                                            "must": {
+                                                            },
+                                                            {
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
@@ -198,11 +182,11 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     }
                                                                 }
                                                             }
-                                                        }
+                                                        ]
                                                     }
                                                 }
                                             }
-                                        ]
+                                        }
                                     }
                                 }
                             ]

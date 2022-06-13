@@ -53,7 +53,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.web import get_url_base, parse_int
@@ -120,7 +119,10 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RESULTS_INSTANCE,
+    RESULTS_INSTANCE_INLINE
+)
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -137,8 +139,10 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     save_xform,
     update_form_unique_ids,
-    update_report_module_ids, module_loads_registry_case,
+    update_report_module_ids,
+    module_loads_registry_case,
     wrap_transition_from_old_update_case_action,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
@@ -148,7 +152,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import (
     BuildRecord,
     BuildSpec,
-    CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.domain.models import Domain
@@ -178,7 +181,6 @@ from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -2072,8 +2074,11 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
-        if value_is_the_default and module_loads_registry_case(module):
-            return RESULTS_INSTANCE
+        if value_is_the_default:
+            if module_uses_inline_search(module):
+                return RESULTS_INSTANCE_INLINE
+            elif module_loads_registry_case(module):
+                return RESULTS_INSTANCE
         return self.instance_name
 
     def get_tab_spans(self):
@@ -2181,7 +2186,7 @@ class CaseSearchProperty(DocumentSchema):
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
     property = StringProperty()
-    default_value = StringProperty(exclude_if_none=True)
+    defaultValue = StringProperty(exclude_if_none=True)
 
 
 class BaseCaseSearchLabel(NavMenuItemMediaMixin):
@@ -2222,12 +2227,14 @@ class CaseSearch(DocumentSchema):
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
 
+    inline_search = BooleanProperty(default=False)
+
     @property
     def case_session_var(self):
         return "search_case_id"
 
-    def get_relevant(self, multi_select=False):
-        xpath = CaseClaimXpath(self.case_session_var)
+    def get_relevant(self, case_session_var, multi_select=False):
+        xpath = CaseClaimXpath(case_session_var)
         default_condition = xpath.multi_select_relevant() if multi_select else xpath.default_relevant()
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
@@ -2495,6 +2502,17 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         return True
 
+    def can_auto_link(self, source_module):
+        """Determine if forms in this module can be automatically linked from a form in the source module.
+
+        Forms can be linked automatically if their module is the same case type the source module,
+        or if they belong to the source module's parent module. All other forms must be linked manually.
+        """
+        case_type_match = self.case_type == source_module.case_type
+        is_parent = self.unique_id == source_module.root_module_id
+        return self.is_surveys or case_type_match or is_parent
+
+
 class ModuleDetailsMixin(object):
 
     @classmethod
@@ -2551,7 +2569,7 @@ class ModuleDetailsMixin(object):
             ('ref_long', self.ref_details.long, False),
         ]
         custom_detail = self.case_details.short.custom_xml
-        if module_offers_search(self) and not custom_detail:
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return tuple(details)
@@ -2816,7 +2834,11 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         return any(action for action in self.actions.load_update_cases if match(action.case_type))
 
     def uses_usercase(self):
-        return self.uses_case_type(USERCASE_TYPE)
+        return (
+            self.uses_case_type(USERCASE_TYPE)
+            or any(action for action in self.actions.load_update_cases
+                   if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE)
+        )
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -3266,7 +3288,9 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self) and not self.case_details.short.custom_xml:
+
+        custom_detail = self.case_details.short.custom_xml
+        if module_offers_search(self) and not (custom_detail or module_uses_inline_search(self)):
             details.append(('search_short', self.search_detail("short"), True))
             details.append(('search_long', self.search_detail("long"), True))
         return details

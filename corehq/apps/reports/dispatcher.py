@@ -21,7 +21,6 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
@@ -279,13 +278,6 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
             return False
-        if isinstance(request.couch_user, AnonymousCouchUser) and self.prefix == 'custom_project_report':
-            reports = self.get_reports(domain)
-            for section in reports:
-                for report_class in section[1]:
-                    report_class_name = report_class.__module__ + '.' + report_class.__name__
-                    if report_class_name == report and report_class.is_public:
-                        return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 

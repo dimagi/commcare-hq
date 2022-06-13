@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from unittest.mock import patch
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
@@ -15,6 +15,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
 )
+from casexml.apps.case.views import CaseDisplayWrapper
 from corehq.util.test_utils import disable_quickcache, flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
@@ -51,7 +52,7 @@ class TestCaseAPI(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def _make_case(self):
+    def _make_case(self, parent_id=None):
         xform, cases = submit_case_blocks([CaseBlock(
             case_id=str(uuid.uuid4()),
             case_type='player',
@@ -63,7 +64,10 @@ class TestCaseAPI(TestCase):
                 'sport': 'chess',
                 'rank': '1600',
                 'dob': '1948-11-02',
-            }
+            },
+            index={
+                'parent': IndexAttrs('player', parent_id, 'child'),
+            } if parent_id else None,
         ).as_text()], domain=self.domain)
         return cases[0]
 
@@ -291,6 +295,21 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].relationship, 'child')
         self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
 
+    def test_cannot_remove_child_case(self):
+        # Documenting that this does not yet work
+        parent_case = self._make_case()
+        child_case = self._make_case(parent_id=parent_case.case_id)
+        res = self._update_case(child_case.case_id, {
+            'indices': {
+                'parent': {
+                    'case_id': '',
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertItemsEqual(res['error'], "You must set either case_id or temporary_id, and not both.")
+
     def test_bulk_action(self):
         existing_case = self._make_case()
         res = self._bulk_update_cases([
@@ -495,3 +514,16 @@ class TestCaseAPI(TestCase):
             )
             # These requests should return a 400 because of the bad body, not a 301 redirect
             self.assertEqual(res.status_code, 400)
+
+    def test_location_id_case_property(self):
+        case_id = uuid.uuid4().hex
+        location_name = 'location'
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            create=True,
+            update={'location_id': location_name}
+        ).as_text()], domain=self.domain)
+        case = CommCareCase.objects.get_case(case_id, self.domain)
+        case_properties = CaseDisplayWrapper(case).dynamic_properties()
+        self.assertTrue('location_id' in case_properties)
+        self.assertEqual(location_name, case_properties['location_id'])

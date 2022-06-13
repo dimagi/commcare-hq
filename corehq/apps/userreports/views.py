@@ -39,6 +39,7 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -94,7 +95,10 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     TEMP_REPORT_PREFIX,
 )
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_and_registry_report_configs_for_domain
+)
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -162,6 +166,7 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
+    wrap_report_config_by_type,
 )
 from corehq.apps.users.decorators import (
     get_permission_name,
@@ -911,7 +916,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
             if '_id' in json_spec:
                 del json_spec['_id']
             json_spec['domain'] = self.domain
-            report = ReportConfiguration.wrap(json_spec)
+            report = wrap_report_config_by_type(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
@@ -942,6 +947,13 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     template_name = 'userreports/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
+    @property
+    def main_context(self):
+        context = super().main_context
+        if toggle_enabled(self.request, toggles.UCR_EXPRESSION_REGISTRY):
+            context['ucr_expressions'] = UCRExpression.objects.filter(domain=self.domain)
+        return context
+
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
@@ -957,56 +969,71 @@ class DataSourceDebuggerView(BaseUserConfigReportsView):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
-    doc_type = request.POST['doc_type']
-    doc_id = request.POST['doc_id']
+    input_type = request.POST['input_type']
     data_source_id = request.POST['data_source']
+    expression_text = request.POST.get('expression')
+    ucr_expression_id = request.POST.get('ucr_expression_id')
+
     try:
-        if data_source_id:
-            data_source = get_datasource_config(data_source_id, domain)[0]
-            factory_context = data_source.get_factory_context()
+        factory_context = _get_factory_context(domain, data_source_id)
+        parsed_expression = _get_parsed_expression(domain, factory_context, expression_text, ucr_expression_id)
+        if input_type == 'doc':
+            doc_type = request.POST['doc_type']
+            doc_id = request.POST['doc_id']
+            doc = _get_document(domain, doc_type, doc_id)
         else:
-            factory_context = FactoryContext.empty(domain=domain)
+            doc = json.loads(request.POST['raw_doc'])
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return JsonResponse({"result": result})
+    except HttpException as e:
+        return JsonResponse({'message': e.message}, status=e.status)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def _get_factory_context(domain, data_source_id):
+    if data_source_id:
+        try:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            return data_source.get_factory_context()
+        except DataSourceConfigurationNotFoundError:
+            raise HttpException(
+                404, _("Data source with id {} not found in domain {}.").format(data_source_id, domain)
+            )
+    return FactoryContext.empty(domain=domain)
+
+
+def _get_parsed_expression(domain, factory_context, expression_text, expression_id):
+    if expression_id:
+        try:
+            expression_model = UCRExpression.objects.get(domain=domain, id=expression_id)
+            return expression_model.wrapped_definition(factory_context)
+        except UCRExpression.DoesNotExist:
+            raise HttpException(404, _("Expression not found"))
+        except BadSpecError as e:
+            raise HttpException(400, _("Problem with expression: {}").format(e))
+
+    try:
+        expression_json = json.loads(expression_text)
+        return ExpressionFactory.from_spec(
+            expression_json,
+            context=factory_context
+        )
+    except BadSpecError as e:
+        raise HttpException(400, _("Problem with expression: {}").format(e))
+
+
+def _get_document(domain, doc_type, doc_id):
+    try:
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
         document_store = get_document_store_for_doc_type(
             domain, usable_type, load_source="eval_expression")
-        doc = document_store.get_document(doc_id)
-        expression_text = request.POST['expression']
-        expression_json = json.loads(expression_text)
-        parsed_expression = ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
-        )
-        result = parsed_expression(doc, EvaluationContext(doc))
-        return json_response({
-            "result": result,
-        })
-    except DataSourceConfigurationNotFoundError:
-        return json_response(
-            {"error": _("Data source with id {} not found in domain {}.").format(
-                data_source_id, domain
-            )},
-            status_code=404,
-        )
+        return document_store.get_document(doc_id)
     except DocumentNotFoundError:
-        return json_response(
-            {"error": _("{} with id {} not found in domain {}.").format(
-                doc_type, doc_id, domain
-            )},
-            status_code=404,
-        )
-    except BadSpecError as e:
-        return json_response(
-            {"error": _("Problem with expression: {}").format(e)},
-            status_code=400,
-        )
-    except Exception as e:
-        return json_response(
-            {"error": str(e)},
-            status_code=500,
-        )
+        raise HttpException(404, _("{} with id {} not found in domain {}.").format(doc_type, doc_id, domain))
 
 
 @login_and_domain_required
@@ -1183,7 +1210,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
-        reports += ReportConfiguration.by_domain(self.domain)
+        reports += get_report_and_registry_report_configs_for_domain(self.domain)
         ret = []
         for report in reports:
             try:

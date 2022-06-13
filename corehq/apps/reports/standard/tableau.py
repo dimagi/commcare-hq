@@ -4,20 +4,23 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 
+from no_exceptions.exceptions import Http403
 import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
-from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.domain.views.base import BaseDomainView
 
 
-@method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator(), name='dispatch')
-class TableauView(BaseProjectReportSectionView):
+class TableauView(BaseDomainView):
     urlname = 'tableau'
     template_name = 'reports/tableau_template.html'
 
-    # Override BaseProjectReportSectionView, but it'll still link to reports home
     section_name = gettext_lazy("Tableau Reports")
+
+    @property
+    def section_url(self):
+        return reverse('reports_home', args=(self.domain, ))
 
     @property
     def page_title(self):
@@ -34,9 +37,12 @@ class TableauView(BaseProjectReportSectionView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.visualization.id,))
 
+    @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
+        if not self.request.couch_user.can_view_tableau_viz(self.domain, f"{self.kwargs.get('viz_id')}"):
+            raise Http403
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -62,7 +68,7 @@ class TableauView(BaseProjectReportSectionView):
 
     def tableau_server_response(self):
         from requests_toolbelt.adapters import host_header_ssl  # avoid top-level import that breaks docs build
-        context = self.page_context
+        context = self.get_context_data()
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
         post_arguments = {'username': self.visualization.server.domain_username}
         if self.visualization.server.target_site != 'Default':

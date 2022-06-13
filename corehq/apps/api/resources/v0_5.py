@@ -44,10 +44,6 @@ from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-from corehq.apps.export.esaccessors import (
-    get_case_export_base_query,
-    get_form_export_base_query,
-)
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
@@ -79,7 +75,7 @@ from corehq.apps.userreports.util import (
     get_report_config_or_not_found,
 )
 from corehq.apps.users.dbaccessors import (
-    get_all_user_id_username_pairs_by_domain,
+    get_all_user_id_username_pairs_by_domain, user_exists,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -88,7 +84,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.apps.users.util import raw_username
+from corehq.apps.users.util import raw_username, generate_mobile_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -223,9 +219,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def obj_create(self, bundle, **kwargs):
         try:
+            username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(e.message)
+
+        try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
-                username=bundle.data['username'].lower(),
+                username=username,
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
                 created_via=USER_CHANGE_VIA_API,
@@ -806,12 +807,13 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         if feature_flag and feature_flag not in toggles.all_toggle_slugs():
             raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
         couch_user = CouchUser.from_django_user(request.user)
+        username = request.user.username
         results = []
         for domain in couch_user.get_domains():
             if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
-            if feature_flag and feature_flag not in toggles.toggles_dict(username=request.user, domain=domain):
+            if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
@@ -984,9 +986,8 @@ class ODataCaseResource(BaseODataResource):
                     "You do not have permission to view this feed."
                 ))
             )
-        query = get_case_export_base_query(domain, config.case_type)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
@@ -1023,9 +1024,7 @@ class ODataFormResource(BaseODataResource):
                 ))
             )
 
-        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
-        for filter in config.get_filters():
-            query = query.filter(filter.to_es_filter())
+        query = config.get_query()
 
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'

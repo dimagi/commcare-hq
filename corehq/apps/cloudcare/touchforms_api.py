@@ -97,7 +97,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         datums = EntriesHelper(self.app).get_datums_meta_for_form_generic(self.form)
         datums = [datum for datum in datums if datum.case_type == self.case_type]
         if len(datums) == 1:
-            session_var = datums[0].datum.id
+            session_var = datums[0].id
         return session_var
 
 

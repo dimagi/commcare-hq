@@ -45,3 +45,11 @@ class ActionNotPermitted(RemoteRequestError):
 
 class UnsupportedActionError(Exception):
     pass
+
+
+class UserDoesNotHavePermission(Exception):
+    pass
+
+
+class RegistryNotAccessible(Exception):
+    pass

@@ -39,6 +39,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_smart_links,
     module_offers_registry_search,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -61,6 +62,7 @@ from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
+RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
 REGISTRY_INSTANCE = 'registry'
@@ -77,23 +79,27 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, suite, module, detail_section_elements):
+    def __init__(self, suite, module, detail_section_elements,
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
-        if self.module.is_multi_select():
-            # the instance is dynamic and its ID matches the datum ID
-            self.case_session_var = SearchSelectedCasesInstanceXpath.id
+        self.storage_instance = storage_instance
+        if case_session_var:
+            self.case_session_var = case_session_var
         else:
-            self.case_session_var = self.module.search_config.case_session_var
+            if self.module.is_multi_select():
+                # the instance is dynamic and its ID matches the datum ID
+                self.case_session_var = SearchSelectedCasesInstanceXpath.default_id
+            else:
+                self.case_session_var = self.module.search_config.case_session_var
 
     def build_remote_request(self):
         return RemoteRequest(
             post=self.build_remote_request_post(),
             command=self.build_command(),
-            instances=self.build_instances(),
             session=self.build_session(),
             stack=self.build_stack(),
         )
@@ -120,22 +126,14 @@ class RemoteRequestFactory(object):
             data.ref = QuerySessionXPath(self.case_session_var).instance()
         return data
 
-    def _get_multi_select_xpaths(self):
-        if not self.module.is_multi_select():
-            return set()
-        return {
-            self._get_multi_select_nodeset(),
-            self._get_multi_select_exclude(),
-        }
-
     def _get_multi_select_nodeset(self):
-        return SearchSelectedCasesInstanceXpath().instance()
+        return SearchSelectedCasesInstanceXpath(self.case_session_var).instance()
 
     def _get_multi_select_exclude(self):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.module.is_multi_select())
+        return self.module.search_config.get_relevant(self.case_session_var, self.module.is_multi_select())
 
     def build_command(self):
         return Command(
@@ -145,43 +143,9 @@ class RemoteRequestFactory(object):
             ),
         )
 
-    def build_instances(self):
-        prompt_select_instances = [
-            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
-            for prop in self.module.search_config.properties
-            if prop.itemset.instance_id
-        ]
-
-        xpaths = {QuerySessionXPath(self.case_session_var).instance()}
-        xpaths.update(datum.ref for datum in self._remote_request_query_datums)
-        xpaths.add(self.get_post_relevant())
-        xpaths = xpaths.union(self._get_multi_select_xpaths())
-        xpaths.add(self.module.search_config.search_filter)
-        xpaths.update(prop.default_value for prop in self.module.search_config.properties)
-        xpaths.update(prop.required for prop in self.module.search_config.properties)
-        # we use the module's case list/details view to select the datum so also
-        # need these instances to be available
-        xpaths.update(self._get_xpaths_for_module())
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, xpaths)
-
-        # exclude remote instances
-        instances = [instance for instance in instances if 'remote' not in instance.src]
-
-        # sorted list to prevent intermittent test failures
-        return sorted(set(list(instances) + prompt_select_instances), key=lambda i: i.id)
-
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
-
-    def _get_xpaths_for_module(self):
-        details_by_id = {detail.id: detail for detail in self.detail_section_elements}
-        detail_ids = [self._details_helper.get_detail_id_safe(self.module, detail_type)
-                      for detail_type, detail, enabled in self.module.get_details()
-                      if enabled]
-        detail_ids = [_f for _f in detail_ids if _f]
-        for detail_id in detail_ids:
-            yield from details_by_id[detail_id].get_all_xpaths()
 
     def build_session(self):
         return RemoteRequestSession(
@@ -193,7 +157,7 @@ class RemoteRequestFactory(object):
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
-                storage_instance=RESULTS_INSTANCE,
+                storage_instance=self.storage_instance,
                 template='case',
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
@@ -209,12 +173,12 @@ class RemoteRequestFactory(object):
             short_detail_id = 'search_short'
             long_detail_id = 'search_long'
 
-        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
-                    additional_types, instance_name=RESULTS_INSTANCE)
+                    additional_types, instance_name=self.storage_instance)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
@@ -376,7 +340,7 @@ class RemoteRequestFactory(object):
 
     def _get_case_domain_xpath(self):
         case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
-        return case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
+        return case_id_xpath.case(instance_name=self.storage_instance).slash(COMMCARE_PROJECT)
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
@@ -396,15 +360,6 @@ class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
             id=f"claim_command.{self.endpoint_id}.{self.case_session_var}",
             display=Display(text=Text()),   # users never see this, but a Display and Text are required
         )
-
-    def build_instances(self):
-        query_xpaths = [QuerySessionXPath(self.case_session_var).instance()]
-        query_xpaths.extend([datum.ref for datum in self._remote_request_query_datums])
-        query_xpaths.append(self.get_post_relevant())
-        instances, unknown_instances = get_all_instances_referenced_in_xpaths(self.app, query_xpaths)
-
-        # sorted list to prevent intermittent test failures
-        return sorted(instances, key=lambda i: i.id)
 
     def build_remote_request_queries(self):
         return []
@@ -436,7 +391,7 @@ class RemoteRequestsHelper(PostProcessor):
     @time_method()
     def update_suite(self, detail_section_elements):
         for module in self.modules:
-            if module_offers_search(module) or module_uses_smart_links(module):
+            if module_offers_search(module) and not module_uses_inline_search(module):
                 self.suite.remote_requests.append(RemoteRequestFactory(
                     self.suite, module, detail_section_elements).build_remote_request()
                 )
