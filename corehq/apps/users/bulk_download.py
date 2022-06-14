@@ -213,6 +213,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
 
     current_user_downloaded_count = 0
     for current_domain in domains_list:
+        print(current_domain)
         location_cache = LocationIdToSiteCodeCache(current_domain)
         if EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
             deactivation_triggers = {
@@ -222,6 +223,9 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
         else:
             deactivation_triggers = {}
         for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
+            print(user)
+            print(user.__dict__)
+            print(Group.by_user_id(user.user_id, wrap=False))
             group_memoizer = load_memoizer(current_domain)
             group_names = sorted([
                 group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
