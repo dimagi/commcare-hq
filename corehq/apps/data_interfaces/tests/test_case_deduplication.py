@@ -841,10 +841,12 @@ class TestDeduplicationRuleRuns(TestCase):
 
         self.case_type = 'duck'
         self.domain = 'naboo'
+        self.domain_obj = create_domain(self.domain)
         self.factory = CaseFactory(self.domain)
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+        self.domain_obj.delete()
         super().tearDown()
 
     def create_rule(self, rule_name, case_type):
@@ -916,7 +918,19 @@ class TestDeduplicationRuleRuns(TestCase):
         for case in cases:
             case.type = self.case_type
 
-        location_id = 'mustafar_id'
+        from corehq.apps.locations.models import make_location
+        from corehq.apps.locations.models import LocationType
+        loc_type = LocationType.objects.create(
+            name='place',
+            domain=self.domain,
+        )
+        location = make_location(
+            domain=self.domain,
+            location_type=loc_type.name,
+            name='Mustafar'
+        )
+        location.save()
+        location_id = location.location_id
 
         # Only assign location id to first 2 cases, since we want only those two cases to be considered
         cases[0].owner_id = location_id
@@ -936,7 +950,7 @@ class TestDeduplicationRuleRuns(TestCase):
 
         # Create rule criteria
         definition = LocationFilterDefinition.objects.create(
-            location_id='mustafar_id',
+            location_id=location.location_id,
         )
         criteria = CaseRuleCriteria(rule=rule)
         criteria.definition = definition

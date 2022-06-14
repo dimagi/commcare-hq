@@ -405,7 +405,7 @@ class SQLLocation(AdjListModel):
 
         Supply point cases and user updates are performed asynchronously.
         """
-        from .tasks import update_users_at_locations, delete_locations_filter_criteria
+        from .tasks import update_users_at_locations, delete_locations_related_rules
         from .document_store import publish_location_saved
 
         to_delete = self.get_descendants(include_self=True)
@@ -422,7 +422,7 @@ class SQLLocation(AdjListModel):
         for loc in to_delete:
             publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
 
-        delete_locations_filter_criteria.delay([loc.location_id for loc in to_delete])
+        delete_locations_related_rules.delay([loc.location_id for loc in to_delete])
 
     full_delete = delete
 

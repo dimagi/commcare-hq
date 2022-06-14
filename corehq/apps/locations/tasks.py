@@ -126,9 +126,14 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
 
 
 @task
-def delete_locations_filter_criteria(location_ids):
-    # Should we remove the corresponding rule if the rule only have this LocationFilterDefinition
-    LocationFilterDefinition.objects.filter(location_id__in=location_ids).delete()
+def delete_locations_related_rules(location_ids):
+    for location_definition in LocationFilterDefinition.objects.filter(location_id__in=location_ids):
+        for criteria in location_definition.caserulecriteria_set.all():
+            rule = criteria.rule
+            rule.delete_criteria()
+            rule.delete_actions()
+            rule.delete()
+        location_definition.delete()
 
 
 def deactivate_users_at_location(location_id):
