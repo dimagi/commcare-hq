@@ -83,5 +83,4 @@ branches:
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
     - rc/add-geocoder-county-field # Robert June 13
-    - jls/menu-nonsense # Jenny June 14
 submodules: { }
