@@ -77,9 +77,6 @@ class TableauView(BaseDomainView):
             post_arguments.update({'target_site': self.visualization.server.target_site})
 
         post_arguments.update({'client_ip': client_ip})
-        #for testing
-        context.update({'client_ip': client_ip})
-        raise Exception(f"Client IP address is {client_ip}")
 
         if self.visualization.server.validate_hostname != '':
             request = requests.Session()
