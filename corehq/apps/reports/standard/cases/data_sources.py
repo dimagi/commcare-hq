@@ -1,11 +1,13 @@
 import json
+from datetime import date
 
-import pytz
-from couchdbkit import ResourceNotFound
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
+
+import pytz
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -120,9 +122,11 @@ class CaseDisplayBase:
         else:
             return "%s (bad ID format)" % self.case_name
 
-    def _fmt_date(self, date, is_phonetime=True):
+    def _fmt_date(self, value, is_phonetime=True):
+        if not isinstance(value, date):
+            return ''
         return report_date_to_json(
-            date,
+            value,
             self.timezone,
             self.date_format,
             is_phonetime=is_phonetime
