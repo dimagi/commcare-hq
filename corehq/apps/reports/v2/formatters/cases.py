@@ -3,22 +3,22 @@ from corehq.apps.case_search.const import (
     SPECIAL_CASE_PROPERTIES,
     SPECIAL_CASE_PROPERTIES_MAP,
 )
-from corehq.apps.es.case_search import flatten_result
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.apps.es.case_search import wrap_case_search_hit
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplaySQL
 from corehq.const import SERVER_DATETIME_FORMAT
 
 
-class CaseDataFormatter(CaseDisplayES):
+class CaseDataFormatter(CaseDisplaySQL):
 
     date_format = SERVER_DATETIME_FORMAT
 
     def __init__(self, raw_data, timezone):
-        case = flatten_result(raw_data)
+        case = wrap_case_search_hit(raw_data)
         super().__init__(case, timezone)
 
     def get_context(self):
         context = {}
-        context.update(self.case)
+        context.update(self.case.to_json())
         context.update(self._case_info_context)
         context['_link'] = self.case_detail_url
         return context
