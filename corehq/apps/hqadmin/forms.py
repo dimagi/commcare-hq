@@ -100,20 +100,12 @@ class SuperuserManagementForm(forms.Form):
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma seperated email addresses",
-        widget=forms.Textarea()
-    )
-    invert_apply = forms.BooleanField(
-        label="Invert",
-        initial=False,
-        required=False,
-        help_text=(
-            "Get dimagi.com accounts not included in the above, comma-separated list."
-        )
+        widget=forms.Textarea(),
+        required=False
     )
 
     def clean(self):
-        invert = self.cleaned_data.get('invert_apply', False)
-        return clean_data(self.cleaned_data, invert=invert, offboarding_list=True)
+        return clean_data(self.cleaned_data, offboarding_list=True)
 
     def __init__(self, *args, **kwargs):
         super(OffboardingUserListForm, self).__init__(*args, **kwargs)
@@ -123,7 +115,6 @@ class OffboardingUserListForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'csv_email_list',
-            'invert_apply',
             FormActions(
                 crispy.Submit(
                     'superuser_management',
@@ -133,9 +124,15 @@ class OffboardingUserListForm(forms.Form):
         )
 
 
-def clean_data(cleaned_data, invert=False, offboarding_list=False):
+def clean_data(cleaned_data, offboarding_list=False):
     EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
+    all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
+                                    | (Q(is_active=True) & Q(username__endswith='@dimagi.com')))
+    if not csv_email_list:
+        cleaned_data['csv_email_list'] = all_users
+        return cleaned_data
+
     csv_email_list = re.split(',|\n', csv_email_list)
     csv_email_list = [parseaddr(email)[EMAIL_INDEX] for email in csv_email_list]
 
@@ -164,8 +161,8 @@ def clean_data(cleaned_data, invert=False, offboarding_list=False):
     if validationErrors:
         raise ValidationError(validationErrors)
 
-    if invert:
-        all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
+    if offboarding_list:
+        #inverts the given list by default
         users = [user for user in all_users if user not in users]
 
     cleaned_data['csv_email_list'] = users
