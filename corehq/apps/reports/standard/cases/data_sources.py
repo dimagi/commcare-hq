@@ -315,6 +315,69 @@ class CaseDisplayES(CaseDisplayBase):
         return self.case['user_id']
 
 
+class CaseDisplaySQL(CaseDisplayBase):
+    @property
+    def domain(self):
+        return self.case.domain
+
+    @property
+    def case_type(self):
+        return self.case.type
+
+    @property
+    def case_name(self):
+        return self.case.name
+
+    @property
+    def case_id(self):
+        return self.case.case_id
+
+    @property
+    def external_id(self):
+        return self.case.external_id
+
+    @property
+    def is_closed(self):
+        return self.case.closed
+
+    @property
+    def _creating_user(self):
+        try:
+            creator_id = self.case.opened_by
+        except KeyError:
+            return None
+
+        return self._user_meta(creator_id)
+
+    @property
+    def owner_id(self):
+        return self.case.owner_id or self.case.user_id or ''
+
+    @property
+    def opened_on(self):
+        return self._dateprop(self.case.opened_by)
+
+    @property
+    def modified_on(self):
+        return self._dateprop(self.case.modified_on)
+
+    @property
+    def closed_on(self):
+        return self._dateprop(self.case.closed_on)
+
+    @property
+    def server_last_modified_date(self):
+        return self._dateprop(self.case.server_modified_on)
+
+    @property
+    def closed_by_user_id(self):
+        return self.case.closed_by
+
+    @property
+    def last_modified_user_id(self):
+        return self.case.user_id
+
+
 class SafeCaseDisplay(object):
     """Show formatted properties if they are used in XML, otherwise show the property directly from the case
     """
@@ -331,14 +394,14 @@ class SafeCaseDisplay(object):
             return json.dumps(self.case.get('indices', []))
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
-            return getattr(CaseDisplayES(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
+            return getattr(CaseDisplaySQL(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
 
-        return self.case.get(name)
+        return self.case.get_case_property(name)
 
     @property
     def _link(self):
         try:
-            link = absolute_reverse('case_data', args=[self.case.get("domain"), self.case.get('_id')])
+            link = absolute_reverse('case_data', args=[self.case.domain, self.case.case_id])
         except NoReverseMatch:
             return _("No link found")
         return format_html(
