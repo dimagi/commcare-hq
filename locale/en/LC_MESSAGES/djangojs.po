@@ -171,6 +171,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/itextBlock.js
 msgid "Add"
 msgstr ""
 
@@ -230,6 +231,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Lookup Table"
 msgstr ""
 
@@ -247,6 +249,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js submodules/formdesigner/src/mugs.js
 msgid "Display Condition"
 msgstr ""
 
@@ -407,6 +410,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Date"
 msgstr ""
 
@@ -444,6 +449,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/uploader.js
 msgid "Audio"
 msgstr ""
 
@@ -841,6 +847,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Label"
 msgstr ""
 
@@ -866,6 +873,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Required"
 msgstr ""
 
@@ -875,16 +883,19 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Default Value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Validation Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Comment"
 msgstr ""
 
@@ -998,6 +1009,7 @@ msgid "Question Details"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Expression Editor"
 msgstr ""
 
@@ -1033,26 +1045,32 @@ msgid "Search..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "No match for {info} found!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "Multiple matches for {info} found!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "Server Form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "Local Form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "XML should not be equivalent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/util.js
 msgid "XML mismatch"
 msgstr ""
 
@@ -1079,10 +1097,12 @@ msgid "Date Format Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/dateformats.js
 msgid "No Formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/logic.js
 msgid ""
 "The {property} for a question is not allowed to reference the question "
 "itself. Please remove the . from the {property} or your form will have "
@@ -1090,210 +1110,263 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/logic.js
 msgid "Unknown question:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/logic.js
 msgid "Unknown questions:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/richText.js
 msgid "no formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/widgets.js
 msgid "Custom"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "{question} is required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "{question} is not allowed."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "{question} validation failed"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Unknown (read-only) question type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js submodules/formdesigner/src/mugs.js
 msgid "Lookup Table Data"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "No Translation Data"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Question ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
 "pick a different Question ID."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain "
 "only letters, numbers, and '-' or '_' characters."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "'meta' is not a valid Question ID."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "Making this change will create a new Question ID (and a new column in "
 "exports)."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "This question has the same Question ID as another question in the same "
 "group. Please choose a unique Question ID."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Default Data Value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Special Hidden Value XMLNS attribute"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Extra Data Attributes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Calculate Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "You cannot have a Validation Error Message with no Validation Condition!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Validation Error Message"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Required Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "The condition will be ignored unless you mark the question required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Extra Bind Attributes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "You are referencing a node in this form. This can cause errors in the form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Appearance Attribute"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Default Display Text"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Default Display Text is required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Hint Display Text"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Extra Control Attributes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Raw XML"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Data Parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Must be valid path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
+#: submodules/formdesigner/tests/diffDataParent.js
 msgid "{path} is not a valid data parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "Data parent of question in repeat group must be (in) the same repeat group"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js submodules/formdesigner/src/mugs.js
 msgid "Hidden Value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Text"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Phone Number or Numeric ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Password"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Integer"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Audio Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Image Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Image Size"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Small"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Medium"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Large"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Original"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "This will resize the image before sending the form. Use this option to send "
 "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 megapixels</"
@@ -1301,89 +1374,110 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Video Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Signature Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "GPS"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Barcode Scan"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Date and Time"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Time"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Long"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Decimal"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Choice"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Choice Value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Whitespace in values is not allowed."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "This choice value has been used in the same question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid ""
 "Cannot change a Multiple/Single Choice question to a non-Choice question if "
 "it has Choices. Please remove all Choices and try again."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Checkbox"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js submodules/formdesigner/src/mugs.js
 msgid "Multiple Choice"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Group"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Question List"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Repeat Group"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Repeat Count"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Repeat Count is required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Extra Repeat Attributes"
 msgstr ""
 
@@ -1402,66 +1496,79 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/form.js submodules/formdesigner/src/writer.js
 msgid "New Form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid "PARSE ERROR!:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid ""
 "No Data block was found in the form. Please check that your form is valid!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid "Form does not have a Name! The default form name will be used"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid ""
 "Form JRM namespace attribute was not found in data block. One will be added "
 "automatically"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid ""
 "Form does not have a UIVersion attribute, one will be generated automatically"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid ""
 "Form does not have a Version attribute (in the data block), one will be "
 "added automatically"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid "Ambiguous bind:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/parser.js
 msgid ""
 "Bind Node [{path}] found but has no associated Data node. This bind node "
 "will be discarded!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/datasources.js
 msgid "Not Found"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/util.js
 msgid ""
 "{type} nodes cannot be used in an output value. Please remove the output "
 "value for '{path}' or your form will have errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/util.js
 msgid ""
 "The {field} for a question is not allowed to reference the question itself. "
 "Please remove the {ref} from the {field} or your form will have errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/util.js
 msgid "output value"
 msgstr ""
 
@@ -1522,124 +1629,154 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/export/static/export/js/models.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js
+#: submodules/formdesigner/src/core.js
 msgid "Save"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js
+#: submodules/formdesigner/src/core.js
 msgid "Cancel"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "Drag question here"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is not equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is less than"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is less than or equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is greater than"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "is greater than or equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "has selected value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "True when ALL of the expressions are true."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/expressionEditor.js
 msgid "True when ANY of the expressions are true."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Error"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Warning"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Form Warning"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Notification"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "Holding the ALT key while clicking save invokes an inefficient save "
 "procedure. Do this only if a normal save fails."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Are you sure you want to exit? All unsaved changes will be lost!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "Look for questions marked with $1 and check they don't reference deleted "
 "questions."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Errors in Form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Form has reference errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Look for questions marked with $1 and fix the errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Form has validation errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+#: submodules/formdesigner/src/core.js
 msgid "Number"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Groups"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Multimedia Capture"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/ignoreButRetain.js
 msgid "Advanced"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Make Required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "You are about to make all existing questions on this form required. This "
 "action will overwrite the current configuration of this form and can only be "
@@ -1647,10 +1784,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Load Default Values"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "You are about to set matching case properties as Default Values for all "
 "existing questions. This action will overwrite existing Default Values for "
@@ -1659,144 +1798,178 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Are you sure you want to perform this action?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/registration/static/registration/js/user_login_form.js
+#: submodules/formdesigner/src/core.js
 msgid "Continue"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Expand Editor"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Shrink Editor"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Export Form Contents"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Edit Source XML"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Form Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Find Usages"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Validation failed. Form may not perform correctly on your device!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Edit Form's Source XML"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Update Source"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
 "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "Copy and paste this content into a spreadsheet program like Excel to easily "
 "share your form with others."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Lost Work Warning"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Overwrite their work"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Show XML Differences"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "Looks like someone else has edited this form since you loaded the page. Are "
 "you sure you want to overwrite their work?"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Edit Form Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Disable Text Formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Use Easy References"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Use of each question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Close"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Unsaved Changes in Editor"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "You have UNSAVED changes in the Expression Editor. Please save changes "
 "before continuing."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Parsing Error. Please check that your form is valid XML."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js
+#: submodules/formdesigner/src/core.js
 msgid "OK"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Sorry, {err}"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Add Choice"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "and"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "There are errors in the form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Fix Manually"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Fix Automatically"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "It looks like your form is not valid XML. This can often happen if you use a "
 "reserved character in one of your questions. Characters to look out for are "
@@ -1805,47 +1978,60 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Form Validation Error"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Fix the problem (recommended)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Save anyway"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Basic"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "The {displaytext} appears in the application. This text will not appear in "
 "data exports."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Display Text"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+#: submodules/formdesigner/src/core.js
+#: submodules/formdesigner/src/modeliteration.js
 msgid "Data Source"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "You can configure an external data source like a case list or lookup table "
 "to use as the choices for a multiple choice question."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js submodules/formdesigner/src/core.js
 msgid "Logic"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js submodules/formdesigner/src/core.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -1853,48 +2039,59 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid "Media"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "This will allow you to add images, audio or video media to a question, or "
 "other custom content."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/core.js
 msgid ""
 "These are advanced settings and are not needed for most applications.  "
 "Please only change these if you have a specific need!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/ignoreButRetain.js
 msgid ""
 "This question represents advanced content that is not supported by the form "
 "builder. Please only change it if you have a specific need!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/ignoreButRetain.js
 msgid "Ignored XML"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Android App Callout"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "External App"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Insert Android Application ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
+#: submodules/formdesigner/src/itemset.js
 msgid "change your subscription"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid ""
 "You no longer have access to built in or external integration in your "
 "application.\n"
@@ -1906,6 +2103,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid ""
 "Your subscription only has access to built-in integration.\n"
 "\n"
@@ -1915,26 +2113,32 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Android app callouts of the same type must have different question ids."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Extra"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Response"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Special Intent XMLNS attribute"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Print"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/intentManager.js
 msgid "Document Template"
 msgstr ""
 
@@ -1959,15 +2163,18 @@ msgid "Instance URI"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/dataSourceWidgets.js
 msgid "Lookup table was not found in the project"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
+#: submodules/formdesigner/src/dataSourceWidgets.js
 msgid "Loading..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid ""
 "You no longer have access to Lookup Tables in your application. Lookup "
 "Tables are available on the Standard plan and higher.\n"
@@ -1976,54 +2183,66 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "A data source must be selected."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Display Text Field"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Sort Field"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Filter"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid ""
 "This is an XPath expression that will filter the set of choices from the "
 "lookup table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Lookup Tables"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Checkbox Lookup Table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid ""
 "Cannot change to Multiple/Single Choice question if it has Choices. Please "
 "remove all Choices and try again."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Can only change to a Multiple Choice Lookup Table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Multiple Choice Lookup Table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "Can only change to a Checkbox Lookup Table"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/itemset.js
 msgid "{attr} was not found in the lookup table"
 msgstr ""
 
@@ -2051,18 +2270,22 @@ msgid "Turn On Text Formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/itextBlock.js
 msgid "custom..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/itextBlock.js
 msgid "New Content Type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/itextBlock.js
 msgid "Content Type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid ""
 "You have languages in your form that are not specified in the \"Languages\" "
 "page of the application builder. The following language will be deleted on "
@@ -2070,86 +2293,107 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "{name} (or multimedia) is required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "{name} (or multimedia) is required for all languages."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "{name} Itext ID is required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "{name} is not a valid ID."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Multimedia was not copied; it must be uploaded separately."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Discarded languages:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Validation Message"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Can't have a Validation Message Itext ID without a Validation Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Validation Message Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Add Validation Media"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Display Text Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Hint Message"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Hint Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Help Message"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Help Itext ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Add Other Content"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Add Multimedia"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Add Help Media"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Edit Bulk Translations"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid "Update Translations"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/javaRosa/plugin.js
 msgid ""
 "Copy these translations into a spreadsheet program like Excel. You can edit "
 "them there and then paste them back here when you're done. These will update "
@@ -2162,91 +2406,112 @@ msgid "App Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/databrowser.js
 msgid "Could not load app properties."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/databrowser.js
 msgid "If this error persists, please report an issue."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid ""
 "The {questionid} is an internal identifier for a question. It does not "
 "appear on the phone. It is the name of the question in data exports."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "The date and time of the action, e.g., now() or today()"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Balance ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid ""
 "The name of the balance you are tracking. This is an internal identifier "
 "which does not appear on the phone."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Product"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Quantity"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "XPath expression for the case ID associated with this balance."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Transfer must have both Source Case and Destination Case defined."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Cannot change $1 to $2"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Source Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "XPath expression for the case ID issuing the transaction."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Destination Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "XPath expression for the case ID receiving the transaction."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Dispense must have a Source Case."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commtrack.js
 msgid "Receive must have a Destination Case."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/modeliteration.js
 msgid "Model Iteration ID Query"
 msgstr ""
 
@@ -2300,104 +2565,129 @@ msgid "Add Property"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Date Modified"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "User ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Case Type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Case ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Create Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Properties To Create"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "You must include {columns} columns to create a case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "You can only use the following properties:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "{props} are invalid properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Close Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Close Condition"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Update Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Properties To Update"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Use Index"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Index Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Relationship must be child or extension"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Use Attachments"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Attachment Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "The from attribute must be one of: local, remote, or inline"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Inlined attachments must have an attachment name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/export/static/export/js/models.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Create"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Update"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Index"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "Attachments"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/saveToCase.js
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
 
@@ -2482,18 +2772,22 @@ msgid "Hide Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/uploader.js
 msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/uploader.js
 msgid "Video"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/uploader.js
 msgid "Inline Video"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/uploader.js
 msgid "HTML"
 msgstr ""
 
@@ -2540,26 +2834,32 @@ msgid "Questions can be copied between forms, and even to other apps."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Cannot insert {type} into tree root"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Cannot insert $1 into or after $2"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Cannot insert $1 into $2"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Unsupported paste format"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Unsupported paste format:"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/copy-paste.js
 msgid "Unknown question type:"
 msgstr ""
 
@@ -2568,6 +2868,7 @@ msgid "Enter command"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: submodules/formdesigner/src/commander.js
 msgid "Command Bar"
 msgstr ""
 
