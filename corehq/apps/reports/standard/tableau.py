@@ -3,7 +3,9 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
+from corehq.apps.analytics.utils import get_client_ip_from_request
 
+# from ipware import get_client_ip
 from no_exceptions.exceptions import Http403
 import requests
 
@@ -63,16 +65,21 @@ class TableauView(BaseDomainView):
 
     def get(self, request, *args, **kwargs):
         if self.visualization.server.server_type == 'server':
-            return self.tableau_server_response()
+            return self.tableau_server_response(get_client_ip_from_request(request))
         return super().get(request, *args, **kwargs)
 
-    def tableau_server_response(self):
+    def tableau_server_response(self, client_ip):
         from requests_toolbelt.adapters import host_header_ssl  # avoid top-level import that breaks docs build
         context = self.get_context_data()
         tabserver_url = 'https://{}/trusted/'.format(self.visualization.server.server_name)
         post_arguments = {'username': self.visualization.server.domain_username}
         if self.visualization.server.target_site != 'Default':
             post_arguments.update({'target_site': self.visualization.server.target_site})
+
+        post_arguments.update({'client_ip': client_ip})
+        #for testing
+        context.update({'client_ip': client_ip})
+        raise Exception(f"Client IP address is {client_ip}")
 
         if self.visualization.server.validate_hostname != '':
             request = requests.Session()
