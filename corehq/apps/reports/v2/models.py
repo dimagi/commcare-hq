@@ -166,7 +166,7 @@ class BaseDataEndpoint(BaseEndpoint):
 
 class BaseDataFormatter(object):
 
-    def __init__(self, request, domain, raw_data):
+    def __init__(self, request, domain):
         self.domain = domain
         self.request = request
 

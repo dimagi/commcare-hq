@@ -23,7 +23,7 @@ from corehq.util.view_utils import absolute_reverse
 class CaseDataFormatter(BaseDataFormatter):
 
     def __init__(self, request, domain, raw_data):
-        super(CaseDataFormatter, self).__init__(request, domain, raw_data)
+        super(CaseDataFormatter, self).__init__(request, domain)
         self.raw_data = flatten_result(raw_data)
 
     @property
