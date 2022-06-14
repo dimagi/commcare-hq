@@ -14428,9 +14428,8 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "\n"
-"            Default time(in hours) for which account confirmation link will "
+"            Default time (in hours) for which account confirmation link will "
 "be valid.\n"
-"            If no value is given, system default of 24 hours will be used.\n"
 "            "
 msgstr ""
 
@@ -36858,14 +36857,42 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            To continue accessing %(feat_name)s after the "
+#| "trial period,\n"
+#| "                            subscribe to the %(req_plan)s Plan.\n"
+#| "                        "
 msgid ""
 "\n"
-"                            Would you like to send the account confirmation "
-"%('email' if request|toggle_enabled:\"TWO_STAGE_USER_PROVISIONING\" else 'sms')s "
-"to this account?\n"
-"                          "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              email to this account?\n"
+"                            "
 msgstr ""
+"\n"
+"Pour continuer à accéder à %(feat_name)saprès la période d'essai, \n"
+"Abonnez-vous au plan %(req_plan)s."
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            To continue accessing %(feat_name)s after the "
+#| "trial period,\n"
+#| "                            subscribe to the %(req_plan)s Plan.\n"
+#| "                        "
+msgid ""
+"\n"
+"                              Would you like to send the account "
+"confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+"\n"
+"Pour continuer à accéder à %(feat_name)saprès la période d'essai, \n"
+"Abonnez-vous au plan %(req_plan)s."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 #, fuzzy

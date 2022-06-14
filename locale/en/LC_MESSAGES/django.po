@@ -13821,9 +13821,8 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "\n"
-"            Default time(in hours) for which account confirmation link will "
+"            Default time (in hours) for which account confirmation link will "
 "be valid.\n"
-"            If no value is given, system default of 24 hours will be used.\n"
 "            "
 msgstr ""
 
@@ -35423,13 +35422,21 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, python-format
 msgid ""
 "\n"
-"                            Would you like to send the account confirmation "
-"%('email' if request|toggle_enabled:\"TWO_STAGE_USER_PROVISIONING\" else 'sms')s "
-"to this account?\n"
-"                          "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              email to this account?\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              Would you like to send the account "
+"confirmation\n"
+"                              SMS to this account?\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
