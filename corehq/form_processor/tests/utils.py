@@ -315,6 +315,7 @@ def create_case(
     case_type='',
     user_id='user1',
     save=False,
+    enable_kafka=False,
     **case_args,
 ):
     """Create case and related models directly (not via form processor)
@@ -347,8 +348,11 @@ def create_case(
     if save:
         # disable publish to Kafka to avoid intermittent errors caused by
         # the nexus of kafka's consumer thread and freeze_time
-        with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+        if enable_kafka:
             FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
+        else:
+            with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+                FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
     return case
 
 
