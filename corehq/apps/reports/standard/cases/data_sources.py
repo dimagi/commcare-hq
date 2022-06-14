@@ -391,7 +391,7 @@ class SafeCaseDisplay(object):
             return self._link
 
         if name == 'indices':
-            return json.dumps(self.case.get('indices', []))
+            return json.dumps([index.to_json() for index in self.case.indices])
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
             return getattr(CaseDisplaySQL(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
