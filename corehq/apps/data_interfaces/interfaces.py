@@ -20,7 +20,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.util import get_simplified_users
 
@@ -82,18 +82,18 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
             ' data-caseid="{case_id}" data-owner="{owner}" data-ownertype="{owner_type}" />')
 
         for row in self.es_results['hits'].get('hits', []):
-            case = self.get_case(row)
-            display = CaseDisplay(case, self.timezone, self.individual)
+            es_case = self.get_case(row)
+            display = CaseDisplayES(es_case, self.timezone, self.individual)
             yield [
                 format_html(
                     checkbox_format,
-                    case_id=case['_id'],
+                    case_id=es_case['_id'],
                     owner=display.owner_id,
                     owner_type=display.owner_type),
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                naturaltime(display.parse_date(display.case['modified_on'])),
+                naturaltime(display.parse_date(es_case['modified_on'])),
             ]
 
 

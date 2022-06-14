@@ -25,7 +25,7 @@ from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
 
-class CaseDisplay:
+class CaseDisplayES:
     """This class wraps a raw case from ES to provide simpler access
     to certain properties as well as formatting for properties for use in
     the UI"""
@@ -259,7 +259,7 @@ class SafeCaseDisplay(object):
             return json.dumps(self.case.get('indices', []))
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
-            return getattr(CaseDisplay(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
+            return getattr(CaseDisplayES(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
 
         return self.case.get(name)
 
