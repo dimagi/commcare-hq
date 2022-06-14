@@ -1,14 +1,11 @@
-import datetime
 import json
 
 import pytz
+from couchdbkit import ResourceNotFound
 from django.template.defaultfilters import yesno
 from django.urls import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
-
-import dateutil
-from couchdbkit import ResourceNotFound
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -20,7 +17,6 @@ from corehq.apps.reports.util import get_user_id_from_form
 from corehq.apps.reports.v2.utils import report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
