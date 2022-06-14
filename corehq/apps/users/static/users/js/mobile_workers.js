@@ -169,6 +169,7 @@ hqDefine("users/js/mobile_workers",[
                 },
                 error: function () {
                     $modal.modal('hide');
+                    $modal.find(".btn").removeSpinnerFromButton();
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
@@ -362,7 +363,7 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.NONE;
             }
 
-            if (self.requiredPhoneMissing() || self.phoneIsInvalid()) {
+            if (self.phoneStatusMessage()) {
                 return self.STATUS.ERROR;
             }
         });

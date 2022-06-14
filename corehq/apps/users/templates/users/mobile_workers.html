@@ -315,6 +315,7 @@
             {% endblocktrans %}
           {% endif %}
         </div>
+
         <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
           {% with two_stage_user_confirmation=request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
           <thead>
@@ -496,9 +497,17 @@
                       </div>
                       <div class="modal-body">
                         <p class="lead">
-                          {% blocktrans %}
-                            Would you like to send the account confirmation {{ 'email' if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" else 'sms' }} to this account?
-                          {% endblocktrans %}
+                          {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                            {% blocktrans %}
+                              Would you like to send the account confirmation
+                              email to this account?
+                            {% endblocktrans %}
+                          {% else %}
+                            {% blocktrans %}
+                              Would you like to send the account confirmation
+                              SMS to this account?
+                            {% endblocktrans %}
+                          {% endif %}
                         </p>
                         <p class="lead">
                           <i class="fa fa-user"></i>

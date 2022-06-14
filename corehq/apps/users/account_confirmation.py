@@ -36,8 +36,7 @@ def send_account_confirmation_sms_if_necessary(couch_user):
     """
     if not should_send_account_confirmation(couch_user):
         return False
-    send_account_confirmation_sms(couch_user)
-    return True
+    return send_account_confirmation_sms(couch_user)
 
 
 def should_send_account_confirmation(couch_user):
@@ -73,7 +72,7 @@ def send_account_confirmation_sms(commcare_user):
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
-    send_sms(
+    return send_sms(
         domain=commcare_user.domain,
         contact=None,
         phone_number=commcare_user.default_phone_number,

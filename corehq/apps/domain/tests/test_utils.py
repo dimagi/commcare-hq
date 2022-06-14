@@ -1,5 +1,6 @@
 import json
 from contextlib import contextmanager
+from random import randint
 
 from django.test import SimpleTestCase, TestCase
 
@@ -8,7 +9,10 @@ from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.utils import (
     get_serializable_wire_invoice_general_credit,
     guess_domain_language,
+    encrypt_account_confirmation_info,
 )
+from corehq.apps.users.models import CommCareUser
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -38,6 +42,14 @@ class UtilsTests(TestCase):
     def test_guess_domain_language_no_apps(self):
         lang = guess_domain_language(self.domain_name)
         self.assertEqual('en', lang)
+
+    def test_user_info_encryption_decryption(self):
+        commcare_user = CommCareUser.create("22", ''.join(str(randint(1,100)) for i in range(3)), "pass22", None, None)
+        encrypted_string = encrypt_account_confirmation_info(commcare_user)
+        decrypted = json.loads(b64_aes_decrypt(encrypted_string))
+        self.assertIsInstance(decrypted, dict)
+        self.assertIsNotNone(decrypted.get("user_id"))
+        self.assertIsNotNone(decrypted.get("time"))
 
 
 class TestGetSerializableWireInvoiceItem(SimpleTestCase):

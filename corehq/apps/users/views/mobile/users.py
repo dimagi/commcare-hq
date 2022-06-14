@@ -1494,7 +1494,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             return MobileWorkerAccountConfirmationForm(self.request.POST)
         else:
             if not self.is_invite_valid():
-                raise ValidationError("Invite is not valid or expired.")
+                raise ValidationError("Invite has expired.")
             return MobileWorkerAccountConfirmationForm(initial={
                 'username': self.user.raw_username,
                 'full_name': self.user.full_name,
@@ -1503,10 +1503,8 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
 
     def is_invite_valid(self):
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
-        logging.debug(f"hours_elapsed {hours_elapsed}")
         invite_expiry_in_hours = self.domain_object.confirmation_link_expiry_time
         invite_expiry_duration_in_hours = invite_expiry_in_hours or self.default_expiry_duration_in_hours
-        logging.debug(f"expiry_duration_in_hours {invite_expiry_duration_in_hours}")
         if hours_elapsed <= invite_expiry_duration_in_hours:
             return True
         return False
