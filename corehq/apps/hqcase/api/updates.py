@@ -8,6 +8,7 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from .core import SubmissionError, UserError
 
@@ -180,23 +181,19 @@ def _populate_index_case_ids(domain, updates):
 
 
 def _get_case_ids_by_external_id(domain, external_ids):
-    def _to_case_id(external_id):
-        try:
-            case = CommCareCase.objects.get_case_by_external_id(
-                domain,
-                external_id,
-                raise_multiple=True
-            )
-        except CommCareCase.MultipleObjectsReturned:
-            raise UserError(f"There are multiple cases with external_id {external_id}")
-        if not case:
-            raise UserError(f"Could not find a case with external_id '{external_id}'")
-        return case.case_id
+    external_ids = list(filter(None, set(external_ids)))
 
-    return {
-        external_id: _to_case_id(external_id)
-        for external_id in filter(None, set(external_ids))
-    }
+    case_ids_by_external_id = {}
+    for db_name in get_db_aliases_for_partitioned_query():
+        query = (CommCareCase.objects.using(db_name)
+                 .filter(domain=domain, external_id__in=external_ids)
+                 .values_list('external_id', 'case_id'))
+        for external_id, case_id in query:
+            if external_id in case_ids_by_external_id:
+                raise UserError(f"There are multiple cases with external_id {external_id}")
+            case_ids_by_external_id[external_id] = case_id
+
+    return case_ids_by_external_id
 
 
 def _get_case_update(data, user_id, case_id=None):
