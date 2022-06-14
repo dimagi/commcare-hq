@@ -1,3 +1,4 @@
+/* global tableau */
 hqDefine("reports/js/tableau", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         self = {};
