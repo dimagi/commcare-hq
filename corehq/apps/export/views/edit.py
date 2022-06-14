@@ -14,6 +14,7 @@ from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
+    LiveGoogleSheetMixin,
     ODataFeedMixin,
     clean_odata_columns,
 )
@@ -129,6 +130,14 @@ class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = gettext_lazy("Copy OData Feed")
     is_copy = True
+
+
+class EditLiveGoogleSheetCaseView(LiveGoogleSheetMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_live_google_sheet_case'
+
+
+class EditLiveGoogleSheetFormView(LiveGoogleSheetMixin, EditNewCustomFormExportView):
+    urlname = 'edit_live_google_sheet_form'
 
 
 @location_safe
