@@ -10,19 +10,18 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 @skip_on_fresh_install
 def _add_default_mobile_worker_role(apps, schema_editor):
+    default_mobile_worker_roles = UserRole.objects.filter(is_commcare_user_default=True)
     for domain in Domain.get_all():
-        items = UserRole.objects.filter(domain=domain, is_commcare_user_default=True)
-        if len(items) == 0:
+        dmw_roles_in_domain = default_mobile_worker_roles.filter(domain=domain)
+        if len(dmw_roles_in_domain) == 0:
             UserRole.create(
                 domain,
                 UserRolePresets.MOBILE_WORKER,
                 permissions=Permissions(),
                 is_commcare_user_default=True,
             )
-        elif len(items) == 1:
+        elif 1 <= len(dmw_roles_in_domain) == 1:
             continue
-        else:
-            raise Exception(f"More than one role on domain {domain} set as user default")
 
 
 class Migration(migrations.Migration):
