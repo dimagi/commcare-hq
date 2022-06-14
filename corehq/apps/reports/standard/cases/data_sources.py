@@ -383,8 +383,7 @@ class SafeCaseDisplay(object):
     """
     def __init__(self, case, timezone, override_user_id=None):
         self.case = case
-        self.timezone = timezone
-        self.override_user_id = override_user_id
+        self.display = CaseDisplaySQL(self.case, timezone, override_user_id)
 
     def get(self, name):
         if name == '_link':
@@ -394,7 +393,7 @@ class SafeCaseDisplay(object):
             return json.dumps([index.to_json() for index in self.case.indices])
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
-            return getattr(CaseDisplaySQL(self.case, self.timezone, self.override_user_id), name.replace('@', ''))
+            return getattr(self.display, name.replace('@', ''))
 
         return self.case.get_case_property(name)
 
