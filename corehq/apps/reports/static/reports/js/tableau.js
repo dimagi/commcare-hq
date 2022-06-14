@@ -17,7 +17,7 @@ hqDefine("reports/js/tableau", function () {
         });
     };
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         self.initViz();
     });
 
