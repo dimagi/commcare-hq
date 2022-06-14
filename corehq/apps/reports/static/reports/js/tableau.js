@@ -31,6 +31,7 @@ hqDefine("report/js/tableau", [
 
     $(document).ready(function() {
         self.initViz();
+        $(window).resize(_.debounce(self.initViz, 300));
     });
 
     return 1;
