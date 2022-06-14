@@ -23144,7 +23144,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr "No hay datos"
 
@@ -27989,7 +27988,6 @@ msgid "[no name]"
 msgstr "[no tiene nombre]"
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr "Desconocido  [%s]"
@@ -30078,10 +30076,6 @@ msgstr ""
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Date is after"
 msgstr ""
-
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr "No hay Datos"
 
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
@@ -42563,6 +42557,9 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "No Data"
+#~ msgstr "No hay Datos"
 
 #~ msgid "Read Only (No Reports)"
 #~ msgstr "Solo Lectura (No Reportes)"
