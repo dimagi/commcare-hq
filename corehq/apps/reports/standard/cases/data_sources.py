@@ -17,6 +17,7 @@ from corehq.apps.case_search.const import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_user_id_from_form
+from corehq.apps.reports.v2.utils import report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
@@ -129,12 +130,13 @@ class CaseDisplayBase:
         else:
             return "%s (bad ID format)" % self.case_name
 
-    def _dateprop(self, date):
-        if isinstance(date, datetime.datetime):
-            user_time = PhoneTime(date, self.timezone).user_time(self.timezone)
-            return user_time.ui_string(self.date_format)
-        else:
-            return ''
+    def _fmt_date(self, date, is_phonetime=True):
+        return report_date_to_json(
+            date,
+            self.timezone,
+            self.date_format,
+            is_phonetime=is_phonetime
+        )
 
     @property
     def owner_display(self):
@@ -292,19 +294,19 @@ class CaseDisplayES(CaseDisplayBase):
 
     @property
     def opened_on(self):
-        return self._dateprop(self.parse_date(self.case['opened_on']))
+        return self._fmt_date(self.parse_date(self.case['opened_on']))
 
     @property
     def modified_on(self):
-        return self._dateprop(self.parse_date(self.case['modified_on']))
+        return self._fmt_date(self.parse_date(self.case['modified_on']))
 
     @property
     def closed_on(self):
-        return self._dateprop(self.parse_date(self.case['closed_on']))
+        return self._fmt_date(self.parse_date(self.case['closed_on']))
 
     @property
     def server_last_modified_date(self):
-        return self._dateprop(self.parse_date(self.case['server_modified_on']))
+        return self._fmt_date(self.parse_date(self.case['server_modified_on']), False)
 
     @property
     def closed_by_user_id(self):
@@ -355,19 +357,19 @@ class CaseDisplaySQL(CaseDisplayBase):
 
     @property
     def opened_on(self):
-        return self._dateprop(self.case.opened_by)
+        return self._fmt_date(self.case.opened_by)
 
     @property
     def modified_on(self):
-        return self._dateprop(self.case.modified_on)
+        return self._fmt_date(self.case.modified_on)
 
     @property
     def closed_on(self):
-        return self._dateprop(self.case.closed_on)
+        return self._fmt_date(self.case.closed_on)
 
     @property
     def server_last_modified_date(self):
-        return self._dateprop(self.case.server_modified_on)
+        return self._fmt_date(self.case.server_modified_on, False)
 
     @property
     def closed_by_user_id(self):
