@@ -32,6 +32,14 @@ class CaseDisplayBase:
     the UI"""
 
     date_format = USER_DATETIME_FORMAT_WITH_SEC
+    aliases = {
+        'status': 'closed_display',
+        'opened_by_username': 'creating_user',
+        'owner_name': 'owner_display',
+        'name': 'case_name',
+        'date_opened': 'opened_on',
+        'last_modified': 'modified_on',
+    }
 
     def __init__(self, case, timezone=pytz.UTC, override_user_id=None):
         """
@@ -117,7 +125,6 @@ class CaseDisplayBase:
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
-    status = closed_display
 
     @property
     def case_link(self):
@@ -145,7 +152,6 @@ class CaseDisplayBase:
             return format_html('<span class="label label-default">{}</span>', owner['name'])
         else:
             return owner['name']
-    owner_name = owner_display
 
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
@@ -157,7 +163,6 @@ class CaseDisplayBase:
             return _("No data")
         else:
             return user['name'] or self.user_not_found_display(user['id'])
-    opened_by_username = creating_user
 
     @property
     def opened_by_user_id(self):
@@ -166,6 +171,11 @@ class CaseDisplayBase:
             return _("No data")
         else:
             return user['id']
+
+    def __getattr__(self, item):
+        if item in self.aliases:
+            return getattr(self, self.aliases[item])
+        return getattr(self, item)
 
     @property
     def last_modified_by_user_username(self):
@@ -186,8 +196,6 @@ class CaseDisplayBase:
     @property
     def case_name(self):
         raise NotImplementedError
-
-    name = case_name
 
     @property
     def case_id(self):
@@ -213,13 +221,9 @@ class CaseDisplayBase:
     def opened_on(self):
         raise NotImplementedError
 
-    date_opened = opened_on
-
     @property
     def modified_on(self):
         raise NotImplementedError
-
-    last_modified = modified_on
 
     @property
     def closed_on(self):
