@@ -12628,6 +12628,17 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr ""
 
+#: corehq/apps/data_interfaces/forms.py
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "Add Filter"
+msgid "Cases Filter"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr ""
@@ -13236,6 +13247,21 @@ msgid "Date case property (advanced)"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr ""
 
@@ -13305,6 +13331,14 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Include cases from child locations"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
@@ -13581,7 +13615,8 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
+#, python-format
+msgid "Deduplication rule not saved due to the following issues: %s"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
@@ -14231,20 +14266,6 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
-msgstr ""
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -40101,6 +40122,10 @@ msgstr ""
 
 #: corehq/util/workbook_json/excel.py
 msgid "Uploaded file does not contian any sheets."
+msgstr ""
+
+#: coverage-report/corehq_apps_users_forms_py.html
+msgid "Specify Users At This Location"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
