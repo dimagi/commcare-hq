@@ -57,13 +57,11 @@ def _run_upload(domain, workbook, replace=False, task=None):
             owners.update(mutation)
 
         old_rows = FixtureDataItem.get_item_list(domain, table.tag)
-        rows_by_id = {r._id: r.sort_key for r in old_rows}
-
+        sort_keys = {r._id: r.sort_key for r in old_rows}
         old_owners = defaultdict(list)
-        for owner in FixtureOwnership.for_all_item_ids(list(rows_by_id), domain):
+        for owner in FixtureOwnership.for_all_item_ids(list(sort_keys), domain):
             old_owners[owner.data_item_id].append(owner)
 
-        sort_keys = {} if replace else rows_by_id
         mutation = get_mutation(
             workbook,
             old_rows,
