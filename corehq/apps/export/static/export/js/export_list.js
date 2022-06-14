@@ -36,9 +36,9 @@ hqDefine("export/js/export_list", [
     utils
 ) {
     var exportModel = function (options, pageOptions) {
-        assertProperties.assert(pageOptions, ['is_deid', 'is_odata', 'model_type', 'urls']);
+        assertProperties.assert(pageOptions, ['is_deid', 'is_odata', 'is_live_google_sheet', 'model_type', 'urls']);
 
-        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData'], function (key) {
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData', 'isLiveGoogleSheet'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
@@ -62,6 +62,7 @@ hqDefine("export/js/export_list", [
             'lastBuildDuration',
             'name',
             'odataUrl',
+            'gsheetUrl',
             'owner_username',
             'sharing',
             'type',
@@ -71,12 +72,15 @@ hqDefine("export/js/export_list", [
             'isDailySaved',
             'isFeed',
             'isOData',
+            'isLiveGoogleSheet',
             'editNameUrl',
             'editDescriptionUrl',
         ]);
-        assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update', 'refreshGSheet']);
 
         var self = ko.mapping.fromJS(options);
+
+        self.displayMessage = ko.observable();
 
         self.showSavedFilters = !!options.filters;
         if (self.showSavedFilters) {
@@ -128,6 +132,10 @@ hqDefine("export/js/export_list", [
             };
         }
 
+        if (options.isLiveGoogleSheet) {
+            self.gsheetUrl = exportFeedUrl(options.gsheetUrl);
+        }
+
         self.editExport = function () {
             if (options.isOData) {
                 kissmetricsAnalytics.track.event("[BI Integration] Clicked Copy OData Feed Link");
@@ -161,6 +169,23 @@ hqDefine("export/js/export_list", [
             return true;    // allow default click action to process so file is downloaded
         };
 
+        self.refreshGoogleSheet = function () {
+            $.ajax({
+                method: 'POST',
+                url: pageOptions.urls.refreshGSheet,
+                data: {
+                    export_id: self.id(),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        self.displayMessage(data.success);
+                    } else if (data.error) {
+                        self.displayMessage(data.error);
+                    }
+                },
+            });
+        };
+
         self.updateDisabledState = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
@@ -172,6 +197,7 @@ hqDefine("export/js/export_list", [
                     is_auto_rebuild_enabled: self.isAutoRebuildEnabled(),
                     is_deid: pageOptions.is_deid,
                     is_odata: pageOptions.is_odata,
+                    is_live_google_sheet: pageOptions.is_live_google_sheet,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
@@ -206,6 +232,10 @@ hqDefine("export/js/export_list", [
             });
             clipboard.onClick(e);
             clipboard.destroy();
+        };
+
+        self.openUrl = function () {
+            window.open(self.url(), '_blank').focus();
         };
 
         return self;
@@ -271,6 +301,7 @@ hqDefine("export/js/export_list", [
                     export_id: exportId,
                     is_deid: pageOptions.is_deid,
                     is_odata: pageOptions.is_odata,
+                    is_live_google_sheet: pageOptions.is_live_google_sheet,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
@@ -289,7 +320,7 @@ hqDefine("export/js/export_list", [
     };
 
     var exportPanelModel = function (options) {
-        assertProperties.assert(options, ['header', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'myExports', 'showOwnership', 'urls']);
+        assertProperties.assert(options, ['header', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'isLiveGoogleSheet', 'modelType', 'myExports', 'showOwnership', 'urls']);
 
         var self = _.extend({}, options);
 
@@ -335,6 +366,7 @@ hqDefine("export/js/export_list", [
                 data: {
                     is_deid: self.isDeid,
                     is_odata: self.isOData ? 1 : 0,
+                    is_live_google_sheet: self.isLiveGoogleSheet ? 1 : 0,
                     model_type: self.modelType,
                     is_daily_saved_export: self.isDailySavedExport ? 1 : 0,
                     is_feed: self.isFeed ? 1 : 0,
@@ -351,8 +383,9 @@ hqDefine("export/js/export_list", [
                         return exportModel(e, {
                             is_deid: self.isDeid,
                             is_odata: self.isOData,
+                            is_live_google_sheet: self.isLiveGoogleSheet,
                             model_type: self.modelType,
-                            urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update'),
+                            urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update', 'refreshGSheet'),
                         });
                     }));
 
@@ -378,7 +411,7 @@ hqDefine("export/js/export_list", [
     };
 
     var exportListModel = function (options) {
-        assertProperties.assert(options, ['headers', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'urls']);
+        assertProperties.assert(options, ['headers', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'isLiveGoogleSheet', 'modelType', 'urls']);
 
         var self = {};
 
@@ -387,8 +420,9 @@ hqDefine("export/js/export_list", [
         self.isDailySavedExport = options.isDailySavedExport;
         self.isFeed = options.isFeed;
         self.isOData = options.isOData;
+        self.isLiveGoogleSheet = options.isLiveGoogleSheet;
 
-        assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update', 'refreshGSheet']);
         self.urls = options.urls;
 
         assertProperties.assert(options.headers, ['my_export_type', 'shared_export_type', 'export_type_caps_plural']);
@@ -644,6 +678,7 @@ hqDefine("export/js/export_list", [
                     }),
                     is_deid: self.isDeid,
                     is_odata: self.isOData,
+                    is_live_google_sheet: self.isLiveGoogleSheet,
                     model_type: self.modelType,
                 },
                 success: function (data) {
