@@ -93,7 +93,7 @@ class MainMenuNode(template.Node):
         try:
             if couch_user:
                 user_role = couch_user.get_role(domain, allow_enterprise=True)
-                role_version = user_role.cache_version if user_role else None
+                role_version = user_role.cache_version if user_role else None   # self.modified_on.isoformat()
         except DomainMembershipError:
             role_version = None
 
