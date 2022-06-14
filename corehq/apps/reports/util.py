@@ -362,16 +362,6 @@ def validate_xform_for_edit(xform):
     return None
 
 
-def get_report_timezone(request, domain):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(request.couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
-
-
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
 def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
