@@ -22,7 +22,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import PhoneTime
+from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -108,19 +108,6 @@ class CaseDisplayBase:
                 return user.username
         except CouchUser.AccountTypeError:
             return None
-
-    def parse_date(self, date_string):
-        try:
-            return iso_string_to_datetime(date_string)
-        except Exception:
-            try:
-                date_obj = dateutil.parser.parse(date_string)
-                if isinstance(date_obj, datetime.datetime):
-                    return date_obj.replace(tzinfo=None)
-                else:
-                    return date_obj
-            except Exception:
-                return date_string
 
     @property
     def closed_display(self):
@@ -298,19 +285,19 @@ class CaseDisplayES(CaseDisplayBase):
 
     @property
     def opened_on(self):
-        return self._fmt_date(self.parse_date(self.case['opened_on']))
+        return self._fmt_date(parse_date(self.case['opened_on']))
 
     @property
     def modified_on(self):
-        return self._fmt_date(self.parse_date(self.case['modified_on']))
+        return self._fmt_date(parse_date(self.case['modified_on']))
 
     @property
     def closed_on(self):
-        return self._fmt_date(self.parse_date(self.case['closed_on']))
+        return self._fmt_date(parse_date(self.case['closed_on']))
 
     @property
     def server_last_modified_date(self):
-        return self._fmt_date(self.parse_date(self.case['server_modified_on']), False)
+        return self._fmt_date(parse_date(self.case['server_modified_on']), False)
 
     @property
     def closed_by_user_id(self):

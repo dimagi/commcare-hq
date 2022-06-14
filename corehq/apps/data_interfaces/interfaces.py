@@ -1,29 +1,24 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
 from memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
-from corehq.apps.reports.util import get_simplified_users
-
+from corehq.util.timezones.utils import parse_date
 from .dispatcher import EditDataInterfaceDispatcher
 
 
@@ -93,7 +88,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                naturaltime(display.parse_date(es_case['modified_on'])),
+                naturaltime(parse_date(es_case['modified_on'])),
             ]
 
 
