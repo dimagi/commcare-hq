@@ -29,7 +29,7 @@ def get_case_upload_record_count(domain, user):
 
 def get_case_ids_for_case_upload(case_upload):
     for form_record in case_upload.form_records.order_by('pk').all():
-        form = XFormInstance.objects.get_form(form_record.form_id, case_upload.domain)
+        form = XFormInstance.objects.get_form(form_record.form_id)
         for case_block in extract_case_blocks(form):
             yield case_block['@case_id']
 
