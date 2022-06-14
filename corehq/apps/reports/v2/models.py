@@ -11,6 +11,7 @@ from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,
     ReportFilterNotFound,
 )
+from corehq.util.timezones.utils import get_timezone
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
 ColumnMeta = namedtuple('ColumnMeta', 'title name width sort')
@@ -146,6 +147,10 @@ class BaseEndpoint(object):
     @memoized
     def report_context(self):
         return json.loads(self.data.get('reportContext', "{}"))
+
+    @property
+    def timezone(self):
+        return get_timezone(self.request, self.domain)
 
 
 class BaseOptionsEndpoint(BaseEndpoint):
