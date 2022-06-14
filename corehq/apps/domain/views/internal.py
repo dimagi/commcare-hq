@@ -35,7 +35,13 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
+from corehq.apps.domain.models import (
+    Domain,
+    ProjectLimit,
+    ProjectLimitType,
+    TransferDomainRequest,
+    AllowedUCRExpressionSettings
+)
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -88,6 +94,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
+        try:
+            gsheet_limit = ProjectLimit.objects.get(
+                domain=self.domain_object,
+                limit_type=ProjectLimitType.LIVE_GOOGLE_SHEETS
+            )
+        except ProjectLimit.DoesNotExist:
+            gsheet_limit = None
+
         can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
             return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
@@ -100,6 +114,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
             'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
             'odata_feed_limit': self.domain_object.odata_feed_limit,
+            'use_custom_gsheet_limit': 'Y' if gsheet_limit else 'N',
+            'gsheet_limit': gsheet_limit.limit_value if gsheet_limit else 20,
             'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
