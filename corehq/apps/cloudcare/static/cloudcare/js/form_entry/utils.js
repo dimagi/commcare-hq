@@ -108,8 +108,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             try {
                 if (contextValue.id.startsWith('district')) {
                     broadcastObj.county = contextValue.text;
+                    broadcastObj.district = contextValue.text;
                 } else if (contextValue.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextValue.text;
+                    broadcastObj.postcode = contextValue.text;
                 } else if (contextValue.id.startsWith('place')) {
                     broadcastObj.city = contextValue.text;
                 } else if (contextValue.id.startsWith('country')) {
