@@ -174,7 +174,7 @@ class CaseDisplayBase:
 
     def __getattr__(self, item):
         if item in self.aliases:
-            return getattr(self, self.aliases[item])
+            item = self.aliases[item]
         return getattr(self, item)
 
     @property
@@ -361,7 +361,7 @@ class CaseDisplaySQL(CaseDisplayBase):
 
     @property
     def opened_on(self):
-        return self._fmt_date(self.case.opened_by)
+        return self._fmt_date(self.case.opened_on)
 
     @property
     def modified_on(self):
