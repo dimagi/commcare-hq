@@ -25,7 +25,7 @@ from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
 
-class CaseDisplayES:
+class CaseDisplayBase:
     """This class wraps a raw case from ES to provide simpler access
     to certain properties as well as formatting for properties for use in
     the UI"""
@@ -41,52 +41,15 @@ class CaseDisplayES:
         self.override_user_id = override_user_id
 
     @property
-    def case_type(self):
-        return self.case['type']
-
-    @property
-    def case_name(self):
-        return self.case['name']
-    name = case_name
-
-    @property
     def case_name_display(self):
         return self.case_name or _('[no name]')
 
     @property
-    def case_id(self):
-        return self.case['_id']
-
-    @property
-    def external_id(self):
-        return self.case['external_id']
-
-    @property
     def case_detail_url(self):
         try:
-            return absolute_reverse('case_data', args=[self.case['domain'], self.case_id])
+            return absolute_reverse('case_data', args=[self.domain, self.case_id])
         except NoReverseMatch:
             return None
-
-    @property
-    def is_closed(self):
-        return self.case['closed']
-
-    @property
-    def _creating_user(self):
-        try:
-            creator_id = self.case['opened_by']
-        except KeyError:
-            creator_id = None
-            if 'actions' in self.case:
-                for action in self.case['actions']:
-                    if action['action_type'] == 'create':
-                        creator_id = get_user_id_from_form(action["xform_id"])
-                        break
-
-        if not creator_id:
-            return None
-        return self._user_meta(creator_id)
 
     def _user_meta(self, user_id):
         return {'id': user_id, 'name': self._get_username(user_id)}
@@ -116,15 +79,6 @@ class CaseDisplayES:
     @property
     def user_id(self):
         return self.override_user_id or self.owner_id
-
-    @property
-    def owner_id(self):
-        if 'owner_id' in self.case:
-            return self.case['owner_id']
-        elif 'user_id' in self.case:
-            return self.case['user_id']
-        else:
-            return ''
 
     @property
     @quickcache(['self.owner_id'])
@@ -175,31 +129,12 @@ class CaseDisplayES:
         else:
             return "%s (bad ID format)" % self.case_name
 
-    def _dateprop(self, prop):
-        date = self.parse_date(self.case[prop])
+    def _dateprop(self, date):
         if isinstance(date, datetime.datetime):
             user_time = PhoneTime(date, self.timezone).user_time(self.timezone)
             return user_time.ui_string(self.date_format)
         else:
             return ''
-
-    @property
-    def opened_on(self):
-        return self._dateprop('opened_on')
-    date_opened = opened_on
-
-    @property
-    def modified_on(self):
-        return self._dateprop('modified_on')
-    last_modified = modified_on
-
-    @property
-    def closed_on(self):
-        return self._dateprop('closed_on')
-
-    @property
-    def server_last_modified_date(self):
-        return self._dateprop('server_modified_on')
 
     @property
     def owner_display(self):
@@ -232,15 +167,152 @@ class CaseDisplayES:
 
     @property
     def last_modified_by_user_username(self):
-        return self._get_username(self.case['user_id'])
+        return self._get_username(self.last_modified_user_id)
+
+    @property
+    def closed_by_username(self):
+        return self._get_username(self.closed_by_user_id)
+
+    @property
+    def domain(self):
+        raise NotImplementedError
+
+    @property
+    def case_type(self):
+        raise NotImplementedError
+
+    @property
+    def case_name(self):
+        raise NotImplementedError
+
+    name = case_name
+
+    @property
+    def case_id(self):
+        raise NotImplementedError
+
+    @property
+    def external_id(self):
+        raise NotImplementedError
+
+    @property
+    def is_closed(self):
+        raise NotImplementedError
+
+    @property
+    def _creating_user(self):
+        raise NotImplementedError
+
+    @property
+    def owner_id(self):
+        raise NotImplementedError
+
+    @property
+    def opened_on(self):
+        raise NotImplementedError
+
+    date_opened = opened_on
+
+    @property
+    def modified_on(self):
+        raise NotImplementedError
+
+    last_modified = modified_on
+
+    @property
+    def closed_on(self):
+        raise NotImplementedError
+
+    @property
+    def server_last_modified_date(self):
+        raise NotImplementedError
+
+    @property
+    def closed_by_user_id(self):
+        raise NotImplementedError
+
+    @property
+    def last_modified_user_id(self):
+        raise NotImplementedError
+
+
+class CaseDisplayES(CaseDisplayBase):
+    """This class wraps a raw case from ES to provide simpler access
+    to certain properties as well as formatting for properties for use in
+    the UI"""
+
+    @property
+    def domain(self):
+        return self.case['domain']
+
+    @property
+    def case_type(self):
+        return self.case['type']
+
+    @property
+    def case_name(self):
+        return self.case['name']
+
+    @property
+    def case_id(self):
+        return self.case['_id']
+
+    @property
+    def external_id(self):
+        return self.case['external_id']
+
+    @property
+    def is_closed(self):
+        return self.case['closed']
+
+    @property
+    def _creating_user(self):
+        try:
+            creator_id = self.case['opened_by']
+        except KeyError:
+            creator_id = None
+            if 'actions' in self.case:
+                for action in self.case['actions']:
+                    if action['action_type'] == 'create':
+                        creator_id = get_user_id_from_form(action["xform_id"])
+                        break
+
+        if not creator_id:
+            return None
+        return self._user_meta(creator_id)
+
+    @property
+    def owner_id(self):
+        if 'owner_id' in self.case:
+            return self.case['owner_id']
+        elif 'user_id' in self.case:
+            return self.case['user_id']
+        else:
+            return ''
+
+    @property
+    def opened_on(self):
+        return self._dateprop(self.parse_date(self.case['opened_on']))
+
+    @property
+    def modified_on(self):
+        return self._dateprop(self.parse_date(self.case['modified_on']))
+
+    @property
+    def closed_on(self):
+        return self._dateprop(self.parse_date(self.case['closed_on']))
+
+    @property
+    def server_last_modified_date(self):
+        return self._dateprop(self.parse_date(self.case['server_modified_on']))
 
     @property
     def closed_by_user_id(self):
         return self.case.get('closed_by')
 
     @property
-    def closed_by_username(self):
-        return self._get_username(self.closed_by_user_id)
+    def last_modified_user_id(self):
+        return self.case['user_id']
 
 
 class SafeCaseDisplay(object):
