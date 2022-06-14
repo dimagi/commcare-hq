@@ -162,7 +162,7 @@ class CaseDisplayBase:
     def __getattr__(self, item):
         if item in self.aliases:
             item = self.aliases[item]
-        return getattr(self, item)
+        return object.__getattribute__(self, item)
 
     @property
     def last_modified_by_user_username(self):
