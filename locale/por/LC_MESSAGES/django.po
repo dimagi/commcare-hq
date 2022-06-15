@@ -29184,7 +29184,7 @@ msgstr ""
 #: corehq/apps/reports/views.py
 #, fuzzy, python-format
 #| msgid "This report's timezone is %(timezone)s."
-msgid "This scheduled report's timezone is %s (%s GMT)"
+msgid "This scheduled report's timezone is %s (UTC%s)"
 msgstr "O fuso horário deste relatório é %(timezone)s."
 
 #: corehq/apps/reports/views.py
@@ -40535,10 +40535,6 @@ msgstr ""
 
 #: corehq/util/workbook_json/excel.py
 msgid "Uploaded file does not contian any sheets."
-msgstr ""
-
-#: coverage-report/corehq_apps_users_forms_py.html
-msgid "Specify Users At This Location"
 msgstr ""
 
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
