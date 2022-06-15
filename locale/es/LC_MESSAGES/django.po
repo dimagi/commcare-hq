@@ -12039,10 +12039,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
-#, fuzzy
-#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr "El formulario no se valida"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""
@@ -24105,10 +24103,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
-#, fuzzy
-#| msgid "This is not a valid sub-area for the area %s"
 msgid "{} is not a valid data source type!"
-msgstr "Esta no es una sub-área válida para el área %s"
+msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
 msgid "The data source referenced by this report could not be found."
@@ -37453,16 +37449,12 @@ msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username contains invalid characters."
 msgid "Username '{}' may not contain special characters."
-msgstr "El nombre de usuario contiene caracteres inválidos."
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username is required."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/util.py
 msgid "Username '{}' may not contain consecutive '.' (period)."
@@ -37477,16 +37469,12 @@ msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
 msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is already taken"
 msgid "Username '{}' is already taken."
-msgstr "Nombre de usuario {} ya está tomado"
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username '{}' is reserved."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py
 #, python-format
@@ -42594,18 +42582,3 @@ msgstr ""
 
 #~ msgid "No Data"
 #~ msgstr "No hay Datos"
-
-#~ msgid "Read Only (No Reports)"
-#~ msgstr "Solo Lectura (No Reportes)"
-
-#~ msgid "App Editor"
-#~ msgstr "Editor de App"
-
-#~ msgid "Read Only"
-#~ msgstr "Solo Lectura"
-
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador de Campo"
-
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador de Facturación"

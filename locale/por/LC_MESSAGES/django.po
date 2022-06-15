@@ -41254,15 +41254,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "App Editor"
-#~ msgstr "Editor da Aplicação"
-
-#~ msgid "Read Only"
-#~ msgstr "Somente Leitura"
-
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador no Terreno"
-
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador do Faturamento"
