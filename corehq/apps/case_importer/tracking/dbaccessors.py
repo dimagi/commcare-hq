@@ -5,7 +5,6 @@ from django.db.models import Q
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.form_processor.models import XFormInstance
 from corehq.apps.enterprise.models import EnterprisePermissions
-from corehq import toggles
 
 MAX_RECENT_UPLOADS = 10000
 
