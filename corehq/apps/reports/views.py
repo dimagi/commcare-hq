@@ -799,10 +799,10 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (%s GMT)") % \
+        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
                                         get_timezone_difference(self.domain))
-        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (%s GMT)") % \
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
                                         get_timezone_difference(self.domain))
         return form
