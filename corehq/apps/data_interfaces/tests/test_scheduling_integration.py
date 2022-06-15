@@ -26,7 +26,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
-from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -566,7 +565,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for minute in [1, 2]:
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                self.update_case_and_sync(self.domain, case.case_id, case_properties={'appointment_date': '2017-06-01'})
+                self.update_case_and_sync(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'appointment_date': '2017-06-01'}
+                )
 
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
@@ -584,7 +587,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 self.assertTrue(instances[0].active)
 
             # Update start date. Instance is updated with new start date,
-            self.update_case_and_sync(self.domain, case.case_id, case_properties={'appointment_date': '2017-07-01'})
+            self.update_case_and_sync(
+                self.domain,
+                case.case_id,
+                case_properties={'appointment_date': '2017-07-01'}
+            )
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -601,7 +608,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Set start date to the past. Instance is updated with new start date and is inactive
-            self.update_case_and_sync(self.domain, case.case_id, case_properties={'appointment_date': '2017-04-01'})
+            self.update_case_and_sync(
+                self.domain,
+                case.case_id,
+                case_properties={'appointment_date': '2017-04-01'}
+            )
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -1031,7 +1042,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # Making another arbitrary update doesn't cause any recalculating to happen
             with patch('corehq.messaging.scheduling.scheduling_partitioned.models.'
                        'AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
-                self.update_case_and_sync(self.domain, case.case_id, case_properties={'new_property': 'new value 2'})
+                self.update_case_and_sync(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'new_property': 'new value 2'}
+                )
                 self.assertEqual(recalculate_patch.call_count, 0)
 
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -1072,7 +1087,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
     def test_run_messaging_rule_sharded(self, es_patch, shard_rule_patch, sync_patch):
         rule_id = self._setup_rule()
-        with self.create_case_and_sync(self.domain, 'person') as case1, self.create_case_and_sync(self.domain, 'person') as case2:
+        with self.create_case_and_sync(self.domain, 'person') as case1, \
+             self.create_case_and_sync(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
             shard_rule_patch.assert_has_calls(
                 [

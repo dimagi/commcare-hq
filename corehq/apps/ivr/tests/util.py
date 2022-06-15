@@ -53,8 +53,13 @@ class LogCallTestCase(TestCase):
             'contact_phone_number': self.phone_number,
             'contact_phone_number_is_verified': '1',
         }
-        with create_test_case(self.domain, 'contact', 'test',
-            case_properties=case_properties, drop_signals=False) as case:
+        with create_test_case(
+                self.domain,
+                'contact',
+                'test',
+                case_properties=case_properties,
+                drop_signals=False
+        ) as case:
             sync_case_for_messaging(self.domain, case.case_id)
             yield case
 
