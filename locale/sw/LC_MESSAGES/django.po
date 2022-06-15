@@ -40127,10 +40127,6 @@ msgstr ""
 msgid "Uploaded file does not contian any sheets."
 msgstr ""
 
-#: coverage-report/corehq_apps_users_forms_py.html
-msgid "Specify Users At This Location"
-msgstr ""
-
 #: custom/abt/reports/filters.py custom/abt/reports/filters_2020.py
 #: custom/abt/reports/late_pmt.py custom/abt/reports/late_pmt_2020.py
 msgid "Level 1"
