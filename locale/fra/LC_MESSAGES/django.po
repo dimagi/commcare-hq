@@ -3499,14 +3499,6 @@ msgid "The request resulted in the following errors: {}"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Attempted to update unknown or non-editable field '{}'"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
-msgid "{} must be a {}"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -3518,6 +3510,34 @@ msgstr ""
 #: corehq/apps/api/resources/v0_5.py
 msgid "You do not have permission to view this feed."
 msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Attempted to update unknown or non-editable field '{}'"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid ""
+#| "Password is not strong enough. Try making your password more complex."
+msgid "Password is not strong enough."
+msgstr ""
+"Le mot de passe n'est pas assez fort. Essayez de le rendre plus complexe. "
+
+#: corehq/apps/api/user_updates.py
+msgid "'default_phone_number' must be a string"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid "Error! The selected form does not exist."
+msgid "The role '{}' does not exist"
+msgstr "Erreur! Le formulaire sélectionné n'existe pas"
+
+#: corehq/apps/api/user_updates.py
+#, fuzzy
+#| msgid "There are {} locations with the name '{}' under the parent '{}'"
+msgid "There are multiple roles with the name '{}' in the domain '{}'"
+msgstr "Il y a des {} sites avec le nom '{}' sous le parent '{}'"
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -17642,6 +17662,10 @@ msgstr ""
 msgid "App not found"
 msgstr ""
 
+#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/list.py
+msgid "OData Feeds"
+msgstr ""
+
 #: corehq/apps/enterprise/enterprise.py
 msgid "Odata feeds used"
 msgstr ""
@@ -19897,10 +19921,6 @@ msgstr ""
 
 #: corehq/apps/export/views/list.py
 msgid "OData feed"
-msgstr ""
-
-#: corehq/apps/export/views/list.py
-msgid "OData Feeds"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
@@ -23038,7 +23058,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr "Aucune donnée"
 
@@ -23977,6 +23996,23 @@ msgid ""
 "+Project+Spaces\" target=\"_blank\">Learn more</a> about pushing content "
 "with Linked Project Spaces.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+#, fuzzy
+#| msgid "This is not a valid sub-area for the area %s"
+msgid "{} is not a valid data source type!"
+msgstr "Cette sous-zone n'est pas valide pour la zone %s"
+
+#: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
+msgid "The data source referenced by this report could not be found."
+msgstr "Les données sources de rapport ne sont trouvées."
+
+#: corehq/apps/linked_domain/ucr.py
+msgid ""
+"This report cannot be linked because the registry is not accessible to {}. "
+"Please make sure the registry invitation has been accepted before linking "
+"reports."
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
@@ -27893,7 +27929,6 @@ msgid "[no name]"
 msgstr "[no name]"
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr "Inconnu [%s]"
@@ -29986,10 +30021,6 @@ msgstr ""
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Date is after"
 msgstr ""
-
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr "Pas de données"
 
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
@@ -34255,10 +34286,6 @@ msgstr ""
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
 msgstr "Le rapport contient des types de documents référencés invalides: {}"
-
-#: corehq/apps/userreports/models.py
-msgid "The data source referenced by this report could not be found."
-msgstr "Les données sources de rapport ne sont trouvées."
 
 #: corehq/apps/userreports/models.py
 #, python-format
@@ -42515,6 +42542,9 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "No Data"
+#~ msgstr "Pas de données"
 
 #~ msgid "Read Only (No Reports)"
 #~ msgstr "Lecture seule (sans rapports)"

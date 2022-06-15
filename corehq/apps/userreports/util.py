@@ -151,8 +151,8 @@ def get_configurable_and_static_reports(domain):
 
 
 def get_existing_reports(domain):
-    from corehq.apps.userreports.models import ReportConfiguration
-    existing_reports = ReportConfiguration.by_domain(domain)
+    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    existing_reports = get_report_and_registry_report_configs_for_domain(domain)
     return [
         report for report in existing_reports
         if not (report.title and report.title.startswith(TEMP_REPORT_PREFIX))
@@ -326,15 +326,19 @@ def _wrap_data_source_by_doc_type(doc, allow_deleted=False):
     }[doc_type].wrap(doc)
 
 
-def wrap_report_config_by_type(config):
+def wrap_report_config_by_type(config, allow_deleted=False):
     from corehq.apps.userreports.models import (
         ReportConfiguration,
         RegistryReportConfiguration,
     )
+    if is_deleted(config) and not allow_deleted:
+        raise ReportConfigurationNotFoundError()
+
+    doc_type = remove_deleted_doc_type_suffix(config["doc_type"])
     try:
         return {
             "ReportConfiguration": ReportConfiguration,
             "RegistryReportConfiguration": RegistryReportConfiguration,
-        }[config["doc_type"]].wrap(config)
+        }[doc_type].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
