@@ -82,4 +82,5 @@ branches:
     - ml/dhis2-better-errors # Minha June 9
     - ad/tableau-request-client-IP # Addison June 14
     - rc/case-id-download-from-mult-domains # Robert June 15
+    - bmb/sso/api/test-001  # Biyeun June 15
 submodules: { }
