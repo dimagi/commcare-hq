@@ -1,3 +1,4 @@
+from itertools import chain
 from uuid import uuid4
 from weakref import WeakKeyDictionary
 
@@ -19,6 +20,7 @@ from ..models import (
     FixtureDataItem,
     FixtureDataType,
     FixtureItemField,
+    FixtureOwnership,
 )
 
 
@@ -36,21 +38,31 @@ class _FixtureWorkbook(object):
             self.workbook = excel_get_workbook(file_or_filename)
         except WorkbookJSONError as e:
             raise FixtureUploadError([str(e)])
+        self._rows = {}
         self.item_keys = WeakKeyDictionary()
+        self.ownership = WeakKeyDictionary()
 
     def get_types_sheet(self):
         try:
-            return self.workbook.get_worksheet(title='types')
+            return self.get_data_sheet("types")
         except WorksheetNotFound:
             raise FixtureUploadError([FAILURE_MESSAGES['no_types_sheet']])
 
-    def get_data_sheet(self, data_type_tag):
-        return self.workbook.get_worksheet(data_type_tag)
+    def get_data_sheet(self, tag):
+        # Cache all rows in memory in order to traverse them more than
+        # once because IteratorJSONReader only allows a single iteration
+        # and openpyxl's ReadOnlyWorksheet does not have an efficient
+        # means of traversing sheets more than once.
+        try:
+            rows = self._rows[tag]
+        except KeyError:
+            rows = self._rows[tag] = list(self.workbook.get_worksheet(tag))
+        return rows
 
     def get_all_type_sheets(self):
         type_sheets = []
         seen_tags = set()
-        for number_of_fixtures, dt in enumerate(self.get_types_sheet()):
+        for dt in self.get_types_sheet():
             table_definition = _FixtureTableDefinition.from_row(dt)
             if table_definition.table_id in seen_tags:
                 raise FixtureUploadError([
@@ -60,6 +72,29 @@ class _FixtureWorkbook(object):
             seen_tags.add(table_definition.table_id)
             type_sheets.append(table_definition)
         return type_sheets
+
+    def get_owners(self):
+        """Get dict of user, group, and location names in this workbook
+
+        Result:
+        ```py
+        {
+            "user": {"user1", "user2", ...},
+            "group": {"group1", "group2", ...},
+            "location": {"location1", "location2", ...},
+        }
+        ```
+        """
+        owners = {
+            "user": set(),
+            "group": set(),
+            "location": set(),
+        }
+        for tabledef in self.get_all_type_sheets():
+            for key, values in owners.items():
+                rows = self.get_data_sheet(tabledef.table_id)
+                values.update(chain.from_iterable(r[key] for r in rows if key in r))
+        return owners
 
     def iter_tables(self, domain):
         for sheet in self.get_all_type_sheets():
@@ -78,15 +113,15 @@ class _FixtureWorkbook(object):
             yield table
 
     def iter_rows(self, data_type, sort_keys):
-        data_items = list(self.get_data_sheet(data_type.tag))
         type_fields = data_type.fields
         sort_key = -1
-        for i, di in enumerate(data_items):
+        for i, di in enumerate(self.get_data_sheet(data_type.tag)):
             if _is_deleted(di):
                 yield Deleted(di['UID'])
                 continue
             sort_key = max(sort_keys.get(di['UID'], i), sort_key + 1)
             item = FixtureDataItem(
+                _id=uuid4().hex,
                 domain=data_type.domain,
                 data_type_id=data_type._id,
                 fields={
@@ -97,10 +132,31 @@ class _FixtureWorkbook(object):
                 sort_key=sort_key,
             )
             self.item_keys[item] = di['UID']
+            self.ownership[item] = ownership = {}
+            for owner_type in ["user", "group", "location"]:
+                owner_names = di.get(owner_type)
+                if owner_names:
+                    ownership[owner_type] = owner_names
             yield item
 
     def get_key(self, obj):
         return self.item_keys.get(obj)
+
+    def iter_ownerships(self, row, data_item_id, owner_ids_map):
+        ownerships = self.ownership[row]
+        if not ownerships:
+            return
+        for owner_type, names in ownerships.items():
+            for name in names:
+                owner_id = owner_ids_map[owner_type].get(name)
+                if owner_id is None:
+                    raise NotImplementedError(f"TODO {owner_type} {name}")
+                yield FixtureOwnership(
+                    domain=row.domain,
+                    data_item_id=data_item_id,
+                    owner_type=owner_type,
+                    owner_id=owner_id,
+                )
 
 
 class Deleted:

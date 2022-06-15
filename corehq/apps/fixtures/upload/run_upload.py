@@ -1,4 +1,5 @@
 import uuid
+from collections import defaultdict
 from itertools import chain
 from operator import attrgetter
 
@@ -14,7 +15,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.location_cache import (
@@ -45,14 +46,30 @@ def _run_upload(domain, workbook, replace=False, task=None):
     Performs only deletes and/or inserts on table row and ownership
     records to optimize database interactions.
     """
-    def process_table(table):
+    def process_table(table, new_table):
+        def process_row(row, new_row):
+            mutation = get_mutation(
+                workbook,
+                old_owners.get(row._id, []),
+                workbook.iter_ownerships(new_row, row._id, owner_ids),
+                owner_key,
+            )
+            owners.update(mutation)
+
         old_rows = FixtureDataItem.get_item_list(domain, table.tag)
-        sort_keys = {} if replace else {r._id: r.sort_key for r in old_rows}
+        rows_by_id = {r._id: r.sort_key for r in old_rows}
+
+        old_owners = defaultdict(list)
+        for owner in FixtureOwnership.for_all_item_ids(list(rows_by_id), domain):
+            old_owners[owner.data_item_id].append(owner)
+
+        sort_keys = {} if replace else rows_by_id
         mutation = get_mutation(
             workbook,
             old_rows,
             workbook.iter_rows(table, sort_keys),
             row_key,
+            process_row,
             delete_missing=replace,
         )
         rows.update(mutation)
@@ -60,6 +77,8 @@ def _run_upload(domain, workbook, replace=False, task=None):
     old_tables = FixtureDataType.by_domain(domain)
 
     rows = Mutation()
+    owners = Mutation()
+    owner_ids = load_owner_ids(workbook.get_owners(), domain)
     tables = get_mutation(
         workbook,
         old_tables,
@@ -74,8 +93,9 @@ def _run_upload(domain, workbook, replace=False, task=None):
         for table in tables.to_delete:
             table.recursive_delete(couch)
         deleted_ids = {d._id for dx in couch.docs_to_delete.values() for d in dx}
-        couch.delete_all(r for r in rows.to_delete if r._id not in deleted_ids)
-        for doc in chain(tables.to_create, rows.to_create):
+        to_delete = chain(rows.to_delete, owners.to_delete)
+        couch.delete_all(d for d in to_delete if d._id not in deleted_ids)
+        for doc in chain(tables.to_create, rows.to_create, owners.to_create):
             couch.save(doc)
     clear_fixture_quickcache(domain, old_tables)
     clear_fixture_cache(domain)
@@ -95,12 +115,16 @@ def row_key(row):
     )
 
 
+def owner_key(owner):
+    return (owner.owner_id, owner.owner_type)
+
+
 def get_mutation(
     workbook,
     old_items,
     new_items,
     key,
-    process_item=lambda item: None,
+    process_item=lambda item, new_item: None,
     delete_missing=True,
     deleted_key=attrgetter("_id"),
 ):
@@ -123,7 +147,7 @@ def get_mutation(
             item = new
         else:
             item = old
-        process_item(item)
+        process_item(item, new)
     if delete_missing:
         mutation.to_delete.extend(old_map.values())
     return mutation
@@ -137,6 +161,41 @@ class Mutation:
     def update(self, mutation):
         self.to_delete.extend(mutation.to_delete)
         self.to_create.extend(mutation.to_create)
+
+
+def load_owner_ids(owners, domain_name):
+    """
+    :param owners: An owner names dict of lists like the one returned by
+    `_FixtureWorkbook.get_owners()`.
+    """
+    return {
+        "user": _load_user_ids_by_name(owners["user"], domain_name),
+        "group": _load_group_ids_by_name(owners["group"], domain_name),
+        "location": _load_location_ids_by_name(owners["location"], domain_name),
+    }
+
+
+def _load_user_ids_by_name(raw_usernames, domain_name):
+    name_map = {normalize_username(str(n), domain_name): n for n in raw_usernames}
+    usernames = list(name_map.keys())
+    results = CommCareUser.get_db().view('users/by_username', keys=usernames, reduce=False)
+    return {name_map[r["key"]]: r["id"] for r in results}
+
+
+def _load_group_ids_by_name(group_names, domain_name):
+    from corehq.apps.groups.models import Group
+    keys = [[domain_name, n] for n in group_names]
+    results = Group.get_db().view('groups/by_name', keys=keys, reduce=False)
+    return {r["key"][1]: r["id"] for r in results}
+
+
+def _load_location_ids_by_name(location_names, domain_name):
+    from corehq.apps.locations.models import SQLLocation
+    results = SQLLocation.active_objects.filter(
+        domain=domain_name,
+        name__in=location_names,
+    ).values_list("name", "location_id")
+    return dict(results)
 
 
 def _run_fixture_upload(domain, workbook, replace=False, task=None):

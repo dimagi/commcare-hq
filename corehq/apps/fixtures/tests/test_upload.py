@@ -1,4 +1,5 @@
 from io import BytesIO
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -11,7 +12,7 @@ from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import (
@@ -21,6 +22,9 @@ from corehq.apps.fixtures.upload.run_upload import (
     clear_fixture_quickcache,
 )
 from corehq.apps.fixtures.upload.workbook import get_workbook
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import generate_cases, make_make_path
 
 from dimagi.utils.couch.database import iter_docs
@@ -593,3 +597,127 @@ class TestFastFixtureUpload(TestFixtureUpload):
     @nottest
     def test_delete_row(self):
         """Fast fixture uploads ignore the delete column"""
+
+
+class TestFixtureOwnershipUpload(TestCase):
+    do_upload = _run_upload
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'fixture-upload-test'
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+
+        cls.user1 = CommCareUser.create(
+            cls.domain, f"user1@{cls.domain}.commcarehq.org", "pass", None, None)
+        cls.addClassCleanup(cls.user1.delete, cls.domain, deleted_by=None)
+        cls.user2 = CommCareUser.create(
+            cls.domain, f"user2@{cls.domain}.commcarehq.org", "pass", None, None)
+        cls.addClassCleanup(cls.user2.delete, cls.domain, deleted_by=None)
+
+        cls.group1 = Group(domain=cls.domain, name="g1", users=[cls.user1._id])
+        cls.group1.save()
+        cls.addClassCleanup(cls.group1.delete)
+        cls.group2 = Group(domain=cls.domain, name="g2", users=[cls.user1._id])
+        cls.group2.save()
+        cls.addClassCleanup(cls.group2.delete)
+
+        cls.region = LocationType(domain=cls.domain, name="region", code="region")
+        cls.region.save()
+        cls.addClassCleanup(cls.region.delete)
+        cls.loc1 = SQLLocation(domain=cls.domain, name="loc1", location_type=cls.region)
+        cls.loc1.save()
+        cls.addClassCleanup(delete_location, cls.loc1)
+        cls.loc2 = SQLLocation(domain=cls.domain, name="loc2", location_type=cls.region)
+        cls.loc2.save()
+        cls.addClassCleanup(delete_location, cls.loc2)
+
+    def tearDown(self):
+        from dimagi.utils.couch.bulk import CouchTransaction
+        types = FixtureDataType.by_domain(self.domain)
+        try:
+            with CouchTransaction() as tx:
+                for dt in types:
+                    dt.recursive_delete(tx)
+        finally:
+            clear_fixture_quickcache(self.domain, types)
+
+    def test_row_ownership(self):
+        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        self.assertEqual(self.get_rows(), [('apple', {'user1'}, {'g1'}, {'loc1'})])
+
+    def test_replace_row_ownership(self):
+        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        apple_id, = [r._id for r in self.get_rows(None)]
+
+        self.upload([(apple_id, 'N', 'apple', 'user2', 'g2', 'loc2')])
+        self.assertEqual(self.get_rows(), [('apple', {'user2'}, {'g2'}, {'loc2'})])
+
+    def test_delete_ownership(self):
+        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        apple_id, = [r._id for r in self.get_rows(None)]
+
+        self.upload([(apple_id, 'N', 'apple', None, None, None)])
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+
+    def test_ownerships_deleted_with_table(self):
+        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        apple_id, = [r._id for r in self.get_rows(None)]
+
+        data = [
+            ('types', [('Y', 'things', 'no', 'name')]),
+            ('things', [(apple_id, 'N', 'apple', 'user1', 'g1', 'loc1')]),
+        ]
+        workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
+        type(self).do_upload(self.domain, workbook)
+
+        ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
+        self.assertEqual(ownerships, [])
+
+    def upload(self, rows, **kw):
+        data = self.make_rows(rows)
+        workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
+        result = type(self).do_upload(self.domain, workbook, **kw)
+        if result:
+            self.assertFalse(result.errors)
+            self.assertFalse(result.messages)
+
+    def get_rows(self, transform=row_name):
+        def sort_key(item):
+            return item.sort_key, transform(item)
+
+        items = FixtureDataItem.get_item_list(self.domain, 'things')
+        if transform is None:
+            return items
+        return [
+            (
+                transform(item),
+                {u.raw_username for u in item.users},
+                {g.name for g in item.groups},
+                {x.name for x in item.locations},
+            )
+            for item in sorted(items, key=sort_key)
+        ]
+
+    headers = (
+        ('types', ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1')),
+        ('things', ('UID', 'Delete(Y/N)', 'field: name', 'user 1', 'group 1', 'location 1')),
+    )
+
+    @staticmethod
+    def make_rows(item_rows):
+        return (
+            ('types', [('N', 'things', 'no', 'name')]),
+            ('things', item_rows),
+        )
+
+
+class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
+    do_upload = _run_fixture_upload
+
+
+def delete_location(location):
+    path = "corehq.apps.locations.dbaccessors.mobile_user_ids_at_locations"
+    with patch(path, lambda ids: []):
+        location.delete()
