@@ -149,22 +149,22 @@ class TestRolePermission(CaseWithDomainAndUser):
         )
 
 
-class TestSQLPermission(CaseWithDomainAndUser):
+class TestPermission(CaseWithDomainAndUser):
 
     def setUp(self):
         self.test_permission = SQLPermission.objects.create(value="edit_bupkis")
 
-    def test_audit_fields_for_sqlpermission_create(self):
+    def test_audit_fields_for_permission_create(self):
         setup_event, = self.get_test_audit_events()
         self.assertTrue(setup_event.is_create)
         self.assertEqual(self.test_permission.pk, setup_event.object_pk)
         self.assertEqual(
-            "corehq.apps.users.models_role.SQLPermission",
+            "corehq.apps.users.models_role.Permission",
             setup_event.object_class_path,
         )
         self.assertEqual({"value": {"new": "edit_bupkis"}}, setup_event.delta)
 
-    def test_audit_fields_for_sqlpermission_update(self):
+    def test_audit_fields_for_permission_update(self):
         setup_event, = self.get_test_audit_events()
         # This isn't an "HQ practical" test because these values don't get
         # changed this way in practice, but this test demonstrates that such a
@@ -176,7 +176,7 @@ class TestSQLPermission(CaseWithDomainAndUser):
         self.assertFalse(event.is_delete)
         self.assertEqual(self.test_permission.pk, event.object_pk)
         self.assertEqual(
-            "corehq.apps.users.models_role.SQLPermission",
+            "corehq.apps.users.models_role.Permission",
             event.object_class_path,
         )
         self.assertEqual(
@@ -184,7 +184,7 @@ class TestSQLPermission(CaseWithDomainAndUser):
             event.delta,
         )
 
-    def test_audit_fields_for_sqlpermission_delete(self):
+    def test_audit_fields_for_permission_delete(self):
         setup_event, = self.get_test_audit_events()
         remember = self.test_permission.pk
         self.test_permission.delete()
@@ -192,7 +192,7 @@ class TestSQLPermission(CaseWithDomainAndUser):
         self.assertTrue(event.is_delete)
         self.assertEqual(remember, event.object_pk)
         self.assertEqual(
-            "corehq.apps.users.models_role.SQLPermission",
+            "corehq.apps.users.models_role.Permission",
             event.object_class_path,
         )
         self.assertEqual({"value": {"old": "edit_bupkis"}}, event.delta)
