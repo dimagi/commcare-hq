@@ -327,51 +327,6 @@ def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
-def flatten_result(hit, include_score=False, is_related_case=False):
-    """Flattens a result from CaseSearchES into the format that Case serializers
-    expect
-
-    i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
-    {'name': 'blah', 'foo':'bar'}
-
-    Note that some dynamic case properties, if present, will overwrite
-    internal case properties:
-
-        domain
-        type
-        opened_on
-        opened_by
-        modified_on
-        server_modified_on
-        modified_by         -> also overwrites user_id
-        closed
-        closed_on
-        closed_by
-        deleted
-        deleted_on
-        deletion_id
-    """
-    try:
-        result = hit['_source']
-    except KeyError:
-        result = hit
-
-    if include_score:
-        result[RELEVANCE_SCORE] = hit['_score']
-    if is_related_case:
-        result[IS_RELATED_CASE] = "true"
-    case_properties = result.pop(CASE_PROPERTIES_PATH, [])
-    for case_property in case_properties:
-        key = case_property.get('key')
-        value = case_property.get('value')
-        if key is not None and key not in SPECIAL_CASE_PROPERTIES and value:
-            result[key] = value
-
-    for key in SYSTEM_PROPERTIES:
-        result.pop(key, None)
-    return result
-
-
 def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
     """Convert case search index hit to CommCareCase
 

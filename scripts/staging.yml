@@ -60,6 +60,7 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
+    - cs/SC-2078-hourly-time-filter+ml/all-in-one-offboarding # Jenny June 14
     - ml/all-in-one-offboarding # Minha April 13
     #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
@@ -68,8 +69,7 @@ branches:
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
-    - jls/tableau-view-all # Jenny May 31
-    #- jls/12-hour-time # Jenny June 1
+#    - jls/tableau-view-all # Jenny May 31
     - akj/mw-signup # Akash May 25
     - ml/mobile-worker-download-bug # Minha May 27
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
@@ -82,6 +82,5 @@ branches:
     - dependabot/pip/requirements/lxml-4.8.0 # Graham June 7
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
-    - rc/add-geocoder-county-field # Robert June 13
-    - jls/tableau-resize # Jenny June 13
+    - ad/tableau-request-client-IP # Addison June 14
 submodules: { }
