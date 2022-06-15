@@ -12,16 +12,14 @@ from corehq.util.django_migrations import skip_on_fresh_install
 def _add_default_mobile_worker_role(apps, schema_editor):
     default_mobile_worker_roles = UserRole.objects.filter(is_commcare_user_default=True)
     for domain in Domain.get_all():
-        dmw_roles_in_domain = default_mobile_worker_roles.filter(domain=domain)
-        if len(dmw_roles_in_domain) == 0:
+        has_dmw_role = default_mobile_worker_roles.filter(domain=domain).exists()
+        if not has_dmw_role:
             UserRole.create(
                 domain,
                 UserRolePresets.MOBILE_WORKER,
                 permissions=Permissions(),
                 is_commcare_user_default=True,
             )
-        elif 1 <= len(dmw_roles_in_domain) == 1:
-            continue
 
 
 class Migration(migrations.Migration):
