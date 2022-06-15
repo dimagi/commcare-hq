@@ -78,7 +78,6 @@ branches:
     - cs/SC-1821-script_for_sizing_model_params # June 2
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
-    - dependabot/pip/requirements/djangorestframework-3.13.1 # Graham June 7
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
     - ad/tableau-request-client-IP # Addison June 14
