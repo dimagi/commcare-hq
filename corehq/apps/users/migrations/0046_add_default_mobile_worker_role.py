@@ -11,7 +11,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 @skip_on_fresh_install
 def _add_default_mobile_worker_role(apps, schema_editor):
     default_mobile_worker_roles = UserRole.objects.filter(is_commcare_user_default=True)
-    for domain in Domain.get_all():
+    for domain in Domain.get_all_names():
         has_dmw_role = default_mobile_worker_roles.filter(domain=domain).exists()
         if not has_dmw_role:
             UserRole.create(
