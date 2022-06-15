@@ -183,7 +183,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
-djangorestframework==3.12.2
+djangorestframework==3.13.1
     # via -r base-requirements.in
 dnspython==1.15.0
     # via
@@ -484,6 +484,7 @@ pytz==2020.1
     #   -r base-requirements.in
     #   babel
     #   django
+    #   djangorestframework
     #   twilio
 pyyaml==5.4.1
     # via
