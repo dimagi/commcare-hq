@@ -104,13 +104,10 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
                 **key
             ).all():
                 if period == 'hourly':
-                    try:
-                        hour = int(result['value'].get('hour'))
-                        stop_hour = int(result['value'].get('stop_hour'))
+                    hour = int(result['value'].get('hour') or 0)
+                    stop_hour = int(result['value'].get('stop_hour') or 23)
 
-                        if hour <= target_point_in_time.hour <= stop_hour:
-                            yield result['id']
-                    except (TypeError, ValueError):
+                    if hour <= target_point_in_time.hour <= stop_hour:
                         yield result['id']
                 else:
                     yield result['id']
