@@ -262,7 +262,7 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
-@audit_fields("id", "value")
+@audit_fields("value")
 class SQLPermission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
