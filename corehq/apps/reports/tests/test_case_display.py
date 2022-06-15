@@ -10,6 +10,7 @@ def test_happy_case_display():
     }
     case_display = CaseDisplayES(case_dict)
     assert_equal(case_display.modified_on, 'Apr 06, 2022 12:13:14 UTC')
+    assert_equal(case_display.last_modified, 'Apr 06, 2022 12:13:14 UTC')
 
 
 def test_bad_case_display():
