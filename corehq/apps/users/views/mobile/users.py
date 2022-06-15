@@ -2,7 +2,6 @@ import io
 import json
 import re
 import time
-import logging
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -1471,6 +1470,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
+
 
 @location_safe
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
