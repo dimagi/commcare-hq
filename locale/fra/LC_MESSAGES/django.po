@@ -27812,6 +27812,12 @@ msgid "Day"
 msgstr "Jour"
 
 #: corehq/apps/reports/forms.py
+#, fuzzy
+#| msgid "Time"
+msgid "To Time"
+msgstr "Heure"
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -27830,6 +27836,10 @@ msgstr "Chaque heure"
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
 msgstr "Configurer le rapport planifié"
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
@@ -30036,6 +30046,12 @@ msgstr "Nouveau rapport planifié"
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr "Editer le rapport planifié"
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr "Le fuseau horaire de ce rapport est %(timezone)s."
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -42508,6 +42524,11 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#, fuzzy
+#~| msgid "Specify Workers at this Location"
+#~ msgid "Specify Users At This Location"
+#~ msgstr "Spécifier les utilisateurs sur ce site"
 
 #~ msgid "No Data"
 #~ msgstr "Pas de données"
