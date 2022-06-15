@@ -14,6 +14,7 @@
   {% initial_page_data 'is_deid' is_deid %}
   {% initial_page_data 'is_feed' is_feed|default:False %}
   {% initial_page_data 'is_odata' is_odata|default:False %}
+  {% initial_page_data 'is_live_google_sheet' is_live_google_sheet|default:False %}
   {% initial_page_data 'model_type' model_type %}
   {% initial_page_data 'my_export_type' my_export_type %}
   {% initial_page_data 'shared_export_type' shared_export_type %}
@@ -25,6 +26,7 @@
   {% registerurl 'get_saved_export_progress' domain %}
   {% registerurl 'submit_app_data_drilldown_form' domain %}
   {% registerurl 'toggle_saved_export_enabled' domain %}
+  {% registerurl 'refresh_google_sheet' domain %}
   {% registerurl 'update_emailed_export_data' domain %}
 
   <p>{{ lead_text }}</p>
@@ -34,6 +36,12 @@
       <feedback params="featureName: '{% trans_html_attr 'PowerBI / Tableau Integration' %}'"></feedback>
     </div>
   {% endif %}
+
+  {% if is_live_google_sheet %}
+    <div class="pull-right">
+      <feedback params="featureName: '{% trans_html_attr 'Google Sheet Integration' %}'"></feedback>
+    </div>
+  {% endif%}
 
   {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}
