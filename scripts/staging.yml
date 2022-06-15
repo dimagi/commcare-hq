@@ -81,5 +81,5 @@ branches:
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
     - ad/tableau-request-client-IP # Addison June 14
-    - rc/case-id-download-from-mult-domain # Robert June 15
+    - rc/case-id-download-from-mult-domains # Robert June 15
 submodules: { }
