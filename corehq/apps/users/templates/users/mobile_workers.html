@@ -34,6 +34,7 @@
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
   {% initial_page_data 'show_deactivate_after_date' show_deactivate_after_date %}
+  {% initial_page_data 'two_stage_user_confirmation' two_stage_user_confirmation %}
   {% registerurl 'location_search' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
@@ -315,9 +316,7 @@
             {% endblocktrans %}
           {% endif %}
         </div>
-
         <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
-          {% with two_stage_user_confirmation=request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
           <thead>
           <tr>
             <th class="col-xs-3">{% trans "Username" %}</th>
@@ -550,7 +549,6 @@
               </td>
             {% endif %}
           </tr>
-          {% endwith %}
           </tbody>
         </table>
         <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">

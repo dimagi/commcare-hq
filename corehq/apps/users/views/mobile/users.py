@@ -674,6 +674,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         )
 
     @property
+    def two_stage_user_confirmation(self):
+        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
+            self.domain
+        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+
+    @property
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
 
@@ -694,6 +700,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'bulk_download_url': bulk_download_url,
             'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
+            'two_stage_user_confirmation': self.two_stage_user_confirmation,
         }
 
     @property
