@@ -284,6 +284,7 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
                     reduce=count_only,
                     include_docs=include_docs
             ):
+                print(row)
                 yield row
 
 
