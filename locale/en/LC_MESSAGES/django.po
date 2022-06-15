@@ -22150,7 +22150,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr ""
 
@@ -26847,7 +26846,6 @@ msgid "[no name]"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr ""
@@ -28859,10 +28857,6 @@ msgstr ""
 
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Date is after"
-msgstr ""
-
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
 msgstr ""
 
 #: corehq/apps/reports/v2/models.py
