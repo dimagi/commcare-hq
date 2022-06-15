@@ -22,7 +22,7 @@ from corehq.util.quickcache import quickcache
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
-new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
+new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+"  # lowercase letters, numbers, and '-' (at most one between "words")
 
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"

@@ -50,7 +50,9 @@ def should_send_account_confirmation(couch_user):
 def send_account_confirmation(commcare_user):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
     from corehq.apps.users.views.mobile import CommCareUserConfirmAccountView
-    template_params = _get_account_confirmation_template_params(commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname)
+    template_params = _get_account_confirmation_template_params(
+        commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
+    )
 
     lang = guess_domain_language(commcare_user.domain)
     with override(lang):
@@ -67,7 +69,9 @@ def send_account_confirmation(commcare_user):
 def send_account_confirmation_sms(commcare_user):
     from corehq.apps.users.views.mobile import CommCareUserConfirmAccountBySMSView
     encrypted_user_info = encrypt_account_confirmation_info(commcare_user)
-    template_params = _get_account_confirmation_template_params(commcare_user, encrypted_user_info, CommCareUserConfirmAccountBySMSView.urlname)
+    template_params = _get_account_confirmation_template_params(
+        commcare_user, encrypted_user_info, CommCareUserConfirmAccountBySMSView.urlname
+    )
     lang = guess_domain_language(commcare_user.domain)
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",

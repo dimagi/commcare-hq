@@ -44,7 +44,8 @@ class UtilsTests(TestCase):
         self.assertEqual('en', lang)
 
     def test_user_info_encryption_decryption(self):
-        commcare_user = CommCareUser.create("22", ''.join(str(randint(1,100)) for i in range(3)), "pass22", None, None)
+        commcare_user = CommCareUser.create("22", ''.join(str(randint(1, 100))
+                                            for i in range(3)), "pass22", None, None)
         encrypted_string = encrypt_account_confirmation_info(commcare_user)
         decrypted = json.loads(b64_aes_decrypt(encrypted_string))
         self.assertIsInstance(decrypted, dict)
@@ -71,6 +72,7 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
         # exception would be raised here if there is an issue
         serialized_items = json.dumps(items)
         self.assertTrue(serialized_items)
+
 
 @contextmanager
 def test_domain(name="domain", skip_full_delete=False):

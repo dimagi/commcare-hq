@@ -226,50 +226,69 @@ def test_validating_sms_confirmation_entry():
     assert validation_result is None
 
     # Confirmation sms set to True, existing user, active
-    user_spec = {ConfirmationSmsValidator.confirmation_sms_header: 'True', 'user_id': 1, ConfirmationSmsValidator.active_status_header: 'True'}
+    user_spec = {
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        'user_id': 1,
+        ConfirmationSmsValidator.active_status_header: 'True'
+    }
     validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for an existing user, is_active must be empty or set to False."
+    assert validation_result == "When 'send_confirmation_sms' is True for an "\
+        "existing user, is_active must be empty or set to False."
 
     # Confirmation sms set to True, existing user, account confirmed
-    user_spec = {ConfirmationSmsValidator.confirmation_sms_header: 'True', 'user_id': 1, ConfirmationSmsValidator.account_confirmed_header: 'True'}
+    user_spec = {
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        'user_id': 1,
+        ConfirmationSmsValidator.account_confirmed_header: 'True'
+    }
     validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for an existing user, is_account_confirmed must be empty."
+    assert validation_result == "When 'send_confirmation_sms' is True for an "\
+        "existing user, is_account_confirmed must be empty."
 
     # Confirmation sms set to True, existing user, account confirmed, active
     user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True', 
-        'user_id': 1, 
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        'user_id': 1,
         ConfirmationSmsValidator.account_confirmed_header: 'True',
-        ConfirmationSmsValidator.active_status_header: 'True'}
+        ConfirmationSmsValidator.active_status_header: 'True'
+    }
     validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for an existing user, is_active must be empty or set to False and is_account_confirmed must be empty."
+    expect = "When 'send_confirmation_sms' is True for an existing user, " \
+        "is_active must be empty or set to False and is_account_confirmed must be empty."
+    assert validation_result == expect
 
     # Confirmation sms set to True, existing user, account not confirmed, not active
     user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True', 
-        'user_id': 1, 
-        ConfirmationSmsValidator.active_status_header: 'False'}
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        'user_id': 1,
+        ConfirmationSmsValidator.active_status_header: 'False'
+    }
     validation_result = validator.validate_spec(user_spec)
     assert validation_result is None
 
     # Confirmation sms set to True, new user, account not confirmed, not active
     user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True', 
-        ConfirmationSmsValidator.active_status_header: 'False'}
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        ConfirmationSmsValidator.active_status_header: 'False'
+    }
     validation_result = validator.validate_spec(user_spec)
     assert validation_result is None
 
     # Confirmation sms set to True, new user, active
     user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True', 
-        ConfirmationSmsValidator.active_status_header: 'True'}
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
+        ConfirmationSmsValidator.active_status_header: 'True'
+    }
     validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for a new user, is_active must be either empty or set to False."
+    assert validation_result == "When 'send_confirmation_sms' is True for a new user, "\
+        "is_active must be either empty or set to False."
 
     # Confirmation sms set to True, new user, active, account confirmed
     user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True', 
+        ConfirmationSmsValidator.confirmation_sms_header: 'True',
         ConfirmationSmsValidator.active_status_header: 'True',
-        ConfirmationSmsValidator.account_confirmed_header: 'True'}
+        ConfirmationSmsValidator.account_confirmed_header: 'True'
+    }
     validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for a new user, is_active and is_account_confirmed must be either empty or set to False."
+    assert validation_result == "When 'send_confirmation_sms' is True for a new user, "\
+        "is_active and is_account_confirmed must be either empty or set to False."

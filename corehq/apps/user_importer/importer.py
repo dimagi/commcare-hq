@@ -256,7 +256,9 @@ def create_or_update_groups(domain, group_specs):
 
         # check that group_names are unique
         if group_name in group_names:
-            log['errors'].append('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+            log['errors'].append(
+                'Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name
+            )
             continue
         else:
             group_names.add(group_name)
@@ -345,7 +347,15 @@ def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
     return locations_updated, primary_location_removed
 
 
-def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
+def get_domain_info(
+    domain,
+    upload_domain,
+    user_specs,
+    domain_info_by_domain,
+    upload_user=None,
+    group_memoizer=None,
+    is_web_upload=False
+):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     from corehq.apps.users.views.utils import get_editable_role_choices
 
@@ -767,7 +777,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                     if domain_info.can_assign_locations and location_codes is not None:
                         # set invite location to first item in location_codes
                         if len(location_codes) > 0:
-                            user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
+                            user_invite_loc = get_location_from_site_code(
+                                location_codes[0], domain_info.location_cache
+                            )
                             user_invite_loc_id = user_invite_loc.location_id
                     create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                      user_invite_loc_id)

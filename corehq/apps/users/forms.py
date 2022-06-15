@@ -914,10 +914,10 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
                                     <!-- ko if: $root.stagedUser().force_account_confirmation() -->
                                         <i class="fa fa-warning"></i> {disabled_email}
-                                    <!-- /ko --> 
-                                    <!-- ko if: !($root.stagedUser().force_account_confirmation()) && $root.stagedUser().force_account_confirmation_by_sms() -->
+                                    <!-- /ko -->
+                                    <!-- ko if: !($root.stagedUser().force_account_confirmation()) && $root.stagedUser().force_account_confirmation_by_sms() -->  # noqa: E501
                                         <i class="fa fa-warning"></i> {disabled_phone}
-                                    <!-- /ko --> 
+                                    <!-- /ko -->
                                 <!-- /ko -->
                             </p>
                         '''.format(
@@ -928,7 +928,8 @@ class NewMobileWorkerForm(forms.Form):
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
                             disabled_email=_("Setting a password is disabled. "
-                                            "The user will set their own password on confirming their account email."),
+                                            "The user will set their own password on "
+                                            "confirming their account email."),
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
