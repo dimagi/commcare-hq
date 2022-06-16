@@ -5,8 +5,17 @@ from django.contrib.auth.models import User
 
 from google.oauth2.credentials import Credentials
 
-from corehq.apps.oauth_integrations.models import GoogleApiToken
-from corehq.apps.oauth_integrations.utils import get_token, load_credentials, stringify_credentials
+from corehq.apps.oauth_integrations.models import (
+    GoogleApiToken,
+    LiveGoogleSheetRefreshStatus,
+    LiveGoogleSheetSchedule,
+)
+from corehq.apps.oauth_integrations.utils import (
+    get_scheduled_refreshes,
+    get_token,
+    load_credentials,
+    stringify_credentials,
+)
 
 
 class TestUtils(TestCase):
@@ -51,6 +60,60 @@ class TestUtils(TestCase):
     def tearDowntoken(self):
         objects = GoogleApiToken.objects.get(user=self.user)
         objects.delete()
+
+    def test_get_scheduled_refreshes(self):
+        now = datetime(2022, 8, 6, 7, 50)
+        LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport6",
+            start_time=now.hour,
+            is_active=False
+        )
+        schedule_ran_today = LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport7",
+            start_time=now.hour,
+            is_active=True
+        )
+        LiveGoogleSheetRefreshStatus.objects.create(
+            schedule=schedule_ran_today,
+            date_start=datetime(2022, 8, 6, 7, 1),
+            date_end=datetime(2022, 8, 6, 7, 49)
+        )
+        schedule_ended_now = LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport",
+            start_time=now.hour,
+            is_active=True
+        )
+        LiveGoogleSheetRefreshStatus.objects.create(
+            schedule=schedule_ended_now,
+            date_start=datetime(2022, 8, 6, 7, 49),
+            date_end=now
+        )
+        schedule_ran_yesterday = LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport2",
+            start_time=now.hour,
+            is_active=True
+        )
+        LiveGoogleSheetRefreshStatus.objects.create(
+            schedule=schedule_ran_yesterday,
+            date_start=datetime(2022, 8, 5, 7, 51),
+            date_end=datetime(2022, 8, 5, 7, 52)
+        )
+        schedule_currently_running = LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport3",
+            start_time=now.hour,
+            is_active=True
+        )
+        LiveGoogleSheetRefreshStatus.objects.create(
+            schedule=schedule_currently_running,
+            date_start=datetime(2022, 8, 6, 7, 49),
+        )
+        schedule_freshly_created = LiveGoogleSheetSchedule.objects.create(
+            export_config_id="fakeExport4",
+            start_time=now.hour,
+            is_active=True
+        )
+
+        self.assertCountEqual(get_scheduled_refreshes(now), [schedule_ran_yesterday, schedule_freshly_created])
 
 
 class TestCredentialsUtils(SimpleTestCase):

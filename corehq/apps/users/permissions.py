@@ -9,6 +9,7 @@ FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 ODATA_FEED_PERMISSION = 'corehq.apps.reports.standard.export.ODataFeedListView'
+LIVE_GOOGLE_SHEET_PERMISSION = 'corehq.apps.reports.standard.export.LiveGoogleSheetListView'
 SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
 
 EXPORT_PERMISSIONS = {
@@ -16,6 +17,7 @@ EXPORT_PERMISSIONS = {
     DEID_EXPORT_PERMISSION,
     CASE_EXPORT_PERMISSION,
     ODATA_FEED_PERMISSION,
+    LIVE_GOOGLE_SHEET_PERMISSION,
 }
 
 ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'])
@@ -26,6 +28,7 @@ def get_extra_permissions():
         FormExportListView,
         CaseExportListView,
         ODataFeedListView,
+        LiveGoogleSheetListView,
     )
     from corehq.apps.export.views.download import DownloadNewSmsExportView
     yield ReportPermission(
@@ -40,6 +43,10 @@ def get_extra_permissions():
     yield ReportPermission(
         ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
         lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
+    )
+    yield ReportPermission(
+        LIVE_GOOGLE_SHEET_PERMISSION, LiveGoogleSheetListView.page_title,
+        lambda couch_user: toggles.GOOGLE_SHEETS_INTEGRATION.enabled(couch_user)
     )
 
 
