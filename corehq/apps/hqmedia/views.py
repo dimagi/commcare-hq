@@ -79,7 +79,7 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
@@ -89,7 +89,7 @@ transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60
 
 class BaseMultimediaView(ApplicationViewMixin, BaseSectionPageView):
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=login_and_domain_required))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
@@ -520,7 +520,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
         except Exception as e:
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=login_and_domain_required))
     # YUI js uploader library doesn't support csrf
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
