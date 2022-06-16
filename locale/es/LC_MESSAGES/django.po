@@ -6515,15 +6515,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"involves a form\n"
-"                that requires manual linking which has not been configured.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -12039,10 +12030,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
-#, fuzzy
-#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr "El formulario no se valida"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""
@@ -23165,7 +23154,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr "No hay datos"
 
@@ -24106,10 +24094,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
-#, fuzzy
-#| msgid "This is not a valid sub-area for the area %s"
 msgid "{} is not a valid data source type!"
-msgstr "Esta no es una sub-área válida para el área %s"
+msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
 msgid "The data source referenced by this report could not be found."
@@ -27926,6 +27912,12 @@ msgid "Day"
 msgstr "Día"
 
 #: corehq/apps/reports/forms.py
+#, fuzzy
+#| msgid "Time"
+msgid "To Time"
+msgstr "Hora"
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -27944,6 +27936,10 @@ msgstr ""
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
 msgstr "Configurar Reporte Agendado"
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
@@ -28029,7 +28025,6 @@ msgid "[no name]"
 msgstr "[no tiene nombre]"
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr "Desconocido  [%s]"
@@ -30119,10 +30114,6 @@ msgstr ""
 msgid "Date is after"
 msgstr ""
 
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr "No hay Datos"
-
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
 msgstr ""
@@ -30151,6 +30142,12 @@ msgstr "Nuevo Reporte Agendado"
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr "Editar Reporte Agendado "
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr "La zona horaria de este reporte es %(timezone)s."
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -37459,16 +37456,12 @@ msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username contains invalid characters."
 msgid "Username '{}' may not contain special characters."
-msgstr "El nombre de usuario contiene caracteres inválidos."
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username is required."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/util.py
 msgid "Username '{}' may not contain consecutive '.' (period)."
@@ -37483,16 +37476,12 @@ msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
 msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is already taken"
 msgid "Username '{}' is already taken."
-msgstr "Nombre de usuario {} ya está tomado"
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username '{}' is reserved."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py
 #, python-format
@@ -42598,17 +42587,10 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr ""
 
-#~ msgid "Read Only (No Reports)"
-#~ msgstr "Solo Lectura (No Reportes)"
+#, fuzzy
+#~| msgid "Specify Workers at this Location"
+#~ msgid "Specify Users At This Location"
+#~ msgstr "Especificar Trabajadores en esta Ubicación"
 
-#~ msgid "App Editor"
-#~ msgstr "Editor de App"
-
-#~ msgid "Read Only"
-#~ msgstr "Solo Lectura"
-
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador de Campo"
-
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador de Facturación"
+#~ msgid "No Data"
+#~ msgstr "No hay Datos"
