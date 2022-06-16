@@ -265,10 +265,10 @@ class SentryContextMiddleware(MiddlewareMixin):
     """Add details to Sentry context.
     Should be placed after 'corehq.apps.users.middleware.UsersMiddleware'
     """
-    def __init__(self, get_response=None):
+    def __init__(self, get_response):
         super(SentryContextMiddleware, self).__init__(get_response)
         try:
-            from sentry_sdk import configure_scope
+            from sentry_sdk import configure_scope  # noqa: F401
         except ImportError:
             raise MiddlewareNotUsed
 

@@ -1,5 +1,6 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
+    var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -244,7 +245,16 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'address';
         self.broadcastTopics = [];
         self.editing = true;
-
+        let isRequired = self.question.required() ? "Yes" : "No";
+        $(function () {
+            let entry = $(`#${self.entryId}`);
+            entry.on("change", function () {
+                kissmetrics.track.event("Accessibility Tracking - Geocoder Question Interaction");
+            });
+        });
+        kissmetrics.track.event("Accessibility Tracking - Geocoder Question Seen", {
+            "Required": isRequired,
+        });
         // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
         // subscribers.
         self.geocoderItemCallback = function (item) {
@@ -397,6 +407,24 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.isMulti = true;
         self.hideLabel = options.hideLabel;
 
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (answer === Const.NO_ANSWER) {
+                    return [];
+                }
+
+                let choices = this.choices();
+                return answer.map(index => choices[index - 1]);
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                // answer is based on a 1 indexed index of the choices
+                let answer = _.filter(value.map((val) => _.indexOf(choices, val) + 1), (v) => v > 0);
+                self.onPreProcess.call(this, answer);
+            },
+        });
+
         self.colStyleIfHideLabel = ko.computed(function () {
             return self.hideLabel ? self.getColStyle(self.choices().length) : null;
         });
@@ -425,15 +453,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return "";
         };
 
-        self.options = ko.computed(function () {
-            return _.map(question.choices(), function (choice, idx) {
-                return {
-                    text: choice,
-                    id: idx + 1,
-                };
-            });
-        });
-
         self.afterRender = function () {
             select2ify(self, {});
         };
@@ -451,26 +470,33 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.choices = question.choices;
         self.templateType = 'select';
         self.isMulti = false;
+
+        self.rawAnswer = ko.pureComputed({
+            read: () => {
+                let answer = this.answer();
+                if (!answer) {
+                    return Const.NO_ANSWER;
+                }
+
+                let choices = this.choices();
+                return choices[answer - 1];
+            },
+            write: (value) => {
+                let choices = this.choices.peek();
+                let answer = _.indexOf(choices, value);
+                // answer is based on a 1 indexed index of the choices
+                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
+            },
+        });
+
         self.onClear = function () {
             self.rawAnswer(Const.NO_ANSWER);
-        };
-        self.isValid = function () {
-            return true;
         };
 
         self.enableReceiver(question, options);
     }
     SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-    SingleSelectEntry.prototype.onPreProcess = function (newValue) {
-        if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
-                this.answer(newValue);
-            } else {
-                this.answer(+newValue);
-            }
-        }
-    };
     SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         // Iterate through choices and select the one that matches the message[field]
         var self = this;
@@ -609,24 +635,45 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         query = query.toLowerCase();
         var haystack = option.text.toLowerCase();
 
-        var match;
+        var match,
+            wordsInQuery = query.split(/\s+/),
+            wordsInChoice = haystack.split(/\s+/);
         if (matchType === Const.COMBOBOX_MULTIWORD) {
             // Multiword filter, matches any choice that contains all of the words in the query
             //
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
             // where n is number of words in the query, and m is number of words in the choice
-            var wordsInQuery = query.split(' ');
-            var wordsInChoice = haystack.split(' ');
 
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
             });
         } else if (matchType === Const.COMBOBOX_FUZZY) {
+            var isFuzzyMatch = function (haystack, query, distanceThreshold) {
+                return (
+                    haystack === query ||
+                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
+                );
+            };
+
+            // First handle prefixes, which will fail fuzzy match if they're too short
+            var distanceThreshold = 2;
+            if (haystack.length > query.length + distanceThreshold) {
+                haystack = haystack.substring(0, query.length + distanceThreshold);
+            }
+
             // Fuzzy filter, matches if query is "close" to answer
-            match = (
-                (window.Levenshtein.get(haystack, query) <= 2 && query.length > 3) ||
-                haystack === query
-            );
+            match = isFuzzyMatch(haystack, query, distanceThreshold);
+
+            // For multiword strings, return true if any word in the query fuzzy matches any word in the target
+            if (!match) {
+                if (wordsInChoice.length > 1 || wordsInQuery.length > 1) {
+                    _.each(wordsInChoice, function (choiceWord) {
+                        _.each(wordsInQuery, function (queryWord) {
+                            match = match || isFuzzyMatch(choiceWord, queryWord, distanceThreshold);
+                        });
+                    });
+                }
+            }
         }
 
         // If we've already matched, return true
@@ -680,15 +727,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer(Const.NO_ANSWER);
     };
 
-    $.datetimepicker.setDateFormatter({
-        parseDate: function (date, format) {
-            var d = moment(date, format);
-            return d.isValid() ? d.toDate() : false;
-        },
-        formatDate: function (date, format) {
-            return moment(date).format(format);
-        },
-    });
     /**
      * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
      * date picker between the three types of Entry.
@@ -699,9 +737,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             minDate,
             maxDate,
             yearEnd,
-            yearStart,
-            displayOpts = _getDisplayOptions(question),
-            isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
+            yearStart;
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -715,61 +751,24 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            var datepickerOpts = {
-                timepicker: self.timepicker,
-                datepicker: self.datepicker,
+            self.$picker.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
-                formatTime: self.clientTimeFormat,
-                formatDate: self.clientDateFormat,
-                value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
-                maxDate: maxDate,
                 minDate: minDate,
-                yearEnd: yearEnd,
-                yearStart: yearStart,
-                scrollInput: false,
-                onChangeDateTime: function (newDate) {
-                    if (!newDate) {
-                        self.answer(Const.NO_ANSWER);
-                        return;
-                    }
-                    self.answer(moment(newDate).format(self.serverFormat));
+                maxDate: maxDate,
+                keepInvalid: true,
+                parseInputDate: function (date) {
+                    var d = moment(date, self.clientFormat);
+                    return d.isValid() ? d : null;
                 },
-                onGenerate: function () {
-                    var $dt = $(this);
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
-                    }
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
-                    }
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_today_button .fa').length < 1) {
-                        $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
-                    }
-
-                    $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
-
-                    if (isPhoneMode && !self.datepicker && self.timepicker) {
-                        $dt.find('.xdsoft_time_box').addClass('time-box-full');
-                    }
-
-                    if (isPhoneMode && self.timepicker && self.datepicker) {
-                        $dt.find('.xdsoft_save_selected')
-                            .show().text(gettext('Save'))
-                            .addClass('btn btn-primary')
-                            .removeClass('blue-gradient-button');
-                        $dt.find('.xdsoft_save_selected').appendTo($dt);
-                    }
-                },
-            };
-            self.$picker.datetimepicker(datepickerOpts);
+            }, self.extraOptions));
+            self.$picker.on("dp.change", function (e) {
+                if (!e.date) {
+                    self.answer(Const.NO_ANSWER);
+                    return;
+                }
+                self.answer(moment(e.date.toDate()).format(self.serverFormat));
+            });
         };
     }
     DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -779,40 +778,48 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     // Format for time or date or datetime for the browser. Defaults to ISO.
-    // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.clientFormat = undefined;
-    DateTimeEntryBase.prototype.clientTimeFormat = undefined;
-    DateTimeEntryBase.prototype.clientDateFormat = undefined;
 
     // Format for time or date or datetime for the server. Defaults to ISO.
-    // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.serverFormat = undefined;
+
+    // Extra options to pass to datetimepicker widget
+    DateTimeEntryBase.prototype.extraOptions = {};
 
     function DateEntry(question, options) {
         this.templateType = 'date';
-        this.timepicker = false;
-        this.datepicker = true;
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     DateEntry.prototype.constructor = DateTimeEntryBase;
     // This is format equates to 12/31/2016 and is used by the datetimepicker
     DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
-    DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
     DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        this.timepicker = true;
-        this.datepicker = false;
+        var style = "",
+            is12Hour = false;
+        if (question.style) {
+            style = ko.utils.unwrapObservable(question.style.raw);
+            if (style === Const.TIME_12_HOUR) {
+                this.clientFormat = 'h:mm a';
+                is12Hour = true;
+            }
+        }
+        this.helpText = function () {
+            return is12Hour ? gettext("12-hour clock") : gettext("24-hour clock");
+        };
         DateTimeEntryBase.call(this, question, options);
     }
     TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     TimeEntry.prototype.constructor = DateTimeEntryBase;
 
-    TimeEntry.prototype.clientTimeFormat = 'HH:mm';
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
+    TimeEntry.prototype.extraOptions = {showTodayButton: false};
 
     function EthiopianDateEntry(question, options) {
         var self = this,
@@ -901,7 +908,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.loadMap = function () {
             var token = initialPageData.get("mapbox_access_token");
             if (token) {
-                self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+                // if a default answer exists, use that instead
+                let lat = self.rawAnswer().length ? self.rawAnswer()[0] : self.DEFAULT.lat;
+                let lon = self.rawAnswer().length ? self.rawAnswer()[1] : self.DEFAULT.lon;
+                let zoom = self.rawAnswer().length ? self.DEFAULT.anszoom : self.DEFAULT.zoom;
+
+                self.map = L.map(self.entryId).setView([lat, lon], zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                             + token, {
                     id: 'mapbox/streets-v11',
@@ -1062,6 +1074,18 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: hideLabel,
                     });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+
+                    }
                 } else {
                     entry = new SingleSelectEntry(question, {
                         receiveStyle: receiveStyle,
@@ -1081,6 +1105,17 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new ChoiceLabelEntry(question, {
                         hideLabel: false,
                     });
+                    if (!hideLabel) {
+                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
+                            "Required": isRequired,
+                        });
+                        $(function () {
+                            $(".q.form-group").on("change", function () {
+                                kissmetrics.track.event("Accessibility Tracking - Tabular Question Interaction");
+                            });
+                        });
+                    }
                 } else if (hideLabel) {
                     entry = new MultiSelectEntry(question, {
                         hideLabel: true,

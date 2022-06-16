@@ -19,7 +19,7 @@ from corehq.apps.sms.tasks import (
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import create_test_case
@@ -106,7 +106,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     def set_case_property(self, case, property_name, value):
         update_case(self.domain, case.case_id, case_properties={property_name: value})
-        return CaseAccessors(self.domain).get_case(case.case_id)
+        return CommCareCase.objects.get_case(case.case_id, self.domain)
 
     def get_case_phone_number(self, case):
         return case.get_phone_number()

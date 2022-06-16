@@ -14,12 +14,13 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
+from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
@@ -38,12 +39,10 @@ from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.util import DatatablesParams, get_report_timezone
+from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
-
-from corehq import toggles
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -155,8 +154,8 @@ class GenericReportView(object):
     parent_report_class = None
 
     is_deprecated = False
-    deprecation_email_message = ugettext("This report has been deprecated.")
-    deprecation_message = ugettext("This report has been deprecated.")
+    deprecation_email_message = gettext("This report has been deprecated.")
+    deprecation_message = gettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -269,7 +268,7 @@ class GenericReportView(object):
     @property
     @memoized
     def timezone(self):
-        return get_report_timezone(self.request, self.domain)
+        return get_timezone(self.request, self.domain)
 
     @property
     @memoized
@@ -305,7 +304,7 @@ class GenericReportView(object):
     @property
     @memoized
     def rendered_report_title(self):
-        return ugettext(self.name)
+        return gettext(self.name)
 
     @property
     @memoized
@@ -1130,30 +1129,6 @@ def summary_context(report):
     # will intentionally break if used with something that doesn't have
     # a summary_values attribute
     return {"summary_values": report.summary_values}
-
-
-class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/summary_tabular.html"
-    extra_context_providers = [summary_context]
-
-    @property
-    def data(self):
-        """
-        Should return a list of data values, that corresponds to the
-        headers.
-        """
-        raise NotImplementedError("Override this function!")
-
-    @property
-    def rows(self):
-        # for backwards compatibility / easy switching with a single-row table
-        return [self.data]
-
-    @property
-    def summary_values(self):
-        headers = list(self.headers)
-        assert (len(self.data) == len(headers))
-        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from django.utils import translation
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from django.utils.translation.trans_real import translation as get_translations
 
 from ...utils.translation import mark_safe_lazy, format_html_lazy
@@ -35,12 +35,12 @@ class custom_translations(ContextDecorator):
 class TestCustomTranslationsDecorator(SimpleTestCase):
     @custom_translations({'Hello World': 'Hello Mundo'})
     def test_does_not_change_default_translation(self):
-        self.assertEqual(ugettext('Hello World'), 'Hello World')
+        self.assertEqual(gettext('Hello World'), 'Hello World')
 
     @custom_translations({'Hello World': 'Hello Mundo'})
     def test_creates_translation_for_custom_language(self):
         with translation.override(CUSTOM_LANGUAGE):
-            self.assertEqual(ugettext('Hello World'), 'Hello Mundo')
+            self.assertEqual(gettext('Hello World'), 'Hello Mundo')
 
     @custom_translations({
         'TranslationOne': 'TranslationUno',
@@ -48,14 +48,14 @@ class TestCustomTranslationsDecorator(SimpleTestCase):
     })
     def test_handles_multiple_translations(self):
         with translation.override(CUSTOM_LANGUAGE):
-            self.assertEqual(ugettext('TranslationOne'), 'TranslationUno')
-            self.assertEqual(ugettext('TranslationTwo'), 'TranslationDos')
+            self.assertEqual(gettext('TranslationOne'), 'TranslationUno')
+            self.assertEqual(gettext('TranslationTwo'), 'TranslationDos')
 
 
 class TestLazyMarkSafe(SimpleTestCase):
     @custom_translations({'Translate Me': 'Translated'})
     def test_lazy_translation(self):
-        translation_promise = mark_safe_lazy(ugettext_lazy('Translate Me'))
+        translation_promise = mark_safe_lazy(gettext_lazy('Translate Me'))
 
         with translation.override(CUSTOM_LANGUAGE):
             translated = str(translation_promise)
@@ -66,7 +66,7 @@ class TestLazyMarkSafe(SimpleTestCase):
 class TestLazyFormatHTML(SimpleTestCase):
     @custom_translations({'Translate Me': 'Translated'})
     def test_no_params(self):
-        translation_promise = format_html_lazy(ugettext_lazy('Translate Me'))
+        translation_promise = format_html_lazy(gettext_lazy('Translate Me'))
 
         with translation.override(CUSTOM_LANGUAGE):
             translated = str(translation_promise)
@@ -75,7 +75,7 @@ class TestLazyFormatHTML(SimpleTestCase):
 
     @custom_translations({'Format {}': 'Translated {} Format'})
     def test_with_params(self):
-        translation_promise = format_html_lazy(ugettext_lazy('Format {}'), 'Success')
+        translation_promise = format_html_lazy(gettext_lazy('Format {}'), 'Success')
 
         with translation.override(CUSTOM_LANGUAGE):
             translated = str(translation_promise)
@@ -88,8 +88,8 @@ class TestLazyFormatHTML(SimpleTestCase):
     })
     def test_with_translated_params(self):
         translation_promise = format_html_lazy(
-            ugettext_lazy('Format {}'),
-            ugettext_lazy('Token')
+            gettext_lazy('Format {}'),
+            gettext_lazy('Token')
         )
 
         with translation.override(CUSTOM_LANGUAGE):

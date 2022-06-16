@@ -4,11 +4,12 @@ from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
 import pytz
+from memoized import memoized
 
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
@@ -18,7 +19,11 @@ from soil.progress import get_task_status
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import LoginAndDomainMixin, api_auth
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    api_auth,
+    login_and_domain_required,
+)
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -48,7 +53,6 @@ from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from memoized import memoized
 
 
 def get_timezone(domain, couch_user):
@@ -143,11 +147,12 @@ class DailySavedExportMixin(object):
 
     def dispatch(self, *args, **kwargs):
         self._priv_check()
-        return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(DailySavedExportMixin, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         instance.is_daily_saved_export = True
@@ -180,9 +185,10 @@ class DashboardFeedMixin(DailySavedExportMixin):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(DashboardFeedMixin, self).create_new_export_instance(
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
             schema,
+            username,
             export_settings=export_settings
         )
         instance.export_format = "html"
@@ -190,7 +196,7 @@ class DashboardFeedMixin(DailySavedExportMixin):
 
     @property
     def page_context(self):
-        context = super(DashboardFeedMixin, self).page_context
+        context = super().page_context
         context['format_options'] = ["html"]
         return context
 
@@ -204,7 +210,7 @@ class ODataFeedMixin(object):
 
     @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED))
     def dispatch(self, *args, **kwargs):
-        return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     @property
     def terminology(self):
@@ -219,15 +225,18 @@ class ODataFeedMixin(object):
             """),
         }
 
-    def create_new_export_instance(self, schema, export_settings=None):
-        instance = super(ODataFeedMixin, self).create_new_export_instance(schema, export_settings=export_settings)
+    def create_new_export_instance(self, schema, username, export_settings=None):
+        instance = super().create_new_export_instance(
+            schema,
+            username,
+            export_settings=export_settings)
         instance.is_odata_config = True
         instance.transform_dates = False
         return instance
 
     @property
     def page_context(self):
-        context = super(ODataFeedMixin, self).page_context
+        context = super().page_context
         context['format_options'] = ["odata"]
         return context
 
@@ -245,7 +254,7 @@ class ODataFeedMixin(object):
         return ODataFeedListView
 
     def get_export_instance(self, schema, original_export_instance):
-        export_instance = super(ODataFeedMixin, self).get_export_instance(schema, original_export_instance)
+        export_instance = super().get_export_instance(schema, original_export_instance)
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
         export_instance.transform_dates = False
@@ -306,10 +315,11 @@ class DashboardFeedPaywall(BaseProjectDataView):
 
 
 @location_safe
+@method_decorator(login_and_domain_required, name='dispatch')
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
     template_name = 'export/download_data_files.html'
-    page_title = ugettext_lazy("Download Data Files")
+    page_title = gettext_lazy("Download Data Files")
 
     def dispatch(self, request, *args, **kwargs):
         if can_download_data_files(self.domain, request.couch_user):

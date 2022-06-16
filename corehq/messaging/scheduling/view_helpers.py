@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import copy
 from django.contrib import messages
 from django.db import transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.util import get_language_list

@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.expression.repeaters import CaseExpressionRepeater
@@ -34,13 +35,34 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=cls.domain,
             connection_settings_id=cls.connection.id,
             configured_filter={
-                "type": "boolean_expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "type",
-                },
-                "operator": "eq",
-                "property_value": "forward-me",
+                "type": "or",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "reduce_items",
+                            "aggregation_fn": "count",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "property_name": "case_id",
+                                    "type": "property_name"
+                                }
+                            }
+                        },
+                        "operator": "gt",
+                        "property_value": 1
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "type",
+                        },
+                        "operator": "eq",
+                        "property_value": "forward-me",
+                    }
+                ]
             },
             configured_expression={
                 "type": "dict",
@@ -79,10 +101,15 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
 
     def test_filter_cases(self):
         forwardable_case = self.factory.create_case(case_type='forward-me')
-        unforwardable_case = self.factory.create_case(case_type='dont-forward-me')  # noqa
+        unforwardable_case = self.factory.create_case(case_type='dont-forward-me')
         repeat_records = self.repeat_records(self.domain).all()
         self.assertEqual(RepeatRecord.count(domain=self.domain), 1)
         self.assertEqual(repeat_records[0].payload_id, forwardable_case.case_id)
+
+        self.factory.update_case(unforwardable_case.case_id, update={'now-this-case': 'can-be-forwarded'})
+        repeat_records = self.repeat_records(self.domain).all()
+        self.assertEqual(RepeatRecord.count(domain=self.domain), 2)
+        self.assertEqual(repeat_records[1].payload_id, unforwardable_case.case_id)
 
     def test_payload(self):
         forwardable_case = self.factory.create_case(case_type='forward-me')
@@ -91,3 +118,37 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
             "case_id": forwardable_case.case_id,
             "a-constant": "foo",
         }))
+
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    def test_custom_url(self):
+
+        self.repeater.url_template = "/{variable1}/a_thing/delete?case_id={case_id}&{missing_variable}='foo'"
+
+        UCRExpression.objects.create(
+            name='variable1',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "property_name",
+                "property_name": "prop1"
+            },
+        )
+        UCRExpression.objects.create(
+            name='case_id',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "property_name",
+                "property_name": "case_id"
+            },
+        )
+
+        forwardable_case = self.factory.create_case(case_type='forward-me', update={'prop1': 'foo'})
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + f"/foo/a_thing/delete?case_id={forwardable_case.case_id}&='foo'"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )

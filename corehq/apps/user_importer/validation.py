@@ -3,7 +3,7 @@ from collections import Counter
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.dbaccessors import get_existing_usernames

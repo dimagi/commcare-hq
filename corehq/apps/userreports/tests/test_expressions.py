@@ -23,9 +23,9 @@ from corehq.apps.userreports.expressions.specs import (
     eval_statements,
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
@@ -254,6 +254,80 @@ class PropertyPathExpressionTest(SimpleTestCase):
                     'to': bad_value
                 }
             }))
+
+
+class JsonpathExpressionTest(SimpleTestCase):
+
+    def test_jsonpath(self):
+        """test examples in docs"""
+        spec = {
+            'type': 'jsonpath',
+            'jsonpath': 'form..case.name'
+        }
+        item = {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+        self.assertEqual(["a", "b", "c", "d"], ExpressionFactory.from_spec(spec)(item))
+        spec['jsonpath'] = 'form.list[0].case.name'
+        self.assertEqual("c", ExpressionFactory.from_spec(spec)(item))
+
+    def test_bad_expression(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                'type': 'jsonpath',
+                'jsonpath': 'find("a" in "b")'
+            })
+
+    @generate_cases([(None,), ('',), ([],)])
+    def test_bad_values(self, bad_value):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': 'a.b.c'
+        })
+        self.assertEqual(None, expr({
+            'a': {
+                'b': bad_value
+            }
+        }))
+
+    @generate_cases([
+        ({"a": "1"}, "a", "integer", 1),
+        ({"a": [{"b": "1"}, {"b": "2"}, {"b": "x"}]}, "a..b", "integer", [1, 2, None]),
+        ({"a": {"b": 1}}, "a..b", "array", [1]),
+    ])
+    def test_datatype(self, item, jsonpath, datatype, expected):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': jsonpath,
+            'datatype': datatype
+        })
+        self.assertEqual(expected, expr(item))
+
+    @generate_cases([
+        ({"a": 1}, "a", 1),
+        ({"a": [1, 2, 3]}, "a", [1, 2, 3]),
+        ({"a": [{"b": 1}, {"b": 2}]}, "a..b", [1, 2]),
+        ({"a": {"b": 1}}, "a..b", 1),
+    ])
+    def test_list_coersion(self, item, jsonpath, expected):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': jsonpath,
+        })
+        self.assertEqual(expected, expr(item))
 
 
 class ConditionalExpressionTest(SimpleTestCase):
@@ -810,12 +884,12 @@ class RelatedDocExpressionTest(SimpleTestCase):
         })
 
     def patch_cases_database(self):
-        def get_case(self_, case_id):
+        def get_case(case_id, domain):
             doc = self.database.get(case_id)
             if doc is None:
                 raise CaseNotFound
             return Config(to_json=lambda: doc)
-        get_case_patch = patch.object(CaseAccessors, "get_case", get_case)
+        get_case_patch = patch.object(CommCareCase.objects, "get_case", get_case)
         get_case_patch.start()
         self.addCleanup(get_case_patch.stop)
         self.database = {}
@@ -1132,7 +1206,7 @@ class TestFormsExpressionSpec(TestCase):
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
         [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+        cls.forms = [f.to_json() for f in XFormInstance.objects.get_forms(cls.case.xform_ids, cls.domain)]
         #  redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 
@@ -1296,6 +1370,12 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
         group.save()
 
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
+    def test_web_user(self):
+        user = WebUser.create(domain=None, username='web', password='123',
+                              created_by=None, created_via=None)
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 

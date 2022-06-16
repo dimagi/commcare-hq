@@ -1,12 +1,14 @@
 import json
-
 from contextlib import contextmanager
 
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import guess_domain_language, get_serializable_wire_invoice_general_credit
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+    guess_domain_language,
+)
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -70,3 +72,16 @@ def test_domain(name="domain", skip_full_delete=False):
             Domain.get_db().delete_doc(domain.get_id)
         else:
             domain.delete()
+
+
+class TestUCRExpressionUtils(TestCase):
+    def test_default_value_when_domain_not_exists(self):
+        self.assertEqual(
+            set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('blah_domain')),
+            {'base_item_expression', 'related_doc'}
+        )
+
+    def test_when_domain_exists(self):
+        exprn = ['base_item_expression']
+        AllowedUCRExpressionSettings.objects.create(domain='test_domain', allowed_ucr_expressions=exprn)
+        self.assertEqual(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('test_domain'), exprn)

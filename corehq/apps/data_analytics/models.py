@@ -36,11 +36,14 @@ class MALTRow(models.Model):
     device_id = models.TextField(blank=True, null=True)
     is_app_deleted = models.BooleanField(default=False)
 
-    wam = models.NullBooleanField(default=NOT_SET)
-    pam = models.NullBooleanField(default=NOT_SET)
+    wam = models.BooleanField(null=True, default=NOT_SET)
+    pam = models.BooleanField(null=True, default=NOT_SET)
 
-    use_threshold = models.PositiveSmallIntegerField(default=15)
-    experienced_threshold = models.PositiveSmallIntegerField(default=3)
+    use_threshold = models.PositiveSmallIntegerField(default=DEFAULT_PERFORMANCE_THRESHOLD)
+    experienced_threshold = models.PositiveSmallIntegerField(default=DEFAULT_EXPERIENCED_THRESHOLD)
+
+    # the last time the MALT was generated for this domain and month
+    last_run_date = models.DateTimeField(default=None, blank=True, null=True)
 
     class Meta(object):
         unique_together = ('month', 'domain_name', 'user_id', 'app_id', 'device_id')
@@ -60,11 +63,11 @@ class GIRRow(models.Model):
     subsector = models.TextField(blank=True, null=True)
     bu = models.TextField(blank=True, null=True)
 
-    self_service = models.NullBooleanField(default=NOT_SET)
-    test_domain = models.NullBooleanField(default=NOT_SET)
+    self_service = models.BooleanField(null=True, default=NOT_SET)
+    test_domain = models.BooleanField(null=True, default=NOT_SET)
     start_date = models.DateField()
     device_id = models.TextField(blank=True, null=True)
-    pam = models.NullBooleanField(default=NOT_SET)
+    pam = models.BooleanField(null=True, default=NOT_SET)
 
     wams_current = models.PositiveIntegerField()
     active_users = models.PositiveIntegerField()

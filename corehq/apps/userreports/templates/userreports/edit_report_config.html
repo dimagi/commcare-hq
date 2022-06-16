@@ -10,17 +10,35 @@
     <div class="btn-toolbar">
       {% if report.get_id %}
         <div class="btn-group">
-          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
+          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">
+            {% if use_updated_ucr_naming %}
+              {% trans "View Custom Web Report" %}
+            {% else %}
+              {% trans 'View Report' %}
+            {% endif %}
+          </a>
         </div>
         <div class="btn-group">
-          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">{% trans 'View Data Source' %}</a>
+          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">
+            {% if use_updated_ucr_naming %}
+                {% trans 'View Custom Web Report Source' %}
+            {% else %}
+              {% trans 'View Data Source' %}
+            {% endif %}
+          </a>
         </div>
         <div class="btn-group">
           <a href="{% url 'configurable_report_json' domain report.get_id %}"
              class="btn btn-default track-usage-link"
              data-category="UCR"
              data-action="View Source"
-             data-label="Report Config">{% trans 'Report Source' %}</a>
+             data-label="Report Config">
+              {% if use_updated_ucr_naming %}
+                {% trans 'Custom Web Report JSON' %}
+              {% else %}
+                {% trans 'Report Source' %}
+              {% endif %}
+          </a>
         </div>
         {% if not report.is_static%}
           {% include 'userreports/partials/delete_report_button.html' with report_id=report.get_id %}
@@ -33,9 +51,6 @@
   <ul class="nav nav-tabs">
     <li class="active"><a data-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
     <li><a data-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
-    {% if not has_release_management_privilege and request|toggle_enabled:"LINKED_DOMAINS" %}
-      <li><a data-toggle="tab" href="#tabs-link-report">{% trans "Link Report" %}</a></li>
-    {% endif %}
   </ul>
 
   <div class="tab-content">
@@ -69,37 +84,5 @@
         </ul>
       {% endif %}
     </div>
-    {% if request|toggle_enabled:"LINKED_DOMAINS" %}
-      <div class="tab-pane fade" id="tabs-link-report">
-        <div class="spacer"></div>
-        <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
-          {% csrf_token %}
-          <div class="form-group row">
-            <input type="hidden" name="report_id" value="{{ report.get_id }}" />
-            <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField" for=" #domain-selector">
-            {% trans "Link this report to project" %}
-              <span class="asteriskField">*</span>
-            </label>
-            <div class="controls col-sm-9 col-md-9">
-              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
-                {% for domain, already_linked in linked_report_domain_list.items %}
-                  <option value="{{ domain }}" {% if already_linked %} disabled {% endif %}>
-                    {{ domain }}
-                    {% if already_linked %} ({% trans "Already Linked" %}) {% endif %}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-actions">
-            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-9">
-              <button class="btn btn-primary" type="submit">
-                {% trans "Copy" %}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    {% endif %}
   </div>
 {% endblock %}

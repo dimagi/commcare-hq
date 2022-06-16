@@ -1,5 +1,5 @@
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from corehq.apps.hqwebapp.decorators import use_maps
 from corehq.apps.products.models import Product
@@ -8,7 +8,7 @@ from corehq.apps.reports.standard.maps import GenericMapReport
 
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
-    name = ugettext_noop("Stock Status (map)")
+    name = gettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
 
     fields = [

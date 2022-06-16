@@ -3,7 +3,7 @@ import uuid
 from collections import Counter, defaultdict, namedtuple
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit import NoResultFound
 
@@ -37,6 +37,7 @@ from corehq.util.timer import TimingContext
 
 from . import exceptions
 from .const import LookupErrors
+from .extension_points import custom_case_import_operations
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -95,6 +96,8 @@ class _Importer(object):
 
     def do_import(self, spreadsheet):
         with TaskProgressManager(self.task, src="case_importer") as progress_manager:
+            # context to be used by extensions to keep during import
+            import_context = {}
             for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
                 progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
                 if row_num == 1:
@@ -106,7 +109,7 @@ class _Importer(object):
                     if self.multi_domain:
                         if self.domain != row.get('domain'):
                             continue
-                    self.import_row(row_num, row)
+                    self.import_row(row_num, row, import_context)
                 except exceptions.CaseRowErrorList as errors:
                     self.results.add_errors(row_num, errors)
                 except exceptions.CaseRowError as error:
@@ -115,9 +118,12 @@ class _Importer(object):
             self.commit_caseblocks()
             return self.results.to_json()
 
-    def import_row(self, row_num, raw_row):
+    def import_row(self, row_num, raw_row, import_context):
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
+        if self._has_custom_case_import_operations():
+            fields_to_update = self._perform_custom_case_import_operations(row_num, raw_row, fields_to_update,
+                                                                           import_context)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
@@ -148,6 +154,22 @@ class _Importer(object):
             raise exceptions.CaseGeneration()
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
+
+    def _has_custom_case_import_operations(self):
+        return any(
+            extension.should_call_for_domain(self.domain)
+            for extension in custom_case_import_operations.extensions
+        )
+
+    def _perform_custom_case_import_operations(self, row_num, raw_row, fields_to_update, import_context):
+        extensions_response = custom_case_import_operations(self.domain, row_num, raw_row,
+                                                            fields_to_update, import_context)
+        if not extensions_response:
+            raise exceptions.UnexpectedError()
+        fields_to_update, custom_errors = extensions_response
+        if custom_errors:
+            raise exceptions.CaseRowErrorList(custom_errors)
+        return fields_to_update
 
     @cached_property
     def user(self):
@@ -550,7 +572,13 @@ class _ImportResults(object):
         if 'rows' not in self._errors[key][column_name]:
             self._errors[key][column_name]['rows'] = []
 
-        self._errors[key][column_name]['rows'].append(row_num)
+        if row_num not in self._errors[key][column_name]['rows']:
+            self._errors[key][column_name]['rows'].append(row_num)
+
+        if 'sample' not in self._errors[key][column_name] and hasattr(error, 'sample'):
+            self._errors[key][column_name]['sample'] = _(
+                'Sample: Cell in row {row_num} contains "{sample}"').format(
+                row_num=row_num, sample=error.sample)
 
     def add_errors(self, row_num, errors):
         for error in errors:

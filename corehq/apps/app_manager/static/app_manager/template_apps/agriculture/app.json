@@ -264,15 +264,42 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_meeting_date": "/data/cooperative/meeting_date",
-                "enrolled_cooperative": "/data/cooperative/enrolled_cooperative",
-                "manager_first__name": "/data/manager/manager/manager_first__name",
-                "crops": "/data/cooperative/crops",
-                "size_cooperative": "/data/cooperative/size_cooperative",
-                "manager_name": "/data/manager/manager/manager_full_name",
-                "founded_date": "/data/cooperative/founded_date",
-                "manager_phone_number": "/data/manager/manager/manager_phone_number",
-                "manager_last_name": "/data/manager/manager/manager_last_name"
+                  "last_meeting_date": {
+                    "question_path": "/data/cooperative/meeting_date",
+                    "update_mode": "always"
+                  },
+                  "enrolled_cooperative": {
+                    "question_path": "/data/cooperative/enrolled_cooperative",
+                    "update_mode": "always"
+                  },
+                  "manager_first__name": {
+                    "question_path": "/data/manager/manager/manager_first__name",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "question_path": "/data/cooperative/crops",
+                    "update_mode": "always"
+                  },
+                  "size_cooperative": {
+                    "question_path": "/data/cooperative/size_cooperative",
+                    "update_mode": "always"
+                  },
+                  "manager_name": {
+                    "question_path": "/data/manager/manager/manager_full_name",
+                    "update_mode": "always"
+                  },
+                  "founded_date": {
+                    "question_path": "/data/cooperative/founded_date",
+                    "update_mode": "always"
+                  },
+                  "manager_phone_number": {
+                    "question_path": "/data/manager/manager/manager_phone_number",
+                    "update_mode": "always"
+                  },
+                  "manager_last_name": {
+                    "question_path": "/data/manager/manager/manager_last_name",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -721,20 +748,76 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "land_ownership": "/data/farmer/land_use/land_ownership",
-                  "first_name": "/data/farmer/farmer_name/first_name",
-                  "last_name": "/data/farmer/farmer_name/last_name",
-                  "rice_farmer": "/data/farmer/rice_farmer",
-                  "crops": "/data/farmer/crops",
-                  "member_since": "/data/farmer/demographic_data/member_since",
-                  "farmer_phone_number": "/data/farmer/demographic_data/farmer_phone_number",
-                  "other_farmer": "/data/farmer/other_farmer",
-                  "farmer_address": "/data/farmer/demographic_data/farmer_address",
-                  "farmer_sex": "/data/farmer/demographic_data/farmer_sex",
-                  "corn_farmer": "/data/farmer/corn_farmer",
-                  "land_access": "/data/farmer/land_use/land_access",
-                  "farmer_age": "/data/farmer/demographic_data/farmer_age",
-                  "arable_land": "/data/farmer/land_use/total_arable_land"
+                  "land_ownership": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/land_ownership",
+                    "update_mode": "always"
+                  },
+                  "first_name": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/farmer_name/first_name",
+                    "update_mode": "always"
+                  },
+                  "last_name": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/farmer_name/last_name",
+                    "update_mode": "always"
+                  },
+                  "rice_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/rice_farmer",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/crops",
+                    "update_mode": "always"
+                  },
+                  "member_since": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/member_since",
+                    "update_mode": "always"
+                  },
+                  "farmer_phone_number": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_phone_number",
+                    "update_mode": "always"
+                  },
+                  "other_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/other_farmer",
+                    "update_mode": "always"
+                  },
+                  "farmer_address": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_address",
+                    "update_mode": "always"
+                  },
+                  "farmer_sex": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_sex",
+                    "update_mode": "always"
+                  },
+                  "corn_farmer": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/corn_farmer",
+                    "update_mode": "always"
+                  },
+                  "land_access": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/land_access",
+                    "update_mode": "always"
+                  },
+                  "farmer_age": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/demographic_data/farmer_age",
+                    "update_mode": "always"
+                  },
+                  "arable_land": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/farmer/land_use/total_arable_land",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "farmer",
                 "reference_id": null,
@@ -1095,16 +1178,46 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_meeting_date": "/data/cooperative/meeting_date",
-                "enrolled_cooperative": "/data/cooperative/enrolled_cooperative",
-                "name": "/data/cooperative/cooperative_name",
-                "crops": "/data/cooperative/crops",
-                "size_cooperative": "/data/cooperative/size_cooperative",
-                "area_of_operations": "/data/cooperative/area_of_operations",
-                "manager_name": "/data/case_properties/manager_name",
-                "founded_date": "/data/cooperative/founded_date",
-                "manager_phone_number": "/data/case_properties/manager_phone_number",
-                "meeting_frequency": "/data/cooperative/meeting_frequency"
+                  "last_meeting_date": {
+                    "question_path": "/data/cooperative/meeting_date",
+                    "update_mode": "always"
+                  },
+                  "enrolled_cooperative": {
+                    "question_path": "/data/cooperative/enrolled_cooperative",
+                    "update_mode": "always"
+                  },
+                  "name": {
+                    "question_path": "/data/cooperative/cooperative_name",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "question_path": "/data/cooperative/crops",
+                    "update_mode": "always"
+                  },
+                  "size_cooperative": {
+                    "question_path": "/data/cooperative/size_cooperative",
+                    "update_mode": "always"
+                  },
+                  "area_of_operations": {
+                    "question_path": "/data/cooperative/area_of_operations",
+                    "update_mode": "always"
+                  },
+                  "manager_name": {
+                    "question_path": "/data/case_properties/manager_name",
+                    "update_mode": "always"
+                  },
+                  "founded_date": {
+                    "question_path": "/data/cooperative/founded_date",
+                    "update_mode": "always"
+                  },
+                  "manager_phone_number": {
+                    "question_path": "/data/case_properties/manager_phone_number",
+                    "update_mode": "always"
+                  },
+                  "meeting_frequency": {
+                    "question_path": "/data/cooperative/meeting_frequency",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -1862,22 +1975,70 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "harvest_year": "/data/preharvest_planning/harvest_year",
-                "visit_number": "/data/case_properties/new_visit_number",
-                "rice_farmer": "/data/supervision/rice_farmer",
-                "next_visit_date": "/data/preharvest_planning/next_visit_date",
-                "crops": "/data/supervision/crops",
-                "other_farmer": "/data/supervision/other_farmer",
-                "arable_land": "/data/supervision/arable_hectares_overwrite",
-                "expected_corn_yield": "/data/preharvest_planning/expected_corn_yield",
-                "arable_hectares_rice": "/data/supervision/crops_per_arable_hectares/rice",
-                "days_to_harvest": "/data/preharvest_planning/days_to_harvest",
-                "corn_farmer": "/data/supervision/corn_farmer",
-                "arable_hectares_corn": "/data/supervision/crops_per_arable_hectares/corn",
-                "harvest_month": "/data/preharvest_planning/harvest_month",
-                "expected_rice_yield": "/data/preharvest_planning/expected_rice_yield",
-                "estimate_harvest_date": "/data/preharvest_planning/expected_harvest_date",
-                "arable_hectares_other": "/data/supervision/crops_per_arable_hectares/other"
+                  "harvest_year": {
+                    "question_path": "/data/preharvest_planning/harvest_year",
+                    "update_mode": "always"
+                  },
+                  "visit_number": {
+                    "question_path": "/data/case_properties/new_visit_number",
+                    "update_mode": "always"
+                  },
+                  "rice_farmer": {
+                    "question_path": "/data/supervision/rice_farmer",
+                    "update_mode": "always"
+                  },
+                  "next_visit_date": {
+                    "question_path": "/data/preharvest_planning/next_visit_date",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "question_path": "/data/supervision/crops",
+                    "update_mode": "always"
+                  },
+                  "other_farmer": {
+                    "question_path": "/data/supervision/other_farmer",
+                    "update_mode": "always"
+                  },
+                  "arable_land": {
+                    "question_path": "/data/supervision/arable_hectares_overwrite",
+                    "update_mode": "always"
+                  },
+                  "expected_corn_yield": {
+                    "question_path": "/data/preharvest_planning/expected_corn_yield",
+                    "update_mode": "always"
+                  },
+                  "arable_hectares_rice": {
+                    "question_path": "/data/supervision/crops_per_arable_hectares/rice",
+                    "update_mode": "always"
+                  },
+                  "days_to_harvest": {
+                    "question_path": "/data/preharvest_planning/days_to_harvest",
+                    "update_mode": "always"
+                  },
+                  "corn_farmer": {
+                    "question_path": "/data/supervision/corn_farmer",
+                    "update_mode": "always"
+                  },
+                  "arable_hectares_corn": {
+                    "question_path": "/data/supervision/crops_per_arable_hectares/corn",
+                    "update_mode": "always"
+                  },
+                  "harvest_month": {
+                    "question_path": "/data/preharvest_planning/harvest_month",
+                    "update_mode": "always"
+                  },
+                  "expected_rice_yield": {
+                    "question_path": "/data/preharvest_planning/expected_rice_yield",
+                    "update_mode": "always"
+                  },
+                  "estimate_harvest_date": {
+                    "question_path": "/data/preharvest_planning/expected_harvest_date",
+                    "update_mode": "always"
+                  },
+                  "arable_hectares_other": {
+                    "question_path": "/data/supervision/crops_per_arable_hectares/other",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -2114,27 +2275,90 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "actual_harvest_date": "/data/actual_harvest_date",
-                "visit_number": "/data/case_properties/new_visit_number",
-                "corn_farmer": "/data/corn_farmer",
-                "rice_farmer": "/data/rice_farmer",
-                "next_visit_date": "/data/next_visit_date",
-                "crop_value_corn": "/data/crop_value_corn",
-                "crop_value_rice": "/data/crop_value_rice",
-                "crops": "/data/crops",
-                "farmer_total_rice_yield": "/data/total_rice_yield",
-                "other_farmer": "/data/other_farmer",
-                "parent/total_crop_yield_rice": "/data/cooperative_total_rice_yield",
-                "corn_yield_weight": "/data/corn_yield_weight",
-                "rice_yield_weight": "/data/rice_yield_weight",
-                "rice_yield_per_hectacre": "/data/rice_yield_per_hectacre",
-                "relative_rice_yield": "/data/relative_rice_yield",
-                "corn_yield_per_hectacre": "/data/corn_yield_per_hectacre",
-                "relative_corn_yield": "/data/relative_corn_yield",
-                "price_rice_per_kilo": "/data/price_rice_per_kilo",
-                "farmer_total_corn_yield": "/data/total_corn_yield",
-                "parent/total__crop_yield_corn": "/data/cooperative_total_corn_yield",
-                "price_corn_per_bushel": "/data/price_corn_per_bushel"
+                  "actual_harvest_date": {
+                    "question_path": "/data/actual_harvest_date",
+                    "update_mode": "always"
+                  },
+                  "visit_number": {
+                    "question_path": "/data/case_properties/new_visit_number",
+                    "update_mode": "always"
+                  },
+                  "corn_farmer": {
+                    "question_path": "/data/corn_farmer",
+                    "update_mode": "always"
+                  },
+                  "rice_farmer": {
+                    "question_path": "/data/rice_farmer",
+                    "update_mode": "always"
+                  },
+                  "next_visit_date": {
+                    "question_path": "/data/next_visit_date",
+                    "update_mode": "always"
+                  },
+                  "crop_value_corn": {
+                    "question_path": "/data/crop_value_corn",
+                    "update_mode": "always"
+                  },
+                  "crop_value_rice": {
+                    "question_path": "/data/crop_value_rice",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "question_path": "/data/crops",
+                    "update_mode": "always"
+                  },
+                  "farmer_total_rice_yield": {
+                    "question_path": "/data/total_rice_yield",
+                    "update_mode": "always"
+                  },
+                  "other_farmer": {
+                    "question_path": "/data/other_farmer",
+                    "update_mode": "always"
+                  },
+                  "parent/total_crop_yield_rice": {
+                    "question_path": "/data/cooperative_total_rice_yield",
+                    "update_mode": "always"
+                  },
+                  "corn_yield_weight": {
+                    "question_path": "/data/corn_yield_weight",
+                    "update_mode": "always"
+                  },
+                  "rice_yield_weight": {
+                    "question_path": "/data/rice_yield_weight",
+                    "update_mode": "always"
+                  },
+                  "rice_yield_per_hectacre": {
+                    "question_path": "/data/rice_yield_per_hectacre",
+                    "update_mode": "always"
+                  },
+                  "relative_rice_yield": {
+                    "question_path": "/data/relative_rice_yield",
+                    "update_mode": "always"
+                  },
+                  "corn_yield_per_hectacre": {
+                    "question_path": "/data/corn_yield_per_hectacre",
+                    "update_mode": "always"
+                  },
+                  "relative_corn_yield": {
+                    "question_path": "/data/relative_corn_yield",
+                    "update_mode": "always"
+                  },
+                  "price_rice_per_kilo": {
+                    "question_path": "/data/price_rice_per_kilo",
+                    "update_mode": "always"
+                  },
+                  "farmer_total_corn_yield": {
+                    "question_path": "/data/total_corn_yield",
+                    "update_mode": "always"
+                  },
+                  "parent/total__crop_yield_corn": {
+                    "question_path": "/data/cooperative_total_corn_yield",
+                    "update_mode": "always"
+                  },
+                  "price_corn_per_bushel": {
+                    "question_path": "/data/price_corn_per_bushel",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -2600,17 +2824,50 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "corn_farmer": "/data/corn_farmer",
-                "rice_farmer": "/data/rice_farmer",
-                "name": "/data/case_properties/farmer_full_name",
-                "crops": "/data/crops",
-                "member_since": "/data/member_since",
-                "farmer_phone_number": "/data/case_properties/farmer_phone_number",
-                "farmer_address": "/data/farmer_address",
-                "farmer_sex": "/data/farmer_sex",
-                "farmer_age": "/data/farmer_age",
-                "land_ownership": "/data/land_ownership",
-                "area_mapper": "/data/arable_land"
+                  "corn_farmer": {
+                    "question_path": "/data/corn_farmer",
+                    "update_mode": "always"
+                  },
+                  "rice_farmer": {
+                    "question_path": "/data/rice_farmer",
+                    "update_mode": "always"
+                  },
+                  "name": {
+                    "question_path": "/data/case_properties/farmer_full_name",
+                    "update_mode": "always"
+                  },
+                  "crops": {
+                    "question_path": "/data/crops",
+                    "update_mode": "always"
+                  },
+                  "member_since": {
+                    "question_path": "/data/member_since",
+                    "update_mode": "always"
+                  },
+                  "farmer_phone_number": {
+                    "question_path": "/data/case_properties/farmer_phone_number",
+                    "update_mode": "always"
+                  },
+                  "farmer_address": {
+                    "question_path": "/data/farmer_address",
+                    "update_mode": "always"
+                  },
+                  "farmer_sex": {
+                    "question_path": "/data/farmer_sex",
+                    "update_mode": "always"
+                  },
+                  "farmer_age": {
+                    "question_path": "/data/farmer_age",
+                    "update_mode": "always"
+                  },
+                  "land_ownership": {
+                    "question_path": "/data/land_ownership",
+                    "update_mode": "always"
+                  },
+                  "area_mapper": {
+                    "question_path": "/data/arable_land",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -3383,7 +3640,10 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "farmer_active": "/data/report_group/group_update_farming_info/farmer_still_growing"
+                  "farmer_active": {
+                    "question_path": "/data/report_group/group_update_farming_info/farmer_still_growing",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,

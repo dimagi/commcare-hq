@@ -7,7 +7,7 @@ from django.test import SimpleTestCase
 import requests
 from unittest.mock import PropertyMock, patch
 
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import RepeatRecord
 from custom.cowin.const import (
@@ -42,8 +42,8 @@ class TestRepeaters(SimpleTestCase):
             'photo_id_number': '1234',
             'consent_version': "1"
         }
-        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
-                               server_modified_on=datetime.datetime.utcnow())
+        case = CommCareCase(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
+                            server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
         repeater = BeneficiaryRegistrationRepeater()
@@ -79,8 +79,8 @@ class TestRepeaters(SimpleTestCase):
             'person_case_id': person_case_id,
             'api': COWIN_API_DATA_REGISTRATION_IDENTIFIER
         }
-        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
-                               server_modified_on=datetime.datetime.utcnow())
+        case = CommCareCase(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
+                            server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
         response_json = {
@@ -109,8 +109,8 @@ class TestRepeaters(SimpleTestCase):
         connection_settings_mock.return_value = ConnectionSettings(password="my-secure-api-key")
 
         case_id = uuid.uuid4().hex
-        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id,
-                               server_modified_on=datetime.datetime.utcnow())
+        case = CommCareCase(domain=self.domain, type='cowin_api_data', case_id=case_id,
+                            server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
         repeater = BeneficiaryVaccinationRepeater()
@@ -181,8 +181,8 @@ class TestRepeaters(SimpleTestCase):
             'api': COWIN_API_DATA_VACCINATION_IDENTIFIER,
             'dose': "1"
         }
-        case = CommCareCaseSQL(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
-                               server_modified_on=datetime.datetime.utcnow())
+        case = CommCareCase(domain=self.domain, type='cowin_api_data', case_id=case_id, case_json=case_json,
+                            server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
         response = requests.Response()

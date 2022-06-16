@@ -18,10 +18,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import AppReindexerFactory
-from corehq.pillows.case import (
-    CouchCaseReindexerFactory,
-    SqlCaseReindexerFactory,
-)
+from corehq.pillows.case import SqlCaseReindexerFactory
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
@@ -148,7 +145,6 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
 
 @generate_cases([
     (AppReindexerFactory, 'ApplicationToElasticsearchPillow'),
-    (CouchCaseReindexerFactory, 'CaseToElasticsearchPillow'),
     (DomainReindexerFactory, 'KafkaDomainPillow'),
     (UserReindexerFactory, 'UserPillow'),
     (GroupReindexerFactory, 'GroupPillow'),
@@ -185,12 +181,12 @@ def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     (SqlCaseReindexerFactory, 'case-pillow'),
     (SqlFormReindexerFactory, 'xform-pillow'),
     (GroupToUserReindexerFactory, 'UserPillow'),
-    (CouchCaseReindexerFactory, 'case-pillow'),
     (ReportCaseReindexerFactory, 'case-pillow'),
     (ReportFormReindexerFactory, 'xform-pillow'),
     (UserReindexerFactory, 'user-pillow'),
     (GroupReindexerFactory, 'group-pillow'),
 ], CheckpointCreationTest)
+@es_test
 def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
     # reindexers

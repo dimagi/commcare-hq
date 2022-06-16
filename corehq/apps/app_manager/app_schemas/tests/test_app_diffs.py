@@ -245,7 +245,7 @@ class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
     def test_remove_save_property(self):
         self._add_question(self.app1.modules[0].forms[0])
         self._add_question(self.app2.modules[0].forms[0])
-        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={'foo': '/data/name'})
+        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={"foo": "/data/name"})
         self.app1.save()
 
         first, second = get_app_diff(self.app1, self.app2)
@@ -257,8 +257,8 @@ class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
     def test_change_save_property(self):
         self._add_question(self.app1.modules[0].forms[0])
         self._add_question(self.app2.modules[0].forms[0])
-        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={'foo': '/data/name'})
-        self.factory2.form_requires_case(self.app2.modules[0].forms[0], update={'bar': '/data/name'})
+        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={"foo": "/data/name"})
+        self.factory2.form_requires_case(self.app2.modules[0].forms[0], update={"bar": "/data/name"})
         self.app1.save()
         self.app2.save()
 

@@ -21,7 +21,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta, CaseUp
 from corehq.apps.case_importer.util import ImporterConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class DbaccessorsTest(TestCase):
@@ -156,7 +156,7 @@ class FormAndCaseIdsTest(TestCase):
         ]
         case_upload_record = self._import_rows(data)
         case_ids = list(get_case_ids_for_case_upload(case_upload_record))
-        cases = CaseAccessors(self.domain).get_cases(case_ids, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids, self.domain, ordered=True)
         self.assertEqual(case_ids, [case.case_id for case in cases])
         should_match_original_data_order = [['name']] + [[case.name] for case in cases]
         self.assertEqual(should_match_original_data_order, data)

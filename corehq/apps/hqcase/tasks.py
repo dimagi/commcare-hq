@@ -3,9 +3,9 @@ from collections import defaultdict
 from copy import copy
 
 from celery.task import task
+from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs
-from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.utils import MockDevice
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase
@@ -16,10 +16,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 @task
@@ -63,7 +60,7 @@ def explode_cases(domain, user_id, factor, task=None):
             del queue[:]
         return progress
 
-    for old_case_id in topological_sort_cases(cases):
+    for old_case_id in reversed(topological_sort_case_blocks(cases)):
         for explosion in range(factor - 1):
             new_case = copy(cases[old_case_id])
             new_case_id = new_case_ids[old_case_id][explosion]
@@ -96,45 +93,16 @@ def explode_cases(domain, user_id, factor, task=None):
     ]}
 
 
-def topological_sort_cases(cases):
-    """returns all cases in topological order
-
-    Using Kahn's algorithm from here:
-    https://en.wikipedia.org/wiki/Topological_sorting
-    L = sorted_ids
-    roots = S
-    root_id = n
-    case_id = m
-
+def topological_sort_case_blocks(cases):
+    """returns a list of case IDs in topological order according to their
+    case indices
     """
-    graph = {}
-    inverse_graph = defaultdict(list)
-    roots = []
-
-    # compile graph
+    tree = defaultdict(set)
     for case_id, case in cases.items():
-        graph[case.case_id] = indices = []
+        tree[case_id]  # prime for case
         for index in case.index.values():
-            indices.append(index.case_id)
-            inverse_graph[index.case_id].append(case.case_id)
-        if not indices:
-            roots.append(case.case_id)
-
-    # sort graph
-    sorted_ids = []
-    while roots:
-        root_id = roots.pop()
-        sorted_ids.append(root_id)
-        for case_id in sorted(inverse_graph[root_id]):
-            graph[case_id].remove(root_id)
-            if not graph[case_id]:
-                roots.append(case_id)
-
-    for indices in graph.values():
-        if indices:
-            raise ValueError("graph has cycles")
-
-    return sorted_ids
+            tree[index.case_id].add(case_id)
+    return toposort_flatten(tree)
 
 
 @task
@@ -154,8 +122,6 @@ def delete_exploded_cases(domain, explosion_id, task=None):
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, len(case_ids))
 
-    case_accessor = CaseAccessors(domain)
-    form_accessor = FormAccessors(domain)
     ledger_accessor = LedgerAccessorSQL
     deleted_form_ids = set()
     num_deleted_ledger_entries = 0
@@ -166,13 +132,13 @@ def delete_exploded_cases(domain, explosion_id, task=None):
             ledger_accessor.delete_ledger_transactions_for_form([id], form_id)
         num_deleted_ledger_entries += ledger_accessor.delete_ledger_values(id)
 
-        new_form_ids = set(case_accessor.get_case_xform_ids(id)) - deleted_form_ids
-        form_accessor.soft_delete_forms(list(new_form_ids))
+        new_form_ids = set(CommCareCase.objects.get_case_xform_ids(id)) - deleted_form_ids
+        XFormInstance.objects.soft_delete_forms(domain, list(new_form_ids))
         deleted_form_ids |= new_form_ids
 
     completed = 0
     for ids in chunked(case_ids, 100):
-        case_accessor.soft_delete_cases(list(ids))
+        CommCareCase.objects.soft_delete_cases(domain, list(ids))
         if task:
             completed += len(ids)
             DownloadBase.set_progress(delete_exploded_case_task, completed, len(case_ids))

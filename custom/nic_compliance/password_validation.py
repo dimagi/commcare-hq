@@ -1,6 +1,6 @@
 from datetime import timedelta
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from custom.nic_compliance.const import (
     RESTRICT_USED_PASSWORDS_NUM,

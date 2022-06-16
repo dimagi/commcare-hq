@@ -35,14 +35,14 @@
         </a>
       </td>
       <td class="form-inline">
-        {% ifequal export.default_format bulk_export_format %}
+        {% if export.default_format == bulk_export_format %}
           <label>
             <input type="checkbox" class="select-export" data-bind="event: {change: updateSelectedExports}" value="{{ export.get_id }}"/>
             <span class="label label-info">+ {% trans "Bulk Export" %}</span>
           </label>
         {% else %}
           <span class="label custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
-        {% endifequal %}
+        {% endif %}
       </td>
     </tr>
   {% endfor %}

@@ -250,8 +250,14 @@
                        "update_case": {
                            "doc_type": "UpdateCaseAction",
                            "update": {
-                               "question3": "/data/question3",
-                               "question2": "/data/question2"
+                              "question3": {
+                                "question_path": "/data/question3",
+                                "update_mode": "always"
+                              },
+                              "question2": {
+                                "question_path": "/data/question2",
+                                "update_mode": "always"
+                              }
                            },
                            "condition": {
                                "answer": null,

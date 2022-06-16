@@ -1,30 +1,15 @@
-from datetime import datetime, time
-from functools import wraps
-
-from django.http import Http404
-from django.utils.translation import ugettext as _
-
-from couchdbkit import ResourceNotFound
-from django_prbac.utils import has_privilege
-
-from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import is_remote_app
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.domain.models import Domain
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
     InvalidFormatException,
     apply_leniency,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.util.quickcache import quickcache
 
 
 # Several SMS forms collect app id and form unique id in a single input
@@ -89,7 +74,7 @@ class DotExpandedDict(dict):
             # Now assign value to current position
             try:
                 current[bits[-1]] = v
-            except TypeError: # Special-case if current isn't a dict.
+            except TypeError:  # Special-case if current isn't a dict.
                 current = {bits[-1]: v}
 
 

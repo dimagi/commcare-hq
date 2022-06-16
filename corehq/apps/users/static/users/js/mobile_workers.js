@@ -31,6 +31,7 @@ hqDefine("users/js/mobile_workers",[
     'users/js/custom_data_fields',
     'hqwebapp/js/components.ko', // for pagination
     'hqwebapp/js/validators.ko', // email address validation
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -71,6 +72,7 @@ hqDefine("users/js/mobile_workers",[
             send_account_confirmation_email: false,
             is_active: true,
             is_account_confirmed: true,
+            deactivate_after_date: '',
         });
 
         var self = ko.mapping.fromJS(options);
@@ -225,6 +227,7 @@ hqDefine("users/js/mobile_workers",[
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
+            'show_deactivate_after_date',
         ]);
 
         var self = {};
@@ -271,9 +274,10 @@ hqDefine("users/js/mobile_workers",[
             if (!self.skipStandardValidations()) {
                 // Standard validation
                 var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
-                if (score > 1) {
+                var minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
+                if (score >= minimumZxcvbnScore) {
                     return self.STATUS.SUCCESS;
-                } else if (score < 1) {
+                } else if (score < minimumZxcvbnScore - 1) {
                     return self.STATUS.ERROR;
                 }
                 return self.STATUS.WARNING;
@@ -428,7 +432,19 @@ hqDefine("users/js/mobile_workers",[
                 locationsWidgets.initAutocomplete($locationSelect);
             }
 
+            if (options.show_deactivate_after_date) {
+                $('#id_deactivate_after_date').datetimepicker({
+                    format: 'MM-y',
+                });
+            }
+
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
+        };
+
+        self.getDeactivateAfterDate = function () {
+            if (options.show_deactivate_after_date) {
+                return $('#id_deactivate_after_date').val();
+            }
         };
 
         self.allowSubmit = ko.computed(function () {
@@ -477,6 +493,7 @@ hqDefine("users/js/mobile_workers",[
             rmi('create_mobile_worker', {
                 user: _.extend(ko.mapping.toJS(newUser), {
                     custom_fields: self.stagedUser().custom_fields.serialize(),
+                    deactivate_after_date: self.getDeactivateAfterDate(),
                 }),
             }).done(function (data) {
                 if (data.success) {
@@ -509,6 +526,7 @@ hqDefine("users/js/mobile_workers",[
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
+            show_deactivate_after_date: initialPageData.get('show_deactivate_after_date'),
         });
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);

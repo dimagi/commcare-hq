@@ -1,16 +1,24 @@
 import csv
+import datetime
 import io
 import uuid
 
-from django.utils.translation import ugettext as _
+from django.db.models import Q
+from django.utils.translation import gettext as _
 
 from celery.task import task
 
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger
+from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.enterprise.enterprise import EnterpriseReport
-from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.models import (
+    EnterprisePermissions,
+    EnterpriseMobileWorkerSettings,
+)
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.const import ONE_DAY
 from corehq.util.view_utils import absolute_reverse
@@ -57,3 +65,25 @@ def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
         for user_id in CouchUser.ids_by_domain(domain):
             user = CouchUser.get_by_user_id(user_id)
             get_enterprise_links_for_dropdown.clear(user)
+
+
+@task()
+def auto_deactivate_mobile_workers():
+    time_started = datetime.datetime.utcnow()
+    date_deactivation = datetime.date.today()
+    for emw_setting in EnterpriseMobileWorkerSettings.objects.filter(
+        Q(enable_auto_deactivation=True) | Q(allow_custom_deactivation=True)
+    ):
+        for domain in emw_setting.account.get_domains():
+            if emw_setting.enable_auto_deactivation:
+                emw_setting.deactivate_mobile_workers_by_inactivity(domain)
+            if emw_setting.allow_custom_deactivation:
+                DeactivateMobileWorkerTrigger.deactivate_mobile_workers(
+                    domain, date_deactivation=date_deactivation,
+                )
+    task_time = datetime.datetime.utcnow() - time_started
+    metrics_gauge(
+        'commcare.enterprise.tasks.auto_deactivate_mobile_workers',
+        task_time.seconds,
+        multiprocess_mode=MPM_LIVESUM
+    )

@@ -63,10 +63,7 @@ class ExportResponseTest(TestCase):
         res = report.export_response
 
         self.assertEqual(res.status_code, 200)
-
-        expected_content_type = ('Content-Type', 'application/vnd.ms-excel')
-
-        self.assertEqual(res._headers['content-type'], expected_content_type)
+        self.assertEqual(res.headers['content-type'], 'application/vnd.ms-excel')
 
     @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', return_value=[])
     @patch('corehq.apps.reports.generic.export_from_tables')

@@ -8,12 +8,18 @@ terminology.
 Linked domains have two major use cases:
 
 1. Setting up a practice domain and then a production domain
-1. Multi-geography projects that have one upstream domain and then a downstream domain for each of several different locations.
+1. Multi-geography projects that have one upstream domain and downstream domains for each unique location.
 
 Most domain links are local, meaning all domains reside in the same HQ cloud environment.
 There are also [remote links](#remote_links), where the upstream domain is in a different environment than the downstream domain(s).
 Not all functionality is supported by remote links, but most of it is. See below for more under Remote
 Links.
+
+## Accessing Linked Project Spaces
+
+Access to the Linked Project Spaces feature is controlled via the `release_management` and `lite_release_management`
+privileges, externally referred to as Enterprise Release Management (ERM) and Multi-Environment Release Management (MRM)
+respectively. Both privileges provide access to this feature, though notably MRM is a limited version of ERM.
 
 ## User Interface
 
@@ -25,12 +31,6 @@ page (Project Settings > Linked Project Spaces) used to overwrite content.
 
 Overwriting can be triggered from either the upstream domain ("pushing") or any
 downstream domain ("pulling").
-
-To enable linked domains, turn on the feature flag
-[LINKED_DOMAINS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/toggles.py#L1497).
-To link two domains, copy an application from the upstream domain to the desired downstream domain, checking the
-checkbox "Copy as linked application." This is a legacy workflow, leftover from when linked domains **only**
-supported applications. Remote domain linkages cannot be created via the UI; see below for details.
 
 ## Data Models<a name="data_models"></a>
 
@@ -54,7 +54,7 @@ created as part of this action.
 
 The ability to edit linked data on a downstream domain depends on the data type. For example, applications are
 read-only on downstream domains, with a few settings (controlled by
-[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml#L97))
+[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yml#L97))
 that may be edited and will retain their
 values even when the app is updated. Reports cannot be edited at all. Other data, such as user roles, can typically
 be edited on the downstream domain, but any edits will be overwritten the next time that data type is
@@ -96,9 +96,9 @@ $ ./manage.py link_to_upstream_domain \
 The specified username and API key are needed to authenticate requests to the upstream environment.
 ### Pulling Changes From the Upstream Domain
 
-On downstream domain's HQ environment, enable `linked_domains` feature flag. Navigate to the
-`Project Settings > Linked Projects` page which has a UI to pull changes from the upstream domain for all of the
-[previously mentioned fields](#data_models) **except for keywords**. This is _likely_ just due to lack of necessity
+On a downstream domain's HQ environment that has the `release_management` or `lite_release_management` permission, navigate to the
+`Project Settings > Linked Project Spaces` page. Use the UI to pull changes from the upstream domain for all of the
+[previously mentioned data models](#data_models) **except for keywords**. Keywords are not supported simply due to lack of necessity
 in the context of remote links.
 
 #### Linking Remote Applications

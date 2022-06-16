@@ -93,7 +93,7 @@ class BaseAutocompleteTest(TestCase):
         # https://github.com/django-compressor/django-appconf/issues/30
         with patch(setting_path, flag):
             response = self.client.get(view_path)
-            soup = BeautifulSoup(response.content)
+            soup = BeautifulSoup(response.content, features="lxml")
             for field in fields:
                 tag = soup.find("input", attrs={"name": field})
                 self.assertTrue(tag, "field not found: " + field)

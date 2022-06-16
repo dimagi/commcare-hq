@@ -93,7 +93,7 @@ def profile_dump(log_file, probability=1, limit=None):
         base, ext = os.path.splitext(log_file)
 
         header = '=' * 100
-        logger.warn("""
+        logger.warning("""
         %(header)s
         Profiling enabled for %(module)s.%(name)s with probability %(prob)s and limit %(limit)s.
         Output will be written to %(base)s-[datetime]%(ext)s

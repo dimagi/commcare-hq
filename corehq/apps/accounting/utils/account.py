@@ -2,7 +2,7 @@ from django.http import Http404
 from django_prbac.utils import has_privilege
 
 from corehq import privileges
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, Subscription, SoftwarePlanEdition
 
 
 def get_account_or_404(domain):

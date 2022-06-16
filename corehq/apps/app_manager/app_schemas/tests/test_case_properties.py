@@ -74,14 +74,14 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         })
         factory.form_opens_case(houshold_form_1, 'patient', is_subcase=True)
         factory.form_requires_case(patient_form_1, update={
-            'patient_id': 1,
-            'parent/household_id': 1,
+            'patient_id': '1',
+            'parent/household_id': '1',
         })
         factory.form_opens_case(patient_form_1, 'referral', is_subcase=True)
         factory.form_requires_case(referral_form_1, update={
             'parent/patient_name': "Ralph",
             'parent/parent/household_color': 'green',
-            'referral_id': 1,
+            'referral_id': '1',
         })
         self.assertCaseProperties(factory.app, 'household', [
             'household_color',

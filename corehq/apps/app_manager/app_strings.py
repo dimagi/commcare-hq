@@ -1,7 +1,7 @@
 import functools
 from distutils.version import LooseVersion
 
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from memoized import memoized
 
@@ -68,7 +68,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             if not name:
                 continue
             with localize(convert_to_two_letter_code(lc)):
-                name = ugettext(name)
+                name = gettext(name)
             yield lc, name
 
     yield id_strings.current_language(), lang
@@ -208,10 +208,10 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                fallback_name = ugettext("Continue To {form_name}".format(
+                fallback_name = gettext("Continue To {form_name}".format(
                     form_name=trans(app.get_form(module.case_list_form.form_id).name)))
             else:
-                fallback_name = ugettext("Create a new Case")
+                fallback_name = gettext("Create a new Case")
             yield (
                 id_strings.case_list_form_locale(module),
                 trans(module.case_list_form.label) or fallback_name
@@ -282,9 +282,13 @@ class AppStringsBase(object):
                     'This user must have access to exactly one lookup table row for the table: ${0}')
 
         if 'case_autoload.usercase.case_missing' not in messages:
-            messages['usercase.missing_id'] = \
+            messages['case_autoload.usercase.case_missing'] = \
                 ('This form affects the user case, but no user case id was found. '
                     'Please contact your supervisor.')
+
+        if 'case_search.claimed_case.case_missing' not in messages:
+            messages['case_search.claimed_case.case_missing'] = \
+                'Unable to find the selected case after performing a sync. Please try again.'
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,

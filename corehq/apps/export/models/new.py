@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from django.utils.datastructures import OrderedSet
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import (
     BooleanProperty,
@@ -89,6 +89,11 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.esaccessors import (
+    get_case_export_base_query,
+    get_form_export_base_query,
+    get_sms_export_base_query
+)
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -108,6 +113,8 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.html_utils import strip_tags
+
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -225,7 +232,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     def create_from_question(cls, question, app_id, app_version, repeats):
         return cls(
             path=_question_path_to_path_nodes(question['value'], repeats),
-            label=question['label'],
+            label=strip_tags(question['label']),
             last_occurrences={app_id: app_version},
             datatype=get_form_indicator_data_type(question['type'])
         )
@@ -1173,6 +1180,20 @@ class CaseExportInstance(ExportInstance):
             for column in table.columns
         )
 
+    def get_query(self, include_filters=True):
+        query = get_case_export_base_query(self.domain, self.case_type)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -1242,6 +1263,20 @@ class FormExportInstance(ExportInstance):
             )
         return []
 
+    def get_query(self, include_filters=True):
+        query = get_form_export_base_query(self.domain, self.app_id, self.xmlns, self.include_errors)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
+
 
 class SMSExportInstance(ExportInstance):
     type = SMS_EXPORT
@@ -1268,6 +1303,14 @@ class SMSExportInstance(ExportInstance):
         instance = cls(domain=schema.domain, tables=[main_table])
         instance._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
+
+    def get_query(self, include_filters=True):
+        query = get_sms_export_base_query(self.domain)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
 
 
 class ExportInstanceDefaults(object):

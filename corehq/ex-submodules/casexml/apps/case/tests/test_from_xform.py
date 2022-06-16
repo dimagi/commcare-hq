@@ -1,9 +1,8 @@
 from django.test import TestCase
 from casexml.apps.case.tests.test_const import CLOSE_DATE, MODIFY_DATE, ORIGINAL_DATE, UPDATE_DATE
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.dates import coerce_to_datetime
 
@@ -32,7 +31,7 @@ class CaseFromXFormTest(TestCase):
 
         xform2, case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
-        case = CaseAccessors(case.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, case.domain)
         self.assertEqual(False, case.closed)
 
         self._check_transactions(case, [xform1, xform2])
@@ -71,7 +70,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(CLOSE_DATE, case.modified_on)
 
     def _check_static_properties(self, case):
-        self.assertEqual(CommCareCaseSQL, type(case))
+        self.assertEqual(CommCareCase, type(case))
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)
         self.assertEqual("someuser", case.user_id)

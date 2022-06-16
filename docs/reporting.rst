@@ -17,7 +17,6 @@ Things to keep in mind:
 * `report API <report_api>`_
 
 
-* `Fluff`_ (legacy)
 * `sqlagg`_
 * `couchdbkit-aggregate`_ (legacy)
 
@@ -227,12 +226,3 @@ e.g.
   config = {'start': date(2013, 1, 1), 'end': date(2013, 5, 1)}
   ds = CustomReportDataSource(config)
   data = ds.get_data()
-
-.. _dynamic_reports:
-
-Adding dynamic reports
-----------------------
-
-Domains support dynamic reports. Currently the only verison of these are maps reports.
-There is currently no documentation for how to use maps reports. However you can look
-at the `drew` or `aaharsneha` domains on prod for examples.

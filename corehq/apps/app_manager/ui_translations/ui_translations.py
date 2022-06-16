@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from distutils.version import StrictVersion
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchexport.export import export_raw_to_writer
 

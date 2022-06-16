@@ -1,5 +1,6 @@
 import datetime
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.sql_db.util import estimate_row_count
@@ -254,22 +255,31 @@ def _get_repeater_ids_by_domain(domain):
     return [result['id'] for result in results]
 
 
-def iterate_repeat_records(due_before, chunk_size=10000, database=None):
+def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
-    json_now = json_format_datetime(due_before)
+    return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
+
+
+def iterate_repeat_record_ids(due_before, chunk_size=10000):
+    """
+    Yields repeat record ids only.
+    Use chunk_size to optimize db query. Has no effect on # of items returned.
+    """
+    from .models import RepeatRecord
+    json_due_before = json_format_datetime(due_before)
 
     view_kwargs = {
         'reduce': False,
         'startkey': [None],
-        'endkey': [None, json_now, {}],
-        'include_docs': True
+        'endkey': [None, json_due_before, {}],
+        'include_docs': False
     }
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'repeaters/repeat_records_by_next_check',
             chunk_size,
             **view_kwargs):
-        yield RepeatRecord.wrap(doc['doc'])
+        yield doc['id']
 
 
 def get_domains_that_have_repeat_records():
@@ -298,3 +308,30 @@ def delete_all_repeaters():
     from .models import Repeater
     for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
         Repeater.wrap(repeater['doc']).delete()
+
+
+def get_all_repeater_docs():
+    from .models import Repeater
+    results = Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all()
+    return [
+        repeater['doc'] for repeater in results
+        if Repeater.get_class_from_doc_type(repeater['doc']['doc_type'])
+    ]
+
+
+def get_repeater_count_for_domains(domains):
+    from .models import Repeater
+    view_kwargs = {
+        'reduce': True,
+        'include_docs': False,
+    }
+    count = 0
+    for domain in domains:
+        view_kwargs.update({
+            'startkey': [domain],
+            'endkey': [domain, {}]
+        })
+        result = Repeater.get_db().view('repeaters/repeaters', **view_kwargs).first()
+        if result:
+            count += result['value']
+    return count

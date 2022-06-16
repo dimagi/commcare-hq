@@ -3,6 +3,8 @@ from nose.tools import assert_equal, assert_in
 
 from corehq.sql_db import check_standby_configs
 
+from .utils import ignore_databases_override_warning
+
 
 def test_check_standby_configs():
     databases = {
@@ -23,6 +25,7 @@ def test_check_standby_configs():
         }
     }
 
+    @ignore_databases_override_warning
     def _check_settings(config, is_error):
         settings = {
             'DATABASES': databases,

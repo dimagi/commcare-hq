@@ -33,6 +33,7 @@ class TaskStatusResultError(jsonobject.StrictJsonObject):
     # search 'row_number=' in tasks.py
     # longer-term solution would be to have another field for debug info
     rows = jsonobject.ListProperty()
+    sample = jsonobject.StringProperty()
 
 
 def normalize_task_status_result(result):
@@ -64,7 +65,8 @@ def normalize_task_status_result_errors(result):
                 title=str(error_value['error']),
                 description=str(error_value['description']),
                 column=column_name,
-                rows=error_value['rows']
+                rows=error_value['rows'],
+                sample=error_value.get('sample', '')
             ))
     return result_errors
 

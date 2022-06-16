@@ -244,11 +244,9 @@ class IterDBTest(TestCase):
 class DocumentClassLookupTest(SimpleTestCase):
 
     def test_a_few_important_ones(self):
-        from casexml.apps.case.models import CommCareCase
         from corehq.apps.users.models import CommCareUser, WebUser
         from corehq.apps.fixtures.models import FixtureDataType
         test_cases = [
-            ('CommCareCase', CommCareCase),
             ('CommCareUser', CommCareUser),
             ('WebUser', WebUser),
             ('FixtureDataType', FixtureDataType),

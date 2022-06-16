@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 from corehq.apps.ota.views import (
@@ -9,7 +9,8 @@ from corehq.apps.ota.views import (
     recovery_measures,
     restore,
     search,
-    registry_case,
+    case_fixture,
+    case_restore,
 )
 
 urlpatterns = [
@@ -23,5 +24,7 @@ urlpatterns = [
     url(r'^heartbeat/(?P<app_build_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
     url(r'^get_next_id/$', get_next_id, name='get_next_id'),
     url(r'^recovery_measures/(?P<build_id>[\w-]+)/$', recovery_measures, name='recovery_measures'),
-    url(r'^registry_case/(?P<app_id>[\w-]+)/$', registry_case, name='registry_case'),
+    url(r'^registry_case/(?P<app_id>[\w-]+)/$', case_fixture),
+    url(r'^case_fixture/(?P<app_id>[\w-]+)/$', case_fixture, name='case_fixture'),
+    url(r'^case_restore/(?P<case_id>[\w\-]+)/$', case_restore, name='case_restore'),
 ]

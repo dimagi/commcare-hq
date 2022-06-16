@@ -12,12 +12,11 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.retry import retry_on
 
 from corehq.apps.es import CaseES, CaseSearchES, FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.progress import (
@@ -193,7 +192,7 @@ class CaseHelper:
         if (es_modified_on, es_domain) != (modified_on, domain):
             # if the doc is newer in ES than sql, refetch from sql to get newest
             if es_modified_on is not None and es_modified_on > modified_on:
-                refreshed = CaseAccessors(domain).get_case(case_id)
+                refreshed = CommCareCase.objects.get_case(case_id, domain)
                 if refreshed.server_modified_on != modified_on:
                     return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                                    refreshed.domain, es_modified_on_by_ids,
@@ -205,7 +204,7 @@ class CaseHelper:
             if (es_modified_on, es_domain) != (modified_on, domain):
                 # if the doc is newer in ES than sql, refetch from sql to get newest
                 if es_modified_on is not None and es_modified_on > modified_on:
-                    refreshed = CaseAccessors(domain).get_case(case_id)
+                    refreshed = CommCareCase.objects.get_case(case_id, domain)
                     if refreshed.server_modified_on != modified_on:
                         return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
                                                        refreshed.domain, es_modified_on_by_ids,
@@ -218,22 +217,22 @@ class CaseHelper:
     @retry_on_es_timeout
     def _get_es_modified_dates(case_ids):
         results = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseES(for_export=True)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod
     @retry_on_es_timeout
     def _get_case_search_es_modified_dates(case_ids):
         results = (
-            CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseSearchES(for_export=True)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
-        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+        return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
     @staticmethod
@@ -284,7 +283,7 @@ class FormHelper:
     @staticmethod
     def _get_es_modified_dates_for_forms(form_ids):
         results = (
-            FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
+            FormES(for_export=True).remove_default_filters()
             .form_ids(form_ids)
             .values_list('_id', 'received_on', 'doc_type', 'domain')
         )

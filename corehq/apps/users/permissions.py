@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -31,7 +31,7 @@ def get_extra_permissions():
     yield ReportPermission(
         FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
     yield ReportPermission(
-        DEID_EXPORT_PERMISSION, ugettext_noop("Export De-Identified Data"),
+        DEID_EXPORT_PERMISSION, gettext_noop("Export De-Identified Data"),
         lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
@@ -66,9 +66,9 @@ def can_view_sms_exports(couch_user, domain):
 
 def has_permission_to_view_report(couch_user, domain, report_to_check):
     from corehq.apps.users.decorators import get_permission_name
-    from corehq.apps.users.models import Permissions
+    from corehq.apps.users.models import HqPermissions
     return couch_user.has_permission(
         domain,
-        get_permission_name(Permissions.view_report),
+        get_permission_name(HqPermissions.view_report),
         data=report_to_check
     )

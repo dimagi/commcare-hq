@@ -1,4 +1,3 @@
-import itertools
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -9,12 +8,11 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseForbidden,
     HttpResponseNotFound,
     JsonResponse,
 )
+from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
-from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -22,8 +20,11 @@ from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 from tastypie.http import HttpTooManyRequests
 
-from casexml.apps.case.cleanup import claim_case, get_first_claim
+from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.data_providers.case.livequery import get_case_hierarchy
+from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     RestoreConfig,
@@ -42,7 +43,9 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.utils import get_case_search_results
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.utils import get_case_search_results_from_request
+from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
@@ -58,10 +61,12 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
+from .case_restore import get_case_restore_response
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .rate_limiter import rate_limit_restore
 from .utils import (
@@ -116,9 +121,8 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     request_dict = request.GET if request.method == 'GET' else request.POST
-    criteria = {k: v[0] if len(v) == 1 else v for k, v in request_dict.lists()}
     try:
-        cases = get_case_search_results(domain, criteria, app_id, request.couch_user)
+        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
@@ -139,23 +143,36 @@ def claim(request, domain):
     as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
     restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
-    case_id = unquote(request.POST.get('case_id', ''))
-    if not case_id:
+    case_ids = request.POST.getlist('case_id')
+
+    if not case_ids:
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if get_first_claim(domain, restore_user.user_id, case_id):
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                status=409)
+        case_ids_already_claimed = get_first_claims(domain, restore_user.user_id, case_ids)
+        case_ids_to_claim = {case for case in case_ids if case not in case_ids_already_claimed}
+    except CaseNotFound as err:
+        return HttpResponse(f'No cases claimed. Case IDs "{err}" not found',
+                            status=410)
 
+    for case_id in case_ids_to_claim:
         claim_case(domain, restore_user, case_id,
                    host_type=unquote(request.POST.get('case_type', '')),
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
-    except CaseNotFound:
-        return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                            status=410)
-    return HttpResponse(status=200)
+
+    def phone_holds_all_cases(request):
+        try:
+            synclog = get_properly_wrapped_sync_log(request.last_sync_token)
+            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+            return not missing_case_ids_on_phone
+        except MissingSyncLog:
+            return False
+
+    if not case_ids_to_claim and phone_holds_all_cases(request):
+        return HttpResponse(status=204)
+
+    return HttpResponse(status=201)
 
 
 def get_restore_params(request, domain):
@@ -263,6 +280,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     # Ensure fixtures are included if sync is full rather than incremental
     if not since:
         skip_fixtures = False
+
+    # If loadtest user, do a full restore
+    if restore_user.loadtest_factor > 1:
+        since = None
 
     app = get_app_cached(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
@@ -411,18 +432,16 @@ def recovery_measures(request, domain, build_id):
 @csrf_exempt
 @mobile_auth
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
-@toggles.DATA_REGISTRY.required_decorator()
-def registry_case(request, domain, app_id):
+def case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST
     case_ids = request_dict.getlist("case_id")
     case_types = request_dict.getlist("case_type")
-    registry = request_dict.get("commcare_registry")
+    registry = request_dict.get(CASE_SEARCH_REGISTRY_ID_KEY)
 
     missing = [
-        name
-        for name, value in zip(
-            ["case_id", "case_type", "commcare_registry"],
-            [case_ids, case_types, registry]
+        name for name, value in zip(
+            ["case_id", "case_type"],
+            [case_ids, case_types]
         )
         if not value
     ]
@@ -433,7 +452,38 @@ def registry_case(request, domain, app_id):
             len(missing)
         ).format(params="', '".join(missing)))
 
-    helper = DataRegistryHelper(domain, registry_slug=registry)
+    if registry:
+        try:
+            cases = _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry)
+        except RegistryAccessException as e:
+            return HttpResponseBadRequest(str(e))
+        except Http404 as e:
+            # convert to a simple response to avoid the HTML error page
+            return HttpResponseNotFound(str(e))
+    else:
+        cases = _single_domain_case_fixture(request, domain, case_types, case_ids)
+
+    for case in cases:
+        case.case_json[COMMCARE_PROJECT] = case.domain
+    return HttpResponse(CaseDBFixture(cases).fixture, content_type="text/xml; charset=utf-8")
+
+
+def _single_domain_case_fixture(request, domain, case_types, case_ids):
+    cases = CommCareCase.objects.get_cases(case_ids)
+    for case in cases:
+        if case.domain != domain or case.type not in case_types:
+            raise Http404(f"Case '{case.case_id}' not found")
+    case_ids_found = {case.case_id for case in cases}
+    missing = set(case_ids) - case_ids_found
+    if missing:
+        raise Http404(f"Cases '{','.join(missing)}' not found")
+
+    return get_case_hierarchy(domain, cases)
+
+
+@toggles.DATA_REGISTRY.required_decorator()
+def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, registry_slug):
+    helper = DataRegistryHelper(domain, registry_slug=registry_slug)
 
     app = get_app_cached(domain, app_id)
     try:
@@ -442,20 +492,23 @@ def registry_case(request, domain, app_id):
             for case_id in case_ids
         ]
     except RegistryNotFound:
-        return HttpResponseNotFound(f"Registry '{registry}' not found")
+        raise Http404(f"Registry '{registry_slug}' not found")
     except CaseNotFound as e:
-        return HttpResponseNotFound(f"Case '{str(e)}' not found")
-    except RegistryAccessException as e:
-        return HttpResponseBadRequest(str(e))
+        raise Http404(f"Case '{str(e)}' not found")
 
     for case in cases:
         if case.type not in case_types:
-            return HttpResponseNotFound(f"Case '{case.case_id}' not found")
+            raise Http404(f"Case '{case.case_id}' not found")
 
-    all_cases = list(itertools.chain.from_iterable(
-        helper.get_case_hierarchy(request.couch_user, case)
-        for case in cases
-    ))
-    for case in all_cases:
-        case.case_json[COMMCARE_PROJECT] = case.domain
-    return HttpResponse(CaseDBFixture(all_cases).fixture, content_type="text/xml; charset=utf-8")
+    return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
+
+
+@formplayer_auth
+def case_restore(request, domain, case_id):
+    """Restore endpoint used for SMS forms where the 'user' is a case.
+
+    Accepts the provided case_id and returns a restore for the user containing:
+    * Registration block
+    * The passed in case and its full network of cases
+    """
+    return get_case_restore_response(domain, case_id)

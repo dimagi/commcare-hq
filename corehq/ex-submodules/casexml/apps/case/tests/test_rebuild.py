@@ -8,8 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.models import CommCareCase, RebuildWithReason, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -26,7 +25,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
     def uid():
         return uuid.uuid4().hex
     case_id = case_id or uid()
-    block = CaseBlock.deprecated_init(create=create,
+    block = CaseBlock(create=create,
                       case_id=case_id,
                       user_id=user_id or uid(),
                       owner_id=owner_id or uid(),
@@ -76,16 +75,15 @@ class CaseRebuildTest(TestCase):
         the case and unarchiving unarchives it.
         """
         case_id = _post_util(create=True, p1='p1-1', p2='p2-1')
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
 
         self.assertFalse(case.is_deleted)
         self.assertEqual(1, len(case.actions))
         [form_id] = case.xform_ids
-        form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, REBUILD_TEST_DOMAIN)
 
         form.archive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
 
         self.assertTrue(case.is_deleted)
         # should just have the 'rebuild' action
@@ -93,7 +91,7 @@ class CaseRebuildTest(TestCase):
         self.assertTrue(case.actions[0].is_case_rebuild)
 
         form.unarchive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
         self.assertFalse(case.is_deleted)
         self.assertEqual(3, len(case.actions))
         self.assertTrue(case.actions[-1].is_case_rebuild)
@@ -108,8 +106,7 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
         closed_by = case.closed_by
         closed_on = case.closed_on
         self.assertNotEqual('', closed_by)
@@ -137,14 +134,14 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(f3, close.form_id)
 
         # todo: should this be the behavior for archiving the create form?
-        form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
-        f1_doc = form_acessors.get_form(f1)
+        get_form = XFormInstance.objects.get_form
+        f1_doc = get_form(f1)
         with capture_kafka_changes_context(topics.CASE_SQL) as change_context:
             f1_doc.archive()
 
         self.assertEqual([case.case_id], [change.id for change in change_context.changes])
 
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
 
         self.assertEqual(2, len(primary_actions(case)))
 
@@ -160,16 +157,16 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.get_case_property('p5'), 'p5-3')  # no change
 
         def _reset(form_id):
-            form_doc = form_acessors.get_form(form_id)
+            form_doc = get_form(form_id)
             form_doc.unarchive()
-            case = case_accessors.get_case(case_id)
+            case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
             _check_initial_state(case)
 
         _reset(f1)
 
-        f2_doc = form_acessors.get_form(f2)
+        f2_doc = get_form(f2)
         f2_doc.archive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
 
         self.assertEqual(2, len(primary_actions(case)))
 
@@ -186,9 +183,9 @@ class CaseRebuildTest(TestCase):
 
         _reset(f2)
 
-        f3_doc = form_acessors.get_form(f3)
+        f3_doc = get_form(f3)
         f3_doc.archive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
 
         self.assertEqual(2, len(primary_actions(case)))
 
@@ -212,22 +209,21 @@ class CaseRebuildTest(TestCase):
         earlier = now - timedelta(hours=1)
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
-        create_block = CaseBlock.deprecated_init(case_id, create=True, date_modified=way_earlier)
+        create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
         post_case_blocks(
             [create_block.as_xml()], form_extras={'received_on': way_earlier}
         )
-        update_block = CaseBlock.deprecated_init(case_id, update={'foo': 'bar'}, date_modified=earlier)
+        update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
         post_case_blocks(
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
 
-        case_accessors = CaseAccessors('test-domain')
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, 'test-domain')
         self.assertEqual(earlier, case.modified_on)
 
-        second_form = FormAccessors(REBUILD_TEST_DOMAIN).get_form(case.xform_ids[-1])
+        second_form = XFormInstance.objects.get_form(case.xform_ids[-1], 'test-domain')
         second_form.archive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, 'test-domain')
         self.assertEqual(way_earlier, case.modified_on)
 
     def test_archive_against_deleted_case(self):
@@ -239,34 +235,32 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p3='p3',
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
-        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
-        case = case_accessors.get_case(case_id)
-        case_accessors.soft_delete_cases([case_id])
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
+        CommCareCase.objects.soft_delete_cases(REBUILD_TEST_DOMAIN, [case_id])
 
         [f1, f2, f3] = case.xform_ids
-        f2_doc = FormAccessors(REBUILD_TEST_DOMAIN).get_form(f2)
+        f2_doc = XFormInstance.objects.get_form(f2, REBUILD_TEST_DOMAIN)
         f2_doc.archive()
-        case = case_accessors.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
         self.assertTrue(case.is_deleted)
 
     def test_archive_removes_index(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks([
-            CaseBlock.deprecated_init(parent_case_id, create=True).as_xml()
+            CaseBlock(parent_case_id, create=True).as_xml()
         ])
         child_case_id = uuid.uuid4().hex
         post_case_blocks([
-            CaseBlock.deprecated_init(child_case_id, create=True).as_xml()
+            CaseBlock(child_case_id, create=True).as_xml()
         ])
         xform, _ = post_case_blocks([
-            CaseBlock.deprecated_init(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
+            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
         ])
 
-        case_accessors = CaseAccessors('test-domain')
-        case = case_accessors.get_case(child_case_id)
+        case = CommCareCase.objects.get_case(child_case_id, 'test-domain')
         self.assertEqual(1, len(case.indices))
 
         xform.archive()
 
-        case = case_accessors.get_case(child_case_id)
+        case = CommCareCase.objects.get_case(child_case_id, 'test-domain')
         self.assertEqual(0, len(case.indices))

@@ -11,9 +11,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import (
     Http404,
     HttpResponse,
@@ -26,7 +28,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ngettext, ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _, ngettext, gettext_lazy, gettext_noop
 
 from corehq.apps.users.analytics import get_role_user_count
 from dimagi.utils.couch import CriticalSection
@@ -56,6 +58,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -87,6 +90,7 @@ from corehq.apps.users.decorators import (
     require_can_view_roles,
     require_permission_to_edit_user,
 )
+from corehq.apps.users.exceptions import MissingRoleException
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
@@ -103,7 +107,7 @@ from corehq.apps.users.models import (
     Invitation,
     StaticRole,
     WebUser,
-    Permissions,
+    HqPermissions,
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
@@ -138,7 +142,7 @@ def _users_context(request, domain):
 
 
 class BaseUserSettingsView(BaseDomainView):
-    section_name = ugettext_noop("Users")
+    section_name = gettext_noop("Users")
 
     @property
     @memoized
@@ -260,7 +264,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
         if role is None:
             if isinstance(self.editable_user, WebUser):
-                raise ValueError("WebUser is always expected to have a role")
+                raise MissingRoleException()
             return None
         else:
             return role.get_qualified_id()
@@ -328,14 +332,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def update_user(self):
         if self.form_user_update.is_valid():
-            old_lang = self.request.couch_user.language
-            if self.form_user_update.update_user():
-                # if editing our own account we should also update the language in the session
-                if self.editable_user._id == self.request.couch_user._id:
-                    new_lang = self.request.couch_user.language
-                    if new_lang != old_lang:
-                        self.request.session['django_language'] = new_lang
-                return True
+            return self.form_user_update.update_user()
 
     def post(self, request, *args, **kwargs):
         saved = False
@@ -356,7 +353,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
-    page_title = ugettext_noop("Edit Web User")
+    page_title = gettext_noop("Edit Web User")
 
     @property
     def page_name(self):
@@ -375,7 +372,14 @@ class EditWebUserView(BaseEditUserView):
                                   request=self.request)
 
         if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+            try:
+                existing_role = self.existing_role
+            except MissingRoleException:
+                existing_role = None
+                messages.error(self.request, _("""
+                    This user has no role. Please assign this user a role and save.
+                """))
+            form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
         else:
             del form.fields['role']
 
@@ -383,7 +387,12 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        try:
+            self.existing_role
+        except MissingRoleException:
+            role_choices = [('none', _('(none)'))] + role_choices
+        return role_choices
 
     @property
     @memoized
@@ -485,9 +494,23 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
+    def release_management_privilege(self):
+        return self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
+
+    @property
+    @memoized
+    def lite_release_management_privilege(self):
+        """
+        Only true if domain does not have privileges.RELEASE_MANAGEMENT
+        """
+        return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
+            not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
+
+    @property
+    @memoized
     def non_admin_roles(self):
         return list(sorted(
-            UserRole.objects.get_by_domain(self.domain),
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -528,7 +551,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
 class EnterpriseUsersView(BaseRoleAccessView):
     template_name = 'users/enterprise_users.html'
-    page_title = ugettext_lazy("Enterprise Users")
+    page_title = gettext_lazy("Enterprise Users")
     urlname = 'enterprise_users'
 
     @property
@@ -542,7 +565,7 @@ class EnterpriseUsersView(BaseRoleAccessView):
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
-    page_title = ugettext_lazy("Web Users")
+    page_title = gettext_lazy("Web Users")
     urlname = 'web_users'
 
 
@@ -595,7 +618,7 @@ def download_web_users(request, domain):
 
 class DownloadWebUsersStatusView(BaseUserSettingsView):
     urlname = 'download_web_users_status'
-    page_title = ugettext_noop('Download Web Users Status')
+    page_title = gettext_noop('Download Web Users Status')
 
     @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -628,7 +651,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
 
 class ListRolesView(BaseRoleAccessView):
     template_name = 'users/roles_and_permissions.html'
-    page_title = ugettext_lazy("Roles & Permissions")
+    page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
     @method_decorator(require_can_view_roles)
@@ -660,11 +683,20 @@ class ListRolesView(BaseRoleAccessView):
                 "Any users assigned to roles that are restricted in data access "
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
+
+        tableau_list = []
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            tableau_list = [{
+                'id': viz.id,
+                'name': viz.name,
+            } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
         return {
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
+            'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
@@ -676,6 +708,8 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
+            'erm_privilege': self.release_management_privilege,
+            'mrm_privilege': self.lite_release_management_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
@@ -896,7 +930,7 @@ def _update_role_from_view(domain, role_data):
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
 
-    permissions = Permissions.wrap(role_data["permissions"])
+    permissions = HqPermissions.wrap(role_data["permissions"])
     permissions.normalize()
     role.set_permissions(permissions.to_list())
 
@@ -977,7 +1011,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_lazy("Invite Web User to Project")
+    page_title = gettext_lazy("Invite Web User to Project")
 
     @property
     @memoized
@@ -1108,7 +1142,7 @@ class BaseUploadUser(BaseUserSettingsView):
             task = parallel_user_import.delay(
                 self.domain,
                 list(self.user_specs),
-                request.couch_user
+                request.couch_user.user_id
             )
         else:
             upload_record = UserUploadRecord(
@@ -1120,7 +1154,7 @@ class BaseUploadUser(BaseUserSettingsView):
                 self.domain,
                 list(self.user_specs),
                 list(self.group_specs),
-                request.couch_user,
+                request.couch_user.user_id,
                 upload_record.pk,
                 self.is_web_upload
             )
@@ -1145,7 +1179,7 @@ class BaseUploadUser(BaseUserSettingsView):
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_web_users'
-    page_title = ugettext_noop("Bulk Upload Web Users")
+    page_title = gettext_noop("Bulk Upload Web Users")
     is_web_upload = True
 
     @method_decorator(always_allow_project_access)
@@ -1167,7 +1201,7 @@ class UploadWebUsers(BaseUploadUser):
 
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
-    page_title = ugettext_noop('Web User Upload Status')
+    page_title = gettext_noop('Web User Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(WebUserUploadStatusView, self).main_context
@@ -1330,18 +1364,27 @@ def change_password(request, domain, login_id):
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
-        if form.is_valid():
-            form.save()
-            log_user_change(
-                by_domain=domain,
-                for_domain=commcare_user.domain,
-                couch_user=commcare_user,
-                changed_by_user=request.couch_user,
-                changed_via=USER_CHANGE_VIA_WEB,
-                change_messages=UserChangeMessage.password_reset()
-            )
-            json_dump['status'] = 'OK'
-            form = SetUserPasswordForm(request.project, login_id, user='')
+        input = request.POST['new_password1']
+        if input == request.POST['new_password2']:
+            if form.project.strong_mobile_passwords:
+                try:
+                    clean_password(input)
+                except ValidationError:
+                    json_dump['status'] = 'weak'
+            if form.is_valid():
+                form.save()
+                log_user_change(
+                    by_domain=domain,
+                    for_domain=commcare_user.domain,
+                    couch_user=commcare_user,
+                    changed_by_user=request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    change_messages=UserChangeMessage.password_reset()
+                )
+                json_dump['status'] = 'OK'
+                form = SetUserPasswordForm(request.project, login_id, user='')
+        else:
+            json_dump['status'] = 'different'
     else:
         form = SetUserPasswordForm(request.project, login_id, user=django_user)
     json_dump['formHTML'] = render_crispy_form(form)

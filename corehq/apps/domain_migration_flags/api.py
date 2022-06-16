@@ -86,7 +86,7 @@ def get_uncompleted_migrations(slug):
     for progress in progs:
         if progress.completed_on is not None:
             assert progress.migration_status != MigrationStatus.COMPLETE, progress
-            log.warn("uncompleted migation (status=%s) has a completed-on date: %s",
+            log.warning("uncompleted migation (status=%s) has a completed-on date: %s",
                 progress.migration_status, progress.domain)
         result[progress.migration_status].append(progress)
     return result

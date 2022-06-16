@@ -1,13 +1,12 @@
 alembic
 architect
-attrs<22
+attrs>=21.4
 boto3
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737	celery==4.4.7
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
 celery @ https://github.com/dimagi/celery/raw/v4.1.1.2/releases/celery-4.1.1.2-py2.py3-none-any.whl
 CommcareTranslationChecker>=0.9.7
-concurrent-log-handler>=0.9.12
 csiphash
 datadog
 ddtrace
@@ -15,7 +14,6 @@ decorator==4.0.11  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
-django-angular
 django-autoslug
 django-braces
 django-bulk-update
@@ -28,19 +26,18 @@ django-formtools
 django-logentry-admin
 django-oauth-toolkit
 django-otp
-django-partial-index
 django-phonenumber-field
 django-prbac
 django-redis-sessions
 django-redis
-django-simple-captcha
+django-recaptcha
 django-statici18n
 django-tastypie
 django-transfer
 django-two-factor-auth
 django-user-agents
-django-websocket-redis
-django<3.0  # we are not ready to move to django 3.0
+django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
+django>=3.2.13,<4.0
 djangorestframework
 dnspython
 dropbox
@@ -52,6 +49,9 @@ eulxml
 Faker
 gevent
 ghdiff
+google-api-python-client==2.32.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==0.4.6
 greenlet
 gunicorn
 hiredis
@@ -61,16 +61,24 @@ Jinja2
 json-delta
 jsonfield
 jsonobject-couchdbkit
-jsonobject
+jsonobject>=2.0.0
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
 kombu
-billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
+billiard!=3.5.0.5 # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
 laboratory
 lxml
+markdown
+oic
 openpyxl
 phonenumberslite
 pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
@@ -82,13 +90,15 @@ psycopg2>=2.8.4  # Python 3.8 support
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
-Pygments
 pygooglechart
 python-dateutil
 python-imap
 pyphonetics
 python-magic
 pytz
+    # via celery
+    # See https://github.com/jazzband/pip-tools/issues/1505
+    # This comment can be removed when that issue is resolved.
 PyYAML
 pyzxcvbn
 qrcode
@@ -112,6 +122,7 @@ stripe
 suds-py3
 text-unidecode
 tinys3
+toposort
 tropo-webapi-python
 turn-python
 twilio

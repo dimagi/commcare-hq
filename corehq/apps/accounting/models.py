@@ -13,7 +13,7 @@ from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
@@ -65,6 +65,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -779,7 +780,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
-    is_customer_software_plan = models.BooleanField(default=False)
+    is_customer_software_plan = models.BooleanField(default=False)  # can plan be used in customer billing account
     max_domains = models.IntegerField(blank=True, null=True)
     is_annual_plan = models.BooleanField(default=False)
 
@@ -839,7 +840,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run migrations?"
+                f"No default {edition!r} product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod
@@ -2126,7 +2127,7 @@ class Invoice(InvoiceBase):
 
         if filter_out_dimagi:
             emails_with_dimagi = contact_emails
-            contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            contact_emails = [e for e in contact_emails if not is_dimagi_email(e)]
             if not contact_emails:
                 # make sure at least someone (even if it's dimagi)
                 # gets this communication. Also helpful with QA when the only

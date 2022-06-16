@@ -1,6 +1,5 @@
 import base64
 import hashlib
-import threading
 from copy import copy
 from mimetypes import guess_type
 from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
@@ -294,39 +293,3 @@ def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandle
 
     for result in paginate_function(call_view, args_provider, event_handler):
         yield result
-
-
-_override_db = threading.local()
-
-
-class OverrideDB(object):
-
-    def __init__(self, document_class, database):
-        self.document_class = document_class
-        self.database = database
-        self.orig_database = None
-        self.orig_get_db = None
-        if not hasattr(_override_db, 'class_to_db'):
-            _override_db.class_to_db = {}
-
-    def __enter__(self):
-        try:
-            self.orig_database = _override_db.class_to_db[self.document_class]
-        except KeyError:
-            self.orig_get_db = self.document_class.get_db
-            self.document_class.get_db = classmethod(_get_db)
-        _override_db.class_to_db[self.document_class] = self.database
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # explict comparison with None necessary
-        # because Database.__nonzero__ returns the doc count
-        if self.orig_database is not None:
-            _override_db.class_to_db[self.document_class] = self.orig_database
-        else:
-            assert self.orig_get_db
-            del _override_db.class_to_db[self.document_class]
-            self.document_class.get_db = self.orig_get_db
-
-
-def _get_db(cls):
-    return _override_db.class_to_db[cls]

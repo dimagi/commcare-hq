@@ -65,7 +65,7 @@
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-02-10",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2021-03-08",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
@@ -75,13 +75,6 @@
         "checkpoint_id": "LedgerToElasticsearchPillow-ledgers_2016-03-15",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
-    },
-    "M4ChangeFormFluffPillow": {
-        "advertised_name": "M4ChangeFormFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.M4ChangeFormFluffPillow.testhq",
-        "full_class_name": "custom.m4change.models.M4ChangeFormFluffPillow",
-        "name": "M4ChangeFormFluffPillow"
     },
     "ReportCaseToElasticsearchPillow": {
         "advertised_name": "ReportCaseToElasticsearchPillow",

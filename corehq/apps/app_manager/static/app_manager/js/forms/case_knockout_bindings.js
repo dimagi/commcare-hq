@@ -89,7 +89,7 @@
                     else {
                         paperclip = '';
                     }
-                    return paperclip + DOMPurify.sanitize(m).replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                    return paperclip + DOMPurify.sanitize(m).replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 },
                 data: _valueToSelect2Data(optionObjects),
                 width: '100%',

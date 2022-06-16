@@ -7,7 +7,7 @@ import pytz
 
 import xml2json
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
@@ -123,7 +123,7 @@ def build_form_xml_from_property_dict(form_properties, separator=''):
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    case_blocks = [CaseBlock.deprecated_init(create=True, case_id=case_id)] if case_id else []
+    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
     return FormSubmissionBuilder(
         form_id=form_id,
         metadata=metadata,
@@ -134,7 +134,6 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE
 
 def get_simple_wrapped_form(form_id, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
-    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
     metadata = metadata or TestFormMetadata()
     xml = get_simple_form_xml(form_id=form_id, metadata=metadata, simple_form=simple_form)
@@ -146,7 +145,7 @@ def get_simple_wrapped_form(form_id, metadata=None, save=True, simple_form=SIMPL
     interface.store_attachments(wrapped_form, [Attachment('form.xml', xml, 'text/xml')])
     if save:
         interface.save_processed_models([wrapped_form])
-        wrapped_form = FormAccessors(metadata.domain).get_form(wrapped_form.form_id)
+        wrapped_form = XFormInstance.objects.get_form(wrapped_form.form_id, metadata.domain)
     return wrapped_form
 
 

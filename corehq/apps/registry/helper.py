@@ -1,8 +1,10 @@
+import itertools
+from operator import attrgetter
+
 from corehq.apps.registry.exceptions import RegistryNotFound, RegistryAccessException
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import RegistryPermissionCheck
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.timer import TimingContext
+from corehq.form_processor.models import CommCareCase
 
 
 class DataRegistryHelper:
@@ -49,9 +51,7 @@ class DataRegistryHelper:
             See ``corehq.apps.registry.models.RegistryAuditHelper.data_accessed``
         :return:
         """
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-
-        case = CaseAccessorSQL.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id)
         self.check_data_access(couch_user, [case.type], case.domain)
         self.log_data_access(couch_user.get_django_user(), case.domain, accessing_object, filters={
             "case_type": case.type,
@@ -59,20 +59,19 @@ class DataRegistryHelper:
         })
         return case
 
-    def get_case_hierarchy(self, couch_user, case):
-        from casexml.apps.phone.data_providers.case.livequery import (
-            get_live_case_ids_and_indices, PrefetchIndexCaseAccessor
-        )
+    def get_multi_domain_case_hierarchy(self, couch_user, cases):
+        """Get the combined case hierarchy for a list of cases that spans multiple domains"""
+        all_cases = list(itertools.chain.from_iterable(
+            self.get_case_hierarchy(domain, couch_user, list(domain_cases))
+            for domain, domain_cases in itertools.groupby(cases, key=attrgetter("domain"))
+        ))
+        return all_cases
 
-        self.check_data_access(couch_user, [case.type], case.domain)
-
-        # using livequery to get related cases matches the semantics of case claim
-        case_ids, indices = get_live_case_ids_and_indices(case.domain, [case.case_id], TimingContext())
-        accessor = PrefetchIndexCaseAccessor(CaseAccessors(case.domain), indices)
-        case_ids.remove(case.case_id)
-        cases = accessor.get_cases(list(case_ids))
-
-        return [case] + cases
+    def get_case_hierarchy(self, domain, couch_user, cases):
+        """Get the combined case hierarchy for the input cases"""
+        from casexml.apps.phone.data_providers.case.livequery import get_case_hierarchy
+        self.check_data_access(couch_user, [case.type for case in cases], domain)
+        return get_case_hierarchy(domain, cases)
 
     def check_data_access(self, couch_user, case_types, case_domain=None):
         """Perform all checks for data access.
@@ -86,7 +85,7 @@ class DataRegistryHelper:
 
     def _check_user_has_access(self, couch_user, case_domain=None):
         if case_domain and self.current_domain == case_domain:
-            # always allow to access data in the current domain
+            # always allow access data in the current domain
             return
 
         checker = RegistryPermissionCheck(self.current_domain, couch_user)

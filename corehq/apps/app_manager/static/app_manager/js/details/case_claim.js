@@ -90,6 +90,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             hidden: false,
             receiverExpression: '',
             itemsetOptions: {},
+            exclude: false,
+            required: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -101,6 +103,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.allowBlankValue = ko.observable(options.allowBlankValue);
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
+        self.exclude = ko.observable(options.exclude);
+        self.required = ko.observable(options.required);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -152,7 +156,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude', 'required',
         ], saveButton);
         return self;
     };
@@ -179,8 +183,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter', 'searchDefaultRelevant',
+        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
+        'customRelatedCaseProperty', 'inlineSearch',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
@@ -226,6 +231,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
             },
         });
 
+        self.inlineSearchVisible = ko.computed(() => {
+            return self.workflow() === "es_only" || self.workflow() === "auto_launch";
+        });
+
+        self.inlineSearchActive = ko.computed(() => {
+            return self.inlineSearchVisible() && self.inlineSearch();
+        });
+
         // Allow search filter to be copied from another part of the page
         self.setSearchFilterVisible = ko.computed(function () {
             return searchFilterObservable && searchFilterObservable();
@@ -259,7 +272,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return {
                 auto_launch: self.autoLaunch(),
                 default_search: self.defaultSearch(),
-                search_default_relevant: self.searchDefaultRelevant(),
                 search_additional_relevant: self.searchAdditionalRelevant(),
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 data_registry: self.dataRegistry(),
@@ -287,6 +299,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
                     return query.caseIdXpath();
                 }) : [],
+                custom_related_case_property: self.customRelatedCaseProperty(),
+                inline_search: self.inlineSearch(),
             };
         };
 
@@ -319,8 +333,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (searchProperties[i].appearance === "address") {
                     appearance = "address";
                 }
-                if (searchProperties[i].input_ === "daterange") {
-                    appearance = "daterange";
+                if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
+                    appearance = searchProperties[i].input_;
                 }
                 var isMultiselect = searchProperties[i].input_ === "select";
                 self.searchProperties.push(searchPropertyModel({
@@ -330,6 +344,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     appearance: appearance,
                     isMultiselect: isMultiselect,
                     allowBlankValue: searchProperties[i].allow_blank_value,
+                    exclude: searchProperties[i].exclude,
+                    required: searchProperties[i].required,
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -368,6 +384,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         appearance: p.appearanceFinal(),
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
+                        exclude: p.exclude(),
+                        required: p.required(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
@@ -426,6 +444,11 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.isCommon = function (prop) {
             return self.commonProperties().indexOf(prop) !== -1;
         };
+
+        self.isEnabled = ko.computed(() => {
+            // match logic in corehq.apps.app_manager.util.module_offers_search
+            return self._getProperties().length > 0 || self._getDefaultProperties().length > 0;
+        });
 
         self.serialize = function () {
             return _.extend({

@@ -170,7 +170,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 for row in export_data[table]['rows']
             ]
 
-        self.assertDictContainsSubset({
+        form_data = get_form_data('Forms')[0]
+        for key, value in {
             # normal form questions
             "form.add_a_prescription": "yes_then_close",
             "form.how_are_you_today": "fine_thanks",
@@ -202,7 +203,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "form.subcase_0.case.index.parent.#text": "71626d9c-2d05-491f-81d9-becf8566618a",
             "form.subcase_0.case.index.parent.@case_type": "mom",
 
-        }, get_form_data('Forms')[0])
+        }.items():
+            self.assertEqual(form_data[key], value, f"key: {key!r}")
 
         self.assertDictEqual({
             "number": "0.0",

@@ -32,7 +32,7 @@ services:
       TRAVIS_PULL_REQUEST_SHA: "${TRAVIS_PULL_REQUEST_SHA}"
       TRAVIS_REPO_SLUG: "${TRAVIS_REPO_SLUG}"
     privileged: true  # allows mount inside container
-    links:
+    depends_on:
       - postgres
       - couch
       - redis
@@ -58,7 +58,7 @@ services:
 
   postgres:
     extends:
-      file: "${COMPOSE_ARCH}"
+      file: "${COMPOSE_OS_FILE}"
       service: postgres
     environment:
       POSTGRES_USER: commcarehq
@@ -126,7 +126,7 @@ services:
           KAFKA_ADVERTISED_PORT: 9092
           CUSTOM_INIT_SCRIPT: |
             URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
-            if curl --max-time 10 $URL > wait.sh ; then
+            if curl --max-time 10 $$URL > wait.sh ; then
               chmod +x ./wait.sh
               ./wait.sh -t 30 zookeeper:2181 || exit 1
             else
@@ -134,7 +134,7 @@ services:
             fi
           KAFKA_ADVERTISED_HOST_NAME: "kafka"
       volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
+        - ${DOCKER_SOCK}:${DOCKER_SOCK}
         - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:

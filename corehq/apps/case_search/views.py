@@ -4,7 +4,7 @@ import re
 from django.http import Http404
 
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -14,10 +14,10 @@ from corehq.util.view_utils import BadRequest, json_error
 
 
 class CaseSearchView(BaseDomainView):
-    section_name = ugettext_lazy("Data")
+    section_name = gettext_lazy("Data")
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
-    page_title = ugettext_lazy("Case Search")
+    page_title = gettext_lazy("Case Search")
 
     @property
     def section_url(self):

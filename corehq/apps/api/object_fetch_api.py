@@ -1,3 +1,5 @@
+import urllib.parse
+from io import BytesIO
 from wsgiref.util import FileWrapper
 
 from django.http import (
@@ -10,11 +12,9 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
-
 from dimagi.utils.django.cached_object import (
+    CachedObject,
+    CachedImage,
     IMAGE_SIZE_ORDERING,
     OBJECT_ORIGINAL,
 )
@@ -23,15 +23,11 @@ from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.views import (
     can_view_attachments,
+    get_form_attachment_response,
     require_form_view_permission,
-    safely_get_form,
 )
-from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-    get_cached_case_attachment,
-)
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CaseAttachment, CommCareCase
 
 
 class CaseAttachmentAPI(View):
@@ -58,7 +54,7 @@ class CaseAttachmentAPI(View):
         max_filesize = int(self.request.GET.get('max_size', 0))
 
         try:
-            CaseAccessors(domain).get_case(case_id)
+            CommCareCase.objects.get_case(case_id, domain)
         except CaseNotFound:
             raise Http404
 
@@ -96,17 +92,14 @@ class CaseAttachmentAPI(View):
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % meta['content_length'])
 
-                        url_params = six.moves.urllib.parse.urlencode({
+                        url_params = urllib.parse.urlencode({
                             "img": '1',
                             "size": fsize,
                             "max_size": max_filesize,
                             "max_image_width": max_width,
                             "max_image_height": max_height
                         })
-                        r.write('<img src="%(attach_url)s?%(params)s">' % {
-                                "attach_url": url_base,
-                                "params": url_params
-                        })
+                        r.write(f'<img src="{url_base}?{url_params}">')
                     else:
                         r.write('Not available')
                     r.write('</li>')
@@ -123,7 +116,7 @@ class CaseAttachmentAPI(View):
                     fixed_size=size
                 )
         else:
-            cached_attachment = get_cached_case_attachment(domain, case_id, attachment_id)
+            cached_attachment = get_cached_case_attachment(case_id, attachment_id)
             attachment_meta, attachment_stream = cached_attachment.get()
 
         if attachment_meta is not None:
@@ -135,30 +128,15 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@api_auth
+@require_form_view_permission
 @location_safe
-class FormAttachmentAPI(View):
-
-    @method_decorator(api_auth)
-    @method_decorator(require_form_view_permission)
-    def get(self, request, domain, form_id=None, attachment_id=None):
-        if not form_id or not attachment_id:
-            raise Http404
-
-        # this raises a PermissionDenied error if necessary
-        safely_get_form(request, domain, form_id)
-
-        try:
-            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
-        except AttachmentNotFound:
-            raise Http404
-
-        return StreamingHttpResponse(
-            streaming_content=FileWrapper(content.content_stream),
-            content_type=content.content_type
-        )
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
 
 
-def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0,
+                     width_limit=0, height_limit=0, fixed_size=None):
     """
     Return (metadata, stream) information of best matching image attachment.
 
@@ -180,7 +158,7 @@ def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_lim
         constraint_dict['width'] = width_limit
     do_constrain = bool(constraint_dict)
 
-    cached_image = get_cached_case_attachment(domain, case_id, attachment_id, is_image=True)
+    cached_image = get_cached_case_attachment(case_id, attachment_id, is_image=True)
     meta, stream = cached_image.get(size_key=size_key)
 
     if do_constrain:
@@ -207,3 +185,14 @@ def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_lim
                 stream = None
 
     return meta, stream
+
+
+def get_cached_case_attachment(case_id, attachment_id, is_image=False):
+    cache_key = f"{case_id}_{attachment_id}"
+    cobject = (CachedImage if is_image else CachedObject)(cache_key)
+    if not cobject.is_cached():
+        content = CaseAttachment.get_content(case_id, attachment_id)
+        stream = BytesIO(content.content_body)
+        metadata = {'content_type': content.content_type}
+        cobject.cache_put(stream, metadata)
+    return cobject

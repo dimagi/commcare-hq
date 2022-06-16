@@ -9,10 +9,10 @@ from django.test import TestCase
 
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
+    FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
 )
-from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
+from corehq.form_processor.models import LedgerValue, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
 
 
@@ -138,7 +138,7 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     def _create_docs(cls, domain, count):
         case_ids = [uuid.uuid4().hex for i in range(count)]
         [create_form_for_test(domain, case_id=case_id) for case_id in case_ids]
-        return CaseAccessorSQL.get_cases(case_ids, ordered=True)
+        return CommCareCase.objects.get_cases(case_ids, ordered=True)
 
     @classmethod
     def _get_doc_ids(cls, docs):
@@ -188,7 +188,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
     utcnow = datetime.utcnow()
 
     case_id = case_id or uuid.uuid4().hex
-    case = CommCareCaseSQL(
+    case = CommCareCase(
         case_id=case_id,
         domain=domain,
         type='',
@@ -199,7 +199,7 @@ def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):
         server_modified_on=utcnow,
     )
 
-    CaseAccessorSQL.save_case(case)
+    case.save(with_tracked_models=True)
 
     ledger = LedgerValue(
         domain=domain,

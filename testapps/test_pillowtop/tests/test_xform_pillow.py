@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
@@ -11,11 +10,12 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -25,6 +25,7 @@ from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@es_test
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
     username = 'xform-pillowtest-user'
@@ -89,7 +90,7 @@ class XFormPillowTest(TestCase):
 
         # soft delete the form
         with self.process_form_changes:
-            FormAccessors(self.domain).soft_delete_forms([form.form_id])
+            XFormInstance.objects.soft_delete_forms(self.domain, [form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 
         # ensure not there anymore
@@ -259,7 +260,7 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         doc_ret = transform_xform_for_elasticsearch(doc_dict)
-        self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': Decimal('42.7'), 'lon': Decimal('-21')})
+        self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': 42.7, 'lon': -21})
 
     def test_transform_xform_for_elasticsearch_location_missing(self):
         doc_dict = {

@@ -6,7 +6,11 @@
     class="btn btn-danger"
     href="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
   >
+  {% if use_updated_ucr_naming %}
+    {% trans 'Delete Custom Web Report' %}
+  {% else %}
     {% trans 'Delete Report' %}
+  {% endif %}
   </a>
 {% else %}
   <div class="btn-group">
@@ -17,7 +21,11 @@
     {% else %}
       <form method='post' action="{% url 'delete_configurable_report' domain report_id %}" >
         {% csrf_token %}
-        <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
+        {% if use_updated_ucr_naming %}
+          <input type="submit" value="{% trans 'Delete Custom Web Report'%}" class="btn btn-danger disable-on-submit pull-right">
+        {% else %}
+          <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
+        {% endif %}
       </form>
     {% endif %}
   </div>

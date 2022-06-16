@@ -1,4 +1,4 @@
-"""A plugin to format test names uniformly for easy comparison
+r"""A plugin to format test names uniformly for easy comparison
 
 Usage:
 

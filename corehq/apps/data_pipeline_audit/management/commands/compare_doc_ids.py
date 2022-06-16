@@ -22,7 +22,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_user_ids,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.util.markup import (
     CSVRowFormatter,
     SimpleTableWriter,
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             'CommCareUser-Deleted': _compare_users,
             'WebUser': _compare_users,
         }
-        handlers.update({doc_type: compare_xforms for doc_type in XFormInstanceSQL.DOC_TYPE_TO_STATE})
+        handlers.update({doc_type: compare_xforms for doc_type in XFormInstance.DOC_TYPE_TO_STATE})
         try:
             primary_count, es_count, primary_only, es_only = \
                 handlers[doc_type](domain, doc_type, startdate, enddate)

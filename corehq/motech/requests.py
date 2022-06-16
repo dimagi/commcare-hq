@@ -322,7 +322,7 @@ def validate_user_input_url_for_repeaters(url, domain, src):
         if settings.DEBUG and e.reason == 'is_loopback':
             pass
         else:
-            metrics_counter('commcare.repeaters.ssrf_attempt', tags={
+            metrics_counter('commcare.security.ssrf_attempt', tags={
                 'domain': domain,
                 'src': src,
                 'reason': e.reason

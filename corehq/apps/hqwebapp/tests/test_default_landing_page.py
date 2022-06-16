@@ -7,10 +7,11 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.views import MySavedReportsView
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
     WebUser,
 )
@@ -32,15 +33,15 @@ class TestDefaultLandingPages(TestCase):
 
         cls.reports_role = UserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
-            permissions=Permissions(view_reports=True),
+            permissions=HqPermissions(view_reports=True),
         )
         cls.webapps_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
-            permissions=Permissions(access_web_apps=True),
+            permissions=HqPermissions(access_web_apps=True),
         )
         cls.downloads_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='downloads',
-            permissions=Permissions.max(),
+            permissions=HqPermissions.max(),
         )
         cls.global_password = 'secret'
 
@@ -95,7 +96,7 @@ class TestDefaultLandingPages(TestCase):
 
 @generate_cases([
     (None, DomainDashboardView.urlname),
-    ('reports_role', "reports_home"),
+    ('reports_role', MySavedReportsView.urlname),
     ('webapps_role', FormplayerMain.urlname),
     ('downloads_role', DomainDashboardView.urlname),
     ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),
@@ -117,7 +118,7 @@ def test_web_user_landing_page(self, role, expected_urlname, enabled_toggle=None
 
 @generate_cases([
     (None, FormplayerMain.urlname),
-    ('reports_role', "reports_home"),
+    ('reports_role', MySavedReportsView.urlname),
     ('webapps_role', FormplayerMain.urlname),
     ('downloads_role', FormplayerMain.urlname),
     ('downloads_role', 'download_data_files', 'DATA_FILE_DOWNLOAD'),

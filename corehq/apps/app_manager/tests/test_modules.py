@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
@@ -44,7 +45,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="phone",
                 case_type="phone",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -59,7 +60,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -77,7 +78,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -98,7 +99,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -114,13 +115,13 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             ),
             AdvancedOpenCaseAction(
                 case_tag="grandchild",
                 case_type="grandchild",
-                name_path="/data/children/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/children/question1"),
                 case_indices=[CaseIndex(tag="child")]
             )
         ]
@@ -162,7 +163,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
         self.all_attrs = ['columns', 'filter', 'sort_elements', 'custom_variables', 'custom_xml',
-                          'case_tile_configuration', 'print_template']
+                          'case_tile_configuration', 'multi_select', 'print_template']
         self.cols_and_filter = ['columns', 'filter']
         self.case_tile = ['case_tile_configuration']
 
@@ -174,6 +175,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.filter_ = setattr(self.src_detail, 'filter', 'a > b')
         self.custom_variables = setattr(self.src_detail, 'custom_variables', 'def')
         self.custom_xml = setattr(self.src_detail, 'custom_xml', 'ghi')
+        self.multi_select = getattr(self.src_detail, 'multi_select')
         self.print_template = getattr(self.src_detail, 'print_template')
         self.print_template['name'] = 'test'
         self.case_tile_configuration = setattr(self.src_detail, 'persist_tile_on_forms', True)
@@ -228,7 +230,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             ],
             auto_launch=True,
             default_search=True,
-            default_relevant=False,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",
@@ -259,9 +260,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("properties")
+        dest_json.pop("properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("properties")
+        blank_json.pop("properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_default_properties(self):
@@ -273,9 +274,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("default_properties")
+        dest_json.pop("default_properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("default_properties")
+        blank_json.pop("default_properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_options(self):
@@ -296,6 +297,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         # everything else should match the source config
         src_json = self.src_module.search_config.to_json()
         for config_dict in (final_json, src_json):
-            config_dict.pop("properties")
-            config_dict.pop("default_properties")
+            config_dict.pop("properties", [])
+            config_dict.pop("default_properties", [])
         self.assertEqual(final_json, src_json)

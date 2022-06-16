@@ -5,7 +5,7 @@ pip
 flower
 setproctitle
 uWSGI
-ipython
+ipython  # for nicer django shell experience
 ndg-httpsclient
 pyasn1
 

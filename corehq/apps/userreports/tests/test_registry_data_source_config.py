@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import create_autospec, patch
+from unittest.mock import MagicMock, create_autospec, patch
 
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
@@ -15,6 +15,7 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class RegistryDataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -71,7 +72,7 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         expected_columns = [
             'doc_id',
             'inserted_at',
-            'domain',
+            'commcare_project',
             'date',
             'owner',
             'count',
@@ -92,7 +93,7 @@ class RegistryDataSourceConfigurationTest(SimpleTestCase):
         datetime_mock.utcnow.return_value = fake_time_now
         # indicators
         sample_doc, expected_indicators = get_sample_doc_and_indicators(fake_time_now)
-        expected_indicators["domain"] = sample_doc["domain"]
+        expected_indicators["commcare_project"] = sample_doc["domain"]
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
             self.assertEqual(expected_indicators[result.column.id], result.value)

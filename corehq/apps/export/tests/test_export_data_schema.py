@@ -13,7 +13,7 @@ from corehq.apps.app_manager.models import (
     Form,
     Module,
     OpenSubCaseAction,
-    XForm,
+    XForm, ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -151,7 +151,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
-                    'weight': '/data/repeat/group/weight',
+                    'weight': ConditionalCaseUpdate(question_path='/data/repeat/group/weight'),
                 },
                 subcase_index=0,
                 _nest=True
@@ -159,7 +159,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
-                    'height': '/data/repeat/height',
+                    'height': ConditionalCaseUpdate(question_path='/data/repeat/height'),
                 },
                 subcase_index=1,
                 _nest=True
@@ -167,7 +167,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
-                    'age': '/data/repeat/nested_repeat/age',
+                    'age': ConditionalCaseUpdate(question_path='/data/repeat/nested_repeat/age'),
                 },
                 subcase_index=2,
                 _nest=False
@@ -569,7 +569,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             AdvancedOpenCaseAction(
                 case_type="advanced",
                 case_tag="open_case_0",
-                name_path="/data/question3/question4",
+                name_update=ConditionalCaseUpdate(question_path="/data/question3/question4"),
                 repeat_context="/data/question3",
                 case_indices=[CaseIndex(tag='load_case0_0')]
             )
@@ -1024,7 +1024,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.copy_of = app.get_id
         second_build.version = 6
         second_build.has_submissions = True
-        second_build.get_module(0).get_form(0).actions.update_case.update['name'] = '/data/question2'
+        second_build.get_module(0).get_form(0).actions.update_case.update['name'] = ConditionalCaseUpdate(
+            question_path='/data/question2')
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)

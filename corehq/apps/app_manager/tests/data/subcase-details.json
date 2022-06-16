@@ -176,8 +176,14 @@
                                 "type": "always"
                             },
                             "update": {
-                                "age": "/data/parent_age",
-                                "only_parent_has_this": "/data/parent_age"
+                              "age": {
+                                "question_path": "/data/parent_age",
+                                "update_mode": "always"
+                              },
+                              "only_parent_has_this": {
+                                "question_path": "/data/parent_age",
+                                "update_mode": "always"
+                              }
                             }
                         },
                         "update_referral": {

@@ -1,6 +1,6 @@
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 
@@ -39,8 +39,8 @@ def get_yes_no(val):
 
 @quickcache(['item', 'xmlns'])
 def get_two_last_forms(item, xmlns):
-    xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
-    forms = FormAccessors(item['domain']).get_forms(xforms_ids)
+    xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
+    forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
     f_forms = [f for f in forms if f.xmlns == xmlns]
     s_forms = sorted(f_forms, key=lambda x: x.received_on)
 
@@ -87,8 +87,8 @@ class EQAActionItemSpec(JsonObject):
     question_id = StringProperty()
 
     def __call__(self, item, context=None):
-        xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
-        forms = FormAccessors(item['domain']).get_forms(xforms_ids)
+        xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
+        forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
         f_forms = [f for f in forms if f.xmlns == self.xmlns]
         s_forms = sorted(f_forms, key=lambda x: x.received_on)
 

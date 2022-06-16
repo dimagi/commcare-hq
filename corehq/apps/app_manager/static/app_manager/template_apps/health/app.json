@@ -230,11 +230,26 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "Last_menstrual_period": "/data/last_menstrual_period",
-                "Total_children": "/data/Total_children",
-                "Children_alive": "/data/children_alive",
-                "village_name": "/data/village_name",
-                "feeling_sick": "/data/feeling_sick"
+                  "Last_menstrual_period": {
+                    "question_path": "/data/last_menstrual_period",
+                    "update_mode": "always"
+                  },
+                  "Total_children": {
+                    "question_path": "/data/Total_children",
+                    "update_mode": "always"
+                  },
+                  "Children_alive": {
+                    "question_path": "/data/children_alive",
+                    "update_mode": "always"
+                  },
+                  "village_name": {
+                    "question_path": "/data/village_name",
+                    "update_mode": "always"
+                  },
+                  "feeling_sick": {
+                    "question_path": "/data/feeling_sick",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,
@@ -693,11 +708,26 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "danger_signs": "/data/danger_signs",
-                "referral": "/data/referral",
-                "feeling_sick": "/data/feeling_sick",
-                "referral_anyway": "/data/referral_anyway",
-                "had_referral_checkup": "/data/had_referral_checkup"
+                "danger_signs": {
+                  "question_path": "/data/danger_signs",
+                  "update_mode": "always"
+                },
+                "referral": {
+                  "question_path": "/data/referral",
+                  "update_mode": "always"
+                },
+                "feeling_sick": {
+                  "question_path": "/data/feeling_sick",
+                  "update_mode": "always"
+                },
+                "referral_anyway": {
+                  "question_path": "/data/referral_anyway",
+                  "update_mode": "always"
+                },
+                "had_referral_checkup": {
+                  "question_path": "/data/had_referral_checkup",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -891,8 +921,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "pregnancy_outcome": "/data/pregnancy_outcome",
-                "baby_name": "/data/baby_name"
+                "pregnancy_outcome": {
+                  "question_path": "/data/pregnancy_outcome",
+                  "update_mode": "always"
+                },
+                "baby_name": {
+                  "question_path": "/data/baby_name",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1506,9 +1542,18 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "danger_signs": "/data/danger_signs",
-                "has_condition_improved": "/data/has_condition_improved",
-                "had_referral_checkup": "/data/had_referral_checkup"
+                  "danger_signs": {
+                    "question_path": "/data/danger_signs",
+                    "update_mode": "always"
+                  },
+                  "has_condition_improved": {
+                    "question_path": "/data/has_condition_improved",
+                    "update_mode": "always"
+                  },
+                  "had_referral_checkup": {
+                    "question_path": "/data/had_referral_checkup",
+                    "update_mode": "always"
+                  }
               },
               "condition": {
                 "answer": null,

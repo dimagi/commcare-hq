@@ -12,7 +12,7 @@ def drop_connected_signals(signal):
     """
     Use as a context manager to temporarily drop signals. Useful in tests.
 
-    with drop_connected_signals(case_post_save):
+    with drop_connected_signals(sql_case_post_save):
        case.save()  # signals won't be called
     case.save()  # signals will be called again
     """

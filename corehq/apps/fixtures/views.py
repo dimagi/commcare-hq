@@ -15,8 +15,8 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
@@ -62,7 +62,7 @@ from corehq.apps.fixtures.utils import (
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
@@ -93,7 +93,7 @@ def _to_kwargs(req):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id):
+def update_tables(request, domain, data_type_id=None):
     """
     receives a JSON-update patch like following
     {
@@ -295,7 +295,7 @@ def fixtures_home(domain):
 
 
 class FixtureViewMixIn(object):
-    section_name = ugettext_noop("Lookup Tables")
+    section_name = gettext_noop("Lookup Tables")
 
     @property
     def section_url(self):
@@ -357,7 +357,7 @@ class UploadItemLists(TemplateView):
 
 class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
     urlname = 'fixture_upload_status'
-    page_title = ugettext_noop('Lookup Table Upload Status')
+    page_title = gettext_noop('Lookup Table Upload Status')
 
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
@@ -567,7 +567,7 @@ def _get_fixture_upload_args_from_request(request, domain):
 
     is_async = request.POST.get("async", "").lower() == "true"
 
-    if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
+    if not request.couch_user.has_permission(domain, HqPermissions.edit_data.name):
         raise FixtureAPIRequestError(
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))

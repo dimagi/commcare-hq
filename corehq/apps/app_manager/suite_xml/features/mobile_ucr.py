@@ -219,7 +219,6 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
                 index
             )
 
-
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration(

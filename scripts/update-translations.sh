@@ -13,7 +13,7 @@ function abort () {
 function help () {
     echo "Update Translations"
     echo
-    echo "Syntax: scripts/updateTranslations [-h|--no-fuzzy|--no-obsolete]"
+    echo "Syntax: scripts/update-translations.sh [-h|--no-fuzzy|--no-obsolete]"
     echo "options:"
     echo " --no-fuzzy   Remove fuzzy translations"
     echo " --no-obsolte Remove obsolete translations"
@@ -33,25 +33,27 @@ while getopts ":h-:" option; do
     esac
 done
 
-
-has_local_changes=`git diff-index HEAD` && true
-if [[ $has_local_changes ]]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT-}" ]
 then
-    abort "You have uncommitted changes in your working tree."
-fi
+    has_local_changes=`git diff-index HEAD` && true
+    if [[ $has_local_changes ]]
+    then
+        abort "You have uncommitted changes in your working tree."
+    fi
 
-branch=$(git rev-parse --abbrev-ref HEAD)
-if [[ $branch != 'master' ]]
-then
-    abort "You must be on master to run this command."
-fi
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch != 'master' ]]
+    then
+        abort "You must be on master to run this command."
+    fi
 
-git fetch
-tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
-upstream_changes=`git rev-list HEAD...$tracking_branch --count`
-if [[ $upstream_changes > 0 ]]
-then
-    abort "There are changes upstream that you should pull with 'git pull' before running this command."
+    git fetch
+    tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+    upstream_changes=`git rev-list HEAD...$tracking_branch --count`
+    if [[ $upstream_changes > 0 ]]
+    then
+        abort "There are changes upstream that you should pull with 'git pull' before running this command."
+    fi
 fi
 
 if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
@@ -65,41 +67,23 @@ fi
 echo "Pulling translations from transifex"
 tx pull -f
 
-echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' $@
-
-echo "Gathering javascript translation strings.  This will also probably take a while"
-./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' $@
-
-set +e   # Temporarily disable strict mode so we can respond any failure
-echo "Compiling translation files."
-./manage.py compilemessages
-if [[ $? -ne "0" ]]; then
-    echo ""
-    echo "'./manage.py compilemessages' failed.  This is probably due to a bad translation, maybe a translator messed up a format string or something."
-    echo "If the deploy is urgent, it might be best to drop the changes to locale/ and deploy without updating translations, then assign an interrupt ticket to fix."
-    echo "The output above from compilemessages should have specifics about the locale/ file and line where the error(s) occurred."
-    echo "1. Open those files, go to the appropriate lines and fix the errors."
-    echo "2. Run './manage.py compilemessages' again to make sure it's fixed."
-    echo "3. Run 'tx push -st' to update them on transifex."
-    echo "4. Now if you do 'git checkout -- locale' and run this script again, it should succeed."
-    echo "5. You should probably also reach out to the translator to make sure they don't mess this up again."
-    abort
-fi
-set -e
+./scripts/make-translations.sh "$@"
 
 echo "Pushing updates to transifex."
-tx push -st
+tx push -s -t
 
-has_local_changes=`git diff-index HEAD` && true
-if [[ ! $has_local_changes ]]
+if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT-}" ]
 then
-    abort "There are no changes....please investigate"
-fi
+    has_local_changes=`git diff-index HEAD` && true
+    if [[ ! $has_local_changes ]]
+    then
+        abort "There are no changes....please investigate"
+    fi
 
-echo "Committing and pushing changes"
-git add locale/ &&
-git commit --edit --message="Update translations." --message="[ci skip]" &&
-git push origin master
+    echo "Committing and pushing changes"
+    git add locale/ &&
+    git commit --edit --message="Update translations." --message="[ci skip]" &&
+    git push origin master
+fi
 
 echo "Translations updated successfully!"

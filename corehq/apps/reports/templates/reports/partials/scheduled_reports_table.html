@@ -64,7 +64,10 @@
       </td>
 
       <td>
-        <!-- ko text: day_name --><!-- /ko --> at <!-- ko text: hour --><!-- /ko -->:00
+        <!-- ko text: day_name --><!-- /ko -->
+        <!-- ko if: hour -->
+          at <!-- ko text: hour --><!-- /ko -->:00
+        <!-- /ko -->
       </td>
 
       <td>

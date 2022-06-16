@@ -6,7 +6,6 @@ from django.test import SimpleTestCase, TestCase
 import pytz
 from unittest.mock import MagicMock, patch
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -58,8 +57,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
@@ -341,16 +339,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         results = get_last_submission_time_for_users(self.domain, ['cruella_deville'], DateSpan(start, end))
         self.assertEqual(results['cruella_deville'], datetime(2013, 7, 2).date())
-
-    def test_get_form_counts_for_domains(self):
-        self._send_form_to_es()
-        self._send_form_to_es()
-        self._send_form_to_es(domain='other')
-
-        self.assertEqual(
-            get_form_counts_for_domains([self.domain, 'other']),
-            {self.domain: 2, 'other': 1}
-        )
 
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
@@ -1035,7 +1023,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             closed_on=None,
             modified_on=None):
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=uuid.uuid4().hex,
             domain=domain or self.domain,
             owner_id=owner_id or self.owner_id,
@@ -1252,8 +1240,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
 
         # simulate a save
-        from casexml.apps.case.signals import case_post_save
-        case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
+        from corehq.form_processor.signals import sql_case_post_save
+        sql_case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
@@ -1262,7 +1250,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = self._send_case_to_es()
         case.external_id = '123'
         case.save()
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
         case_json = case.to_json()
         case_json['contact_phone_number'] = '234'
         es_case = transform_case_for_elasticsearch(case_json)

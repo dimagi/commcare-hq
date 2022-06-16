@@ -308,7 +308,7 @@ def delete_case_schedule_instance(instance):
     instance.delete()
 
 
-def delete_alert_schedule_instances_for_schedule(cls, schedule_id):
+def delete_alert_schedule_instances_for_schedule(cls, schedule_uuid):
     from corehq.messaging.scheduling.scheduling_partitioned.models import (
         AlertScheduleInstance,
         CaseAlertScheduleInstance,
@@ -317,13 +317,13 @@ def delete_alert_schedule_instances_for_schedule(cls, schedule_id):
     if cls not in (AlertScheduleInstance, CaseAlertScheduleInstance):
         raise TypeError("Expected AlertScheduleInstance or CaseAlertScheduleInstance")
 
-    _validate_uuid(schedule_id)
+    _validate_uuid(schedule_uuid)
 
     for db_name in get_db_aliases_for_partitioned_query():
-        cls.objects.using(db_name).filter(alert_schedule_id=schedule_id).delete()
+        cls.objects.using(db_name).filter(alert_schedule_id=schedule_uuid).delete()
 
 
-def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
+def delete_timed_schedule_instances_for_schedule(cls, schedule_uuid):
     from corehq.messaging.scheduling.scheduling_partitioned.models import (
         TimedScheduleInstance,
         CaseTimedScheduleInstance,
@@ -332,10 +332,10 @@ def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
     if cls not in (TimedScheduleInstance, CaseTimedScheduleInstance):
         raise TypeError("Expected TimedScheduleInstance or CaseTimedScheduleInstance")
 
-    _validate_uuid(schedule_id)
+    _validate_uuid(schedule_uuid)
 
     for db_name in get_db_aliases_for_partitioned_query():
-        cls.objects.using(db_name).filter(timed_schedule_id=schedule_id).delete()
+        cls.objects.using(db_name).filter(timed_schedule_id=schedule_uuid).delete()
 
 
 def delete_schedule_instances_by_case_id(domain, case_id):

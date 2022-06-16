@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.db import transaction
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from celery import chord
 
@@ -52,7 +52,7 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
+def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admin=False, domain=None, ip=None):
     full_name = form.cleaned_data['full_name']
     new_user = activate_new_user(
         username=form.cleaned_data['email'],
@@ -71,7 +71,7 @@ def activate_new_user_via_reg_form(form, created_by, created_via, is_domain_admi
 
 def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
-    is_domain_admin=True, domain=None, ip=None, atypical_user=False
+    is_domain_admin=False, domain=None, ip=None, atypical_user=False
 ):
     now = datetime.utcnow()
 
@@ -260,7 +260,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     message_html = render_to_string(
         'registration/email/mobile_signup_reminder.html', params)
 
-    subject = ugettext('Visit CommCareHQ on your computer!')
+    subject = gettext('Visit CommCareHQ on your computer!')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

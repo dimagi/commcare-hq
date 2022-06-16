@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.motech.repeaters.expression.forms import CaseExpressionRepeaterForm
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
@@ -19,6 +19,7 @@ class AddCaseExpressionRepeaterView(AddRepeaterView):
             self.add_repeater_form.cleaned_data['configured_filter'])
         repeater.configured_expression = (
             self.add_repeater_form.cleaned_data['configured_expression'])
+        repeater.url_template = self.add_repeater_form.cleaned_data['url_template']
         return repeater
 
 

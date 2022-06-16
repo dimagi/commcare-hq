@@ -91,6 +91,7 @@ class TestAppResource(APIResourceTest):
             "versions": versions,
             "is_released": False, "modules": [
                 {
+                    "name": {"en": "open_case module"},
                     "unique_id": "open_case_module",
                     "case_type": "house",
                     "case_properties": ["name"],
@@ -100,6 +101,7 @@ class TestAppResource(APIResourceTest):
                     }],
                 },
                 {
+                    "name": {'en': 'update_case module'},
                     "unique_id": "update_case_module",
                     "case_type": "person",
                     "case_properties": ["name"], "forms": [{

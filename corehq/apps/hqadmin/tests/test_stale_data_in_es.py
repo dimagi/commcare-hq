@@ -59,6 +59,9 @@ class TestStaleDataInESSQL(TestCase):
     def test_case_missing_then_not_domain_specific(self):
         self._test_case_missing_then_not({'domain': self.project.name})
 
+    def test_case_missing_date(self):
+        self._test_case_missing_date()
+
     def test_case_resume(self):
         iteration_key = uuid.uuid4().hex
 
@@ -193,6 +196,20 @@ class TestStaleDataInESSQL(TestCase):
         self._send_cases_to_es([case])
         self._assert_in_sync(call())
 
+    def _test_case_missing_date(self):
+        def call():
+            return self._stale_data_in_es('case')
+        form, (case,) = self._submit_form(self.project.name, new_cases=1)
+
+        pg_modified_on = case.server_modified_on
+        case.server_modified_on = None
+        self._send_cases_to_es([case], refetch_doc=False)
+        case.server_modified_on = pg_modified_on
+
+        self._assert_not_in_sync(call(), rows=[
+            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+        ])
+
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
         expect_exception = kwargs.pop('expect_exception', None)
@@ -206,7 +223,7 @@ class TestStaleDataInESSQL(TestCase):
 
     def _submit_form(self, domain, new_cases=0, update_cases=()):
         case_blocks = [
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=str(uuid.uuid4()),
                 case_type=self.case_type,
                 create={'name': str(uuid.uuid4())[:5]},
@@ -214,7 +231,7 @@ class TestStaleDataInESSQL(TestCase):
             for i in range(new_cases)
         ]
         case_blocks += [
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=case.case_id,
                 update={}
             )
@@ -240,11 +257,14 @@ class TestStaleDataInESSQL(TestCase):
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         self.forms_to_delete_from_es.update(form.form_id for form in forms)
 
-    def _send_cases_to_es(self, cases):
+    def _send_cases_to_es(self, cases, refetch_doc=True):
         for case in cases:
-            es_case = transform_case_for_elasticsearch(
-                CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
-            )
+            if refetch_doc:
+                es_case = transform_case_for_elasticsearch(
+                    CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
+                )
+            else:
+                es_case = transform_case_for_elasticsearch(case.to_json())
             send_to_elasticsearch('cases', es_case)
 
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)

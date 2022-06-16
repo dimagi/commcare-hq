@@ -10,10 +10,7 @@ from django.http.response import (
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import (
-    ugettext as _,
-    ugettext_lazy,
-)
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from corehq import toggles
@@ -39,7 +36,7 @@ from corehq.apps.locations.models import SQLLocation
 class ManageReleasesByLocation(BaseProjectSettingsView):
     template_name = 'domain/manage_releases_by_location.html'
     urlname = 'manage_releases_by_location'
-    page_title = ugettext_lazy("Manage Releases By Location")
+    page_title = gettext_lazy("Manage Releases By Location")
 
     @cached_property
     def form(self):
@@ -101,7 +98,7 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
 class ManageReleasesByAppProfile(BaseProjectSettingsView):
     template_name = 'domain/manage_releases_by_app_profile.html'
     urlname = 'manage_releases_by_app_profile'
-    page_title = ugettext_lazy("Manage Releases By App Profile")
+    page_title = gettext_lazy("Manage Releases By App Profile")
 
     @cached_property
     def creation_form(self):

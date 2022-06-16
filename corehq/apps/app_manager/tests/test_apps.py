@@ -2,8 +2,9 @@ import json
 import os
 import uuid
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
+from collections import namedtuple
 from memoized import memoized
 from unittest.mock import patch
 
@@ -37,6 +38,9 @@ from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
+MockRequest = namedtuple('MockRequest', ['status', 'data'])
+
+
 @patch_validate_xform()
 class AppManagerTest(TestCase, TestXmlMixin):
     file_path = ('data',)
@@ -46,10 +50,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         'files/suite.xml',
         'files/media_suite.xml',
         'files/modules-0/forms-0.xml',
-    )
-    jad_jar_paths = (
-        'CommCare.jar',
-        'CommCare.jad',
     )
 
     @classmethod
@@ -114,17 +114,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertEqual(len(self.app.modules), 3)
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
-
-    def testCreateJadJar(self):
-        self.app.build_spec = BuildSpec(**self.build1)
-        self.app.create_build_files()
-        self.app.save(increment_version=False)
-        # get a fresh one from the db to make sure attachments aren't cached
-        # since that's closer to the real situation
-        self.app = Application.get(self.app._id)
-        self.app.create_jadjar_from_build_files(save=True)
-        self.app.save(increment_version=False)
-        self._check_has_build_files(self.app, self.jad_jar_paths)
 
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
@@ -262,10 +251,16 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
 
-    def testBuildTemplateApps(self):
-        # Tests that these apps successfully build
-        for slug in ['agriculture', 'health', 'wash']:
-            load_app_from_slug(self.domain, 'username', slug)
+    @patch('urllib3.PoolManager.request')
+    def testBuildTemplateApps(self, request_mock):
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
+                                  'commcare-hq-logo.png')
+        with open(image_path, 'rb') as f:
+            request_mock.return_value = MockRequest(status=200, data=f.read())
+
+            # Tests that these apps successfully build
+            for slug in ['agriculture', 'health', 'wash']:
+                self.assertIsNotNone(load_app_from_slug(self.domain, 'username', slug))
 
     def testGetLatestBuild(self):
         factory = AppFactory(build_version='2.40.0')
@@ -372,9 +367,3 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
-
-    def test_jad_settings(self):
-        self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)
-        self.assertIn('Build-Number', self.app.jad_settings)
-        self.app.build_spec = BuildSpec(version='2.8.0', build_number=1)
-        self.assertNotIn('Build-Number', self.app.jad_settings)

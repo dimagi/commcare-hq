@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from crispy_forms import layout as crispy
 # todo proper B3 Handle
@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 
 
 class PrimeRestoreCacheForm(forms.Form):
-    info_text = ugettext(
+    info_text = gettext(
         "For projects where mobile users manage a lot of cases (e.g. more than 10,000), "
         "this tool can be used to temporarily speed up phone sync times. Once activated, "
         "it will ensure that the 'Sync with Server' functionality runs faster on the phone for 24 hours.")

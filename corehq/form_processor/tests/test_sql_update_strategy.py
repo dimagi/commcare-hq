@@ -6,12 +6,11 @@ from corehq.util.soft_assert.core import SoftAssert
 
 from casexml.apps.case.exceptions import ReconciliationError
 from casexml.apps.case.xml.parser import CaseUpdateAction, KNOWN_PROPERTIES
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
-    CommCareCaseSQL,
+    CommCareCase,
     CaseTransaction,
     RebuildWithReason,
 )
@@ -54,14 +53,14 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-11"):
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
@@ -75,7 +74,7 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
@@ -98,7 +97,7 @@ class SqlUpdateStrategyTest(TestCase):
             rebuild_transaction = CaseTransaction.rebuild_transaction(case, rebuild_detail)
             self._save(new_rebuild_xform, case, rebuild_transaction)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
@@ -113,7 +112,7 @@ class SqlUpdateStrategyTest(TestCase):
 
         self.assertTrue(case.check_transaction_order())
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertRaises(ReconciliationError, update_strategy.reconcile_transactions)
 
@@ -135,14 +134,14 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             self._save(new_old_xform, case, new_old_trans)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
-        CaseAccessorSQL.save_case(case)
+        case.save(with_tracked_models=True)
 
-        case = CaseAccessorSQL.get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
         self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
@@ -151,7 +150,7 @@ class SqlUpdateStrategyTest(TestCase):
         """
         Create the models directly so that these tests aren't dependent on any
         other apps.
-        :return: XFormInstanceSQL
+        :return: XFormInstance
         """
         user_id = user_id or 'mr_wednesday'
         received_on = received_on or datetime.utcnow()
@@ -176,7 +175,7 @@ class SqlUpdateStrategyTest(TestCase):
         user_id = user_id or 'mr_wednesday'
         utcnow = datetime.utcnow()
 
-        case = CommCareCaseSQL(
+        case = CommCareCase(
             case_id=case_id,
             domain=self.DOMAIN,
             type=case_type or '',
@@ -191,7 +190,7 @@ class SqlUpdateStrategyTest(TestCase):
         trans = self._create_case_transaction(case, form, utcnow, action_types=[128])
         self._save(form, case, trans)
 
-        return CaseAccessorSQL.get_case(case_id)
+        return CommCareCase.objects.get_case(case_id)
 
     def _save(self, form, case, transaction):
         # disable publish to Kafka to avoid intermittent errors caused by

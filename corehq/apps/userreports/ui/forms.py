@@ -1,7 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -10,6 +10,7 @@ from crispy_forms.layout import Submit
 
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.userreports.models import guess_data_source_type
@@ -171,6 +172,13 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             inline_label="Asynchronous processing"
         )
     )
+    is_available_in_analytics = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=forms.HiddenInput(),
+        help_text=help_text.ANALYTICS
+    )
 
     def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
@@ -182,6 +190,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ('Location', _('locations'))
             )
             self.fields['referenced_doc_type'].choices = choices
+
+        if toggles.SUPERSET_ANALYTICS.enabled(domain):
+            self.fields['is_available_in_analytics'].widget = BootstrapCheckboxInput(
+                inline_label="Availabe in Analytics"
+            )
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
@@ -196,13 +209,19 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'referenced_doc_type',
             'display_name',
             'description',
-            'base_item_expression',
+        ]
+        if 'base_item_expression' in AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.domain):
+            fields.append('base_item_expression')
+
+        fields += [
             'configured_filter',
             'configured_indicators',
             'named_expressions',
             'named_filters',
             'asynchronous',
+            'is_available_in_analytics',
         ]
+
         if data_source_config.get_id:
             fields.append('_id')
 

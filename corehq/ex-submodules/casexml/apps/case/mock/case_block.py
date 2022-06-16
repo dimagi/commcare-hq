@@ -44,9 +44,9 @@ class CaseBlock(object):
                                 else date_opened)
         else:
             self.date_opened = date_opened
-        self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
-        self.case_name = "" if create and case_name is CaseBlock.undefined else case_name
-        self.owner_id = "" if create and owner_id is CaseBlock.undefined else owner_id
+        self.case_type = case_type
+        self.case_name = case_name
+        self.owner_id = owner_id
         self.close = close
         self.case_id = case_id
         self.user_id = user_id
@@ -106,6 +106,8 @@ class CaseBlock(object):
         create_or_update = {key: val for key, val in self._updatable_built_ins()
                             if val is not CaseBlock.undefined}
         if self.create:
+            for key in self._built_ins:
+                create_or_update.setdefault(key, "")
             result['create'] = create_or_update
         else:
             result['update'].update(create_or_update)

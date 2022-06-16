@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.task import task
 from celery.utils.log import get_task_logger
@@ -9,7 +9,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_id,
 )
 from corehq.apps.app_manager.exceptions import SavedAppBuildException, AppValidationError
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
 
 logger = get_task_logger(__name__)
@@ -18,21 +19,12 @@ logger = get_task_logger(__name__)
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercase
-    for user in CommCareUser.by_domain(domain_name):
-        sync_usercase(user)
-
-
-# Can be deleted after deploy
-@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
-def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
-    app = get_app(domain, app_id)
-    try:
-        copy = app.make_build(comment=comment)
-    except AppValidationError:
-        return
-    copy.is_auto_generated = allow_prune
-    copy.save(increment_version=False)
-    return copy
+    if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
+        users = CouchUser.by_domain(domain_name)
+    else:
+        users = CommCareUser.by_domain(domain_name)
+    for user in users:
+        sync_usercase(user, domain_name)
 
 
 def autogenerate_build(app, username):
@@ -45,7 +37,14 @@ def autogenerate_build(app, username):
 
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def autogenerate_build_task(app_id, domain, version, comment):
-    make_async_build_v2(app_id, domain, version, allow_prune=True, comment=comment)
+    app = get_app(domain, app_id)
+    try:
+        copy = app.make_build(comment=comment)
+    except AppValidationError:
+        return
+    copy.is_auto_generated = True
+    copy.save(increment_version=False)
+    return copy
 
 
 @task(queue='background_queue', ignore_result=True)

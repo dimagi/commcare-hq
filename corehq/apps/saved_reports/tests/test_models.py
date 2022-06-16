@@ -1,11 +1,26 @@
-from django.test import SimpleTestCase
+from django.conf import settings
+from django.test import SimpleTestCase, TestCase
 from smtplib import SMTPSenderRefused
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
 from corehq.apps.reports import views
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
-from ..models import ReportNotification
+from ..models import ReportNotification, ReportConfig
+
+
+class TestReportConfig(TestCase):
+
+    def tearDown(self) -> None:
+        self.config.delete()
+
+    def test_report_is_shared_on_domain(self):
+        domain = 'test_domain'
+        self.config = ReportConfig(
+            domain=domain,
+        )
+        self.config.save()
+        self.assertFalse(self.config.is_shared_on_domain())
 
 
 class TestReportNotification(SimpleTestCase):
@@ -28,6 +43,12 @@ class TestReportNotification(SimpleTestCase):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=['test@dimagi.com'])
         subscribed_user = self._create_user(email='test@dimagi.com')
         self.assertTrue(report.can_be_viewed_by(subscribed_user))
+
+    def test_report_with_unknown_owner_has_null_owner_email(self):
+        report = ReportNotification(owner_id='5', domain='test_domain')
+        with patch.object(CouchUser, "get_by_user_id", lambda uid: None):
+            self.assertIsNone(report.owner)
+            self.assertIsNone(report.owner_email)
 
     def _create_user(self, id='100', email='not-included', is_domain_admin=False):
         user_template = WebUser(domain='test_domain', username='test_user')
@@ -146,7 +167,7 @@ class TestSendEmails(SimpleTestCase):
         self.mock_send_email.assert_called_with('Test Report',
             ['test1@dimagi.com', 'test2@dimagi.com'],
             'Unable to generate email report. Excel files are attached.',
-            email_from='commcarehq-noreply@example.com',
+            email_from=settings.DEFAULT_FROM_EMAIL,
             file_attachments=['abba'])
 
     def test_failing_emails_are_logged(self):

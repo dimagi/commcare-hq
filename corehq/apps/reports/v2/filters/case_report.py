@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.es import CaseSearchES
@@ -18,7 +18,7 @@ from corehq.apps.reports.v2.models import (
 
 
 class CaseOwnerReportFilter(BaseReportFilter):
-    title = ugettext_lazy("Case Owner(s)")
+    title = gettext_lazy("Case Owner(s)")
     name = 'report_case_owner'
     endpoint_slug = CaseOwnerEndpoint.slug
     ko_template_name = ReportFilterKoTemplate.SELECT2_MULTI_ASYNC
@@ -42,7 +42,7 @@ class CaseOwnerReportFilter(BaseReportFilter):
 
 
 class CaseTypeReportFilter(BaseReportFilter):
-    title = ugettext_lazy("Case Type")
+    title = gettext_lazy("Case Type")
     name = 'report_case_type'
     endpoint_slug = CaseTypeEndpoint.slug
     ko_template_name = ReportFilterKoTemplate.SELECT2_SINGLE

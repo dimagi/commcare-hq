@@ -3,7 +3,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple
 from urllib.error import HTTPError
 
 import attr
@@ -13,13 +13,11 @@ from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import (
@@ -51,7 +49,7 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
 
     Allows us to read current case property values and build a CaseBlock
     """
-    case: Union[CommCareCase, CommCareCaseSQL]
+    case: CommCareCase
     updates: dict = attr.Factory(dict)
 
     @property
@@ -164,9 +162,8 @@ def get_dhis2_server(
 
 
 def get_clays() -> Iterable[CassiusMarcellus]:
-    case_accessors = CaseAccessors(DOMAIN)
-    for case_id in case_accessors.get_case_ids_in_domain(type=CASE_TYPE):
-        case = case_accessors.get_case(case_id)
+    for case_id in CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CASE_TYPE):
+        case = CommCareCase.objects.get_case(case_id, DOMAIN)
         if not case.external_id:
             # This case is not mapped to a facility in DHIS2.
             continue

@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 
 from ..models import FHIRResourceProperty, FHIRResourceType
@@ -124,7 +124,7 @@ class TestPatientRegistration(TestCase, DomainSubscriptionMixin):
             requests.delete(entry['fullUrl'])
 
     def test_external_id(self):
-        case = CaseAccessors(DOMAIN).get_case(CASE_ID)
+        case = CommCareCase.objects.get_case(CASE_ID, DOMAIN)
         self.assertTrue(bool(case.external_id))
 
     def test_remote_search(self):

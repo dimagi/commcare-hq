@@ -1,6 +1,12 @@
 from django.db import migrations
 
-from corehq.util.django_migrations import run_once_off_migration
+from django.core.management import call_command
+from corehq.util.django_migrations import skip_on_fresh_install
+
+
+@skip_on_fresh_install
+def _migrate_reprs(apps, schema_editor):
+    call_command('migrate_reprs')
 
 
 class Migration(migrations.Migration):
@@ -10,5 +16,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        run_once_off_migration('migrate_reprs')
+        migrations.RunPython(_migrate_reprs),
     ]

@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/formplayer/users/controller", function () {
                 query: query,
             });
 
+            FormplayerFrontend.trigger('clearProgress');
             FormplayerFrontend.regions.getRegion('main').show(restoreAsView);
         },
     };
