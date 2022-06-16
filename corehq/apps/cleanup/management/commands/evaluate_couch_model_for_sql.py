@@ -343,6 +343,13 @@ class Command(BaseCommand):
             submodels=submodels
         )
 
+    def generate_test_file(self):
+        return render_tempate(
+            'migration_attr_equality_test.j2',
+            class_name=self.class_name,
+            models_path=self.models_path
+        )
+
     def is_submodel_key(self, key):
         return "." in key or self.is_field_type_submodel(key)
 
