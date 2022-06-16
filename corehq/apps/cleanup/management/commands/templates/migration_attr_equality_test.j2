@@ -1,0 +1,23 @@
+from corehq.apps.cleanup.tests.util import ModelAttrEqualityHelper
+from {{models_path}} import {{class_name}}
+from {{models_path}} import SQL{{class_name}}
+
+
+class Test{{class_name}}ModelsAttrEquality(ModelAttrEqualityHelper):
+
+    def test_have_same_attrs(self):
+        couch_attrs = self.get_cleaned_couch_attrs({{class_name}})
+        sql_attrs = self.get_sql_attrs(SQL{{class_name}})
+        self.assertEqual(couch_attrs ^ sql_attrs, set())
+
+    @classmethod
+    def _couch_only_attrs(cls):
+        return {
+            # removed attrs
+            # renamed attrs
+            # not used attrs
+        }
+
+    @classmethod
+    def _sql_only_attrs(cls):
+        return {}
