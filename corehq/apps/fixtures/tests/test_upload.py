@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from nose.tools import nottest
+from testil import Regex
 
 import openpyxl
 
@@ -395,9 +396,16 @@ class TestFixtureUpload(TestCase):
         cls.project = create_domain(cls.domain)
         cls.addClassCleanup(cls.project.delete)
 
+    def setUp(self):
+        self.upload_domains = {self.domain}
+
     def tearDown(self):
         from dimagi.utils.couch.bulk import CouchTransaction
-        types = FixtureDataType.by_domain(self.domain)
+        types = [
+            dt
+            for domain in self.upload_domains
+            for dt in FixtureDataType.by_domain(domain)
+        ]
         try:
             with CouchTransaction() as tx:
                 for dt in types:
@@ -417,17 +425,19 @@ class TestFixtureUpload(TestCase):
             workbook = self.get_workbook_from_data(self.headers, data)
         else:
             workbook = rows_or_workbook
-        type(self).do_upload(self.domain, workbook, **kw)
+        domain = kw.pop("domain", self.domain)
+        self.upload_domains.add(domain)
+        return type(self).do_upload(domain, workbook, **kw)
 
-    def get_table(self):
-        return FixtureDataType.by_domain_tag(self.domain, 'things').one()
+    def get_table(self, domain=None):
+        return FixtureDataType.by_domain_tag(domain or self.domain, 'things').one()
 
-    def get_rows(self, transform=row_name):
+    def get_rows(self, transform=row_name, *, domain=None):
         # return list of field values of fixture table 'things'
         def sort_key(item):
             return item.sort_key, transform(item)
 
-        items = FixtureDataItem.get_item_list(self.domain, 'things')
+        items = FixtureDataItem.get_item_list(domain or self.domain, 'things')
         if transform is None:
             return items
         return [transform(item) for item in sorted(items, key=sort_key)]
@@ -543,6 +553,57 @@ class TestFixtureUpload(TestCase):
         ])
         self.assertEqual(self.get_rows(), ['orange'])
 
+    def test_upload_progress_and_result(self):
+        task = FakeTask()
+        result = self.upload([
+            (None, 'N', 'apple'),
+            (None, 'N', 'banana'),
+            (None, 'N', 'coconut'),
+            (None, 'N', 'doughnut'),
+        ], task=task)
+        self.assertEqual(task.states, [
+            {'state': 'PROGRESS', 'meta': {'current': 0.0, 'total': 10}},
+            {'state': 'PROGRESS', 'meta': {'current': 2.5, 'total': 10}},
+            {'state': 'PROGRESS', 'meta': {'current': 5.0, 'total': 10}},
+            {'state': 'PROGRESS', 'meta': {'current': 7.5, 'total': 10}},
+        ])
+        self.assertEqual(result.number_of_fixtures, 1)
+        self.assertTrue(result.success)
+
+    def test_table_uid_conflict(self):
+        result = self.upload_table_with_uid_conflict()
+        self.assertFalse(result.errors)
+
+    def upload_table_with_uid_conflict(self):
+        self.upload([(None, 'N', 'apple')], domain=self.domain + "2")
+        bad_uid = self.get_table(self.domain + "2")._id
+
+        headers = (
+            ('types', ('UID', 'Delete(Y/N)', 'table_id', 'is_global?', 'field 1')),
+            ('things', ('UID', 'Delete(Y/N)', 'field: name')),
+        )
+        data = [
+            ('types', [(bad_uid, 'N', 'things', 'yes', 'name')]),
+            ('things', [(None, 'N', 'apple')]),
+        ]
+        result = self.upload(self.get_workbook_from_data(headers, data))
+        self.assertNotEqual(self.get_table()._id, bad_uid)
+        return result
+
+    def test_row_uid_conflict(self):
+        result = self.upload_row_with_uid_conflict()
+        self.assertFalse(result.errors)
+
+    def upload_row_with_uid_conflict(self):
+        domain2 = self.domain + "2"
+        self.upload([(None, 'N', 'apple')], domain=domain2)
+        bad_uid, = [r._id for r in self.get_rows(None, domain=domain2)]
+
+        result = self.upload([(bad_uid, 'N', 'apple')])
+        new_uid, = [r._id for r in self.get_rows(None)]
+        self.assertNotEqual(new_uid, bad_uid)
+        return result
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
@@ -564,12 +625,24 @@ class TestOldFixtureUpload(TestFixtureUpload):
         # NOTE old uploader does not respect updated order of rows
         self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
 
+    def test_table_uid_conflict(self):
+        result = self.upload_table_with_uid_conflict()
+        self.assertEqual(result.errors, [
+            Regex(r"'[0-9a-f]+' is not a valid UID\. But the new type is created\.")
+        ])
+
+    def test_row_uid_conflict(self):
+        result = self.upload_row_with_uid_conflict()
+        self.assertEqual(result.errors, [
+            Regex(r"'[0-9a-f]+' is not a valid UID\. But the new item is created\.")
+        ])
+
 
 class TestFastFixtureUpload(TestFixtureUpload):
 
     @staticmethod
-    def do_upload(*args, replace=None):
-        _run_fast_fixture_upload(*args)
+    def do_upload(*args, replace=None, **kw):
+        return _run_fast_fixture_upload(*args, **kw)
 
     def test_rows_with_no_changes(self):
         # table and row ids always change
@@ -712,3 +785,11 @@ class TestFixtureOwnershipUpload(TestCase):
 
 class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
     do_upload = _run_fixture_upload
+
+
+class FakeTask:
+    def __init__(self):
+        self.states = []
+
+    def update_state(self, **kw):
+        self.states.append(kw)

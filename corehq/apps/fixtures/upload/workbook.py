@@ -96,6 +96,12 @@ class _FixtureWorkbook(object):
                 values.update(chain.from_iterable(r[key] for r in rows if key in r))
         return owners
 
+    def count_tables(self):
+        return len(self.get_all_type_sheets())
+
+    def count_rows(self, data_type):
+        return len(self.get_data_sheet(data_type.tag))
+
     def iter_tables(self, domain):
         for sheet in self.get_all_type_sheets():
             if sheet.delete:

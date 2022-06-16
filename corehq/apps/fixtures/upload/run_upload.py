@@ -48,6 +48,7 @@ def _run_upload(domain, workbook, replace=False, task=None):
     """
     def process_table(table, new_table):
         def process_row(row, new_row):
+            update_progress(table)
             mutation = get_mutation(
                 workbook,
                 old_owners.get(row._id, []),
@@ -72,11 +73,12 @@ def _run_upload(domain, workbook, replace=False, task=None):
         )
         rows.update(mutation)
 
+    result = FixtureUploadResult()
+    result.number_of_fixtures, update_progress = setup_progress(task, workbook)
     old_tables = FixtureDataType.by_domain(domain)
-
+    owner_ids = load_owner_ids(workbook.get_owners(), domain)
     rows = Mutation()
     owners = Mutation()
-    owner_ids = load_owner_ids(workbook.get_owners(), domain)
     tables = get_mutation(
         workbook,
         old_tables,
@@ -97,6 +99,29 @@ def _run_upload(domain, workbook, replace=False, task=None):
             couch.save(doc)
     clear_fixture_quickcache(domain, old_tables)
     clear_fixture_cache(domain)
+    return result
+
+
+def setup_progress(task, workbook):
+    total_tables = workbook.count_tables()
+    if task is None:
+        return total_tables, lambda table: None
+
+    def update_progress(table):
+        if table.tag not in progress.tables:
+            progress.tables.add(table.tag)
+            progress.total_rows = workbook.count_rows(table) or 1
+            progress.row = 0
+        else:
+            progress.row += 1
+        table_count = len(progress.tables) - 1
+        processed = table_count * 10 + (10 * progress.row / progress.total_rows)
+        DownloadBase.set_progress(task, processed, 10 * total_tables)
+
+    class progress:
+        tables = set()
+
+    return total_tables, update_progress
 
 
 def table_key(table):
