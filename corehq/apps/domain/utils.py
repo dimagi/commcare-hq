@@ -2,6 +2,8 @@ import logging
 import os
 import re
 import sys
+import json
+import time
 from collections import Counter
 
 import simplejson
@@ -11,6 +13,7 @@ from memoized import memoized
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.extension_points import custom_domain_module
+from corehq.motech.utils import b64_aes_encrypt
 from corehq.util.test_utils import unit_testing_only
 
 from corehq.apps.domain.models import Domain
@@ -19,7 +22,7 @@ from corehq.util.quickcache import quickcache
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
-new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
+new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+"  # lowercase letters, numbers, and '-' (at most one between "words")
 
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
@@ -131,3 +134,8 @@ def get_serializable_wire_invoice_general_credit(general_credit):
 
 def log_domain_changes(user, domain, new_obj, old_obj):
     logger.info(f"{user} changed UCR permsissions {old_obj} to {new_obj} for domain {domain} ")
+
+
+def encrypt_account_confirmation_info(commcare_user):
+    data = {"user_id": commcare_user.get_id, "time": int(time.time())}
+    return b64_aes_encrypt(json.dumps(data))
