@@ -1,12 +1,11 @@
-from itertools import chain
 from uuid import uuid4
 from weakref import WeakKeyDictionary
 
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
-from corehq.apps.fixtures.upload.const import DELETE_HEADER
+from corehq.apps.fixtures.upload.const import DELETE_HEADER, MULTIPLE
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.util.workbook_json.excel import (
@@ -90,10 +89,21 @@ class _FixtureWorkbook(object):
             "group": set(),
             "location": set(),
         }
+        transforms = {
+            "user": str.lower,
+            "group": lambda x: x,
+            "location": str.lower,
+        }
         for tabledef in self.get_all_type_sheets():
             for key, values in owners.items():
                 rows = self.get_data_sheet(tabledef.table_id)
-                values.update(chain.from_iterable(r[key] for r in rows if key in r))
+                transform = transforms[key]
+                values.update(
+                    transform(name)
+                    for row in rows
+                    if key in row
+                    for name in row[key]
+                )
         return owners
 
     def count_tables(self):
@@ -142,27 +152,42 @@ class _FixtureWorkbook(object):
             for owner_type in ["user", "group", "location"]:
                 owner_names = di.get(owner_type)
                 if owner_names:
+                    if owner_type != "group":
+                        # names, except for groups, are case insensitive
+                        owner_names = [n.lower() for n in owner_names]
                     ownership[owner_type] = owner_names
             yield item
 
     def get_key(self, obj):
         return self.item_keys.get(obj)
 
-    def iter_ownerships(self, row, data_item_id, owner_ids_map):
+    def iter_ownerships(self, row, data_item_id, owner_ids_map, errors):
         ownerships = self.ownership[row]
         if not ownerships:
             return
         for owner_type, names in ownerships.items():
             for name in names:
                 owner_id = owner_ids_map[owner_type].get(name)
-                if owner_id is None:
-                    raise NotImplementedError(f"TODO {owner_type} {name}")
+                if owner_id is None or owner_id is MULTIPLE:
+                    key = (owner_id, owner_type)
+                    errors.append(self.ownership_errors[key] % {'name': name})
+                    continue
                 yield FixtureOwnership(
                     domain=row.domain,
                     data_item_id=data_item_id,
                     owner_type=owner_type,
                     owner_id=owner_id,
                 )
+
+    ownership_errors = {
+        (None, "user"): gettext_lazy("Unknown user: '%(name)s'. But the row is successfully added"),
+        (None, "group"): gettext_lazy("Unknown group: '%(name)s'. But the row is successfully added"),
+        (None, "location"): gettext_lazy("Unknown location: '%(name)s'. But the row is successfully added"),
+        (MULTIPLE, "location"): gettext_lazy(
+            "Multiple locations found with the name: '%(name)s'.  "
+            "Try using site code. But the row is successfully added"
+        ),
+    }
 
 
 class Deleted:

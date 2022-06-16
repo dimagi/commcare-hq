@@ -13,36 +13,52 @@ class TestFixtureWorkbook(SimpleTestCase):
 
     def test_get_owners(self):
         workbook = self.get_workbook({
-            'types': [
-                ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'),
-                ('N', 'things', 'no', 'name'),
-            ],
+            'types': TYPES,
             'things': [
                 ('UID', 'Delete(Y/N)', 'field: name', 'user 1', 'group 1', 'location 1'),
-                (None, 'N', 'apple', 'user1', None, None),
-                (None, 'N', 'banana', None, 'g1', None),
-                (None, 'N', 'coconut', 'user2', None, 'loc1'),
+                (None, 'N', 'apple', 'User1', None, None),
+                (None, 'N', 'banana', None, 'G1', None),
+                (None, 'N', 'coconut', 'User2', None, 'Loc1'),
             ]
         })
         all_owners = workbook.get_owners()
         self.assertEqual(all_owners, {
             "user": {"user1", "user2"},
-            "group": {"g1"},
+            "group": {"G1"},
             "location": {"loc1"},
         })
 
         # must be able to iterate tables and rows after retrieving owners
         expected_owners = [
             {"user": ["user1"], "group": [], "location": []},
-            {"user": [], "group": ["g1"], "location": []},
+            {"user": [], "group": ["G1"], "location": []},
             {"user": ["user2"], "group": [], "location": ["loc1"]},
         ]
         table = next(workbook.iter_tables("test"))
         rows = workbook.iter_rows(table, {})
         for row, expected in zip_longest(rows, expected_owners):
-            ownerships = list(workbook.iter_ownerships(row, row._id, OWNER_IDS))
+            errors = []
+            ownerships = list(workbook.iter_ownerships(row, row._id, OWNER_IDS, errors))
             actual = map_ownerships(ownerships)
             self.assertEqual(actual, expected)
+            self.assertFalse(errors)
+
+    def test_get_owners_with_missing_owner_types(self):
+        workbook = self.get_workbook({
+            'types': TYPES,
+            'things': [
+                ('UID', 'Delete(Y/N)', 'field: name', 'user 1'),
+                (None, 'N', 'apple', 'User1'),
+                (None, 'N', 'banana', None),
+                (None, 'N', 'coconut', 'User2'),
+            ]
+        })
+        all_owners = workbook.get_owners()
+        self.assertEqual(all_owners, {
+            "user": {"user1", "user2"},
+            "group": set(),
+            "location": set(),
+        })
 
     def get_workbook(self, data):
         headers = [(key, rows[0]) for key, rows in data.items()]
@@ -63,9 +79,13 @@ def map_ownerships(ownerships):
     }
 
 
+TYPES = [
+    ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'),
+    ('N', 'things', 'no', 'name'),
+]
 OWNER_IDS = {
     "user": {"user1": "abc", "user2": "jkl"},
-    "group": {"g1": "def"},
+    "group": {"G1": "def"},
     "location": {"loc1": "ghi"},
 }
-OWNERS_BY_ID = {"abc": "user1", "def": "g1", "ghi": "loc1", "jkl": "user2"}
+OWNERS_BY_ID = {"abc": "user1", "def": "G1", "ghi": "loc1", "jkl": "user2"}

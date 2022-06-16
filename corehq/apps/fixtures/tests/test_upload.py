@@ -30,6 +30,8 @@ from corehq.util.test_utils import generate_cases, make_make_path
 
 from dimagi.utils.couch.database import iter_docs
 
+from ..upload import run_upload as mod
+
 _make_path = make_make_path(__file__)
 
 
@@ -689,7 +691,8 @@ class TestFixtureOwnershipUpload(TestCase):
             cls.domain, f"user2@{cls.domain}.commcarehq.org", "pass", None, None)
         cls.addClassCleanup(cls.user2.delete, cls.domain, deleted_by=None)
 
-        cls.group1 = Group(domain=cls.domain, name="g1", users=[cls.user1._id])
+        # group names are case sensitive, user and location names are not
+        cls.group1 = Group(domain=cls.domain, name="G1", users=[cls.user1._id])
         cls.group1.save()
         cls.addClassCleanup(cls.group1.delete)
         cls.group2 = Group(domain=cls.domain, name="g2", users=[cls.user1._id])
@@ -714,30 +717,30 @@ class TestFixtureOwnershipUpload(TestCase):
             clear_fixture_quickcache(self.domain, types)
 
     def test_row_ownership(self):
-        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
-        self.assertEqual(self.get_rows(), [('apple', {'user1'}, {'g1'}, {'loc1'})])
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
+        self.assertEqual(self.get_rows(), [('apple', {'user1'}, {'G1'}, {'loc1'})])
 
     def test_replace_row_ownership(self):
-        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
         apple_id, = [r._id for r in self.get_rows(None)]
 
         self.upload([(apple_id, 'N', 'apple', 'user2', 'g2', 'loc2')])
         self.assertEqual(self.get_rows(), [('apple', {'user2'}, {'g2'}, {'loc2'})])
 
     def test_delete_ownership(self):
-        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
         apple_id, = [r._id for r in self.get_rows(None)]
 
         self.upload([(apple_id, 'N', 'apple', None, None, None)])
         self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
 
     def test_ownerships_deleted_with_table(self):
-        self.upload([(None, 'N', 'apple', 'user1', 'g1', 'loc1')])
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
         apple_id, = [r._id for r in self.get_rows(None)]
 
         data = [
             ('types', [('Y', 'things', 'no', 'name')]),
-            ('things', [(apple_id, 'N', 'apple', 'user1', 'g1', 'loc1')]),
+            ('things', [(apple_id, 'N', 'apple', 'user1', 'G1', 'loc1')]),
         ]
         workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
         type(self).do_upload(self.domain, workbook)
@@ -745,13 +748,50 @@ class TestFixtureOwnershipUpload(TestCase):
         ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
         self.assertEqual(ownerships, [])
 
-    def upload(self, rows, **kw):
+    def test_unknown_owners(self):
+        result = self.upload([(None, 'N', 'apple', 'who', 'what', 'where')], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+        self.assertEqual(set(result.errors), {
+            "Unknown group: 'what'. But the row is successfully added",
+            "Unknown user: 'who'. But the row is successfully added",
+            "Unknown location: 'where'. But the row is successfully added",
+        })
+
+    def test_multiple_locations(self):
+        loc_dup = SQLLocation(domain=self.domain, name="d u p", location_type=self.region)
+        loc_dup.save()
+        loc_dup2 = SQLLocation(domain=self.domain, name="d u p", location_type=self.region)
+        loc_dup2.save()
+        assert SQLLocation.objects.filter(name="d u p").count() == 2
+
+        result = self.upload([(None, 'N', 'apple', None, None, 'd u p')], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+        self.assertEqual(result.errors, [
+            "Multiple locations found with the name: 'd u p'.  "
+            "Try using site code. But the row is successfully added"
+        ])
+
+    def test_case_insensitive_ownership_matching(self):
+        loc = SQLLocation(domain=self.domain, name="L O C", location_type=self.region)
+        loc.save()
+        assert loc.name != loc.site_code, loc.site_code
+        self.upload([(None, 'N', 'apple', 'User1', None, 'L o c')])
+        self.assertEqual(self.get_rows(), [('apple', {'user1'}, set(), {'L O C'})])
+
+    def test_case_sensitive_group_match(self):
+        assert self.group1.name == 'G1', self.group1.name
+        result = self.upload([(None, 'N', 'apple', None, 'g1', None)], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+        self.assertEqual(result.errors, ["Unknown group: 'g1'. But the row is successfully added"])
+
+    def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)
         workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
         result = type(self).do_upload(self.domain, workbook, **kw)
-        if result:
+        if check_result:
             self.assertFalse(result.errors)
             self.assertFalse(result.messages)
+        return result
 
     def get_rows(self, transform=row_name):
         def sort_key(item):
@@ -785,6 +825,92 @@ class TestFixtureOwnershipUpload(TestCase):
 
 class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
     do_upload = _run_fixture_upload
+
+
+class TestLocationLookups(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        publish = patch("corehq.apps.locations.document_store.publish_location_saved")
+        publish.start()
+        cls.addClassCleanup(publish.stop)
+
+        cls.domain = 'fixture-upload-test'
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+
+        cls.region = LocationType(domain=cls.domain, name="region", code="region")
+        cls.region.save()
+        cls.loc = SQLLocation(domain=cls.domain, name="L O C", location_type=cls.region)
+        cls.loc.save()
+        assert cls.loc.name != cls.loc.site_code, cls.loc.site_code
+
+        # duplicates with matching site code
+        cls.loc_dup1 = SQLLocation(domain=cls.domain, name="DUP", location_type=cls.region)
+        cls.loc_dup1.save()
+        cls.loc_dup2 = SQLLocation(domain=cls.domain, name="dup", location_type=cls.region)
+        cls.loc_dup2.save()
+        dup_names = SQLLocation.objects.filter(name__iexact="dup").count()
+        assert dup_names == 2, dup_names
+        assert cls.loc_dup1.site_code == "dup", cls.loc_dup1.site_code
+        assert cls.loc_dup2.site_code != "dup", cls.loc_dup2.site_code
+
+        # duplicates with no matching site code
+        cls.loc_dup3 = SQLLocation(domain=cls.domain, name="D U P", location_type=cls.region)
+        cls.loc_dup3.save()
+        cls.loc_dup4 = SQLLocation(domain=cls.domain, name="d u p", location_type=cls.region)
+        cls.loc_dup4.save()
+        dup_names = SQLLocation.objects.filter(name__iexact="d u p").count()
+        dup_sites = SQLLocation.objects.filter(site_code="d u p").count()
+        assert dup_names == 2, dup_names
+        assert dup_sites == 0, dup_sites
+
+    def test_match_site_code(self):
+        self.assertEqual(self.lookup(self.loc.site_code), self.loc.location_id)
+
+    def test_case_insensitive_name_match(self):
+        self.assertEqual(self.lookup("l o c"), self.loc.location_id)
+
+    def test_site_code_overrides_duplicate_name(self):
+        self.assertEqual(self.lookup("dup"), self.loc_dup1.location_id)
+
+    def test_site_code_match(self):
+        self.assertEqual(self.lookup(self.loc_dup4.site_code), self.loc_dup4.location_id)
+
+    def test_duplicate_name(self):
+        self.assertEqual(self.lookup('d u p'), mod.MULTIPLE)
+        # User-friendly error is added at another place in the uploader
+
+    def lookup(self, name_or_site_code):
+        assert name_or_site_code.islower(), """
+            Location names are converted to lower case by
+            `_FixtureWorkbook.get_owners()` before being passed to
+            `_load_location_ids_by_name()`, so it does not make sense to
+            pass names with upper case letters here."""
+        result = mod._load_location_ids_by_name([name_or_site_code], self.domain)
+        return result.get(name_or_site_code.lower())
+
+
+class TestOldLocationLookups(TestLocationLookups):
+
+    def lookup(self, name_or_site_code, errors=None):
+        get_location = mod.get_memoized_location_getter(self.domain)
+        result = get_location(name_or_site_code)
+        if errors is None:
+            self.assertFalse(result.is_error, result.message)
+        elif result.is_error:
+            errors.append(result.message)
+        return result.location.location_id if result.location else None
+
+    def test_duplicate_name(self):
+        errors = []
+        result = self.lookup('d u p', errors)
+        self.assertIsNone(result)
+        self.assertEqual(errors, [
+            "Multiple locations found with the name: 'd u p'.  "
+            "Try using site code. But the row is successfully added"
+        ])
 
 
 class FakeTask:

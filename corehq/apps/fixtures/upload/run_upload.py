@@ -6,6 +6,8 @@ from operator import attrgetter
 from attrs import define, field
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
 from couchdbkit import BulkSaveError, ResourceNotFound
@@ -18,6 +20,7 @@ from soil import DownloadBase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
+from corehq.apps.fixtures.upload.const import MULTIPLE
 from corehq.apps.fixtures.upload.location_cache import (
     get_memoized_location_getter,
 )
@@ -52,7 +55,7 @@ def _run_upload(domain, workbook, replace=False, task=None):
             mutation = get_mutation(
                 workbook,
                 old_owners.get(row._id, []),
-                workbook.iter_ownerships(new_row, row._id, owner_ids),
+                workbook.iter_ownerships(new_row, row._id, owner_ids, result.errors),
                 owner_key,
             )
             owners.update(mutation)
@@ -214,11 +217,19 @@ def _load_group_ids_by_name(group_names, domain_name):
 
 def _load_location_ids_by_name(location_names, domain_name):
     from corehq.apps.locations.models import SQLLocation
-    results = SQLLocation.active_objects.filter(
+    assert all(n.islower() for n in location_names), location_names
+    results = SQLLocation.active_objects.annotate(
+        lname=Lower("name"),
+    ).filter(
+        Q(lname__in=location_names) | Q(site_code__in=location_names),
         domain=domain_name,
-        name__in=location_names,
-    ).values_list("name", "location_id")
-    return dict(results)
+    ).values_list("lname", "site_code", "location_id")
+    by_name = {}
+    by_code = {}
+    for name, site_code, location_id in results:
+        by_name[name] = MULTIPLE if name in by_name else location_id
+        by_code[site_code] = location_id
+    return by_name | by_code
 
 
 def _run_fixture_upload(domain, workbook, replace=False, task=None):
