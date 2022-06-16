@@ -47,6 +47,9 @@ hqDefine("userreports/js/ucr_expression", [
                 dataType: 'json',
                 success: function (response, status, xhr, form) {
                     alertUser.alert_user(gettext("Expression saved"), 'success');
+                    if (response.warning) {
+                        alertUser.alert_user(response.warning, 'warning');
+                    }
                 },
                 error: function(response) {
                     if (response.responseJSON && response.responseJSON.errors) {
