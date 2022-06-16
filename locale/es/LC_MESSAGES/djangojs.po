@@ -4323,6 +4323,12 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+#, fuzzy
+#| msgid "Expression"
+msgid "Expression saved"
+msgstr "Expresión"
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
