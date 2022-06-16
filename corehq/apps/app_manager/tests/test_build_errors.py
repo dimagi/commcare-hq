@@ -7,7 +7,6 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
-    WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -16,8 +15,6 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
-    FormDatum,
-    FormLink,
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -259,32 +256,5 @@ class BuildErrorsTest(SimpleTestCase):
         module.search_config.auto_launch = True
         self.assertNotIn(
             'case search instance used in casedb case details',
-            [error['type'] for error in factory.app.validate_app()]
-        )
-
-    def test_manual_form_linking(self, *args):
-        factory = AppFactory(include_xmlns=True)
-        m0, f0 = factory.new_basic_module('basic', 'person')
-        factory.form_requires_case(f0, 'person')
-
-        m1, f1 = factory.new_basic_module('basic', 'cat')
-        factory.form_requires_case(f1, 'cat')
-        f1.form_links = [FormLink(
-            xpath="true()",
-            form_id=f0.unique_id
-        )]
-        f1.post_form_workflow = WORKFLOW_FORM
-
-        self.assertIn({
-            'type': 'manual form linking required',
-            'form_type': 'module_form',
-            'module': {'id': 1, 'name': {'en': 'basic module'}, 'unique_id': 'basic_module'},
-            'form': {'id': 0, 'name': {'en': 'basic form 0'}, 'unique_id': 'basic_form_0'}
-        }, factory.app.validate_app())
-
-        # error is not present if manual datums are provided (regardless off their correctness)
-        f1.form_links[0].datums = [FormDatum(name="case_id", xpath="anything")]
-        self.assertNotIn(
-            'manual form linking required',
             [error['type'] for error in factory.app.validate_app()]
         )
