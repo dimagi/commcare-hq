@@ -63,6 +63,7 @@ class.
 "Data Forwarding Records".
 
 """
+import inspect
 import traceback
 import warnings
 from collections import OrderedDict
@@ -285,6 +286,28 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
+
+    def to_json(self):
+        repeater_dict = self.__dict__.copy()
+        options = repeater_dict.pop('options', None)
+
+        # Populating OptionValue attrs
+        for attr_tuple in inspect.getmembers(self.__class__):
+            if isinstance(attr_tuple[1], OptionValue):
+                attr = attr_tuple[0]
+                repeater_dict[attr] = options.get(attr) if attr in options else getattr(self, attr, None)
+
+        # include_app_id_param is a constant in some Repeaters and will not come up in options
+        if hasattr(self, 'include_app_id_param'):
+            repeater_dict['include_app_id_param'] = self.include_app_id_param
+
+        # Remove keys which were not present in couch
+        repeater_dict.pop('_state', None)
+        repeater_dict.pop('id', None)
+        repeater_dict.pop('is_deleted', None)
+        repeater_dict.pop('next_attempt_at', None)
+        repeater_dict.pop('last_attempt_at', None)
+        return repeater_dict
 
     def get_url(self, record):
         return self.repeater.get_url(record)
