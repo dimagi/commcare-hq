@@ -411,9 +411,12 @@ class TestFixtureUpload(TestCase):
         export_raw(headers, rows, file, format=Format.XLS_2007)
         return get_workbook(file)
 
-    def upload(self, rows, **kw):
-        data = self.make_rows(rows)
-        workbook = self.get_workbook_from_data(self.headers, data)
+    def upload(self, rows_or_workbook, **kw):
+        if isinstance(rows_or_workbook, (list, tuple)):
+            data = self.make_rows(rows_or_workbook)
+            workbook = self.get_workbook_from_data(self.headers, data)
+        else:
+            workbook = rows_or_workbook
         type(self).do_upload(self.domain, workbook, **kw)
 
     def get_table(self):
@@ -497,8 +500,7 @@ class TestFixtureUpload(TestCase):
             ('types', [('Y', 'things', 'yes', 'name', 'yes')]),
             ('things', [(None, 'N', 'apple')]),
         ]
-        workbook = self.get_workbook_from_data(self.headers, data)
-        type(self).do_upload(self.domain, workbook)
+        self.upload(self.get_workbook_from_data(self.headers, data))
 
         self.assertIsNone(self.get_table())
         item_ids = {x["_id"] for x in iter_docs(FixtureDataItem.get_db(), row_ids)}
@@ -509,8 +511,7 @@ class TestFixtureUpload(TestCase):
             ('types', [('Y', 'things', 'yes', 'name', 'yes')]),
             ('things', [(None, 'N', 'apple')]),
         ]
-        workbook = self.get_workbook_from_data(self.headers, data)
-        type(self).do_upload(self.domain, workbook)
+        self.upload(self.get_workbook_from_data(self.headers, data))
 
         self.assertIsNone(self.get_table())
 
@@ -529,8 +530,7 @@ class TestFixtureUpload(TestCase):
             ('types', [('N', 'things', 'yes', 'part', 'yes')]),
             ('things', [(apple_id, 'N', 'branch')]),
         ]
-        workbook = self.get_workbook_from_data(headers, data)
-        type(self).do_upload(self.domain, workbook)
+        self.upload(self.get_workbook_from_data(headers, data))
         self.assertEqual(self.get_rows(part), ['branch'])
 
     def test_delete_row(self):
