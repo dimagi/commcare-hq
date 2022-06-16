@@ -948,7 +948,7 @@ def get_form_datums(request, domain, app_id):
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ]
-    return json_response(datums)
+    return JsonResponse(datums)
 
 
 @require_GET
