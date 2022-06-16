@@ -1356,7 +1356,6 @@ msgid "Date and Time"
 msgstr "Date et Heure"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr "Heure"
 
@@ -3852,12 +3851,6 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/data_corrections.js
 msgid "Select a value"
 msgstr ""
-
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
-#, fuzzy
-#| msgid "Time"
-msgid "From Time"
-msgstr "Heure"
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js

@@ -550,11 +550,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
     hour = IntegerProperty(default=8)
-    minute = IntegerProperty(default=0)  # Currently unused
-    # Used for the "hourly" interval to enable hourly range functionality
-    stop_hour = IntegerProperty(default=23)
-    stop_minute = IntegerProperty(default=0)  # Currently unused
-
+    minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["hourly", "daily", "weekly", "monthly"])
     uuid = StringProperty()
