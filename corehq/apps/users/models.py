@@ -93,7 +93,7 @@ from corehq.util.view_utils import absolute_reverse
 from .models_role import (  # noqa
     RoleAssignableBy,
     RolePermission,
-    SQLPermission,
+    Permission,
     StaticRole,
     UserRole,
 )

@@ -6,7 +6,7 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.users.models import (
     HqPermissions,
-    UserRole, SQLPermission, RolePermission, RoleAssignableBy, PermissionInfo,
+    UserRole, Permission, RolePermission, RoleAssignableBy, PermissionInfo,
     StaticRole
 )
 
@@ -16,7 +16,7 @@ class RolesTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        SQLPermission.create_all()
+        Permission.create_all()
         cls.roles = [
             UserRole(
                 domain=cls.domain,

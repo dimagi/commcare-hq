@@ -224,7 +224,7 @@ class UserRole(models.Model):
 @foreign_value_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
-    permission_fk = models.ForeignKey("SQLPermission", on_delete=models.CASCADE)
+    permission_fk = models.ForeignKey("Permission", on_delete=models.CASCADE)
     permission = ForeignValue(permission_fk)
 
     # if True allow access to all items
@@ -257,7 +257,7 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
-class SQLPermission(models.Model):
+class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
     class Meta:
@@ -267,7 +267,7 @@ class SQLPermission(models.Model):
     def create_all(cls):
         from corehq.apps.users.models import HqPermissions
         for name in HqPermissions.permission_names():
-            SQLPermission.objects.get_or_create(value=name)
+            Permission.objects.get_or_create(value=name)
 
 
 class RoleAssignableBy(models.Model):
