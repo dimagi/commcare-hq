@@ -124,9 +124,11 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
+    RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
 )
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 
 logger = logging.getLogger(__name__)
 
@@ -336,8 +338,8 @@ def _get_report_module_context(app, module):
             'filter_structure': report.filters_without_prefilters,
         }
 
-    all_reports = ReportConfiguration.by_domain(app.domain) + \
-                  StaticReportConfiguration.by_domain(app.domain)
+    all_reports = get_report_and_registry_report_configs_for_domain(app.domain) + \
+        StaticReportConfiguration.by_domain(app.domain)
     validity = module.check_report_validity()
 
     # We're now proactively deleting these references, so after that's been
@@ -789,7 +791,7 @@ def _new_report_module(request, domain, app, name, lang):
             header={lang: report.title},
             description={lang: report.description} if report.description else None,
         )
-        for report in ReportConfiguration.by_domain(domain)
+        for report in get_report_and_registry_report_configs_for_domain(domain)
     ]
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)

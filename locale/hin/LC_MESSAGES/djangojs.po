@@ -11,7 +11,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-06 20:51+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -1326,6 +1325,7 @@ msgid "Date and Time"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr ""
 
@@ -3808,6 +3808,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/data_corrections.js
 msgid "Select a value"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+msgid "From Time"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js

@@ -37,7 +37,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-07 17:42+0000\n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
@@ -3285,14 +3284,6 @@ msgid "The request resulted in the following errors: {}"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Attempted to update unknown or non-editable field '{}'"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
-msgid "{} must be a {}"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -3303,6 +3294,26 @@ msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You do not have permission to view this feed."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Attempted to update unknown or non-editable field '{}'"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Password is not strong enough."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "'default_phone_number' must be a string"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "The role '{}' does not exist"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "There are multiple roles with the name '{}' in the domain '{}'"
 msgstr ""
 
 #: corehq/apps/api/util.py
@@ -6060,6 +6071,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct.\n"
+"                Modules configured to \"make search input available after "
+"search\" do not support\n"
+"                the \"Previous Screen\" workflow.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -6230,6 +6251,50 @@ msgid ""
 "                uses smart links and is configured to make search input "
 "available after search.\n"
 "                These two features are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has a Parent Menu configured with \"make search input "
+"available after search\",\n"
+"                This workflow is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses \"Display only forms\" and is also configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection but parent case list is using\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection and is configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
 "              "
 msgstr ""
 
@@ -6506,6 +6571,18 @@ msgid ""
 "                Case List has invalid location reference <code>%(property)s</"
 "code>.\n"
 "                Details: %(details)s\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List uses an instance that is only available for case "
+"search <code>%(property)s</code>.\n"
+"                Details: The %(details)s instance(s) are only available in "
+"case lists using case search.\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "              "
 msgstr ""
@@ -16924,6 +17001,10 @@ msgstr ""
 msgid "App not found"
 msgstr ""
 
+#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/list.py
+msgid "OData Feeds"
+msgstr ""
+
 #: corehq/apps/enterprise/enterprise.py
 msgid "Odata feeds used"
 msgstr ""
@@ -19182,10 +19263,6 @@ msgid "OData feed"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "OData Feeds"
-msgstr ""
-
-#: corehq/apps/export/views/list.py
 msgid "OData feeds"
 msgstr ""
 
@@ -21247,7 +21324,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -22217,7 +22294,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr ""
 
@@ -23153,6 +23229,21 @@ msgid ""
 "+Project+Spaces\" target=\"_blank\">Learn more</a> about pushing content "
 "with Linked Project Spaces.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid "{} is not a valid data source type!"
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
+msgid "The data source referenced by this report could not be found."
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid ""
+"This report cannot be linked because the registry is not accessible to {}. "
+"Please make sure the registry invitation has been accepted before linking "
+"reports."
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
@@ -26805,6 +26896,12 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
+#, fuzzy
+#| msgid "Time"
+msgid "To Time"
+msgstr "Hora"
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr "Data do Início do Relatório"
 
@@ -26822,6 +26919,10 @@ msgstr "De ora em hora"
 
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
@@ -26908,7 +27009,6 @@ msgid "[no name]"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr ""
@@ -28953,10 +29053,6 @@ msgstr ""
 msgid "Date is after"
 msgstr ""
 
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr ""
-
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
 msgstr ""
@@ -28985,6 +29081,12 @@ msgstr ""
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr ""
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr "O fuso horário deste relatório é %(timezone)s."
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -33070,10 +33172,6 @@ msgid "Report contains invalid referenced_doc_type: {}"
 msgstr ""
 
 #: corehq/apps/userreports/models.py
-msgid "The data source referenced by this report could not be found."
-msgstr ""
-
-#: corehq/apps/userreports/models.py
 #, python-format
 msgid ""
 "The data source %(config_id)s referenced by this report could not be found."
@@ -34637,26 +34735,6 @@ msgid "No landing page found with id {page_id}"
 msgstr ""
 
 #: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr "Editor da Aplicação"
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr "Somente Leitura"
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr "Implementador no Terreno"
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
-msgstr "Administrador do Faturamento"
-
-#: corehq/apps/users/models.py
 msgid "Unknown User"
 msgstr ""
 
@@ -36089,6 +36167,34 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain special characters."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username is required."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is already taken."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is reserved."
+msgstr ""
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -36350,30 +36456,6 @@ msgstr ""
 msgid ""
 "Form not valid. A group may have been deleted while you were viewing this "
 "pagePlease try again."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
