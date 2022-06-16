@@ -89,7 +89,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .dispatcher import require_form_management_privilege
 from .interfaces import BulkFormManagementInterface, FormManagementMode
 from ..users.decorators import require_permission
-from ..users.models import Permissions
+from ..users.models import HqPermissions
 
 
 @login_and_domain_required
@@ -276,7 +276,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
         }
 
 
-@method_decorator(require_permission(Permissions.edit_messaging), name="dispatch")
+@method_decorator(require_permission(HqPermissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
