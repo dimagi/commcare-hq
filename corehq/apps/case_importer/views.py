@@ -39,7 +39,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
@@ -48,7 +48,7 @@ from corehq.util.workbook_reading import (
     valid_extensions,
 )
 
-require_can_edit_data = require_permission(Permissions.edit_data)
+require_can_edit_data = require_permission(HqPermissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
 
