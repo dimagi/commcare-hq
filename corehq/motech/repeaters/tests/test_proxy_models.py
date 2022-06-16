@@ -288,7 +288,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
         return {
             'repeater_id', 'set_next_attempt', 'next_attempt_at',
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
-            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
+            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater', 'to_json',
             'get_request_method_display'  # added by django choicefield in models
         }
 
