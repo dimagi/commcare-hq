@@ -68,7 +68,7 @@ class BaseExpressionRepeater(Repeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["configured_filter", "configured_expression"]
+        return super()._migration_get_fields() + ["configured_filter", "configured_expression", "url_template"]
 
 
 class CaseExpressionRepeater(BaseExpressionRepeater):
@@ -128,7 +128,7 @@ class SQLBaseExpressionRepeater(SQLRepeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["configured_filter", "configured_expression"]
+        return super()._migration_get_fields() + ["configured_filter", "configured_expression", "url_template"]
 
 
 class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
