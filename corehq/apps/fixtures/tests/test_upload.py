@@ -393,11 +393,7 @@ class TestFixtureUpload(TestCase):
         super().setUpClass()
         cls.domain = 'fixture-upload-test'
         cls.project = create_domain(cls.domain)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.project.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.project.delete)
 
     def tearDown(self):
         from dimagi.utils.couch.bulk import CouchTransaction
@@ -605,6 +601,10 @@ class TestFixtureOwnershipUpload(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        publish = patch("corehq.apps.locations.document_store.publish_location_saved")
+        publish.start()
+        cls.addClassCleanup(publish.stop)
+
         cls.domain = 'fixture-upload-test'
         cls.project = create_domain(cls.domain)
         cls.addClassCleanup(cls.project.delete)
@@ -625,13 +625,10 @@ class TestFixtureOwnershipUpload(TestCase):
 
         cls.region = LocationType(domain=cls.domain, name="region", code="region")
         cls.region.save()
-        cls.addClassCleanup(cls.region.delete)
         cls.loc1 = SQLLocation(domain=cls.domain, name="loc1", location_type=cls.region)
         cls.loc1.save()
-        cls.addClassCleanup(delete_location, cls.loc1)
         cls.loc2 = SQLLocation(domain=cls.domain, name="loc2", location_type=cls.region)
         cls.loc2.save()
-        cls.addClassCleanup(delete_location, cls.loc2)
 
     def tearDown(self):
         from dimagi.utils.couch.bulk import CouchTransaction
@@ -715,9 +712,3 @@ class TestFixtureOwnershipUpload(TestCase):
 
 class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
     do_upload = _run_fixture_upload
-
-
-def delete_location(location):
-    path = "corehq.apps.locations.dbaccessors.mobile_user_ids_at_locations"
-    with patch(path, lambda ids: []):
-        location.delete()
