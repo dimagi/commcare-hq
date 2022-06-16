@@ -4185,6 +4185,14 @@ msgid "Please enter a valid email address."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
 msgstr ""
 
