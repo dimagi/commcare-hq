@@ -95,7 +95,6 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
             # Don't care if not on hour
             continue
         keys = _make_all_notification_view_keys(period, target_point_in_time)
-
         for key in keys:
             for result in ReportNotification.view(
                 "reportconfig/all_notifications",
@@ -103,14 +102,7 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
                 include_docs=False,
                 **key
             ).all():
-                if period == 'hourly':
-                    hour = int(result['value'].get('hour') or 0)
-                    stop_hour = int(result['value'].get('stop_hour') or 23)
-
-                    if hour <= target_point_in_time.hour <= stop_hour:
-                        yield result['id']
-                else:
-                    yield result['id']
+                yield result['id']
 
 
 def guess_reporting_minute(now=None):

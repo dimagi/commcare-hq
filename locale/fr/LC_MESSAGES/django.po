@@ -26708,10 +26708,6 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
-msgid "To Time"
-msgstr ""
-
-#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -26729,10 +26725,6 @@ msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
-msgstr ""
-
-#: corehq/apps/reports/forms.py
-msgid "Must be after 'From Time'"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
@@ -28859,11 +28851,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
 msgstr ""
 
 #: corehq/apps/reports/views.py

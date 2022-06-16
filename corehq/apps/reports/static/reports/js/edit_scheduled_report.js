@@ -40,13 +40,9 @@ hqDefine("reports/js/edit_scheduled_report", [
             $interval.closest('.form-group').after($day_control_group);
         }
 
-        $('#div_id_stop_hour').hide();
-        if ($interval.val() === 'hourly') {
-            $("label[for='id_hour']").text(gettext('From Time') + "*");
-            $('#div_id_stop_hour').show();
-        }
-        else {
-            $("label[for='id_hour']").text(gettext('Time') + "*");
+        $('#div_id_hour').hide();
+        if ($interval.val() !== 'hourly') {
+            $('#div_id_hour').show();
         }
     };
 
