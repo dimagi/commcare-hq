@@ -6,9 +6,9 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
-require_can_edit_data = require_permission(Permissions.edit_data)
+require_can_edit_data = require_permission(HqPermissions.edit_data)
 
 require_form_management_privilege = requires_privilege_with_fallback(privileges.DATA_CLEANUP)
 

@@ -19,7 +19,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_API_V0_6
@@ -82,8 +82,8 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
-@require_permission(Permissions.edit_data)
-@require_permission(Permissions.access_api)
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
 @CASE_API_V0_6.required_decorator()
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle

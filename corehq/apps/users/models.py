@@ -93,7 +93,7 @@ from corehq.util.view_utils import absolute_reverse
 from .models_role import (  # noqa
     RoleAssignableBy,
     RolePermission,
-    SQLPermission,
+    Permission,
     StaticRole,
     UserRole,
 )
@@ -151,7 +151,7 @@ PARAMETERIZED_PERMISSIONS = {
 }
 
 
-class Permissions(DocumentSchema):
+class HqPermissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     view_web_users = BooleanProperty(default=False)
 
@@ -208,7 +208,7 @@ class Permissions(DocumentSchema):
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
-        permissions = Permissions.min()
+        permissions = HqPermissions.min()
         for perm in permission_list:
             setattr(permissions, perm.name, perm.allow_all)
             if perm.name in PARAMETERIZED_PERMISSIONS:
@@ -252,7 +252,7 @@ class Permissions(DocumentSchema):
     def permission_names(cls):
         """Returns a list of permission names"""
         return {
-            name for name, value in Permissions.properties().items()
+            name for name, value in HqPermissions.properties().items()
             if isinstance(value, BooleanProperty)
         }
 
@@ -261,7 +261,7 @@ class Permissions(DocumentSchema):
         return list(self._yield_enabled())
 
     def _yield_enabled(self):
-        for name in Permissions.permission_names():
+        for name in HqPermissions.permission_names():
             value = getattr(self, name)
             list_value = None
             if name in PARAMETERIZED_PERMISSIONS:
@@ -274,6 +274,8 @@ class Permissions(DocumentSchema):
         return self.view_reports or report in self.view_report_list
 
     def view_tableau_viz(self, viz_id):
+        if not self.access_all_locations:
+            return False
         return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
@@ -296,16 +298,16 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions._all(True)
+        return HqPermissions._all(True)
 
     @classmethod
     def min(cls):
-        return Permissions._all(False)
+        return HqPermissions._all(False)
 
     @classmethod
     def _all(cls, value: bool):
-        perms = Permissions()
-        for name in Permissions.permission_names():
+        perms = HqPermissions()
+        for name in HqPermissions.permission_names():
             setattr(perms, name, value)
         return perms
 
@@ -340,7 +342,7 @@ class DomainMembership(Membership):
         if self.role:
             return self.role.permissions
         else:
-            return Permissions()
+            return HqPermissions()
 
     @classmethod
     def wrap(cls, data):
@@ -1462,6 +1464,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_view_some_tableau_viz(self, domain):
+        if not self.can_access_all_locations(domain):
+            return False
+
         from corehq.apps.reports.models import TableauVisualization
         return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 

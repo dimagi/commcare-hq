@@ -172,7 +172,7 @@ from corehq.apps.users.decorators import (
     get_permission_name,
     require_permission,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -247,7 +247,7 @@ class BaseUserConfigReportsView(BaseDomainView):
         allow_access_to_ucrs = (
             hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
-                get_permission_name(Permissions.edit_ucrs)
+                get_permission_name(HqPermissions.edit_ucrs)
             )
         )
         if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
@@ -338,7 +338,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 
 class ReportBuilderView(BaseDomainView):
 
-    @method_decorator(require_permission(Permissions.edit_reports))
+    @method_decorator(require_permission(HqPermissions.edit_reports))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables
@@ -831,7 +831,7 @@ def _assert_report_delete_privileges(request):
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id,
@@ -880,7 +880,7 @@ def delete_report(request, domain, report_id):
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
@@ -1484,7 +1484,7 @@ def process_url_params(params, columns):
 
 
 @api_auth_with_scope(['reports:view'])
-@require_permission(Permissions.view_reports)
+@require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
     """See README.rst for docs"""

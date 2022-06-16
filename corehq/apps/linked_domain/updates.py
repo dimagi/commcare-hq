@@ -106,7 +106,7 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
@@ -274,7 +274,7 @@ def update_user_roles(domain_link):
         role.is_non_admin_editable = role_def["is_non_admin_editable"]
         role.save()
 
-        permissions = Permissions.wrap(role_def["permissions"])
+        permissions = HqPermissions.wrap(role_def["permissions"])
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids

@@ -1,10 +1,10 @@
 from django.db import migrations
 
-from corehq.apps.users.models_role import SQLPermission
+from corehq.apps.users.models_role import Permission
 
 
 def create_view_tableau_permission(apps, schema_editor):
-    SQLPermission.create_all()
+    Permission.create_all()
 
 
 class Migration(migrations.Migration):

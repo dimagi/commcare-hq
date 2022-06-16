@@ -120,7 +120,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
 
 
@@ -266,7 +266,7 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 
 @no_conflict_require_POST
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -536,7 +536,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
@@ -916,13 +916,15 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-
-        auto_link = candidate_module.can_auto_link(module)
         for candidate_form in candidate_module.get_forms():
+            # Forms can be linked automatically if their module is the same case type as this module,
+            # or if they belong to this module's parent module. All other forms can be linked manually.
+            case_type_match = candidate_module.case_type == module.case_type
+            is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
                 'name': _form_name(candidate_form),
-                'auto_link': auto_link,
+                'auto_link': case_type_match or is_parent,
                 'allow_manual_linking': True,
             })
 

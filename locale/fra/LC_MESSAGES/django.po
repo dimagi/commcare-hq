@@ -6393,15 +6393,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"involves a form\n"
-"                that requires manual linking which has not been configured.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -23106,7 +23097,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr "Aucune donnée"
 
@@ -27865,6 +27855,12 @@ msgid "Day"
 msgstr "Jour"
 
 #: corehq/apps/reports/forms.py
+#, fuzzy
+#| msgid "Time"
+msgid "To Time"
+msgstr "Heure"
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -27883,6 +27879,10 @@ msgstr "Chaque heure"
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
 msgstr "Configurer le rapport planifié"
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
@@ -27968,7 +27968,6 @@ msgid "[no name]"
 msgstr "[no name]"
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr "Inconnu [%s]"
@@ -30062,10 +30061,6 @@ msgstr ""
 msgid "Date is after"
 msgstr ""
 
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr "Pas de données"
-
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
 msgstr ""
@@ -30094,6 +30089,12 @@ msgstr "Nouveau rapport planifié"
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr "Editer le rapport planifié"
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr "Le fuseau horaire de ce rapport est %(timezone)s."
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -42574,6 +42575,9 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "No Data"
+#~ msgstr "Pas de données"
 
 #~ msgid "Read Only (No Reports)"
 #~ msgstr "Lecture seule (sans rapports)"

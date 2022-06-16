@@ -96,7 +96,7 @@ def get_hmac_callout_settings(domain_link):
 
 
 def get_auto_update_rules(domain_link):
-    return _do_simple_request('linked_domain:auto_update_rules', domain_link)
+    return _do_simple_request('linked_domain:auto_update_rules', domain_link)['rules']
 
 
 def get_remote_linkable_ucr(domain_link):

@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -35,7 +35,7 @@ class TestCaseAPI(TestCase):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         role = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
 
@@ -295,6 +295,41 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].relationship, 'child')
         self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
 
+    def test_set_parent_by_external_id(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'match',
+            'case_name': 'Harmon/Luchenko',
+            'owner_id': 'harmon',
+            'indices': {
+                'parent': {
+                    'external_id': parent_case.external_id,
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
+        self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
+
+    def test_set_parent_by_bad_external_id(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'match',
+            'case_name': 'Harmon/Luchenko',
+            'owner_id': 'harmon',
+            'indices': {
+                'parent': {
+                    'external_id': 'MISSING',
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertEqual(res['error'], "Could not find a case with external_id 'MISSING'")
+
     def test_cannot_remove_child_case(self):
         # Documenting that this does not yet work
         parent_case = self._make_case()
@@ -308,7 +343,7 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertItemsEqual(res['error'], "You must set either case_id or temporary_id, and not both.")
+        self.assertEqual(res['error'], "Indices must specify case_id, external_id, or temporary ID, and only one")
 
     def test_bulk_action(self):
         existing_case = self._make_case()
@@ -425,7 +460,7 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "Could not find a case with temporary ID 'MISSING'")
+        self.assertEqual(res.json()['error'], "Could not find a case with temporary_id 'MISSING'")
 
     def test_non_json_data(self):
         res = self._create_case("this isn't json")
