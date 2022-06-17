@@ -7,6 +7,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.utils import silence_during_tests
+from corehq.apps.groups.models import Group
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import (
     estimate_partitioned_row_count,
@@ -73,6 +74,11 @@ class Command(BaseCommand):
         form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
         for chunk in chunked(form_ids, 1000, list):
             XFormInstance.objects.hard_delete_forms(domain_name, chunk)
+
+    @staticmethod
+    def hard_delete_groups(domain_name):
+        print("Hard-deleting groups...")
+        Group.hard_delete_docs_for_domain(domain_name)
 
 
 def iter_ids(model_class, field, domain, chunk_size=1000):
