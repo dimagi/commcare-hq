@@ -101,6 +101,7 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
+    Domain,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
     AllowedUCRExpressionSettings
@@ -386,10 +387,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
     confirmation_link_expiry = IntegerField(
         label=gettext_lazy("Account confirmation link expiry"),
-        required=False,
+        required=True,
         min_value=1,
         max_value=720,
-        initial=168,
         help_text=gettext_lazy(
             """
             Default time (in hours) for which account confirmation link will be valid.
@@ -439,6 +439,10 @@ class DomainGlobalSettingsForm(forms.Form):
 
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
             del self.fields['confirmation_link_expiry']
+        else:
+            self.fields['confirmation_link_expiry'].initial = Domain.get_by_name(
+                self.domain
+            ).confirmation_link_expiry_time
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -451,6 +455,13 @@ class DomainGlobalSettingsForm(forms.Form):
         if isinstance(data, dict):
             return data
         return json.loads(data or '{}')
+
+    def clean_confirmation_link_expiry(self):
+        data = self.cleaned_data['confirmation_link_expiry']
+        try:
+            return int(data)
+        except ValueError:
+            raise forms.ValidationError(_("Confirmation link expiry should be an integer."))
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()

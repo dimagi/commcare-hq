@@ -441,7 +441,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    confirmation_link_expiry_time = IntegerProperty()
+    confirmation_link_expiry_time = IntegerProperty(default=168)
 
     ga_opt_out = BooleanProperty(default=False)
 
