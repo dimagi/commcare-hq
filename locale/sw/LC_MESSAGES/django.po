@@ -13835,6 +13835,10 @@ msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Confirmation link expiry should be an integer."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid ""
 "You must choose a Call Center Type, Owner, and Case Type to use the call "
 "center application. Please uncheck the \"Call Center Application\" setting "
