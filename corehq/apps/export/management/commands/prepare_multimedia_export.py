@@ -104,6 +104,7 @@ class Command(BaseCommand):
                                 convert_bytes(MAX_MULTIMEDIA_EXPORT_SIZE)
                             )
                         )
+                        print("amount of unique files: {}".format(len(unique_ids)))
                         return
             print("success!")
             return
