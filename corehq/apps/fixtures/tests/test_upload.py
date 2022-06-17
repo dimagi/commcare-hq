@@ -606,6 +606,37 @@ class TestFixtureUpload(TestCase):
         self.assertNotEqual(new_uid, bad_uid)
         return result
 
+    def test_error_on_non_global_table(self):
+        data = [
+            ('types', [('N', 'things', 'no', 'name', 'yes')]),
+            ('things', [(None, 'N', 'apple')]),
+        ]
+        workbook = self.get_workbook_from_data(self.headers, data)
+        result = self.upload(workbook, skip_orm=True)
+        self.assertEqual(result.errors, ["type things is not defined as global"])
+        self.assertIsNone(self.get_table())
+
+    def test_ownerships_ignored_on_skip_orm(self):
+        user = CommCareUser.create(
+            self.domain, f"user@{self.domain}.commcarehq.org", "pass", None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        region = LocationType(domain=self.domain, name="region", code="region")
+        region.save()
+        SQLLocation(domain=self.domain, name="loc", location_type=region).save()
+
+        headers = TestFixtureOwnershipUpload.headers
+        data = [
+            ('types', [('N', 'things', 'yes', 'name')]),
+            ('things', [(None, 'N', 'apple', 'user', None, 'loc')]),
+        ]
+        workbook = self.get_workbook_from_data(headers, data)
+        result = self.upload(workbook, skip_orm=True)
+        apple_id, = [r._id for r in self.get_rows(None)]
+
+        ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
+        self.assertFalse(ownerships)
+        self.assertFalse(result.errors)
+
 
 class TestOldFixtureUpload(TestFixtureUpload):
     do_upload = _run_fixture_upload
@@ -639,11 +670,19 @@ class TestOldFixtureUpload(TestFixtureUpload):
             Regex(r"'[0-9a-f]+' is not a valid UID\. But the new item is created\.")
         ])
 
+    @nottest
+    def test_error_on_non_global_table(self):
+        """Old fixture uploader always uses the ORM"""
+
+    @nottest
+    def test_ownerships_ignored_on_skip_orm(self):
+        """Old fixture uploader always uses the ORM"""
+
 
 class TestFastFixtureUpload(TestFixtureUpload):
 
     @staticmethod
-    def do_upload(*args, replace=None, **kw):
+    def do_upload(*args, replace=None, skip_orm=True, **kw):
         return _run_fast_fixture_upload(*args, **kw)
 
     def test_rows_with_no_changes(self):

@@ -43,7 +43,7 @@ def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
     return _run_fixture_upload(domain, workbook, replace=replace, task=task)
 
 
-def _run_upload(domain, workbook, replace=False, task=None):
+def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     """Run lookup table upload
 
     Performs only deletes and/or inserts on table row and ownership
@@ -52,6 +52,8 @@ def _run_upload(domain, workbook, replace=False, task=None):
     def process_table(table, new_table):
         def process_row(row, new_row):
             update_progress(table)
+            if skip_orm:
+                return  # fast upload does not do ownership
             mutation = get_mutation(
                 workbook,
                 old_owners.get(row._id, []),
@@ -62,9 +64,10 @@ def _run_upload(domain, workbook, replace=False, task=None):
 
         old_rows = FixtureDataItem.get_item_list(domain, table.tag)
         sort_keys = {r._id: r.sort_key for r in old_rows}
-        old_owners = defaultdict(list)
-        for owner in FixtureOwnership.for_all_item_ids(list(sort_keys), domain):
-            old_owners[owner.data_item_id].append(owner)
+        if not skip_orm:
+            old_owners = defaultdict(list)
+            for owner in FixtureOwnership.for_all_item_ids(list(sort_keys), domain):
+                old_owners[owner.data_item_id].append(owner)
 
         mutation = get_mutation(
             workbook,
@@ -77,9 +80,16 @@ def _run_upload(domain, workbook, replace=False, task=None):
         rows.update(mutation)
 
     result = FixtureUploadResult()
+    if skip_orm:
+        # TODO remove when SKIP_ORM_FIXTURE_UPLOAD feature toggle is removed
+        non_globals = [s.table_id for s in workbook.get_all_type_sheets() if not s.is_global]
+        if non_globals:
+            result.errors.append(non_global_error(non_globals[0]))
+            return result
+    else:
+        owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
     old_tables = FixtureDataType.by_domain(domain)
-    owner_ids = load_owner_ids(workbook.get_owners(), domain)
     rows = Mutation()
     owners = Mutation()
     tables = get_mutation(
@@ -125,6 +135,12 @@ def setup_progress(task, workbook):
         tables = set()
 
     return total_tables, update_progress
+
+
+def non_global_error(tag):
+    return _("type {lookup_table_name} is not defined as global").format(
+        lookup_table_name=tag
+    )
 
 
 def table_key(table):
