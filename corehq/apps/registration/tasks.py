@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -45,10 +45,11 @@ def activation_24hr_reminder_email():
             'registration/email/confirm_account_reminder.txt', email_context)
         message_html = render_to_string(
             'registration/email/confirm_account.html', email_context)
-        subject = ugettext('Reminder to Activate your CommCare project')
+        subject = gettext('Reminder to Activate your CommCare project')
 
+        recipient = user.get_email() if user else request.new_user_username
         send_html_email_async.delay(
-            subject, request.new_user_username, message_html,
+            subject, recipient, message_html,
             text_content=message_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL
         )
@@ -75,7 +76,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name, firs
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)
 
-    subject = ugettext('Activate your CommCare project')
+    subject = gettext('Activate your CommCare project')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

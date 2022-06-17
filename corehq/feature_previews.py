@@ -4,7 +4,7 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from memoized import memoized
 

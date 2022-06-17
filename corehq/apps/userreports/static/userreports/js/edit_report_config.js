@@ -6,11 +6,10 @@ hqDefine('userreports/js/edit_report_config', [
     multiselectUtils
 ) {
     $(function () {
-        multiselectUtils.createFullMultiselectWidget(
-            'domain-selector',
-            gettext("Linked projects"),
-            gettext("Projects to copy to"),
-            gettext("Search projects")
-        );
+        multiselectUtils.createFullMultiselectWidget('domain-selector', {
+            selectableHeaderTitle: gettext("Linked projects"),
+            selectedHeaderTitle: gettext("Projects to copy to"),
+            searchItemTitle: gettext("Search projects"),
+        });
     });
 });

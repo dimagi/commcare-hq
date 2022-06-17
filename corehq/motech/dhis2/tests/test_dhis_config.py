@@ -12,6 +12,7 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 
 class TestDhisConfigValidation(SimpleTestCase):
 
+    # adding sync_to_sql=False because tests only deal with config validations
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
@@ -83,7 +84,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
 
     def test_config_empty_datavalue_map(self):
         config = {
@@ -110,7 +111,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         with self.assertRaises(BadValueError) as e:
-            repeater.save()
+            repeater.save(sync_to_sql=False)
         self.assertEqual(
             str(e.exception),
             "Property data_element_id is required."
@@ -146,7 +147,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
 
     def test_org_unit_id_migration(self):
         config = {
@@ -174,7 +175,7 @@ class TestDhisConfigValidation(SimpleTestCase):
 
         repeater = Dhis2Repeater()
         repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
-        repeater.save()
+        repeater.save(sync_to_sql=False)
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {'value': 'dhis2_location_id'})
 

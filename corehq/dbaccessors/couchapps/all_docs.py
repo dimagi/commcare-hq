@@ -67,7 +67,10 @@ def get_all_docs_with_doc_types(db, doc_types):
 
 
 def get_doc_ids_by_class(doc_class):
-    """Useful for migrations, but has the potential to be very large"""
+    """Useful for migrations, but has the potential to be very large
+
+    Suggested alternative: corehq.util.doc_processor.couch.DocsIterator
+    """
     doc_type = doc_class.__name__
     return [row['id'] for row in doc_class.get_db().view(
         'all_docs/by_doc_type',

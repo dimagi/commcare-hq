@@ -1,7 +1,7 @@
 Formplayer in HQ
 ================
 
-This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`_ fits into the larger
+This documentation describes how `formplayer <https://github.com/dimagi/formplayer/>`__ fits into the larger
 CommCare system, especially how it relates to CommCare HQ development. For details on building, running, and
 contributing to formplayer, see the formplayer repository.
 
@@ -14,8 +14,7 @@ built on top of it:
 
 * Web Apps is a single-page application, inlined into a CommCare HQ template, that provides a web UI backed by the formplayer API.
 * App Preview is essentially the same as web apps, but embedded as a cell-phone-shaped iframe within the App Builder.
-* SMS Forms serializes a form filling session over SMS in a question / answer sequence that is handled
-by the main HQ process, which hits formplayer's API to send answers and get the next question.
+* SMS Forms serializes a form filling session over SMS in a question / answer sequence that is handled by the main HQ process, which hits formplayer's API to send answers and get the next question.
 
 Repository Overview
 ^^^^^^^^^^^^^^^^^^^
@@ -24,7 +23,7 @@ Repository Overview
 
 * `commcare-android <https://github.com/dimagi/commcare-android>`_: The UI layer of CommCare mobile.
 * `commcare-core <https://github.com/dimagi/commcare-core>`_: The CommCare engine, this powers both CommCare mobile and formplayer. Mobile uses the ``master`` branch, while formplayer uses the ``formplayer`` branch. The two branches have a fairly small diff.
-* `formplayer <https://github.com/dimagi/formplayer>`_
+* `formplayer <https://github.com/dimagi/formplayer>`__
 * `commcare-hq <https://github.com/dimagi/commcare-hq>`_: HQ hosts web apps and the processes that run SMS forms.
 
 
@@ -50,37 +49,6 @@ as they are on the phone. A phone typically has one db file and one user, wherea
 are as many db files as there are users, i.e. tens of thousands. Each file has its own slice of the data synced
 down from the source of truth, but always just a little bit out of date if anyone's updated it after their last
 sync.
-
-Navigation and replaying of sessions
-++++++++++++++++++++++++++++++++++++
-User activity in CommCare is oriented around navigating to and then submitting forms. User actions are represented
-as a series of "selections" that begin at the app's initial list of menus and eventually end in form entry.
-
-Selections can be:
-
-* An integer index. This is used for lists of menus and/or forms and represents the position of the selected item.
-* A case id. This indicates that the user selected the given case.
-* The keyword ``action`` and an integer index, such as ``action 0``. This represents the user selecting an action on a detail screen. The index represents the position of the action in the detail's list of actions.
-
-For example, the selections ``[1, 'abc123', 0]`` indicate that a user selected the second visible menu, then selected case
-``abc123``, then selected the first visible menu (or form). Note that formplayer determines whether a given
-selection is an index, case id, or action based not on the selection itself but on its understanding of the app
-structure and the pieces of data needed to proceed to reach a form.
-
-Navigation requests from web apps include a ``selections`` parameter, an array of selections made. Each
-request contains the full set of selections, so the example above might map to the following requests:
-
-* ``navigate_menu_start`` to view the first screen, a list of menus
-* ``navigate_menu`` with selections ``[1]`` to select the first menu, which leads to a case list
-* ``get_details`` with selections ``[1]`` to select a case and show its details
-* ``navigate_menu`` with selections ``[1, 'abc123']`` to confirm the case selection, which leads to a list of forms
-* ``navigate_menu`` with selections ``[1, 'abc123', 0]`` to select the first form
-* ``submit-all`` to submit the form when complete, which sends the user back to the first list of menus
-
-Because formplayer is a RESTful service, each of these individual request plays through all of the given
-selections, even those that were already completed earlier. If an early selection contained an expensive operation,
-that operation can slow down requests for the rest of the session. Selections that cause side effects will cause
-them repeatedly.
 
 Request routing
 +++++++++++++++
@@ -135,3 +103,189 @@ that formplayer performance drops sharply when you go from running on
 machines with 64G RAM and 30G java heap to machines with 128G RAM and (still) 30G java heap. So for the time being
 our understanding is that the max machine size is 64G RAM to run formplayer on. This, of course, limits our ability
 to mitigate the many-machines load imbalance problem.
+
+Navigation
+^^^^^^^^^^
+
+The purpose of this section is to introduce formplayer navigation *in the context of CommCare HQ*. CommCare allows
+for a wide variety of behavior, but applications built in HQ use a subset of this behavior and a few common
+workflows.
+
+For a full picture of CommCare, see the `commcare-core wiki <https://github.com/dimagi/commcare-core/wiki/>`_, in
+particular
+
+* `CommCare Session <https://github.com/dimagi/commcare-core/wiki/SessionStack>`_
+* `CommCare Session External Instance Definition <https://github.com/dimagi/commcare-core/wiki/commcaresession>`_
+* `CommCare 2.0 Suite Definition <https://github.com/dimagi/commcare-core/wiki/Suite20>`_
+
+Note: This document uses case-centric language, because that is the entity most often used in HQ. Any references to
+cases could be changed to any model that is backed by a similar XML structure.
+
+The CommCare Session
+++++++++++++++++++++
+
+A single CommCare session is (loosely) defined as the series of **actions** taken by a user from the time that they
+view the home screen until the time that they press "Submit" in a form, plus the **data**
+that is collected and persisted along the way as those those actions are taken.
+
+The end goal of a session is to complete a form. This implies:
+
+* Every CommCare form has specific pieces of data that it needs to have access to in order to function properly.
+
+* Forms always get that data by referencing the session, i.e. ``instance('commcaresession')/session/data/blahblahblah``
+
+* The flow of a CommCare session is always structured to ensure that a user has "collected" all of the data that a certain form needs before allowing the user to enter that form.
+
+The session is implemented by the class `CommCareSession <https://github.com/dimagi/commcare-core/blob/master/src/main/java/org/commcare/session/CommCareSession.java>`_,
+with its data stored in ``CommCareSession.collectedDatums``. The session also keeps track of the current menu or form id, in ``CommCaseSession.currentCmd``.
+`CommCareSession.getNeededData <https://github.com/dimagi/commcare-core/blob/d791a58880cfe22e4d23b7deaef12a0cb1e4aeee/src/main/java/org/commcare/session/CommCareSession.java#L193-L217>`_
+determines what information is needed next, based on the current command on the data needed by entries associated
+with that command, and ``MenuSessionRunnerService`` (see below) uses that need to determine what screen to show.
+
+Each piece of **data** in the session is either:
+
+* "Action history" - information about the actions that a user has taken in the session so far. This is useful to implement "back" navigation, and it is also a necessary part of formplayer being a RESTful service (see the section below on replaying sessions).
+
+* "Collected data" - pieces of raw app data that will be used later within some form in the app, like case ids
+
+The **actions** a user can take in the session are:
+
+* Select a menu - this adds a "command id", which identifies the menu, to the session
+
+* Select a case (or confirm selection of a case) - this adds a "datum" to the session, the case's id, which both serves as a record of the selection action and identifies the case.
+
+* Select a form - this adds a "command id", which identifies the form, to the session
+
+Screens
++++++++
+
+This section answers the question, "After each user action in a CommCare app, how does CommCare decide what screen to show next?"
+
+There are three principles used to answer this question:
+
+1. Order matters: CommCare will never instruct the user to collect a datum that is listed later in a <session> block before one listed earlier in that same block. This allows ``<datum>s`` that come later in the list to refer to ones that came earlier, which is useful in workflows such as selecting a case that must be the child of a previously selected case.
+
+1. Equality of datums: CommCare is at all times aware of a universe of all datums which are required by at least one form in the app - some of which may overlap. The most notable effect of this is that if all of the possible actions a user is considering all require the same datum, CommCare will ask the user to select that datum before moving on to select the action.
+
+1. Never collect unnecessary data
+
+At any given time, there is one piece of data that the app is focused on acquiring, and the screen that CommCare shows is determined by the 'type' of that piece of data:
+
+* If CommCare is looking for a "datum", it will show a case list
+
+* If CommCare is looking for a "command id", it will show a menu screen
+
+Before the "Start" button is pressed, CommCare is always looking for a command id (module or form), which is why the app's root module menu is always the first screen to be shown.
+
+``commcare-core``, the engine shared by CommCare mobile, the `CommCare CLI <https://confluence.dimagi.com/display/commcarepublic/CommCare+CLI>`_, and formplayer, has the following types of screens:
+
+* ``MenuScreen`` - Displays a list of menus and/or forms.
+
+* ``EntityScreen`` - Displays a case list.
+
+* ``QueryScreen`` - Used for case search and claim, see section below. This is the screen the displays search fields. Search results are displayed using an ``EntityScreen``.
+
+* ``SyncScreen`` - Used for case search and claim, see section below. This screen isn't visible to the user, but it controls the sending of the claim request and then syncing.
+
+``formplayer`` uses these same screens, but ``FormplayerQueryScreen`` and ``FormplayerSyncScreen`` extend
+``QueryScreen`` and ``SyncScreen``. This means that formplayer and the CLI use different logic for case search &
+claim.
+
+A screen's job is to handle input, which often includes updating the session - either setting the ``currentCmd`` or
+adding an item to `collectedDatums``.
+
+The ``EntityScreen`` is a special case, since it handles what, from the user's perspective, are two screens: the
+case list and the case detail confirmation. ``EntityScreen`` acts as a "host" screen, extending
+``CompoundScreenHost``. The ``EntityDetailSubscreen``, which handles the case detail, is not a full ``Screen`` but
+rather a ``Subscreen`` that updates its host, the entity screen, which is then in charge of updating the session.
+
+Case lists that allow for the selection of multiple entities have further special handling, described in
+`formplayer docs <https://github.com/dimagi/formplayer/wiki/Multi-Select-Case-Lists>`_.
+
+Selections
+++++++++++
+User activity in CommCare is oriented around navigating to and then submitting forms. User actions are represented
+as a series of "selections" that begin at the app's initial list of menus and eventually end in form entry.
+
+The selections list keeps track of actions the user has taken in the current session. Every time a user takes a
+navigation action (selecting a menu, case, or form), web apps updates the ``selections`` list and sends it to
+formplayer as part of a ``navigate_menu`` request.
+
+A single selection can be:
+
+* An integer index. This is used for lists of menus and/or forms and represents the position of the selected item.
+* A case id. This indicates that the user selected the given case.
+* The keyword ``action`` and an integer index, such as ``action 0``. This represents the user selecting an action on a detail screen. The index represents the position of the action in the detail's list of actions.
+
+Replaying sessions
+------------------
+
+For an example, consider the selections ``[1, 'abc123', 0]``. These indicate that a user selected the second visible menu, then selected case
+``abc123``, then selected the first visible menu (or form). This might have mapped to the following requests:
+
+* ``navigate_menu_start`` to view the first screen, a list of menus
+* ``navigate_menu`` with selections ``[1]`` to select the first menu, which leads to a case list
+* ``get_details`` with selections ``[1]`` to select a case and show its details
+* ``navigate_menu`` with selections ``[1, 'abc123']`` to confirm the case selection, which leads to a list of forms
+* ``navigate_menu`` with selections ``[1, 'abc123', 0]`` to select the first form
+* ``submit-all`` to submit the form when complete, which sends the user back to the first list of menus
+
+Because formplayer is a RESTful service, each of these individual request plays through all of the given
+selections, even those that were already completed earlier. If an early selection contained an expensive operation,
+that operation can slow down requests for the rest of the session. Selections that cause side effects will cause
+them repeatedly.
+
+`MenuSessionRunnerService <https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/services/MenuSessionRunnerService.java>`_
+controls formplayer navigation. This largely happens in ``advanceSessionWithSelections``, which loops over the
+selections list, replaying the full session as described above.
+
+On each iteration, ``advanceSessionWithSelections`` determines the current screen based on the state of the
+``MenuSession`` and then adds the next selection. It handles special navigation, which mostly relates to case
+search and claim (see below). When it runs out of selections, it returns the current menu, which is a response
+bean.
+
+Case Search and Claim
++++++++++++++++++++++
+Case search and claim allows a user to gain access to a case not already in their casedb. Case search and claim are
+implemented using a "remote request", which is an extension of an entry. While an entry's purpose is to get the
+user into an XForm, a remote request's purpose is to send a request to the server (HQ).
+
+From the case list, the user takes a case search action. This presents them with a multi-field search screen, the
+``QueryScreen``. Their search inputs are sent as a request to HQ, which queries ElasticSearch for all cases in the
+domain and sends an XML document back with the results. Formplayer displays these results as a case list, an
+``EntityScreen``. When the user selects and then confirms a case, formplayer sends a POST request to HQ. This
+request, configured as part of the app, creates an extension case for the selected case. When this request returns,
+formplayer syncs, causing the selected case to be added to the user's casedb. CommCare then "rewinds" to the
+case list where the user started, selecting the case they claimed and moving them on to the next form or menu,
+using a mark/rewind mechanism discussed
+`elsewhere <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_.
+
+CommCare treats case search and claim as pieces of data to be gathered. Just as CommCare
+typically is expecting either a command (a menu or form) or a datum (a case), it can instead expect a
+``QUERY_REQUEST`` or a ``SYNC_REQUEST``, which indicate it should display a ``QueryScreen`` or handle a
+``SyncScreen`` (send the post request and subsequent sync).
+
+Alternate Case Search Workflows
+-------------------------------
+For projects using CommCare mobile, case search and claim is typically an unusual workflow. However, projects that
+use web apps, and therefore have guaranteed connectivity, may use it much more heavily, even to the point that the user
+is unaware of their casedb and always uses case search to find cases.
+
+To support this approach, HQ allows apps to be configured with several alternate navigation flows. These workflows
+are gated by the ``USH_CASE_CLAIM_UPDATES`` feature flag.
+
+The default case search and claim workflow shows the user the following screens:
+
+* A menu screen, where the user selects a form/menu that requires a case
+
+* A case list screen displaying the user's casedb, where the user elects to go into case search
+
+* A case search screen, with search inputs for various fields
+
+* A case list screen displaying the results of the search
+
+The alternate case search workflows allow the user to skip  the casedb case list, the case search screen, or both.
+
+To handle this skipping behavior, every iteration over the selections list in
+``MenuSessionRunnerService.advanceSessionWithSelections`` checks to see if there are any "automatic" actions
+needed, in ``autoAdvanceSession``.

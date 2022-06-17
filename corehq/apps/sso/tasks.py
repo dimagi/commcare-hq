@@ -5,7 +5,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils.context_helpers import get_idp_cert_expiration_email_context
 
 
@@ -23,6 +23,7 @@ def renew_service_provider_x509_certificates():
     """
     in_one_week = datetime.datetime.utcnow() + datetime.timedelta(days=7)
     for idp in IdentityProvider.objects.filter(
+        protocol=IdentityProviderProtocol.SAML,
         sp_rollover_cert_public__isnull=False,
         date_sp_cert_expiration__lte=in_one_week
     ).all():
@@ -37,6 +38,7 @@ def create_rollover_service_provider_x509_certificates():
     """
     in_two_weeks = datetime.datetime.utcnow() + datetime.timedelta(days=14)
     for idp in IdentityProvider.objects.filter(
+        protocol=IdentityProviderProtocol.SAML,
         sp_rollover_cert_public__isnull=True,
         date_sp_cert_expiration__lte=in_two_weeks
     ).all():
@@ -64,6 +66,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
     date_in_n_days = today + datetime.timedelta(days=num_days)
     day_after_that = date_in_n_days + datetime.timedelta(days=1)
     queryset = IdentityProvider.objects.filter(
+        protocol=IdentityProviderProtocol.SAML,
         is_active=True,
         date_idp_cert_expiration__gte=date_in_n_days,
         date_idp_cert_expiration__lt=day_after_that,

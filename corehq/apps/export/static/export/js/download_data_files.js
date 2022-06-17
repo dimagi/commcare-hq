@@ -1,4 +1,3 @@
-/* globals hqDefine, django, $ */
 hqDefine("export/js/download_data_files",[
     'jquery',
     'hqwebapp/js/alert_user',
@@ -23,7 +22,7 @@ hqDefine("export/js/download_data_files",[
         var textareaElem = $('#url_'.concat($(this).data("id")));
 
         var showCopyDialog = function () {
-            window.prompt(django.gettext("Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"), url);
+            window.prompt(gettext("Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"), url);
         };
         try {
             // Most browsers since Sept 2015
@@ -32,7 +31,7 @@ hqDefine("export/js/download_data_files",[
             var copied = document.execCommand("copy");
             textareaElem.hide();
             if (copied) {
-                alertUser(django.gettext("Data file URL copied to clipboard."), "success", true);
+                alertUser(gettext("Data file URL copied to clipboard."), "success", true);
             } else {
                 showCopyDialog();
             }
@@ -58,7 +57,7 @@ hqDefine("export/js/download_data_files",[
             type: "DELETE",
             success: function () {
                 rowElem.remove();
-                alertUser(django.gettext("Data file deleted."), "success", true);
+                alertUser(gettext("Data file deleted."), "success", true);
             },
         });
     };

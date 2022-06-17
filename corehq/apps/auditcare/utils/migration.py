@@ -6,13 +6,28 @@ from django.core.cache import cache
 
 from dimagi.utils.dates import force_to_datetime
 
-from corehq.apps.auditcare.models import AuditcareMigrationMeta
-from corehq.apps.auditcare.utils.export import get_sql_start_date
+from corehq.apps.auditcare.models import AuditcareMigrationMeta, NavigationEventAudit
 
 CUTOFF_TIME = datetime(2012, 12, 31)
 CACHE_TTL = 14 * 24 * 60 * 60  # 14 days
 
 logger = logging.getLogger(__name__)
+
+
+def get_sql_start_date():
+    """Get the date of the first SQL auditcare record
+
+    HACK this uses `NavigationEventAudit` since that model is likely to
+    have the record with the earliest timestamp.
+
+    NOTE this function assumes no SQL data has been archived, and that
+    all auditcare data in Couch will be obsolete and/or archived before
+    SQL data. It should be removed when the data in Couch is no longer
+    relevant.
+    """
+    manager = NavigationEventAudit.objects
+    row = manager.order_by("event_date").values("event_date")[:1].first()
+    return row["event_date"] if row else datetime.utcnow()
 
 
 class AuditCareMigrationUtil():
@@ -64,6 +79,13 @@ class AuditCareMigrationUtil():
             .values_list('key', flat=True)[:limit])
 
         return [get_datetimes_from_key(key) for key in errored_keys]
+
+    def get_cancelled_keys(self, limit=5):
+        cancelled_keys = (AuditcareMigrationMeta.objects
+            .filter(state=AuditcareMigrationMeta.STARTED, finished_at__isnull=True)
+            .values_list('key', flat=True)[:limit]
+        )
+        return [get_datetimes_from_key(key) for key in cancelled_keys]
 
     def log_batch_start(self, key):
         if AuditcareMigrationMeta.objects.filter(key=key):

@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.test import TestCase
 from datetime import time
 from io import BytesIO
-from mock import patch
+from unittest.mock import patch
 import re
 import tempfile
 

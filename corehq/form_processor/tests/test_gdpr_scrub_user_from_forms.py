@@ -1,11 +1,10 @@
 from django.test import TestCase
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import sharded
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
-from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.utils import get_simple_wrapped_form
+from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.utils import TestFormMetadata, get_simple_wrapped_form
 
 import uuid
 
@@ -67,15 +66,15 @@ class GDPRScrubUserFromFormsTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().update_form_data(form, NEW_USERNAME)
-        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
+        XFormInstance.objects.modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the metadata changed in the database
-        form = FormAccessors(DOMAIN).get_form(form.form_id)
+        form = XFormInstance.objects.get_form(form.form_id, DOMAIN)
         actual_form_xml = form.get_attachment("form.xml").decode('utf-8')
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
         # Test that the operations history is updated in this form
-        refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
+        refetched_form = XFormInstance.objects.get_form(form.form_id, DOMAIN)
         self.assertEqual(len(refetched_form.history), 1)
         self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
         self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)

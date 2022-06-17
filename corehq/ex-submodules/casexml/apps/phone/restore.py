@@ -3,62 +3,63 @@ import os
 import shutil
 import tempfile
 import uuid
-from io import BytesIO
-from uuid import uuid4
-from distutils.version import LooseVersion
 from datetime import datetime, timedelta
+from distutils.version import LooseVersion
+from io import BytesIO
+from typing import Optional
+from uuid import uuid4
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
-from celery.exceptions import TimeoutError
-from celery.result import AsyncResult
-from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
+from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.text import slugify
 
-from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
-from casexml.apps.phone.exceptions import (
-    InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException
+from celery.exceptions import TimeoutError
+from celery.result import AsyncResult
+from memoized import memoized
+
+from casexml.apps.case.xml import V1, check_version
+from couchforms.openrosa_response import (
+    ResponseNature,
+    get_response_element,
+    get_simple_response_xml,
 )
-from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
-from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from casexml.apps.phone.utils import get_cached_items_with_count
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, NAMESPACE_DOMAIN
+
+from corehq.apps.domain.models import Domain
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.exceptions import NotFound
+from corehq.const import LOADTEST_HARD_LIMIT
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
-from memoized import memoized
-from casexml.apps.phone.models import (
-    get_properly_wrapped_sync_log,
+
+from .checksum import CaseStateHash
+from .const import (
+    ASYNC_RETRY_AFTER,
+    INITIAL_ASYNC_TIMEOUT_THRESHOLD,
+    INITIAL_SYNC_CACHE_THRESHOLD,
+    INITIAL_SYNC_CACHE_TIMEOUT,
+)
+from .data_providers import get_async_providers, get_element_providers
+from .exceptions import (
+    BadStateException,
+    InvalidSyncLogException,
+    RestoreException,
+    SyncLogUserMismatch,
+)
+from .models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
+    get_properly_wrapped_sync_log,
 )
-from dimagi.utils.couch.database import get_db
-from casexml.apps.phone import xml as xml_util
-from couchforms.openrosa_response import (
-    ResponseNature,
-    get_simple_response_xml,
-    get_response_element,
-)
-from casexml.apps.case.xml import check_version, V1
-from casexml.apps.phone.checksum import CaseStateHash
-from casexml.apps.phone.const import (
-    INITIAL_SYNC_CACHE_TIMEOUT,
-    INITIAL_SYNC_CACHE_THRESHOLD,
-    INITIAL_ASYNC_TIMEOUT_THRESHOLD,
-    ASYNC_RETRY_AFTER,
-    CLEAN_OWNERS,
-    LIVEQUERY,
-)
-from casexml.apps.phone.xml import get_sync_element, get_progress_element
-from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.exceptions import NotFound
-
+from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
+from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
+from .utils import get_cached_items_with_count
+from .xml import get_progress_element, get_sync_element
 
 logger = logging.getLogger('restore')
-
-DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
 def stream_response(payload, headers=None, status=200):
@@ -336,17 +337,24 @@ class RestoreCacheSettings(object):
         )
 
 
-
-class RestoreState(object):
+class RestoreState:
     """
-    The RestoreState object can be passed around to multiple restore data providers.
+    The RestoreState object can be passed around to multiple restore
+    data providers.
 
-    This allows the providers to set values on the state, for either logging or performance
-    reasons.
+    This allows the providers to set values on the state, for either
+    logging or performance reasons.
     """
 
-    def __init__(self, project, restore_user, params, is_async=False,
-                 overwrite_cache=False, case_sync=None, auth_type=None):
+    def __init__(
+            self,
+            project: Domain,
+            restore_user: OTARestoreUser,
+            params: RestoreParams,
+            is_async: bool = False,
+            overwrite_cache: bool = False,
+            auth_type: Optional[str] = None,
+    ):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -365,22 +373,9 @@ class RestoreState(object):
         self.auth_type = auth_type
         self._last_sync_log = Ellipsis
 
-        if case_sync is None:
-            if project.use_livequery or LIVEQUERY_SYNC.enabled(self.domain, NAMESPACE_DOMAIN):
-                case_sync = LIVEQUERY
-            else:
-                case_sync = DEFAULT_CASE_SYNC
-        if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
-            raise ValueError("unknown case sync algorithm: %s" % case_sync)
-        self._case_sync = case_sync
-        self.is_livequery = case_sync == LIVEQUERY
-
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
-            if (self._case_sync == CLEAN_OWNERS and
-                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
-                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -471,14 +466,19 @@ class RestoreState(object):
         )
         if self.params.app:
             new_synclog.app_id = self.params.app.copy_of or self.params.app_id
-        if self.is_livequery:
-            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
+        new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
-    @property
     @memoized
-    def loadtest_factor(self):
-        return self.restore_user.loadtest_factor
+    def get_safe_loadtest_factor(self, total_cases: int) -> int:
+        """
+        Ensures ``RestoreUser.loadtest_factor`` cannot result in a
+        payload that exceeds ``LOADTEST_HARD_LIMIT`` number of cases
+        (unless the user really has that many cases).
+        """
+        unsafe = self.restore_user.loadtest_factor
+        max_factor = max(1, LOADTEST_HARD_LIMIT // total_cases)
+        return min(unsafe, max_factor)
 
     def __repr__(self):
         return "RestoreState(project='{}', domain={}, restore_user='{}', start_time='{}', duration='{}'".format(
@@ -499,12 +499,11 @@ class RestoreConfig(object):
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param is_async:           Whether to get the restore response using a celery task
-    :param case_sync:       Case sync algorithm (None -> default).
     :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
     def __init__(self, project=None, restore_user=None, params=None,
-                 cache_settings=None, is_async=False, case_sync=None,
+                 cache_settings=None, is_async=False,
                  skip_fixtures=False, auth_type=None):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
@@ -520,7 +519,6 @@ class RestoreConfig(object):
             self.restore_user,
             self.params, is_async,
             self.cache_settings.overwrite_cache,
-            case_sync=case_sync,
             auth_type=auth_type
         )
 

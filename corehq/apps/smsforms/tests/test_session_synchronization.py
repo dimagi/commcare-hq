@@ -1,7 +1,7 @@
 import pickle
 from uuid import uuid4
 
-import mock
+from unittest import mock
 
 from corehq.apps.smsforms.models import XFormsSessionSynchronization, RunningSessionInfo, SMSChannel, \
     SQLXFormsSession

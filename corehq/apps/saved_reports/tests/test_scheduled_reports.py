@@ -74,6 +74,71 @@ class ScheduledReportTest(TestCase):
         as_of += timedelta(microseconds=1)
         self.assertEqual(count, len(list(get_scheduled_report_ids(period, end_datetime=as_of))))
 
+    def testHourlyReportWithMinuteZero(self):
+        ReportNotification(hour=1, minute=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 1, 30), 0)
+
+    def testHourlyReportWithMinuteHalfHour(self):
+        # We don't currently cater for minute-specific hourly reporting;
+        # every report with 'hourly' interval will be sent on the zero-minute hour
+        ReportNotification(hour=1, minute=30, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 1, 30), 0)
+
+    def testHourlyReportWithoutMinute(self):
+        # We don't currently cater for minute-specific hourly reporting;
+        # every report with 'hourly' interval will be sent on the zero-minute hour
+        ReportNotification(hour=1, minute=None, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+
+    def testHourlyReportWithoutSpecifyingStopHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithNoneStopHour(self):
+        # It should return every hour if stop_hour not valid
+        ReportNotification(hour=0, stop_hour=None, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithInterval_everyHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 0, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 7, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 18, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 23, 0), 1)
+
+    def testHourlyReportWithInterval_onlyAt12(self):
+        ReportNotification(hour=12, stop_hour=12, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 0)
+
+    def testHourlyReportWithInterval_between12And15(self):
+        ReportNotification(hour=12, stop_hour=15, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 11, 0), 0)
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 14, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 15, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 16, 0), 0)
+
+    def testHourlyReportOtherTypesDontCount(self):
+        ReportNotification(hour=1, minute=0, interval='hourly').save()
+        self._check('daily', datetime(2014, 10, 31, 1, 0), 0)
+        self._check('weekly', datetime(2014, 10, 31, 1, 0), 0)
+        self._check('monthly', datetime(2014, 10, 31, 1, 0), 0)
+
+    def testIntervalReportDontIncludeOtherIntervals(self):
+        ReportNotification(hour=1, minute=0, interval='hourly').save()
+        ReportNotification(hour=1, minute=0, interval='daily').save()
+        ReportNotification(hour=12, minute=0, day=4, interval='weekly').save()
+        ReportNotification(hour=1, minute=0, interval='monthly').save()
+        self._check('hourly', datetime(2014, 10, 1, 1, 0), 1)
+        self._check('daily', datetime(2014, 10, 1, 1, 0), 1)
+        self._check('weekly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('monthly', datetime(2014, 10, 1, 1, 0), 1)
+
     def testDailyReportEmptyMinute(self):
         ReportNotification(hour=12, minute=None, interval='daily').save()
         self._check('daily', datetime(2014, 10, 31, 12, 0), 1)

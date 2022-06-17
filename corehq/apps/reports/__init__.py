@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import gettext_noop as _
 
 # this is just here to mark some strings from settings for translation
 # in a safer way.

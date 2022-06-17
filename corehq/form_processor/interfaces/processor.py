@@ -13,6 +13,7 @@ from corehq.form_processor.exceptions import (
     XFormQuestionValueNotFound,
 )
 from memoized import memoized
+from ..models import XFormInstance
 from ..system_action import system_action
 
 
@@ -47,8 +48,7 @@ class FormProcessorInterface(object):
     @property
     @memoized
     def xform_model(self):
-        from corehq.form_processor.models import XFormInstanceSQL
-        return XFormInstanceSQL
+        return XFormInstance
 
     @property
     @memoized
@@ -123,7 +123,6 @@ class FormProcessorInterface(object):
         Update a set of question responses. Returns a list of any
         questions that were not found in the xform.
         """
-        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         from corehq.form_processor.utils.xform import update_response
 
         errors = []
@@ -134,7 +133,7 @@ class FormProcessorInterface(object):
             except XFormQuestionValueNotFound:
                 errors.append(question)
 
-        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        existing_form = XFormInstance.objects.get_with_attachments(xform.get_id, xform.domain)
         existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
                                                                    value_responses_map, user_id)
         self.save_processed_models([new_form, existing_form])

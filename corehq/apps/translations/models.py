@@ -1,18 +1,9 @@
 from collections import defaultdict
 
 from django.contrib import admin
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
-
-from dimagi.ext.couchdbkit import (
-    DictProperty,
-    Document,
-    ListProperty,
-    StringProperty,
-)
-from dimagi.utils.couch import CouchDocLockableMixIn
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.utils import b64_aes_decrypt
@@ -21,8 +12,8 @@ from corehq.util.quickcache import quickcache
 
 class SMSTranslations(models.Model):
     domain = models.CharField(max_length=255, unique=True)
-    langs = JSONField(default=list)
-    translations = JSONField(default=dict)
+    langs = models.JSONField(default=list)
+    translations = models.JSONField(default=dict)
 
     @property
     def default_lang(self):

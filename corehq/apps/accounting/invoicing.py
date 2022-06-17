@@ -3,11 +3,12 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
+import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
-from django.utils.translation import ugettext as _
-from django.utils.translation import ungettext
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
@@ -49,6 +50,7 @@ from corehq.apps.accounting.utils import (
     months_from_date,
 )
 from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
+from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -335,12 +337,16 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, items, amount):
+    def create_wire_credits_invoice(self, amount, general_credit):
+
+        serializable_amount = simplejson.dumps(amount, use_decimal=True)
+        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
-            amount=amount,
-            invoice_items=items,
+            amount=serializable_amount,
+            invoice_items=serializable_items,
             contact_emails=self.contact_emails
         )
 
@@ -627,7 +633,7 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def unit_description(self):
         if self.is_prorated:
-            return ungettext(
+            return ngettext(
                 "{num_days} day of {plan_name} Software Plan."
                 "{subscription_date_range}",
                 "{num_days} days of {plan_name} Software Plan."
@@ -753,7 +759,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
                 )
             )
         if self.quantity > 0:
-            return ungettext(
+            return ngettext(
                 "Per-user fee exceeding limit of {monthly_limit} user "
                 "with plan above.{prorated_notice}",
                 "Per-user fee exceeding limit of {monthly_limit} users "
@@ -833,7 +839,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @memoized
     def unit_description(self):
         if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return ungettext(
+            return ngettext(
                 "{num_sms} SMS Message",
                 "{num_sms} SMS Messages",
                 self.num_sms
@@ -856,7 +862,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
-            return ungettext(
+            return ngettext(
                 "{num_extra_sms} SMS message beyond {monthly_limit} "
                 "messages included{date_range}.",
                 "{num_extra_sms} SMS messages beyond {monthly_limit} "

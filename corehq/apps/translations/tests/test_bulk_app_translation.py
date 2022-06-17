@@ -5,7 +5,7 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from couchexport.export import export_raw
 from couchexport.models import Format

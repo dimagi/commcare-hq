@@ -5,7 +5,7 @@ from celery.task import periodic_task
 
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import CardinalityAggregation
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import resave_form
 from corehq.pillows.utils import get_user_type_deep_cache_for_unknown_users, UNKNOWN_USER_TYPE
 from corehq.util.decorators import serial_task
@@ -41,7 +41,7 @@ def resave_es_forms_with_unknown_user_type(user_id):
         .values_list('domain', '_id', scroll=True)
     )
     for domain, form_id in domain_form_id_list:
-        form = FormAccessors(domain).get_form(form_id)
+        form = XFormInstance.objects.get_form(form_id, domain)
         resave_form(domain, form)
 
 

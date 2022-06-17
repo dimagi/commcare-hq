@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='automaticupdaterule',
             name='migrated',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
     ]

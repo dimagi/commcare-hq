@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import partial
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from memoized import memoized_property
 from requests import HTTPError

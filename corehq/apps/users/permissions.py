@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -31,7 +31,7 @@ def get_extra_permissions():
     yield ReportPermission(
         FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
     yield ReportPermission(
-        DEID_EXPORT_PERMISSION, ugettext_noop("Export De-Identified Data"),
+        DEID_EXPORT_PERMISSION, gettext_noop("Export De-Identified Data"),
         lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)

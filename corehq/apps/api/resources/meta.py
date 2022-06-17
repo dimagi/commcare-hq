@@ -8,6 +8,13 @@ from corehq.apps.api.serializers import CustomXMLSerializer
 from corehq.toggles import API_THROTTLE_WHITELIST
 
 
+def get_hq_throttle():
+    return HQThrottle(
+        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
+    )
+
+
 class HQThrottle(CacheDBThrottle):
 
     def should_be_throttled(self, identifier, **kwargs):
@@ -26,7 +33,11 @@ class HQThrottle(CacheDBThrottle):
         # Do the import here, instead of top-level, so that the model is
         # only required when using this throttling mechanism.
         from tastypie.models import ApiAccess
-        super(CacheDBThrottle, self).accessed(identifier, **kwargs)
+
+        # only record in redis if we need the throttle, otherwise skip
+        # and just leave the db logging
+        if not API_THROTTLE_WHITELIST.enabled(identifier):
+            super(CacheDBThrottle, self).accessed(identifier, **kwargs)
         # Write out the access to the DB for logging purposes.
         url = kwargs.get('url', '')
         if len(url) > 255:
@@ -43,7 +54,4 @@ class CustomResourceMeta(object):
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
     default_format = 'application/json'
-    throttle = HQThrottle(
-        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
-        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
-    )
+    throttle = get_hq_throttle()

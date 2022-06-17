@@ -3,8 +3,8 @@ from datetime import timedelta
 
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import bootstrap as twbscrispy
@@ -72,9 +72,9 @@ class CreateExportTagForm(forms.Form):
     # common fields
     model_type = forms.ChoiceField(
         choices=[
-            ("", ugettext_lazy("Select model type")),
-            ('case', ugettext_lazy('case')),
-            ('form', ugettext_lazy('form')),
+            ("", gettext_lazy("Select model type")),
+            ('case', gettext_lazy('case')),
+            ('form', gettext_lazy('form')),
         ]
     )
     app_type = forms.CharField(widget=forms.Select(choices=[]))
@@ -207,11 +207,11 @@ class BaseFilterExportDownloadForm(forms.Form):
     _USER_ADMIN = 'admin'
 
     _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
-        (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_WEB, ugettext_lazy("Web Users")),
-        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
-        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
+        (_USER_MOBILE, gettext_lazy("All Mobile Workers")),
+        (_USER_DEMO, gettext_lazy("Demo User")),
+        (_USER_WEB, gettext_lazy("Web Users")),
+        (_USER_UNKNOWN, gettext_lazy("Unknown Users")),
+        (_USER_SUPPLY, gettext_lazy("CommCare Supply")),
     ]
 
     def __init__(self, domain_object, *args, **kwargs):
@@ -279,56 +279,56 @@ class DashboardFeedFilterForm(forms.Form):
     A form used to configure the filters on a Dashboard Feed export
     """
     emwf_case_filter = forms.Field(
-        label=ugettext_lazy("Case Owner(s)"),
+        label=gettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
         help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     emwf_form_filter = forms.Field(
-        label=ugettext_lazy("User(s)"),
+        label=gettext_lazy("User(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
         help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     date_range = forms.ChoiceField(
-        label=ugettext_lazy("Date Range"),
+        label=gettext_lazy("Date Range"),
         required=True,
         initial="last7",
         choices=[
-            ("last7", ugettext_lazy("Last 7 days")),
-            ("last30", ugettext_lazy("Last 30 days")),
-            ("lastmonth", ugettext_lazy("Last month")),
-            ("lastyear", ugettext_lazy("Last year")),
-            ("lastn", ugettext_lazy("Days ago")),
-            ("since", ugettext_lazy("Since a date")),
-            ("range", ugettext_lazy("From a date to a date")),
+            ("last7", gettext_lazy("Last 7 days")),
+            ("last30", gettext_lazy("Last 30 days")),
+            ("lastmonth", gettext_lazy("Last month")),
+            ("lastyear", gettext_lazy("Last year")),
+            ("lastn", gettext_lazy("Days ago")),
+            ("since", gettext_lazy("Since a date")),
+            ("range", gettext_lazy("From a date to a date")),
         ],
         help_text='''
             <span data-bind='visible: showEmwfFormFilter'>{}</span>
             <span data-bind='visible: showEmwfCaseFilter'>{}</span>
         '''.format(
-            ugettext_lazy("Export forms received in this date range."),
-            ugettext_lazy("Export cases modified in this date range."),
+            gettext_lazy("Export forms received in this date range."),
+            gettext_lazy("Export cases modified in this date range."),
         )
     )
     days = forms.IntegerField(
-        label=ugettext_lazy("Number of Days"),
+        label=gettext_lazy("Number of Days"),
         required=False,
     )
     start_date = forms.DateField(
-        label=ugettext_lazy("Begin Date"),
+        label=gettext_lazy("Begin Date"),
         required=False,
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
-        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
+        help_text="<small class='label label-default'>{}</small>".format(gettext_lazy("YYYY-MM-DD")),
     )
     end_date = forms.DateField(
-        label=ugettext_lazy("End Date"),
+        label=gettext_lazy("End Date"),
         required=False,
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
-        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
+        help_text="<small class='label label-default'>{}</small>".format(gettext_lazy("YYYY-MM-DD")),
     )
     update_location_restriction = forms.BooleanField(
-        label=ugettext_lazy("Update location restriction to match filters."),
+        label=gettext_lazy("Update location restriction to match filters."),
         required=False,
     )
 
@@ -551,7 +551,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     _export_type = 'form'
 
     date_range = DateSpanField(
-        label=ugettext_lazy("Date Range"),
+        label=gettext_lazy("Date Range"),
         required=True,
     )
 
@@ -982,9 +982,9 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
     _export_type = 'case'
 
     date_range = DateSpanField(
-        label=ugettext_lazy("Date Range"),
+        label=gettext_lazy("Date Range"),
         required=True,
-        help_text=ugettext_lazy("Export cases modified in this date range"),
+        help_text=gettext_lazy("Export cases modified in this date range"),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
@@ -1040,9 +1040,9 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
 
 class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
     date_range = DateSpanField(
-        label=ugettext_lazy("Date Range"),
+        label=gettext_lazy("Date Range"),
         required=True,
-        help_text=ugettext_lazy("Export messages sent in this date range"),
+        help_text=gettext_lazy("Export messages sent in this date range"),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
@@ -1149,7 +1149,7 @@ class UpdateIncrementalExportForm(forms.ModelForm):
             crispy.Field('active'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update"),
+                    gettext_lazy("Update"),
                     css_class='btn btn-primary',
                     type='submit',
                 ),

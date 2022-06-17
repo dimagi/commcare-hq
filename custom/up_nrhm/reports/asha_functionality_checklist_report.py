@@ -5,11 +5,11 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import gettext as _, gettext_noop
 
 
 class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    name = ugettext_noop("Format-1 for ASHA Sanginis")
+    name = gettext_noop("Format-1 for ASHA Sanginis")
     slug = "asha_functionality_checklist_report"
 
     @property

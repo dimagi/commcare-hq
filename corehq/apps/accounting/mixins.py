@@ -88,7 +88,7 @@ class BillingModalsMixin(object):
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
                 num_months_remaining = prepaid_credits / monthly_fee
-                prepaid_remaining_date = months_from_date(date.today(), num_months_remaining)
+                prepaid_remaining_date = months_from_date(date.today(), int(num_months_remaining))
                 partial_month_remaining = num_months_remaining % 1
                 num_days_in_month = 30  # Approximate
                 prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))

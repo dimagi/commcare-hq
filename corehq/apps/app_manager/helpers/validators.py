@@ -4,8 +4,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.exceptions import PermissionDenied
 from lxml import etree
@@ -21,12 +20,13 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
     FormNotFoundException,
-    LocationXpathValidationError,
+    LocationXPathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
     ParentModuleReferenceError,
@@ -40,15 +40,17 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
+    module_loads_registry_case,
+    module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.domain.models import Domain
-from corehq.util import view_utils
 from corehq.util.timer import time_method
 
 
@@ -368,37 +370,126 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        if self.module.put_in_root and self.module.session_endpoint_id:
-            errors.append({
-                'type': 'endpoint to display only forms',
-                'module': self.get_module_info(),
-            })
+        uses_inline_search = module_uses_inline_search(self.module)
+        if self.module.put_in_root:
+            if self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'endpoint to display only forms',
+                    'module': self.get_module_info(),
+                })
+            if uses_inline_search:
+                errors.append({
+                    'type': 'inline search to display only forms',
+                    'module': self.get_module_info(),
+                })
+
+        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
+            if self.module.parent_select.relationship == 'parent':
+                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+                valid_modules = get_modules_with_parent_case_type(app, self.module)
+            else:
+                from corehq.apps.app_manager.views.modules import get_all_case_modules
+                valid_modules = get_all_case_modules(app, self.module)
+            valid_module_ids = [info['unique_id'] for info in valid_modules]
+            if self.module.parent_select.module_id not in valid_module_ids:
+                errors.append({
+                    'type': 'invalid parent select id',
+                    'module': self.get_module_info(),
+                })
+            else:
+                module_id = self.module.parent_select.module_id
+                parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+                if parent_select_module and module_uses_inline_search(parent_select_module):
+                    errors.append({
+                        'type': 'parent select is inline search module',
+                        'module': self.get_module_info(),
+                    })
+
+            if uses_inline_search:
+                if self.module.parent_select.relationship:
+                    errors.append({
+                        'type': 'inline search parent select relationship',
+                        'module': self.get_module_info(),
+                    })
+
+        if module_uses_smart_links(self.module):
+            if not self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'smart links missing endpoint',
+                    'module': self.get_module_info(),
+                })
+            if self.module.parent_select.active:
+                errors.append({
+                    'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+            if uses_inline_search:
+                errors.append({
+                    'type': 'smart links inline search',
+                    'module': self.get_module_info(),
+                })
+
+        if module_loads_registry_case(self.module):
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'data registry multi select',
+                    'module': self.get_module_info(),
+                })
+
+        if self.module.root_module_id:
+            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
+            if root_module and module_uses_inline_search(root_module):
+                errors.append({
+                    'type': 'inline search as parent module',
+                    'module': self.get_module_info(),
+                })
 
         return errors
 
-    def validate_detail_columns(self, columns):
+    def validate_detail_columns(self, detail):
         from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
+        from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
+        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
         from corehq.apps.locations.util import parent_child
         from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
 
         hierarchy = None
-        for column in columns:
+        is_search_detail = detail.get_instance_name(self.module) == RESULTS_INSTANCE
+        auto_launch_search = self.module.search_config.auto_launch
+        for column in detail.columns:
             if column.field_type == FIELD_TYPE_LOCATION:
                 domain = self.module.get_app().domain
                 domain_obj = Domain.get_by_name(domain)
                 try:
                     if not should_sync_hierarchical_fixture(domain_obj, self.module.get_app()):
                         # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
+                        raise LocationXPathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
+                except LocationXPathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': str(e),
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+            if column.useXpathExpression:
+                search_instances = {
+                    name for name in get_instance_names(column.field)
+                    if name.split(':')[0] in {'results', 'search-input'}
+                }
+                if search_instances and not is_search_detail and not auto_launch_search:
+                    yield {
+                        'type': 'case search instance used in casedb case details',
+                        'details': ','.join(search_instances),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -471,10 +562,11 @@ class ModuleDetailValidatorMixin(object):
                     'type': 'no case detail',
                     'module': module_info,
                 }
-            columns = self.module.case_details.short.columns + self.module.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
+            for detail_type, detail, enabled in self.module.get_details():
+                if not enabled:
+                    continue
+                errors = self.validate_detail_columns(detail)
+                yield from errors
 
         if needs_referral_detail and not self.module.ref_details.short.columns:
             yield {
@@ -556,10 +648,11 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     })
                 elif len(non_auto_select_actions) != 1:
                     for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        check_tag = non_auto_select_actions[index - 1].case_tag
                         if (
-                            index > 0 and
-                            non_auto_select_actions[index - 1].case_tag and
-                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                            index > 0
+                            and check_tag
+                            and check_tag not in (p.tag for p in action.case_indices)
                         ):
                             errors.append({
                                 'type': 'case list module form can only load parent cases',
@@ -618,12 +711,14 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                             'module': module_info,
                         }
                         break
-            columns = self.module.case_details.short.columns + self.module.case_details.long.columns
+            errors = []
+            for detail_type, detail, enabled in self.module.get_details():
+                if not enabled:
+                    continue
+                errors.extend(self.validate_detail_columns(detail))
             if self.module.get_app().commtrack_enabled:
-                columns += self.module.product_details.short.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
+                errors.extend(self.validate_detail_columns(self.module.product_details.short))
+            yield from errors
 
 
 class ReportModuleValidator(ModuleBaseValidator):
@@ -761,25 +856,43 @@ class FormBaseValidator(object):
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
+            if self.form.get_module().is_multi_select():
+                errors.append(dict(type="multi select form links", **meta))
             for form_link in self.form.form_links:
+                linked_module = None
                 if form_link.form_id:
                     try:
-                        self.form.get_app().get_form(form_link.form_id)
+                        linked_form = self.form.get_app().get_form(form_link.form_id)
+                        linked_module = linked_form.get_module()
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
                 else:
                     try:
-                        self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
+                        linked_module = self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
                     except ModuleNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
+                if linked_module:
+                    if linked_module.is_multi_select():
+                        errors.append(dict(type="multi select form links", **meta))
+                    if linked_module.root_module and linked_module.root_module.is_multi_select():
+                        errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+            if module.root_module and module.root_module.is_multi_select():
+                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
+            elif module.root_module.is_multi_select():
+                errors.append(dict(type='parent multi select form links', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
+            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
+                errors.append(dict(type='previous multi select form links', **meta))
+            if self.form.requires_case() and module_uses_inline_search(module):
+                errors.append(dict(type='workflow previous inline search', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:
@@ -861,7 +974,7 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names.update(subcase_action.case_properties)
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
-                and not self.form.actions.open_case.name_path:
+                and not self.form.actions.open_case.name_update.question_path:
             errors.append({'type': 'case_name required'})
 
         errors.extend(self.check_case_properties(
@@ -929,15 +1042,15 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
-                if not action.name_path:
+                if not action.name_update.question_path:
                     errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
 
                 for case_index in action.case_indices:
                     meta = self.form.actions.actions_meta_by_tag.get(case_index.tag)
                     if meta and meta['type'] == 'open' and meta['action'].repeat_context:
                         if (
-                            not action.repeat_context or
-                            not action.repeat_context.startswith(meta['action'].repeat_context)
+                            not action.repeat_context
+                            or not action.repeat_context.startswith(meta['action'].repeat_context)
                         ):
                             errors.append({'type': 'subcase repeat context',
                                            'case_tag': action.case_tag,
@@ -988,8 +1101,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     module=self.form.get_module(), form=self.form)
 
             form_filter_references_case = (
-                xpath_references_case(interpolated_form_filter) or
-                xpath_references_usercase(interpolated_form_filter)
+                xpath_references_case(interpolated_form_filter)
+                or xpath_references_usercase(interpolated_form_filter)
             )
 
             if form_filter_references_case:

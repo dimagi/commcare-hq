@@ -2,10 +2,9 @@ import json
 import uuid
 from datetime import datetime
 
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
-
 from corehq.apps.export.export import get_export_file
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.util.files import TransientTempfile
 
 DOMAIN = "export-file-domain"
@@ -19,9 +18,9 @@ DEFAULT_XMLNS = "test-xmlns"
 def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
              type=DEFAULT_CASE_TYPE, name=DEFAULT_CASE_NAME,
              closed=False, **kwargs):
-    kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
-    kwargs["modified_on"] = kwargs.get("modified_on", datetime.utcnow())
-    kwargs["server_modified_on"] = kwargs.get("server_modified_on", datetime.utcnow())
+    kwargs.setdefault("case_id", uuid.uuid4().hex)
+    kwargs.setdefault("modified_on", datetime.utcnow())
+    kwargs.setdefault("server_modified_on", datetime.utcnow())
     return CommCareCase(
         domain=domain,
         user_id=user_id,
@@ -33,13 +32,13 @@ def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
     )
 
 
-def new_form(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS, **kwargs):
-    kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
-    return XFormInstance(
-        domain=domain,
-        app_id=app_id,
-        xmlns=xmlns,
-        **kwargs
+def new_form(form_data):
+    return create_form_for_test(
+        domain=DOMAIN,
+        app_id=DEFAULT_APP_ID,
+        xmlns=DEFAULT_XMLNS,
+        form_data=form_data,
+        save=False,
     )
 
 

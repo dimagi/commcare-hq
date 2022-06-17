@@ -1,6 +1,6 @@
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 
@@ -25,7 +25,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     LocationChoiceProvider,
     MultiFieldDataSourceColumnChoiceProvider,
     OwnerChoiceProvider,
-    UserChoiceProvider,
+    UserChoiceProvider, DomainChoiceProvider, COMMCARE_PROJECT,
 )
 from corehq.apps.userreports.reports.filters.specs import (
     ChoiceListFilterSpec,
@@ -206,7 +206,8 @@ class FilterChoiceProviderFactory(object):
         DATA_SOURCE_COLUMN: DataSourceColumnChoiceProvider,
         LOCATION: LocationChoiceProvider,
         USER: UserChoiceProvider,
-        OWNER: OwnerChoiceProvider
+        OWNER: OwnerChoiceProvider,
+        COMMCARE_PROJECT: DomainChoiceProvider
     }
 
     @classmethod

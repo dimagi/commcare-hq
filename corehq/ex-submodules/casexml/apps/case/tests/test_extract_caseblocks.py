@@ -8,11 +8,10 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.case.const import CASE_ATTR_ID
 from casexml.apps.case.xform import extract_case_blocks
-from six.moves import range
 
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 TEST_DOMAIN_NAME = 'test-domain'
@@ -112,8 +111,9 @@ class TestParsingExtractCaseBlock(TestCase, TestFileMixin):
 
     def test_parsing_date_modified(self):
         """
-        To ensure that extract_case_blocks processes date_modified when passed as datetime.datetime object using
-        FormAccessors and form_data when at validate_phone_datetime
+        To ensure that extract_case_blocks processes date_modified when passed
+        as datetime.datetime object using XFormInstance.objects.get_form and
+        form_data when at validate_phone_datetime
         """
         xml_data = self.get_xml('create')
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, {})
@@ -124,5 +124,5 @@ class TestParsingExtractCaseBlock(TestCase, TestFileMixin):
             last_sync_token=None,
             received_on=None
         )
-        xform = FormAccessors(TEST_DOMAIN_NAME).get_form(result.xform.get_id)
+        xform = XFormInstance.objects.get_form(result.xform.get_id, TEST_DOMAIN_NAME)
         extract_case_blocks(xform.form_data)

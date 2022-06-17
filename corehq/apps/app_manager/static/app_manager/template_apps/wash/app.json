@@ -203,17 +203,50 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "number_of_household_members": "/data/number_of_household_members",
-                "point_of_reference": "/data/point_of_reference",
-                "client_status": "/data/client_status",
-                "last_reading": "/data/last_reading",
-                "full_address": "/data/full_address",
-                "current_reading": "/data/current_reading",
-                "consumer_level": "/data/consumer_level",
-                "client_id": "/data/client_id",
-                "preferred_day_of_payment": "/data/preferred_day_of_payment"
+                "last_reading_date": {
+                  "question_path": "/data/last_reading_date",
+                  "update_mode": "always"
+                },
+                "consumption": {
+                  "question_path": "/data/consumption",
+                  "update_mode": "always"
+                },
+                "number_of_household_members": {
+                  "question_path": "/data/number_of_household_members",
+                  "update_mode": "always"
+                },
+                "point_of_reference": {
+                  "question_path": "/data/point_of_reference",
+                  "update_mode": "always"
+                },
+                "client_status": {
+                  "question_path": "/data/client_status",
+                  "update_mode": "always"
+                },
+                "last_reading": {
+                  "question_path": "/data/last_reading",
+                  "update_mode": "always"
+                },
+                "full_address": {
+                  "question_path": "/data/full_address",
+                  "update_mode": "always"
+                },
+                "current_reading": {
+                  "question_path": "/data/current_reading",
+                  "update_mode": "always"
+                },
+                "consumer_level": {
+                  "question_path": "/data/consumer_level",
+                  "update_mode": "always"
+                },
+                "client_id": {
+                  "question_path": "/data/client_id",
+                  "update_mode": "always"
+                },
+                "preferred_day_of_payment": {
+                  "question_path": "/data/preferred_day_of_payment",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -646,10 +679,26 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "repairs": "/data/repairs",
-                  "referral_date": "/data/refferral_date",
-                  "leakage": "/data/leakadge_group/leakage",
-                  "reason_for_referral": "/data/reason_for_referral"
+                  "repairs": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/repairs",
+                    "update_mode": "always"
+                  },
+                  "referral_date": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/refferral_date",
+                    "update_mode": "always"
+                  },
+                  "leakage": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/leakadge_group/leakage",
+                    "update_mode": "always"
+                  },
+                  "reason_for_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/reason_for_referral",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
@@ -678,12 +727,30 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "last_reading_date": "/data/last_reading_date",
-                "consumption": "/data/consumption",
-                "average_dailly_consumption": "/data/average_dailly_consumption",
-                "last_reading": "/data/last_reading",
-                "current_reading": "/data/current_reading",
-                "leakage": "/data/leakadge_group/leakage"
+                "last_reading_date": {
+                  "question_path": "/data/last_reading_date",
+                  "update_mode": "always"
+                },
+                "consumption": {
+                  "question_path": "/data/consumption",
+                  "update_mode": "always"
+                },
+                "average_dailly_consumption": {
+                  "question_path": "/data/average_dailly_consumption",
+                  "update_mode": "always"
+                },
+                "last_reading": {
+                  "question_path": "/data/last_reading",
+                  "update_mode": "always"
+                },
+                "current_reading": {
+                  "question_path": "/data/current_reading",
+                  "update_mode": "always"
+                },
+                "leakage": {
+                  "question_path": "/data/leakadge_group/leakage",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -866,17 +933,61 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "reason_for_referral": "/data/reason_for_referral",
-                  "hygiene_score": "/data/hygiene_water_sanitation/hygiene_score",
-                  "turbidity_referral": "/data/turbidity_referral",
-                  "ph_referral": "/data/ph_referral",
-                  "hygene_referral": "/data/hygene_referral",
-                  "water_ph": "/data/visit_info/water_ph",
-                  "clorine_referral": "/data/clorine_referral",
-                  "hygiene_possible": "/data/hygiene_water_sanitation/hygiene_possible",
-                  "residual_chlorine_concentration": "/data/visit_info/residual_chlorine_concentration",
-                  "water_turbidity": "/data/visit_info/water_turbidity",
-                  "referral_date": "/data/refferral_date"
+                  "reason_for_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/reason_for_referral",
+                    "update_mode": "always"
+                  },
+                  "hygiene_score": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/hygiene_water_sanitation/hygiene_score",
+                    "update_mode": "always"
+                  },
+                  "turbidity_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/turbidity_referral",
+                    "update_mode": "always"
+                  },
+                  "ph_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/ph_referral",
+                    "update_mode": "always"
+                  },
+                  "hygene_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/hygene_referral",
+                    "update_mode": "always"
+                  },
+                  "water_ph": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/visit_info/water_ph",
+                    "update_mode": "always"
+                  },
+                  "clorine_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/clorine_referral",
+                    "update_mode": "always"
+                  },
+                  "hygiene_possible": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/hygiene_water_sanitation/hygiene_possible",
+                    "update_mode": "always"
+                  },
+                  "residual_chlorine_concentration": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/visit_info/residual_chlorine_concentration",
+                    "update_mode": "always"
+                  },
+                  "water_turbidity": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/visit_info/water_turbidity",
+                    "update_mode": "always"
+                  },
+                  "referral_date": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/refferral_date",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
@@ -905,8 +1016,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "hygiene_score": "/data/hygiene_water_sanitation/hygiene_score",
-                "hygiene_possible": "/data/hygiene_water_sanitation/hygiene_possible"
+                "hygiene_score": {
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_score",
+                  "update_mode": "always"
+                },
+                "hygiene_possible": {
+                  "question_path": "/data/hygiene_water_sanitation/hygiene_possible",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -1468,11 +1585,31 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "restore_water": "/data/restore_water_group/restore_water",
-                  "cut_water": "/data/cut_water_group/cut_water",
-                  "client_status": "/data/client_status",
-                  "reason_for_referral": "/data/reason_for_referral",
-                  "motive_to_cut_water_supply": "/data/cut_water_group/motive_to_cut_water_supply"
+                  "restore_water": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/restore_water_group/restore_water",
+                    "update_mode": "always"
+                  },
+                  "cut_water": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/cut_water_group/cut_water",
+                    "update_mode": "always"
+                  },
+                  "client_status": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/client_status",
+                    "update_mode": "always"
+                  },
+                  "reason_for_referral": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/reason_for_referral",
+                    "update_mode": "always"
+                  },
+                  "motive_to_cut_water_supply": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/cut_water_group/motive_to_cut_water_supply",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "referall",
                 "reference_id": null,
@@ -1501,10 +1638,22 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_group/cut_water",
-                "client_status": "/data/client_status",
-                "reason_for_referral": "/data/reason_for_referral",
-                "motive_to_cut_water_supply": "/data/cut_water_group/motive_to_cut_water_supply"
+                "cut_water": {
+                  "question_path": "/data/cut_water_group/cut_water",
+                  "update_mode": "always"
+                },
+                "client_status": {
+                  "question_path": "/data/client_status",
+                  "update_mode": "always"
+                },
+                "reason_for_referral": {
+                  "question_path": "/data/reason_for_referral",
+                  "update_mode": "always"
+                },
+                "motive_to_cut_water_supply": {
+                  "question_path": "/data/cut_water_group/motive_to_cut_water_supply",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2091,13 +2240,34 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "cut_water": "/data/cut_water_referrals_group/cut_water_referral_value",
-                "turbidity_referral": "/data/water_quality_referrals_group/turbidity_referral_value",
-                "ph_referral": "/data/water_quality_referrals_group/ph_referral_value",
-                "restore_water": "/data/restore_water_referrals_group/restore_supply_referral_value",
-                "leakage": "/data/leakage_referrals_group/leakage_referral_value",
-                "clorine_referral": "/data/water_quality_referrals_group/clorine_referral_value",
-                "hygene_referral": "/data/hygiene_referrals_group/hygiene_referral_value"
+                "cut_water": {
+                  "question_path": "/data/cut_water_referrals_group/cut_water_referral_value",
+                  "update_mode": "always"
+                },
+                "turbidity_referral": {
+                  "question_path": "/data/water_quality_referrals_group/turbidity_referral_value",
+                  "update_mode": "always"
+                },
+                "ph_referral": {
+                  "question_path": "/data/water_quality_referrals_group/ph_referral_value",
+                  "update_mode": "always"
+                },
+                "restore_water": {
+                  "question_path": "/data/restore_water_referrals_group/restore_supply_referral_value",
+                  "update_mode": "always"
+                },
+                "leakage": {
+                  "question_path": "/data/leakage_referrals_group/leakage_referral_value",
+                  "update_mode": "always"
+                },
+                "clorine_referral": {
+                  "question_path": "/data/water_quality_referrals_group/clorine_referral_value",
+                  "update_mode": "always"
+                },
+                "hygene_referral": {
+                  "question_path": "/data/hygiene_referrals_group/hygiene_referral_value",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,
@@ -2757,8 +2927,14 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                "contract_termination_date": "/data/contract_termination_date",
-                "reason_for_terminating_the_contract": "/data/reason_for_terminating_the_contract"
+                "contract_termination_date": {
+                  "question_path": "/data/contract_termination_date",
+                  "update_mode": "always"
+                },
+                "reason_for_terminating_the_contract": {
+                  "question_path": "/data/reason_for_terminating_the_contract",
+                  "update_mode": "always"
+                }
               },
               "condition": {
                 "answer": null,

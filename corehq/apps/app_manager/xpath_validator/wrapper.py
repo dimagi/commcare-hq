@@ -6,7 +6,7 @@ from corehq.apps.app_manager.xpath_validator.config import (
     get_xpath_validator_path,
 )
 from corehq.apps.app_manager.xpath_validator.exceptions import (
-    XpathValidationError,
+    XPathValidationError,
 )
 
 XpathValidationResponse = namedtuple('XpathValidationResponse', ['is_valid', 'message'])
@@ -27,6 +27,6 @@ def validate_xpath(xpath, allow_case_hashtags=False):
     elif exit_code == 1:
         return XpathValidationResponse(is_valid=False, message=stdout)
     else:
-        raise XpathValidationError(
+        raise XPathValidationError(
             "{path} failed with exit code {exit_code}:\n{stderr}"
             .format(path=path, exit_code=exit_code, stderr=stderr))

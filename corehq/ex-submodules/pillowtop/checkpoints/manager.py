@@ -123,16 +123,19 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         self.max_checkpoint_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', MAX_CHECKPOINT_DELAY)
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
-        self.last_update = datetime.utcnow()
-        self.last_log = datetime.utcnow()
+        self.last_update = None
+        self.last_log = None
         self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
         frequency_hit = context.changes_seen >= self.checkpoint_frequency
         time_hit = False
         if self.max_checkpoint_delay:
-            seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
-            time_hit = seconds_since_last_update >= self.max_checkpoint_delay
+            if self.last_update is not None:
+                seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
+                time_hit = seconds_since_last_update >= self.max_checkpoint_delay
+            else:
+                time_hit = True
         return frequency_hit or time_hit
 
     def get_new_seq(self, change):
@@ -146,7 +149,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             if self.checkpoint_callback:
                 self.checkpoint_callback.checkpoint_updated()
             return True
-        elif (datetime.utcnow() - self.last_log).total_seconds() > 10:
+        elif self.last_log is None or (datetime.utcnow() - self.last_log).total_seconds() > 10:
             self.last_log = datetime.utcnow()
             pillow_logging.info("Heartbeat: %s", self.get_new_seq(change))
 

@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 
 
 class ProBonoMixin(object):
-    page_title = ugettext_lazy("Pro-Bono Application")
+    page_title = gettext_lazy("Pro-Bono Application")
     is_submitted = False
 
     url_name = None

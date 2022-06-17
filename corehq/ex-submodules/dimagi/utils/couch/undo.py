@@ -43,9 +43,13 @@ def is_deleted(doc):
     Returns False otherwise.
     """
     try:
-        return doc and doc['doc_type'].endswith(DELETED_SUFFIX)
+        return doc and _is_doc_type_deleted(doc['doc_type'])
     except KeyError:
         return False
+
+
+def _is_doc_type_deleted(doc_type):
+    return doc_type.endswith(DELETED_SUFFIX)
 
 
 def soft_delete(document):
@@ -61,6 +65,13 @@ def get_deleted_doc_type(document_class_or_instance):
     return '{}{}'.format(base_name, DELETED_SUFFIX)
 
 
-def undo_delete(document):
-    document.doc_type = document.doc_type.rstrip(DELETED_SUFFIX)
-    document.save()
+def undo_delete(document, save=True):
+    document.doc_type = remove_deleted_doc_type_suffix(document['doc_type'])
+    if save:
+        document.save()
+
+
+def remove_deleted_doc_type_suffix(doc_type):
+    while _is_doc_type_deleted(doc_type):
+        doc_type = doc_type.removesuffix(DELETED_SUFFIX)
+    return doc_type

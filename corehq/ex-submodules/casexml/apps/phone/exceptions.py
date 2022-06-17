@@ -48,18 +48,6 @@ class IncompatibleSyncLogType(InvalidSyncLogException):
     pass
 
 
-class OwnershipCleanlinessError(Exception):
-    pass
-
-
-class InvalidDomainError(OwnershipCleanlinessError):
-    pass
-
-
-class InvalidOwnerIdError(OwnershipCleanlinessError):
-    pass
-
-
 class SyncLogCachingError(Exception):
     pass
 

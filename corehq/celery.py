@@ -1,10 +1,10 @@
+# When celery is launched with `celery -A corehq ...` it automatically
+# finds the app at `corehq.celery.app`. This module is for that purpose
+# alone, and should not be imported elsewhere.
 import os
 
 import django
 from django.core.checks import run_checks
-from django.core.exceptions import AppRegistryNotReady
-
-from celery import Celery
 
 from manage import init_hq_python_path, run_patches
 
@@ -13,12 +13,7 @@ run_patches()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-app = Celery()
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
+django.setup()  # corehq.apps.celery.Config creates the app
+run_checks()
 
-django.setup()
-try:
-    run_checks()
-except AppRegistryNotReady:
-    pass
+from corehq.apps.celery import app  # noqa: E402, F401

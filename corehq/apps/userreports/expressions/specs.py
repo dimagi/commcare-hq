@@ -1,6 +1,9 @@
-from jsonobject.base_properties import DefaultProperty
-from simpleeval import InvalidExpression
 import textwrap
+from functools import cached_property
+
+from jsonobject.base_properties import DefaultProperty
+from jsonpath_ng.ext import parse as jsonpath_parse
+from simpleeval import InvalidExpression
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -23,14 +26,14 @@ from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.getters import (
     safe_recursive_lookup,
-    transform_from_datatype,
+    transform_for_datatype,
 )
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.couch import get_db_by_doc_type
 
 from .utils import eval_statements
@@ -125,7 +128,7 @@ class PropertyNameGetterSpec(JsonObject):
 
     def __call__(self, item, context=None):
         raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
-        return transform_from_datatype(self.datatype)(raw_value)
+        return transform_for_datatype(self.datatype)(raw_value)
 
     def __str__(self):
         value = self.property_name
@@ -155,7 +158,7 @@ class PropertyPathGetterSpec(JsonObject):
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
-        transform = transform_from_datatype(self.datatype)
+        transform = transform_for_datatype(self.datatype)
         return transform(safe_recursive_lookup(item, self.property_path))
 
     def __str__(self):
@@ -454,6 +457,81 @@ class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return "iterate on [{}] if {}".format(expressions_text, str(self._test))
 
 
+class JsonpathExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    This will execute the jsonpath expression against the current doc
+    and emit the result.
+
+    .. code:: json
+
+       {
+           "type": "jsonpath",
+           "jsonpath": "form..case.name",
+       }
+
+    Given the following doc:
+
+    .. code:: json
+
+        {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+
+    This above expression will evaluate to ``["a", "b", "c", "d"]``.
+    Another example is ``form.list[0].case.name`` which will evaluate to ``"c"``
+
+    For more information consult the following resources:
+
+    * `Article by Stefan Goessner <https://goessner.net/articles/JsonPath/>`__
+    * `JSONPath expression syntax <https://goessner.net/articles/JsonPath/index.html#e2>`__
+    * `JSONPath Online Evaluator <https://jsonpath.com/>`__
+    """
+    type = TypeProperty('jsonpath')
+    jsonpath = StringProperty(str, required=True)
+    datatype = DataTypeProperty(required=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        ret = super().wrap(obj)
+        ret.jsonpath_expr  # noqa: call to validate
+        return ret
+
+    @cached_property
+    def jsonpath_expr(self):
+        try:
+            return jsonpath_parse(self.jsonpath)
+        except Exception as e:
+            raise BadSpecError(f'Error parsing jsonpath expression <pre>{self.jsonpath}</pre>. '
+                               f'Message is {str(e)}')
+
+    def __call__(self, item, context=None):
+        transform = transform_for_datatype(self.datatype)
+        values = [transform(match.value) for match in self.jsonpath_expr.find(item)]
+        if not values:
+            return None
+        if len(values) == 1:
+            return values[0]
+        return values
+
+    def __str__(self):
+        if self.datatype:
+            return f"({self.datatype}){self.jsonpath}"
+        return self.jsonpath
+
+
 class RootDocExpressionSpec(JsonObject):
     type = TypeProperty('root_doc')
     expression = DictProperty(required=True)
@@ -496,7 +574,11 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        non_couch_doc_types = (LOCATION_DOC_TYPE,)
+        non_couch_doc_types = {
+            CommCareCase.DOC_TYPE,
+            LOCATION_DOC_TYPE,
+            XFormInstance.STATE_TO_DOC_TYPE[XFormInstance.NORMAL],
+        }
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError('Cannot determine database for document type {}!'.format(self.related_doc_type))
@@ -695,7 +777,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             untransformed_value = eval_statements(self.statement, var_dict)
-            return transform_from_datatype(self.datatype)(untransformed_value)
+            return transform_for_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
@@ -789,7 +871,7 @@ class SubcasesExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('case_id',))
     def _get_subcases(self, case_id, context):
         domain = context.root_doc['domain']
-        return [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
+        return [c.to_json() for c in CommCareCase.objects.get_reverse_indexed_cases(domain, [case_id])]
 
     def __str__(self):
         return "get subcases for {}".format(str(self._case_id_expression))
@@ -812,7 +894,10 @@ class _GroupsExpressionSpec(JsonObject):
     @ucr_context_cache(vary_on=('user_id',))
     def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
-        user = CommCareUser.get_by_user_id(user_id, domain)
+        try:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+        except CouchUser.AccountTypeError:
+            user = None
         if not user:
             return []
 
@@ -933,7 +1018,7 @@ class SplitStringExpressionSpec(JsonObject):
 class CoalesceExpressionSpec(JsonObject):
     """
     This expression returns the value of the expression provided, or the
-    value of the default_expression if the expression provided evalutes to a
+    value of the default_expression if the expression provided evaluates to a
     null or blank string.
 
     .. code:: json

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from .views import EditMenuView, get, get_all, import_build, post
 

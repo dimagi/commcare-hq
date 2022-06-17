@@ -14,27 +14,28 @@
           {% endif %}
         </h4>
       </div>
-      <div class="modal-body form-horizontal">
 
-        {# Hubspot Form #}
-        <div class="form form-horizontal"
-             id="get-demo-cta-form-content"></div>
-
-        {# Schedule Once Demo #}
-        <div id="get-demo-cta-calendar-content" style="display: none;">
-          <p>
-            {% blocktrans %}
-              Select a time to see CommCare in action and review
-              questions with our team.
-            {% endblocktrans %}
-          </p>
-          <div id="SOIDIV_commcaredemoform"
-               data-so-page="commcaredemoform"
-               data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
-               data-psz="11"></div>
-        </div>
-
+      {# Hubspot Form #}
+      <div id="get-demo-cta-form-content">
+        {% include "analytics/forms/hubspot_cta_form.html" %}
       </div>
+
+      {# Schedule Once Demo #}
+      <div id="get-demo-cta-calendar-content"
+           class="modal-body form-horizontal"
+           style="display: none;">
+        <p>
+          {% blocktrans %}
+            Select a time to see CommCare in action and review
+            questions with our team.
+          {% endblocktrans %}
+        </p>
+        <div id="SOIDIV_commcaredemoform"
+             data-so-page="commcaredemoform"
+             data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
+             data-psz="11"></div>
+      </div>
+
     </div>
   </div>
 </div>

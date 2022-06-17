@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE

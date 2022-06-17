@@ -1,6 +1,6 @@
 import itertools
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from jsonobject.base_properties import DefaultProperty
 

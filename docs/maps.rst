@@ -17,9 +17,8 @@ These are:
 * ``data_source`` -- the backend data source which will power the report (required)
 * ``display_config`` -- customizations to the display/behavior of the map itself (optional, but suggested for anything other than quick prototyping)
 
-There are two options for how this configuration actually takes place:
+This is how this configuration actually takes place:
 
-* via a domain's "dynamic reports" (see :ref:`dynamic_reports`), where you can create specific configurations of a generic report for a domain
 * subclass the map report to provide/generate the config parameters.
   You should **not** need to subclass any code functionality.
   This is useful for making a more permanent map configuration, and when the configuration needs to be dynamically generated based on other data or domain config (e.g., for `CommTrack`_)

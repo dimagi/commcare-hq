@@ -8,7 +8,7 @@ Vellum development environment configured correctly, including having
 correct dependency versions installed (see Vellum's README.md for
 instructions), before using this script to push changes to master.
 
-This script assumes that the vellum-staging branch is in staging.yaml.
+This script assumes that the vellum-staging branch is in staging.yml.
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -170,7 +170,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
         """
 
     code = subprocess.call([
-        "git", "commit", "--edit", "--message={}".format(message)
+        "git", "commit", "--edit", "--no-verify", "--message={}".format(message)
     ], cwd=path)
     if code != 0:
         sys.exit(code)

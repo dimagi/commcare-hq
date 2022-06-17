@@ -1,6 +1,33 @@
+import json
 from datetime import timezone, datetime
+
 from django.conf import settings
+
+from corehq.util.es.elasticsearch import SerializationError
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.metrics import metrics_counter
+
+
+class ElasticJSONSerializer(object):
+    """Modified version of ``elasticsearch.serializer.JSONSerializer``
+    that uses the CommCareJSONEncoder for serializing to JSON.
+    """
+    mimetype = 'application/json'
+
+    def loads(self, s):
+        try:
+            return json.loads(s)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(s, e)
+
+    def dumps(self, data):
+        # don't serialize strings
+        if isinstance(data, str):
+            return data
+        try:
+            return json.dumps(data, cls=CommCareJSONEncoder)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(data, e)
 
 
 def values_list(hits, *fields, **kwargs):
@@ -15,9 +42,9 @@ def values_list(hits, *fields, **kwargs):
         raise TypeError('must be called with at least one field')
     if flat:
         field, = fields
-        return [hit[field] for hit in hits]
+        return [hit.get(field) for hit in hits]
     else:
-        return [tuple(hit[field] for field in fields) for hit in hits]
+        return [tuple(hit.get(field) for field in fields) for hit in hits]
 
 
 def flatten_field_dict(results, fields_property='fields'):

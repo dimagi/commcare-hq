@@ -1,8 +1,10 @@
+import logging
 import os
 import re
 import sys
 from collections import Counter
 
+import simplejson
 from django.conf import settings
 
 from memoized import memoized
@@ -22,6 +24,8 @@ new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
 domain_url_re = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re)
+
+logger = logging.getLogger('domain')
 
 
 @memoized
@@ -113,3 +117,17 @@ def clear_domain_names(*domain_names):
     for domain_names in domain_names:
         for domain in iter_all_domains_and_deleted_domains_with_name(domain_names):
             domain.delete()
+
+
+def get_serializable_wire_invoice_general_credit(general_credit):
+    if general_credit > 0:
+        return [{
+            'type': 'General Credits',
+            'amount': simplejson.dumps(general_credit, use_decimal=True)
+        }]
+
+    return []
+
+
+def log_domain_changes(user, domain, new_obj, old_obj):
+    logger.info(f"{user} changed UCR permsissions {old_obj} to {new_obj} for domain {domain} ")

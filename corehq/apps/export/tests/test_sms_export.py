@@ -4,7 +4,7 @@ import uuid
 
 from django.test.testcases import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from couchexport.models import Format
 

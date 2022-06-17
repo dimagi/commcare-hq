@@ -1,4 +1,8 @@
+from datetime import datetime
+
 from django.test import SimpleTestCase
+
+from dimagi.utils.dates import DateSpan
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import (
@@ -8,6 +12,7 @@ from corehq.apps.userreports.filters import (
     ORFilter,
 )
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.reports.filters.values import DateFilterValue
 from corehq.apps.userreports.specs import FactoryContext
 
 
@@ -447,3 +452,25 @@ class ConfigurableNamedFilterTest(SimpleTestCase):
 
     def test_filter_no_match(self):
         self.assertFalse(self.filter(dict(foo='bar')))
+
+
+class DateFilterValueTests(SimpleTestCase):
+    # NOTE: This test should likely go away. The important thing to verify is that the date format used here
+    # matches the date format that the data is inserted with -- but this test can't verify that.
+    # Ideally, the code changes so that both the code used to insert values, and this code which creates
+    # the filter strings, uses the same date formatting class so the two representations stay in sync
+    def test_dates_use_iso_formatting(self):
+        spec = {
+            'slug': 'opened_on',
+            'type': 'date',
+            'compare_as_string': True,
+        }
+        start = datetime(year=2021, month=1, day=5)
+        end = datetime(year=2021, month=1, day=5, hour=7)
+        value = DateSpan(inclusive=False, startdate=start, enddate=end)
+
+        filter_value = DateFilterValue(spec, value)
+        sql_values = filter_value.to_sql_values()
+
+        self.assertEqual(sql_values['opened_on_startdate'], '2021-01-05T00:00:00')
+        self.assertEqual(sql_values['opened_on_enddate'], '2021-01-05T07:00:00')

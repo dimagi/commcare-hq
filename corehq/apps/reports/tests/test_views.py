@@ -1,5 +1,6 @@
 import io
-
+import json
+import unittest
 from urllib.parse import urlencode
 from couchdbkit import ResourceNotFound
 from django.http.response import Http404
@@ -10,9 +11,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import Permissions, UserRole, WebUser
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.blobs import get_blob_db
-import unittest
-
+from corehq.apps.reports.views import (
+    MySavedReportsView,
+    AddSavedReportConfigView,
+)
+from django.urls.base import reverse
 from .. import views
+
 
 REPORT_NAME_LOOKUP = {
     'worker_activity': 'corehq.apps.reports.standard.monitoring.WorkerActivityReport'
@@ -71,6 +76,11 @@ class TestEmailReport(TestCase):
         with self.assertRaises(Http404):
             self.email_report(report_name='worker_activity')
 
+    def test_disallowed_request_get_method(self):
+        self.request = self._create_request(method='get')
+        response = self.email_report()
+        self.assertEqual(response.status_code, 405)
+
 # ################ Helpers / Setup
     def email_report(self, domain=None, report_name='worker_activity'):
         domain = domain or self.domain
@@ -110,15 +120,17 @@ class TestEmailReport(TestCase):
 
         super().tearDown()
 
-    def _create_request(self, params=None):
+    def _create_request(self, params=None, method='post'):
         if params is None:
             params = {'send_to_owner': True}
 
-        params = urlencode(params)
+        url = f'/a/{self.domain}/emailReport'
 
-        base_url = f'/a/{self.domain}/emailReport'
-        url = f'{base_url}?{params}'
-        request = RequestFactory().get(url)
+        if method == 'get':
+            request = RequestFactory().get(url, params)
+        else:
+            request = RequestFactory().post(url, params)
+
         request.user = self.user
         return request
 
@@ -564,7 +576,6 @@ class TestViewScheduledReport(TestCase):
         owner_id = owner_id or self.user._id
         report = ReportNotification(domain=domain, owner_id=owner_id, config_ids=config_ids)
         report.save()
-
         self.addCleanup(report.delete)
 
         return report
@@ -573,3 +584,340 @@ class TestViewScheduledReport(TestCase):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
         self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+
+
+class TestDomainSharedConfigs(TestCase):
+    DOMAIN = 'test_domain'
+    OWNER_ID = '5'
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Make sure cached value us cleared
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
+    def test_domain_does_not_have_shared_configs(self):
+        self.assertEqual(len(ReportConfig.shared_on_domain(self.DOMAIN)), 0)
+
+    def test_domain_has_shared_configs(self):
+        config = ReportConfig(domain=self.DOMAIN, owner_id=self.OWNER_ID)
+        config.save()
+        self.addCleanup(config.delete)
+
+        self._create_scheduled_report(
+            domain=self.DOMAIN,
+            owner_id=self.OWNER_ID,
+            config_ids=[config._id],
+        )
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN))
+
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0]._id, config._id)
+
+    def test_config_used_in_multiple_report_notifications(self):
+        config = ReportConfig(domain=self.DOMAIN, owner_id=self.OWNER_ID)
+        config.save()
+        self.addCleanup(config.delete)
+
+        self._create_scheduled_report(
+            domain=self.DOMAIN,
+            owner_id=self.OWNER_ID,
+            config_ids=[config._id],
+        )
+        self._create_scheduled_report(
+            domain=self.DOMAIN,
+            owner_id=self.OWNER_ID,
+            config_ids=[config._id],
+        )
+
+        configs = list(ReportConfig.shared_on_domain(self.DOMAIN))
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0]._id, config._id)
+
+    def _create_scheduled_report(self, domain=None, owner_id=None, config_ids=[]):
+        report = ReportNotification(domain=domain, owner_id=owner_id, config_ids=config_ids)
+        report.save()
+        self.addCleanup(report.delete)
+        return report
+
+
+class TestReportsBase(TestCase):
+
+    DOMAIN = 'test-domain'
+    DEFAULT_USER_PASSWORD = 'password'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestReportsBase, cls).setUpClass()
+
+        cls.domain_obj = create_domain(cls.DOMAIN)
+        cls.admin_user = WebUser.create(
+            cls.DOMAIN, 'username@test.com', cls.DEFAULT_USER_PASSWORD, None, None, is_admin=True
+        )
+        cls.other_admin_user = WebUser.create(
+            cls.DOMAIN, 'username2@test.com', cls.DEFAULT_USER_PASSWORD, None, None, is_admin=True
+        )
+        cls.non_admin_user = WebUser.create(
+            cls.DOMAIN, 'username3@test.com', cls.DEFAULT_USER_PASSWORD, None, None, is_admin=False
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.admin_user.delete(cls.DOMAIN, deleted_by=None)
+        cls.other_admin_user.delete(cls.DOMAIN, deleted_by=None)
+        cls.non_admin_user.delete(cls.DOMAIN, deleted_by=None)
+
+        cls.domain_obj.delete()
+        super(TestReportsBase, cls).tearDownClass()
+
+    def create_report_notification(self, configs, owner_id):
+        domain = configs[0].domain
+        config_ids = [c._id for c in configs]
+        rn = ReportNotification(
+            domain=domain,
+            config_ids=config_ids,
+            owner_id=owner_id,
+            interval='daily',
+        )
+        rn.save()
+        self.addCleanup(rn.delete)
+        return rn
+
+    def create_report_config(self, domain, owner_id, **kwargs):
+        rc = ReportConfig(domain=domain, owner_id=owner_id, **kwargs)
+        rc.save()
+        self.addCleanup(rc.delete)
+        return rc
+
+    def log_user_in(self, username):
+        self.client.login(username=username, password=self.DEFAULT_USER_PASSWORD)
+
+
+class TestUserConfigsWithShared(TestReportsBase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
+    def test_no_shared_configs(self):
+        config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+        configs = ReportConfig.by_domain_and_owner(
+            self.DOMAIN,
+            self.admin_user._id,
+            include_shared=True,
+            stale=False,
+        )
+
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0]._id, config._id)
+
+    def test_with_shared_config(self):
+        config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+
+        self.create_report_notification([config], owner_id=self.admin_user._id)
+        # Clear cached value
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain=self.DOMAIN)
+
+        configs = ReportConfig.by_domain_and_owner(
+            self.DOMAIN,
+            self.admin_user._id,
+            include_shared=True,
+            stale=False,
+        )
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0]._id, config._id)
+
+    def test_with_other_owner_shared_config(self):
+        _config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+        config2 = self.create_report_config(self.DOMAIN, self.other_admin_user._id)
+        self.create_report_notification([config2], owner_id=self.other_admin_user._id)
+
+        configs = ReportConfig.by_domain_and_owner(
+            self.DOMAIN,
+            self.admin_user._id,
+            include_shared=True,
+            stale=False,
+        )
+        self.assertEqual(len(configs), 2)
+
+
+class TestMySavedReportsView(TestReportsBase):
+
+    URL = reverse(MySavedReportsView.urlname, args=[TestReportsBase.DOMAIN])
+
+    def get_shared_saved_reports_for_user(self, username):
+        ReportConfig.shared_on_domain.clear(ReportConfig, self.DOMAIN)
+
+        self.log_user_in(username)
+        response = self.client.get(self.URL)
+        return response.context['shared_saved_reports']
+
+    @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
+    def test_one_admin_has_report_notifications(self, *args):
+        config1 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
+        config2 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
+        config3 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
+        self.create_report_notification([config1, config2], owner_id=self.admin_user._id)
+
+        shared_reports = self.get_shared_saved_reports_for_user(self.admin_user.username)
+        self.assertEqual(len(shared_reports), 2)
+
+        config_ids = [r['_id'] for r in shared_reports]
+        self.assertNotIn(config3._id, config_ids)
+
+    @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
+    def test_multiple_admins_can_see_shared_reports(self, *args):
+        config1 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
+        _config2 = self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
+
+        # Test scenario when only one admin user create a ReportNotification
+        self.create_report_notification([config1], owner_id=self.admin_user._id)
+
+        shared_reports = self.get_shared_saved_reports_for_user(self.admin_user.username)
+
+        self.assertEqual(len(shared_reports), 1)
+        self.assertEqual(shared_reports[0]['_id'], config1._id)
+
+        # Other admin user should also see config1
+        other_admin_shared_reports = self.get_shared_saved_reports_for_user(self.other_admin_user.username)
+
+        self.assertEqual(len(other_admin_shared_reports), 1)
+        self.assertEqual(other_admin_shared_reports[0]['_id'], config1._id)
+
+    @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
+    def test_non_admin_can_see_only_own_shared_reports(self, *args):
+        admin_config = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
+        non_admin_config = self.create_report_config(domain=self.DOMAIN, owner_id=self.non_admin_user._id)
+
+        self.create_report_notification([admin_config], owner_id=self.admin_user._id)
+        self.create_report_notification([non_admin_config], owner_id=self.non_admin_user._id)
+
+        # Admin user should see both configs
+        shared_reports = self.get_shared_saved_reports_for_user(self.admin_user.username)
+
+        self.assertEqual(len(shared_reports), 2)
+
+        # Non admin user should see only own config
+        shared_reports = self.get_shared_saved_reports_for_user(self.non_admin_user.username)
+
+        self.assertEqual(len(shared_reports), 1)
+        self.assertEqual(shared_reports[0]['_id'], non_admin_config._id)
+
+
+class TestAddSavedReportConfigView(TestReportsBase):
+
+    URL = reverse(AddSavedReportConfigView.name, kwargs={'domain': TestReportsBase.DOMAIN})
+
+    def test_admin_can_edit_normal_config(self, *args):
+        config1 = self.create_report_config(
+            domain=self.DOMAIN,
+            owner_id=self.admin_user._id,
+            name='Name',
+            description='',
+        )
+
+        new_description = 'This is a description'
+        post_data = {
+            'description': new_description,
+            'name': config1.name,
+            '_id': config1._id,
+        }
+
+        self.log_user_in(self.admin_user.username)
+        response = self.client.post(
+            self.URL,
+            json.dumps(post_data),
+            content_type='application/json;charset=UTF-8',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        updated_config = ReportConfig.get(config1._id)
+        self.assertTrue(updated_config.description, new_description)
+
+    def test_another_admin_cannot_edit_normal_config(self, *args):
+        config1 = self.create_report_config(
+            domain=self.DOMAIN,
+            owner_id=self.admin_user._id,
+            name='Name',
+            description='',
+        )
+
+        post_data = {
+            'description': 'Malicious description',
+            'name': config1.name,
+            '_id': config1._id,
+        }
+
+        self.log_user_in(self.other_admin_user.username)
+        try:
+            _response = self.client.post(
+                self.URL,
+                json.dumps(post_data),
+                content_type='application/json;charset=UTF-8',
+            )
+        except Exception as e:
+            self.assertTrue(e.__class__ == AssertionError)
+
+        # Validate that config1 is untouched
+        original_config = ReportConfig.get(config1._id)
+        self.assertEqual(original_config.description, '')
+
+    def test_other_admin_can_edit_shared_saved_report(self, *args):
+        config1 = self.create_report_config(
+            domain=self.DOMAIN,
+            owner_id=self.admin_user._id,
+            name='Name',
+            description='',
+        )
+        # Create ReportNotification as to make confi1 shared
+        self.create_report_notification([config1], owner_id=self.admin_user._id)
+        ReportConfig.shared_on_domain.clear(ReportConfig, self.DOMAIN, only_id=True)
+
+        new_description = 'This is a description'
+        post_data = {
+            'description': new_description,
+            'name': config1.name,
+            '_id': config1._id,
+        }
+
+        self.log_user_in(self.other_admin_user.username)
+        response = self.client.post(
+            self.URL,
+            json.dumps(post_data),
+            content_type='application/json;charset=UTF-8',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        updated_config = ReportConfig.get(config1._id)
+        self.assertTrue(updated_config.description, new_description)
+
+    def test_non_admin_cannot_edit_other_shared_configs(self):
+        config1 = self.create_report_config(
+            domain=self.DOMAIN,
+            owner_id=self.admin_user._id,
+            name='Name',
+            description='',
+        )
+
+        post_data = {
+            'description': 'Malicious description',
+            'name': config1.name,
+            '_id': config1._id,
+        }
+
+        self.log_user_in(self.non_admin_user.username)
+        try:
+            _response = self.client.post(
+                self.URL,
+                json.dumps(post_data),
+                content_type='application/json;charset=UTF-8',
+            )
+        except Exception as e:
+            self.assertTrue(e.__class__ == AssertionError)
+
+        # Validate that config1 is untouched
+        original_config = ReportConfig.get(config1._id)
+        self.assertEqual(original_config.description, '')

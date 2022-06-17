@@ -5,9 +5,9 @@ from rest_framework import serializers
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
-    CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL,
-    LedgerValue, CaseAttachmentSQL)
+    CommCareCaseIndex, CommCareCase, CaseTransaction,
+    XFormInstance, XFormOperation,
+    LedgerValue, CaseAttachment)
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -23,11 +23,11 @@ class DeletableModelSerializer(serializers.ModelSerializer):
             self.fields.pop('deleted_on')
 
 
-class XFormOperationSQLSerializer(serializers.ModelSerializer):
+class XFormOperationSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source="user_id")
 
     class Meta(object):
-        model = XFormOperationSQL
+        model = XFormOperation
         exclude = ('id', 'form', 'user_id')
 
 
@@ -44,14 +44,14 @@ def _serialize_form_attachments(form):
 
 
 def _serialize_form_history(form):
-    return list(XFormOperationSQLSerializer(form.history, many=True).data)
+    return list(XFormOperationSerializer(form.history, many=True).data)
 
 
 lazy_serialize_form_attachments = lazy(_serialize_form_attachments, dict)
 lazy_serialize_form_history = lazy(_serialize_form_history, dict)
 
 
-class XFormInstanceSQLSerializer(DeletableModelSerializer):
+class XFormInstanceSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='form_id')
     doc_type = serializers.CharField()
     form = serializers.JSONField(source='form_data')
@@ -59,13 +59,13 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
     openrosa_headers = serializers.DictField()
 
     class Meta(object):
-        model = XFormInstanceSQL
+        model = XFormInstance
         exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
 
 
 class XFormStateField(serializers.ChoiceField):
     def __init__(self, **kwargs):
-        super(XFormStateField, self).__init__(XFormInstanceSQL.STATES, **kwargs)
+        super(XFormStateField, self).__init__(XFormInstance.STATES, **kwargs)
 
     def get_attribute(self, obj):
         choice = super(serializers.ChoiceField, self).get_attribute(obj)
@@ -82,14 +82,14 @@ class JsonFieldSerializerMixin(object):
     serializer_field_mapping[JSONField] = serializers.JSONField
 
 
-class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+class XFormInstanceRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
-    history = XFormOperationSQLSerializer(many=True, read_only=True)
+    history = XFormOperationSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
 
     def __init__(self, instance=None, *args, **kwargs):
-        super(XFormInstanceSQLRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
+        super(XFormInstanceRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
         if instance is not None:
             try:
                 instance.get_xml()
@@ -97,16 +97,16 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
                 self.fields.pop('form')
 
     class Meta(object):
-        model = XFormInstanceSQL
+        model = XFormInstance
         fields = '__all__'
 
 
-class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+class CommCareCaseIndexSerializer(serializers.ModelSerializer):
     case_id = serializers.CharField()
     relationship = serializers.CharField()
 
     class Meta(object):
-        model = CommCareCaseIndexSQL
+        model = CommCareCaseIndex
         fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
 
@@ -127,19 +127,19 @@ class CaseTransactionActionRawDocSerializer(JsonFieldSerializerMixin, CaseTransa
         fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
 
 
-class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
-    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+class CommCareCaseRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+    indices = CommCareCaseIndexSerializer(many=True, read_only=True)
     transactions = CaseTransactionActionRawDocSerializer(
         many=True, read_only=True, source='non_revoked_transactions')
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         fields = '__all__'
 
 
-class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
+class CaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta(object):
-        model = CaseAttachmentSQL
+        model = CaseAttachment
         fields = (
             'content_type',
             'content_length',
@@ -148,7 +148,7 @@ class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
 
 
 def _serialize_case_indices(case):
-    return list(CommCareCaseIndexSQLSerializer(case.indices, many=True).data)
+    return list(CommCareCaseIndexSerializer(case.indices, many=True).data)
 
 
 def _serialize_case_transactions(case):
@@ -169,18 +169,18 @@ lazy_serialize_case_xform_ids = lazy(_serialize_case_xform_ids, list)
 lazy_serialize_case_attachments = lazy(_serialize_case_attachments, dict)
 
 
-class CommCareCaseSQLSerializer(DeletableModelSerializer):
+class CommCareCaseSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
     case_json = serializers.JSONField()
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         exclude = ('id',)
 
 
-class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
+class CommCareCaseAPISerializer(serializers.ModelSerializer):
     """This serializer is for presenting a case in json for APIs to access"""
     user_id = serializers.CharField(source='modified_by')
     date_closed = serializers.DateTimeField(source='closed_on')
@@ -195,10 +195,10 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
         lite = kwargs.pop('lite', False)
         if lite:
             self.fields.pop('reverse_indices')
-        super(CommCareCaseSQLAPISerializer, self).__init__(*args, **kwargs)
+        super(CommCareCaseAPISerializer, self).__init__(*args, **kwargs)
 
     class Meta(object):
-        model = CommCareCaseSQL
+        model = CommCareCase
         fields = (
             'domain',
             'case_id',

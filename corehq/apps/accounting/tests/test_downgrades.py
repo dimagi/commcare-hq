@@ -60,7 +60,7 @@ def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=Fal
         num_users=20,
         record_date=invoice_date - datetime.timedelta(days=1)
     )
-    tasks.generate_invoices(invoice_date)
+    tasks.generate_invoices_based_on_date(invoice_date)
 
     # for testing purposes, force the latest invoice due_date to be
     # the "invoice_due_date" specified above

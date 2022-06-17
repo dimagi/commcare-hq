@@ -2,7 +2,31 @@ class DomainLinkError(Exception):
     pass
 
 
+class DomainLinkAlreadyExists(Exception):
+    pass
+
+
+class DomainLinkNotAllowed(Exception):
+    pass
+
+
+class AttemptedPushViolatesConstraints(Exception):
+    pass
+
+
+class DomainLinkNotFound(Exception):
+    pass
+
+
+class NoDownstreamDomainsProvided(Exception):
+    pass
+
+
 class MultipleDownstreamAppsError(Exception):
+    pass
+
+
+class MultipleDownstreamKeywordsError(Exception):
     pass
 
 
@@ -20,4 +44,12 @@ class ActionNotPermitted(RemoteRequestError):
 
 
 class UnsupportedActionError(Exception):
+    pass
+
+
+class UserDoesNotHavePermission(Exception):
+    pass
+
+
+class RegistryNotAccessible(Exception):
     pass

@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 logger = logging.getLogger()
 
@@ -66,7 +66,7 @@ def message_status(request, message_id):
         backend = SQLTelerivetBackend.by_webhook_secret(request_secret)
 
     if backend is None:
-        return HttpResponseForbidden()
+        return HttpResponseForbidden('Invalid secret')
 
     try:
         sms = SMS.objects.get(couch_id=message_id)
@@ -84,7 +84,7 @@ def message_status(request, message_id):
 class TelerivetSetupView(BaseMessagingSectionView):
     template_name = 'telerivet/telerivet_setup.html'
     urlname = 'telerivet_setup'
-    page_title = ugettext_lazy("Telerivet Setup")
+    page_title = gettext_lazy("Telerivet Setup")
 
     @property
     def page_url(self):

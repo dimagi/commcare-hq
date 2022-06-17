@@ -1,6 +1,5 @@
 from django.db import models, migrations
 import dimagi.utils.couch
-import corehq.form_processor.abstract_models
 
 
 class Migration(migrations.Migration):
@@ -26,6 +25,6 @@ class Migration(migrations.Migration):
             ],
             options={
             },
-            bases=(models.Model, corehq.form_processor.abstract_models.AbstractXFormInstance, dimagi.utils.couch.RedisLockableMixIn),
+            bases=(models.Model, dimagi.utils.couch.RedisLockableMixIn),
         ),
     ]

@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.test import SimpleTestCase
 
-import mock
+from unittest import mock
 
 from corehq.apps.export.models import (
     ExportColumn,
@@ -66,3 +66,15 @@ class TestExportItemGeneration(SimpleTestCase):
         wrapped = ExportItem.wrap(item.to_json())
         self.assertEqual(type(wrapped), type(item))
         self.assertEqual(wrapped.to_json(), item.to_json())
+
+
+class CreateFromQuestionTests(SimpleTestCase):
+    def test_removes_html_from_label(self):
+        question = {
+            'label': '<span style="color:#ffffff">Enter a number</span>',
+            'value': '/data/enter_number',
+            'type': 'Int',
+        }
+
+        item = ExportItem.create_from_question(question, 'app_id', 'app_ersion', [])
+        self.assertEqual(item.label, 'Enter a number')

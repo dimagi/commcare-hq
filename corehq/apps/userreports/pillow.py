@@ -123,7 +123,7 @@ class UcrTableManager(ABC):
         """
         self.bootstrapped = False
         self.last_bootstrapped = self.last_imported = datetime.utcnow()
-        self.bootstrap_interval = bootstrap_interval
+        self.bootstrap_interval = bootstrap_interval or REBUILD_CHECK_INTERVAL
         self.run_migrations = run_migrations
 
     def needs_bootstrap(self):
@@ -192,7 +192,7 @@ class UcrTableManager(ABC):
 class ConfigurableReportTableManager(UcrTableManager):
 
     def __init__(self, data_source_providers, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=None,
                  run_migrations=True):
         """Initializes the processor for UCRs
 
@@ -291,7 +291,7 @@ class ConfigurableReportTableManager(UcrTableManager):
 
 class RegistryDataSourceTableManager(UcrTableManager):
 
-    def __init__(self, bootstrap_interval=REBUILD_CHECK_INTERVAL, run_migrations=True):
+    def __init__(self, bootstrap_interval=None, run_migrations=True):
         """Initializes the processor for UCRs backed by a data registry
         """
         super().__init__(bootstrap_interval, run_migrations)
@@ -310,8 +310,6 @@ class RegistryDataSourceTableManager(UcrTableManager):
 
     def _do_bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
-        if not configs:
-            return
 
         for config in configs:
             self._add_adapter_for_data_source(config)
@@ -610,6 +608,41 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self.retry_errors = retry_errors
 
 
+def get_ucr_processor(data_source_providers,
+                      ucr_division=None,
+                      include_ucrs=None,
+                      exclude_ucrs=None,
+                      bootstrap_interval=None,
+                      run_migrations=True,
+                      ucr_configs=None):
+    table_manager = ConfigurableReportTableManager(
+        data_source_providers=data_source_providers,
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+        bootstrap_interval=bootstrap_interval,
+        run_migrations=run_migrations,
+    )
+    if ucr_configs:
+        table_manager.bootstrap([
+            config for config in ucr_configs
+            if config.doc_type == "DataSourceConfiguration"
+        ])
+    return ConfigurableReportPillowProcessor(table_manager)
+
+
+def get_data_registry_ucr_processor(run_migrations, ucr_configs):
+    table_manager = RegistryDataSourceTableManager(
+        run_migrations=run_migrations
+    )
+    if ucr_configs:
+        table_manager.bootstrap([
+            config for config in ucr_configs
+            if config.doc_type == "RegistryDataSourceConfiguration"
+        ])
+    return ConfigurableReportPillowProcessor(table_manager)
+
+
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0, dedicated_migration_process=False,
@@ -721,12 +754,10 @@ def get_kafka_ucr_registry_pillow(
         Processors:
           - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
     """
-    table_manager = RegistryDataSourceTableManager(
-        run_migrations=(process_num == 0)  # only first process runs migrations
+    ucr_processor = get_data_registry_ucr_processor(
+        run_migrations=(process_num == 0),  # only first process runs migrations
+        ucr_configs=ucr_configs
     )
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
 
     return ConfigurableReportKafkaPillow(
         processor=ucr_processor,

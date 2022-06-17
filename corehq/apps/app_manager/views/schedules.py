@@ -55,7 +55,7 @@ def edit_visit_schedule(request, domain, app_id, form_unique_id):
     json_loads = json.loads(request.POST.get('schedule'))
     enabled = json_loads.pop('enabled')
     anchor = json_loads.pop('anchor')
-    schedule_form_id = json_loads.pop('schedule_form_id')
+    schedule_form_id = json_loads.pop('schedule_form_id', None)
 
     if enabled:
         try:

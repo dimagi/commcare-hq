@@ -5,10 +5,13 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
 
+# Changing these values requires a migration
 NOTIFICATION_TYPES = (
     ('billing', 'Billing Notification'),
     ('info', 'Product Notification'),
     ('alert', 'Maintenance Notification'),
+    ('feat_basic', 'Feature Discovery (Basic)'),
+    ('feat_pro', 'Feature Discovery (Advanced)')
 )
 
 
@@ -34,7 +37,7 @@ class Notification(models.Model):
         ordering = ["-activated"]
 
     @classmethod
-    def get_by_user(cls, django_user, couch_user, limit=10):
+    def get_by_user(cls, django_user, couch_user, limit=10, plan_tier='basic', hide_features=True):
         """Returns notifications for a particular user
 
         After five notifications all notifications should be marked as read.
@@ -58,7 +61,25 @@ class Notification(models.Model):
             }
             return note_dict
 
-        return list(map(_fmt_note, enumerate(notes)))
+        notifications = list(map(_fmt_note, enumerate(notes)))
+
+        # retrieves feature discovery notification for new web users
+        if not notifications:
+            all_notes = cls.objects.filter(Q(domain_specific=False) | Q(domains__overlap=couch_user.domains),
+                                        is_active=True)[:limit]
+            notifications = list(map(_fmt_note, enumerate(all_notes)))
+            notifications = [notif for notif in notifications
+                             if notif['type'] == 'feat_basic' or notif['type'] == 'feat_pro']
+
+        def exclude_feature_notifications(should_hide_features, plan):
+            returned_notifs = notifications
+            if plan == 'pro' or should_hide_features:
+                returned_notifs = [notif for notif in returned_notifs if notif['type'] != 'feat_basic']
+            if plan == 'basic' or should_hide_features:
+                returned_notifs = [notif for notif in returned_notifs if notif['type'] != 'feat_pro']
+            return returned_notifs
+
+        return exclude_feature_notifications(hide_features, plan_tier)
 
     def mark_as_read(self, user):
         self.users_read.add(user)

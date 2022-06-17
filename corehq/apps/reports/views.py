@@ -2,9 +2,10 @@ import copy
 import io
 import json
 import re
-from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
+from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,14 +19,15 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
+    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import get_language
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -73,7 +75,6 @@ from corehq.apps.cloudcare.touchforms_api import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
-    login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
@@ -135,19 +136,16 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
 )
 from corehq.blobs import CODES, NotFound, get_blob_db, models
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
+from corehq.motech.repeaters.views.repeat_record_display import RepeatRecordDisplay
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
 from corehq.util.timezones.conversions import ServerTime
@@ -172,6 +170,8 @@ from .models import TableauVisualization, TableauServer
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
+DATE_FORMAT = "%Y-%m-%d %H:%M"
+
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
@@ -189,8 +189,16 @@ require_form_deid_export_permission = require_permission(
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
-require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
-require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
+require_form_view_permission = require_permission(
+    Permissions.view_report,
+    'corehq.apps.reports.standard.inspect.SubmitHistory',
+    login_decorator=None,
+)
+require_case_view_permission = require_permission(
+    Permissions.view_report,
+    'corehq.apps.reports.standard.cases.basic.CaseListReport',
+    login_decorator=None,
+)
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
@@ -206,8 +214,21 @@ def can_view_attachments(request):
     )
 
 
+@login_and_domain_required
+def reports_home(request, domain):
+    if user_can_view_reports(request.project, request.couch_user):
+        return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
+
+    if toggles.EMBEDDED_TABLEAU.enabled_for_request(request):
+        from .standard.tableau import TableauView
+        for viz in TableauVisualization.for_user(domain, request.couch_user):
+            return HttpResponseRedirect(reverse(TableauView.urlname, args=[domain, viz.id]))
+
+    raise Http404()
+
+
 class BaseProjectReportSectionView(BaseDomainView):
-    section_name = ugettext_lazy("Project Reports")
+    section_name = gettext_lazy("Project Reports")
 
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
@@ -225,10 +246,8 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = ugettext_noop("My Saved Reports")
+    page_title = gettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
-
-    default_scheduled_report_length = 10
 
     @use_jquery_ui
     @use_datatables
@@ -278,10 +297,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
         return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
-    def show_all_scheduled_reports(self):
-        return self.request.GET.get('show_all_scheduled_reports', False)
-
-    @property
     def others_scheduled_reports(self):
         def _is_valid(rn):
             # the _id check is for weird bugs we've seen in the wild that look like
@@ -301,14 +316,34 @@ class MySavedReportsView(BaseProjectReportSectionView):
         all_scheduled_reports = ReportNotification.view('reportconfig/user_notifications', reduce=False,
                                                         include_docs=True, startkey=key, endkey=key + [{}])
         user = self.request.couch_user
-        user_email = user.get_email()
+        owner_id = user.username if user.is_web_user() else user.get_email()
         for scheduled_report in all_scheduled_reports:
-            if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
+            if not _is_valid(scheduled_report) or owner_id == scheduled_report.owner_email:
                 continue
             self._adjust_report_day_and_time(scheduled_report)
             if scheduled_report.can_be_viewed_by(user):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
+
+    @property
+    def shared_saved_reports(self):
+        user = self.request.couch_user
+        config_reports = []
+
+        if user.is_domain_admin(self.domain):
+            # Admin user should see ALL shared saved reports
+            config_reports = ReportConfig.shared_on_domain(self.domain)
+        else:
+            # The non-admin user should ONLY see their saved reports (ie ReportConfigs) which have been used
+            # in a ReportNotification (not other users' ReportConfigs).
+            [config_reports.extend(r.configs) for r in self.scheduled_reports]
+
+        good_configs = [
+            config.to_complete_json(lang=self.language)
+            for config in config_reports
+            if not (config.is_configurable_report and not config.configurable_report)
+        ]
+        return good_configs
 
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
@@ -317,8 +352,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
         time_difference = get_timezone_difference(self.domain)
         (report.hour, day_change) = recalculate_hour(
             report.hour,
-            int(time_difference[:3]),
-            int(time_difference[3:])
+            time_difference.hours,
+            time_difference.minutes
         )
         report.minute = 0
         if day_change:
@@ -329,13 +364,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
     def page_context(self):
         user = self.request.couch_user
         others_scheduled_reports = self.others_scheduled_reports
-        if self.show_all_scheduled_reports:
-            num_unlisted_scheduled_reports = 0
-        else:
-            cur_len = len(others_scheduled_reports)
-            num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
-            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
-                                                                     cur_len)]
 
         class OthersScheduledReportWrapper(ReportNotification):
             @property
@@ -344,14 +372,23 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
         for other_report in others_scheduled_reports:
             other_report.__class__ = OthersScheduledReportWrapper
+
+        others_scheduled_reports = [
+            self.report_details(r, user.get_email(), r.context_secret) for r in others_scheduled_reports
+        ]
+
+        scheduled_reports = [
+            self.report_details(r) for r in self.scheduled_reports
+        ]
+
         return {
             'couch_user': user,
             'user_email': user.get_email(),
             'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
-            'scheduled_reports': self.scheduled_reports,
+            'scheduled_reports': scheduled_reports,
             'others_scheduled_reports': others_scheduled_reports,
-            'extra_reports': num_unlisted_scheduled_reports,
+            'shared_saved_reports': self.shared_saved_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -360,6 +397,46 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
+
+    @staticmethod
+    def report_details(report, user_email=None, context_secret=None):
+        details = {
+            'id': report.get_id,
+            'addedToBulk': report.addedToBulk,
+            'domain': report.domain,
+            'owner_id': report.owner_id,
+            'recipient_emails': report.recipient_emails,
+            'config_ids': report.config_ids,
+            'send_to_owner': report.send_to_owner,
+            'hour': report.hour if report.interval != 'hourly' else None,
+            'minute': report.minute,
+            'day': report.day,
+            'uuid': report.uuid,
+            'start_date': report.start_date,
+
+            #property methods
+            'configs': [{'url': r.url,
+                         'name': r.name,
+                         'report_name': r.report_name} for r in report.configs],
+            'is_editable': report.is_editable,
+            'owner_email': report.owner_email,
+            'day_name': report.day_name,
+
+            #urls
+            'editUrl': reverse(ScheduledReportsView.urlname, args=(report.domain, report.get_id)),
+            'viewUrl': reverse(view_scheduled_report, args=(report.domain, report.get_id)),
+            'sendUrl': reverse(send_test_scheduled_report, args=(report.domain, report.get_id)),
+            'deleteUrl': reverse(delete_scheduled_report, args=(report.domain, report.get_id)),
+        }
+
+        #only for others_scheduled_reports
+        if user_email and context_secret:
+            details['unsubscribeUrl'] = reverse(ReportNotificationUnsubscribeView.urlname,
+                                                args=(report.get_id, user_email, context_secret))
+        else:
+            details['unsubscribeUrl'] = ''
+
+        return details
 
 
 def should_update_export(last_accessed):
@@ -422,6 +499,8 @@ class AddSavedReportConfigView(View):
 
         self.config.save()
         ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user)
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
         touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
@@ -434,8 +513,12 @@ class AddSavedReportConfigView(View):
             _id = None  # make sure we pass None not a blank string
         config = ReportConfig.get_or_create(_id)
         if config.owner_id:
-            # in case a user maliciously tries to edit another user's config
-            assert config.owner_id == self.user_id
+            # in case a non-admin user maliciously tries to edit another user's config
+            # or an admin edits a non-shared report in some way
+            assert config.owner_id == self.user_id or (
+                self.user.is_domain_admin(self.domain) and
+                config.is_shared_on_domain()
+            )
         else:
             config.domain = self.domain
             config.owner_id = self.user_id
@@ -464,15 +547,29 @@ class AddSavedReportConfigView(View):
 
     @property
     def user_id(self):
-        return self.request.couch_user._id
+        return self.user._id
+
+    @property
+    def user(self):
+        return self.request.couch_user
+
+
+@dataclass
+class Timezone:
+    hours: int
+    minutes: int
+
+    def __str__(self):
+        return f"{self.hours:+03}:{self.minutes:02}"
 
 
 @login_and_domain_required
 @datespan_default
+@require_POST
 def email_report(request, domain, report_slug, dispatcher_class=ProjectReportDispatcher, once=False):
     from .forms import EmailReportForm
 
-    form = EmailReportForm(request.GET)
+    form = EmailReportForm(request.POST)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
@@ -505,6 +602,8 @@ def _can_email_report(report_slug, request, dispatcher_class, domain):
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
+    ReportConfig.shared_on_domain.clear(ReportConfig, domain)
+
     try:
         saved_report = ReportConfig.get(config_id)
     except ResourceNotFound:
@@ -521,7 +620,10 @@ def delete_config(request, domain, config_id):
 
 
 def _can_delete_saved_report(report, user, domain):
-    return domain == report.domain and user._id == report.owner_id
+    return domain == report.domain and user._id == report.owner_id or (
+        user.is_domain_admin(domain) and
+        report.is_shared_on_domain()
+    )
 
 
 def normalize_hour(hour):
@@ -552,7 +654,9 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    domain_obj = Domain.get_by_name(domain)
+    tz_diff = datetime.now(pytz.timezone(domain_obj.default_timezone)).strftime('%z')
+    return Timezone(int(tz_diff[:3]), int(tz_diff[3:]))
 
 
 def calculate_day(interval, day, day_change):
@@ -592,8 +696,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             time_difference = get_timezone_difference(self.domain)
             (instance.hour, day_change) = recalculate_hour(
                 instance.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
+                time_difference.hours,
+                time_difference.minutes
             )
             instance.minute = 0
             if day_change:
@@ -608,6 +712,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 config_ids=[],
                 hour=8,
                 minute=0,
+                stop_hour=20,
+                stop_minute=0,
                 send_to_owner=True,
                 recipient_emails=[],
                 language=None,
@@ -638,11 +744,18 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def configs(self):
         user = self.request.couch_user
-        if (self.scheduled_report_id and user.is_domain_admin(self.domain) and
-                user._id != self.owner_id):
+
+        if self.scheduled_report_id and user.is_domain_admin(self.domain):
             return self.report_notification.configs
+
+        report_configurations = ReportConfig.by_domain_and_owner(
+            self.domain,
+            user._id,
+            include_shared=user.is_domain_admin(self.domain)
+        )
+
         return [
-            c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
+            c for c in report_configurations
             if c.report and c.report.emailable
         ]
 
@@ -663,6 +776,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def scheduled_report_form(self):
         initial = self.report_notification.to_json()
+
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
@@ -685,10 +799,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
+        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain)[:3] + ':'
-                                        + get_timezone_difference(self.domain)[3:])
+                                        get_timezone_difference(self.domain))
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
+                                        (Domain.get_by_name(self.domain)['default_timezone'],
+                                        get_timezone_difference(self.domain))
         return form
 
     @property
@@ -698,7 +814,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'report': {
                 'show': user_can_view_reports(self.request.project, self.request.couch_user),
                 'slug': None,
-                'default_url': reverse('reports_home', args=(self.domain,)),
+                'default_url': reverse('reports_home', args=(self.domain,)) + '#scheduled-reports',
                 'is_async': False,
                 'section_name': ProjectReport.section_name,
                 'title': self.page_name,
@@ -733,13 +849,13 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = str(err)
-                messages.error(request, ugettext_lazy(kwargs['error']))
+                messages.error(request, gettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
+                self.report_notification.hour, time_difference.hours, time_difference.minutes
             )
-            self.report_notification.minute = int(time_difference[3:])
+            self.report_notification.minute = time_difference.minutes
             if day_change:
                 self.report_notification.day = calculate_day(
                     self.report_notification.interval,
@@ -749,6 +865,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
+            ReportConfig.shared_on_domain.clear(ReportConfig, self.domain)
             if self.is_new:
                 DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_saved_scheduled_reports')
                 messages.success(request, _("Scheduled report added."))
@@ -756,7 +873,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
-            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
+            return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)) + '#scheduled-reports')
 
         return self.get(request, *args, **kwargs)
 
@@ -764,8 +881,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
-    not_found_error = ugettext_noop('Could not find the requested Scheduled Report')
-    broken_link_error = ugettext_noop('Invalid unsubscribe link')
+    not_found_error = gettext_noop('Could not find the requested Scheduled Report')
+    broken_link_error = gettext_noop('Invalid unsubscribe link')
     report = None
 
     def get(self, request, *args, **kwargs):
@@ -777,16 +894,16 @@ class ReportNotificationUnsubscribeView(TemplateView):
                 if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
                     raise ValidationError(self.broken_link_error)
                 if email not in self.report.all_recipient_emails:
-                    raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
+                    raise ValidationError(gettext_noop('This email address has already been unsubscribed.'))
             except ResourceNotFound:
                 kwargs['error'] = self.not_found_error
             except ValidationError as err:
                 kwargs['error'] = err.message
 
         if 'error' in kwargs:
-            messages.error(request, ugettext_lazy(kwargs['error']))
+            messages.error(request, gettext_lazy(kwargs['error']))
         elif 'success' in kwargs:
-            messages.success(request, ugettext_lazy(kwargs['success']))
+            messages.success(request, gettext_lazy(kwargs['success']))
 
         return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
 
@@ -810,7 +927,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
             else:
                 self.report.delete()
 
-            kwargs['success'] = ugettext_noop('Successfully unsubscribed from report notification.')
+            kwargs['success'] = gettext_noop('Successfully unsubscribed from report notification.')
         except ResourceNotFound:
             kwargs['error'] = self.not_found_error
         except ValidationError as err:
@@ -823,18 +940,45 @@ class ReportNotificationUnsubscribeView(TemplateView):
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user = request.couch_user
+    delete_count = request.POST.get("bulkDeleteCount")
+
     try:
-        scheduled_report = ReportNotification.get(scheduled_report_id)
+        if delete_count:
+            delete_list = json.loads(request.POST.get("deleteList"))
+            scheduled_reports = [ReportNotification.get(report_id) for report_id in delete_list]
+        else:
+            scheduled_report = ReportNotification.get(scheduled_report_id)
     except ResourceNotFound:
         # was probably already deleted by a fast-clicker.
         pass
     else:
-        if not _can_delete_scheduled_report(scheduled_report, user, domain):
-            raise Http404()
+        ReportConfig.shared_on_domain.clear(ReportConfig, domain)
 
-        scheduled_report.delete()
-        messages.success(request, "Scheduled report deleted!")
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+        if delete_count:
+            for report in scheduled_reports:
+                if not _can_delete_scheduled_report(report, user, domain):
+                    raise Http404()
+
+            for report in scheduled_reports:
+                report.delete()
+            if int(delete_count) > 1:
+                plural = "s were"
+            else:
+                plural = " was"
+            messages.success(
+                request,
+                format_html(_("<strong>{}</strong> Scheduled report{} deleted!"), delete_count, plural)
+            )
+            # not necessary since it just refreshes from the js
+            return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+        else:
+            if not _can_delete_scheduled_report(scheduled_report, user, domain):
+                raise Http404()
+
+            scheduled_report.delete()
+            messages.success(request, "Scheduled report deleted!")
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
 
 def _can_delete_scheduled_report(report, user, domain):
@@ -848,17 +992,31 @@ def _can_delete_scheduled_report(report, user, domain):
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     if not _can_send_test_report(scheduled_report_id, request.couch_user, domain):
         raise Http404()
+    send_count = request.POST.get("bulkSendCount")
 
     try:
-        send_delayed_report(scheduled_report_id)
+        if send_count:
+            for report_id in json.loads(request.POST.get("sendList")):
+                send_delayed_report(report_id)
+        else:
+            send_delayed_report(scheduled_report_id)
     except Exception as e:
         import logging
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Report sent to this report's recipients"))
+        if send_count and int(send_count) > 1:
+            messages.success(
+                request,
+                format_html(_("{} reports sent to their recipients"), send_count)
+            )
+        else:
+            messages.success(request, _("Report sent to this report's recipients"))
 
-    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+    if send_count:
+        return HttpResponse(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
+    else:
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)) + '#scheduled-reports')
 
 
 def _can_send_test_report(report_id, user, domain):
@@ -1005,8 +1163,8 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 def safely_get_case(request, domain, case_id):
     """Get case if accessible else raise a 404 or 403"""
     case = get_case_or_404(domain, case_id)
-    if not (request.can_access_all_locations or
-            user_can_access_case(domain, request.couch_user, case)):
+    if not (request.can_access_all_locations
+            or user_can_access_case(domain, request.couch_user, case)):
         raise location_restricted_exception(request)
     return case
 
@@ -1015,7 +1173,7 @@ def safely_get_case(request, domain, case_id):
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
     template_name = "reports/reportdata/case_data.html"
-    page_title = ugettext_lazy("Case Data")
+    page_title = gettext_lazy("Case Data")
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
@@ -1026,8 +1184,8 @@ class CaseDataView(BaseProjectReportSectionView):
                           _("Sorry, we couldn't find that case. If you think this "
                             "is a mistake please report an issue."))
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
-        if not (request.can_access_all_locations or
-                user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
+        if not (request.can_access_all_locations
+                or user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
         return super(CaseDataView, self).dispatch(request, *args, **kwargs)
 
@@ -1039,7 +1197,7 @@ class CaseDataView(BaseProjectReportSectionView):
     @memoized
     def case_instance(self):
         try:
-            case = CaseAccessors(self.domain).get_case(self.case_id)
+            case = CommCareCase.objects.get_case(self.case_id, self.domain)
             if case.domain != self.domain or case.is_deleted:
                 return None
             return case
@@ -1106,7 +1264,6 @@ class CaseDataView(BaseProjectReportSectionView):
             dynamic_properties = None
 
         the_time_is_now = datetime.utcnow()
-        tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
         product_name_by_id = {
@@ -1126,7 +1283,10 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
-        repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
+        repeat_records = [
+            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
+            for record in get_repeat_records_by_payload_id(self.domain, self.case_id)
+        ]
 
         can_edit_data = self.request.couch_user.can_edit_data
         show_properties_edit = (
@@ -1148,7 +1308,6 @@ class CaseDataView(BaseProjectReportSectionView):
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
             "ledgers": ledger_map,
-            "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
@@ -1164,7 +1323,7 @@ def form_to_json(domain, form, timezone):
         app_id=form.app_id,
         lang=get_language(),
     )
-    received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
+    received_on = ServerTime(form.received_on).user_time(timezone).done().strftime(DATE_FORMAT)
 
     return {
         'id': form.form_id,
@@ -1190,7 +1349,7 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice, ordered=True)
+    forms = XFormInstance.objects.get_forms(slice, domain, ordered=True)
     timezone = get_timezone_for_user(request.couch_user, domain)
     return json_response([
         form_to_json(domain, form, timezone) for form in forms
@@ -1255,7 +1414,7 @@ def download_case_history(request, domain, case_id):
 class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
-    page_title = ugettext_lazy("Case Attachments")
+    page_title = gettext_lazy("Case Attachments")
     http_method_names = ['get']
 
     @method_decorator(login_and_domain_required)
@@ -1332,7 +1491,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, **case_block_kwargs).as_text()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1400,7 +1559,7 @@ def undo_close_case_view(request, domain, case_id, xform_id):
     else:
         closing_form_id = xform_id
         assert closing_form_id in case.xform_ids
-        form = FormAccessors(domain).get_form(closing_form_id)
+        form = XFormInstance.objects.get_form(closing_form_id, domain)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, 'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
@@ -1512,15 +1671,15 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     instance_history = []
     if instance.history:
         form_operations = {
-            'archive': ugettext_lazy('Archive'),
-            'unarchive': ugettext_lazy('Un-Archive'),
-            'edit': ugettext_lazy('Edit'),
-            'uuid_data_fix': ugettext_lazy('Duplicate ID fix')
+            'archive': gettext_lazy('Archive'),
+            'unarchive': gettext_lazy('Un-Archive'),
+            'edit': gettext_lazy('Edit'),
+            'uuid_data_fix': gettext_lazy('Duplicate ID fix')
         }
         for operation in instance.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
             instance_history.append({
-                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
+                'readable_date': user_date.strftime(DATE_FORMAT),
                 'readable_action': form_operations.get(operation.operation, operation.operation),
                 'user_info': get_doc_info_by_id(domain, operation.user),
             })
@@ -1545,7 +1704,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
-            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
         except ResourceNotFound:
             this_case = None
@@ -1579,8 +1738,8 @@ def _get_cases_changed_context(domain, form, case_id=None):
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    meta = _top_level_tags(form).get('meta', None) or {}
-
+    meta = form.metadata.to_json() if form.metadata else {}
+    meta['@xmlns'] = form.xmlns
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
@@ -1624,28 +1783,6 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
-
-
-def _top_level_tags(form):
-        """
-        Returns a OrderedDict of the top level tags found in the xml, in the
-        order they are found.
-
-        The actual values are taken from the form JSON data and not from the XML
-        """
-        to_return = OrderedDict()
-
-        element = form.get_xml_element()
-        if element is None:
-            return OrderedDict(sorted(form.form_data.items()))
-
-        for child in element:
-            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
-            if key == "Meta":
-                key = "meta"
-            to_return[key] = form.get_data('form/' + key)
-        return to_return
 
 
 def _sorted_form_metadata_keys(keys):
@@ -1722,7 +1859,7 @@ def safely_get_form(request, domain, instance_id):
 @location_safe
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
-    page_title = ugettext_lazy("Untitled Form")
+    page_title = gettext_lazy("Untitled Form")
     template_name = "reports/reportdata/form_data.html"
     http_method_names = ['get']
 
@@ -1772,6 +1909,32 @@ class FormDataView(BaseProjectReportSectionView):
             "form_received_on": self.xform_instance.received_on,
         })
         return page_context
+
+
+@login_and_domain_required
+@require_form_view_permission
+@location_safe
+def view_form_attachment(request, domain, instance_id, attachment_id):
+    # Open form attachment in browser
+    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    if not instance_id or not attachment_id:
+        raise Http404
+
+    # this raises a PermissionDenied error if necessary
+    safely_get_form(request, domain, instance_id)
+
+    try:
+        content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)
+    except AttachmentNotFound:
+        raise Http404
+
+    return StreamingHttpResponse(
+        streaming_content=FileWrapper(content.content_stream),
+        content_type=content.content_type
+    )
 
 
 @location_safe
@@ -1882,12 +2045,12 @@ class EditFormInstance(View):
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
-            datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+            datums = EntriesHelper(form.get_app()).get_case_datums_meta_for_form(form, include_autogenerated=False)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
                 matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
                 if len(matching_datums) == 1:
-                    edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
+                    edit_session_data[matching_datums[0].id] = case_block.caseblock.get(const.CASE_ATTR_ID)
         else:
             # a bit hacky - the app manager puts the main case directly in the form, so it won't have
             # any other path associated with it. This allows us to differentiate from parent cases.
@@ -1896,7 +2059,7 @@ class EditFormInstance(View):
             non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
-                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                case = CommCareCase.objects.get_case(edit_session_data['case_id'], domain)
                 if case.closed:
                     message = format_html(_(
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
@@ -2022,7 +2185,7 @@ def _get_cases_with_other_forms(domain, xform):
     :returns: Dict of Case ID -> Case"""
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
-    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+    for case in CommCareCase.objects.iter_cases(cases_created, domain):
         if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
@@ -2043,7 +2206,7 @@ def _get_case_id_and_redirect_url(domain, request):
         if case_id:
             case_id = case_id[0]
             try:
-                case = CaseAccessors(domain).get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id, domain)
                 if case.is_deleted:
                     raise CaseNotFound
             except CaseNotFound:
@@ -2116,7 +2279,6 @@ def edit_form(request, domain, instance_id):
 def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_form_saved
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     resave_form(domain, instance)
@@ -2195,7 +2357,7 @@ def project_health_user_details(request, domain, user_id):
 
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
-    page_title = ugettext_lazy('Tableau Server Config')
+    page_title = gettext_lazy('Tableau Server Config')
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
@@ -2226,11 +2388,11 @@ class TableauServerView(BaseProjectReportSectionView):
         if self.tableau_server_form.is_valid():
             self.tableau_server_form.save()
             messages.success(
-                request, ugettext_lazy("Tableau Server Settings Updated")
+                request, gettext_lazy("Tableau Server Settings Updated")
             )
         else:
             messages.error(
-                request, ugettext_lazy("Could not update Tableau Server Settings")
+                request, gettext_lazy("Could not update Tableau Server Settings")
             )
         return self.get(request, *args, **kwargs)
 

@@ -1,11 +1,15 @@
 from functools import wraps
 
 from django.http import HttpResponse
+from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain
+)
 
 
 def require_cloudcare_access_ex():
@@ -17,11 +21,18 @@ def require_cloudcare_access_ex():
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if toggles.DISABLE_WEB_APPS.enabled_for_request(request):
-                message = 'Service Temporarily Unavailable'
-                is_superuser = hasattr(request, "couch_user") and request.couch_user.is_superuser
-                if is_superuser or toggles.SUPPORT.enabled_for_request(request):
-                    message += " (due to 'disable_web_apps' feature flag)"
-                return HttpResponse(message, content_type='text/plain', status=503)
+
+                apps_in_domain = get_apps_in_domain(domain)
+                if (len(apps_in_domain) == 1):
+                    app_or_domain_name = apps_in_domain[0].name
+                else:
+                    app_or_domain_name = domain
+
+                context = {
+                    "app_or_domain_name": app_or_domain_name,
+                    "is_superuser": hasattr(request, "couch_user") and request.couch_user.is_superuser
+                }
+                return render(request, "cloudcare/web_apps_disabled.html", context)
             if hasattr(request, "couch_user"):
                 if request.couch_user.is_web_user():
                     return require_permission(Permissions.access_web_apps)(view_func)(request, domain, *args, **kwargs)

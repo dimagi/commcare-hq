@@ -19,3 +19,6 @@ in which the custom code was deleted.
 * ilsgateway d1df43f1ef068d4555d6a710f5feeb5368825dc8
 * wisepill 90bf0f6f9bcaabdcb9ba6d7a70455a52ba312590
 * ews-ghana fa31f4d5f48388c64973a758d935c9f983b90c15, 65957fcc662812eee14ae62bb6fbc1c7018aef6c, caa56af005d7ec5a9cd9a1aa505d01e3fafd6cd8
+* intrahealth cca1567108dd9fad3510f508f9f3d66f7a9611e1
+* succeed 877f0ffe9c64201ce0b9a7b49ae48622c93f6635
+* m4change 7dedfb673e34123646e782d7b2bcaa83d9c95aac

@@ -22,7 +22,6 @@ from memoized import memoized
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.http import Http404
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
@@ -169,7 +168,7 @@ class SMSSurveyContent(Content):
     # See corehq.apps.smsforms.models.SQLXFormsSession for an
     # explanation of these properties
     expire_after = models.IntegerField()
-    reminder_intervals = JSONField(default=list)
+    reminder_intervals = models.JSONField(default=list)
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
 
@@ -350,7 +349,7 @@ class IVRSurveyContent(Content):
     # After waiting the amount of minutes specified by each interval, the framework will
     # check if an outbound IVR call was answered for this event. If not, it will retry
     # the outbound call again.
-    reminder_intervals = JSONField(default=list)
+    reminder_intervals = models.JSONField(default=list)
 
     # At the end of the IVR call, if this is True, the form will be submitted in its current
     # state regardless if it was completed or not.
@@ -391,11 +390,11 @@ class SMSCallbackContent(Content):
     corehq.apps.sms.models.ExpectedCallback.
     """
 
-    message = JSONField(default=dict)
+    message = models.JSONField(default=dict)
 
     # This is a list of intervals representing minutes to wait. It should never be empty.
     # See the explanation above to understand how this is used.
-    reminder_intervals = JSONField(default=list)
+    reminder_intervals = models.JSONField(default=list)
 
     def send(self, recipient, logged_event, phone_entry=None):
         pass

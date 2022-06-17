@@ -2,7 +2,7 @@ from random import randint
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SQLMobileBackend

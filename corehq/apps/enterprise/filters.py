@@ -1,5 +1,5 @@
 from corehq.apps.accounting.filters import clean_options
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.accounting.models import BillingAccount, Subscription
@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import BillingAccount, Subscription
 
 class EnterpriseDomainFilter(BaseSingleOptionFilter):
     slug = "domain"
-    label = ugettext_lazy("Project Space")
+    label = gettext_lazy("Project Space")
 
     @property
     def options(self):

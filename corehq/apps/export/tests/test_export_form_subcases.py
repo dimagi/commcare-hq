@@ -3,7 +3,7 @@ import os
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from couchexport.models import Format
 
@@ -148,7 +148,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             baby_repeat_group_schema
         )
 
-        instance = FormExportInstance.generate_instance_from_schema(schema)
+        with patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {}):
+            instance = FormExportInstance.generate_instance_from_schema(schema)
         instance.export_format = Format.JSON
         # make everything show up in the export
         for table in instance.tables:
@@ -169,7 +170,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 for row in export_data[table]['rows']
             ]
 
-        self.assertDictContainsSubset({
+        form_data = get_form_data('Forms')[0]
+        for key, value in {
             # normal form questions
             "form.add_a_prescription": "yes_then_close",
             "form.how_are_you_today": "fine_thanks",
@@ -201,7 +203,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "form.subcase_0.case.index.parent.#text": "71626d9c-2d05-491f-81d9-becf8566618a",
             "form.subcase_0.case.index.parent.@case_type": "mom",
 
-        }, get_form_data('Forms')[0])
+        }.items():
+            self.assertEqual(form_data[key], value, f"key: {key!r}")
 
         self.assertDictEqual({
             "number": "0.0",

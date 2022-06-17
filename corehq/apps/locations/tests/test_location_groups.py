@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.phone.tests.utils import call_fixture_generator
 

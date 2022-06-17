@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 from django.utils.html import format_html
 
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
@@ -26,8 +26,9 @@ from corehq.apps.sso.async_handlers import (
     Select2IdentityProviderHandler,
     IdentityProviderAdminAsyncHandler,
     SSOExemptUsersAdminAsyncHandler,
+    SsoTestUserAdminAsyncHandler,
 )
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol, AuthenticatedEmailDomain
 
 
 class IdentityProviderInterface(AddItemInterface):
@@ -119,6 +120,7 @@ class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMi
     def page_context(self):
         return {
             'create_idp_form': self.create_idp_form,
+            'idp_types_by_protocol': IdentityProviderProtocol.get_supported_types(),
         }
 
     @property
@@ -138,12 +140,13 @@ class NewIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMi
 
 
 class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerMixin):
-    page_title = ugettext_lazy('Edit Identity Provider')
+    page_title = gettext_lazy('Edit Identity Provider')
     template_name = 'sso/accounting_admin/edit_identity_provider.html'
     urlname = 'edit_identity_provider'
     async_handlers = [
         IdentityProviderAdminAsyncHandler,
         SSOExemptUsersAdminAsyncHandler,
+        SsoTestUserAdminAsyncHandler,
     ]
 
     @property
@@ -203,6 +206,7 @@ class EditIdentityProviderAdminView(BaseIdentityProviderAdminView, AsyncHandlerM
                 )
             )
         elif self.is_deletion_request:
+            AuthenticatedEmailDomain.objects.filter(identity_provider=self.identity_provider).delete()
             self.identity_provider.delete()
             messages.success(
                 request,

@@ -34,7 +34,7 @@ def shell_exec_checked(cmd, cwd=None):
         raise ShellCommandError(**locals())
 
     if err:
-        logging.warn('command [%s] returned error output %s (return code OK)' % (cmd, str(err)))
+        logging.warning('command [%s] returned error output %s (return code OK)' % (cmd, str(err)))
     return out
 
 

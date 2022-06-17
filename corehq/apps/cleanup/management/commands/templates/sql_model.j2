@@ -1,6 +1,3 @@
-{% if import_json %}
-from django.contrib.postgres.fields import JSONField
-{%- endif %}
 from django.db import models
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 

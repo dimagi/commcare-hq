@@ -17,5 +17,4 @@ ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore-task"
 RESTORE_CACHE_KEY_PREFIX = "ota-restore"
 
 # case sync algorithms
-CLEAN_OWNERS = 'clean_owners'
 LIVEQUERY = 'livequery'

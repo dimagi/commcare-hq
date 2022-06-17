@@ -129,6 +129,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         formplayerLoadingComplete();
     });
 
+    FormplayerFrontend.on('clearNotifications', function () {
+        $("#cloudcare-notifications").empty();
+    });
+
     FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
         if (isHTML) {
             showHTMLError(errorMessage, $("#cloudcare-notifications"));
@@ -266,8 +270,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        var notifications = hqImport('notifications/js/notifications_service_main');
-        notifications.initNotifications();
+        if (user.environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT) {
+            var notifications = hqImport('notifications/js/notifications_service_main');
+            notifications.initNotifications();
+        }
         $('.menu-scrollable-container').addClass('hide');
     });
 
@@ -280,7 +286,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         user.formplayer_url = options.formplayer_url;
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
-        user.useLiveQuery = options.useLiveQuery;
         user.changeFormLanguage = options.changeFormLanguage;
         user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
@@ -373,6 +378,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
             selections: urlObject.selections,
+            queryData: urlObject.queryData,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,
@@ -488,7 +494,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 "username": username,
                 "domain": domain,
                 "restoreAs": user.restoreAs,
-                "useLiveQuery": user.useLiveQuery,
             },
             options;
 
@@ -557,8 +562,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         var progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView,
             progressFinishTimeout = 200;
 
-        if (progressView) {
-            progressView.setProgress(1, progressFinishTimeout);
+        if (progressView && progressView.hasProgress()) {
+            progressView.setProgress(1, 1, progressFinishTimeout);
             setTimeout(function () {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
             }, progressFinishTimeout);

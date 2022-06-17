@@ -5,7 +5,7 @@ from collections import Counter
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -16,6 +16,7 @@ from corehq.util.test_utils import TestFileMixin, timelimit
 
 
 @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     file_path = ('data', 'static_data_sources')
@@ -48,7 +49,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             self.assertTrue(example.is_static)
 
     def test_is_static_positive_yaml(self):
-        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yaml')]):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yml')]):
             example = list(StaticDataSourceConfiguration.all())[0]
             self.assertTrue(example.is_static)
 

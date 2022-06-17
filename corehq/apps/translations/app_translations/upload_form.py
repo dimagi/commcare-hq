@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from lxml import etree
 from lxml.etree import Element, XMLSyntaxError
@@ -254,7 +254,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             node.xml.getparent().remove(node.xml)
         escaped_trans = self.escape_output_value(new_translation)
         value_node.xml.text = escaped_trans.text
-        for n in escaped_trans.getchildren():
+        for n in escaped_trans:
             value_node.xml.append(n)
 
     def _looks_like_markdown(self, str):

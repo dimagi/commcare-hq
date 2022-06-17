@@ -7,10 +7,10 @@ from couchdbkit.ext.django import schema
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date, parse_datetime
 
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.couchdb_management import couch_config
+from corehq.util.doc_processor.couch import DocsIterator
+from corehq.util.log import with_progress_bar
 from dimagi.ext import jsonobject
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,13 @@ class Command(BaseCommand):
         parser.add_argument(
             'class_name',
         )
+        parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=100,
+            help="Chunk size for batches of documents fetched from Couch. "
+                 "Default: 100",
+        )
 
     COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc', '_attachments'}
 
@@ -46,7 +53,7 @@ class Command(BaseCommand):
     FIELD_TYPE_DATETIME = 'models.DateTimeField'
     FIELD_TYPE_DECIMAL = 'models.DecimalField'
     FIELD_TYPE_STRING = 'models.CharField'
-    FIELD_TYPE_JSON = 'JSONField'
+    FIELD_TYPE_JSON = 'models.JSONField'
     FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
     FIELD_TYPE_UNKNOWN = 'unknown_type'
@@ -55,7 +62,7 @@ class Command(BaseCommand):
     field_params = {}
     index_fields = set()
 
-    def handle(self, django_app, class_name, **options):
+    def handle(self, django_app, class_name, chunk_size, **options):
         self.class_name = class_name
         self.django_app = django_app
         self.models_path = f"corehq.apps.{self.django_app}.models.{self.class_name}"
@@ -65,11 +72,15 @@ class Command(BaseCommand):
             self.couch_class = to_function(self.models_path)
             self.class_name = self.models_path.split(".")[-1]
 
-        doc_ids = get_doc_ids_by_class(self.couch_class)
-        print("Found {} {} docs\n".format(len(doc_ids), self.class_name))
+        docs = DocsIterator(self.couch_class, chunk_size)
+        print("Found {} {} docs\n".format(len(docs), self.class_name))
+        print("CTRL+C to stop evaluating documents.")
 
-        for doc in iter_docs(self.couch_class.get_db(), doc_ids):
-            self.evaluate_doc(doc)
+        try:
+            for doc in with_progress_bar(docs, oneline="concise"):
+                self.evaluate_doc(doc)
+        except KeyboardInterrupt:
+            pass
 
         self.standardize_max_lengths()
         self.correlate_with_couch_schema(self.couch_class)
@@ -278,7 +289,6 @@ class Command(BaseCommand):
         db_table = self.django_app.lower() + "_" + self.class_name.replace("_", "").lower()
         sql_model = render_tempate(
             "sql_model.j2",
-            import_json=self.FIELD_TYPE_JSON in self.field_types.values(),
             class_name=self.class_name,
             migration_field_names=migration_field_names,
             suggested_fields=suggested_fields,

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from collections import defaultdict
 
 from corehq.apps.groups.models import Group
@@ -19,7 +19,8 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role):
     :param couch_user: user accessing the roles
     :param allow_admin_role: to include admin role, in case user is admin
     """
-    roles = UserRole.objects.get_by_domain(domain)
+    roles = [role for role in UserRole.objects.get_by_domain(domain)
+             if not role.is_commcare_user_default]
     if not couch_user.is_domain_admin(domain):
         try:
             user_role = couch_user.get_role(domain)
@@ -32,10 +33,10 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role):
         ]
     elif allow_admin_role:
         roles = [StaticRole.domain_admin(domain)] + roles
-    return [
+    return sorted([
         (role.get_qualified_id(), role.name or _('(No Name)'))
         for role in roles
-    ]
+    ], key=lambda c: c[1].lower())
 
 
 class BulkUploadResponseWrapper(object):

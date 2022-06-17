@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core import mail
 from django.db import models
 
-import mock
+from unittest import mock
 
 from dimagi.utils.dates import add_months_to_date
 

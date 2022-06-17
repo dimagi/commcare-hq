@@ -1,9 +1,9 @@
-import cgi
+import html
 from collections import namedtuple
 
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.models import (
@@ -74,7 +74,7 @@ def get_status_display(event, sms=None):
     # Sometimes the additional information from touchforms has < or >
     # characters, so we need to escape them for display
     if error_message:
-        return '%s - %s' % (_(status), cgi.escape(error_message))
+        return '%s - %s' % (_(status), html.escape(error_message))
     else:
         return _(status)
 

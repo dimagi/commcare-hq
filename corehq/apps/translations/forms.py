@@ -3,8 +3,8 @@ from zipfile import ZipFile
 from django import forms
 from django.forms.widgets import Select
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 import openpyxl
 from crispy_forms import bootstrap as twbscrispy
@@ -40,7 +40,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 class ConvertTranslationsForm(forms.Form):
     upload_file = forms.FileField(label="", required=True,
-                                  help_text=ugettext_lazy("Upload a xls/xlsx/po/zip file"))
+                                  help_text=gettext_lazy("Upload a xls/xlsx/po/zip file"))
 
     def __init__(self, *args, **kwargs):
         super(ConvertTranslationsForm, self).__init__(*args, **kwargs)
@@ -58,7 +58,7 @@ class ConvertTranslationsForm(forms.Form):
                 ),
             ),
             StrictButton(
-                ugettext_lazy('Convert'),
+                gettext_lazy('Convert'),
                 css_class='btn-primary',
                 type='submit',
             ),
@@ -82,8 +82,8 @@ class ConvertTranslationsForm(forms.Form):
                 zipfile = ZipFile(uploaded_file)
                 for fileinfo in zipfile.filelist:
                     filename = fileinfo.filename
-                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx') and
-                            not filename.endswith('.po')):
+                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx')
+                            and not filename.endswith('.po')):
                         raise forms.ValidationError(
                             _('Unexpected file passed within zip. Please upload xls/xlsx/po files.'))
                 return uploaded_file
@@ -91,13 +91,13 @@ class ConvertTranslationsForm(forms.Form):
 
 
 class PullResourceForm(forms.Form):
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=())
-    target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
+    transifex_project_slug = forms.ChoiceField(label=gettext_lazy("Transifex project"), choices=())
+    target_lang = forms.ChoiceField(label=gettext_lazy("Target Language"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
     resource_slug = forms.CharField(label=_("Resource Slug"), required=False,
-                                    help_text=ugettext_lazy("Leave blank to fetch full project")
+                                    help_text=gettext_lazy("Leave blank to fetch full project")
                                     )
 
     def __init__(self, domain, *args, **kwargs):
@@ -119,7 +119,7 @@ class PullResourceForm(forms.Form):
             'resource_slug',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit"),
+                    gettext_lazy("Submit"),
                     type="submit",
                     css_class="btn-primary",
                 )
@@ -128,9 +128,9 @@ class PullResourceForm(forms.Form):
 
 
 class AppTranslationsForm(forms.Form):
-    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy("Application Version"), required=False,
-                                 help_text=ugettext_lazy("Leave blank to use current saved state"),
+    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=gettext_lazy("Application Version"), required=False,
+                                 help_text=gettext_lazy("Leave blank to use current saved state"),
                                  widget=Select(choices=[]))
     use_version_postfix = forms.MultipleChoiceField(
         choices=[
@@ -139,20 +139,20 @@ class AppTranslationsForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
         required=False,
         initial='no',
-        help_text=ugettext_lazy("Check this if you want to maintain different resources separately for different "
-                                "versions of the application. Leave it unchecked for continuous update to the same"
-                                " set of resources")
+        help_text=gettext_lazy("Check this if you want to maintain different resources separately for different "
+                               "versions of the application. Leave it unchecked for continuous update to the same"
+                               " set of resources")
     )
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=(),
+    transifex_project_slug = forms.ChoiceField(label=gettext_lazy("Transifex project"), choices=(),
                                                required=True)
-    target_lang = forms.ChoiceField(label=ugettext_lazy("Translated Language"),
-                                    choices=([(None, ugettext_lazy('Select Translated Language'))] +
-                                             langcodes.get_all_langs_for_select()),
+    target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
                                     required=False,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
     perform_translated_check = forms.BooleanField(
-        label=ugettext_lazy("Confirm that resources are completely translated before performing request"),
+        label=gettext_lazy("Confirm that resources are completely translated before performing request"),
         required=False,
         initial=True)
 
@@ -178,10 +178,10 @@ class AppTranslationsForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit"),
+                    gettext_lazy("Submit"),
                     type="submit",
                     css_class="btn btn-primary disable-on-submit",
-                    onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
+                    onclick="return confirm('%s')" % gettext_lazy("Please confirm that you want to proceed?")
                 )
             )
         )
@@ -205,10 +205,10 @@ class AppTranslationsForm(forms.Form):
             app_id = cleaned_data['app_id']
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
-                self.add_error('version', ugettext_lazy('Version not available for app'))
-        if (not cleaned_data['target_lang'] and
-                (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
-            self.add_error('target_lang', ugettext_lazy('Target lang required to confirm translation completion'))
+                self.add_error('version', gettext_lazy('Version not available for app'))
+        if (not cleaned_data['target_lang']
+                and (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
+            self.add_error('target_lang', gettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
 
     @classmethod
@@ -229,7 +229,7 @@ class AppTranslationsForm(forms.Form):
 
 class CreateAppTranslationsForm(AppTranslationsForm):
     form_action = 'create'
-    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language on Transifex"),
+    source_lang = forms.ChoiceField(label=gettext_lazy("Source Language on Transifex"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
@@ -255,10 +255,10 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
-    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock translations for resources that are being "
-                                                               "pulled"),
-                                           help_text=ugettext_lazy("Please note that this will lock the resource"
-                                                                   " for all languages"),
+    lock_translations = forms.BooleanField(label=gettext_lazy("Lock translations for resources that are being "
+                                                              "pulled"),
+                                           help_text=gettext_lazy("Please note that this will lock the resource"
+                                                                  " for all languages"),
                                            required=False,
                                            initial=False)
 
@@ -298,7 +298,7 @@ class TransifexOrganizationForm(forms.ModelForm):
 
 
 class AddTransifexBlacklistForm(forms.ModelForm):
-    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=True)
     action = forms.CharField(widget=forms.HiddenInput)
     domain = forms.CharField(widget=forms.HiddenInput)
 
@@ -317,7 +317,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
             hqcrispy.Field('action'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Add"),
+                    gettext_lazy("Add"),
                     type="submit",
                     css_class="btn-primary disable-on-submit",
                 )
@@ -325,7 +325,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
         ]
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                ugettext_lazy("Add translation to blacklist"),
+                gettext_lazy("Add translation to blacklist"),
                 *form_fields
             ),
         )
@@ -372,12 +372,12 @@ class MigrateTransifexProjectForm(forms.Form):
     TYPE_HEADER = "Type"
     OLD_ID_HEADER = "Old-ID"
     NEW_ID_HEADER = "New-ID"
-    from_app_id = forms.ChoiceField(label=ugettext_lazy("From Application"), choices=(), required=True)
-    to_app_id = forms.ChoiceField(label=ugettext_lazy("To Application"), choices=(), required=True)
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=(),
+    from_app_id = forms.ChoiceField(label=gettext_lazy("From Application"), choices=(), required=True)
+    to_app_id = forms.ChoiceField(label=gettext_lazy("To Application"), choices=(), required=True)
+    transifex_project_slug = forms.ChoiceField(label=gettext_lazy("Transifex project"), choices=(),
                                                required=True)
     mapping_file = forms.FileField(label="", required=True,
-                                   help_text=ugettext_lazy("Upload a xls file mapping old to new ids"))
+                                   help_text=gettext_lazy("Upload a xls file mapping old to new ids"))
 
     def __init__(self, domain, *args, **kwargs):
         super(MigrateTransifexProjectForm, self).__init__(*args, **kwargs)
@@ -394,10 +394,10 @@ class MigrateTransifexProjectForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit"),
+                    gettext_lazy("Submit"),
                     type="submit",
                     css_class="btn btn-primary disable-on-submit",
-                    onclick="return confirm('%s')" % ugettext_lazy(
+                    onclick="return confirm('%s')" % gettext_lazy(
                         "We recommend taking a backup if you have not already."
                         "Please confirm that you want to proceed?")
                 )

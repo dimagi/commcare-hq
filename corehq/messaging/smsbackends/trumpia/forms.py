@@ -1,5 +1,5 @@
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 
@@ -9,8 +9,8 @@ from corehq.apps.sms.forms import BackendForm
 
 
 class TrumpiaBackendForm(BackendForm):
-    username = TrimmedCharField(label=ugettext_lazy("Username"), required=True)
-    api_key = TrimmedCharField(label=ugettext_lazy("API Key"), required=True)
+    username = TrimmedCharField(label=gettext_lazy("Username"), required=True)
+    api_key = TrimmedCharField(label=gettext_lazy("API Key"), required=True)
 
     @property
     def gateway_specific_fields(self):

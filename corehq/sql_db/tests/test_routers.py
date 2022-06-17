@@ -4,7 +4,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from mock import patch
+from unittest.mock import patch
 from nose.tools import assert_equal, assert_false, assert_true
 
 from corehq.sql_db.config import PlProxyConfig, _get_standby_plproxy_config
@@ -22,7 +22,10 @@ from corehq.sql_db.tests.test_partition_config import (
 )
 from corehq.sql_db.util import select_plproxy_db_for_read
 
+from .utils import ignore_databases_override_warning
 
+
+@ignore_databases_override_warning
 class AllowMigrateTest(SimpleTestCase):
 
     @override_settings(
@@ -64,6 +67,7 @@ class AllowMigrateTest(SimpleTestCase):
         self.assertIs(True, allow_migrate(DEFAULT_DB_ALIAS, 'accounting'))
 
 
+@ignore_databases_override_warning
 @patch('corehq.sql_db.util.get_standby_databases', return_value=set())
 @patch('corehq.sql_db.util.get_standbys_with_acceptible_delay', return_value=set())
 def test_load_balanced_read_apps(_, __):
@@ -85,6 +89,7 @@ def test_load_balanced_read_apps(_, __):
     assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
 def test_load_balanced_plproxy():
     primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)

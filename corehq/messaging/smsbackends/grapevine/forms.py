@@ -1,7 +1,7 @@
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class GrapevineBackendForm(BackendForm):

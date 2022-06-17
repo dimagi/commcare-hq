@@ -6,7 +6,6 @@ import os
 import shutil
 import uuid
 import zipfile
-from collections import defaultdict
 from datetime import datetime
 from mimetypes import guess_all_extensions, guess_type
 
@@ -19,13 +18,13 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView, View
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -35,7 +34,6 @@ from memoized import memoized
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.util import expose_cached_download
 
@@ -163,7 +161,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 class MultimediaReferencesView(BaseMultimediaUploaderView):
     urlname = "hqmedia_references"
     template_name = "hqmedia/references.html"
-    page_title = ugettext_noop("Multimedia Reference Checker")
+    page_title = gettext_noop("Multimedia Reference Checker")
 
     @property
     def page_context(self):
@@ -255,7 +253,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
-    page_title = ugettext_noop("Bulk Upload Multimedia")
+    page_title = gettext_noop("Bulk Upload Multimedia")
 
     @property
     def parent_pages(self):
@@ -275,7 +273,7 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
 class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     urlname = "manage_multimedia_paths"
     template_name = "hqmedia/manage_paths.html"
-    page_title = ugettext_noop("Manage Multimedia Paths")
+    page_title = gettext_noop("Manage Multimedia Paths")
 
     @method_decorator(login_and_domain_required)
     @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator())
@@ -388,7 +386,7 @@ def download_multimedia_paths(request, domain, app_id):
 class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     urlname = "multimedia_translations_coverage"
     template_name = "hqmedia/translations_coverage.html"
-    page_title = ugettext_noop("Translations Coverage")
+    page_title = gettext_noop("Translations Coverage")
 
     @property
     def parent_pages(self):
@@ -458,7 +456,7 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
 class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
     urlname = "multimedia_audio_translator"
     template_name = "hqmedia/audio_translator.html"
-    page_title = ugettext_noop("Download Audio Translator Files")
+    page_title = gettext_noop("Download Audio Translator Files")
 
     @property
     def parent_pages(self):
@@ -566,7 +564,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
-        if not self.mime_type in self.valid_mime_types():
+        if self.mime_type not in self.valid_mime_types():
             raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
             raise BadMediaFileException(_("There is no ZIP file."))
@@ -849,7 +847,8 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
+def iter_app_files(app, include_multimedia_files, include_index_files,
+                   build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
     index_file_count = 0

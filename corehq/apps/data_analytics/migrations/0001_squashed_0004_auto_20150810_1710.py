@@ -24,8 +24,8 @@ class Migration(migrations.Migration):
                 ('num_of_forms', models.PositiveIntegerField()),
                 ('app_id', models.TextField()),
                 ('is_app_deleted', models.BooleanField(default=False)),
-                ('wam', models.NullBooleanField(default=None)),
-                ('pam', models.NullBooleanField(default=None)),
+                ('wam', models.BooleanField(null=True, default=None)),
+                ('pam', models.BooleanField(null=True, default=None)),
             ],
             options={
             },

@@ -12,7 +12,7 @@ def drop_connected_signals(signal):
     """
     Use as a context manager to temporarily drop signals. Useful in tests.
 
-    with drop_connected_signals(case_post_save):
+    with drop_connected_signals(sql_case_post_save):
        case.save()  # signals won't be called
     case.save()  # signals will be called again
     """
@@ -40,8 +40,8 @@ def notify_someone(email, success_message, error_message='Sorry, your HQ task fa
 @contextmanager
 def catch_signal(signal):
     """Catch django signal and return the mocked call."""
-    import mock
-    handler = mock.Mock()
+    from unittest.mock import Mock
+    handler = Mock()
     signal.connect(handler)
     yield handler
     signal.disconnect(handler)

@@ -2,7 +2,7 @@ import datetime
 
 from django.test import RequestFactory, TestCase
 
-import mock
+from unittest import mock
 
 from dimagi.utils.dates import add_months
 

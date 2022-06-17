@@ -1,5 +1,5 @@
 from faker import Faker
-from mock import patch
+from unittest.mock import patch
 from testil import assert_raises
 
 from corehq.apps.user_importer.exceptions import UserUploadError

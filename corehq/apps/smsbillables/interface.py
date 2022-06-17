@@ -1,5 +1,5 @@
 from corehq.apps.accounting.models import BillingAccount
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from django.db.models.aggregates import Count
 

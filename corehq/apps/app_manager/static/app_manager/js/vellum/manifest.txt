@@ -61,7 +61,9 @@
 │  ├─ mixin-deep@^1.2.0
 │  └─ pascalcase@^0.1.1
 ├─ base64-js@1.5.1
-├─ basic-auth@1.1.0
+├─ basic-auth@2.0.1
+│  ├─ safe-buffer@5.1.2
+│  └─ safe-buffer@5.1.2
 ├─ batch@0.6.1
 ├─ bcrypt-pbkdf@1.0.2
 │  └─ tweetnacl@^0.14.3
@@ -110,7 +112,6 @@
 ├─ camelcase@5.0.0
 ├─ Caret.js@0.3.1
 │  ├─ async@3.2.0
-│  ├─ getobject@1.0.1
 │  ├─ grunt-cli@1.4.3
 │  │  ├─ grunt-known-options@~2.0.0
 │  │  ├─ interpret@~1.1.0
@@ -195,7 +196,7 @@
 ├─ color-convert@1.9.3
 │  └─ color-name@1.1.3
 ├─ color-name@1.1.3
-├─ colors@1.4.0
+├─ colors@1.1.2
 ├─ combined-stream@1.0.8
 │  └─ delayed-stream@~1.0.0
 ├─ component-emitter@1.3.0
@@ -269,11 +270,6 @@
 ├─ ecc-jsbn@0.1.2
 │  ├─ jsbn@~0.1.0
 │  └─ safer-buffer@^2.1.0
-├─ ecstatic@3.3.2
-│  ├─ he@^1.1.1
-│  ├─ mime@^1.6.0
-│  ├─ minimist@^1.1.0
-│  └─ url-join@^2.0.5
 ├─ ee-first@1.1.1
 ├─ emoji-regex@7.0.3
 ├─ encodeurl@1.0.2
@@ -387,7 +383,7 @@
 ├─ flat@4.1.1
 │  ├─ is-buffer@~2.0.3
 │  └─ is-buffer@2.0.5
-├─ follow-redirects@1.13.1
+├─ follow-redirects@1.14.7
 ├─ for-in@1.0.2
 ├─ for-own@1.0.0
 │  └─ for-in@^1.0.1
@@ -415,7 +411,7 @@
 ├─ get-stream@5.2.0
 │  └─ pump@^3.0.0
 ├─ get-value@2.0.6
-├─ getobject@0.1.0
+├─ getobject@1.0.2
 ├─ getpass@0.1.7
 │  └─ assert-plus@^1.0.0
 ├─ glob-parent@5.1.2
@@ -463,7 +459,7 @@
 │  ├─ portscanner@^2.2.0
 │  ├─ serve-index@^1.9.1
 │  └─ serve-static@^1.14.1
-├─ grunt-contrib-jshint@3.0.0
+├─ grunt-contrib-jshint@3.1.0
 │  ├─ ansi-styles@4.3.0
 │  │  └─ color-convert@^2.0.1
 │  ├─ chalk@^4.1.0
@@ -473,11 +469,8 @@
 │  ├─ color-convert@2.0.1
 │  │  └─ color-name@~1.1.4
 │  ├─ color-name@1.1.4
-│  ├─ has-flag@4.0.0
 │  ├─ hooker@^0.2.3
-│  ├─ jshint@~2.12.0
-│  └─ supports-color@7.2.0
-│     └─ has-flag@^4.0.0
+│  └─ jshint@~2.13.0
 ├─ grunt-contrib-watch@1.1.0
 │  ├─ async@^2.6.0
 │  ├─ gaze@^1.1.0
@@ -494,13 +487,9 @@
 │  ├─ color-convert@2.0.1
 │  │  └─ color-name@~1.1.4
 │  ├─ color-name@1.1.4
-│  ├─ has-flag@4.0.0
-│  ├─ lodash@~4.17.19
-│  └─ supports-color@7.2.0
-│     └─ has-flag@^4.0.0
+│  └─ lodash@~4.17.19
 ├─ grunt-legacy-log@3.0.0
 │  ├─ colors@~1.1.2
-│  ├─ colors@1.1.2
 │  ├─ grunt-legacy-log-utils@~2.1.0
 │  ├─ hooker@~0.2.3
 │  └─ lodash@~4.17.19
@@ -551,6 +540,8 @@
 ├─ homedir-polyfill@1.0.3
 │  └─ parse-passwd@^1.0.0
 ├─ hooker@0.2.3
+├─ html-encoding-sniffer@3.0.0
+│  └─ whatwg-encoding@^2.0.0
 ├─ htmlparser2@3.8.3
 │  ├─ domelementtype@1
 │  ├─ domhandler@2.3
@@ -575,17 +566,28 @@
 │  ├─ eventemitter3@^4.0.0
 │  ├─ follow-redirects@^1.0.0
 │  └─ requires-port@^1.0.0
-├─ http-server@0.12.3
-│  ├─ basic-auth@^1.0.3
-│  ├─ colors@^1.4.0
+├─ http-server@14.1.0
+│  ├─ ansi-styles@4.3.0
+│  │  └─ color-convert@^2.0.1
+│  ├─ basic-auth@^2.0.1
+│  ├─ chalk@^4.1.2
+│  ├─ chalk@4.1.2
+│  │  ├─ ansi-styles@^4.1.0
+│  │  └─ supports-color@^7.1.0
+│  ├─ color-convert@2.0.1
+│  │  └─ color-name@~1.1.4
+│  ├─ color-name@1.1.4
 │  ├─ corser@^2.0.1
-│  ├─ ecstatic@^3.3.2
-│  ├─ http-proxy@^1.18.0
+│  ├─ he@^1.2.0
+│  ├─ html-encoding-sniffer@^3.0.0
+│  ├─ http-proxy@^1.18.1
+│  ├─ mime@^1.6.0
 │  ├─ minimist@^1.2.5
 │  ├─ opener@^1.5.1
-│  ├─ portfinder@^1.0.25
+│  ├─ portfinder@^1.0.28
 │  ├─ secure-compare@3.0.1
-│  └─ union@~0.5.0
+│  ├─ union@~0.5.0
+│  └─ url-join@^4.0.1
 ├─ http-signature@1.2.0
 │  ├─ assert-plus@^1.0.0
 │  ├─ jsprim@^1.2.2
@@ -640,6 +642,7 @@
 │  └─ kind-of@^3.0.2
 ├─ is-plain-object@2.0.4
 │  └─ isobject@^3.0.1
+├─ is-primitive@3.0.1
 ├─ is-regex@1.1.1
 │  └─ has-symbols@^1.0.1
 ├─ is-relative@1.0.0
@@ -655,20 +658,19 @@
 ├─ isexe@2.0.0
 ├─ isobject@3.0.1
 ├─ isstream@0.1.2
-├─ jquery@3.5.1
+├─ jquery@3.6.0
 ├─ js-yaml@3.14.1
 │  ├─ argparse@^1.0.7
 │  └─ esprima@^4.0.0
 ├─ jsbn@0.1.1
 ├─ jsdiff@0.0.0
-├─ jshint@2.12.0
+├─ jshint@2.13.4
 │  ├─ cli@~1.0.0
 │  ├─ console-browserify@1.1.x
 │  ├─ exit@0.1.x
 │  ├─ htmlparser2@3.8.x
-│  ├─ lodash@~4.17.19
+│  ├─ lodash@~4.17.21
 │  ├─ minimatch@~3.0.2
-│  ├─ shelljs@0.3.x
 │  └─ strip-json-comments@1.0.x
 ├─ json-schema-traverse@0.4.1
 ├─ json-schema@0.2.3
@@ -751,7 +753,7 @@
 ├─ map-cache@0.2.2
 ├─ map-visit@1.0.0
 │  └─ object-visit@^1.0.0
-├─ markdown-it@12.0.4
+├─ markdown-it@12.3.2
 │  ├─ argparse@^2.0.1
 │  ├─ argparse@2.0.1
 │  ├─ entities@~2.1.0
@@ -864,6 +866,8 @@
 │  ├─ strip-json-comments@2.0.1
 │  ├─ strip-json-comments@2.0.1
 │  ├─ supports-color@6.0.0
+│  ├─ supports-color@6.0.0
+│  │  └─ has-flag@^3.0.0
 │  ├─ which@1.3.1
 │  ├─ wide-align@1.1.3
 │  ├─ yargs-parser@13.1.2
@@ -871,14 +875,11 @@
 │  └─ yargs@13.3.2
 ├─ morgan@1.10.0
 │  ├─ basic-auth@~2.0.1
-│  ├─ basic-auth@2.0.1
-│  │  └─ safe-buffer@5.1.2
 │  ├─ debug@2.6.9
 │  ├─ depd@~2.0.0
 │  ├─ depd@2.0.0
 │  ├─ on-finished@~2.3.0
-│  ├─ on-headers@~1.0.2
-│  └─ safe-buffer@5.1.2
+│  └─ on-headers@~1.0.2
 ├─ mri@1.1.4
 ├─ ms@2.1.1
 ├─ nanomatch@1.2.13
@@ -978,7 +979,7 @@
 ├─ path-root-regex@0.1.2
 ├─ path-root@0.1.1
 │  └─ path-root-regex@^0.1.0
-├─ pathval@1.1.0
+├─ pathval@1.1.1
 ├─ pend@1.2.0
 ├─ performance-now@2.1.0
 ├─ picomatch@2.2.2
@@ -1075,7 +1076,7 @@
 ├─ require-directory@2.1.1
 ├─ require-main-filename@2.0.0
 ├─ requirejs-plugins@1.0.2
-├─ requirejs-text@2.0.15
+├─ requirejs-text@2.0.16
 ├─ requirejs-undertemplate@0.0.5
 │  ├─ requirejs-text@~2.0.12
 │  ├─ requirejs@2.3.3
@@ -1135,14 +1136,11 @@
 │  ├─ parseurl@~1.3.3
 │  └─ send@0.17.1
 ├─ set-blocking@2.0.0
-├─ set-value@2.0.1
-│  ├─ extend-shallow@^2.0.1
-│  ├─ is-extendable@^0.1.1
-│  ├─ is-plain-object@^2.0.3
-│  └─ split-string@^3.0.1
+├─ set-value@4.1.0
+│  ├─ is-plain-object@^2.0.4
+│  └─ is-primitive@^3.0.1
 ├─ setimmediate@1.0.5
 ├─ setprototypeof@1.1.0
-├─ shelljs@0.3.0
 ├─ snapdragon-node@2.1.1
 │  ├─ define-property@^1.0.0
 │  ├─ define-property@1.0.0
@@ -1209,8 +1207,9 @@
 ├─ strip-ansi@5.2.0
 │  └─ ansi-regex@^4.1.0
 ├─ strip-json-comments@1.0.4
-├─ supports-color@6.0.0
-│  └─ has-flag@^3.0.0
+├─ supports-color@7.2.0
+│  ├─ has-flag@^4.0.0
+│  └─ has-flag@4.0.0
 ├─ tar-fs@2.1.1
 │  ├─ chownr@^1.1.1
 │  ├─ mkdirp-classic@^0.5.2
@@ -1298,7 +1297,7 @@
 ├─ uri-js@4.4.1
 │  └─ punycode@^2.1.0
 ├─ urix@0.1.0
-├─ url-join@2.0.5
+├─ url-join@4.0.1
 ├─ url@0.11.0
 │  ├─ punycode@1.3.2
 │  ├─ punycode@1.3.2
@@ -1329,6 +1328,10 @@
 │  ├─ safe-buffer@^5.1.2
 │  ├─ ws@^3.2.0
 │  └─ xtend@^4.0.0
+├─ whatwg-encoding@2.0.0
+│  ├─ iconv-lite@0.6.3
+│  └─ iconv-lite@0.6.3
+│     └─ safer-buffer@>= 2.1.2 < 3.0.0
 ├─ which-module@2.0.0
 ├─ which@1.3.1
 │  └─ isexe@^2.0.0
@@ -1376,4 +1379,4 @@
 └─ yauzl@2.10.0
    ├─ buffer-crc32@~0.2.3
    └─ fd-slicer@~1.1.0
-Done in 0.28s.
+Done in 0.27s.
