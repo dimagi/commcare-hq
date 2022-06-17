@@ -690,6 +690,9 @@ class TestFixtureOwnershipUpload(TestCase):
         cls.user2 = CommCareUser.create(
             cls.domain, f"user2@{cls.domain}.commcarehq.org", "pass", None, None)
         cls.addClassCleanup(cls.user2.delete, cls.domain, deleted_by=None)
+        cls.user3 = CommCareUser.create(
+            cls.domain, f"3@{cls.domain}.commcarehq.org", "pass", None, None)
+        cls.addClassCleanup(cls.user3.delete, cls.domain, deleted_by=None)
 
         # group names are case sensitive, user and location names are not
         cls.group1 = Group(domain=cls.domain, name="G1", users=[cls.user1._id])
@@ -698,6 +701,9 @@ class TestFixtureOwnershipUpload(TestCase):
         cls.group2 = Group(domain=cls.domain, name="g2", users=[cls.user1._id])
         cls.group2.save()
         cls.addClassCleanup(cls.group2.delete)
+        cls.group3 = Group(domain=cls.domain, name="3", users=[cls.user1._id])
+        cls.group3.save()
+        cls.addClassCleanup(cls.group3.delete)
 
         cls.region = LocationType(domain=cls.domain, name="region", code="region")
         cls.region.save()
@@ -705,6 +711,8 @@ class TestFixtureOwnershipUpload(TestCase):
         cls.loc1.save()
         cls.loc2 = SQLLocation(domain=cls.domain, name="loc2", location_type=cls.region)
         cls.loc2.save()
+        cls.loc3 = SQLLocation(domain=cls.domain, name="3", location_type=cls.region)
+        cls.loc3.save()
 
     def tearDown(self):
         from dimagi.utils.couch.bulk import CouchTransaction
@@ -788,6 +796,11 @@ class TestFixtureOwnershipUpload(TestCase):
         result = self.upload([(None, 'N', 'apple', 'n@pe', None, None)], check_result=False)
         self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
         self.assertEqual(result.errors, ["Invalid username: 'n@pe'. But the row is successfully added"])
+
+    def test_non_string_owner_names(self):
+        result = self.upload([(None, 'N', 'apple', 3, 3, 3)], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', {'3'}, {'3'}, {'3'})])
+        self.assertFalse(result.errors)
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)

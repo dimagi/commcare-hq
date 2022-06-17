@@ -225,7 +225,6 @@ def _load_group_ids_by_name(group_names, domain_name):
 
 def _load_location_ids_by_name(location_names, domain_name):
     from corehq.apps.locations.models import SQLLocation
-    assert all(n.islower() for n in location_names), location_names
     results = SQLLocation.active_objects.annotate(
         lname=Lower("name"),
     ).filter(
@@ -550,7 +549,7 @@ def _process_group_ownership(di, old_data_item, group_memoizer, transaction):
         old_data_item.remove_group(group)
 
     for group_name in di.get('group', []):
-        group = group_memoizer.by_name(group_name)
+        group = group_memoizer.by_name(str(group_name))
         if group:
             old_data_item.add_group(group, transaction=transaction)
         else:
@@ -607,7 +606,7 @@ def _process_location_ownership(di, old_data_item, get_location, transaction):
         old_data_item.remove_location(location)
 
     for name in di.get('location', []):
-        location_cache = get_location(name)
+        location_cache = get_location(str(name))
         if location_cache.is_error:
             errors.append(location_cache.message)
         else:

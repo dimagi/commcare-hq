@@ -99,7 +99,7 @@ class _FixtureWorkbook(object):
                 rows = self.get_data_sheet(tabledef.table_id)
                 transform = transforms[key]
                 values.update(
-                    transform(name)
+                    transform(str(name))
                     for row in rows
                     if key in row
                     for name in row[key]
@@ -152,9 +152,11 @@ class _FixtureWorkbook(object):
             for owner_type in ["user", "group", "location"]:
                 owner_names = di.get(owner_type)
                 if owner_names:
-                    if owner_type != "group":
+                    if owner_type == "group":
+                        owner_names = [str(n) for n in owner_names]
+                    else:
                         # names, except for groups, are case insensitive
-                        owner_names = [n.lower() for n in owner_names]
+                        owner_names = [str(n).lower() for n in owner_names]
                     ownership[owner_type] = owner_names
             yield item
 
