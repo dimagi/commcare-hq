@@ -155,7 +155,7 @@
     },
     "xform-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2017-09-07",
+        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-report_xforms_20160824_1708-test_hqusers_2017-09-07",
         "name": "xform-pillow",
         "advertised_name": "xform-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"

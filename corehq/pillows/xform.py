@@ -18,7 +18,6 @@ from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
@@ -214,8 +213,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     # TODO Do we need to preserve this checkpoint format?
-    checkpoint_id = "{}-{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+    checkpoint_id = "{}-{}-report_xforms_20160824_1708-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
