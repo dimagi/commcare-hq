@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 
+from corehq.apps.userreports.specs import FactoryContext
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 from dimagi.utils.web import json_handler
 
@@ -386,6 +387,7 @@ class ExpressionFactory(object):
 
     @classmethod
     def from_spec(cls, spec, context=None):
+        context = context or FactoryContext.empty()
         if _is_literal(spec):
             return cls.from_spec(_convert_constant_to_expression_spec(spec), context)
         try:
