@@ -1653,8 +1653,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 
     def configured_filter_summary(self):
         if self.config.configured_filter:
-            return str(FilterFactory.from_spec(self.config.configured_filter,
-                                            context=self.config.get_factory_context()))
+            return str(FilterFactory.from_spec(
+                self.config.configured_filter, self.config.get_factory_context()))
         return _("No filter defined")
 
     def _add_links_to_output(self, items):

@@ -315,7 +315,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             _Validation(
                 validation.name,
                 validation.error_message,
-                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+                FilterFactory.from_spec(validation.expression, self.get_factory_context())
             )
             for validation in self.validations
         ]
@@ -359,7 +359,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.get_factory_context(),
+            self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
