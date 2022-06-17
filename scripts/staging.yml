@@ -56,7 +56,6 @@ branches:
     - sr/es-alias # Sravan Nov 18
     - ce/bulk-case-search # Cal July 6
     # - sr/memoized-toggle # Sravan July 26
-    - smh/remove-extra-spinner-icons # Steph Oct 6
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
