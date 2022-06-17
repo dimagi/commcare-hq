@@ -1617,16 +1617,16 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         }
 
     def indicator_summary(self):
-        context = self.config.get_factory_context()
+        factory_context = self.config.get_factory_context()
         wrapped_specs = [
-            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            IndicatorFactory.from_spec(spec, factory_context).wrapped_spec
             for spec in self.config.configured_indicators
         ]
         return [
             {
                 "column_id": wrapped.column_id,
                 "comment": wrapped.comment,
-                "readable_output": wrapped.readable_output(context)
+                "readable_output": wrapped.readable_output(factory_context)
             }
             for wrapped in wrapped_specs if wrapped
         ]

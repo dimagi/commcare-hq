@@ -48,15 +48,15 @@ class LocationParentIdSpec(JsonObject):
     location_id_expression = DictProperty(required=True)
 
 
-def location_type_name(spec, context):
+def location_type_name(spec, factory_context):
     wrapped = LocationTypeSpec.wrap(spec)
     wrapped.configure(
-        location_id_expression=ExpressionFactory.from_spec(wrapped.location_id_expression, context)
+        location_id_expression=ExpressionFactory.from_spec(wrapped.location_id_expression, factory_context)
     )
     return wrapped
 
 
-def location_parent_id(spec, context):
+def location_parent_id(spec, factory_context):
     LocationParentIdSpec.wrap(spec)  # this is just for validation
     spec = {
         "type": "related_doc",
@@ -67,7 +67,7 @@ def location_parent_id(spec, context):
             "property_name": "parent_location_id",
         }
     }
-    return ExpressionFactory.from_spec(spec, context)
+    return ExpressionFactory.from_spec(spec, factory_context)
 
 
 class AncestorLocationExpression(JsonObject):
@@ -147,10 +147,10 @@ class AncestorLocationExpression(JsonObject):
         }
 
 
-def ancestor_location(spec, context):
+def ancestor_location(spec, factory_context):
     wrapped = AncestorLocationExpression.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.location_id, context),
-        ExpressionFactory.from_spec(wrapped.location_type, context),
+        ExpressionFactory.from_spec(wrapped.location_id, factory_context),
+        ExpressionFactory.from_spec(wrapped.location_type, factory_context),
     )
     return wrapped
