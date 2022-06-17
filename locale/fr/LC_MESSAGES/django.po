@@ -6013,15 +6013,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"involves a form\n"
-"                that requires manual linking which has not been configured.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -26744,6 +26735,10 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
+msgid "To Time"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -26761,6 +26756,10 @@ msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
@@ -28887,6 +28886,11 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+#, python-format
+msgid "This scheduled report's timezone is %s (UTC%s)"
 msgstr ""
 
 #: corehq/apps/reports/views.py

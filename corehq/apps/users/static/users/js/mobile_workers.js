@@ -129,12 +129,12 @@ hqDefine("users/js/mobile_workers",[
         self.sendConfirmationEmail = function () {
             var urlName = 'send_confirmation_email';
             var $modal = $('#confirm_' + self.user_id());
-
-            $modal.find(".btn").addSpinnerToButton();
+            $modal.find(".btn").disableButton();
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse(urlName, self.user_id()),
                 success: function (data) {
+                    $modal.find(".btn").enableButton();
                     $modal.modal('hide');
                     if (data.success) {
                         self.action_error('');
@@ -144,6 +144,7 @@ hqDefine("users/js/mobile_workers",[
 
                 },
                 error: function () {
+                    $modal.find(".btn").enableButton();
                     $modal.modal('hide');
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },

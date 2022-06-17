@@ -6082,15 +6082,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"involves a form\n"
-"                that requires manual linking which has not been configured.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -26932,6 +26923,12 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
+#, fuzzy
+#| msgid "Time"
+msgid "To Time"
+msgstr "Hora"
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr "Data do Início do Relatório"
 
@@ -26949,6 +26946,10 @@ msgstr "De ora em hora"
 
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
@@ -29107,6 +29108,12 @@ msgstr ""
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr ""
+
+#: corehq/apps/reports/views.py
+#, fuzzy, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr "O fuso horário deste relatório é %(timezone)s."
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -41352,15 +41359,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "App Editor"
-#~ msgstr "Editor da Aplicação"
-
-#~ msgid "Read Only"
-#~ msgstr "Somente Leitura"
-
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador no Terreno"
-
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador do Faturamento"

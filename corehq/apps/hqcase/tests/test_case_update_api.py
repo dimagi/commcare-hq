@@ -462,6 +462,34 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json()['error'], "Could not find a case with temporary_id 'MISSING'")
 
+    def test_index_reference_to_uncreated_external_id(self):
+        res = self._bulk_update_cases([
+            {
+                'case_type': 'player',
+                'case_name': 'Elizabeth Harmon',
+                'owner_id': 'us_chess_federation',
+                'external_id': 'beth',
+            },
+            {
+                'case_type': 'match',
+                'case_name': 'Harmon/Luchenko',
+                'external_id': 'harmon-luchenko',
+                'owner_id': 'harmon',
+                'indices': {
+                    'parent': {
+                        # This case will be created in the same payload
+                        'external_id': 'beth',
+                        'case_type': 'player',
+                        'relationship': 'child',
+                    },
+                },
+            },
+        ])
+        self.assertEqual(res.status_code, 200)
+        parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
+        child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
+        self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
+
     def test_non_json_data(self):
         res = self._create_case("this isn't json")
         self.assertEqual(res.status_code, 400)
