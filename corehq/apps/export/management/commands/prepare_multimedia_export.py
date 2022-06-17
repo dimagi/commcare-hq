@@ -97,15 +97,7 @@ class Command(BaseCommand):
                     print("id : {}".format(attachment_id))
                     print("attachment size: {}".format(convert_bytes(attachment_size)))
                     print("current multimedia size: {}".format(convert_bytes(size)))
-                    if size > MAX_MULTIMEDIA_EXPORT_SIZE:
-                        print(
-                            "multimedia export size {} is larger than the limit of {}".format(
-                                convert_bytes(size),
-                                convert_bytes(MAX_MULTIMEDIA_EXPORT_SIZE)
-                            )
-                        )
-                        print("amount of unique files: {}".format(len(unique_ids)))
-                        return
+            print("amount of unique files: {}".format(len(unique_ids)))
             print("success!")
             return
         except Exception as e:
