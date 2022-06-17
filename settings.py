@@ -1911,21 +1911,6 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-# Custom fully indexed domains for ReportCase index/pillowtop
-# Adding a domain will not automatically index that domain's existing cases
-ES_CASE_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-    'crs-remind',
-]
-
-# Custom fully indexed domains for ReportXForm index/pillowtop --
-# only those domains that don't require custom pre-processing before indexing,
-# otherwise list in XFORM_PILLOW_HANDLERS
-# Adding a domain will not automatically index that domain's existing forms
-ES_XFORM_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-]
-
 CUSTOM_UCR_EXPRESSIONS = [
     ('indexed_case', 'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
