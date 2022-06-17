@@ -685,7 +685,7 @@ class NestedExpressionTest(SimpleTestCase):
         evaluation_context = EvaluationContext(doc)
         factory_context = FactoryContext({
             'test_named_expression': ExpressionFactory.from_spec(named_expression)
-        }, evaluation_context)
+        }, {})
 
         expression1 = ExpressionFactory.from_spec(
             {
