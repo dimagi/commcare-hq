@@ -1016,8 +1016,7 @@ def _get_parsed_expression(domain, factory_context, expression_text, expression_
     try:
         expression_json = json.loads(expression_text)
         return ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
+            expression_json, factory_context
         )
     except BadSpecError as e:
         raise HttpException(400, _("Problem with expression: {}").format(e))

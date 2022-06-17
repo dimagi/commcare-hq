@@ -639,7 +639,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "type": "identity",
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -655,7 +655,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "three"
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -706,7 +706,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         expression2 = ExpressionFactory.from_spec(
             {
@@ -727,7 +727,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         self.assertEqual(expression1(doc, evaluation_context), 'my_parent_id')
         self.assertEqual(expression2(doc, evaluation_context), 'my_parent_id2')

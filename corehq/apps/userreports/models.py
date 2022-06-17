@@ -456,7 +456,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, self.get_factory_context())
         return None
 
     @memoized
