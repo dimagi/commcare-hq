@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
-from corehq.apps.fixtures.upload.const import DELETE_HEADER, MULTIPLE
+from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MULTIPLE
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.util.workbook_json.excel import (
@@ -168,7 +168,7 @@ class _FixtureWorkbook(object):
         for owner_type, names in ownerships.items():
             for name in names:
                 owner_id = owner_ids_map[owner_type].get(name)
-                if owner_id is None or owner_id is MULTIPLE:
+                if owner_id is None or owner_id is MULTIPLE or owner_id is INVALID:
                     key = (owner_id, owner_type)
                     errors.append(self.ownership_errors[key] % {'name': name})
                     continue
@@ -183,6 +183,7 @@ class _FixtureWorkbook(object):
         (None, "user"): gettext_lazy("Unknown user: '%(name)s'. But the row is successfully added"),
         (None, "group"): gettext_lazy("Unknown group: '%(name)s'. But the row is successfully added"),
         (None, "location"): gettext_lazy("Unknown location: '%(name)s'. But the row is successfully added"),
+        (INVALID, "user"): gettext_lazy("Invalid username: '%(name)s'. But the row is successfully added"),
         (MULTIPLE, "location"): gettext_lazy(
             "Multiple locations found with the name: '%(name)s'.  "
             "Try using site code. But the row is successfully added"

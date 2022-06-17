@@ -784,6 +784,11 @@ class TestFixtureOwnershipUpload(TestCase):
         self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
         self.assertEqual(result.errors, ["Unknown group: 'g1'. But the row is successfully added"])
 
+    def test_invalid_username(self):
+        result = self.upload([(None, 'N', 'apple', 'n@pe', None, None)], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+        self.assertEqual(result.errors, ["Invalid username: 'n@pe'. But the row is successfully added"])
+
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)
         workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
@@ -825,6 +830,12 @@ class TestFixtureOwnershipUpload(TestCase):
 
 class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
     do_upload = _run_fixture_upload
+
+    def test_invalid_username(self):
+        result = self.upload([(None, 'N', 'apple', 'n@pe', None, None)], check_result=False)
+        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
+        # the "Row is not added" part of this error is wrong
+        self.assertEqual(result.errors, ["Invalid username: 'n@pe'. Row is not added"])
 
 
 class TestLocationLookups(TestCase):

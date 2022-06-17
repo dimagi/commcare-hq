@@ -20,7 +20,7 @@ from soil import DownloadBase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
-from corehq.apps.fixtures.upload.const import MULTIPLE
+from corehq.apps.fixtures.upload.const import INVALID, MULTIPLE
 from corehq.apps.fixtures.upload.location_cache import (
     get_memoized_location_getter,
 )
@@ -202,10 +202,18 @@ def load_owner_ids(owners, domain_name):
 
 
 def _load_user_ids_by_name(raw_usernames, domain_name):
-    name_map = {normalize_username(str(n), domain_name): n for n in raw_usernames}
+    name_map = {}
+    errors = {}
+    for raw_username in raw_usernames:
+        try:
+            username = normalize_username(raw_username, domain_name)
+        except ValidationError:
+            errors[raw_username] = INVALID
+            continue
+        name_map[username] = raw_username
     usernames = list(name_map.keys())
     results = CommCareUser.get_db().view('users/by_username', keys=usernames, reduce=False)
-    return {name_map[r["key"]]: r["id"] for r in results}
+    return errors | {name_map[r["key"]]: r["id"] for r in results}
 
 
 def _load_group_ids_by_name(group_names, domain_name):
