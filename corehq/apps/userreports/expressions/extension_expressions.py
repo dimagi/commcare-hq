@@ -57,8 +57,8 @@ class IndexedCaseExpressionSpec(JsonObject):
         }
         self._expression = ExpressionFactory.from_spec(spec, factory_context)
 
-    def __call__(self, item, context=None):
-        return self._expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        return self._expression(item, evaluation_context)
 
     def __str__(self):
         return "{case}/{index}".format(

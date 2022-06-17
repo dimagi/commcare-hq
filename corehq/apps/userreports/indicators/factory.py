@@ -35,7 +35,7 @@ def _build_count_indicator(spec, factory_context):
     return BooleanIndicator(
         wrapped.display_name,
         wrapped.column_id,
-        CustomFilter(lambda item, context=None: True),
+        CustomFilter(lambda item, evaluation_context=None: True),
         wrapped,
     )
 

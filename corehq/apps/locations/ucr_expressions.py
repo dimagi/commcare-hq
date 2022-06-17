@@ -10,18 +10,18 @@ from corehq.util.quickcache import quickcache
 
 
 @ucr_context_cache(vary_on=('location_id',))
-def _get_location(location_id, context):
+def _get_location(location_id, evaluation_context):
     try:
         return SQLLocation.objects.select_related('location_type').get(
-            domain=context.root_doc['domain'],
+            domain=evaluation_context.root_doc['domain'],
             location_id=location_id
         )
     except SQLLocation.DoesNotExist:
         return None
 
 
-def _get_location_type_name(location_id, context):
-    location = _get_location(location_id, context)
+def _get_location_type_name(location_id, evaluation_context):
+    location = _get_location(location_id, evaluation_context)
     if not location:
         return None
 
@@ -35,12 +35,12 @@ class LocationTypeSpec(JsonObject):
     def configure(self, location_id_expression):
         self._location_id_expression = location_id_expression
 
-    def __call__(self, item, context=None):
-        doc_id = self._location_id_expression(item, context)
+    def __call__(self, item, evaluation_context=None):
+        doc_id = self._location_id_expression(item, evaluation_context)
         if not doc_id:
             return None
 
-        return _get_location_type_name(doc_id, context)
+        return _get_location_type_name(doc_id, evaluation_context)
 
 
 class LocationParentIdSpec(JsonObject):
@@ -121,10 +121,10 @@ class AncestorLocationExpression(JsonObject):
         self._location_id_expression = location_id_expression
         self._location_type_expression = location_type_expression
 
-    def __call__(self, item, context=None):
-        location_id = self._location_id_expression(item, context)
-        location_type = self._location_type_expression(item, context)
-        location = self._get_ancestors_by_type(location_id, context).get(location_type)
+    def __call__(self, item, evaluation_context=None):
+        location_id = self._location_id_expression(item, evaluation_context)
+        location_type = self._location_type_expression(item, evaluation_context)
+        location = self._get_ancestors_by_type(location_id, evaluation_context).get(location_type)
         if not location:
             return None
 
@@ -135,8 +135,8 @@ class AncestorLocationExpression(JsonObject):
 
     @staticmethod
     @ucr_context_cache(vary_on=('location_id',))
-    def _get_ancestors_by_type(location_id, context):
-        location = _get_location(location_id, context)
+    def _get_ancestors_by_type(location_id, evaluation_context):
+        location = _get_location(location_id, evaluation_context)
         if not location:
             return {}
         ancestors = (location.get_ancestors(include_self=False)
