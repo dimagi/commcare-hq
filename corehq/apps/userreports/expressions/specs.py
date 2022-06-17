@@ -127,7 +127,9 @@ class PropertyNameGetterSpec(JsonObject):
         self._property_name_expression = property_name_expression
 
     def __call__(self, item, evaluation_context=None):
-        raw_value = item.get(self._property_name_expression(item, evaluation_context)) if isinstance(item, dict) else None
+        raw_value = None
+        if isinstance(item, dict):
+            raw_value = item.get(self._property_name_expression(item, evaluation_context))
         return transform_for_datatype(self.datatype)(raw_value)
 
     def __str__(self):
