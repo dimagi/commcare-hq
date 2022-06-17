@@ -21,6 +21,7 @@ from corehq.apps.userreports.filters.specs import (
     PropertyMatchFilterSpec,
 )
 from corehq.apps.userreports.operators import equal, get_operator
+from corehq.apps.userreports.specs import FactoryContext
 
 
 def _build_compound_filter(spec, factory_context):
@@ -85,6 +86,7 @@ class FilterFactory(object):
 
     @classmethod
     def from_spec(cls, spec, factory_context=None):
+        factory_context = factory_context or FactoryContext.empty()
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec, factory_context)
