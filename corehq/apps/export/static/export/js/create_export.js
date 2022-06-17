@@ -31,12 +31,13 @@ hqDefine("export/js/create_export", [
         var self = {};
 
         self.isOData = initialPageData.get('is_odata', true);
+        self.isLiveGoogleSheet = initialPageData.get('is_live_google_sheet', true);
 
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
         // is static on the basic form/case export pages but is a user option on the daily saved & feed pages.
         assertProperties.assert(options.page, [
-            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata',
+            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata', 'is_live_google_sheet',
         ]);
         self.pageOptions = options.page;
 
@@ -282,6 +283,7 @@ hqDefine("export/js/create_export", [
                     is_feed: self.pageOptions.is_feed,
                     is_deid: self.pageOptions.is_deid,
                     is_odata: self.pageOptions.is_odata,
+                    is_live_google_sheet: self.pageOptions.is_live_google_sheet,
                     model_type: self.pageOptions.model_type,
                     form_data: JSON.stringify({
                         model_type: self.modelType(),
@@ -314,6 +316,7 @@ hqDefine("export/js/create_export", [
             data: {
                 is_deid: self.pageOptions.is_deid,
                 is_odata: self.pageOptions.is_odata,
+                is_live_google_sheet: self.pageOptions.is_live_google_sheet,
                 model_type: self.pageOptions.model_type,
             },
             success: function (data) {
