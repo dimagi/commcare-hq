@@ -49,7 +49,7 @@ class TestLocationTypeExpression(TestCase):
             expected,
             self.expression(
                 doc,
-                context=EvaluationContext({"domain": domain}, 0)
+                EvaluationContext({"domain": domain}, 0)
             )
         )
 
