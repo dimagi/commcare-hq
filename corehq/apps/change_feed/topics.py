@@ -1,4 +1,5 @@
 from kafka.common import OffsetRequestPayload
+from kafka.errors import FailedPayloadsError
 
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
@@ -112,9 +113,13 @@ def _get_topic_offsets(topics, latest):
                 offsets[(topic, partition)] = None
                 offset_requests.append(OffsetRequestPayload(topic, partition, time_value, num_offsets))
 
-        responses = client.send_offset_request(offset_requests)
-        for r in responses:
-            offsets[(r.topic, r.partition)] = r.offsets[0]
+        try:
+            responses = client.send_offset_request(offset_requests)
+        except FailedPayloadsError:
+            pass
+        else:
+            for r in responses:
+                offsets[(r.topic, r.partition)] = r.offsets[0]
 
         return offsets
 
