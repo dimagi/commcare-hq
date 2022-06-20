@@ -29,7 +29,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
@@ -429,6 +429,8 @@ class SubmissionPost(object):
         try:
             case_stock_result.stock_result.finalize()
 
+            SubmissionPost.send_to_elasticsearch(instance)
+
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
             close_extension_cases(
@@ -444,6 +446,22 @@ class SubmissionPost(object):
                 'form_id': instance.form_id,
             })
             raise PostSaveError
+
+    @staticmethod
+    def send_to_elasticsearch(instance):
+        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+            return
+
+        from casexml.apps.case.xform import extract_case_blocks
+        from corehq.elastic import send_to_elasticsearch
+        from corehq.pillows.case_search import transform_case_for_elasticsearch
+        case_ids = [info.get('@case_id') for info in extract_case_blocks(instance)]
+        cases = CommCareCase.objects.get_cases(case_ids)
+        for instance_case in cases:
+            send_to_elasticsearch(
+                "case_search",
+                transform_case_for_elasticsearch(instance_case.to_json()),
+            )
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
