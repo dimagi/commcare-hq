@@ -12988,6 +12988,7 @@ msgid "Edit Column"
 msgstr "Edição da Coluna"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/reports/views.py
 msgid "Title"
 msgstr ""
 
