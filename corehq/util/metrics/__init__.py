@@ -213,7 +213,7 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
     """
     tags = COMMON_TAGS.update(tags or {})
     try:
-        _get_metrics_provider().create_event(title, text, tags, alert_type, aggregation_key)
+        _get_metrics_provider().create_event(title, text, alert_type, tags, aggregation_key)
     except Exception as e:
         metrics_logger.exception('Error creating metrics event', e)
 

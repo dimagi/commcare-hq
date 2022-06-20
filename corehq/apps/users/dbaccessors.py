@@ -149,19 +149,21 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
     kwargs:
         count_only: If True, returns count of search results
     """
-    if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
-                user_filters.get('location_id', None), user_filters.get('web_user_assigned_location_ids', []),
-                count_only]):
+    filters_applied = any([
+        user_filters.get(f, None)
+        for f in ['role_id', 'search_string', 'location_id', 'web_user_assigned_location_ids']
+    ]) or type(user_filters.get('user_active_status', None)) == bool
+    if not count_only and not filters_applied:
         if user_type == MOBILE_USER_TYPE:
             return get_all_commcare_users_by_domain(domain)
         if user_type == WEB_USER_TYPE:
             return get_all_web_users_by_domain(domain)
-
-    query = _get_es_query(domain, user_type, user_filters)
-    if count_only:
-        return query.count()
-    user_ids = query.scroll_ids()
-    return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
+    else:
+        query = _get_es_query(domain, user_type, user_filters)
+        if count_only:
+            return query.count()
+        user_ids = query.scroll_ids()
+        return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
 
 
 def count_invitations_by_filters(domain, user_filters):

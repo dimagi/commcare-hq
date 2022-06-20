@@ -3,19 +3,17 @@ import uuid
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es import filters
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.exceptions import (
-    CaseNotFound,
-    MissingFormXml,
-)
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
 
 CASEBLOCK_CHUNKSIZE = 100
@@ -23,8 +21,8 @@ SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 
 SYSTEM_FORM_XMLNS_MAP = {
-    SYSTEM_FORM_XMLNS: 'System Form',
-    EDIT_FORM_XMLNS: 'Data Cleaning Form',
+    SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
+    EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
@@ -132,7 +130,7 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
-                xmlns=None, device_id=None, owner_id=None):
+                xmlns=None, device_id=None, owner_id=None, max_wait=...):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -142,6 +140,9 @@ def update_case(domain, case_id, case_properties=None, close=False,
     close - True to close the case, False otherwise
     xmlns - pass in an xmlns to use it instead of the default
     device_id - see submit_case_blocks device_id docs
+    max_wait - Maximum time (in seconds) to allow the process to be delayed if
+               the project is over its submission rate limit.
+               See the docstring for submit_form_locally for meaning of values
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
@@ -150,6 +151,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,
         device_id=device_id,
+        max_wait=max_wait
     )
 
 

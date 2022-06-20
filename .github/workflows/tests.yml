@@ -51,3 +51,11 @@ jobs:
     - name: Stop containers
       if: always()
       run: scripts/docker down
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-artifacts
+        path: artifacts
+        if-no-files-found: ignore
+        retention-days: 7

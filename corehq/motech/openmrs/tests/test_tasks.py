@@ -1,4 +1,5 @@
 import datetime
+import doctest
 import json
 import logging
 from contextlib import contextmanager
@@ -460,3 +461,10 @@ class OwnerTests(LocationHierarchyTestCase):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
             )
+
+
+def test_doctests():
+    import corehq.motech.openmrs.tasks
+
+    results = doctest.testmod(corehq.motech.openmrs.tasks)
+    assert results.failed == 0

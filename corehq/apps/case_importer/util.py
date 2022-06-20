@@ -10,11 +10,10 @@ from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
-    ImporterRawError,
     ImporterExcelError,
     ImporterExcelFileEncrypted,
     ImporterFileNotFound,
-    ImporterRefError,
+    ImporterRawError,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -184,15 +183,9 @@ def get_spreadsheet(filename):
 
 
 def get_importer_error_message(e):
-    if isinstance(e, ImporterRefError):
-        # I'm not totally sure this is the right error, but it's what was being
-        # used before. (I think people were just calling _spreadsheet_expired
-        # or otherwise blaming expired sessions whenever anything unexpected
-        # happened though...)
-        return _('Sorry, your session has expired. Please start over and try again.')
-    elif isinstance(e, ImporterFileNotFound):
-        return _('The session containing the file you uploaded has expired. '
-                 'Please upload a new one.')
+    if isinstance(e, ImporterFileNotFound):
+        return _('There was an unexpected error retrieving the file you uploaded. '
+                 'Please try again and contact support if the problem persists.')
     elif isinstance(e, ImporterExcelFileEncrypted):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')

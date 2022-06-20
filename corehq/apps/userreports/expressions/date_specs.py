@@ -40,9 +40,9 @@ class AddDaysExpressionSpec(JsonObject):
         self._date_expression = date_expression
         self._count_expression = count_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
-        int_val = transform_int(self._count_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_date(self._date_expression(item, evaluation_context))
+        int_val = transform_int(self._count_expression(item, evaluation_context))
         if date_val is not None and int_val is not None:
             return date_val + datetime.timedelta(days=int_val)
         return None
@@ -79,9 +79,9 @@ class AddHoursExpressionSpec(JsonObject):
         self._date_expression = date_expression
         self._count_expression = count_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_datetime(self._date_expression(item, context))
-        int_val = transform_int(self._count_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_datetime(self._date_expression(item, evaluation_context))
+        int_val = transform_int(self._count_expression(item, evaluation_context))
         if date_val is not None and int_val is not None:
             return date_val + datetime.timedelta(hours=int_val)
         return None
@@ -121,9 +121,9 @@ class AddMonthsExpressionSpec(JsonObject):
         self._date_expression = date_expression
         self._months_expression = months_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
-        months_count_val = transform_int(self._months_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_date(self._date_expression(item, evaluation_context))
+        months_count_val = transform_int(self._months_expression(item, evaluation_context))
         if date_val is not None and months_count_val is not None:
             return date_val + relativedelta(months=months_count_val)
         return None
@@ -158,8 +158,8 @@ class MonthStartDateExpressionSpec(JsonObject):
     def configure(self, date_expression):
         self._date_expression = date_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_date(self._date_expression(item, evaluation_context))
         if date_val is not None:
             return datetime.date(date_val.year, date_val.month, 1)
         return None
@@ -175,8 +175,8 @@ class MonthEndDateExpressionSpec(JsonObject):
     def configure(self, date_expression):
         self._date_expression = date_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_date(self._date_expression(item, evaluation_context))
         if date_val is not None:
             first_week_day, last_day = calendar.monthrange(date_val.year, date_val.month)
             return datetime.date(date_val.year, date_val.month, last_day)
@@ -212,9 +212,9 @@ class DiffDaysExpressionSpec(JsonObject):
         self._from_date_expression = from_date_expression
         self._to_date_expression = to_date_expression
 
-    def __call__(self, item, context=None):
-        from_date_val = transform_date(self._from_date_expression(item, context))
-        to_date_val = transform_date(self._to_date_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        from_date_val = transform_date(self._from_date_expression(item, evaluation_context))
+        to_date_val = transform_date(self._to_date_expression(item, evaluation_context))
         if from_date_val is not None and to_date_val is not None:
             return (to_date_val - from_date_val).days
         return None
@@ -231,7 +231,7 @@ def _datetime_now():
 class UTCNow(JsonObject):
     type = TypeProperty('utcnow')
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         return _datetime_now()
 
     def __str__(self):
@@ -255,14 +255,19 @@ class GregorianDateToEthiopianDateSpec(JsonObject):
         }
 
     """
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty("gregorian_date_to_ethiopian_date")
     date_expression = DefaultProperty(required=True)
 
     def configure(self, date_expression):
         self._date_expression = date_expression
 
-    def __call__(self, item, context=None):
-        date_val = transform_date(self._date_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        date_val = transform_date(self._date_expression(item, evaluation_context))
         return get_gregorian_to_ethiopian(date_val)
 
 
@@ -283,11 +288,19 @@ class EthiopianDateToGregorianDateSpec(JsonObject):
         }
 
     """
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
+
     type = TypeProperty("ethiopian_date_to_gregorian_date")
     date_expression = DefaultProperty(required=True)
 
     def configure(self, date_expression):
         self._date_expression = date_expression
 
-    def __call__(self, item, context=None):
-        return transform_date(get_ethiopian_to_gregorian(self._date_expression(item, context)))
+    def __call__(self, item, evaluation_context=None):
+        unwrapped_date = self._date_expression(item, evaluation_context)
+        if isinstance(unwrapped_date, (datetime.datetime, datetime.date)):
+            unwrapped_date = unwrapped_date.strftime('%Y-%m-%d')
+        return transform_date(get_ethiopian_to_gregorian(unwrapped_date))

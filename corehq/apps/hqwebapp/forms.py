@@ -37,7 +37,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._fix_username_max_length()
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
@@ -48,14 +47,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                 'class': 'form-control',
                 'placeholder': _("Enter password"),
             })
-
-    def _fix_username_max_length(self):
-        # TODO remove when Django 2 is no longer supported
-        # Django overwrites username max length with
-        # UserModel._meta.get_field(UserModel.USERNAME_FIELD).max_length
-        # This was done incompletely prior to Django 3.1
-        # https://github.com/django/django/commit/6c9778a58e4f680db180d4cc9dc5639d2ec1b40c
-        self.fields['username'].widget.attrs["maxlength"] = self.fields['username'].max_length
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()

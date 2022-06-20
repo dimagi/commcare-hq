@@ -2,9 +2,7 @@ import copy
 from unittest import mock
 from django.test import SimpleTestCase
 from django.conf import settings
-from corehq.apps.api.es import report_term_filter
-from corehq.pillows.base import restore_property_dict, VALUE_TAG
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING
+from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.utils import UNKNOWN_USER_TYPE
 
@@ -119,6 +117,29 @@ CONCEPT_XFORM = {
    ],
    "__retrieved_case_ids": ["test_case_123345"],
 }
+
+
+def restore_property_dict(report_dict_item):
+    """
+    Revert a converted/retrieved document from Report<index> and deconvert all its properties
+    back from {#value: <val>} to just <val>
+    """
+    restored = {}
+    if not isinstance(report_dict_item, dict):
+        return report_dict_item
+
+    for k, v in report_dict_item.items():
+        if isinstance(v, list):
+            restored[k] = [restore_property_dict(x) for x in v]
+        elif isinstance(v, dict):
+            if VALUE_TAG in v:
+                restored[k] = v[VALUE_TAG]
+            else:
+                restored[k] = restore_property_dict(v)
+        else:
+            restored[k] = v
+
+    return restored
 
 
 @mock.patch('corehq.pillows.xform.get_user_type', new=lambda user_id: UNKNOWN_USER_TYPE)
@@ -347,37 +368,6 @@ class TestReportXFormProcessing(SimpleTestCase):
 
         self.assertNotEqual(orig['computed_'], for_indexing['computed_'])
         self.assertEqual(orig['computed_'], restored['computed_'])
-
-    def testReporXFormtQuery(self):
-
-        unknown_terms = ['form.num_using_fp.#text', 'form.num_using_fp.@concept_id',
-                         'form.counseling.sanitation_counseling.handwashing_importance',
-                         'form.counseling.bednet_counseling.wash_bednet',
-                         'form.prev_location_code',
-                         'member_available.#text',
-                         'location_code_1']
-        unknown_terms_query = report_term_filter(unknown_terms, REPORT_XFORM_MAPPING)
-
-        manually_set = ['%s.%s' % (x, VALUE_TAG) for x in unknown_terms]
-        self.assertEqual(manually_set, unknown_terms_query)
-
-        known_terms = [
-            'initial_processing_complete',
-            'doc_type',
-            'app_id',
-            'xmlns',
-            '@uiVersion',
-            '@version',
-            'form.#type',
-            'form.@name',
-            'form.meta.timeStart',
-            'form.meta.timeEnd',
-            'form.meta.appVersion',
-            ]
-
-        # shoot, TODO, cases are difficult to escape the VALUE_TAG term due to dynamic templates
-        known_terms_query = report_term_filter(known_terms, REPORT_XFORM_MAPPING)
-        self.assertEqual(known_terms_query, known_terms)
 
     def testConceptReportConversion(self):
         orig = CONCEPT_XFORM

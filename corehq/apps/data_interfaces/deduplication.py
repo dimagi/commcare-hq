@@ -86,6 +86,7 @@ def backfill_deduplicate_rule(domain, rule):
 
     progress_helper = MessagingRuleProgressHelper(rule.pk)
     total_cases_count = CaseSearchES().domain(domain).case_type(rule.case_type).count()
+    progress_helper.set_initial_progress()
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
     now = datetime.utcnow()
     try:

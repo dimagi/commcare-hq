@@ -346,3 +346,31 @@ def process_reporting_metadata_staging():
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
+
+
+@task(queue='background_queue', acks_late=True)
+def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
+    """
+    If ``loadtest_factor`` is set on a non-demo user, then that user
+    will become a demo user for as long as ``loadtest_factor`` > 1.
+
+    If ``loadtest_factor`` is set on a user that is already a demo
+    user, their status as a demo user is not affected.
+
+    ``is_loadtest_user`` is used for determining when to set or reset
+    their status as a demo user.
+    """
+    from corehq.apps.ota.utils import turn_off_demo_mode, turn_on_demo_mode
+    from corehq.apps.users.models import CommCareUser
+
+    user = CommCareUser.get_by_user_id(commcare_user_id)
+    if user.loadtest_factor and user.loadtest_factor > 1:
+        if not user.is_demo_user:
+            user.is_loadtest_user = True  # This change gets saved by
+            # turn_on_demo_mode() > reset_demo_user_restore()
+            turn_on_demo_mode(user, user.domain)
+    else:
+        if user.is_loadtest_user:
+            user.is_loadtest_user = False  # This change gets saved by
+            # turn_off_demo_mode()
+            turn_off_demo_mode(user)

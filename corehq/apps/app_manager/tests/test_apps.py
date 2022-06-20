@@ -51,10 +51,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         'files/media_suite.xml',
         'files/modules-0/forms-0.xml',
     )
-    jad_jar_paths = (
-        'CommCare.jar',
-        'CommCare.jad',
-    )
 
     @classmethod
     def setUpClass(cls):
@@ -118,17 +114,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.assertEqual(len(self.app.modules), 3)
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
-
-    def testCreateJadJar(self):
-        self.app.build_spec = BuildSpec(**self.build1)
-        self.app.create_build_files()
-        self.app.save(increment_version=False)
-        # get a fresh one from the db to make sure attachments aren't cached
-        # since that's closer to the real situation
-        self.app = Application.get(self.app._id)
-        self.app.create_jadjar_from_build_files(save=True)
-        self.app.save(increment_version=False)
-        self._check_has_build_files(self.app, self.jad_jar_paths)
 
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
@@ -382,9 +367,3 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
-
-    def test_jad_settings(self):
-        self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)
-        self.assertIn('Build-Number', self.app.jad_settings)
-        self.app.build_spec = BuildSpec(version='2.8.0', build_number=1)
-        self.assertNotIn('Build-Number', self.app.jad_settings)

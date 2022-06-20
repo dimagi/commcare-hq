@@ -121,6 +121,8 @@ from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
+    Repeater,
+    SQLCaseRepeater,
     SQLRepeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
@@ -946,27 +948,30 @@ class TestDeleteDomain(TestCase):
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
-    def test_repeaters_delete(self):
+    # Repeater.get_class_from_doc_type is patched because while syncing the
+    # SQL object to couch, the Repeater.save was erroring while clearing cache
+    @patch.object(Repeater, 'get_class_from_doc_type')
+    def test_repeaters_delete(self, mock):
+        mock.return_value = Repeater
         for domain_name in [self.domain.name, self.domain2.name]:
             conn = ConnectionSettings.objects.create(
                 domain=domain_name,
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLRepeater.objects.create(
+            repeater = SQLCaseRepeater.objects.create(
                 domain=domain_name,
-                repeater_id=str(uuid.uuid4()),
                 connection_settings=conn
             )
             record = repeater.repeat_records.create(
                 domain=domain_name,
-                payload_id=str(uuid.uuid4()),
                 registered_at=datetime.utcnow(),
             )
             record.sqlrepeatrecordattempt_set.create(
                 state=RECORD_SUCCESS_STATE,
             )
             self._assert_repeaters_count(domain_name, 1)
+            self.addCleanup(repeater.delete)
 
         self.domain.delete()
 

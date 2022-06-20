@@ -12,7 +12,7 @@
 /corehq/elastic.py @proteusvacuum @joxl
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/form_processor/ @snopoke
-/corehq/messaging/ @millerdev @orangejenny @mkangia
+/corehq/messaging/ @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @calellowitz @joxl
 /corehq/sql_accessors/ @snopoke
@@ -48,10 +48,11 @@
 /corehq/apps/ota/ @snopoke
 /corehq/apps/reports/standard/cases/ @proteusvacuum @esoergel
 /corehq/apps/receiverwrapper/ @snopoke
-/corehq/apps/sms*/ @millerdev @orangejenny @mkangia
+/corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/translations/app_translations/ @orangejenny
+/corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/static/ @orangejenny
 /corehq/apps/userreports/templates/ @orangejenny
@@ -62,6 +63,7 @@
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 /corehq/util/es/ @joxl
 
+/custom/covid/management/commands/ @stephherbers
 /custom/icds_reports/ @calellowitz
 /custom/icds_reports/templates/ @calellowitz
 /custom/icds_reports/static/ @calellowitz

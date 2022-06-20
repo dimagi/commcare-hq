@@ -41,9 +41,8 @@ class TestCommCareCaseResource(APIResourceTest):
             kwargs = {}
             if owner_id:
                 kwargs['owner_id'] = owner_id
-            if case_id:
-                kwargs['case_id'] = case_id
             backend_case = CommCareCase(
+                case_id=case_id if case_id else uuid.uuid4().hex,
                 domain=self.domain.name,
                 modified_on=modify_date,
                 server_modified_on=modify_date,

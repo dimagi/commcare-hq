@@ -53,7 +53,11 @@ def check_redis():
     if 'redis' in settings.CACHES:
         import redis
         rc = cache.caches['redis']
-        redis_api = redis.StrictRedis.from_url('%s' % rc._server)
+        if isinstance(rc._server, list):
+            redis_server = rc._server[0]
+        else:
+            redis_server = rc._server
+        redis_api = redis.StrictRedis.from_url(redis_server)
         memory = redis_api.info()['used_memory_human']
         result = rc.set('serverup_check_key', 'test', timeout=5)
         return ServiceStatus(result, "Redis is up and using {} memory".format(memory))

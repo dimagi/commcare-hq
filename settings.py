@@ -293,7 +293,7 @@ HQ_APPS = (
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager.AppManagerAppConfig',
-    'corehq.apps.es',
+    'corehq.apps.es.app_config.ElasticAppConfig',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
@@ -374,7 +374,6 @@ HQ_APPS = (
 
     # custom reports
     'custom.reports.mc',
-    'custom.apps.crs_reports',
     'custom.ucla',
 
     'custom.up_nrhm',
@@ -804,11 +803,6 @@ RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
 RUN_DEDUPLICATION_PILLOW = True
 
-# Set to True to remove the `actions` and `xform_id` fields from the
-# ES Case index. These fields contribute high load to the shard
-# databases.
-CASE_ES_DROP_FORM_FIELDS = False
-
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.FormRepeater',
@@ -1053,10 +1047,23 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ES_SETTINGS = None
-ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
-ES_XFORM_DISABLE_ALL = False
+ELASTIC_ADAPTER_SETTINGS = {
+    "ElasticCase": {
+        # Set to True to remove the `actions` and `xform_id` fields from the
+        # Elastic "hqcases_..." index. These fields contribute high load to the
+        # shard databases.
+        "DROP_FORM_FIELDS": False,
+    },
+    "ElasticForm": {
+        # TODO: document what this is for
+        "DISABLE_ALL": False,
+    },
+}
+
+# TODO: remove these Elastic settings:
+ES_SETTINGS = None  # [do not use] legacy mechanism for tests
+CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1552,7 +1559,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
 
     # custom reports
@@ -1937,18 +1943,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
 
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
-
-    'crs-remind': 'custom.apps.crs_reports',
 
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',

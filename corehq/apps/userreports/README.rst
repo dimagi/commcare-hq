@@ -277,6 +277,11 @@ Property Path Expression
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.PropertyPathGetterSpec
 
+Jsonpath Expression
+''''''''''''''''''''''''
+
+.. autoclass:: corehq.apps.userreports.expressions.specs.JsonpathExpressionSpec
+
 Conditional Expression
 ''''''''''''''''''''''
 
@@ -2257,7 +2262,7 @@ framework. To do so:
 
 ::
 
-    def custom_expression(spec, context):
+    def custom_expression(spec, evaluation_context):
         ...
 
 2. Extend the ``custom_ucr_expressions`` extension point:

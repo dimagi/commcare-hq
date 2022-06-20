@@ -8,7 +8,7 @@ from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
@@ -105,9 +105,9 @@ class SavedReportConfigForm(forms.Form):
 
 class ScheduledReportForm(forms.Form):
     INTERVAL_CHOICES = [
-        ("daily", gettext("Daily")),
-        ("weekly", gettext("Weekly")),
-        ("monthly", gettext("Monthly"))
+        ("daily", _("Daily")),
+        ("weekly", _("Weekly")),
+        ("monthly", _("Monthly"))
     ]
 
     config_ids = forms.MultipleChoiceField(
@@ -129,6 +129,11 @@ class ScheduledReportForm(forms.Form):
 
     hour = forms.TypedChoiceField(
         label=_('Time'),
+        coerce=int,
+        choices=ReportNotification.hour_choices())
+
+    stop_hour = forms.TypedChoiceField(
+        label=_('To Time'),
         coerce=int,
         choices=ReportNotification.hour_choices())
 
@@ -187,6 +192,7 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
+                    'stop_hour',
                     'start_date',
                     crispy.Field(
                         'email_subject',
@@ -216,9 +222,16 @@ class ScheduledReportForm(forms.Form):
             del cleaned_data["day"]
         if cleaned_data.get("interval") == "hourly":
             del cleaned_data["day"]
-            del cleaned_data["hour"]
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def clean_stop_hour(self):
+        cleaned_data = super(ScheduledReportForm, self).clean()
+        if cleaned_data.get("interval") == "hourly":
+            if cleaned_data['hour'] > cleaned_data['stop_hour']:
+                self.add_error('stop_hour', _("Must be after 'From Time'"))
+
+        return cleaned_data.get('stop_hour')
 
 
 class EmailReportForm(forms.Form):

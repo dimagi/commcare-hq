@@ -11,9 +11,9 @@
         {% endif %}
     </label>
     <div class="controls {{ field_class }} controls-multiple">
-        <div class="row">
+        {% if show_row_class %}<div class="row">{% endif %}
             {{ field_html }}
-        </div>
+        {% if show_row_class %}</div>{% endif %}
         {% for error in error_list %}
             <span class="help-block">
                 <strong>{{ error }}</strong>

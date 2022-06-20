@@ -166,6 +166,22 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[0].get_case_property('p'), '2')
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
+    def test_case_block_ordering_with_indices(self):
+        # creating a case that indexes another new case in the same form
+        # where the child case block appears before the parent case block in the form
+        case_id1 = "child-" + uuid.uuid4().hex
+        case_id2 = "parent-" + uuid.uuid4().hex
+        blocks = [
+            CaseBlock(create=True, case_id=case_id1, case_type="child", index={
+                "parent": ("parent", case_id2)
+            }).as_xml(),
+            CaseBlock(create=True, case_id=case_id2, case_type="parent").as_xml()
+        ]
+
+        xform, cases = post_case_blocks(blocks)
+        child_case = [case for case in cases if case.type == "child"][0]
+        self.assertEqual(child_case.get_index("parent").referenced_id, case_id2)
+
 
 @sharded
 class TestCaseHierarchy(TestCase):

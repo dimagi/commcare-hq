@@ -6,9 +6,9 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
-from corehq.util.django2_shim.template.base import TokenType
 from django.template.base import (
     Token,
+    TokenType,
     Variable,
     VariableDoesNotExist,
 )

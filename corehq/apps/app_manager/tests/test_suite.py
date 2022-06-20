@@ -23,7 +23,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 
 
 @patch_get_xform_resource_overrides()
-class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_normal_suite(self, *args):

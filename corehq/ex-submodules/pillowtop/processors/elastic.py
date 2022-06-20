@@ -158,16 +158,23 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
-                self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+                list(changes_to_process.values()),
+                self.doc_transform_fn,
+                error_collector,
             )
             error_changes = error_collector.errors
 
         try:
             with self._datadog_timing('bulk_load'):
                 _, errors = self.es_interface.bulk_ops(
-                    es_actions, raise_on_error=False, raise_on_exception=False)
+                    self.index_info.alias,
+                    self.index_info.type,
+                    es_actions,
+                    raise_on_error=False,
+                    raise_on_exception=False,
+                )
         except Exception as e:
-            pillow_logging.exception("[%s] ES bulk load error")
+            pillow_logging.exception("Elastic bulk error: %s", e)
             error_changes.extend([
                 (change, e) for change in changes_to_process.values()
             ])

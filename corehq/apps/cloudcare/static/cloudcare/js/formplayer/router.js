@@ -65,8 +65,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         listSettings: function () {
             appsController.listSettings();
         },
-        showDetail: function (caseId, detailTabIndex, isPersistent) {
-            menusController.selectDetail(caseId, detailTabIndex, isPersistent);
+        showDetail: function (caseId, detailTabIndex, isPersistent, isMultiSelect) {
+            menusController.selectDetail(caseId, detailTabIndex, isPersistent, isMultiSelect);
         },
         listSessions: function (pageNumber, pageSize) {
             sessionsController.listSessions(pageNumber, pageSize);
@@ -204,8 +204,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listSettings();
     });
 
-    FormplayerFrontend.on("menu:show:detail", function (caseId, detailTabIndex, isPersistent) {
-        API.showDetail(caseId, detailTabIndex, isPersistent);
+    FormplayerFrontend.on("menu:show:detail", function (caseId, detailTabIndex, isMultiSelect, isPersistent) {
+        API.showDetail(caseId, detailTabIndex, isPersistent, isMultiSelect);
     });
 
     FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {

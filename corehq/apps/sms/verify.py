@@ -88,27 +88,27 @@ def send_verification(domain, user, phone_number, logged_event):
             language=user.get_language_code()
         )
     send_sms(domain, user, phone_number, message,
-        metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+             metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
     subevent.completed()
 
 
-def process_verification(v, msg, verification_keywords=None, create_subevent_for_inbound=True):
+def process_verification(verified_number, msg, verification_keywords=None, create_subevent_for_inbound=True):
     verification_keywords = verification_keywords or ['123']
 
     logged_event = MessagingEvent.get_current_verification_event(
-        v.domain, v.owner_id, v.phone_number)
+        verified_number.domain, verified_number.owner_id, verified_number.phone_number)
 
     if not logged_event:
-        logged_event = MessagingEvent.create_verification_event(v.domain, v.owner)
+        logged_event = MessagingEvent.create_verification_event(verified_number.domain, verified_number.owner)
 
-    msg.domain = v.domain
-    msg.couch_recipient_doc_type = v.owner_doc_type
-    msg.couch_recipient = v.owner_id
+    msg.domain = verified_number.domain
+    msg.couch_recipient_doc_type = verified_number.owner_doc_type
+    msg.couch_recipient = verified_number.owner_id
 
     if create_subevent_for_inbound:
         subevent = logged_event.create_subevent_for_single_sms(
-            v.owner_doc_type,
-            v.owner_id
+            verified_number.owner_doc_type,
+            verified_number.owner_id
         )
         subevent.completed()
         msg.messaging_subevent_id = subevent.pk
@@ -121,22 +121,22 @@ def process_verification(v, msg, verification_keywords=None, create_subevent_for
     ):
         return False
 
-    v.set_two_way()
-    v.set_verified()
-    v.save()
+    verified_number.set_two_way()
+    verified_number.set_verified()
+    verified_number.save()
 
     logged_event.completed()
     subevent = logged_event.create_subevent_for_single_sms(
-        v.owner_doc_type,
-        v.owner_id
+        verified_number.owner_doc_type,
+        verified_number.owner_id
     )
 
     message = messages.get_message(
         messages.MSG_VERIFICATION_SUCCESSFUL,
-        verified_number=v
+        verified_number=verified_number
     )
-    send_sms_to_verified_number(v, message,
-        metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+    send_sms_to_verified_number(verified_number, message,
+                                metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
     subevent.completed()
     return True
 

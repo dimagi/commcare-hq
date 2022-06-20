@@ -341,8 +341,3 @@ future test run and in every future new production or development environment.
 If your migration is only relevant to environments that already have data in the
 old format, decorate it with ``@skip_on_fresh_install`` so that it is a noop for
 new environments.
-
-**Use run_once_off_migration** - This encapsulates the common pattern of a
-migration that runs a management command (and tags it with
-``@skip_on_fresh_install``). It also provides a path for removing the management
-command down the road while keeping the migration as a failsafe.

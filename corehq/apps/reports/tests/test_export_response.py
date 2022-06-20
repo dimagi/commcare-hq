@@ -63,13 +63,7 @@ class ExportResponseTest(TestCase):
         res = report.export_response
 
         self.assertEqual(res.status_code, 200)
-
-        try:
-            content_type = res.headers['content-type']
-        except AttributeError:
-            # TODO remove after upgrading to Django 3.2
-            content_type = res._headers['content-type'][1]
-        self.assertEqual(content_type, 'application/vnd.ms-excel')
+        self.assertEqual(res.headers['content-type'], 'application/vnd.ms-excel')
 
     @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', return_value=[])
     @patch('corehq.apps.reports.generic.export_from_tables')

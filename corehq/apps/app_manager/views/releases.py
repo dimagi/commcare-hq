@@ -89,6 +89,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import toggles_enabled_for_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -203,7 +204,6 @@ def get_releases_context(request, domain, app_id):
         ),
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
-        'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
@@ -308,6 +308,7 @@ def save_copy(request, domain, app_id):
                 'build_errors': e.errors,
                 'domain': domain,
                 'langs': langs,
+                'toggles': toggles_enabled_for_request(request),
             }),
         })
     except BuildConflictException:

@@ -9,6 +9,8 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html, conditional_escape
 from django.utils.translation import gettext_noop
 
+from corehq.util.json import CommCareJSONEncoder
+
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
@@ -149,15 +151,20 @@ class SelectToggle(forms.Select):
     def render(self, name, value, attrs=None, renderer=None):
         return '''
             <select-toggle data-apply-bindings="{apply_bindings}"
-                           params="name: '{name}',
-                                   id: '{id}',
-                                   value: {value},
-                                   options: {options}"></select-toggle>
-        '''.format(apply_bindings="true" if self.apply_bindings else "false",
-                   name=name,
-                   id=html_attr(attrs.get('id', '')),
-                   value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
-                   options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
+                            params="name: '{name}',
+                                    id: '{id}',
+                                    value: {value},
+                                    options: {options}"></select-toggle>
+        '''.format(
+            apply_bindings="true" if self.apply_bindings else "false",
+            name=name,
+            id=html_attr(attrs.get('id', '')),
+            value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
+            options=html_attr(json.dumps(
+                [{'id': c[0], 'text': c[1]} for c in self.choices],
+                cls=CommCareJSONEncoder
+            ))
+        )
 
 
 class GeoCoderInput(Input):

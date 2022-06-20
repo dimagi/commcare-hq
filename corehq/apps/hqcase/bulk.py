@@ -4,7 +4,7 @@ from xml.etree import cElementTree as ElementTree
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
 from corehq.form_processor.models import CommCareCase
 
-from .utils import CASEBLOCK_CHUNKSIZE, SYSTEM_FORM_XMLNS, submit_case_blocks
+from .utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 
 
 @dataclass(frozen=True)
@@ -12,7 +12,6 @@ class SystemFormMeta:
     user_id: str = SYSTEM_USER_ID
     username: str = SYSTEM_USER_ID
     device_id: str = SYSTEM_USER_ID
-    xmlns: str = SYSTEM_FORM_XMLNS
 
     @classmethod
     def for_script(cls, name, username=None):
@@ -28,7 +27,6 @@ class SystemFormMeta:
 
         return cls(
             device_id=name,
-            xmlns=f"http://commcarehq.org/script/{name.split('.')[-1]}",
             **user_kwargs,
         )
 
@@ -64,7 +62,6 @@ class CaseBulkDB:
                 case_blocks,
                 self.domain,
                 device_id=self.form_meta.device_id,
-                xmlns=self.form_meta.xmlns,
                 user_id=self.form_meta.user_id,
                 username=self.form_meta.username,
             )

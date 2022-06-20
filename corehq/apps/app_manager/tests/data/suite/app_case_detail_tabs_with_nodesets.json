@@ -632,6 +632,7 @@
                             "has_nodeset":true,
                             "nodeset":"",
                             "nodeset_case_type":"show",
+                            "nodeset_filter":"biggest_fan = #user/username",
                             "isTab":true,
                             "header":{  
                                 "en":"Data"

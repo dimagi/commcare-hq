@@ -12,7 +12,6 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.enterprise.tests.utils import (
     create_enterprise_permissions,
-    cleanup_accounting,
     get_enterprise_software_plan,
     get_enterprise_account,
     add_domains_to_enterprise_account,
@@ -74,7 +73,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         one_year_ago = add_months_to_date(datetime.datetime.utcnow(), -12)
         enterprise_plan = get_enterprise_software_plan()
         cls.enterprise_account = get_enterprise_account()
-        cls.addClassCleanup(cleanup_accounting)
         add_domains_to_enterprise_account(
             cls.enterprise_account,
             [cls.emw_domain],

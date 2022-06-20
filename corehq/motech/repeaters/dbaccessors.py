@@ -308,3 +308,30 @@ def delete_all_repeaters():
     from .models import Repeater
     for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
         Repeater.wrap(repeater['doc']).delete()
+
+
+def get_all_repeater_docs():
+    from .models import Repeater
+    results = Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all()
+    return [
+        repeater['doc'] for repeater in results
+        if Repeater.get_class_from_doc_type(repeater['doc']['doc_type'])
+    ]
+
+
+def get_repeater_count_for_domains(domains):
+    from .models import Repeater
+    view_kwargs = {
+        'reduce': True,
+        'include_docs': False,
+    }
+    count = 0
+    for domain in domains:
+        view_kwargs.update({
+            'startkey': [domain],
+            'endkey': [domain, {}]
+        })
+        result = Repeater.get_db().view('repeaters/repeaters', **view_kwargs).first()
+        if result:
+            count += result['value']
+    return count

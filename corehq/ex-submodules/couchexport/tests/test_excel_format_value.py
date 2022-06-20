@@ -1,13 +1,12 @@
 import datetime
 from decimal import Decimal
 
+from openpyxl.styles import numbers
 from testil import eq
 
-from dateutil.tz import tzoffset, tzlocal
-from openpyxl.styles import numbers
-
-from corehq.apps.export.const import MISSING_VALUE, EMPTY_VALUE
 from couchexport.util import get_excel_format_value
+
+from corehq.apps.export.const import EMPTY_VALUE, MISSING_VALUE
 
 
 def check(input, output, format, output_type):
@@ -107,18 +106,16 @@ def test_datetime():
         datetime.datetime(2020, 1, 20, 13, 33, 22), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 09:33:22.890000-6:00', \
-        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
-                          tzinfo=tzoffset(None, -21600)), \
+        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-20 09:33:22.890000-6', \
-        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000,
-                          tzinfo=tzoffset(None, -21600)), \
+        datetime.datetime(2020, 1, 20, 9, 33, 22, 890000), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, datetime.datetime(2020, 1, 20, 11, 11), \
         datetime.datetime(2020, 1, 20, 11, 11), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, '2020-01-17T15:45:37.268000Z', \
-        datetime.datetime(2020, 1, 17, 15, 45, 37, 268000, tzinfo=tzlocal()), \
+        datetime.datetime(2020, 1, 17, 15, 45, 37, 268000), \
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
 
 

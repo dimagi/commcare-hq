@@ -561,9 +561,9 @@ class LocationFilterForm(forms.Form):
     SHOW_ALL = 'show_all'
 
     LOCATION_ACTIVE_STATUS = (
-        (SHOW_ALL, _('Show All')),
-        (ACTIVE, _('Only Active')),
-        (ARCHIVED, _('Only Archived'))
+        (SHOW_ALL, gettext_lazy('Show All')),
+        (ACTIVE, gettext_lazy('Only Active')),
+        (ARCHIVED, gettext_lazy('Only Archived'))
     )
 
     location_id = forms.CharField(

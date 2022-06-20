@@ -14,6 +14,7 @@ from nose.tools import assert_equal, assert_true
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.requests import Requests
 
 dhis2_version = "2.32.2"
@@ -211,6 +212,11 @@ class SlowApiVersionTest(TestCase):
             "username": "admin",
             "password": "district",
         })
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_repeaters()
+        return super().tearDownClass()
 
     def test_none_fetches_metadata(self):
         self.assertIsNone(self.repeater.dhis2_version)

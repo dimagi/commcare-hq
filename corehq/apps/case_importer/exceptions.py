@@ -22,10 +22,6 @@ class ImporterFileNotFound(ImporterError):
     """Raised when a referenced file can't be found"""
 
 
-class ImporterRefError(ImporterError):
-    """Raised when a Soil download ref is None"""
-
-
 class ImporterExcelError(ImporterError, xlrd.XLRDError):
     """
     Generic error raised for any error parsing an Excel file

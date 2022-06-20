@@ -1,3 +1,4 @@
+from corehq.apps.userreports.util import wrap_report_config_by_type
 import textwrap
 from collections import OrderedDict
 from copy import deepcopy
@@ -120,7 +121,7 @@ def clean_filters(json_spec):
 
 def clean_columns(json_spec):
     static_config = StaticReportConfiguration.wrap(deepcopy(json_spec))
-    report_config = ReportConfiguration.wrap(static_config.config)
+    report_config = wrap_report_config_by_type(static_config.config)
     cleaned_columns = []
     for col_spec, wrapped_col in zip(json_spec['config']['columns'],
                                      report_config.report_columns):

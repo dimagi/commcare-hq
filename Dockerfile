@@ -18,7 +18,8 @@ RUN apt-get update \
      wget \
      libxml2-dev \
      libxmlsec1-dev \
-     libxmlsec1-openssl
+     libxmlsec1-openssl \
+     gettext
 
 # Install latest chrome dev package and fonts to support major
 # charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
