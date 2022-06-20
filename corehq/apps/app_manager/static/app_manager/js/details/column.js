@@ -45,19 +45,20 @@ hqDefine("app_manager/js/details/column", function () {
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
-        // Set up tab attributes
+        // Set up tab defaults
         var tabDefaults = {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
-            // Blank string is meaningful for nodesetCaseType (indicating a custom expression), so be strict here
-            nodesetCaseType: _.has(self.original, "nodesetCaseType") ? self.original.nodesetCaseType : screen.childCaseTypes[0] || "",
+            nodesetCaseType: "",
             nodesetFilter: "",
             relevant: "",
         };
-        _.each(_.keys(tabDefaults), function (key) {
-            self.original[key] = self.original[key] || tabDefaults[key];
-        });
+        self.original = _.defaults(self.original, tabDefaults);
+        if (!self.original.nodeset && screen.childCaseTypes && screen.childCaseTypes.length) {
+            // If there's no nodeset but there are child case types, default to showing a case type
+            self.original.nodesetCaseType = screen.childCaseTypes[0];
+        }
         _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
         self.screen = screen;
