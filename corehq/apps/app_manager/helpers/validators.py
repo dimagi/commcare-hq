@@ -337,30 +337,9 @@ class ModuleBaseValidator(object):
                 needs_case_type=needs_case_type,
                 needs_case_detail=needs_case_detail
             ))
-        if self.module.case_list_form.form_id:
-            try:
-                form = app.get_form(self.module.case_list_form.form_id)
-            except FormNotFoundException:
-                errors.append({
-                    'type': 'case list form missing',
-                    'module': self.get_module_info()
-                })
-            else:
-                if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
-                    if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
-                        errors.append({
-                            'type': 'invalid case list followup form',
-                            'module': self.get_module_info(),
-                            'form': form,
-                        })
-                elif not form.is_registration_form(self.module.case_type):
-                    errors.append({
-                        'type': 'case list form not registration',
-                        'module': self.get_module_info(),
-                        'form': form,
-                    })
+
+        errors.extend(self.validate_case_list_form())
+
         if self.module.module_filter:
             is_valid, message = validate_xpath(self.module.module_filter)
             if not is_valid:
@@ -451,6 +430,38 @@ class ModuleBaseValidator(object):
 
         for form in self.module.get_suite_forms():
             errors.extend(form.validator.validate_for_module(self.module))
+
+        return errors
+
+    def validate_case_list_form(self):
+        if not self.module.case_list_form.form_id:
+            return []
+
+        errors = []
+        app = self.module.get_app()
+        try:
+            form = app.get_form(self.module.case_list_form.form_id)
+        except FormNotFoundException:
+            errors.append({
+                'type': 'case list form missing',
+                'module': self.get_module_info()
+            })
+        else:
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
+                    errors.append({
+                        'type': 'invalid case list followup form',
+                        'module': self.get_module_info(),
+                        'form': form,
+                    })
+            elif not form.is_registration_form(self.module.case_type):
+                errors.append({
+                    'type': 'case list form not registration',
+                    'module': self.get_module_info(),
+                    'form': form,
+                })
 
         return errors
 
