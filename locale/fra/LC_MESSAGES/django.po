@@ -13473,6 +13473,7 @@ msgid "Edit Column"
 msgstr "Modifier la colonne"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/reports/views.py
 msgid "Title"
 msgstr "Titre"
 
