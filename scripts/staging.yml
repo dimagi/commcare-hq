@@ -83,4 +83,5 @@ branches:
     - ml/all-in-one-offboarding  # Minha April 13
     - sk/rename-permission-classes
     - cs/fix-case-owner-location-parent # Charl Jun 20
+    - dm/lookup-table-uploader # Daniel Jun 20
 submodules: { }
