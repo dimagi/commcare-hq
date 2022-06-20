@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 function abort () {
     echo $@
     echo "Aborting."
@@ -5,10 +6,10 @@ function abort () {
 }
 
 echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' --add-location file "$@"
+./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs/_build' --ignore 'coverage-report' --add-location file "$@"
 
 echo "Gathering javascript translation strings.  This will also probably take a while"
-./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' --add-location file "$@"
+./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'docs' --ignore 'coverage-report' --add-location file "$@"
 
 echo "Compiling translation files."
 if ! ./manage.py compilemessages; then
@@ -24,13 +25,9 @@ if ! ./manage.py compilemessages; then
     abort
 fi
 
-# Remove diffs for files where the only thing that changed was POT-Creation-Date
-# Todo: It's a bit hacky that this relies on git state to undo unncessary changes
-# Todo: Ideally we'd change the management commands above to just not produce the diff in the first place
+# Remove POT-Creation-Date which changes every time and is conflict-prone
 git diff --name-only | grep '^locale/' | while read -r filename
 do
-    if ! git diff -U0 -- "$filename" | tail -n +6 | grep -v '^[+-]"POT-Creation-Date:\s' > /dev/null
-    then
-        git checkout -- "$filename"
-    fi
+    sed -i.bak '/^"POT-Creation-Date: .*"$/d' "$filename"
+    rm "${filename}.bak"
 done

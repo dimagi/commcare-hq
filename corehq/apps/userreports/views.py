@@ -95,7 +95,10 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     TEMP_REPORT_PREFIX,
 )
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_and_registry_report_configs_for_domain
+)
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -163,6 +166,7 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
+    wrap_report_config_by_type,
 )
 from corehq.apps.users.decorators import (
     get_permission_name,
@@ -912,7 +916,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
             if '_id' in json_spec:
                 del json_spec['_id']
             json_spec['domain'] = self.domain
-            report = ReportConfiguration.wrap(json_spec)
+            report = wrap_report_config_by_type(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
@@ -1206,7 +1210,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
-        reports += ReportConfiguration.by_domain(self.domain)
+        reports += get_report_and_registry_report_configs_for_domain(self.domain)
         ret = []
         for report in reports:
             try:
