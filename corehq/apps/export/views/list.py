@@ -980,7 +980,7 @@ class ODataFeedListHelper(ExportListHelper):
     @memoized
     def odata_feed_limit(self):
         domain_object = Domain.get_by_name(self.domain)
-        return domain_object.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
+        return domain_object.get_odata_feed_limit()
 
     @property
     def create_export_form_title(self):

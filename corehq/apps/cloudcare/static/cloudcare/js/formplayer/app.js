@@ -129,6 +129,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         formplayerLoadingComplete();
     });
 
+    FormplayerFrontend.on('clearNotifications', function () {
+        $("#cloudcare-notifications").empty();
+    });
+
     FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
         if (isHTML) {
             showHTMLError(errorMessage, $("#cloudcare-notifications"));
@@ -374,6 +378,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         cloudCareDebugger = new CloudCareDebugger({
             baseUrl: user.formplayer_url,
             selections: urlObject.selections,
+            queryData: urlObject.queryData,
             username: user.username,
             restoreAs: user.restoreAs,
             domain: user.domain,

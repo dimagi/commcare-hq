@@ -159,6 +159,20 @@
       </label>
     </div>
   </script>
+
+  <script type="text/html" id="module-case-detail-tab-nodeset-template">
+    <div>
+        <select class="form-control" data-bind="options: dropdownOptions, optionsText: 'name', optionsValue: 'value', value: nodesetCaseType" style="margin-bottom: 5px;"></select>
+        <button class="btn btn-default btn-xs" data-bind="visible: !showFilter() && !showXpath(), click: function () { showFilter(true); }">
+          <i class="fa fa-plus"></i> {% trans "Add filter" %}
+        </button>
+        <input type="text" class="form-control" data-bind="value: nodesetFilter, visible: showFilter" placeholder="{% trans_html_attr "referral = 'y'" %}" />
+        <textarea class="form-control" data-bind="value: nodeset, visible: showXpath" /></textarea>
+        {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+          <p data-bind="visible: showXpath() && nodeset()" class="help-block">{% trans "This data will not be shown for case search results." %}</p>
+        {% endif %}
+    </div>
+  </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}

@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler
+from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
     SsoSamlEnterpriseSettingsForm,
@@ -38,6 +38,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     template_name = 'sso/enterprise_admin/edit_identity_provider.html'
     async_handlers = [
         SSOExemptUsersAdminAsyncHandler,
+        SsoTestUserAdminAsyncHandler,
     ]
 
     @property
@@ -63,6 +64,10 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
+            'toggle_client_secret': (
+                self.identity_provider.protocol == IdentityProviderProtocol.OIDC
+                and self.identity_provider.client_secret
+            ),
         }
 
     @property

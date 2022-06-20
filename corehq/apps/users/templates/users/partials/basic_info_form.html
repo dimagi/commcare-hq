@@ -2,7 +2,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<form class="form form-horizontal" name="user_information" method="post">
+<form id="user_information"
+      name="user_information"
+      class="form form-horizontal"
+      method="post">
   <input type="hidden" name="form_type" value="update-user" />
   <fieldset>
     <legend>{{ edit_user_form_title }}</legend>

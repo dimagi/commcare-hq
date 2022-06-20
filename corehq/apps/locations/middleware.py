@@ -2,8 +2,6 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.hqwebapp.views import no_permissions
-from corehq.apps.users.models import AnonymousCouchUser
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = gettext_lazy("""
@@ -46,12 +44,7 @@ class LocationAccessMiddleware(MiddlewareMixin):
         if not domain or not user or not user.is_member_of(domain):
             # This is probably some non-domain page or a test, let normal auth handle it
             request.can_access_all_locations = True
-        elif (
-            user.has_permission(domain, 'access_all_locations') or (
-                isinstance(user, AnonymousCouchUser) and
-                PUBLISH_CUSTOM_REPORTS.enabled(domain)
-            )
-        ):
+        elif user.has_permission(domain, 'access_all_locations'):
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False

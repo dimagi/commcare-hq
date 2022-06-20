@@ -63,7 +63,7 @@ class EQAExpressionSpec(JsonObject):
     display_text = StringProperty()
     xmlns = StringProperty()
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         curr_form, prev_form = get_two_last_forms(item, self.xmlns)
 
         path_question = 'form/%s' % self.question_id
@@ -86,7 +86,7 @@ class EQAActionItemSpec(JsonObject):
     section = StringProperty()
     question_id = StringProperty()
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
         forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
         f_forms = [f for f in forms if f.xmlns == self.xmlns]
@@ -143,7 +143,7 @@ class EQAPercentExpression(JsonObject):
     display_text = StringProperty()
     xmlns = StringProperty()
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         curr_form, prev_form = get_two_last_forms(item, self.xmlns)
 
         path_question = 'form/%s' % self.question_id
@@ -169,16 +169,16 @@ class EQAPercentExpression(JsonObject):
         }
 
 
-def eqa_expression(spec, context):
+def eqa_expression(spec, factory_context):
     wrapped = EQAExpressionSpec.wrap(spec)
     return wrapped
 
 
-def cqi_action_item(spec, context):
+def cqi_action_item(spec, factory_context):
     wrapped = EQAActionItemSpec.wrap(spec)
     return wrapped
 
 
-def eqa_percent_expression(spec, context):
+def eqa_percent_expression(spec, factory_context):
     wrapped = EQAPercentExpression.wrap(spec)
     return wrapped

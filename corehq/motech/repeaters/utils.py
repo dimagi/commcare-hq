@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from memoized import memoized
 
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import (
@@ -9,6 +10,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeater_count_for_domains,
     get_repeaters_by_domain,
 )
+from corehq.motech.repeaters.models import Repeater
 
 
 class RepeaterMigrationHelper(PopulateSQLCommand):
@@ -104,12 +106,31 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
             defaults={**default_obj, **options_obj})
         return model, created
 
+    def sanitize_repeater_docs(self, repeater_docs):
+        """
+        There were some instances where we found that repeaters exist without a connection settings id.
+        This causes the migration to fail.
+        The function deletes those repeaters as they are useless without a valid connection_settings
+        """
+        sanitized_docs = []
+        for r in repeater_docs:
+            repeater = Repeater.wrap(r)
+            try:
+                conn = repeater.connection_settings # noqa F841
+                sanitized_docs.append(r)
+            except (ConnectionSettings.DoesNotExist, IntegrityError):
+                print(f"""{repeater.doc_type} with id {repeater._id} configured for domain {repeater.domain} is unusable.
+                It does not have valid connection settings info. The Repeater is being archived.""")
+                repeater.delete(sync_to_sql=False)
+        return sanitized_docs
+
     @memoized
     def _get_all_couch_docs_for_model(self):
-        return [
+        repeater_docs = [
             repeater for repeater in get_all_repeater_docs()
             if repeater['doc_type'] == self.couch_doc_type()
         ]
+        return self.sanitize_repeater_docs(repeater_docs)
 
     def _get_couch_doc_count_for_type(self):
         return len(self._get_all_couch_docs_for_model())

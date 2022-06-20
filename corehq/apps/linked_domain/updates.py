@@ -1,4 +1,5 @@
 from copy import copy
+from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
@@ -41,6 +42,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_LOCATION_DATA,
     MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
+    MODEL_UCR_EXPRESSION,
     MODEL_USER_DATA,
     MODEL_REPORT,
     MODEL_ROLES,
@@ -99,7 +101,7 @@ from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
@@ -128,6 +130,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
+        MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -511,9 +514,10 @@ def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.
     """
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
+    report_configs = get_report_and_registry_report_configs_for_domain(domain_link.linked_domain)
     report_map.update({
         c.report_meta.master_id: c._id
-        for c in get_report_configs_for_domain(domain_link.linked_domain)
+        for c in report_configs
     })
 
     for role_def in master_results:

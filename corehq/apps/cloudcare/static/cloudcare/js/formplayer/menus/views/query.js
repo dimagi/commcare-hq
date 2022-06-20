@@ -164,12 +164,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
+                hasError: this.hasError,
             };
         },
 
         initialize: function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
+            this.hasError = false;
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -186,12 +188,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
+            date: 'input.date',
             queryField: '.query-field',
             searchForBlank: '.search-for-blank',
         },
 
         events: {
             'change @ui.queryField': 'changeQueryField',
+            'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -199,14 +203,57 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'change': 'render',
         },
 
+        _isValid: function () {
+            if (!this.model.get('required')) {
+                return true;
+            }
+
+            var answer = this.getEncodedValue();
+            return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
+        },
+
+        isValid: function () {
+            var hasError = !this._isValid();
+            if (hasError !== this.hasError) {
+                this.hasError = hasError;
+                this.render();
+            }
+            return !this.hasError;
+        },
+
+        clear: function () {
+            var self = this;
+            self.model.set('value', '');
+            self.model.set('searchForBlank', false);
+            if (self.ui.date.length) {
+                self.ui.date.data("DateTimePicker").clear();
+            }
+        },
+
+        getEncodedValue: function () {
+            if (this.model.get('input') === 'address') {
+                return;  // skip geocoder address
+            }
+            var queryValue = $(this.ui.queryField).val(),
+                searchForBlank = $(this.ui.searchForBlank).prop('checked');
+            return encodeValue(this.model, queryValue, searchForBlank);
+        },
+
         changeQueryField: function (e) {
-            if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+            if (this.model.get('input') === 'date') {
+                // Skip because dates get handled by changeDateQueryField
+                return;
+            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.parentView.setStickyQueryInputs();
+        },
+        changeDateQueryField: function (e) {
+            this.changeQueryField(e);
             this.parentView.setStickyQueryInputs();
         },
 
@@ -234,6 +281,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
+            this.ui.date.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+                format: dateFormat,
+            }));
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -302,19 +352,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         getAnswers: function () {
-            var $inputGroups = $(".query-input-group"),
-                answers = {},
-                model = this.parentModel;
-            $inputGroups.each(function (index) {
-                if (model[index].get('input') === 'address') {
-                    return;  // skip geocoder address
-                }
-                var queryValue = $(this).find('.query-field').val(),
-                    fieldId = model[index].get('id'),
-                    searchForBlank = $(this).find('.search-for-blank').prop('checked'),
-                    encodedValue = encodeValue(model[index], queryValue, searchForBlank);
+            var answers = {};
+            this.children.each(function (childView) {
+                var encodedValue = childView.getEncodedValue();
                 if (encodedValue !== undefined) {
-                    answers[fieldId] = encodedValue;
+                    answers[childView.model.get('id')] = encodedValue;
                 }
             });
             return answers;
@@ -363,11 +405,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            _.each(self.collection.models, function (model) {
-                model.set('value', '');
-                model.set('searchForBlank', false);
-                if (model.get('input') === 'address') {
-                    initMapboxWidget(model);
+            this.children.each(function (childView) {
+                childView.clear();
+                if (childView.model.get('input') === 'address') {
+                    initMapboxWidget(childView.model);
                 }
             });
             self.setStickyQueryInputs();
@@ -375,6 +416,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
+            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
+
+            var invalidFields = [];
+            this.children.each(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            if (invalidFields.length) {
+                var errorHTML = "Please enter values for the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true);
+                return;
+            }
+
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
 

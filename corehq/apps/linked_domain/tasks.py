@@ -6,6 +6,8 @@ from django.utils.translation import gettext as _
 
 from celery import chord
 from celery.task import task
+from corehq.apps.linked_domain.ucr_expressions import create_linked_ucr_expression, update_linked_ucr_expression
+from corehq.apps.userreports.models import UCRExpression
 
 from dimagi.utils.logging import notify_exception
 
@@ -19,6 +21,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    MODEL_UCR_EXPRESSION,
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -29,6 +32,7 @@ from corehq.apps.linked_domain.keywords import (
 from corehq.apps.linked_domain.models import (
     KeywordLinkDetail,
     ReportLinkDetail,
+    UCRExpressionLinkDetail,
 )
 from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
@@ -195,6 +199,25 @@ The following linked project spaces received content:
             model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
         )
 
+    def _release_ucr_expression(self, domain_link, model, user_id):
+        upstream_id = model['detail']['ucr_expression_id']
+        try:
+            linked_ucr_expression_id = UCRExpression.objects.values_list(
+                'id', flat=True
+            ).get(
+                domain=domain_link.linked_domain, upstream_id=upstream_id
+            )
+        except UCRExpression.DoesNotExist:
+            linked_ucr_expression_id = create_linked_ucr_expression(domain_link, upstream_id)
+        else:
+            update_linked_ucr_expression(domain_link, linked_ucr_expression_id)
+
+        domain_link.update_last_pull(
+            MODEL_UCR_EXPRESSION,
+            user_id,
+            model_detail=UCRExpressionLinkDetail(ucr_expression_id=str(linked_ucr_expression_id)).to_json(),
+        )
+
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
         domain_link.update_last_pull(model['type'], user._id, model_detail=model['detail'])
@@ -226,6 +249,8 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
                                                                FEATURE_FLAG_DATA_MODEL_TOGGLES[model['type']])
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model, manager.user._id)
+            elif model['type'] == MODEL_UCR_EXPRESSION:
+                errors = manager._release_ucr_expression(domain_link, model, manager.user._id)
             else:
                 manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad

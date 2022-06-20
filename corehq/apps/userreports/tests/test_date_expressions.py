@@ -201,3 +201,18 @@ def test_gregorian_to_ethiopian_expression(self, source_doc, expected_value):
         'date_expression': date_expression,
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({"type": "constant", "constant": '2021-10-11'}, '2014-02-01'),
+    ({"type": "constant", "constant": '2021-10-9'}, '2014-01-29'),
+])
+def test_gregorian_to_ethiopian_expression_constant(self, expression, expected_value):
+    """
+        Used to fail with BadValueError: datetime.date(2020, 9, 9) is not a date-formatted string
+    """
+    wrapped_expression = ExpressionFactory.from_spec({
+        'type': 'gregorian_date_to_ethiopian_date',
+        'date_expression': expression,
+    })
+    self.assertEqual(expected_value, wrapped_expression({"foo": "bar"}))
