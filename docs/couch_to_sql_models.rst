@@ -45,7 +45,7 @@ This should contain:
 
 - A new model and a management command that fetches all couch docs and creates or updates the corresponding SQL model(s).
 
-  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file, a new management command and also a test which will ensure that the couch model and sql model has same attributes.
+  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file, a new management command and also a test which will ensure that the couch model and sql model have the same attributes.
 
     - The reason to run on production is that it will examine existing documents to help determine things like ``max_length``. This also means it can take a while. If you have reasonable data locally, running it locally is fine - but since the sql class will often have stricter data validation than couch, it's good to run it on prod at some point.
 
@@ -73,12 +73,12 @@ This should contain:
 
   - Run ``makemigrations``
   - Add the test that was generated to it's respective place.
-    - The test file uses `ModelAttrEquality` util which has mehods for running the equality tests.
-    - The test class that is generated will have three methods namely `_couch_only_attrs`,  `_sql_only_attrs` and `test_have_same_attrs`.
+    - The test file uses a `ModelAttrEquality` util which has methods for running the equality tests.
+    - The test class that is generated will have three methods: `_couch_only_attrs`, `_sql_only_attrs` and `test_have_same_attrs`.
     - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `_couch_only_attrs` and `_sql_only_attrs`.
     - `_couch_only_attrs` is supposed to return a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
-    - `_sql_only_attrs` would return a set of attributes and methods that are added newly in the SQL model.
-    - `test_have_same_attrs` is the test method that would run to test the equality of the attributes. The default implementation should work if you have populated above methods but you can modify it's implementation as per your requirement.
+    - `_sql_only_attrs` would return a set of attributes and methods that are new in the SQL model.
+    - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated the above methods but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
     - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
