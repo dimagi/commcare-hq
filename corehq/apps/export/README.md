@@ -13,11 +13,11 @@ Example:
 
 Suppose there exists the following app builds
 
-| app_id  | build_version | questions |
-|---|---|---|
-| 1234  | 12 (current) | q1,q2,q4   |
-| 1234  | 10  | q1,q3   |
-| 1234  | 1  | q1,q2,q3   |
+| app_id | build_version | questions |
+|--------|---------------|-----------|
+| 1234   | 12 (current)  | q1,q2,q4  |
+| 1234   | 10            | q1,q3     |
+| 1234   | 1             | q1,q2,q3  |
 
 Below illustrates what the schema will look like after processing each app from beginning to current.
 The example schema is simplified for understanding. Each question has an app_id and version associated with it.
