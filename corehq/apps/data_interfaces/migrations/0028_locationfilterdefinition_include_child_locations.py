@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='locationfilterdefinition',
             name='include_child_locations',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(default=True),
         ),
     ]
