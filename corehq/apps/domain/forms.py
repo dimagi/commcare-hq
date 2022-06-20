@@ -114,7 +114,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, Ge
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
+    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, SYNC_SEARCH_CASE_CLAIM, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -374,6 +374,13 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
+    web_apps_sync_case_search = BooleanField(
+        label=gettext_lazy("Synchronous web apps case search"),
+        required=False,
+        help_text=gettext_lazy("Update case search ElasticSearch data immediately on web apps form submission. "
+                               "This will slow down submissions but prevent case search data from going stale.")
+    )
+
     mobile_ucr_sync_interval = IntegerField(
         label=gettext_lazy("Default mobile report sync delay (hours)"),
         required=False,
@@ -405,6 +412,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[10] = twbscrispy.PrependedText('web_apps_sync_case_search', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -433,6 +441,9 @@ class DomainGlobalSettingsForm(forms.Form):
                     reverse(CallCenterOwnerOptionsView.url_name, args=(self.domain,))
                 )
                 owner_field.widget.set_domain(self.domain)
+
+        if not SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
+            del self.fields['web_apps_sync_case_search']
 
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
@@ -532,6 +543,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
+        domain.web_apps_sync_case_search = self.cleaned_data.get('web_apps_sync_case_search', None)
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:

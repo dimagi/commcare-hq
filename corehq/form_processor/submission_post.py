@@ -24,6 +24,7 @@ from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
@@ -450,6 +451,10 @@ class SubmissionPost(object):
     @staticmethod
     def send_to_elasticsearch(instance):
         if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+            return
+
+        domain_obj = Domain.get_by_name(instance.domain)
+        if not domain_obj or not domain_obj.web_apps_sync_case_search:
             return
 
         from casexml.apps.case.xform import extract_case_blocks
