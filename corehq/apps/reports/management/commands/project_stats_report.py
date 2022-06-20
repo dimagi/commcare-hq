@@ -83,6 +83,10 @@ class ResourceModel(object):
 resource_model_stats_dict = {key: '' for key in RESOURCE_MODEL_STATS}
 resource_model = ResourceModel(resource_model_stats_dict)
 
+db_aliases = get_db_aliases_for_partitioned_query()
+DB_ALIAS = db_aliases[0]
+PARTITIONS_COUNT = len(db_aliases)
+
 
 class Month(Func):
     function = 'EXTRACT'
@@ -266,16 +270,15 @@ class Command(BaseCommand):
         case_ids = set()
         ledger_count = 0
 
-        for db_name in get_db_aliases_for_partitioned_query():
-            results = (
-                LedgerValue.objects.using(db_name).filter(domain=self.domain)
-                .values('case_id')
-                .annotate(ledger_count=Count('pk'))
-            )
+        results = (
+            LedgerValue.objects.using(DB_ALIAS).filter(domain=self.domain)
+            .values('case_id')
+            .annotate(ledger_count=Count('pk'))
+        )
 
-            for result in results:
-                case_ids.add(result['case_id'])
-                ledger_count += result['ledger_count']
+        for result in results:
+            case_ids = result['case_id']
+            ledger_count = result['ledger_count']
 
         if not case_ids:
             self.stdout.write("Domain has no ledgers")
@@ -292,9 +295,8 @@ class Command(BaseCommand):
         self.stdout.write('\nCase Types with Ledgers')
         for type_ in case_types:
             self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
-            db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
             results = (
-                CommCareCase.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
+                CommCareCase.objects.using(DB_ALIAS).filter(domain=self.domain, closed=True, type=type_)
                 .annotate(lifespan=F('closed_on') - F('opened_on'))
                 .annotate(avg_lifespan=Avg('lifespan'))
                 .values('avg_lifespan', flat=True)
@@ -323,24 +325,49 @@ class Command(BaseCommand):
         self.stdout.write('Ledger updates per case')
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
 
-    def collect_attachment_sizes(self):
-        result = []
+    def _cases_created_per_user_per_month(self, case_type=None):
+        query = (
+            CaseES(for_export=True).domain(self.domain)
+            .opened_range(gte=self.date_start, lt=self.date_end)
+            .aggregation(
+                TermsAggregation('cases_per_user', 'owner_id', size=100)
+                .aggregation(DateHistogram('cases_by_date', 'opened_on', DateHistogram.Interval.MONTH)))
+        )
+        if case_type:
+            query = query.case_type(case_type)
 
-        for db_name in get_db_aliases_for_partitioned_query():
-            with BlobMeta.get_cursor_for_partition_db(db_name, readonly=True) as cursor:
-                cursor.execute("""
-                    SELECT
-                        meta.content_type,
-                        width_bucket(content_length, 0, 2900000, 10) AS bucket,
-                        min(content_length) as bucket_min, max(content_length) AS bucket_max,
-                        count(content_length) AS freq
-                    FROM blobs_blobmeta meta INNER JOIN form_processor_xforminstancesql
-                      ON meta.parent_id = form_processor_xforminstancesql.form_id
-                    WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
-                    GROUP BY content_type, bucket
-                    ORDER BY content_type, bucket
-                """, [self.domain])
-                result = result + [i for i in fetchall_as_namedtuple(cursor)]
+        results = query.size(0).run()
+
+        stats = defaultdict(list)
+        for bucket in results.aggregations.cases_per_user.buckets_list:
+            for month, count in bucket.cases_by_date.counts_by_bucket().items():
+                stats[month].append(count)
+
+        final_stats = []
+        for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
+            final_stats.append((month, sum(case_count_list) // len(case_count_list)))
+
+        suffix = ''
+        if case_type:
+            suffix = '(case type: %s)' % case_type
+        self.stdout.write('Cases created per user (estimate)')
+        self._print_table(['Month', 'Cases created per user %s' % suffix], final_stats)
+
+    def collect_attachment_sizes(self):
+        with BlobMeta.get_cursor_for_partition_db(DB_ALIAS, readonly=True) as cursor:
+            cursor.execute("""
+                SELECT
+                    meta.content_type,
+                    width_bucket(content_length, 0, 2900000, 10) AS bucket,
+                    min(content_length) as bucket_min, max(content_length) AS bucket_max,
+                    count(content_length) AS freq
+                FROM blobs_blobmeta meta INNER JOIN form_processor_xforminstancesql
+                  ON meta.parent_id = form_processor_xforminstancesql.form_id
+                WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
+                GROUP BY content_type, bucket
+                ORDER BY content_type, bucket
+            """, [self.domain])
+            result = [i for i in fetchall_as_namedtuple(cursor)]
 
         resource_model['attachments'] = result
 
@@ -383,63 +410,45 @@ class Command(BaseCommand):
         resource_model['datasources_info'] = rows
 
     def collect_case_transactions(self):
-        total_form_case_updates = 0
-        total_forms = 0
-        total_transactions = 0
+        db_cursor = connections[DB_ALIAS].cursor()
 
-        for db_name in get_db_aliases_for_partitioned_query():
-            db_cursor = connections[db_name].cursor()
-
-            with db_cursor as cursor:
-                cursor.execute("""
-                    SELECT COUNT(*) as num_forms, sum(d.count) as num_updates
-                    FROM (
-                        SELECT COUNT(*) as count
-                        FROM form_processor_casetransaction t
-                        JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
-                        WHERE c.domain = %s
-                        GROUP BY form_id
-                    ) AS d
-                """, [self.domain])
-                result = cursor.fetchall()
-                forms, form_case_updates = (0, 0)
-                if result:
-                    forms, form_case_updates = result[0]
-
-                total_forms += forms
-                total_form_case_updates += form_case_updates
-
-                cursor.execute("""
+        with db_cursor as cursor:
+            cursor.execute("""
+                SELECT COUNT(*) as num_forms, sum(d.count) as num_updates
+                FROM (
                     SELECT COUNT(*) as count
                     FROM form_processor_casetransaction t
                     JOIN form_processor_commcarecasesql c on t.case_id = c.case_id
                     WHERE c.domain = %s
-                """, [self.domain])
-                (transactions,) = cursor.fetchone()
-                total_transactions += transactions
+                    GROUP BY form_id
+                ) AS d
+            """, [self.domain])
+            result = cursor.fetchall()
+            forms, form_case_updates = (0, 0)
+            if result:
+                forms, form_case_updates = result[0]
 
-        resource_model['case_transactions_per_form'] = total_form_case_updates / total_forms
-        resource_model['case_transactions_total'] = total_transactions
+        resource_model['case_transactions_per_form'] = round(form_case_updates / forms, 2)
+        resource_model['case_transactions_total'] = form_case_updates * PARTITIONS_COUNT
 
     def collect_case_indices(self):
-        total_case_indices = 0
-        for db_name in get_db_aliases_for_partitioned_query():
-            db_cursor = connections[db_name].cursor()
+        db_cursor = connections[DB_ALIAS].cursor()
 
-            with db_cursor as cursor:
-                cursor.execute("""
-                    SELECT COUNT(*)
-                    FROM form_processor_commcarecaseindexsql
-                    WHERE domain = %s;
-                """, [self.domain])
-                (case_indices,) = cursor.fetchone()
-                total_case_indices += case_indices
+        with db_cursor as cursor:
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM form_processor_commcarecaseindexsql
+                WHERE domain = %s;
+            """, [self.domain])
+            (case_indices,) = cursor.fetchone()
 
         total_cases = resource_model['cases_total']
         if total_cases > 0:
-            resource_model['case_index_ratio'] = total_case_indices/total_cases
+            # total_cases are already multiplied by PARTITIONS_COUNT,
+            # so case_indices needs to also be multiplied in order to cancel out that factor
+            resource_model['case_index_ratio'] = (case_indices * PARTITIONS_COUNT) / total_cases
         else:
-            resource_model['case_index_ratio'] = 0
+            resource_model['case_index_ratio'] = None
 
     def collect_synclogs(self):
         db_name = router.db_for_read(SyncLogSQL)
@@ -494,6 +503,7 @@ class Command(BaseCommand):
         self._output_case_transactions()
 
         self._print_section_title('Sync logs')
+        self.stdout.write('** Synclogs are pruned every so often, so this numbers might be misleading')
         self._output_synclogs()
 
         self._print_section_title('Device logs')
@@ -557,7 +567,11 @@ class Command(BaseCommand):
 
     def _output_case_ratio_index(self):
         case_index_ratio = resource_model['case_index_ratio']
-        self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
+
+        if case_index_ratio is None:
+            self.stdout.write(f'Ratio of cases to case indices: indeterminate')
+        else:
+            self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
     def _output_attachment_sizes(self):
         attachments = resource_model['attachments']
