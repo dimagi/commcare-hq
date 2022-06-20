@@ -197,14 +197,11 @@ class ProjectReportsTab(UITab):
 
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
-        items = [
-            {
-                'title': viz.name,
-                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-                'show_in_dropdown': i < 2,
-            }
-            for i, viz in enumerate(TableauVisualization.for_user(self.domain, self.couch_user))
-        ]
+        items = [{
+            'title': viz.title or viz.name,
+            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+            'show_in_dropdown': False,
+        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return [(_("Tableau Reports"), items)] if items else []
 
