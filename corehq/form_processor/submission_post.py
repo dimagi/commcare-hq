@@ -463,10 +463,18 @@ class SubmissionPost(object):
         case_ids = [info.get('@case_id') for info in extract_case_blocks(instance)]
         cases = CommCareCase.objects.get_cases(case_ids)
         for instance_case in cases:
-            send_to_elasticsearch(
-                "case_search",
-                transform_case_for_elasticsearch(instance_case.to_json()),
-            )
+            try:
+                send_to_elasticsearch(
+                    "case_search",
+                    transform_case_for_elasticsearch(instance_case.to_json()),
+                )
+            except Exception:
+                # Skip all errors - the regular case search pillow is going to reprocess these anyway
+                notify_exception(None, "Error updating case_search ES index during form processing", details={
+                    'xml': instance,
+                    'case_id': instance_case.case_id,
+                    'domain': instance.domain,
+                })
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
