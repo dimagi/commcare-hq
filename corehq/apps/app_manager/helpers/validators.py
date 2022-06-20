@@ -329,7 +329,6 @@ class ModuleBaseValidator(object):
         This is the real validation logic, to be overridden/augmented by subclasses.
         '''
         errors = []
-        app = self.module.get_app()
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
@@ -353,34 +352,7 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_parent_select())
 
-        if module_uses_smart_links(self.module):
-            if not self.module.session_endpoint_id:
-                errors.append({
-                    'type': 'smart links missing endpoint',
-                    'module': self.get_module_info(),
-                })
-            if self.module.parent_select.active:
-                errors.append({
-                    'type': 'smart links select parent first',
-                    'module': self.get_module_info(),
-                })
-            if self.module.is_multi_select():
-                errors.append({
-                    'type': 'smart links multi select',
-                    'module': self.get_module_info(),
-                })
-            if module_uses_inline_search(self.module):
-                errors.append({
-                    'type': 'smart links inline search',
-                    'module': self.get_module_info(),
-                })
-
-        if module_loads_registry_case(self.module):
-            if self.module.is_multi_select():
-                errors.append({
-                    'type': 'data registry multi select',
-                    'module': self.get_module_info(),
-                })
+        errors.extend(self.validate_smart_links())
 
         if self.module.root_module_id:
             root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
@@ -474,6 +446,39 @@ class ModuleBaseValidator(object):
             if self.module.parent_select.relationship:
                 errors.append({
                     'type': 'inline search parent select relationship',
+                    'module': self.get_module_info(),
+                })
+
+        return errors
+
+    def validate_smart_links(self):
+        errors = []
+        if module_uses_smart_links(self.module):
+            if not self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'smart links missing endpoint',
+                    'module': self.get_module_info(),
+                })
+            if self.module.parent_select.active:
+                errors.append({
+                    'type': 'smart links select parent first',
+                    'module': self.get_module_info(),
+                })
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'smart links multi select',
+                    'module': self.get_module_info(),
+                })
+            if module_uses_inline_search(self.module):
+                errors.append({
+                    'type': 'smart links inline search',
+                    'module': self.get_module_info(),
+                })
+
+        if module_loads_registry_case(self.module):
+            if self.module.is_multi_select():
+                errors.append({
+                    'type': 'data registry multi select',
                     'module': self.get_module_info(),
                 })
 
