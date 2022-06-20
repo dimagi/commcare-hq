@@ -107,7 +107,7 @@ from corehq.apps.users.models import (
     Invitation,
     StaticRole,
     WebUser,
-    Permissions,
+    HqPermissions,
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
@@ -930,7 +930,7 @@ def _update_role_from_view(domain, role_data):
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
 
-    permissions = Permissions.wrap(role_data["permissions"])
+    permissions = HqPermissions.wrap(role_data["permissions"])
     permissions.normalize()
     role.set_permissions(permissions.to_list())
 
