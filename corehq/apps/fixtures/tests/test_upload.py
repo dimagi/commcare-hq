@@ -3,9 +3,6 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from nose.tools import nottest
-from testil import Regex
-
 import openpyxl
 
 from couchexport.export import export_raw
@@ -24,8 +21,6 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import (
-    _run_fast_fixture_upload,
-    _run_fixture_upload,
     _run_upload,
     clear_fixture_quickcache,
 )
@@ -645,77 +640,6 @@ class TestFixtureUpload(TestCase):
         self.assertFalse(result.errors)
 
 
-class TestOldFixtureUpload(TestFixtureUpload):
-    do_upload = _run_fixture_upload
-
-    def test_rearrange_rows(self):
-        self.upload([
-            (None, 'N', 'apple'),
-            (None, 'N', 'banana'),
-            (None, 'N', 'coconut'),
-        ])
-        self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
-
-        ids = {row_name(r): r._id for r in self.get_rows(None)}
-        self.upload([
-            (ids['banana'], 'N', 'banana'),
-            (ids['coconut'], 'N', 'coconut'),
-            (ids['apple'], 'N', 'apple'),
-        ])
-        # NOTE old uploader does not respect updated order of rows
-        self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
-
-    def test_table_uid_conflict(self):
-        result = self.upload_table_with_uid_conflict()
-        self.assertEqual(result.errors, [
-            Regex(r"'[0-9a-f]+' is not a valid UID\. But the new type is created\.")
-        ])
-
-    def test_row_uid_conflict(self):
-        result = self.upload_row_with_uid_conflict()
-        self.assertEqual(result.errors, [
-            Regex(r"'[0-9a-f]+' is not a valid UID\. But the new item is created\.")
-        ])
-
-    @nottest
-    def test_error_on_non_global_table(self):
-        """Old fixture uploader always uses the ORM"""
-
-    @nottest
-    def test_ownerships_ignored_on_skip_orm(self):
-        """Old fixture uploader always uses the ORM"""
-
-
-class TestFastFixtureUpload(TestFixtureUpload):
-
-    @staticmethod
-    def do_upload(*args, replace=None, skip_orm=True, **kw):
-        return _run_fast_fixture_upload(*args, **kw)
-
-    def test_rows_with_no_changes(self):
-        # table and row ids always change
-        self.upload([(None, 'N', 'apple')])
-
-        self.upload([(None, 'N', 'apple')])
-        self.assertEqual(self.get_rows(), ['apple'])
-
-    @nottest
-    def test_add_rows_without_replace(self):
-        """Fast fixture uploads always replace"""
-
-    @nottest
-    def test_delete_table(self):
-        """Fast fixture uploads always create"""
-
-    @nottest
-    def test_delete_missing_table(self):
-        """Fast fixture uploads always create"""
-
-    @nottest
-    def test_delete_row(self):
-        """Fast fixture uploads ignore the delete column"""
-
-
 class TestFixtureOwnershipUpload(TestCase):
     do_upload = _run_upload
 
@@ -887,16 +811,6 @@ class TestFixtureOwnershipUpload(TestCase):
         )
 
 
-class TestOldFixtureOwnershipUpload(TestFixtureOwnershipUpload):
-    do_upload = _run_fixture_upload
-
-    def test_invalid_username(self):
-        result = self.upload([(None, 'N', 'apple', 'n@pe', None, None)], check_result=False)
-        self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
-        # the "Row is not added" part of this error is wrong
-        self.assertEqual(result.errors, ["Invalid username: 'n@pe'. Row is not added"])
-
-
 class TestLocationLookups(TestCase):
 
     @classmethod
@@ -960,27 +874,6 @@ class TestLocationLookups(TestCase):
             pass names with upper case letters here."""
         result = mod._load_location_ids_by_name([name_or_site_code], self.domain)
         return result.get(name_or_site_code.lower())
-
-
-class TestOldLocationLookups(TestLocationLookups):
-
-    def lookup(self, name_or_site_code, errors=None):
-        get_location = mod.get_memoized_location_getter(self.domain)
-        result = get_location(name_or_site_code)
-        if errors is None:
-            self.assertFalse(result.is_error, result.message)
-        elif result.is_error:
-            errors.append(result.message)
-        return result.location.location_id if result.location else None
-
-    def test_duplicate_name(self):
-        errors = []
-        result = self.lookup('d u p', errors)
-        self.assertIsNone(result)
-        self.assertEqual(errors, [
-            "Multiple locations found with the name: 'd u p'.  "
-            "Try using site code. But the row is successfully added"
-        ])
 
 
 class FakeTask:
