@@ -282,7 +282,6 @@ data_interfaces
  0026_automaticupdaterule_criteria_operator
  0027_auto_20220420_1301
  0028_locationfilterdefinition_include_child_locations
- 0029_alter_locationfilterdefinition_include_child_locations
 dhis2
  0001_initial
  0002_auto_20170322_1323
