@@ -136,7 +136,9 @@ class Command(BaseCommand):
         self.output_stats()
 
     def collect_doc_counts(self):
-        resource_model['forms_total'] = FormES().domain(self.domain).count()
+        form_es = FormES()
+        form_es.remove_default_filters()
+        resource_model['forms_total'] = form_es.domain(self.domain).count()
         resource_model['cases_total'] = CaseES().domain(self.domain).count()
 
     def collect_forms_per_user_per_month(self):
