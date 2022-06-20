@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tableauvisualization',
             name='title',
-            field=models.CharField(default='', max_length=32),
+            field=models.CharField(default='', max_length=32, null=True),
             preserve_default=False,
         ),
     ]
