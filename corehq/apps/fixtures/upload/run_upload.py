@@ -145,14 +145,18 @@ def non_global_error(tag):
 
 def table_key(table):
     return (
+        table.is_global,
         table.tag,
         tuple(table.fields),
+        tuple(table.item_attributes),
+        table.description,
     )
 
 
 def row_key(row):
     return (
-        tuple(row.fields.items()),
+        tuple(sorted(row.fields.items())),
+        tuple(sorted(row.item_attributes.items())),
         row.sort_key,
     )
 

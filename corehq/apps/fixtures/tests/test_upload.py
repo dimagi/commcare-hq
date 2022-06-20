@@ -13,7 +13,14 @@ from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureOwnership,
+    FixtureItemField,
+    FixtureTypeField,
+)
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import (
@@ -982,3 +989,123 @@ class FakeTask:
 
     def update_state(self, **kw):
         self.states.append(kw)
+
+
+class TestTableKey(SimpleTestCase):
+
+    def test_tag(self):
+        t1 = FixtureDataType(tag="this")
+        t2 = FixtureDataType(tag="this")
+        self.assertEqual(mod.table_key(t1), mod.table_key(t2))
+
+        t3 = FixtureDataType(tag="that")
+        self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
+
+    def test_is_global(self):
+        t1 = FixtureDataType(is_global=True)
+        t2 = FixtureDataType(is_global=True)
+        self.assertEqual(mod.table_key(t1), mod.table_key(t2))
+
+        t3 = FixtureDataType(is_global=False)
+        self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
+
+    def test_fields(self):
+        t1 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["color"])])
+        t2 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["color"])])
+        self.assertEqual(mod.table_key(t1), mod.table_key(t2))
+
+        t3 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["hue"])])
+        self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
+
+    def test_item_attributes(self):
+        t1 = FixtureDataType(item_attributes=["name"])
+        t2 = FixtureDataType(item_attributes=["name"])
+        self.assertEqual(mod.table_key(t1), mod.table_key(t2))
+
+        t3 = FixtureDataType(item_attributes=["origin"])
+        self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
+
+    def test_description(self):
+        t1 = FixtureDataType(description="Hello old friend")
+        t2 = FixtureDataType(description="Hello old friend")
+        self.assertEqual(mod.table_key(t1), mod.table_key(t2))
+
+        t3 = FixtureDataType(description="It's good to see you")
+        self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
+
+
+class TestRowKey(SimpleTestCase):
+
+    def test_fields(self):
+        t1 = FixtureDataItem(fields={"state": FieldList(
+            field_list=[FixtureItemField(
+                field_name="name",
+                properties={"color": "blue"},
+            )]
+        )})
+        t2 = FixtureDataItem(fields={"state": FieldList(
+            field_list=[FixtureItemField(
+                field_name="name",
+                properties={"color": "blue"},
+            )]
+        )})
+        self.assertEqual(mod.row_key(t1), mod.row_key(t2))
+
+        t3 = FixtureDataItem(fields={"state": FieldList(
+            field_list=[FixtureItemField(
+                field_name="name",
+                properties={"color": "red"},
+            )]
+        )})
+        self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
+
+    def test_fields_order(self):
+        t1 = FixtureDataItem(fields={
+            "state": FieldList(field_list=[FixtureItemField(field_name="name", properties={})]),
+            "temp": FieldList(field_list=[FixtureItemField(field_name="value", properties={})]),
+        })
+        t2 = FixtureDataItem(fields={
+            "temp": FieldList(field_list=[FixtureItemField(field_name="value", properties={})]),
+            "state": FieldList(field_list=[FixtureItemField(field_name="name", properties={})]),
+        })
+        self.assertEqual(mod.row_key(t1), mod.row_key(t2))
+
+    def test_item_attributes(self):
+        t1 = FixtureDataItem(item_attributes={"color": "blue"})
+        t2 = FixtureDataItem(item_attributes={"color": "blue"})
+        self.assertEqual(mod.row_key(t1), mod.row_key(t2))
+
+        t3 = FixtureDataItem(item_attributes={"color": "red"})
+        self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
+
+    def test_item_attributes_order(self):
+        t1 = FixtureDataItem(item_attributes={"color": "blue", "shape": "square"})
+        t2 = FixtureDataItem(item_attributes={"shape": "square", "color": "blue"})
+        self.assertEqual(mod.row_key(t1), mod.row_key(t2))
+
+    def test_sort_key(self):
+        t1 = FixtureDataItem(sort_key=1)
+        t2 = FixtureDataItem(sort_key=1)
+        self.assertEqual(mod.row_key(t1), mod.row_key(t2))
+
+        t3 = FixtureDataItem(sort_key=2)
+        self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
+
+
+class TestOwnerKey(SimpleTestCase):
+
+    def test_owner_type(self):
+        t1 = FixtureOwnership(owner_type="user")
+        t2 = FixtureOwnership(owner_type="user")
+        self.assertEqual(mod.owner_key(t1), mod.owner_key(t2))
+
+        t3 = FixtureOwnership(owner_type="group")
+        self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))
+
+    def test_owner_id(self):
+        t1 = FixtureOwnership(owner_id="abc")
+        t2 = FixtureOwnership(owner_id="abc")
+        self.assertEqual(mod.owner_key(t1), mod.owner_key(t2))
+
+        t3 = FixtureOwnership(owner_id="def")
+        self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))
