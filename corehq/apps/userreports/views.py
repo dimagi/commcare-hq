@@ -1716,7 +1716,8 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'name': expression.name,
             'type': expression.expression_type,
             'description': expression.description,
-            'definition': self._truncate_value(json.dumps(expression.definition)),
+            'definition': json.dumps(expression.definition, indent=2),
+            'definition_preview': self._truncate_value(json.dumps(expression.definition)),
             'upstream_id': expression.upstream_id,
             'edit_url': reverse(UCRExpressionEditView.urlname, args=[self.domain, expression.id]),
         }

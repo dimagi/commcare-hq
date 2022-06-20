@@ -9,7 +9,25 @@
     <td data-bind="text: name"></td>
     <td data-bind="text: type"></td>
     <td data-bind="text: description"></td>
-    <td data-bind="text: definition"></td>
+    <td>
+      <span data-bind="text: definition_preview"></span>
+      <a data-toggle="modal" data-bind="attr: {'data-target': '#update-expression-' + id}">
+        ({% trans "see more" %})
+      </a>
+      <div class="modal fade" data-bind="attr: {id: 'update-expression-' + id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 data-bind="text: name"></h3>
+                    </div>
+                    <div class="modal-body">
+                        <div><pre data-bind="text: definition"></pre></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
     <td> <!-- actions -->
         <a class="btn btn-primary"
                 data-bind="attr: {href: edit_url}">
