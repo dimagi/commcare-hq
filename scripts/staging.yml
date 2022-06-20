@@ -82,4 +82,5 @@ branches:
     - es/mobile-auth  # Simon Nov 23
     - ml/all-in-one-offboarding  # Minha April 13
     - sk/rename-permission-classes
+    - cs/fix-case-owner-location-parent # Charl Jun 20
 submodules: { }
