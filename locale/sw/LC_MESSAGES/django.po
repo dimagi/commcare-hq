@@ -19675,62 +19675,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid "Unknown location: '%(name)s'. But the row is successfully added"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid ""
-"Multiple locations found with the name: '%(name)s'.  Try using site code. "
-"But the row is successfully added"
-msgstr ""
-
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
 msgid "type {lookup_table_name} is not defined as global"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown group: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
+msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid ""
+"Multiple locations found with the name: '%(name)s'.  Try using site code. "
+"But the row is successfully added"
 msgstr ""
 
 #: corehq/apps/fixtures/views.py
