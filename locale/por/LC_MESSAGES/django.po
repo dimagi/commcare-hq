@@ -34033,6 +34033,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "see more"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 msgid "Update Expression"
 msgstr ""
 

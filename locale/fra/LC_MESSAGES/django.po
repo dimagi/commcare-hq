@@ -35168,6 +35168,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#, fuzzy
+#| msgid "Learn more"
+msgid "see more"
+msgstr "Lire plus"
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 msgid "Update Expression"
 msgstr ""
 
