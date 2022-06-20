@@ -349,18 +349,7 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        uses_inline_search = module_uses_inline_search(self.module)
-        if self.module.put_in_root:
-            if self.module.session_endpoint_id:
-                errors.append({
-                    'type': 'endpoint to display only forms',
-                    'module': self.get_module_info(),
-                })
-            if uses_inline_search:
-                errors.append({
-                    'type': 'inline search to display only forms',
-                    'module': self.get_module_info(),
-                })
+        errors.extend(self.validate_display_only_forms())
 
         if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
             if self.module.parent_select.relationship == 'parent':
@@ -384,7 +373,7 @@ class ModuleBaseValidator(object):
                         'module': self.get_module_info(),
                     })
 
-            if uses_inline_search:
+            if module_uses_inline_search(self.module):
                 if self.module.parent_select.relationship:
                     errors.append({
                         'type': 'inline search parent select relationship',
@@ -407,7 +396,7 @@ class ModuleBaseValidator(object):
                     'type': 'smart links multi select',
                     'module': self.get_module_info(),
                 })
-            if uses_inline_search:
+            if module_uses_inline_search(self.module):
                 errors.append({
                     'type': 'smart links inline search',
                     'module': self.get_module_info(),
@@ -463,6 +452,21 @@ class ModuleBaseValidator(object):
                     'form': form,
                 })
 
+        return errors
+
+    def validate_display_only_forms(self):
+        errors = []
+        if self.module.put_in_root:
+            if self.module.session_endpoint_id:
+                errors.append({
+                    'type': 'endpoint to display only forms',
+                    'module': self.get_module_info(),
+                })
+            if module_uses_inline_search(self.module):
+                errors.append({
+                    'type': 'inline search to display only forms',
+                    'module': self.get_module_info(),
+                })
         return errors
 
     def validate_detail_columns(self, detail):
