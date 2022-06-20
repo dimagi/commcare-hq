@@ -449,6 +449,9 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
+        for form in self.module.get_suite_forms():
+            errors.extend(form.validator.validate_for_module(self.module))
+
         return errors
 
     def validate_detail_columns(self, detail):
@@ -797,15 +800,14 @@ class FormBaseValidator(object):
     def __init__(self, form):
         self.form = form
 
-    def validate_for_build(self, validate_module):
-        errors = []
+    def error_meta(self, module=None):
+        if not module:
+            try:
+                module = self.form.get_module()
+            except AttributeError:
+                module = None
 
-        try:
-            module = self.form.get_module()
-        except AttributeError:
-            module = None
-
-        meta = {
+        return {
             'form_type': self.form.form_type,
             'module': module.validator.get_module_info() if module else {},
             'form': {
@@ -815,6 +817,10 @@ class FormBaseValidator(object):
             }
         }
 
+    def validate_for_build(self, validate_module):
+        errors = []
+
+        meta = self.error_meta()
         xml_valid = False
         if self.form.source == '' and self.form.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
@@ -852,6 +858,40 @@ class FormBaseValidator(object):
                     errors.append(error)
                 except XFormValidationFailed:
                     pass  # ignore this here as it gets picked up in other places
+
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self.form, 'form_filter') and self.form.form_filter:
+            with self.form.timing_context("validate_xpath"):
+                is_valid, message = validate_xpath(self.form.form_filter, allow_case_hashtags=True)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
+
+        errors.extend(self.extended_build_validation(xml_valid, validate_module))
+
+        return errors
+
+    def extended_build_validation(self, xml_valid, validate_module=True):
+        """
+        Override to perform additional validation during build process.
+        """
+        return []
+
+    def validate_for_module(self, module):
+        """
+        Perform validation that depends on module config.
+        Necessary so that forms can be validated not only against their module, but also
+        against any shadow modules where they appear.
+        """
+        if not self.form.post_form_workflow:
+            return
+
+        errors = []
+        meta = self.error_meta(module)
 
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
@@ -894,27 +934,7 @@ class FormBaseValidator(object):
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
-        # this isn't great but two of FormBase's subclasses have form_filter
-        if hasattr(self.form, 'form_filter') and self.form.form_filter:
-            with self.form.timing_context("validate_xpath"):
-                is_valid, message = validate_xpath(self.form.form_filter, allow_case_hashtags=True)
-            if not is_valid:
-                error = {
-                    'type': 'form filter has xpath error',
-                    'xpath_error': message,
-                }
-                error.update(meta)
-                errors.append(error)
-
-        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
-
         return errors
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        """
-        Override to perform additional validation during build process.
-        """
-        return []
 
 
 class IndexedFormBaseValidator(FormBaseValidator):
@@ -998,11 +1018,11 @@ class FormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
             for error in self.check_actions():
-                error.update(error_meta)
+                error.update(self.error_meta())
                 errors.append(error)
 
         if validate_module:
@@ -1125,11 +1145,11 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
             for error in self.check_actions():
-                error.update(error_meta)
+                error.update(self.error_meta())
                 errors.append(error)
 
         module = self.form.get_module()
@@ -1145,19 +1165,20 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
 class ShadowFormValidator(IndexedFormBaseValidator):
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = super(ShadowFormValidator, self).extended_build_validation(error_meta, xml_valid, validate_module)
+    def extended_build_validation(self, xml_valid, validate_module=True):
+        errors = super(ShadowFormValidator, self).extended_build_validation(xml_valid, validate_module)
+        meta = self.error_meta()
         if not self.form.shadow_parent_form_id:
             error = {
                 "type": "missing shadow parent",
             }
-            error.update(error_meta)
+            error.update(meta)
             errors.append(error)
         elif not self.form.shadow_parent_form:
             error = {
                 "type": "shadow parent does not exist",
             }
-            error.update(error_meta)
+            error.update(meta)
             errors.append(error)
         return errors
 
