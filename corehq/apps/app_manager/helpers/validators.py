@@ -351,34 +351,7 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_display_only_forms())
 
-        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
-            if self.module.parent_select.relationship == 'parent':
-                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
-                valid_modules = get_modules_with_parent_case_type(app, self.module)
-            else:
-                from corehq.apps.app_manager.views.modules import get_all_case_modules
-                valid_modules = get_all_case_modules(app, self.module)
-            valid_module_ids = [info['unique_id'] for info in valid_modules]
-            if self.module.parent_select.module_id not in valid_module_ids:
-                errors.append({
-                    'type': 'invalid parent select id',
-                    'module': self.get_module_info(),
-                })
-            else:
-                module_id = self.module.parent_select.module_id
-                parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
-                if parent_select_module and module_uses_inline_search(parent_select_module):
-                    errors.append({
-                        'type': 'parent select is inline search module',
-                        'module': self.get_module_info(),
-                    })
-
-            if module_uses_inline_search(self.module):
-                if self.module.parent_select.relationship:
-                    errors.append({
-                        'type': 'inline search parent select relationship',
-                        'module': self.get_module_info(),
-                    })
+        errors.extend(self.validate_parent_select())
 
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
@@ -467,6 +440,43 @@ class ModuleBaseValidator(object):
                     'type': 'inline search to display only forms',
                     'module': self.get_module_info(),
                 })
+        return errors
+
+    def validate_parent_select(self):
+        if not hasattr(self.module, 'parent_select') or not self.module.parent_select.active:
+            return []
+
+        app = self.module.get_app()
+        errors = []
+
+        if self.module.parent_select.relationship == 'parent':
+            from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+            valid_modules = get_modules_with_parent_case_type(app, self.module)
+        else:
+            from corehq.apps.app_manager.views.modules import get_all_case_modules
+            valid_modules = get_all_case_modules(app, self.module)
+        valid_module_ids = [info['unique_id'] for info in valid_modules]
+        if self.module.parent_select.module_id not in valid_module_ids:
+            errors.append({
+                'type': 'invalid parent select id',
+                'module': self.get_module_info(),
+            })
+        else:
+            module_id = self.module.parent_select.module_id
+            parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+            if parent_select_module and module_uses_inline_search(parent_select_module):
+                errors.append({
+                    'type': 'parent select is inline search module',
+                    'module': self.get_module_info(),
+                })
+
+        if module_uses_inline_search(self.module):
+            if self.module.parent_select.relationship:
+                errors.append({
+                    'type': 'inline search parent select relationship',
+                    'module': self.get_module_info(),
+                })
+
         return errors
 
     def validate_detail_columns(self, detail):
