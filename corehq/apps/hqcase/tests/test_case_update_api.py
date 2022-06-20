@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from unittest.mock import patch
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
@@ -52,7 +52,7 @@ class TestCaseAPI(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def _make_case(self):
+    def _make_case(self, parent_id=None):
         xform, cases = submit_case_blocks([CaseBlock(
             case_id=str(uuid.uuid4()),
             case_type='player',
@@ -64,7 +64,10 @@ class TestCaseAPI(TestCase):
                 'sport': 'chess',
                 'rank': '1600',
                 'dob': '1948-11-02',
-            }
+            },
+            index={
+                'parent': IndexAttrs('player', parent_id, 'child'),
+            } if parent_id else None,
         ).as_text()], domain=self.domain)
         return cases[0]
 
@@ -292,6 +295,56 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.indices[0].relationship, 'child')
         self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
 
+    def test_set_parent_by_external_id(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'match',
+            'case_name': 'Harmon/Luchenko',
+            'owner_id': 'harmon',
+            'indices': {
+                'parent': {
+                    'external_id': parent_case.external_id,
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
+        self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
+
+    def test_set_parent_by_bad_external_id(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'match',
+            'case_name': 'Harmon/Luchenko',
+            'owner_id': 'harmon',
+            'indices': {
+                'parent': {
+                    'external_id': 'MISSING',
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertEqual(res['error'], "Could not find a case with external_id 'MISSING'")
+
+    def test_cannot_remove_child_case(self):
+        # Documenting that this does not yet work
+        parent_case = self._make_case()
+        child_case = self._make_case(parent_id=parent_case.case_id)
+        res = self._update_case(child_case.case_id, {
+            'indices': {
+                'parent': {
+                    'case_id': '',
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        }).json()
+        self.assertEqual(res['error'], "Indices must specify case_id, external_id, or temporary ID, and only one")
+
     def test_bulk_action(self):
         existing_case = self._make_case()
         res = self._bulk_update_cases([
@@ -407,7 +460,35 @@ class TestCaseAPI(TestCase):
             },
         ])
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "Could not find a case with temporary ID 'MISSING'")
+        self.assertEqual(res.json()['error'], "Could not find a case with temporary_id 'MISSING'")
+
+    def test_index_reference_to_uncreated_external_id(self):
+        res = self._bulk_update_cases([
+            {
+                'case_type': 'player',
+                'case_name': 'Elizabeth Harmon',
+                'owner_id': 'us_chess_federation',
+                'external_id': 'beth',
+            },
+            {
+                'case_type': 'match',
+                'case_name': 'Harmon/Luchenko',
+                'external_id': 'harmon-luchenko',
+                'owner_id': 'harmon',
+                'indices': {
+                    'parent': {
+                        # This case will be created in the same payload
+                        'external_id': 'beth',
+                        'case_type': 'player',
+                        'relationship': 'child',
+                    },
+                },
+            },
+        ])
+        self.assertEqual(res.status_code, 200)
+        parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
+        child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
+        self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
 
     def test_non_json_data(self):
         res = self._create_case("this isn't json")

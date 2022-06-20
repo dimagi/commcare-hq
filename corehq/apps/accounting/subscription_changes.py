@@ -383,9 +383,9 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
-        from corehq.apps.userreports.models import ReportConfiguration
         from corehq.apps.userreports.tasks import rebuild_indicators
-        reports = ReportConfiguration.by_domain(project.name)
+        from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+        reports = get_report_and_registry_report_configs_for_domain(project.name)
         builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
             try:
@@ -423,8 +423,8 @@ def _has_report_builder_add_on(plan_version):
 
 
 def _get_report_builder_reports(project):
-    from corehq.apps.userreports.models import ReportConfiguration
-    reports = ReportConfiguration.by_domain(project.name)
+    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    reports = get_report_and_registry_report_configs_for_domain(project.name)
     return [report for report in reports if report.report_meta.created_by_builder]
 
 

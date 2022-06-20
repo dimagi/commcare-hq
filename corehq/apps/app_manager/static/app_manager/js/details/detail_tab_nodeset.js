@@ -30,13 +30,16 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         hqImport("hqwebapp/js/main").eventize(self);
         self.nodeset.subscribe(function () {
             self.fire('change');
-            self.showFilter(false);
         });
-        self.nodesetCaseType.subscribe(function () {
+        self.nodesetCaseType.subscribe(function (newValue) {
             self.fire('change');
-            self.nodeset("");
-            self.showFilter(false);
-            self.nodesetFilter("");
+            if (newValue) {
+                self.nodeset("");
+                self.showFilter(true);
+            } else {
+                self.nodesetFilter("");
+                self.showFilter(false);
+            }
         });
         self.nodesetFilter.subscribe(function () {
             self.fire('change');

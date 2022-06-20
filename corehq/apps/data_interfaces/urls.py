@@ -17,7 +17,7 @@ from corehq.apps.data_interfaces.views import (
     find_by_id,
     xform_management_job_poll,
 )
-from corehq.apps.userreports.views import UCRExpressionListView
+from corehq.apps.userreports.views import UCRExpressionListView, UCRExpressionEditView
 
 from .interfaces import FormManagementMode
 
@@ -56,4 +56,6 @@ urlpatterns = [
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
     url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
+    url(r'^ucr_expressions/(?P<expression_id>\d+)/$', UCRExpressionEditView.as_view(),
+        name=UCRExpressionEditView.urlname),
 ]

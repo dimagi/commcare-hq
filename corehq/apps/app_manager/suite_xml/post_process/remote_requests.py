@@ -62,6 +62,7 @@ from corehq.util.view_utils import absolute_reverse
 
 # The name of the instance where search results are stored
 RESULTS_INSTANCE = 'results'
+RESULTS_INSTANCE_INLINE = 'results:inline'
 
 # The name of the instance where search results are stored when querying a data registry
 REGISTRY_INSTANCE = 'registry'
@@ -78,12 +79,14 @@ class QuerySessionXPath(InstanceXpath):
 
 
 class RemoteRequestFactory(object):
-    def __init__(self, suite, module, detail_section_elements, case_session_var=None):
+    def __init__(self, suite, module, detail_section_elements,
+                 case_session_var=None, storage_instance=RESULTS_INSTANCE):
         self.suite = suite
         self.app = module.get_app()
         self.domain = self.app.domain
         self.module = module
         self.detail_section_elements = detail_section_elements
+        self.storage_instance = storage_instance
         if case_session_var:
             self.case_session_var = case_session_var
         else:
@@ -130,7 +133,13 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.case_session_var, self.module.is_multi_select())
+        case_not_claimed = self.module.search_config.get_relevant(
+            self.case_session_var, self.module.is_multi_select())
+        if module_uses_smart_links(self.module):
+            case_in_project = self._get_smart_link_rewind_xpath()
+            return XPath.and_(case_not_claimed, case_in_project)
+        else:
+            return case_not_claimed
 
     def build_command(self):
         return Command(
@@ -154,7 +163,7 @@ class RemoteRequestFactory(object):
         return [
             RemoteRequestQuery(
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
-                storage_instance=RESULTS_INSTANCE,
+                storage_instance=self.storage_instance,
                 template='case',
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
@@ -170,12 +179,12 @@ class RemoteRequestFactory(object):
             short_detail_id = 'search_short'
             long_detail_id = 'search_long'
 
-        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=RESULTS_INSTANCE)
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
         if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
             additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
-                    additional_types, instance_name=RESULTS_INSTANCE)
+                    additional_types, instance_name=self.storage_instance)
             if self.module.search_config.search_filter:
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
@@ -272,9 +281,7 @@ class RemoteRequestFactory(object):
         stack = Stack()
         rewind_if = None
         if module_uses_smart_links(self.module):
-            user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
-            # For case in same domain, do a regular case claim rewind
-            rewind_if = self._get_case_domain_xpath().eq(user_domain_xpath)
+            rewind_if = self._get_smart_link_rewind_xpath()
             # For case in another domain, jump to that other domain
             frame = PushFrame(if_clause=XPath.not_(rewind_if))
             frame.add_datum(StackJump(
@@ -290,6 +297,11 @@ class RemoteRequestFactory(object):
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+    def _get_smart_link_rewind_xpath(self):
+        user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
+        # For case in same domain, do a regular case claim rewind
+        return self._get_case_domain_xpath().eq(user_domain_xpath)
 
     def get_smart_link_function(self):
         # Returns XPath that will evaluate to a URL.
@@ -337,7 +349,7 @@ class RemoteRequestFactory(object):
 
     def _get_case_domain_xpath(self):
         case_id_xpath = CaseIDXPath(session_var(self.case_session_var))
-        return case_id_xpath.case(instance_name=RESULTS_INSTANCE).slash(COMMCARE_PROJECT)
+        return case_id_xpath.case(instance_name=self.storage_instance).slash(COMMCARE_PROJECT)
 
 
 class SessionEndpointRemoteRequestFactory(RemoteRequestFactory):
