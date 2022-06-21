@@ -75,6 +75,9 @@ class OptionValue(property):
 
     def __set_name__(self, owner, name):
         self.name = name
+        if not hasattr(owner, '_all_option_value_fields'):
+            setattr(owner, '_all_option_value_fields', set())
+        owner._all_option_value_fields.add(self.name)
 
     def __get__(self, obj, objtype=None):
         if obj is None:
