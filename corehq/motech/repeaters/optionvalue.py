@@ -109,6 +109,11 @@ class OptionValue(property):
             value = self.coder.to_json(value)
         obj.options[self.name] = value
 
+    def get_default_value(self):
+        if self.default != self.NOT_SET:
+            return self.default
+        return None
+
 
 def _assert_options(obj):
     assert hasattr(obj, 'options') and isinstance(obj.options, dict), \
