@@ -293,7 +293,7 @@ class CaseRuleCriteriaForm(forms.Form):
     custom_match_definitions = forms.CharField(required=False, initial='[]')
     property_match_definitions = forms.CharField(required=False, initial='[]')
     filter_on_closed_parent = forms.CharField(required=False, initial='false')
-    ucr_filter_definitions = forms.JSONField(required=False, initial={})
+    ucr_filter_definitions = forms.JSONField(required=False, initial=list)
 
     @property
     def current_values(self):
