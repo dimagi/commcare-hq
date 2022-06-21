@@ -8,7 +8,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-03 13:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -133,6 +132,7 @@ msgstr ""
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Type"
@@ -424,6 +424,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/enterprise_users.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -566,6 +567,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 #: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
@@ -3224,14 +3226,6 @@ msgid "The request resulted in the following errors: {}"
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
-msgid "Attempted to update unknown or non-editable field '{}'"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
-msgid "{} must be a {}"
-msgstr ""
-
-#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -3242,6 +3236,26 @@ msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
 msgid "You do not have permission to view this feed."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Attempted to update unknown or non-editable field '{}'"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "Password is not strong enough."
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "'default_phone_number' must be a string"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "The role '{}' does not exist"
+msgstr ""
+
+#: corehq/apps/api/user_updates.py
+msgid "There are multiple roles with the name '{}' in the domain '{}'"
 msgstr ""
 
 #: corehq/apps/api/util.py
@@ -5990,6 +6004,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+msgid ""
+"\n"
+"                Please check that end of form navigation is correct.\n"
+"                Modules configured to \"make search input available after "
+"search\" do not support\n"
+"                the \"Previous Screen\" workflow.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -6160,6 +6184,50 @@ msgid ""
 "                uses smart links and is configured to make search input "
 "available after search.\n"
 "                These two features are not compatible.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                has a Parent Menu configured with \"make search input "
+"available after search\",\n"
+"                This workflow is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses \"Display only forms\" and is also configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection but parent case list is using\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"                uses parent case selection and is configured with\n"
+"                \"make search input available after search\". This workflow "
+"is unsupported.\n"
 "              "
 msgstr ""
 
@@ -6436,6 +6504,18 @@ msgid ""
 "                Case List has invalid location reference <code>%(property)s</"
 "code>.\n"
 "                Details: %(details)s\n"
+"                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+"              "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"                Case List uses an instance that is only available for case "
+"search <code>%(property)s</code>.\n"
+"                Details: The %(details)s instance(s) are only available in "
+"case lists using case search.\n"
 "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
 "              "
 msgstr ""
@@ -8690,6 +8770,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py
 msgid "Description"
@@ -13728,6 +13809,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Account confirmation link expiry"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Default time (in hours) for which account confirmation link will "
+"be valid.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr ""
 
@@ -13737,6 +13830,10 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Confirmation link expiry should be an integer."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -15112,6 +15209,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr ""
 
@@ -16814,6 +16912,10 @@ msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "App not found"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/list.py
+msgid "OData Feeds"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
@@ -19053,10 +19155,6 @@ msgid "OData feed"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-msgid "OData Feeds"
-msgstr ""
-
-#: corehq/apps/export/views/list.py
 msgid "OData feeds"
 msgstr ""
 
@@ -21082,7 +21180,7 @@ msgid "Case Group"
 msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
-#: corehq/apps/sms/views.py corehq/apps/users/models.py
+#: corehq/apps/sms/views.py
 msgid "Mobile Worker"
 msgstr ""
 
@@ -22050,7 +22148,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr ""
 
@@ -22986,6 +23083,21 @@ msgid ""
 "+Project+Spaces\" target=\"_blank\">Learn more</a> about pushing content "
 "with Linked Project Spaces.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid "{} is not a valid data source type!"
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
+msgid "The data source referenced by this report could not be found."
+msgstr ""
+
+#: corehq/apps/linked_domain/ucr.py
+msgid ""
+"This report cannot be linked because the registry is not accessible to {}. "
+"Please make sure the registry invitation has been accepted before linking "
+"reports."
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
@@ -24856,6 +24968,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -24863,6 +24976,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -24881,10 +24995,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr ""
@@ -24933,6 +25049,15 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare HQ"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Once you confirm your account you will be able to access and submit data in "
+"the \"%(domain)s\" project on %(hq_name)s.\n"
+"Your username to login is %(username)s\n"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
@@ -26616,6 +26741,10 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
+msgid "To Time"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -26633,6 +26762,10 @@ msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
@@ -26719,7 +26852,6 @@ msgid "[no name]"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr ""
@@ -28733,10 +28865,6 @@ msgstr ""
 msgid "Date is after"
 msgstr ""
 
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr ""
-
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
 msgstr ""
@@ -28764,6 +28892,11 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
+msgstr ""
+
+#: corehq/apps/reports/views.py
+#, python-format
+msgid "This scheduled report's timezone is %s (UTC%s)"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -32744,6 +32877,15 @@ msgstr ""
 msgid "Target domain {} does not use enterprise permissions of {}"
 msgstr ""
 
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"When '{}' is True for a new user, {} must be either empty or set to False."
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid "When '{}' is True for an existing user, {}."
+msgstr ""
+
 #: corehq/apps/userreports/columns.py
 #, python-brace-format
 msgid ""
@@ -32842,10 +32984,6 @@ msgstr ""
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
-msgstr ""
-
-#: corehq/apps/userreports/models.py
-msgid "The data source referenced by this report could not be found."
 msgstr ""
 
 #: corehq/apps/userreports/models.py
@@ -33373,6 +33511,7 @@ msgid "Evaluate!"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 msgid "Format JSON"
 msgstr ""
 
@@ -33686,16 +33825,34 @@ msgstr ""
 msgid "Step 1 of 2 - Select Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Update Expression"
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid "Named Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid "Named Filter"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/views.py
+msgid "Definition"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid ""
+"\n"
+"                    Your expression has parse errors!\n"
+"                    For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid ""
-"\n"
-"                                Update Expression <strong data-bind=\"text: "
-"name\"></strong>:\n"
-"                            "
+msgid "see more"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Update Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
@@ -34104,13 +34261,13 @@ msgid "UCR Expressions"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid "Definition"
-msgstr ""
-
-#: corehq/apps/userreports/views.py
 msgid ""
 "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
 "exists."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid "Edit UCR Expression"
 msgstr ""
 
 #: corehq/apps/users/account_confirmation.py
@@ -34262,6 +34419,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "Require Account Confirmation by SMS?"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"If checked, the user will be sent a confirmation SMS and asked to set their "
+"password."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
@@ -34283,6 +34450,12 @@ msgstr ""
 msgid ""
 "Setting a password is disabled. The user will set their own password on "
 "confirming their account email."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"Setting a password is disabled. The user will set their own password on "
+"confirming their account phone number."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -34407,26 +34580,6 @@ msgstr ""
 #: corehq/apps/users/landing_pages.py
 #, python-brace-format
 msgid "No landing page found with id {page_id}"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Read Only (No Reports)"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "App Editor"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Read Only"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Field Implementer"
-msgstr ""
-
-#: corehq/apps/users/models.py
-msgid "Billing Admin"
 msgstr ""
 
 #: corehq/apps/users/models.py
@@ -35250,6 +35403,10 @@ msgid "Send Confirmation Email"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr ""
 
@@ -35291,23 +35448,47 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            Would you like to send the account confirmation "
-"email to this account?\n"
-"                          "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              email to this account?\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            The user will be sent an email with instructions "
-"to\n"
-"                            set a password and be able to login to this "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              The user will be sent an email with "
+"instructions to\n"
+"                              set a password and be able to login to this "
 "project.\n"
-"                          "
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions "
+"to\n"
+"                              set a password and be able to login to this "
+"project.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Send Account Confirmaton Email"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -35837,6 +36018,34 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain special characters."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username is required."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not contain consecutive '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' may not end with a '.' (period)."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is already taken."
+msgstr ""
+
+#: corehq/apps/users/util.py
+msgid "Username '{}' is reserved."
+msgstr ""
+
 #: corehq/apps/users/views/__init__.py
 #, python-format
 msgid "Changes saved for user \"%s\""
@@ -36097,30 +36306,6 @@ msgstr ""
 msgid ""
 "Form not valid. A group may have been deleted while you were viewing this "
 "pagePlease try again."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is reserved."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain consecutive . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not end with a . (period)."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} belonged to a user that was deleted and cannot be reused"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Username {} is already taken"
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py

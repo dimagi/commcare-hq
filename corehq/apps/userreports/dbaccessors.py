@@ -46,6 +46,18 @@ def get_registry_report_configs_for_domain(domain):
     )
 
 
+def get_report_and_registry_report_configs_for_domain(domain):
+    from corehq.apps.userreports.models import (
+        ReportConfiguration,
+        RegistryReportConfiguration,
+    )
+    configs = get_docs_in_domain_by_class(domain, ReportConfiguration)
+    configs += get_docs_in_domain_by_class(domain, RegistryReportConfiguration)
+    return sorted(
+        configs,
+        key=lambda report: report.title or '',
+    )
+
 def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False, include_aggregate=False):
     from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, \
         RegistryDataSourceConfiguration
@@ -120,7 +132,7 @@ def get_registry_data_sources_modified_since(timestamp):
 def get_all_report_configs():
     all_domains = Domain.get_all()
     for domain_obj in all_domains:
-        for report_config in get_report_configs_for_domain(domain_obj.name):
+        for report_config in get_report_and_registry_report_configs_for_domain(domain_obj.name):
             yield report_config
 
 

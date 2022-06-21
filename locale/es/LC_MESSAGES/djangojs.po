@@ -13,7 +13,6 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-07 17:42+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -1355,6 +1354,7 @@ msgid "Date and Time"
 msgstr "Fecha y Hora"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr "Hora"
 
@@ -3975,6 +3975,12 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#, fuzzy
+#| msgid "Time"
+msgid "From Time"
+msgstr "Hora"
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
@@ -4324,6 +4330,12 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+#, fuzzy
+#| msgid "Expression"
+msgid "Expression saved"
+msgstr "Expresión"
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4385,6 +4397,14 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."

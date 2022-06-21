@@ -88,6 +88,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     save_xform,
     module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -769,7 +770,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if not module.root_module_id or not module.root_module.is_multi_select():
         if not module.put_in_root:
             form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
-        if not module.is_multi_select():
+        if not (module.is_multi_select() or module_uses_inline_search(module)):
             form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
@@ -943,18 +944,11 @@ def get_form_datums(request, domain, app_id):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
-    datums = []
-    root_module = form.get_module().root_module
-    if root_module:
-        datums.extend([
-            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
-            if datum.requires_selection
-        ])
-    datums.extend([
+    datums = [
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
-    ])
-    return json_response(datums)
+    ]
+    return JsonResponse(datums)
 
 
 @require_GET

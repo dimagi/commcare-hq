@@ -8,6 +8,7 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from .core import SubmissionError, UserError
 
@@ -19,14 +20,15 @@ def is_simple_dict(d):
 
 class JsonIndex(jsonobject.JsonObject):
     case_id = jsonobject.StringProperty()
+    external_id = jsonobject.StringProperty()
     temporary_id = jsonobject.StringProperty()
     case_type = jsonobject.StringProperty(required=True)
     relationship = jsonobject.StringProperty(required=True, choices=('child', 'extension'))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not (bool(self.case_id) ^ bool(self.temporary_id)):
-            raise BadValueError("You must set either case_id or temporary_id, and not both.")
+        if len(list(filter(None, [self.case_id, self.external_id, self.temporary_id]))) != 1:
+            raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
@@ -107,6 +109,8 @@ def handle_case_update(domain, data, user, device_id, case_id=None):
     else:
         updates = [_get_individual_update(domain, data, user, case_id)]
 
+    _populate_index_case_ids(domain, updates)
+
     xform, cases = _submit_case_updates(updates, domain, user, device_id)
     if xform.is_error:
         raise SubmissionError(xform.problem, xform.form_id,)
@@ -145,8 +149,6 @@ def _get_bulk_updates(domain, all_data, user):
         except BadValueError as e:
             errors.append(f'Error in row {i}: {e}')
 
-    populate_index_case_ids(updates)
-
     if errors:
         raise UserError("; ".join(errors))
 
@@ -158,18 +160,44 @@ def _missing_cases(domain, case_ids):
     return set(case_ids) - set(real_case_ids)
 
 
-def populate_index_case_ids(updates):
-    case_ids_by_temp_id = {
+def _populate_index_case_ids(domain, updates):
+    case_ids = {}
+    case_ids['temporary_id'] = {
         update.temporary_id: update.get_case_id()
         for update in updates if getattr(update, 'temporary_id', None)
     }
+    case_ids['external_id'] = _get_case_ids_by_external_id(domain, [
+        index.external_id for update in updates for index in update.indices.values()
+    ])
+    case_ids['external_id'].update(
+        (update.external_id, update.get_case_id())
+        for update in updates if update.external_id
+    )
     for update in updates:
         for index in update.indices.values():
-            if index.temporary_id:
-                try:
-                    index.case_id = case_ids_by_temp_id[index.temporary_id]
-                except KeyError:
-                    raise UserError(f"Could not find a case with temporary ID '{index.temporary_id}'")
+            for id_prop in case_ids:
+                key = getattr(index, id_prop)
+                if key:
+                    try:
+                        index.case_id = case_ids[id_prop][key]
+                    except KeyError:
+                        raise UserError(f"Could not find a case with {id_prop} '{key}'")
+
+
+def _get_case_ids_by_external_id(domain, external_ids):
+    external_ids = list(filter(None, set(external_ids)))
+
+    case_ids_by_external_id = {}
+    for db_name in get_db_aliases_for_partitioned_query():
+        query = (CommCareCase.objects.using(db_name)
+                 .filter(domain=domain, external_id__in=external_ids)
+                 .values_list('external_id', 'case_id'))
+        for external_id, case_id in query:
+            if external_id in case_ids_by_external_id:
+                raise UserError(f"There are multiple cases with external_id {external_id}")
+            case_ids_by_external_id[external_id] = case_id
+
+    return case_ids_by_external_id
 
 
 def _get_case_update(data, user_id, case_id=None):

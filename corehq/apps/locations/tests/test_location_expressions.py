@@ -49,7 +49,7 @@ class TestLocationTypeExpression(TestCase):
             expected,
             self.expression(
                 doc,
-                context=EvaluationContext({"domain": domain}, 0)
+                EvaluationContext({"domain": domain}, 0)
             )
         )
 
@@ -196,7 +196,7 @@ class TestAncestorLocationExpression(LocationHierarchyTest):
             'type': 'ancestor_location',
             'location_id': self.city.location_id,
             'location_type': "continent",
-        }, context)
+        })
 
         ancestor_location = expression({}, context)
         self.assertIsNotNone(ancestor_location)
@@ -211,7 +211,7 @@ class TestAncestorLocationExpression(LocationHierarchyTest):
             'type': 'ancestor_location',
             'location_id': self.kingdom.location_id,
             'location_type': "nonsense",
-        }, context)
+        })
 
         ancestor_location = expression({}, context)
         self.assertIsNone(ancestor_location)
@@ -222,7 +222,7 @@ class TestAncestorLocationExpression(LocationHierarchyTest):
             'type': 'ancestor_location',
             'location_id': "gibberish",
             'location_type': "kingdom",
-        }, context)
+        })
 
         ancestor_location = expression({}, context)
         self.assertIsNone(ancestor_location)
@@ -234,7 +234,7 @@ class TestAncestorLocationExpression(LocationHierarchyTest):
             'location_id': self.city.location_id,
             'location_type': "continent",
             'location_property': "_id"
-        }, context)
+        })
 
         ancestor_location_property = expression({}, context)
         self.assertIsNotNone(ancestor_location_property)
