@@ -65,17 +65,6 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                   self.errorMessage(error)
                   return self;
                 }
-
-                var annotations = editors[i].getSession().getAnnotations()
-                if (annotations.length > 0) {
-                    for (let i = 0; i < annotations.length; i++) {
-                        var row = annotations[0]['row']
-                            error = annotations[0]['text'];
-                        var text = `Syntax error on row ${row}: `;
-                        self.errorMessage(text + error);
-                    };
-                    return self;
-                };
             };
             self.errorMessage("")
             $.post(
