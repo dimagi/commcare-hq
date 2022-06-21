@@ -53,7 +53,7 @@ NEXT_INPUT_INSTANCE = "next_input"
 
 AUTO_LAUNCH_EXPRESSIONS = {
     "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
-    "multi-select": ("count(instance('" + NEXT_INPUT_INSTANCE + "')/results/value[count(instance(‘casedb’)"
+    "multi-select": ("count(instance('" + NEXT_INPUT_INSTANCE + "')/results/value[count(instance('casedb')"
                     "/casedb/case[@case_id = current()/.]) =0 ]) > 0")
 }
 
