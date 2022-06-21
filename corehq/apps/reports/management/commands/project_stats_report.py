@@ -63,6 +63,9 @@ RESOURCE_MODEL_STATS = [
     'dynamic_datasources',
     'datasources_info',
     'devicelogs_per_user',
+    'ledger_updates_per_case',
+    'average_ledgers_per_case',
+    'case_types_avg_lifespans',
 ]
 
 
@@ -292,20 +295,24 @@ class Command(BaseCommand):
 
         case_types = case_types_result.aggregations.types.keys
 
-        self.stdout.write('\nCase Types with Ledgers')
+        resource_model['case_types_avg_lifespans'] = []
+
         for type_ in case_types:
-            self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
             results = (
                 CommCareCase.objects.using(DB_ALIAS).filter(domain=self.domain, closed=True, type=type_)
                 .annotate(lifespan=F('closed_on') - F('opened_on'))
                 .annotate(avg_lifespan=Avg('lifespan'))
                 .values('avg_lifespan', flat=True)
             )
-            self._print_value('Average lifespan for "%s" cases' % type_, results[0]['avg_lifespan'])
+            case_type_lifespan_data = {
+                'type': type_,
+                'count': CaseES().domain(self.domain).case_type(type_).count(),
+                'avg_lifespan': results[0]['avg_lifespan'],
+                'cases_per_user_pm': self._cases_created_per_user_per_month(type_),
+            }
+            resource_model['case_types_avg_lifespans'].append(case_type_lifespan_data)
 
-            self._cases_created_per_user_per_month(type_)
-
-        self._print_value('Average ledgers per case', avg_ledgers_per_case)
+        resource_model['average_ledgers_per_case'] = avg_ledgers_per_case
 
         stats = defaultdict(list)
         for db_name, case_ids_p in split_list_by_db_partition(case_ids):
@@ -322,8 +329,7 @@ class Command(BaseCommand):
         for month, transaction_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month.isoformat(), sum(transaction_count_list) // len(transaction_count_list)))
 
-        self.stdout.write('Ledger updates per case')
-        self._print_table(['Month', 'Ledgers updated per case'], final_stats)
+        resource_model['ledger_updates_per_case'] = final_stats
 
     def _cases_created_per_user_per_month(self, case_type=None):
         query = (
@@ -347,11 +353,7 @@ class Command(BaseCommand):
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
-        suffix = ''
-        if case_type:
-            suffix = '(case type: %s)' % case_type
-        self.stdout.write('Cases created per user (estimate)')
-        self._print_table(['Month', 'Cases created per user %s' % suffix], final_stats)
+        return final_stats
 
     def collect_attachment_sizes(self):
         with BlobMeta.get_cursor_for_partition_db(DB_ALIAS, readonly=True) as cursor:
@@ -502,6 +504,15 @@ class Command(BaseCommand):
         self._print_section_title('Case Transactions')
         self._output_case_transactions()
 
+        self._print_section_title('Case Types with Ledgers')
+        self._output_case_case_types_with_ledgers()
+
+        self._print_section_title('Average Ledgers per case')
+        self._output_ledgers_per_case()
+
+        self._print_section_title('Ledger updates per case')
+        self._output_ledger_updates_per_case()
+
         self._print_section_title('Sync logs')
         self.stdout.write('** Synclogs are pruned every so often, so this numbers might be misleading')
         self._output_synclogs()
@@ -612,3 +623,28 @@ class Command(BaseCommand):
     def _output_devicelogs(self):
         synclogs_per_user = resource_model['devicelogs_per_user']
         self.stdout.write(f'Device logs per user: {synclogs_per_user}')
+
+    def _output_case_case_types_with_ledgers(self):
+        for case_type_data in resource_model['case_types_avg_lifespans']:
+            case_type = case_type_data['type']
+            self._print_value('case_type', case_type, case_type_data['count'])
+
+            avg_lifespan = case_type_data['avg_lifespan']
+            cases_per_user = case_type_data['cases_per_user_pm']
+
+            self._print_value(f'Average lifespan for "%s" cases' % case_type, avg_lifespan)
+
+            suffix = ''
+            if case_type:
+                suffix = '(case type: %s)' % case_type
+
+            self.stdout.write('Cases created per user (estimate)')
+            self._print_table(['Month', 'Cases created per user %s' % suffix], cases_per_user)
+
+    def _output_ledgers_per_case(self):
+        avg_ledgers_per_case = resource_model['average_ledgers_per_case']
+        self._print_value('Average ledgers per case', avg_ledgers_per_case)
+
+    def _output_ledger_updates_per_case(self):
+        stats = resource_model['ledger_updates_per_case']
+        self._print_table(['Month', 'Ledgers updated per case'], stats)
