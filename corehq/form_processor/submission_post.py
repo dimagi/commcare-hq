@@ -474,7 +474,6 @@ class SubmissionPost(object):
             # Notify but otherwise ignore all errors - the regular case search pillow is going to reprocess these
             notify_exception(None, "Error updating case_search ES index during form processing", details={
                 'xml': instance,
-                'case_id': case_model.case_id,
                 'domain': instance.domain,
                 'errors': errors,
             })
