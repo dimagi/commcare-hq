@@ -431,7 +431,7 @@ class SubmissionPost(object):
         try:
             case_stock_result.stock_result.finalize()
 
-            SubmissionPost.index_case_search(instance, case_stock_result)
+            SubmissionPost.index_case_search(instance, case_stock_result.case_models)
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
@@ -450,7 +450,7 @@ class SubmissionPost(object):
             raise PostSaveError
 
     @staticmethod
-    def index_case_search(instance, case_stock_result):
+    def index_case_search(instance, case_models):
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return
 
@@ -462,7 +462,7 @@ class SubmissionPost(object):
         from corehq.apps.es.case_search import ElasticCaseSearch
         actions = [
             BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
-            for case_model in case_stock_result.case_models
+            for case_model in case_models
         ]
         try:
             _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
