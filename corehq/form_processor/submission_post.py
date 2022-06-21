@@ -26,6 +26,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
@@ -459,19 +460,25 @@ class SubmissionPost(object):
 
         from corehq.elastic import send_to_elasticsearch
         from corehq.pillows.case_search import transform_case_for_elasticsearch
-        for case_model in case_stock_result.case_models:
-            try:
-                send_to_elasticsearch(
-                    "case_search",
-                    transform_case_for_elasticsearch(case_model.to_json()),
-                )
-            except Exception:
-                # Skip all errors - the regular case search pillow is going to reprocess these anyway
-                notify_exception(None, "Error updating case_search ES index during form processing", details={
-                    'xml': instance,
-                    'case_id': case_model.case_id,
-                    'domain': instance.domain,
-                })
+        from corehq.apps.es.case_search import ElasticCaseSearch
+        actions = [
+            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json())
+            for case_model in case_stock_result.case_models
+        ]
+        try:
+            _, errors = ElasticCaseSearch().bulk(actions, refresh=True, raise_on_error=False,
+                                                 raise_on_exception=False)
+        except Exception as e:
+            errors = [str(e)]
+
+        if errors:
+            # Notify but otherwise ignore all errors - the regular case search pillow is going to reprocess these
+            notify_exception(None, "Error updating case_search ES index during form processing", details={
+                'xml': instance,
+                'case_id': case_model.case_id,
+                'domain': instance.domain,
+                'errors': errors,
+            })
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
