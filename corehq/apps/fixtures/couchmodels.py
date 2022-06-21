@@ -111,13 +111,13 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
             "item_attributes",
         ]
 
-    def _migration_sync_to_sql(self, sql_object):
+    def _migration_sync_to_sql(self, sql_object, save=True):
         fields = self._sql_fields
         if sql_object.fields != fields:
             sql_object.fields = fields
         if sql_object.description != (self.description or ""):
             sql_object.description = self.description or ""
-        super()._migration_sync_to_sql(sql_object)
+        super()._migration_sync_to_sql(sql_object, save=save)
 
     @property
     def _sql_fields(self):
@@ -310,14 +310,14 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
     def _migration_get_fields(cls):
         return ["domain", "item_attributes"]
 
-    def _migration_sync_to_sql(self, sql_object):
+    def _migration_sync_to_sql(self, sql_object, save=True):
         if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
             sql_object.table_id = UUID(self.data_type_id)
         fields = self._sql_fields
         if sql_object.fields != fields:
             sql_object.fields = fields
         sql_object.sort_key = self.sort_key or 0
-        super()._migration_sync_to_sql(sql_object)
+        super()._migration_sync_to_sql(sql_object, save=save)
 
     @property
     def _sql_fields(self):
@@ -603,13 +603,13 @@ class FixtureOwnership(SyncCouchToSQLMixin, Document):
             "owner_id",
         ]
 
-    def _migration_sync_to_sql(self, sql_object):
+    def _migration_sync_to_sql(self, sql_object, save=True):
         from .models import OwnerType
         if sql_object.row_id is None or sql_object.row_id != UUID(self.data_item_id):
             sql_object.row_id = UUID(self.data_item_id)
         if OwnerType.from_string(self.owner_type) != sql_object.owner_type:
             sql_object.owner_type = OwnerType.from_string(self.owner_type)
-        super()._migration_sync_to_sql(sql_object)
+        super()._migration_sync_to_sql(sql_object, save=save)
 
     @classmethod
     def _migration_get_sql_model_class(cls):

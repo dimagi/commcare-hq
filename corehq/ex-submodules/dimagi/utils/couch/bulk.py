@@ -7,6 +7,8 @@ from simplejson import JSONDecodeError
 
 from dimagi.utils.chunked import chunked
 
+from .migration import SyncCouchToSQLMixin
+
 
 class BulkFetchException(Exception):
     pass
@@ -83,12 +85,37 @@ class CouchTransaction(object):
 
     def commit(self):
         for cls, docs in self.docs_to_delete.items():
+            if issubclass(cls, SyncCouchToSQLMixin):
+                def delete(chunk):
+                    ids = [doc._id for doc in chunk if doc._id]
+                    cls.bulk_delete(chunk)
+                    sql_class.objects.filter(**{id_name + "__in": ids}).delete()
+                sql_class = cls._migration_get_sql_model_class()
+                id_name = sql_class._migration_couch_id_name
+            else:
+                delete = cls.bulk_delete
             for chunk in chunked(docs, 1000):
-                cls.bulk_delete(chunk)
+                delete(chunk)
 
         for cls, doc_map in self.docs_to_save.items():
+            if issubclass(cls, SyncCouchToSQLMixin):
+                def save(chunk):
+                    if any(doc._rev is not None for doc in chunk):
+                        raise NotImplementedError([d for d in chunk if d._rev])
+                    cls.bulk_save(chunk)
+                    sql_class = cls._migration_get_sql_model_class()
+                    id_name = sql_class._migration_couch_id_name
+                    new_sql_docs = []
+                    for doc in chunk:
+                        assert doc._id, doc
+                        obj = sql_class(**{id_name: doc._id})
+                        doc._migration_sync_to_sql(obj, save=False)
+                        new_sql_docs.append(obj)
+                    sql_class.objects.bulk_create(new_sql_docs)
+            else:
+                save = cls.bulk_save
             for docs in chunked(doc_map.values(), 1000, list):
-                cls.bulk_save(docs)
+                save(docs)
 
         for action in self.post_commit_actions:
             action()
