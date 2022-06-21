@@ -514,6 +514,7 @@ class CaseSearchTests(FundamentalBaseTests):
             device_id=FORMPLAYER_DEVICE_ID,
             xmlns=xmlns
         )
+        # This case is sent to elasticsearch synchronously, without pillowtop
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
 
         es_case = CaseSearchES().doc_id(case_id).run().hits[0]
