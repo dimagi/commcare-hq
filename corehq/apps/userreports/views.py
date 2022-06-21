@@ -110,10 +110,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.forms import (
-    UCRExpressionForm,
-    UCRExpressionUpdateForm,
-)
+from corehq.apps.userreports.forms import UCRExpressionForm
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -1016,8 +1013,7 @@ def _get_parsed_expression(domain, factory_context, expression_text, expression_
     try:
         expression_json = json.loads(expression_text)
         return ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
+            expression_json, factory_context
         )
     except BadSpecError as e:
         raise HttpException(400, _("Problem with expression: {}").format(e))
@@ -1618,16 +1614,16 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         }
 
     def indicator_summary(self):
-        context = self.config.get_factory_context()
+        factory_context = self.config.get_factory_context()
         wrapped_specs = [
-            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            IndicatorFactory.from_spec(spec, factory_context).wrapped_spec
             for spec in self.config.configured_indicators
         ]
         return [
             {
                 "column_id": wrapped.column_id,
                 "comment": wrapped.comment,
-                "readable_output": wrapped.readable_output(context)
+                "readable_output": wrapped.readable_output(factory_context)
             }
             for wrapped in wrapped_specs if wrapped
         ]
@@ -1654,8 +1650,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 
     def configured_filter_summary(self):
         if self.config.configured_filter:
-            return str(FilterFactory.from_spec(self.config.configured_filter,
-                                            context=self.config.get_factory_context()))
+            return str(FilterFactory.from_spec(
+                self.config.configured_filter, self.config.get_factory_context()))
         return _("No filter defined")
 
     def _add_links_to_output(self, items):
@@ -1719,9 +1715,10 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'name': expression.name,
             'type': expression.expression_type,
             'description': expression.description,
-            'definition': self._truncate_value(json.dumps(expression.definition)),
+            'definition': json.dumps(expression.definition, indent=2),
+            'definition_preview': self._truncate_value(json.dumps(expression.definition)),
             'upstream_id': expression.upstream_id,
-            'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
+            'edit_url': reverse(UCRExpressionEditView.urlname, args=[self.domain, expression.id]),
         }
 
     def _truncate_value(self, value):
@@ -1747,18 +1744,55 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
-    def get_update_form(self, instance=None):
-        if instance is None:
-            instance = UCRExpression.objects.get(
-                id=self.request.POST.get("id"), domain=self.domain
-            )
-        if self.request.method == "POST" and self.action == "update":
-            return UCRExpressionUpdateForm(self.request, self.request.POST, instance=instance)
-        return UCRExpressionUpdateForm(self.request, instance=instance)
 
-    def get_updated_item_data(self, update_form):
-        updated_expression = update_form.save()
-        return {
-            "itemData": self._item_data(updated_expression),
-            "template": "base-ucr-statement-template",
-        }
+@method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
+class UCRExpressionEditView(BaseProjectDataView):
+    page_title = _("Edit UCR Expression")
+    urlname = "edit_ucr_expression"
+    template_name = "userreports/ucr_expression.html"
+
+    @property
+    def expression_id(self):
+        return self.kwargs['expression_id']
+
+    @property
+    @memoized
+    def expression(self):
+        try:
+            return UCRExpression.objects.get(id=self.expression_id)
+        except UCRExpression.DoesNotExist:
+            raise Http404
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.expression_id,))
+
+    @property
+    def main_context(self):
+        main_context = super(UCRExpressionEditView, self).main_context
+
+        main_context.update({
+            "expression": {
+                "id": self.expression.id,
+                "domain": self.expression.domain,
+                "name": self.expression.name,
+                "description": self.expression.description,
+                "expression_type": self.expression.expression_type,
+                "definition_raw": self.expression.definition,
+            },
+        })
+        return main_context
+
+    def post(self, request, domain, **kwargs):
+        form = UCRExpressionForm(self.request, self.request.POST, instance=self.expression)
+        if form.is_valid():
+            form.save()
+            try:
+                self.expression.wrapped_definition(EvaluationContext({}))
+            except BadSpecError as e:
+                return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
+            return JsonResponse({})
+
+        return JsonResponse({"errors": [
+            f"{field} {error}" for field, error in form.errors.items()
+        ]}, status=400)
