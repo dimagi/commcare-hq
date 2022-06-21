@@ -485,8 +485,8 @@ class Command(BaseCommand):
                 num_device_logs=Count('id'),
         )
 
-        devicelogs_per_user = \
-            device_log_data['num_device_logs'] // device_log_data['num_authors'] if device_log_data['num_authors'] > 0 else 0
+        devicelogs_per_user = device_log_data['num_device_logs'] // device_log_data['num_authors'] \
+            if device_log_data['num_authors'] > 0 else 0
 
         resource_model['devicelogs_per_user'] = devicelogs_per_user
 
@@ -580,7 +580,7 @@ class Command(BaseCommand):
         case_index_ratio = resource_model['case_index_ratio']
 
         if case_index_ratio is None:
-            self.stdout.write(f'Ratio of cases to case indices: indeterminate')
+            self.stdout.write('Ratio of cases to case indices: indeterminate')
         else:
             self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
@@ -632,7 +632,7 @@ class Command(BaseCommand):
             avg_lifespan = case_type_data['avg_lifespan']
             cases_per_user = case_type_data['cases_per_user_pm']
 
-            self._print_value(f'Average lifespan for "%s" cases' % case_type, avg_lifespan)
+            self._print_value('Average lifespan for "%s" cases' % case_type, avg_lifespan)
 
             suffix = ''
             if case_type:
