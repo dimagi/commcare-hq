@@ -462,7 +462,7 @@ class SubmissionPost(object):
         from corehq.pillows.case_search import transform_case_for_elasticsearch
         from corehq.apps.es.case_search import ElasticCaseSearch
         actions = [
-            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json())
+            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
             for case_model in case_stock_result.case_models
         ]
         try:
