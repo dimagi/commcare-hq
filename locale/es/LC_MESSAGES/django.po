@@ -13320,6 +13320,12 @@ msgid "Please enter a valid regular expression to match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "There was a problem with your request"
+msgid "There was a problem with a UCR Filter Definition: "
+msgstr "Hubo un problema con su solicitud"
+
+#: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr "Por favor especifique por lo menos una acción."
 
@@ -13948,6 +13954,12 @@ msgid "Custom filter"
 msgstr "Filtro personalizado"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "Use Filter"
+msgid "UCR Filter"
+msgstr "Filtro de Uso"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
 msgstr "Y"
 
@@ -14010,6 +14022,12 @@ msgstr "El caso padre ha sido cerrado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "ID filtro Personalizada"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "Filter Options"
+msgid "Filter Definition"
+msgstr "Opciones de Filtro"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
@@ -34355,6 +34373,12 @@ msgstr ""
 #, python-brace-format
 msgid "{0} filter type must include a \"filters\" list"
 msgstr "{0} tipo de filtro debe incluir una lista de \"filtros\" "
+
+#: corehq/apps/userreports/filters/factory.py
+#, fuzzy
+#| msgid "Couldn't find the following user(s): "
+msgid "Couldn't find named filter with name: {}"
+msgstr "No se pudo encontrar a los siguientes usuario(s):"
 
 #: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
