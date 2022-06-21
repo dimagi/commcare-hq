@@ -450,7 +450,7 @@ class SubmissionPost(object):
 
     @staticmethod
     def send_to_elasticsearch(instance, case_stock_result):
-        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return
 
         domain_obj = Domain.get_by_name(instance.domain)
