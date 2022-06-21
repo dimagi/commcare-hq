@@ -465,8 +465,7 @@ class SubmissionPost(object):
             for case_model in case_stock_result.case_models
         ]
         try:
-            _, errors = ElasticCaseSearch().bulk(actions, refresh=True, raise_on_error=False,
-                                                 raise_on_exception=False)
+            _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
         except Exception as e:
             errors = [str(e)]
 
