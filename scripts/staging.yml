@@ -79,11 +79,11 @@ branches:
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
     - ml/all-in-one-offboarding+sk/rename-permission-classes
     - es/mobile-auth+sk/rename-permission-classes
+    - dm/lookup-table-uploader+cs/SC-1945-ability-to-add-filter-to-rules+ml/all-in-one-offboarding # Amit Jun 21
     - es/mobile-auth  # Simon Nov 23
     - ml/all-in-one-offboarding  # Minha April 13
     - sk/rename-permission-classes
     - cs/fix-case-owner-location-parent # Charl Jun 20
     - dm/lookup-table-uploader # Daniel Jun 20
     - dependabot/npm_and_yarn/npm-8.12.2 # Amit Jun 21
-    - dm/lookup-table-uploader+cs/SC-1945-ability-to-add-filter-to-rules+ml/all-in-one-offboarding # Amit Jun 21
 submodules: { }
