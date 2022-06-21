@@ -431,7 +431,7 @@ class SubmissionPost(object):
         try:
             case_stock_result.stock_result.finalize()
 
-            SubmissionPost.send_to_elasticsearch(instance, case_stock_result)
+            SubmissionPost.index_case_search(instance, case_stock_result)
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
@@ -450,7 +450,7 @@ class SubmissionPost(object):
             raise PostSaveError
 
     @staticmethod
-    def send_to_elasticsearch(instance, case_stock_result):
+    def index_case_search(instance, case_stock_result):
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return
 
@@ -458,7 +458,6 @@ class SubmissionPost(object):
         if not domain_obj or not domain_obj.web_apps_sync_case_search:
             return
 
-        from corehq.elastic import send_to_elasticsearch
         from corehq.pillows.case_search import transform_case_for_elasticsearch
         from corehq.apps.es.case_search import ElasticCaseSearch
         actions = [
