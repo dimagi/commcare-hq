@@ -11,11 +11,19 @@ from dimagi.utils.couch.migration import (
 
 
 class ModelAttrEqualityHelper(SimpleTestCase):
+    """
+    Helper class to test the equality of couch and a SQL models during a couch to sql migration.
+    Update `couch_only_attrs` and `sql_only_attrs` as per requirements
+    """
     class DummySQLModel(models.Model, SyncSQLToCouchMixin):
         pass
 
     class DummyCouchModel(Document, SyncCouchToSQLMixin):
         pass
+
+    couch_only_attrs = set()
+
+    sql_only_attrs = set()
 
     @classmethod
     def _get_user_defined_attrs(cls, model_cls, dummy_model):
@@ -31,14 +39,6 @@ class ModelAttrEqualityHelper(SimpleTestCase):
     @classmethod
     def get_cleaned_couch_attrs(cls, couch_model_cls):
         couch_attrs = cls._get_user_defined_attrs(couch_model_cls, cls.DummyCouchModel)
-        extra_attrs = cls._couch_only_attrs()
-        new_attrs = cls._sql_only_attrs()
+        extra_attrs = cls.couch_only_attrs
+        new_attrs = cls.sql_only_attrs
         return (couch_attrs - extra_attrs).union(new_attrs)
-
-    @classmethod
-    def _couch_only_attrs(cls):
-        return set()
-
-    @classmethod
-    def _sql_only_attrs(cls):
-        return set()
