@@ -84,4 +84,5 @@ branches:
     - sk/rename-permission-classes
     - cs/fix-case-owner-location-parent # Charl Jun 20
     - dm/lookup-table-uploader # Daniel Jun 20
+    - dependabot/npm_and_yarn/npm-8.12.2 # Amit Jun 21
 submodules: { }
