@@ -74,11 +74,11 @@ This should contain:
   - Run ``makemigrations``
   - Add the test that was generated to it's respective place.
     - The test file uses a `ModelAttrEquality` util which has methods for running the equality tests.
-    - The test class that is generated will have three methods: `_couch_only_attrs`, `_sql_only_attrs` and `test_have_same_attrs`.
-    - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `_couch_only_attrs` and `_sql_only_attrs`.
-    - `_couch_only_attrs` is supposed to return a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
-    - `_sql_only_attrs` would return a set of attributes and methods that are new in the SQL model.
-    - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated the above methods but you can modify it's implementation as needed.
+    - The test class that is generated will have two attributes  `couch_only_attrs`, `sql_only_attrs` and one method `test_have_same_attrs`.
+    - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `couch_only_attrs` and `sql_only_attrs`.
+    - `couch_only_attrs` is supposed to be a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
+    - `sql_only_attrs` would be having of attributes and methods that are new in the SQL model.
+    - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated `couch_only_attrs` and `sql_only_attrs` but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
     - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
