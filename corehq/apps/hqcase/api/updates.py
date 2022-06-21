@@ -169,6 +169,10 @@ def _populate_index_case_ids(domain, updates):
     case_ids['external_id'] = _get_case_ids_by_external_id(domain, [
         index.external_id for update in updates for index in update.indices.values()
     ])
+    case_ids['external_id'].update(
+        (update.external_id, update.get_case_id())
+        for update in updates if update.external_id
+    )
     for update in updates:
         for index in update.indices.values():
             for id_prop in case_ids:
