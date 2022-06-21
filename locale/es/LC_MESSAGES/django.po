@@ -14581,6 +14581,17 @@ msgstr ""
 "aplicaciones de centro de llamadas"
 
 #: corehq/apps/domain/forms.py
+msgid "Synchronous web apps case search"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Update case search ElasticSearch data immediately on web apps form "
+"submission. This will slow down submissions but prevent case search data "
+"from going stale."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Default mobile report sync delay (hours)"
 msgstr "Atraso de sincronización (horas) de reporte móvil por defecto"
 

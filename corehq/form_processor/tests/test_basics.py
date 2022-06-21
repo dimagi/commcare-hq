@@ -11,17 +11,28 @@ from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
+from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
+from corehq.pillows.mappings.case_search_mapping import (
+    CASE_SEARCH_INDEX,
+    CASE_SEARCH_INDEX_INFO,
+)
+from corehq.util.elastic import ensure_index_deleted
+from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.dates import coerce_to_datetime
+from corehq.util.test_utils import flag_enabled
+from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = 'fundamentals'
 
@@ -474,7 +485,43 @@ class FundamentalCaseTests(FundamentalBaseTests):
             _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
 
 
-def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, **kwargs):
+@flag_enabled('SYNC_SEARCH_CASE_CLAIM')
+@patch('corehq.motech.repeaters.models.domain_has_privilege', lambda x, y: True)
+class CaseSearchTests(FundamentalBaseTests):
+    def setUp(self):
+        super().setUp()
+        self.elasticsearch = get_es_new()
+        ensure_index_deleted(CASE_SEARCH_INDEX)
+        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+
+    def tearDown(self):
+        super().tearDown()
+        ensure_index_deleted(CASE_SEARCH_INDEX)
+
+    @patch.object(CouchUser, 'get_by_user_id', return_value=None)
+    @patch.object(Domain, 'get_by_name')
+    def test_create_case_and_update_elasticsearch(self, domain_mock, user_mock):
+        domain_mock.return_value = Domain(name=DOMAIN, web_apps_sync_case_search=True)
+
+        case_id = uuid.uuid4().hex
+        modified_on = datetime.utcnow()
+        xmlns = 'http://commcare.org/test_xmlns'
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
+                'dynamic': '123'
+            },
+            device_id=FORMPLAYER_DEVICE_ID,
+            xmlns=xmlns
+        )
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+
+        es_case = CaseSearchES().doc_id(case_id).run().hits[0]
+        case_props = {prop['key']: prop['value'] for prop in es_case['case_properties']}
+        self.assertEqual(case_props['dynamic'], '123')
+
+
+def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, device_id=None, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)
     return post_case_blocks(
         [
@@ -485,6 +532,7 @@ def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, **kwargs):
             ).as_xml()
         ],
         domain=domain,
+        device_id=device_id,
         form_extras={'xmlns': xmlns}
     )
 
