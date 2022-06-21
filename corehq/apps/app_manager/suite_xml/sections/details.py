@@ -49,7 +49,13 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
-AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+NEXT_INPUT_INSTANCE = "next_input"
+
+AUTO_LAUNCH_EXPRESSIONS = {
+    "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
+    "multi-select": ("count(instance('" + NEXT_INPUT_INSTANCE + "')/results/value[count(instance(‘casedb’)"
+                    "/casedb/case[@case_id = current()/.]) =0 ]) > 0")
+}
 
 
 class DetailContributor(SectionContributor):
@@ -395,10 +401,9 @@ class DetailContributor(SectionContributor):
         auto_launch_expression = "false()"
         if allow_auto_launch and module.search_config.auto_launch:
             if module.is_multi_select():
-                # AUTO_LAUNCH_EXPRESSION is incompatible with multi select case lists - See USH-1870
-                auto_launch_expression = "true()"
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['multi-select'])
             else:
-                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['single-select'])
         return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
