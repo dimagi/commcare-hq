@@ -123,3 +123,6 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+#Google Sheet Integration testing variable
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
