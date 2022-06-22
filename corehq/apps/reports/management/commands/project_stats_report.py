@@ -577,12 +577,8 @@ class Command(BaseCommand):
         self.stdout.write(f'Average cases per user per month: {monthly_cases_per_user}')
 
     def _output_case_ratio_index(self):
-        case_index_ratio = resource_model['case_index_ratio']
-
-        if case_index_ratio is None:
-            self.stdout.write('Ratio of cases to case indices: indeterminate')
-        else:
-            self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
+        case_index_ratio = round(resource_model.get('case_index_ratio', 0), 2)
+        self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
     def _output_attachment_sizes(self):
         attachments = resource_model['attachments']
