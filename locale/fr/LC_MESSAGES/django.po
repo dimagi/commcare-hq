@@ -15211,7 +15211,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr ""
 
@@ -24976,6 +24975,8 @@ msgid ""
 "\n"
 "You have been added to the \"%(domain)s\" project on %(hq_name)s.\n"
 msgstr ""
+"\n"
+"Vous avez été ajouté à \"%(domain)s\" projet sur %(hq_name)s.\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
@@ -24985,6 +24986,9 @@ msgid ""
 "To confirm your account, please open the following link in your browser: "
 "%(url)s\n"
 msgstr ""
+"\n"
+"Pour confirmer votre compte, veuillez ouvrir le lien suivant dans votre "
+"navigateur: %(url)s\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #, python-format
@@ -24999,13 +25003,13 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
-msgstr ""
+msgstr "Merci,"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
-msgstr ""
+msgstr "-Le %(hq_name)s équipe"
 
 #: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
 msgid ""
@@ -25055,12 +25059,21 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
+msgid "Hello %(name)s,"
+msgstr "Bonjour %(name)s,"
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
 msgid ""
 "\n"
 "Once you confirm your account you will be able to access and submit data in "
 "the \"%(domain)s\" project on %(hq_name)s.\n"
 "Your username to login is %(username)s\n"
 msgstr ""
+"\n"
+"Une fois que vous aurez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le \"%(domain)s\" projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter est %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
