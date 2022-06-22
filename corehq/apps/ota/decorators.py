@@ -3,16 +3,15 @@ from functools import wraps
 
 from django.http import HttpResponseForbidden
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.auth import BASIC
 from corehq.apps.domain.decorators import (
     get_multi_auth_decorator,
     two_factor_exempt,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.apps.users.models import HqPermissions
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -35,7 +34,7 @@ def require_mobile_access(fn):
                     )
                     return HttpResponseForbidden()
 
-            return require_permission(Permissions.access_mobile_endpoints)(fn)(request, domain, *args, **kwargs)
+            return require_permission(HqPermissions.access_mobile_endpoints)(fn)(request, domain, *args, **kwargs)
 
         return fn(request, domain, *args, **kwargs)
 

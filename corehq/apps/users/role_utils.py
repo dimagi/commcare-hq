@@ -1,4 +1,4 @@
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import UserRole, HqPermissions
 
 
 class UserRolePresets:
@@ -10,22 +10,22 @@ class UserRolePresets:
     MOBILE_WORKER = "Mobile Worker Default"
 
     INITIAL_ROLES = {
-        READ_ONLY: lambda: Permissions(view_reports=True),
-        APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-        FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
-                                               view_commcare_users=True,
-                                               edit_groups=True,
-                                               view_groups=True,
-                                               edit_locations=True,
-                                               view_locations=True,
-                                               edit_shared_exports=True,
-                                               view_reports=True),
-        BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-        MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
-                                           report_an_issue=True,
-                                           access_all_locations=True,
-                                           access_api=False,
-                                           download_reports=False)
+        READ_ONLY: lambda: HqPermissions(view_reports=True),
+        APP_EDITOR: lambda: HqPermissions(edit_apps=True, view_apps=True, view_reports=True),
+        FIELD_IMPLEMENTER: lambda: HqPermissions(edit_commcare_users=True,
+                                                 view_commcare_users=True,
+                                                 edit_groups=True,
+                                                 view_groups=True,
+                                                 edit_locations=True,
+                                                 view_locations=True,
+                                                 edit_shared_exports=True,
+                                                 view_reports=True),
+        BILLING_ADMIN: lambda: HqPermissions(edit_billing=True),
+        MOBILE_WORKER: lambda: HqPermissions(access_mobile_endpoints=True,
+                                             report_an_issue=True,
+                                             access_all_locations=True,
+                                             access_api=False,
+                                             download_reports=False)
     }
 
 

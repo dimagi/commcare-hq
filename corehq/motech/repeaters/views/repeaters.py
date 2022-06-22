@@ -18,7 +18,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
@@ -38,7 +38,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Data Forwarding")
     template_name = 'repeaters/repeaters.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -79,7 +79,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
