@@ -22,7 +22,6 @@ from casexml.apps.case.const import (
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.exceptions import (
-    UsernameAlreadyExists,
     ReservedUsernameException,
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
@@ -63,11 +62,6 @@ def generate_mobile_username(username, domain):
     error = None
     try:
         return validate_mobile_username(username, domain)
-    except UsernameAlreadyExists as e:
-        if e.is_deleted:
-            error = _("Username '{}' belonged to a user that was deleted and cannot be reused.").format(username)
-        else:
-            error = _("Username '{}' is already taken.").format(username)
     except ReservedUsernameException:
         error = _("Username '{}' is reserved.").format(username)
     finally:
@@ -487,3 +481,18 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
 
 def is_dimagi_email(email):
     return email.endswith('@dimagi.com')
+
+
+def is_username_available(username):
+    """
+    Checks if the username is available to use
+    :param username: expects complete/email formatted username (e.g., user@example.commcarehq.org)
+    :return: boolean
+    """
+    from corehq.apps.users.dbaccessors import user_exists
+    # enforce complete username, otherwise check is meaningless
+    if not re.match("[a-z0-9.+-_]+@[a-z0-9.+-_]+.commcarehq.org", username):
+        return False
+
+    exists = user_exists(username)
+    return not exists.exists
