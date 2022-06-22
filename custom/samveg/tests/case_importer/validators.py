@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from dateutil.relativedelta import relativedelta
 
@@ -199,7 +199,7 @@ class TestFormatValidator(SimpleTestCase):
         )
 
 
-class TestUploadLimitValidator(SimpleTestCase):
+class TestUploadLimitValidator(TestCase):
 
     def setUp(self):
         super(TestUploadLimitValidator, self).setUp()
@@ -232,7 +232,7 @@ class TestUploadLimitValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
         # initialize context to replicate limit reached
-        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': Domain.operator_call_limit}}}
+        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': self.domain.operator_call_limit}}}
 
         fields_to_update, errors = UploadLimitValidator.run(
             row_num, raw_row, fields_to_update, import_context, "test_domain")
@@ -258,7 +258,7 @@ class TestUploadLimitValidator(SimpleTestCase):
         )
 
 
-class TestSuccessfulUpload(SimpleTestCase):
+class TestSuccessfulUpload(TestCase):
 
     def setUp(self):
         super(TestSuccessfulUpload, self).setUp()
