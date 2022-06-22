@@ -14424,6 +14424,26 @@ msgid "Add case type"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid "Synchronous Web Apps Submissions"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
 msgstr ""
 

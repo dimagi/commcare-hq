@@ -15070,6 +15070,28 @@ msgid "Add case type"
 msgstr "Ajouter un type de dossier"
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
+#, fuzzy
+#| msgid "Web Apps Permissions"
+msgid "Synchronous Web Apps Submissions"
+msgstr "Permissions pour applications web"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
 msgstr "Supprimer les caractères spéciaux"
 
