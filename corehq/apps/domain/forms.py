@@ -119,6 +119,7 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
+from custom.samveg.const import SAMVEG_DOMAINS
 
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
@@ -399,6 +400,18 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    operator_call_limit = IntegerField(
+        label=gettext_lazy("Call limit"),
+        required=True,
+        min_value=1,
+        max_value=1000,
+        help_text=gettext_lazy(
+            """
+            Limit on number of calls allowed to an operator for each call type.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -446,6 +459,13 @@ class DomainGlobalSettingsForm(forms.Form):
                 self.domain
             ).confirmation_link_expiry_time
 
+        if self.domain not in SAMVEG_DOMAINS:
+            del self.fields['operator_call_limit']
+        else:
+            self.fields['operator_call_limit'].initial = Domain.get_by_name(
+                self.domain
+            ).operator_call_limit
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -460,10 +480,18 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']
+        DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
+
+    def clean_operator_call_limit(self):
+        data = self.cleaned_data['operator_call_limit']
+        DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    @staticmethod
+    def validate_integer_value(value, value_name):
         try:
-            return int(data)
+            return int(value)
         except ValueError:
-            raise forms.ValidationError(_("Confirmation link expiry should be an integer."))
+            raise forms.ValidationError(_(f"{value_name} should be an integer."))
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
