@@ -22,7 +22,6 @@ from casexml.apps.case.const import (
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.exceptions import (
-    InvalidUsernameException,
     UsernameAlreadyExists,
     ReservedUsernameException,
 )
@@ -64,14 +63,6 @@ def generate_mobile_username(username, domain):
     error = None
     try:
         return validate_mobile_username(username, domain)
-    except InvalidUsernameException:
-        error = _("Username '{}' may not contain special characters.").format(username)
-        if not username:
-            error = _("Username is required.")
-        elif '..' in username:
-            error = _("Username '{}' may not contain consecutive '.' (period).").format(username)
-        elif username.endswith('.'):
-            error = _("Username '{}' may not end with a '.' (period).").format(username)
     except UsernameAlreadyExists as e:
         if e.is_deleted:
             error = _("Username '{}' belonged to a user that was deleted and cannot be reused.").format(username)

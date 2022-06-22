@@ -212,23 +212,27 @@ class TestGenerateMobileUsername(TestCase):
 
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
-    def test_invalid_username_double_period_message(self):
+    def test_invalid_username_if_double_period(self):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test..user', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'test..user' may not contain consecutive '.' (period).")
+        self.assertEqual(cm.exception.message,
+                         "Username 'test..user@test-domain.commcarehq.org' must be a valid email address.")
 
-    def test_invalid_username_trailing_period_message(self):
+    def test_invalid_username_if_trailing_period(self):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test.user.', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'test.user.' may not end with a '.' (period).")
+        self.assertEqual(cm.exception.message,
+                         "Username 'test.user.@test-domain.commcarehq.org' must be a valid email address.")
 
-    def test_invalid_username_generic_message(self):
+    def test_invalid_username_if_special_characters(self):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test%user', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'test%user' may not contain special characters.")
+        self.assertEqual(cm.exception.message,
+                         "The username component 'test%user' of 'test%user@test-domain.commcarehq.org' may not "
+                         "contain special characters.")
 
     def test_username_actively_in_use_message(self):
         with self.assertRaises(ValidationError) as cm:

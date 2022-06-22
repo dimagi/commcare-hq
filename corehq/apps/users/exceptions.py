@@ -26,12 +26,6 @@ class ReservedUsernameException(Exception):
         self.username = username
 
 
-class InvalidUsernameException(Exception):
-    """Raised if username contains invalid characters"""
-    def __init__(self, username):
-        self.username = username
-
-
 class UsernameAlreadyExists(Exception):
     """Raised if username is associated with a current or deleted user"""
     def __init__(self, username, is_deleted):

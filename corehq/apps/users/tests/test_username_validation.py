@@ -1,8 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.exceptions import (
-    InvalidUsernameException,
     UsernameAlreadyExists,
 )
 from corehq.apps.users.models import CommCareUser
@@ -10,7 +10,7 @@ from corehq.apps.users.validation import (
     ReservedUsernameException,
     _check_for_reserved_usernames,
     _ensure_username_is_available,
-    _ensure_valid_username,
+    _validate_complete_username,
     validate_mobile_username,
 )
 
@@ -32,7 +32,7 @@ class TestMobileUsernameValidation(TestCase):
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
     def test_none_username_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+        with self.assertRaises(ValidationError):
             validate_mobile_username(None, self.domain)
 
     def test_reserved_username_raises_exception(self):
@@ -40,11 +40,11 @@ class TestMobileUsernameValidation(TestCase):
             validate_mobile_username('admin', self.domain)
 
     def test_empty_username_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+        with self.assertRaises(ValidationError):
             validate_mobile_username('', self.domain)
 
     def test_invalid_email_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+        with self.assertRaises(ValidationError):
             validate_mobile_username('test..user', self.domain)
 
     def test_already_used_username_raises_exception(self):
@@ -69,25 +69,25 @@ class TestCheckForReservedUsernames(SimpleTestCase):
             _check_for_reserved_usernames('demo_user')
 
 
-class TestEnsureValidUsername(SimpleTestCase):
+class TestValidateCompleteUsername(SimpleTestCase):
 
     def test_valid_email_does_not_raise_exception(self):
         try:
-            _ensure_valid_username('username@domain.commcarehq.org')
-        except InvalidUsernameException:
-            self.fail(f'Unexpected raised exception: {InvalidUsernameException}')
+            _validate_complete_username('username@domain.commcarehq.org')
+        except ValidationError:
+            self.fail(f'Unexpected raised exception: {ValidationError}')
 
     def test_invalid_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('username%domain.commcarehq.org')
+        with self.assertRaises(ValidationError):
+            _validate_complete_username('username%domain.commcarehq.org')
 
     def test_trailing_period_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('username.@domain.commcarehq.org')
+        with self.assertRaises(ValidationError):
+            _validate_complete_username('username.@domain.commcarehq.org')
 
     def test_double_period_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('user..name@domain.commcarehq.org')
+        with self.assertRaises(ValidationError):
+            _validate_complete_username('user..name@domain.commcarehq.org')
 
 
 class TestEnsureUsernameIsAvailable(TestCase):
@@ -106,7 +106,7 @@ class TestEnsureUsernameIsAvailable(TestCase):
         try:
             _ensure_username_is_available('unused-test-user@test-domain.commcarehq.org')
         except UsernameAlreadyExists:
-            self.fail(f'Unexpected raised exception: {InvalidUsernameException}')
+            self.fail(f'Unexpected raised exception: {UsernameAlreadyExists}')
 
     def test_username_is_actively_in_use(self):
         with self.assertRaises(UsernameAlreadyExists) as cm:
