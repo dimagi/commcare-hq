@@ -214,67 +214,9 @@ class TestGenerateMobileUsername(TestCase):
 
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
-    def test_invalid_username_if_double_period(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test..user', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username 'test..user@test-domain.commcarehq.org' must be a valid email address.")
-
-    def test_invalid_username_if_trailing_period(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test.user.', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username 'test.user.@test-domain.commcarehq.org' must be a valid email address.")
-
-    def test_invalid_username_if_special_characters(self):
-        with self.assertRaises(ValidationError) as cm:
+    def test_exception_raised_if_username_validation_fails(self):
+        with self.assertRaises(ValidationError):
             generate_mobile_username('test%user', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "The username component 'test%user' of 'test%user@test-domain.commcarehq.org' may not "
-                         "contain special characters.")
-
-    def test_username_is_not_available_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test-user', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username 'test-user@test-domain.commcarehq.org' is already taken or reserved.")
-
-    def test_username_was_previously_in_use_message(self):
-        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
-        self.addCleanup(retired_user.delete, self.domain, None)
-        retired_user.retire(self.domain, None)
-
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('retired', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username 'retired@test-domain.commcarehq.org' is already taken or reserved.")
-
-    def test_username_is_reserved_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('admin', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username 'admin@test-domain.commcarehq.org' is already taken or reserved.")
-
-    def test_username_is_empty_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "Username '@test-domain.commcarehq.org' must be a valid email address.")
-
-    def test_username_email_domain_is_incorrect_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test-user@test-domain2.commcarehq.org', self.domain)
-
-        self.assertEqual(cm.exception.message,
-                         "The username email domain '@test-domain2.commcarehq.org' should be "
-                         "'@test-domain.commcarehq.org'.")
 
 
 class TestIsUsernameAvailable(TestCase):
