@@ -244,6 +244,7 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
+    synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
@@ -273,6 +274,7 @@ class CaseSearchConfig(models.Model):
         if not config:
             return None
 
+        config.synchronous_web_apps = json_def['synchronous_web_apps']
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()

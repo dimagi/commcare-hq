@@ -25,6 +25,7 @@ from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
@@ -429,6 +430,8 @@ class SubmissionPost(object):
         try:
             case_stock_result.stock_result.finalize()
 
+            SubmissionPost.index_case_search(instance, case_stock_result.case_models)
+
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
             close_extension_cases(
@@ -444,6 +447,38 @@ class SubmissionPost(object):
                 'form_id': instance.form_id,
             })
             raise PostSaveError
+
+    @staticmethod
+    def index_case_search(instance, case_models):
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+            return
+
+        from corehq.apps.case_search.models import CaseSearchConfig, case_search_enabled_for_domain
+        if not case_search_enabled_for_domain(instance.domain):
+            return
+
+        config = CaseSearchConfig.objects.get_or_none(pk=instance.domain)
+        if not config or not config.synchronous_web_apps:
+            return
+
+        from corehq.pillows.case_search import transform_case_for_elasticsearch
+        from corehq.apps.es.case_search import ElasticCaseSearch
+        actions = [
+            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
+            for case_model in case_models
+        ]
+        try:
+            _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
+        except Exception as e:
+            errors = [str(e)]
+
+        if errors:
+            # Notify but otherwise ignore all errors - the regular case search pillow is going to reprocess these
+            notify_exception(None, "Error updating case_search ES index during form processing", details={
+                'xml': instance,
+                'domain': instance.domain,
+                'errors': errors,
+            })
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
