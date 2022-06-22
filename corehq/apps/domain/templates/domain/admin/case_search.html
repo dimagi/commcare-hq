@@ -107,15 +107,13 @@
             <tbody data-bind="foreach: ignorePatterns">
             <tr>
               <td>
-                <select data-bind="options: $root.caseTypes,
-                                                       value: caseType">
-                </select>
+                <select class="form-control" data-bind="options: $root.caseTypes, value: caseType"></select>
               </td>
               <td>
-                <input type="text" data-bind="value: caseProperty" placeholder="e.g. name" />
+                <input type="text" class="form-control" data-bind="value: caseProperty" placeholder="e.g. name" />
               </td>
               <td>
-                <input type="text" data-bind="value: regex" placeholder="e.g. +" />
+                <input type="text" class="form-control" data-bind="value: regex" placeholder="e.g. +" />
               </td>
               <td>
                 <button type="button"
