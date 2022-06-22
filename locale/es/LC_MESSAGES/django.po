@@ -14530,17 +14530,6 @@ msgstr ""
 "aplicaciones de centro de llamadas"
 
 #: corehq/apps/domain/forms.py
-msgid "Synchronous web apps case search"
-msgstr ""
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"Update case search ElasticSearch data immediately on web apps form "
-"submission. This will slow down submissions but prevent case search data "
-"from going stale."
-msgstr ""
-
-#: corehq/apps/domain/forms.py
 msgid "Default mobile report sync delay (hours)"
 msgstr "Atraso de sincronización (horas) de reporte móvil por defecto"
 
@@ -15190,6 +15179,28 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Add case type"
 msgstr "Agregar tipo de caso"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+#, fuzzy
+#| msgid "Web Apps Permissions"
+msgid "Synchronous Web Apps Submissions"
+msgstr "Permisos de Aplicaciones Web"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
