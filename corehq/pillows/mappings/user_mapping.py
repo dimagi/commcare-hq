@@ -1,10 +1,13 @@
+from corehq.apps.es.users import ElasticUser
 from corehq.util.elastic import prefix_for_tests
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 from pillowtop.es_utils import ElasticsearchIndexInfo, USER_HQ_INDEX_NAME
 
 
-USER_INDEX = prefix_for_tests("hqusers_2017-09-07")
+USER_INDEX = ElasticUser.index_name
+USER_ES_ALIAS = prefix_for_tests('hqusers')
+
 USER_MAPPING = {
     "_all": {
         "analyzer": "standard"
@@ -502,12 +505,10 @@ USER_MAPPING = {
     }
 }
 
-USER_ES_ALIAS = prefix_for_tests('hqusers')
-
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,
     alias=USER_ES_ALIAS,
-    type='user',
+    type=ElasticUser.type,
     mapping=USER_MAPPING,
     hq_index_name=USER_HQ_INDEX_NAME
 )

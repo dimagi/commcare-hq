@@ -18,11 +18,11 @@ from corehq.apps.es.case_search import (
     case_property_query,
     case_property_range_query,
     case_property_text_query,
-    flatten_result,
     wrap_case_search_hit,
 )
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT, get_es_new
+from corehq.elastic import get_es_new
 from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
@@ -149,46 +149,30 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                             ],
                             "should": [
                                 {
-                                    "bool": {
-                                        "should": [
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
-                                                                    }
-                                                                }
-                                                            ],
-                                                            "must": {
-                                                                "match": {
-                                                                    "case_properties.value": {
-                                                                        "query": "polly",
-                                                                        "operator": "or",
-                                                                        "fuzziness": "AUTO"
-                                                                    }
-                                                                }
-                                                            }
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
                                                         }
                                                     }
-                                                }
-                                            },
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
+                                                ],
+                                                "must": {
+                                                    "bool": {
+                                                        "should": [
+                                                            {
+                                                                "fuzzy": {
+                                                                    "case_properties.value": {
+                                                                        "value": "polly",
+                                                                        "fuzziness": "AUTO",
+                                                                        "max_expansions": 100
                                                                     }
                                                                 }
-                                                            ],
-                                                            "must": {
+                                                            },
+                                                            {
                                                                 "match": {
                                                                     "case_properties.value": {
                                                                         "query": "polly",
@@ -197,11 +181,11 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     }
                                                                 }
                                                             }
-                                                        }
+                                                        ]
                                                     }
                                                 }
                                             }
-                                        ]
+                                        }
                                     }
                                 }
                             ]
@@ -216,28 +200,6 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                  .case_property_query("name", "redbeard")
                  .case_property_query("parrot_name", "polly", clause="should", fuzzy=True))
         self.checkQuery(query, json_output, validate_query=False)
-
-    def test_flatten_result(self):
-        expected = {'name': 'blah', 'foo': 'bar', 'baz': 'buzz', RELEVANCE_SCORE: "1.095"}
-        self.assertEqual(
-            flatten_result(
-                {
-                    "_score": "1.095",
-                    "_source": {
-                        'name': 'blah',
-                        'case_properties': [
-                            {'key': '@case_id', 'value': 'should be removed'},
-                            {'key': 'name', 'value': 'should be removed'},
-                            {'key': 'case_name', 'value': 'should be removed'},
-                            {'key': 'last_modified', 'value': 'should be removed'},
-                            {'key': 'foo', 'value': 'bar'},
-                            {'key': 'baz', 'value': 'buzz'}]
-                    }
-                },
-                include_score=True
-            ),
-            expected
-        )
 
     def test_blacklisted_owner_ids(self):
         query = self.es.domain('swashbucklers').blacklist_owner_id('123').owner('234')

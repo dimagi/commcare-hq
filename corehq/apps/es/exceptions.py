@@ -4,3 +4,18 @@ class ESError(Exception):
 
 class ESRegistryError(ESError):
     pass
+
+
+class ESShardFailure(ESError):
+    pass
+
+
+class TaskError(ESError):
+
+    def __init__(self, tasks_result):
+        self.tasks_result = tasks_result
+        super().__init__(tasks_result)
+
+
+class TaskMissing(TaskError):
+    pass

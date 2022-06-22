@@ -5,7 +5,7 @@ from corehq.apps.app_manager.tests.util import patch_get_xform_resource_override
 
 
 @patch_get_xform_resource_overrides()
-class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class ShadowModuleSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def test_shadow_module(self, *args):
@@ -19,7 +19,7 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
 
 @patch_get_xform_resource_overrides()
-class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class ShadowModuleWithChildSuiteTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):

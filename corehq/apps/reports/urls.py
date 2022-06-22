@@ -49,6 +49,7 @@ from .views import (
     export_report,
     project_health_user_details,
     rebuild_case_view,
+    reports_home,
     resave_case_view,
     resave_form_view,
     restore_edit,
@@ -86,7 +87,7 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', MySavedReportsView.as_view(), name="reports_home"),
+    url(r'^$', reports_home, name="reports_home"),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', MySavedReportsView.as_view(), name="old_saved_reports"),
 

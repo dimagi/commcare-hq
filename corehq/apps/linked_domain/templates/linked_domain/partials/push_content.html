@@ -78,4 +78,12 @@
       </div>
     </form>
   </div>
+  <div data-bind="if: !canPush()">
+    <p>
+      {% blocktrans %}
+        You have no linked project spaces that allow you to push data.<br/>
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with Linked Project Spaces.
+      {% endblocktrans %}
+    </p>
+  </div>
 </div>

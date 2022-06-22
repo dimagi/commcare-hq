@@ -23,7 +23,7 @@ from corehq.apps.userreports.expressions.specs import (
     eval_statements,
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import (
@@ -254,6 +254,80 @@ class PropertyPathExpressionTest(SimpleTestCase):
                     'to': bad_value
                 }
             }))
+
+
+class JsonpathExpressionTest(SimpleTestCase):
+
+    def test_jsonpath(self):
+        """test examples in docs"""
+        spec = {
+            'type': 'jsonpath',
+            'jsonpath': 'form..case.name'
+        }
+        item = {
+            "form": {
+                "case": {"name": "a"},
+                "nested": {
+                    "case": {"name": "b"},
+                },
+                "list": [
+                    {"case": {"name": "c"}},
+                    {
+                        "nested": {
+                            "case": {"name": "d"}
+                        }
+                    }
+                ]
+            }
+        }
+        self.assertEqual(["a", "b", "c", "d"], ExpressionFactory.from_spec(spec)(item))
+        spec['jsonpath'] = 'form.list[0].case.name'
+        self.assertEqual("c", ExpressionFactory.from_spec(spec)(item))
+
+    def test_bad_expression(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                'type': 'jsonpath',
+                'jsonpath': 'find("a" in "b")'
+            })
+
+    @generate_cases([(None,), ('',), ([],)])
+    def test_bad_values(self, bad_value):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': 'a.b.c'
+        })
+        self.assertEqual(None, expr({
+            'a': {
+                'b': bad_value
+            }
+        }))
+
+    @generate_cases([
+        ({"a": "1"}, "a", "integer", 1),
+        ({"a": [{"b": "1"}, {"b": "2"}, {"b": "x"}]}, "a..b", "integer", [1, 2, None]),
+        ({"a": {"b": 1}}, "a..b", "array", [1]),
+    ])
+    def test_datatype(self, item, jsonpath, datatype, expected):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': jsonpath,
+            'datatype': datatype
+        })
+        self.assertEqual(expected, expr(item))
+
+    @generate_cases([
+        ({"a": 1}, "a", 1),
+        ({"a": [1, 2, 3]}, "a", [1, 2, 3]),
+        ({"a": [{"b": 1}, {"b": 2}]}, "a..b", [1, 2]),
+        ({"a": {"b": 1}}, "a..b", 1),
+    ])
+    def test_list_coersion(self, item, jsonpath, expected):
+        expr = ExpressionFactory.from_spec({
+            'type': 'jsonpath',
+            'jsonpath': jsonpath,
+        })
+        self.assertEqual(expected, expr(item))
 
 
 class ConditionalExpressionTest(SimpleTestCase):
@@ -565,7 +639,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "type": "identity",
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -581,7 +655,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "three"
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -611,7 +685,7 @@ class NestedExpressionTest(SimpleTestCase):
         evaluation_context = EvaluationContext(doc)
         factory_context = FactoryContext({
             'test_named_expression': ExpressionFactory.from_spec(named_expression)
-        }, evaluation_context)
+        }, {})
 
         expression1 = ExpressionFactory.from_spec(
             {
@@ -632,7 +706,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         expression2 = ExpressionFactory.from_spec(
             {
@@ -653,7 +727,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         self.assertEqual(expression1(doc, evaluation_context), 'my_parent_id')
         self.assertEqual(expression2(doc, evaluation_context), 'my_parent_id2')
@@ -756,7 +830,7 @@ class RootDocExpressionTest(SimpleTestCase):
             None,
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({}, 0)
+                EvaluationContext({}, 0)
             )
         )
 
@@ -765,7 +839,7 @@ class RootDocExpressionTest(SimpleTestCase):
             "base_value",
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({"base_property": "base_value"}, 0)
+                EvaluationContext({"base_property": "base_value"}, 0)
             )
         )
 
@@ -1299,6 +1373,12 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
+    def test_web_user(self):
+        user = WebUser.create(domain=None, username='web', password='123',
+                              created_by=None, created_via=None)
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
 
 class TestGetReportingGroupsExpression(TestCase):
 
@@ -1377,7 +1457,7 @@ class TestEvaluationContext(SimpleTestCase):
         counter = MagicMock()
 
         @ucr_context_cache(vary_on=('arg1', 'arg2',))
-        def fn_that_should_be_cached(arg1, arg2, context):
+        def fn_that_should_be_cached(arg1, arg2, evaluation_context):
             counter()
 
         context = EvaluationContext({})
@@ -1393,7 +1473,7 @@ class TestEvaluationContext(SimpleTestCase):
 
         class MyObject(object):
             @ucr_context_cache(vary_on=('arg1', 'arg2',))
-            def method_that_should_be_cached(self, arg1, arg2, context):
+            def method_that_should_be_cached(self, arg1, arg2, evaluation_context):
                 counter()
 
         context = EvaluationContext({})
@@ -1409,11 +1489,11 @@ class TestEvaluationContext(SimpleTestCase):
         counter = MagicMock()
 
         @ucr_context_cache(vary_on=('arg1',))
-        def fn_that_should_be_cached(arg1, context):
+        def fn_that_should_be_cached(arg1, evaluation_context):
             counter()
 
         @ucr_context_cache(vary_on=('arg1',))
-        def another_fn_that_should_be_cached(arg1, context):
+        def another_fn_that_should_be_cached(arg1, evaluation_context):
             counter()
 
         context = EvaluationContext({})

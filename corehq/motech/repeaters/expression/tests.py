@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.expression.repeaters import CaseExpressionRepeater
@@ -117,3 +118,37 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
             "case_id": forwardable_case.case_id,
             "a-constant": "foo",
         }))
+
+    @flag_enabled("UCR_EXPRESSION_REGISTRY")
+    def test_custom_url(self):
+
+        self.repeater.url_template = "/{variable1}/a_thing/delete?case_id={case_id}&{missing_variable}='foo'"
+
+        UCRExpression.objects.create(
+            name='variable1',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "property_name",
+                "property_name": "prop1"
+            },
+        )
+        UCRExpression.objects.create(
+            name='case_id',
+            domain=self.domain,
+            expression_type="named_expression",
+            definition={
+                "type": "property_name",
+                "property_name": "case_id"
+            },
+        )
+
+        forwardable_case = self.factory.create_case(case_type='forward-me', update={'prop1': 'foo'})
+        repeat_record = self.repeat_records(self.domain).all()[0]
+
+        expected_url = self.connection.url + f"/foo/a_thing/delete?case_id={forwardable_case.case_id}&='foo'"
+
+        self.assertEqual(
+            self.repeater.get_url(repeat_record),
+            expected_url
+        )

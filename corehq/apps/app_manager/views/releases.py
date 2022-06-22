@@ -204,7 +204,6 @@ def get_releases_context(request, domain, app_id):
         ),
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
-        'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,

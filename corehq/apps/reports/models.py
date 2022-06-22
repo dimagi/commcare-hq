@@ -225,6 +225,7 @@ class TableauServer(models.Model):
 
 
 class TableauVisualization(models.Model):
+    title = models.CharField(max_length=32, null=True)
     domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
@@ -238,3 +239,12 @@ class TableauVisualization(models.Model):
         return '{domain} {server} {view}'.format(domain=self.domain,
                                                  server=self.server,
                                                  view=self.view_url[0:64])
+
+    @classmethod
+    def for_user(cls, domain, couch_user):
+        items = [
+            viz
+            for viz in TableauVisualization.objects.filter(domain=domain)
+            if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
+        ]
+        return sorted(items, key=lambda v: v.name.lower())

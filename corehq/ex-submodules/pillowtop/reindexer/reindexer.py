@@ -198,38 +198,39 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         return True
 
     def process_bulk_docs(self, docs, progress_logger):
-        if len(docs) == 0:
+        if not docs:
             return True
 
         pillow_logging.info("Processing batch of %s docs", len(docs))
-
-        changes = [
-            self._doc_to_change(doc) for doc in docs
-            if self.process_deletes or not is_deletion(doc.get('doc_type'))
-        ]
+        changes = []
+        for doc in docs:
+            change = self._doc_to_change(doc)  # de-dupe the is_deletion check
+            if self.process_deletes or not change.deleted:
+                changes.append(change)
         error_collector = ErrorCollector()
 
-        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
+        bulk_changes = build_bulk_payload(changes, self.doc_transform, error_collector)
 
         for change, exception in error_collector.errors:
-            pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
+            pillow_logging.error("Error processing doc %s: %s (%s)", change.id,
+                                 type(exception), exception)
 
         es_interface = ElasticsearchInterface(self.es)
         try:
-            es_interface.bulk_ops(bulk_changes)
+            es_interface.bulk_ops(self.index_info.alias, self.index_info.type,
+                                  bulk_changes)
         except BulkIndexError as e:
             pillow_logging.error("Bulk index errors\n%s", e.errors)
-        except Exception:
-            pillow_logging.exception("\tException sending payload to ES")
+        except Exception as exc:
+            pillow_logging.exception("Error sending bulk payload to Elasticsearch: %s", exc)
             return False
 
         return True
 
     @staticmethod
     def _doc_to_change(doc):
-        return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc.get('doc_type'))
-        )
+        return Change(id=doc['_id'], sequence_id=None, document=doc,
+                      deleted=is_deletion(doc.get('doc_type')))
 
 
 class ResumableBulkElasticPillowReindexer(Reindexer):

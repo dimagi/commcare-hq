@@ -1,8 +1,12 @@
+from corehq.apps.es.sms import ElasticSMS
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, SMS_HQ_INDEX_NAME
 
-SMS_INDEX = prefix_for_tests("smslogs_2020-01-28")
+SMS_INDEX = ElasticSMS.index_name
+SMS_TYPE = ElasticSMS.type
+SMS_ES_ALIAS = prefix_for_tests("smslogs")
+
 SMS_MAPPING = {
     "_all": {
         "enabled": False
@@ -78,9 +82,6 @@ SMS_MAPPING = {
         }
     }
 }
-
-SMS_TYPE = 'sms'
-SMS_ES_ALIAS = prefix_for_tests("smslogs")
 
 SMS_INDEX_INFO = ElasticsearchIndexInfo(
     index=SMS_INDEX,

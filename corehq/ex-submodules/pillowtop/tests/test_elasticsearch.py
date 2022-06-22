@@ -2,8 +2,6 @@ import functools
 from unittest import mock
 import uuid
 
-
-from django.conf import settings
 from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError, RequestError
@@ -18,10 +16,7 @@ from pillowtop.es_utils import (
     initialize_index,
     initialize_index_and_mapping,
     mapping_exists,
-    set_index_normal_settings,
-    set_index_reindex_settings,
 )
-from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
@@ -69,16 +64,6 @@ class ElasticPillowTest(SimpleTestCase):
             mapping['properties']['doc_type']
         )
 
-    def test_refresh_index(self):
-        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        doc_id = uuid.uuid4().hex
-        doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        self.assertEqual(0, get_doc_count(self.es, self.es_alias))
-        self.es_interface.index_doc(self.es_alias, 'case', doc_id, doc)
-        self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
-        self.es.indices.refresh(self.index)
-        self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
-
     def test_index_operations(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         self.assertTrue(self.es.indices.exists(self.index))
@@ -95,13 +80,12 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        with mock.patch.object(ElasticsearchInterface, "_verify_is_alias", return_value=None):
-            ElasticsearchInterface(get_es_new()).index_doc(
-                self.index,
-                TEST_INDEX_INFO.type,
-                doc_id,
-                {'doc_type': 'CommCareCase', 'type': 'mother'},
-            )
+        ElasticsearchInterface(get_es_new()).index_doc(
+            TEST_INDEX_INFO.alias,
+            TEST_INDEX_INFO.type,
+            doc_id,
+            {'doc_type': 'CommCareCase', 'type': 'mother'},
+        )
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -119,53 +103,18 @@ class ElasticPillowTest(SimpleTestCase):
 
         # make sure it's there in the other index
         aliases = self.es_interface.get_aliases()
-        self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
+        # NOTE: alias is currently applied to *both* indices now because the
+        # `initialize_index_and_mapping` helper function both creates the index
+        # and applies an alias to the (new) index. The `assertIn()` test is used
+        # here as to not make this test depend on that implied functionality of
+        # the helper function.
+        self.assertIn(new_index, aliases[TEST_INDEX_INFO.alias])
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         aliases = self.es_interface.get_aliases()
 
-        self.assertEqual(0, len(aliases[new_index]['aliases']))
-        self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
-
-    def test_update_settings(self):
-        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        self.es_interface.update_index_settings(self.index, INDEX_REINDEX_SETTINGS)
-        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back)
-        self.es_interface.update_index_settings(self.index, INDEX_STANDARD_SETTINGS)
-        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back)
-
-    def test_set_index_reindex(self):
-        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        set_index_reindex_settings(self.es, self.index)
-        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back)
-
-    def test_set_index_normal(self):
-        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        set_index_normal_settings(self.es, self.index)
-        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back)
-
-    def _compare_es_dicts(self, expected, returned):
-        sub_returned = returned['index']
-        should_not_exist = disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]
-        for key, value in expected['index'].items():
-            if key in should_not_exist:
-                continue
-            split_key = key.split('.')
-            returned_value = sub_returned[split_key[0]]
-            for sub_key in split_key[1:]:
-                returned_value = returned_value[sub_key]
-            self.assertEqual(str(value), returned_value)
-
-        for disallowed_setting in should_not_exist:
-            self.assertNotIn(
-                disallowed_setting, sub_returned,
-                '{} is disallowed and should not be in the index settings'
-                .format(disallowed_setting))
+        self.assertEqual([self.index], aliases[TEST_INDEX_INFO.alias])
 
 
 @es_test(index=TEST_INDEX_INFO)
@@ -270,22 +219,6 @@ class TestSendToElasticsearch(SimpleTestCase):
             es_merge_update=True,
         )
         self.assertEqual(0, get_doc_count(self.es, self.index))
-
-    def test_connection_failure(self):
-        def _bad_es_getter():
-            from corehq.util.es.elasticsearch import Elasticsearch
-            return Elasticsearch(
-                [{
-                    'host': settings.ELASTICSEARCH_HOST,
-                    'port': settings.ELASTICSEARCH_PORT - 2,  # bad port
-                }],
-                timeout=0.1,
-            )
-
-        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
-
-        with self.assertRaises(PillowtopIndexingError):
-            self._send_to_es_and_check(doc, esgetter=_bad_es_getter)
 
     def test_connection_failure_no_error(self):
         logs = self._send_to_es_mock_errors(ConnectionError("test", "test", "test"), 2)

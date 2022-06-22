@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from corehq.apps.sms.api import get_inbound_phone_entry
+from corehq.apps.sms.api import get_inbound_phone_entry_from_sms
 from corehq.apps.sms.models import PhoneNumber, MobileBackendInvitation, SMS, SQLMobileBackend
 from corehq.apps.smsforms.models import XFormsSessionSynchronization, SMSChannel, RunningSessionInfo
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
@@ -104,14 +104,14 @@ class TestGetInboundPhoneEntry(TestCase):
 
     def test_get_inbound_phone_entry__no_backend_id(self):
         sms = SMS(phone_number=self.phone_number)
-        phone_number, has_domain_two_way_scope = get_inbound_phone_entry(sms)
+        phone_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(sms)
 
         self.assertEqual(phone_number.owner_id, "fake-owner-1")
         self.assertFalse(has_domain_two_way_scope)
 
     def test_get_inbound_phone_entry__global_backend(self):
         sms = SMS(phone_number=self.phone_number, backend_id=self.global_backend.couch_id)
-        phone_number, has_domain_two_way_scope = get_inbound_phone_entry(sms)
+        phone_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(sms)
 
         self.assertEqual(phone_number.owner_id, "fake-owner-1")
         self.assertFalse(has_domain_two_way_scope)
@@ -122,7 +122,7 @@ class TestGetInboundPhoneEntry(TestCase):
         test methods that are testing `get_inbound_phone_entry` under different conditions
         """
         sms = SMS(phone_number=self.phone_number, backend_id=self.domain2_backend.couch_id)
-        return get_inbound_phone_entry(sms)
+        return get_inbound_phone_entry_from_sms(sms)
 
     def test_get_inbound_phone_entry__domain_backend(self):
         """Should return the only 'two way' number.

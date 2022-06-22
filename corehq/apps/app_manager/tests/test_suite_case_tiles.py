@@ -16,7 +16,7 @@ from corehq.apps.app_manager.tests.util import (
 
 
 @patch_get_xform_resource_overrides()
-class SuiteCaseTilesTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     @staticmethod

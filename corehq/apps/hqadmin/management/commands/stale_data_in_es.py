@@ -12,7 +12,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.retry import retry_on
 
 from corehq.apps.es import CaseES, CaseSearchES, FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
@@ -218,7 +217,7 @@ class CaseHelper:
     @retry_on_es_timeout
     def _get_es_modified_dates(case_ids):
         results = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseES(for_export=True)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
@@ -229,7 +228,7 @@ class CaseHelper:
     @retry_on_es_timeout
     def _get_case_search_es_modified_dates(case_ids):
         results = (
-            CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseSearchES(for_export=True)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
@@ -284,7 +283,7 @@ class FormHelper:
     @staticmethod
     def _get_es_modified_dates_for_forms(form_ids):
         results = (
-            FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
+            FormES(for_export=True).remove_default_filters()
             .form_ids(form_ids)
             .values_list('_id', 'received_on', 'doc_type', 'domain')
         )

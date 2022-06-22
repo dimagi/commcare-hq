@@ -208,3 +208,10 @@ class CommCareFeatureSupportMixin(object):
             toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
             and self._require_minimum_version('2.53')
         )
+
+    @property
+    def enable_required_search_fields(self):
+        return (
+            toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
+            and self._require_minimum_version('2.53')
+        )

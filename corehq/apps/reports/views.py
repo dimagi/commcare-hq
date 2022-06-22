@@ -2,7 +2,7 @@ import copy
 import io
 import json
 import re
-from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
 from wsgiref.util import FileWrapper
@@ -214,6 +214,19 @@ def can_view_attachments(request):
     )
 
 
+@login_and_domain_required
+def reports_home(request, domain):
+    if user_can_view_reports(request.project, request.couch_user):
+        return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
+
+    if toggles.EMBEDDED_TABLEAU.enabled_for_request(request):
+        from .standard.tableau import TableauView
+        for viz in TableauVisualization.for_user(domain, request.couch_user):
+            return HttpResponseRedirect(reverse(TableauView.urlname, args=[domain, viz.id]))
+
+    raise Http404()
+
+
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = gettext_lazy("Project Reports")
 
@@ -339,8 +352,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
         time_difference = get_timezone_difference(self.domain)
         (report.hour, day_change) = recalculate_hour(
             report.hour,
-            int(time_difference[:3]),
-            int(time_difference[3:])
+            time_difference.hours,
+            time_difference.minutes
         )
         report.minute = 0
         if day_change:
@@ -541,6 +554,14 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+@dataclass
+class Timezone:
+    hours: int
+    minutes: int
+
+    def __str__(self):
+        return f"{self.hours:+03}:{self.minutes:02}"
+
 
 @login_and_domain_required
 @datespan_default
@@ -633,7 +654,9 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    domain_obj = Domain.get_by_name(domain)
+    tz_diff = datetime.now(pytz.timezone(domain_obj.default_timezone)).strftime('%z')
+    return Timezone(int(tz_diff[:3]), int(tz_diff[3:]))
 
 
 def calculate_day(interval, day, day_change):
@@ -673,8 +696,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             time_difference = get_timezone_difference(self.domain)
             (instance.hour, day_change) = recalculate_hour(
                 instance.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
+                time_difference.hours,
+                time_difference.minutes
             )
             instance.minute = 0
             if day_change:
@@ -689,6 +712,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 config_ids=[],
                 hour=8,
                 minute=0,
+                stop_hour=20,
+                stop_minute=0,
                 send_to_owner=True,
                 recipient_emails=[],
                 language=None,
@@ -751,6 +776,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def scheduled_report_form(self):
         initial = self.report_notification.to_json()
+
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
@@ -773,10 +799,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
+        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain)[:3] + ':'
-                                        + get_timezone_difference(self.domain)[3:])
+                                        get_timezone_difference(self.domain))
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
+                                        (Domain.get_by_name(self.domain)['default_timezone'],
+                                        get_timezone_difference(self.domain))
         return form
 
     @property
@@ -825,9 +853,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
+                self.report_notification.hour, time_difference.hours, time_difference.minutes
             )
-            self.report_notification.minute = int(time_difference[3:])
+            self.report_notification.minute = time_difference.minutes
             if day_change:
                 self.report_notification.day = calculate_day(
                     self.report_notification.interval,
@@ -1710,8 +1738,8 @@ def _get_cases_changed_context(domain, form, case_id=None):
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    meta = _top_level_tags(form).get('meta', None) or {}
-
+    meta = form.metadata.to_json() if form.metadata else {}
+    meta['@xmlns'] = form.xmlns
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
@@ -1755,28 +1783,6 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
-
-
-def _top_level_tags(form):
-    """
-    Returns a OrderedDict of the top level tags found in the xml, in the
-    order they are found.
-
-    The actual values are taken from the form JSON data and not from the XML
-    """
-    to_return = OrderedDict()
-
-    element = form.get_xml_element()
-    if element is None:
-        return OrderedDict(sorted(form.form_data.items()))
-
-    for child in element:
-        # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
-        key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
-        if key == "Meta":
-            key = "meta"
-        to_return[key] = form.get_data('form/' + key)
-    return to_return
 
 
 def _sorted_form_metadata_keys(keys):
@@ -2039,12 +2045,12 @@ class EditFormInstance(View):
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
-            datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+            datums = EntriesHelper(form.get_app()).get_case_datums_meta_for_form(form, include_autogenerated=False)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
                 matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
                 if len(matching_datums) == 1:
-                    edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
+                    edit_session_data[matching_datums[0].id] = case_block.caseblock.get(const.CASE_ATTR_ID)
         else:
             # a bit hacky - the app manager puts the main case directly in the form, so it won't have
             # any other path associated with it. This allows us to differentiate from parent cases.
@@ -2411,6 +2417,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     @property
     def column_names(self):
         return [
+            _("Title"),
             _("Server"),
             _("View URL"),
         ]
@@ -2431,6 +2438,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     def _get_item_data(self, tableau_visualization):
         data = {
             'id': tableau_visualization.id,
+            'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
         }

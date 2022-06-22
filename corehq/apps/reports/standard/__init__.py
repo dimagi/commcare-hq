@@ -47,7 +47,6 @@ class ProjectReport(GenericReportView):
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
     emailable = True
-    is_public = False
     languages = None
 
     @classmethod

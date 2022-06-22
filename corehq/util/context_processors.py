@@ -100,8 +100,8 @@ def js_api_keys(request):
     if getattr(request, 'couch_user', None) and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
     api_keys = {
-        'ANALYTICS_IDS': settings.ANALYTICS_IDS,
-        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
+        'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
     if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
@@ -259,10 +259,10 @@ def banners(request):
 
 
 def get_demo(request):
-    is_user_not_logged_in = getattr(request, 'user', None) and not request.user.is_authenticated
+    is_user_logged_in = getattr(request, 'user', None) and request.user.is_authenticated
     is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     context = {}
-    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and is_user_not_logged_in:
+    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and not is_user_logged_in:
         context.update({
             'is_demo_visible': True,
         })

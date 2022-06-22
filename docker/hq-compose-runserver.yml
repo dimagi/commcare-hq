@@ -13,7 +13,7 @@ services:
       DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
     privileged: true  # allows mount inside container
     command: [runserver]
-    links:
+    depends_on:
       - postgres
       - couch
       - redis
@@ -36,7 +36,7 @@ services:
       service: formplayer
     environment:
         COMMCARE_HOST: "http://web:8000"
-    links:
+    depends_on:
       - postgres
       - redis
     ports:

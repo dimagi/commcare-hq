@@ -550,7 +550,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
     hour = IntegerProperty(default=8)
-    minute = IntegerProperty(default=0)
+    minute = IntegerProperty(default=0)  # Currently unused
+    # Used for the "hourly" interval to enable hourly range functionality
+    stop_hour = IntegerProperty(default=23)
+    stop_minute = IntegerProperty(default=0)  # Currently unused
+
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["hourly", "daily", "weekly", "monthly"])
     uuid = StringProperty()
@@ -613,6 +617,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def owner_email(self):
+        if self.owner is None:
+            return None
         if self.owner.is_web_user():
             return self.owner.username
 

@@ -123,7 +123,7 @@ class TestIncrementalExport(TestCase):
     def _cleanup_case(self, case_id):
         def _clean():
             interface = ElasticsearchInterface(self.es)
-            interface.delete_doc(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type, case_id)
+            interface.delete_doc(CASE_INDEX_INFO.alias, CASE_INDEX_INFO.type, case_id)
             self.es.indices.refresh(CASE_INDEX_INFO.index)
         return _clean
 

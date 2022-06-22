@@ -6,6 +6,9 @@ from settings import *  # noqa: F403
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
+# timeout faster in tests
+ES_SEARCH_TIMEOUT = 5
+
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
 # it can be reverted whenever that's figured out.
@@ -118,8 +121,5 @@ METRICS_PROVIDERS = [
     'corehq.util.metrics.datadog.DatadogMetrics',
     'corehq.util.metrics.prometheus.PrometheusMetrics',
 ]
-
-# timeout faster in tests
-ES_SEARCH_TIMEOUT = 5
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"

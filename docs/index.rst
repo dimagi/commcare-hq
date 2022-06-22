@@ -133,7 +133,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     toggles
     commtrack
     elasticsearch
-    es_query
     middleware
     nfs
     forms_and_cases

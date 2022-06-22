@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.es.client import BulkActionItem
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.models import CommCareCase
@@ -61,34 +62,19 @@ class TestEnsureDocumentExists(TestCase):
 @es_test
 class TestBuildBulkPayload(SimpleTestCase):
 
-    class TEST_INFO:
-        alias = "test_alias"
-        type = "test_doc"
-
     def test_build_bulk_payload_performs_delete_for__is_deleted_change(self):
         change = DummyChange("1", None, True)
-        expected = [{
-            "_index": self.TEST_INFO.alias,
-            "_type": self.TEST_INFO.type,
-            "_op_type": "delete",
-            "_id": change.id,
-        }]
-        self.assertEqual(expected, build_bulk_payload(self.TEST_INFO, [change]))
+        expected = [BulkActionItem.delete_id(change.id)]
+        self.assertEqual(expected, build_bulk_payload([change]))
 
     def test_build_bulk_payload_performs_index_for_not__is_deleted_change(self):
         change = DummyChange("1", "foo", False)
-        expected = [{
-            "_index": self.TEST_INFO.alias,
-            "_type": self.TEST_INFO.type,
-            "_op_type": "index",
-            "_id": change.id,
-            "_source": change.get_document()
-        }]
-        self.assertEqual(expected, build_bulk_payload(self.TEST_INFO, [change]))
+        expected = [BulkActionItem.index(change.get_document())]
+        self.assertEqual(expected, build_bulk_payload([change]))
 
     def test_build_bulk_payload_discards_delete_change_for_not__is_deleted(self):
         change = DummyChange("1", "foo", True)
-        self.assertEqual([], build_bulk_payload(self.TEST_INFO, [change]))
+        self.assertEqual([], build_bulk_payload([change]))
 
 
 class DummyChange:
