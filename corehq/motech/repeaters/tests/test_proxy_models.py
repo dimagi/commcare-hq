@@ -260,7 +260,15 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(Repeater)
         sql_attrs = self.get_sql_attrs(SQLRepeater)
-        self.assertEqual(couch_attrs ^ sql_attrs, {'_all_option_value_fields'})
+        self.assertEqual(couch_attrs ^ sql_attrs, set())
+
+    @classmethod
+    def get_sql_attrs(cls, model_cls):
+        sql_attrs = cls._get_user_defined_attrs(model_cls, cls.DummySQLModel)
+        # Dynamically Added by OptionValue class
+        if '_all_option_value_fields' in sql_attrs:
+            sql_attrs.remove('_all_option_value_fields')
+        return sql_attrs
 
     @classmethod
     def _couch_only_attrs(cls):
@@ -289,8 +297,6 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             'repeater_id', 'set_next_attempt', 'next_attempt_at',
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
             'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
-            # dynamically added by OptionValue in some repeaters
-            '_all_option_value_fields',
             # added by django choicefield in models
             'get_request_method_display'
         }
@@ -349,21 +355,21 @@ class TestAppStructureRepeater(TestRepeaterModelsAttrEquality):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(AppStructureRepeater)
         sql_attrs = self.get_sql_attrs(SQLAppStructureRepeater)
-        self.assertEqual(couch_attrs ^ sql_attrs, {'_all_option_value_fields'})
+        self.assertEqual(couch_attrs ^ sql_attrs, set())
 
 
 class TestUserRepeater(TestRepeaterModelsAttrEquality):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(UserRepeater)
         sql_attrs = self.get_sql_attrs(SQLUserRepeater)
-        self.assertEqual(couch_attrs ^ sql_attrs, {'_all_option_value_fields'})
+        self.assertEqual(couch_attrs ^ sql_attrs, set())
 
 
 class TestLocationRepeater(TestRepeaterModelsAttrEquality):
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(LocationRepeater)
         sql_attrs = self.get_sql_attrs(SQLLocationRepeater)
-        self.assertEqual(couch_attrs ^ sql_attrs, {'_all_option_value_fields'})
+        self.assertEqual(couch_attrs ^ sql_attrs, set())
 
 
 class TestDhsi2Repeater(TestRepeaterModelsAttrEquality):
