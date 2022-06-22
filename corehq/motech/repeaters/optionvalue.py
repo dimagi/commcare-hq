@@ -91,7 +91,7 @@ class OptionValue(property):
             return obj.options[self.name]
         if self.default is self.NOT_SET:
             raise AttributeError(self.name)
-        value = self.default() if callable(self.default) else self.default
+        value = self.get_default_value()
         obj.options[self.name] = value
         return value
 
@@ -110,9 +110,7 @@ class OptionValue(property):
         obj.options[self.name] = value
 
     def get_default_value(self):
-        if self.default != self.NOT_SET:
-            return self.default
-        return None
+        return self.default() if callable(self.default) else self.default
 
 
 def _assert_options(obj):
