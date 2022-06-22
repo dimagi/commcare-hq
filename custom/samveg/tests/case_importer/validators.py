@@ -221,7 +221,8 @@ class TestUploadLimitValidator(SimpleTestCase):
         # initialize context to replicate limit reached
         import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': Domain.operator_call_limit}}}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(
+            row_num, raw_row, fields_to_update, import_context, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
