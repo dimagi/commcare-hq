@@ -66,7 +66,7 @@
         "multiselect": "0.9.12",
         "npm": "8.12.2",
         "nprogress": "0.2.0",
-        "nvd3": "1.1.10",
+        "nvd3": "1.8.6",
         "nvd3-1.8.6": "npm:nvd3#1.8.6",
         "perfect-scrollbar": "1.5.0",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",

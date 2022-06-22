@@ -3916,15 +3916,10 @@ nprogress@0.2.0:
   resolved "https://registry.yarnpkg.com/nprogress/-/nprogress-0.2.0.tgz#cb8f34c53213d895723fcbab907e9422adbcafb1"
   integrity sha1-y480xTIT2JVyP8urkH6UIq28r7E=
 
-"nvd3-1.8.6@npm:nvd3#1.8.6":
+"nvd3-1.8.6@npm:nvd3#1.8.6", nvd3@1.8.6:
   version "1.8.6"
   resolved "https://registry.yarnpkg.com/nvd3/-/nvd3-1.8.6.tgz#2d3eba74bf33363b5101ebf1d093c59a53ae73c4"
   integrity sha1-LT66dL8zNjtRAevx0JPFmlOuc8Q=
-
-nvd3@1.1.10:
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/nvd3/-/nvd3-1.1.10.tgz#66bae25a93bf6531f91d02f92150cf58a24f2351"
-  integrity sha1-ZrriWpO/ZTH5HQL5IVDPWKJPI1E=
 
 oauth-sign@~0.9.0:
   version "0.9.0"
