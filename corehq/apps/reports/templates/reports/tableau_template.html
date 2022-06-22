@@ -5,8 +5,21 @@
 
 {% block page_content %}
 
+{% initial_page_data "server_type" server_type %}
+{% initial_page_data "ticket" ticket %}
+{% initial_page_data "validate_hostname" validate_hostname %}
+{% initial_page_data "server_address" server_address %}
+{% initial_page_data "target_site" target_site %}
+{% initial_page_data "domain_username" domain_username %}
+{% initial_page_data "view_url" view_url %}
+{% registerurl 'tableau_visualisation_ajax' request.domain %}
+
+<script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
+<script src="{% static 'reports/js/tableau.js' %}"></script>
+
 <body>
     <div><p>{% trans "Page is loading..." %} </p></div>
+    <div id="vizContainer"></div>
 </body>
 
 {% endblock %}

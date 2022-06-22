@@ -2,7 +2,7 @@ from django.conf.urls import include, re_path as url
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
-from corehq.apps.reports.standard.tableau import TableauView
+from corehq.apps.reports.standard.tableau import TableauView, tableau_visualisation_ajax
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -153,6 +153,7 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
+    url(r'^tableau/visualization/$', tableau_visualisation_ajax, name='tableau_visualisation_ajax'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
