@@ -11,7 +11,7 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2014,2016
 # Claire_Cravero <ccravero@dimagi.com>, 2014,2016
 # Derek Hans <dhans@dimagi.com>, 2015
-# Dimagi Dev <devops@dimagi.com>, 2015-2016
+# Dimagi Dev <devops@dimagi.com>, 2015-2016,2022
 # djindag <djindalaure@gmail.com>, 2015
 # Farid Rener <frener@dimagi.com>, 2020
 # fatim thiam <fthiam@dimagi.com>, 2015
@@ -37,7 +37,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2015-2016,2022\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -3519,28 +3519,20 @@ msgid "Attempted to update unknown or non-editable field '{}'"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid ""
-#| "Password is not strong enough. Try making your password more complex."
 msgid "Password is not strong enough."
 msgstr ""
-"Le mot de passe n'est pas assez fort. Essayez de le rendre plus complexe. "
 
 #: corehq/apps/api/user_updates.py
 msgid "'default_phone_number' must be a string"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "Error! The selected form does not exist."
 msgid "The role '{}' does not exist"
-msgstr "Erreur! Le formulaire sélectionné n'existe pas"
+msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "There are {} locations with the name '{}' under the parent '{}'"
 msgid "There are multiple roles with the name '{}' in the domain '{}'"
-msgstr "Il y a des {} sites avec le nom '{}' sous le parent '{}'"
+msgstr ""
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -26036,6 +26028,8 @@ msgid ""
 "\n"
 "You have been added to the \"%(domain)s\" project on %(hq_name)s.\n"
 msgstr ""
+"\n"
+"Vous avez été ajouté à \"%(domain)s\" projet sur %(hq_name)s\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
@@ -42700,11 +42694,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#, fuzzy
-#~| msgid "Specify Workers at this Location"
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Spécifier les utilisateurs sur ce site"
-
-#~ msgid "No Data"
-#~ msgstr "Pas de données"
