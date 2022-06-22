@@ -10,7 +10,7 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.schema import RegistrySchemaBuilder
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -228,5 +228,5 @@ def _mock_case(case_type, domain):
 
 
 def _mock_user(has_permission=True):
-    mock_role = Mock(permissions=Permissions(view_data_registry_contents=has_permission))
+    mock_role = Mock(permissions=HqPermissions(view_data_registry_contents=has_permission))
     return Mock(get_role=Mock(return_value=mock_role), get_django_user=Mock(return_value="user"))

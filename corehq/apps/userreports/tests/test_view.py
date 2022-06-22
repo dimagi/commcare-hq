@@ -18,7 +18,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.sql_db.connections import Session
@@ -403,17 +403,17 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             user_role = UserRole.create(
                 domain=domain.name,
                 name=rolename,
-                permissions=Permissions(edit_commcare_users=True,
-                                        view_commcare_users=True,
-                                        edit_groups=True,
-                                        view_groups=True,
-                                        edit_locations=True,
-                                        view_locations=True,
-                                        access_all_locations=False,
-                                        edit_data=True,
-                                        edit_reports=can_edit_reports,
-                                        view_reports=True
-                                        )
+                permissions=HqPermissions(edit_commcare_users=True,
+                                          view_commcare_users=True,
+                                          edit_groups=True,
+                                          view_groups=True,
+                                          edit_locations=True,
+                                          view_locations=True,
+                                          access_all_locations=False,
+                                          edit_data=True,
+                                          edit_reports=can_edit_reports,
+                                          view_reports=True
+                                          )
             )
 
             web_user = WebUser.create(domain.name, username, '***', None, None)
