@@ -280,6 +280,7 @@ data_interfaces
  0024_add_automaticupdaterule_upstream_id
  0025_domaincaserulerun_num_errors
  0026_automaticupdaterule_criteria_operator
+ 0027_auto_20220511_2017
 dhis2
  0001_initial
  0002_auto_20170322_1323
