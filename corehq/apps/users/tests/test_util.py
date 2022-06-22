@@ -11,6 +11,7 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     cached_user_id_to_user_display,
     generate_mobile_username,
+    get_complete_mobile_username,
     is_username_available,
     user_display_string,
     user_id_to_username,
@@ -260,11 +261,20 @@ class TestGenerateMobileUsername(TestCase):
         self.assertEqual(cm.exception.message,
                          "Username 'admin@test-domain.commcarehq.org' is already taken or reserved.")
 
-    def test_username_is_none_message(self):
+    def test_username_is_empty_message(self):
         with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username(None, self.domain)
+            generate_mobile_username('', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username is required.")
+        self.assertEqual(cm.exception.message,
+                         "Username '@test-domain.commcarehq.org' must be a valid email address.")
+
+    def test_username_email_domain_is_incorrect_message(self):
+        with self.assertRaises(ValidationError) as cm:
+            generate_mobile_username('test-user@test-domain2.commcarehq.org', self.domain)
+
+        self.assertEqual(cm.exception.message,
+                         "The username email domain '@test-domain2.commcarehq.org' should be "
+                         "'@test-domain.commcarehq.org'.")
 
 
 class TestIsUsernameAvailable(TestCase):
@@ -300,3 +310,14 @@ class TestIsUsernameAvailable(TestCase):
     def test_returns_false_if_reserved_username(self):
         self.assertFalse(is_username_available('admin'))
         self.assertFalse(is_username_available('demo_user'))
+
+
+class TestGetCompleteMobileUsername(SimpleTestCase):
+
+    def test_returns_unchanged_username_if_already_complete(self):
+        username = get_complete_mobile_username('test@test-domain.commcarehq.org', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')
+
+    def test_returns_complete_username_if_incomplete(self):
+        username = get_complete_mobile_username('test', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')

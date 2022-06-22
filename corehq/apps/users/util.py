@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -50,14 +49,28 @@ def generate_mobile_username(username, domain):
     Returns the email formatted mobile username if successfully generated
     Handles exceptions raised by .validation.validate_mobile_username with user facing messages
     Any additional validation should live in .validation.validate_mobile_username
-    :param username: required str, expecting the first part of a mobile username
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: required str, domain name
     :return: str, email formatted mobile username
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
-    # TODO: separate username generation and validation
-    return validate_mobile_username(username, domain)
+    username = get_complete_mobile_username(username, domain)
+    validate_mobile_username(username, domain)
+    return username
+
+
+def get_complete_mobile_username(username, domain):
+    """
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: domain associated with the mobile user
+    :return: the complete username ('example-user@domain.commcarehq.org')
+    """
+    # this method is not responsible for validation, and therefore does the most basic email format check
+    if not re.match(".+@.+", username):
+        username = format_username(username, domain)
+
+    return username
 
 
 def cc_user_domain(domain):
