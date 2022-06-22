@@ -558,6 +558,18 @@ class _AuthorizableMixin(IsMemberOfMixin):
         else:
             return False
 
+    # I'm not sure this is the correct place for this, as it turns a generic module
+    #  into one that knows about ERM specifics. It might make more sense to move this into
+    #  into the domain membership module, as that module knows about specific permissions.
+    # However, because this class is the barrier between the user and domain membership,
+    # exposing new functionality on domain membership wouldn't change the problem.
+    # An alternate solution would be to expose this functionality directly on the WebUser class, instead.
+    def can_edit_linked_data(self, domain):
+        return (
+            self.has_permission(domain, 'access_release_management')
+            or self.has_permission(domain, 'edit_linked_configurations')
+        )
+
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
         if set(domains) == set(self.domains):

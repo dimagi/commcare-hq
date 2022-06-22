@@ -68,6 +68,16 @@ class TestUpdateRoles(TestCase):
         self.assertEqual(1, len(roles))
         self.assertIsNotNone(roles.get('test'))
 
+    def test_matching_names_are_not_overwritten(self):
+        self._create_user_role(self.downstream_domain, name='test', couch_id='local_role')
+        self._create_user_role(self.upstream_domain, name='test')
+
+        update_user_roles(self.domain_link)
+
+        role_ids = {r.get_id for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(2, len(role_ids))
+        self.assertIn('local_role', role_ids)
+
     def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
         if not permissions:
             permissions = HqPermissions(edit_web_users=True, view_locations=True)

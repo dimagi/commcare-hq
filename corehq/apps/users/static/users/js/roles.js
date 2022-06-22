@@ -150,6 +150,9 @@ hqDefine('users/js/roles',[
                         });
                     });
                 };
+                self.isEditable = ko.computed(function () {
+                    return root.allowEdit && (!self.upstream_id() || root.unlockLinkedRoles());
+                });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
@@ -401,16 +404,16 @@ hqDefine('users/js/roles',[
                     'title': linkedTitle,
                     'visible': root.ermPrivilege || root.mrmPrivilege,
                     'access_release_management': {
-                        text: linkedTitle,
+                        text: gettext('Linked Project Spaces'),
                         checkboxLabel: "erm-checkbox",
                         checkboxPermission: self.permissions.access_release_management,
-                        checkboxText: gettext("Access the Linked Project Spaces feature"),
+                        checkboxText: gettext("Allow role to configure linked project spaces"),
                     },
                     'edit_linked_configs': {
-                        text: gettext("Edit Linked Configurations"),
+                        text: gettext("Linked Configurations"),
                         checkboxLabel: "erm-edit-linked-checkbox",
                         checkboxPermission: self.permissions.edit_linked_configurations,
-                        checkboxText: "Allow overriding linked data",
+                        checkboxText: gettext("Allow role to edit linked configurations on this project space"),
                     },
                 };
 
@@ -544,6 +547,8 @@ hqDefine('users/js/roles',[
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
+        self.unlockLinkedRoles = ko.observable(false);
+        self.canEditLinkedData = o.canEditLinkedData;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -551,6 +556,14 @@ hqDefine('users/js/roles',[
         self.roleBeingEdited = ko.observable();
         self.roleBeingDeleted = ko.observable();
         self.defaultRole = UserRole.wrap(o.defaultRole);
+
+        self.hasLinkedRoles = ko.computed(function () {
+            return self.userRoles().some(element => element.upstream_id());
+        });
+
+        self.toggleLinkedRoles = function () {
+            self.unlockLinkedRoles(!self.unlockLinkedRoles());
+        };
 
         self.addOrReplaceRole = function (role) {
             var newRole = UserRole.wrap(role);
@@ -662,10 +675,13 @@ hqDefine('users/js/roles',[
     };
 
     return {
-        initUserRoles: function ($element, o) {
+        initUserRoles: function ($element, $modal, $infoBar, o) {
+            const viewModel = RolesViewModel(o);
             $element.each(function () {
-                $element.koApplyBindings(RolesViewModel(o));
+                $element.koApplyBindings(viewModel);
             });
+            $modal.koApplyBindings(viewModel);
+            $infoBar.koApplyBindings(viewModel);
         },
     };
 });
