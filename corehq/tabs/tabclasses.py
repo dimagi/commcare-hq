@@ -199,7 +199,7 @@ class ProjectReportsTab(UITab):
         from corehq.apps.reports.standard.tableau import TableauView
         items = [
             {
-                'title': viz.name,
+                'title': viz.title or viz.name,
                 'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
                 'show_in_dropdown': i < 2,
             }

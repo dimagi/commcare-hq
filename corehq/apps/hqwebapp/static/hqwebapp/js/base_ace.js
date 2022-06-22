@@ -93,6 +93,7 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             observable(editor.getSession().getValue());
         });
+        return editor;
     };
 
 

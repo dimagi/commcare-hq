@@ -263,6 +263,13 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
         self.assertEqual(couch_attrs ^ sql_attrs, set())
 
     @classmethod
+    def get_sql_attrs(cls, model_cls):
+        sql_attrs = cls._get_user_defined_attrs(model_cls, cls.DummySQLModel)
+        # Dynamically Added by OptionValue class
+        sql_attrs.discard('_all_option_value_fields')
+        return sql_attrs
+
+    @classmethod
     def _couch_only_attrs(cls):
         return {
             # removed
@@ -288,8 +295,9 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
         return {
             'repeater_id', 'set_next_attempt', 'next_attempt_at',
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
-            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater', 'to_json',
-            'get_request_method_display'  # added by django choicefield in models
+            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
+            # added by django choicefield in models
+            'get_request_method_display'
         }
 
 

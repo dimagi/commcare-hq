@@ -9,50 +9,35 @@
     <td data-bind="text: name"></td>
     <td data-bind="text: type"></td>
     <td data-bind="text: description"></td>
-    <td data-bind="text: definition"></td>
+    <td>
+      <span data-bind="text: definition_preview"></span>
+      <a data-toggle="modal" data-bind="attr: {'data-target': '#update-expression-' + id}">
+        ({% trans "see more" %})
+      </a>
+      <div class="modal fade" data-bind="attr: {id: 'update-expression-' + id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 data-bind="text: name"></h3>
+                    </div>
+                    <div class="modal-body">
+                        <div><pre data-bind="text: definition"></pre></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
     <td> <!-- actions -->
-        <button type="button"
-                data-toggle="modal"
-                data-bind="
-                    visible: ! upstream_id,
-                    attr: {
-                        'data-target': '#update-expression-' + id
-                    }
-                "
-                class="btn btn-primary">
+        <a class="btn btn-primary"
+                data-bind="attr: {href: edit_url}">
             {% trans "Update Expression" %}
-        </button>
+        </a>
         <a class="btn btn-primary"
                 href="{% url 'domain_links' domain %}"
                 data-bind="visible: upstream_id">
             {% trans "Linked Project Spaces" %}
         </a>
-
-        <div class="modal fade"
-             data-bind="
-                attr: {
-                    id: 'update-expression-' + id
-                }
-             ">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button"
-                                class="close"
-                                data-dismiss="modal"
-                                aria-hidden="true">&times;</button>
-                        <h3>
-                            {% blocktrans %}
-                                Update Expression <strong data-bind="text: name"></strong>:
-                            {% endblocktrans %}
-                        </h3>
-                    </div>
-                    <div class="modal-body">
-                        <div data-bind="html: updateForm"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </td>
 </script>
 {% endblock %}

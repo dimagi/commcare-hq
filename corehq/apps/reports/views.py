@@ -2417,6 +2417,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     @property
     def column_names(self):
         return [
+            _("Title"),
             _("Server"),
             _("View URL"),
         ]
@@ -2437,6 +2438,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     def _get_item_data(self, tableau_visualization):
         data = {
             'id': tableau_visualization.id,
+            'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
         }

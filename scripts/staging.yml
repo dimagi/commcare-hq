@@ -56,24 +56,16 @@ branches:
     - sr/es-alias # Sravan Nov 18
     - ce/bulk-case-search # Cal July 6
     # - sr/memoized-toggle # Sravan July 26
-    - smh/remove-extra-spinner-icons # Steph Oct 6
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
-    - es/mobile-auth # Simon Nov 23
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - cs/SC-2078-hourly-time-filter+ml/all-in-one-offboarding # Jenny June 14
-    - ml/all-in-one-offboarding # Minha April 13
     #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
-    - rp/gsheet/update-project-info-form # Rynhard April 22
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
-    - akj/mw-signup # Akash May 25
-    - ml/mobile-worker-download-bug # Minha May 27
-    - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
-    - gh/upgrade-twilio # Graham May 31
-    - cs/SC-2078-hourly-time-filter # June 2
+    #- akj/mw-signup # Akash May 25
+    # - gh/upgrade-twilio # Graham May 31
     - cs/SC-1821-script_for_sizing_model_params # June 2
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
@@ -82,4 +74,15 @@ branches:
     - ad/tableau-request-client-IP # Addison June 14
     - rc/case-id-download-from-mult-domains # Robert June 15
     - bmb/sso/api/test-001  # Biyeun June 15
+    - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth+cs/SC-1945-ability-to-add-filter-to-rules # Jenny June 21
+    - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
+    - ml/all-in-one-offboarding+sk/rename-permission-classes
+    - es/mobile-auth+sk/rename-permission-classes
+    - es/mobile-auth  # Simon Nov 23
+    - ml/all-in-one-offboarding  # Minha April 13
+    - sk/rename-permission-classes
+    - cs/fix-case-owner-location-parent # Charl Jun 20
+    - dm/lookup-table-uploader # Daniel Jun 20
+    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
+    - akj/call-limit-settings # Akash June 22
 submodules: { }
