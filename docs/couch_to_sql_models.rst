@@ -76,8 +76,8 @@ This should contain:
     - The test file uses a `ModelAttrEquality` util which has methods for running the equality tests.
     - The test class that is generated will have two attributes  `couch_only_attrs`, `sql_only_attrs` and one method `test_have_same_attrs`.
     - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `couch_only_attrs` and `sql_only_attrs`.
-    - `couch_only_attrs` is supposed to be a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
-    - `sql_only_attrs` would be having of attributes and methods that are new in the SQL model.
+    - `couch_only_attrs` should be a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
+    - `sql_only_attrs` should be a set of attributes and methods that are new in the SQL model.
     - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated `couch_only_attrs` and `sql_only_attrs` but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
