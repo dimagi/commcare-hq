@@ -85,11 +85,8 @@ def send_account_confirmation_sms(commcare_user):
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
     url = absolute_reverse(url_name, args=[commcare_user.domain, message_token])
-    name = ""
-    if commcare_user.first_name or commcare_user.last_name:
-        name = " ".join([commcare_user.first_name, commcare_user.last_name])
     return {
-        'name': name,
+        'name': commcare_user.full_name,
         'domain': commcare_user.domain,
         'username': commcare_user.raw_username,
         'url': url,
