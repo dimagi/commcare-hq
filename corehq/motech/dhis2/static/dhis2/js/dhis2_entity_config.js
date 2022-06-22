@@ -60,10 +60,15 @@ hqDefine('dhis2/js/dhis2_entity_config', [
             for (let i = 0; i < editors.length; i++) {
                 var value = editors[i].getValue();
                 try {
-                  var result = jsonParse.parseJson(value, null, 30)
+                    if (editors.length > 1) {
+                        var result = jsonParse.parseJson(value, null, 30, i)
+                    }
+                    else {
+                        var result = jsonParse.parseJson(value, null, 30)
+                    }
                 } catch (error) {
-                  self.errorMessage(error)
-                  return self;
+                    self.errorMessage(error)
+                    return self;
                 }
             };
             self.errorMessage("")

@@ -8,83 +8,88 @@ hqDefine('dhis2/js/json_syntax_parse', [
 
     */
 
-    var parseError = function (e, txt, context) {
-      if (!txt) {
-        return {
-          message: e.message + ' while parsing empty string',
-          position: 0,
+    var parseError = function (error, text, context, editor) {
+        if (!text) {
+            return {
+                message: error.message + ' while parsing empty string',
+                position: 0,
+            }
         }
-      }
-      var badToken = e.message.startsWith('Unexpected token') ?
-        e.message.match(/^Unexpected token (.|\n) .*position\s+(\d+)/i)
-        : e.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i)
+        var badToken = error.message.startsWith('Unexpected token') ?
+            error.message.match(/^Unexpected token (.|\n) .*position\s+(\d+)/i)
+            : error.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i)
 
-      var errIdx = badToken ? +badToken[2]
-        : e.message.match(/^Unexpected end of JSON.*/i) ? txt.length - 1
-        : null
+        var errorIndex = badToken ? +badToken[2]
+            : error.message.match(/^Unexpected end of JSON.*/i) ? text.length - 1
+            : null
 
-      var msg = badToken ? e.message.replace(/^Unexpected token ./, `Unexpected token ${
-          JSON.stringify(badToken[1])
-        }`)
-        : e.message
-      if (badToken != null && badToken[1] === '\n') {
-        msg = msg.replace(/[\n\r]/, 'at end of row')
-      }
+        var errorMsg = badToken ? error.message.replace(/^Unexpected token ./, `Unexpected token ${
+                JSON.stringify(badToken[1])
+            }`)
+            : error.message
 
-      // To clean up/refactor later
-      // Not sure this is even right
-      var helpText = "";
-      if (e.message.startsWith('Unexpected token')) {
-        if (badToken[1] === '\n') {
-            helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, ['
+        if (badToken != null && badToken[1] === '\n') {
+            errorMsg = errorMsg.replace(/[\n\r]/, 'at end of row')
+        }
+
+        var helpText = "";
+        if (error.message.startsWith('Unexpected token')) {
+            if (badToken[1] === '\n') {
+                helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, ['
+            }
+            else {
+                helpText = "Expected: }, ',', ]"
+            }
         }
         else {
-            helpText = "Expected: }, ',', ]"
+            helpText = "Expected: }, :, ',', ]"
         }
-      }
-      else {
-        helpText = "Expected: }, :, ',', ]"
-      }
 
-      var errorRow = txt.slice(0, errIdx).split('\n').length - 1
-      msg = msg.replace(/position [0-9]*/, `row ${errorRow}`)
-
-      if (errIdx !== null && errIdx !== undefined) {
-        var start = errIdx <= context ? 0 : errIdx - context
-        var end = errIdx + context >= txt.length ? txt.length : errIdx + context
-        var slice = (start === 0 ? '' : '...') +
-          txt.slice(start, errIdx) + '{ERROR}' + txt.slice(errIdx, end) +
-          (end === txt.length ? '' : '...')
-
-        var near = txt === slice ? '' : 'near '
-        return {
-          message: msg + ` while parsing ${near}\n${slice}\n` + helpText,
-          position: errIdx,
+        var errorRow = text.slice(0, errorIndex).split('\n').length - 1
+        if (editor > -1) {
+            var editorNum = `, Case config ${editor + 1},`
+            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}${editorNum}`)
         }
-      }
-      else {
-        return {
-          message: msg + ` while parsing '${txt.slice(0, context * 2)}'`,
-          position: 0,
+        else {
+            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}`)
         }
-      }
+
+        if (errorIndex !== null && errorIndex !== undefined) {
+            var start = errorIndex <= context ? 0 : errorIndex - context
+            var end = errorIndex + context >= text.length ? text.length : errorIndex + context
+            var slice = (start === 0 ? '' : '...') +
+                text.slice(start, errorIndex) + '{ERROR}' + text.slice(errorIndex, end) +
+                (end === text.length ? '' : '...')
+
+            var near = text === slice ? '' : 'near '
+            return {
+                message: errorMsg + ` while parsing ${near}\n${slice}\n` + helpText,
+                position: errorIndex,
+            }
+        }
+        else {
+            return {
+                message: errorMsg + ` while parsing '${text.slice(0, context * 2)}'`,
+                position: 0,
+            }
+        }
     }
 
     class JSONParseError extends SyntaxError {
-      constructor (er, txt, context, caller) {
-        context = context || 20
-        var metadata = parseError(er, txt, context)
-        super(metadata.message)
-      }
+        constructor (error, text, context, caller, editor) {
+            context = context || 20
+            var metadata = parseError(error, text, context, editor)
+            super(metadata.message)
+        }
     }
 
-    var parseJson = function (txt, reviver, context) {
-      context = context || 20
-      try {
-        return JSON.parse(txt, reviver)
-      } catch (e) {
-        throw new JSONParseError(e, txt, context, parseJson)
-      }
+    var parseJson = function (text, reviver, context, editor=-1) {
+        context = context || 20
+        try {
+            return JSON.parse(text, reviver)
+        } catch (error) {
+            throw new JSONParseError(error, text, context, parseJson, editor)
+        }
     }
 
     return {

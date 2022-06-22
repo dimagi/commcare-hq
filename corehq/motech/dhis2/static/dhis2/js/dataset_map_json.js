@@ -23,7 +23,7 @@ hqDefine('dhis2/js/dataset_map_json', [
             return self.errorMessage() === '' ? false : true
         });
 
-        self.initCaseConfigTemplate = function (elements) {
+        self.initMapConfigTemplate = function (elements) {
             _.each(elements, function (element) {
                 _.each($(element).find('.jsonwidget'), baseAce.initObservableJsonWidget);
             });
@@ -38,6 +38,7 @@ hqDefine('dhis2/js/dataset_map_json', [
               self.errorMessage(error)
               return self;
             }
+            self.errorMessage('')
             $.post(
                 form.action,
                 {'dataset_map': self.dataSetMap()},

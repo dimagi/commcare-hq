@@ -27,7 +27,7 @@
         <textarea name="dataSetMap"
                   class="jsonwidget form-control"
                   required=""
-                  data-bind="value: dataSetMap, afterRender: initCaseConfigTemplate"></textarea>
+                  data-bind="value: dataSetMap"></textarea>
       </div>
     </div>
   </fieldset>
@@ -39,7 +39,7 @@
       data-bind="submit: submit">
   <div data-bind="template: {
                         name: 'dataSetMap-config-template',
-                        afterRender: initCaseConfigTemplate
+                        afterRender: initMapConfigTemplate
                     }"></div>
   <p>
     <div data-bind="visible: isError()">
