@@ -1,5 +1,5 @@
 import json
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import LookupTable, FixtureDataItem
 from corehq.apps.reports.filters.base import BaseReportFilter
 from django.urls import reverse
 
@@ -29,8 +29,10 @@ class AsyncDrillableFilter(BaseReportFilter):
 
     def data_types(self, index=None):
         if not self.fdts:
-            self.fdts = [FixtureDataType.by_domain_tag(
-                self.domain, h["type"]).one() for h in self.hierarchy]
+            self.fdts = [
+                LookupTable.objects.by_domain_tag(self.domain, h["type"])
+                for h in self.hierarchy
+            ]
         return self.fdts if index is None else self.fdts[index]
 
     @property
@@ -44,7 +46,7 @@ class AsyncDrillableFilter(BaseReportFilter):
         ret = []
         for i, h in enumerate(self.hierarchy):
             new_h = dict(h)
-            new_h['id'] = self.data_types(i).get_id
+            new_h['id'] = self.data_types(i)._migration_couch_id
             ret.append(new_h)
         return ret
 
@@ -79,7 +81,7 @@ class AsyncDrillableFilter(BaseReportFilter):
     @property
     def filter_context(self):
         root_fdis = [self.fdi_to_json(f) for f in FixtureDataItem.by_data_type(
-            self.domain, self.data_types(0).get_id)]
+            self.domain, self.data_types(0)._migration_couch_id)]
 
         f_id = self.request.GET.get('fixture_id', None)
         selected_fdi_type = f_id.split(':')[0] if f_id else None

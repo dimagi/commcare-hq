@@ -8,8 +8,8 @@ from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
     FixtureDataItem,
-    FixtureDataType,
-    FixtureTypeField,
+    LookupTable,
+    TypeField,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -113,16 +113,16 @@ def _import_fixtures(domain):
             ('languages', 'languages.csv'),
     ]:
         fields, rows = _read_csv(filename)
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=domain,
             tag=fixture_name,
-            fields=[FixtureTypeField(field_name=field) for field in fields],
+            fields=[TypeField(name=field) for field in fields],
         )
         data_type.save()
 
         with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
             for i, vals in enumerate(rows):
-                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals, i)
+                fixture_data_item = _mk_fixture_data_item(domain, data_type._migration_couch_id, fields, vals, i)
                 iter_db.save(fixture_data_item)
 
 

@@ -26,6 +26,10 @@ class LookupTableManager(models.Manager):
     def by_domain(self, domain_name):
         return self.filter(domain=domain_name)
 
+    def by_domain_tag(self, domain_name, tag):
+        """Get lookup table by domain and tag"""
+        return self.get(domain=domain_name, tag=tag)
+
 
 @define
 class Alias:

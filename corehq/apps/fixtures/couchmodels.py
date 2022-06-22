@@ -29,10 +29,7 @@ from corehq.apps.fixtures.exceptions import (
     FixtureTypeCheckError,
     FixtureVersionError,
 )
-from corehq.apps.fixtures.utils import (
-    get_fields_without_attributes,
-    remove_deleted_ownerships,
-)
+from corehq.apps.fixtures.utils import remove_deleted_ownerships
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -132,7 +129,7 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
     # support for old fields
     @property
     def fields_without_attributes(self):
-        return get_fields_without_attributes(self.fields)
+        raise NotImplementedError("no longer used")
 
     @property
     def is_indexed(self):
@@ -591,8 +588,11 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
 
 def _id_from_doc(doc_or_doc_id):
+    from .models import LookupTable
     if isinstance(doc_or_doc_id, str):
         doc_id = doc_or_doc_id
+    elif isinstance(doc_or_doc_id, LookupTable):
+        doc_id = doc_or_doc_id._migration_couch_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None
     return doc_id

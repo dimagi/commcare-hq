@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
-    FixtureDataType, FixtureTypeField, FixtureDataItem, FieldList, FixtureItemField
+    LookupTable, FixtureDataItem, FieldList, FixtureItemField, TypeField
 )
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -68,33 +68,24 @@ class TestUCLACustomHandler(TestCase):
         return Handler(events=[None])
 
     def _setup_fixture_type(self):
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain_name,
             tag=self.fixture_name,
             fields=[
-                FixtureTypeField(
-                    field_name="risk_profile",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="sequence",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="message",
-                    properties=[]
-                ),
+                TypeField(name="risk_profile"),
+                TypeField(name="sequence"),
+                TypeField(name="message"),
             ],
-            item_attributes=[]
+            item_attributes=[],
         )
         self.data_type.save()
-        self.addCleanup(self.data_type.delete)
+        self.addCleanup(self.data_type._migration_get_couch_object().delete)
         self._setup_data_item()
 
     def _setup_data_item(self, risk='risk1', sequence='1', message='message1'):
         data_item = FixtureDataItem(
             domain=self.domain_name,
-            data_type_id=self.data_type.get_id,
+            data_type_id=self.data_type._migration_couch_id,
             fields={
                 "risk_profile": FieldList(
                     field_list=[
@@ -139,14 +130,14 @@ class TestUCLACustomHandler(TestCase):
                 AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_message_bank_doesnt_have_correct_properties(self):
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=self.domain_name,
             tag=self.fixture_name,
             fields=[],
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(data_type.delete)
+        self.addCleanup(data_type._migration_get_couch_object().delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             self.assertRaises(
                 AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
@@ -196,14 +187,14 @@ class TestUCLACustomHandler(TestCase):
             self.assertIn('Lookup Table general_health not found', str(e.exception))
 
     def test_message_bank_doesnt_have_correct_properties_new(self):
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=self.domain_name,
             tag=self.fixture_name,
             fields=[],
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(data_type.delete)
+        self.addCleanup(data_type._migration_get_couch_object().delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))

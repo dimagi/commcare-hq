@@ -30,6 +30,15 @@ class TestLookupTableManager(TestCase):
         self.make_table()
         self.assertEqual([t.tag for t in tables], ['price'])
 
+    def test_by_domain_tag(self):
+        self.make_table()
+        table = LookupTable.objects.by_domain_tag(self.domain.name, "price")
+        self.assertEqual(table.tag, "price")
+
+    def test_by_domain_tag_missing(self):
+        with self.assertRaises(LookupTable.DoesNotExist):
+            LookupTable.objects.by_domain_tag(self.domain.name, "lostnotfound")
+
     def make_table(self):
         table = LookupTable(
             domain=self.domain.name,
