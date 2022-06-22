@@ -49,12 +49,11 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
-NEXT_INPUT_INSTANCE = "next_input"
-
 AUTO_LAUNCH_EXPRESSIONS = {
     "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
-    "multi-select": ("count(instance('" + NEXT_INPUT_INSTANCE + "')/results/value[count(instance('casedb')"
-                    "/casedb/case[@case_id = current()/.]) =0 ]) > 0")
+    "multi-select": ("count(instance('next_input')/results/value) = 0"
+                     " or count(instance('next_input')/results/value"
+                     "[count(instance('casedb')/casedb/case[@case_id = current()/.]) = 0]) > 0")
 }
 
 
