@@ -1,4 +1,5 @@
 import json
+from django.http import Http404
 
 from django.test import TestCase
 from django.urls import reverse
@@ -161,6 +162,16 @@ class TestUpdateRoleFromView(TestCase):
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
+
+    def test_cannot_update_parent_data(self):
+        role = UserRole.objects.create(domain='test-domain', name='initial_name', upstream_id='some_parent')
+
+        role_data = self.BASE_JSON.copy()
+        role_data["_id"] = role.get_id
+        role_data["name"] = "updated_role"
+
+        with self.assertRaises(Http404):
+            _update_role_from_view('test-domain', role_data)
 
 
 class TestDeletePhoneNumberView(TestCase):
