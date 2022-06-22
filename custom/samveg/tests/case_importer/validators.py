@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.case_importer.util import get_spreadsheet
+from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import TestFileMixin
 from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
@@ -22,7 +23,6 @@ from custom.samveg.const import (
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
     REQUIRED_COLUMNS,
-    ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
     SKIP_CALL_VALIDATOR,
     SKIP_CALL_VALIDATOR_YES,
     SNCU_BENEFICIARY_IDENTIFIER,
@@ -219,7 +219,7 @@ class TestUploadLimitValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
         # initialize context to replicate limit reached
-        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
+        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': Domain.operator_call_limit}}}
 
         fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
 
