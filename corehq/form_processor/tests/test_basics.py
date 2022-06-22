@@ -490,7 +490,6 @@ class FundamentalCaseTests(FundamentalBaseTests):
 @patch('corehq.motech.repeaters.models.domain_has_privilege', lambda x, y: True)
 class CaseSearchTests(FundamentalBaseTests):
     def setUp(self):
-        super().setUp()
         self.elasticsearch = get_es_new()
         CaseSearchConfig(
             domain=DOMAIN,
@@ -501,7 +500,6 @@ class CaseSearchTests(FundamentalBaseTests):
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
 
     def tearDown(self):
-        super().tearDown()
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
     @patch.object(CouchUser, 'get_by_user_id', return_value=None)
