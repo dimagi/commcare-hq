@@ -3504,29 +3504,20 @@ msgid "Attempted to update unknown or non-editable field '{}'"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid ""
-#| "Password is not strong enough. Try making your password more complex."
 msgid "Password is not strong enough."
 msgstr ""
-"La contraseña no es lo suficientemente segura. Intente hacer su contraseña "
-"más compleja."
 
 #: corehq/apps/api/user_updates.py
 msgid "'default_phone_number' must be a string"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "Error! The selected form does not exist."
 msgid "The role '{}' does not exist"
-msgstr "¡Error! El formulario seleccionado no existe."
+msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "There are {} locations with the name '{}' under the parent '{}'"
 msgid "There are multiple roles with the name '{}' in the domain '{}'"
-msgstr "Hay {} ubicaciones con el nombre '{}' bajo el padre '{}'"
+msgstr ""
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -42793,11 +42784,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#, fuzzy
-#~| msgid "Specify Workers at this Location"
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Especificar Trabajadores en esta Ubicación"
-
-#~ msgid "No Data"
-#~ msgstr "No hay Datos"
