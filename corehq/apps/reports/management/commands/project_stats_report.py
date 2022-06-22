@@ -44,7 +44,6 @@ from corehq.util.markup import (
 )
 from casexml.apps.phone.models import SyncLogSQL
 
-
 RESOURCE_MODEL_STATS = [
     'total_users',
     'monthly_forms_per_user',
@@ -65,7 +64,7 @@ RESOURCE_MODEL_STATS = [
     'devicelogs_per_user',
     'ledger_updates_per_case',
     'average_ledgers_per_case',
-    'case_types_avg_lifespans',
+    'case_type_stats',
 ]
 
 
@@ -181,11 +180,11 @@ class Command(BaseCommand):
         resource_model['total_users'] = total_users
 
         if months > 0:
-            resource_model['monthly_forms_per_user'] = total_average_forms/months
+            resource_model['monthly_forms_per_user'] = total_average_forms / months
 
-        monthly_user_stats = user_stat_from_malt\
-            .filter(user_type__in=['CommCareUser'])\
-            .filter(user_id__in=self.active_not_deleted_users)\
+        monthly_user_stats = user_stat_from_malt \
+            .filter(user_type__in=['CommCareUser']) \
+            .filter(user_id__in=self.active_not_deleted_users) \
             .filter(num_of_forms__gte=performance_threshold)
 
         resource_model['monthly_user_form_stats_expanded'] = monthly_user_stats
@@ -220,7 +219,7 @@ class Command(BaseCommand):
             final_stats.append((month, average_cases_per_user))
 
         if n > 0:
-            resource_model['monthly_cases_per_user'] = total_average_cases_per_user/n
+            resource_model['monthly_cases_per_user'] = total_average_cases_per_user / n
 
         resource_model['monthly_user_case_stats_expanded'] = final_stats
 
@@ -286,18 +285,17 @@ class Command(BaseCommand):
             ledger_count = result['ledger_count']
 
         if not case_ids:
-            self.stdout.write("Domain has no ledgers")
             return
 
         avg_ledgers_per_case = ledger_count / len(case_ids)
-        case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
-            .domain(self.domain).case_ids(case_ids)\
-            .aggregation(TermsAggregation('types', 'type.exact'))\
+        case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE) \
+            .domain(self.domain).case_ids(case_ids) \
+            .aggregation(TermsAggregation('types', 'type.exact')) \
             .size(0).run()
 
         case_types = case_types_result.aggregations.types.keys
 
-        resource_model['case_types_avg_lifespans'] = []
+        resource_model['case_type_stats'] = []
 
         for type_ in case_types:
             results = (
@@ -306,13 +304,13 @@ class Command(BaseCommand):
                 .annotate(avg_lifespan=Avg('lifespan'))
                 .values('avg_lifespan', flat=True)
             )
-            case_type_lifespan_data = {
+            case_type_data = {
                 'type': type_,
                 'count': CaseES().domain(self.domain).case_type(type_).count(),
                 'avg_lifespan': results[0]['avg_lifespan'],
                 'cases_per_user_pm': self._cases_created_per_user_per_month(type_),
             }
-            resource_model['case_types_avg_lifespans'].append(case_type_lifespan_data)
+            resource_model['case_type_stats'].append(case_type_data)
 
         resource_model['average_ledgers_per_case'] = avg_ledgers_per_case
 
@@ -481,10 +479,10 @@ class Command(BaseCommand):
 
     def collect_devicelogs(self):
         from phonelog.models import DeviceReportEntry
-        device_log_data = DeviceReportEntry.objects.filter(domain=self.domain)\
+        device_log_data = DeviceReportEntry.objects.filter(domain=self.domain) \
             .aggregate(
-                num_authors=Count('user_id', distinct=True),
-                num_device_logs=Count('id'),
+            num_authors=Count('user_id', distinct=True),
+            num_device_logs=Count('id'),
         )
 
         devicelogs_per_user = device_log_data['num_device_logs'] // device_log_data['num_authors'] \
@@ -506,8 +504,8 @@ class Command(BaseCommand):
         self._print_section_title('Case Transactions')
         self._output_case_transactions()
 
-        self._print_section_title('Case Types with Ledgers')
-        self._output_case_case_types_with_ledgers()
+        self._print_section_title('Case Type Statistics')
+        self._output_case_types_stats()
 
         self._print_section_title('Average Ledgers per case')
         self._output_ledgers_per_case()
@@ -622,8 +620,8 @@ class Command(BaseCommand):
         synclogs_per_user = resource_model['devicelogs_per_user']
         self.stdout.write(f'Device logs per user: {synclogs_per_user}')
 
-    def _output_case_case_types_with_ledgers(self):
-        for case_type_data in resource_model['case_types_avg_lifespans']:
+    def _output_case_types_stats(self):
+        for case_type_data in resource_model['case_type_stats']:
             case_type = case_type_data['type']
             self._print_value('case_type', case_type, case_type_data['count'])
 
