@@ -174,7 +174,7 @@ class UploadLimitValidator(BaseRowOperation):
         owner_name = fields_to_update.get(OWNER_NAME)
         call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
         if owner_name and call_number:
-            if cls._upload_limit_reached(import_context, owner_name, call_number):
+            if cls._upload_limit_reached(import_context, owner_name, call_number, domain_name):
                 error_messages.append(UploadLimitReachedError())
             else:
                 cls._update_counter(import_context, owner_name, call_number)
