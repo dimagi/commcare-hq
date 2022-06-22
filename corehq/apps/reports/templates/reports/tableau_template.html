@@ -5,15 +5,8 @@
 
 {% block page_content %}
 
-{% initial_page_data "server_type" server_type %}
-{% initial_page_data "ticket" ticket %}
-{% initial_page_data "validate_hostname" validate_hostname %}
-{% initial_page_data "view_url" view_url %}
-
-<script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
-<script src="{% static 'reports/js/tableau.js' %}"></script>
-
 <body>
-    <div id="vizContainer"></div>
+    <div><p>{% trans "Page is loading..." %} </p></div>
 </body>
+
 {% endblock %}

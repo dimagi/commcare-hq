@@ -63,7 +63,7 @@ class TableauView(BaseDomainView):
 
     def get(self, request, *args, **kwargs):
         if self.visualization.server.server_type == 'server':
-            return self.tableau_server_response()
+            return render(self.request, self.template_name)
         return super().get(request, *args, **kwargs)
 
     def tableau_server_response(self):
