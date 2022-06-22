@@ -89,8 +89,6 @@ class OptionValue(property):
             if self.coder:
                 return self.coder.from_json(obj.options[self.name])
             return obj.options[self.name]
-        if self.default is self.NOT_SET:
-            raise AttributeError(self.name)
         value = self.get_default_value()
         obj.options[self.name] = value
         return value
@@ -110,6 +108,8 @@ class OptionValue(property):
         obj.options[self.name] = value
 
     def get_default_value(self):
+        if self.default is self.NOT_SET:
+            raise AttributeError(self.name)
         return self.default() if callable(self.default) else self.default
 
 
