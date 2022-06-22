@@ -308,6 +308,11 @@ def case_search_enabled_for_domain(domain):
         return True
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def case_search_config_for_domain(domain):
+    return CaseSearchConfig.objects.get_or_none(pk=domain)
+
+
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
