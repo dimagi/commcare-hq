@@ -3504,29 +3504,20 @@ msgid "Attempted to update unknown or non-editable field '{}'"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid ""
-#| "Password is not strong enough. Try making your password more complex."
 msgid "Password is not strong enough."
 msgstr ""
-"La contraseña no es lo suficientemente segura. Intente hacer su contraseña "
-"más compleja."
 
 #: corehq/apps/api/user_updates.py
 msgid "'default_phone_number' must be a string"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "Error! The selected form does not exist."
 msgid "The role '{}' does not exist"
-msgstr "¡Error! El formulario seleccionado no existe."
+msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "There are {} locations with the name '{}' under the parent '{}'"
 msgid "There are multiple roles with the name '{}' in the domain '{}'"
-msgstr "Hay {} ubicaciones con el nombre '{}' bajo el padre '{}'"
+msgstr ""
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -13320,6 +13311,10 @@ msgid "Please enter a valid regular expression to match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
+msgid "There was a problem with a UCR Filter Definition: "
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr "Por favor especifique por lo menos una acción."
 
@@ -13948,6 +13943,10 @@ msgid "Custom filter"
 msgstr "Filtro personalizado"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "UCR Filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
 msgstr "Y"
 
@@ -14010,6 +14009,10 @@ msgstr "El caso padre ha sido cerrado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "ID filtro Personalizada"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Filter Definition"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
@@ -15180,6 +15183,28 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Add case type"
 msgstr "Agregar tipo de caso"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+#, fuzzy
+#| msgid "Web Apps Permissions"
+msgid "Synchronous Web Apps Submissions"
+msgstr "Permisos de Aplicaciones Web"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
@@ -27952,10 +27977,8 @@ msgid "Day"
 msgstr "Día"
 
 #: corehq/apps/reports/forms.py
-#, fuzzy
-#| msgid "Time"
 msgid "To Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Report Start Date"
@@ -30184,10 +30207,9 @@ msgid "Edit Scheduled Report"
 msgstr "Editar Reporte Agendado "
 
 #: corehq/apps/reports/views.py
-#, fuzzy, python-format
-#| msgid "This report's timezone is %(timezone)s."
+#, python-format
 msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "La zona horaria de este reporte es %(timezone)s."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -34362,6 +34384,10 @@ msgid "{0} filter type must include a \"filters\" list"
 msgstr "{0} tipo de filtro debe incluir una lista de \"filtros\" "
 
 #: corehq/apps/userreports/filters/factory.py
+msgid "Couldn't find named filter with name: {}"
+msgstr ""
+
+#: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
 msgstr "Problema creando filtro de spec:  {}, el mensaje es {}"
 
@@ -35299,16 +35325,12 @@ msgid "Step 1 of 2 - Select Data Source"
 msgstr "Paso 1 de 2 - Seleccionar Fuente de Datos"
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Add Expression"
 msgid "Named Expression"
-msgstr "Agregue Expresión"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Date Filter"
 msgid "Named Filter"
-msgstr "Filtro de Fecha"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -35325,10 +35347,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-#, fuzzy
-#| msgid "Learn more"
 msgid "see more"
-msgstr "Aprenda más"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
 msgid "Update Expression"
@@ -35782,10 +35802,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-#, fuzzy
-#| msgid "Add Expression"
 msgid "Edit UCR Expression"
-msgstr "Agregue Expresión"
+msgstr ""
 
 #: corehq/apps/users/account_confirmation.py
 #, python-brace-format
@@ -35938,10 +35956,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Resend Confirmation"
 msgid "Require Account Confirmation by SMS?"
-msgstr "Volver a enviar Confirmación"
+msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid ""
@@ -36958,10 +36974,8 @@ msgid "Send Confirmation Email"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid "Resend Confirmation"
 msgid "Send Confirmation SMS"
-msgstr "Volver a enviar Confirmación"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
@@ -37003,13 +37017,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -37017,18 +37024,8 @@ msgid ""
 "                              email to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -37036,18 +37033,8 @@ msgid ""
 "                              SMS to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                              The user will be sent an email with "
@@ -37056,18 +37043,8 @@ msgid ""
 "project.\n"
 "                            "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                              The user will be sent a SMS with instructions "
@@ -37076,19 +37053,14 @@ msgid ""
 "project.\n"
 "                            "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Send Account Confirmaton Email"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid "Resend Confirmation"
 msgid "Send Account Confirmaton SMS"
-msgstr "Volver a enviar Confirmación"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Loading Workers..."
@@ -42752,11 +42724,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#, fuzzy
-#~| msgid "Specify Workers at this Location"
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Especificar Trabajadores en esta Ubicación"
-
-#~ msgid "No Data"
-#~ msgstr "No hay Datos"

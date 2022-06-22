@@ -13,6 +13,16 @@ def test_basic_option_value():
     eq(order.options, {"dish": "Chicken"})
 
 
+def test_all_option_value_fields_is_populated():
+    order = FoodOptions()
+    order.dish = "something"
+    eq(order._all_option_value_fields, {'dish', 'food_option', 'condiments'})
+
+
+def test_get_default_value():
+    eq(FoodOptions.food_option.get_default_value(), 'veg')
+
+
 def test_option_value_not_set():
     order = FoodOptions()
     with assert_raises(AttributeError):

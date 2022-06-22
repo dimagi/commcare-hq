@@ -84,7 +84,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
   - **Linux**:
 
     ```sh
-    sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
+    sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config gettext
     ```
 
   - **macOS**:
