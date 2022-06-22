@@ -11,6 +11,7 @@ from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
@@ -491,6 +492,11 @@ class CaseSearchTests(FundamentalBaseTests):
     def setUp(self):
         super().setUp()
         self.elasticsearch = get_es_new()
+        CaseSearchConfig(
+            domain=DOMAIN,
+            enabled=True,
+            synchronous_web_apps=True,
+        ).save()
         ensure_index_deleted(CASE_SEARCH_INDEX)
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
 
@@ -499,10 +505,7 @@ class CaseSearchTests(FundamentalBaseTests):
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
     @patch.object(CouchUser, 'get_by_user_id', return_value=None)
-    @patch.object(Domain, 'get_by_name')
-    def test_create_case_and_update_elasticsearch(self, domain_mock, user_mock):
-        domain_mock.return_value = Domain(name=DOMAIN, web_apps_sync_case_search=True)
-
+    def test_create_case_and_update_elasticsearch(self, user_mock):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
         xmlns = 'http://commcare.org/test_xmlns'

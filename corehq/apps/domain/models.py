@@ -438,9 +438,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     requested_report_builder_subscription = StringListProperty()
 
-    # Update case search ES synchronously on web apps form submission
-    web_apps_sync_case_search = BooleanProperty(default=False)
-
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 

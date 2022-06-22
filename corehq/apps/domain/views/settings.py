@@ -147,7 +147,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'web_apps_sync_case_search': self.domain_object.web_apps_sync_case_search,
             'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval,
         }
         if self.can_user_see_meta:
@@ -366,6 +365,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
         config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
+            'synchronous_web_apps': request_json.get('synchronous_web_apps'),
         })
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
@@ -381,6 +381,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
+                'synchronous_web_apps': current_values.synchronous_web_apps,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
                 } if current_values else {},
