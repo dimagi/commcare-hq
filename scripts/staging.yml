@@ -85,4 +85,5 @@ branches:
     - dm/lookup-table-uploader # Daniel Jun 20
     - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
+    - ad/multi-select-auto-launch # Addison/Jenny June 22
 submodules: { }
