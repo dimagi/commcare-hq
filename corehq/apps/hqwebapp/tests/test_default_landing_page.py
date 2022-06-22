@@ -11,7 +11,7 @@ from corehq.apps.reports.views import MySavedReportsView
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
     WebUser,
 )
@@ -33,15 +33,15 @@ class TestDefaultLandingPages(TestCase):
 
         cls.reports_role = UserRole.create(
             domain=cls.domain, name='reports-role', default_landing_page='reports',
-            permissions=Permissions(view_reports=True),
+            permissions=HqPermissions(view_reports=True),
         )
         cls.webapps_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
-            permissions=Permissions(access_web_apps=True),
+            permissions=HqPermissions(access_web_apps=True),
         )
         cls.downloads_role = UserRole.create(
             domain=cls.domain, name='webapps-role', default_landing_page='downloads',
-            permissions=Permissions.max(),
+            permissions=HqPermissions.max(),
         )
         cls.global_password = 'secret'
 

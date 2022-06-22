@@ -16,7 +16,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
@@ -139,7 +139,7 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
 class OpenmrsImporterView(BaseProjectSettingsView):
     urlname = 'openmrs_importer_view'
