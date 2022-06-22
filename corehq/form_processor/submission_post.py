@@ -453,9 +453,8 @@ class SubmissionPost(object):
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return
 
-        from corehq.apps.case_search.models import case_search_config_for_domain
-        config = case_search_config_for_domain(instance.domain)
-        if not config or not config.enabled or not config.synchronous_web_apps:
+        from corehq.apps.case_search.models import case_search_synchronous_web_apps_for_domain
+        if not case_search_synchronous_web_apps_for_domain(instance.domain):
             return
 
         from corehq.pillows.case_search import transform_case_for_elasticsearch

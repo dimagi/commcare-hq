@@ -309,8 +309,14 @@ def case_search_enabled_for_domain(domain):
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
-def case_search_config_for_domain(domain):
-    return CaseSearchConfig.objects.get_or_none(pk=domain)
+def case_search_synchronous_web_apps_for_domain(domain):
+    if not case_search_enabled_for_domain(domain):
+        return False
+
+    config = CaseSearchConfig.objects.get_or_none(pk=domain)
+    if config:
+        return config.synchronous_web_apps
+    return False
 
 
 def enable_case_search(domain):

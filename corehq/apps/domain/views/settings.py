@@ -28,7 +28,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
-    case_search_config_for_domain,
+    case_search_synchronous_web_apps_for_domain,
     disable_case_search,
     enable_case_search,
 )
@@ -368,7 +368,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'enabled': request_json.get('enable'),
             'synchronous_web_apps': request_json.get('synchronous_web_apps'),
         })
-        case_search_config_for_domain.clear(self.domain)
+        case_search_synchronous_web_apps_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
