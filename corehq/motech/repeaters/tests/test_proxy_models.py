@@ -266,8 +266,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
     def get_sql_attrs(cls, model_cls):
         sql_attrs = cls._get_user_defined_attrs(model_cls, cls.DummySQLModel)
         # Dynamically Added by OptionValue class
-        if '_all_option_value_fields' in sql_attrs:
-            sql_attrs.remove('_all_option_value_fields')
+        sql_attrs.discard('_all_option_value_fields')
         return sql_attrs
 
     @classmethod
