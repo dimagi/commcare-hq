@@ -128,6 +128,8 @@ class Command(BaseCommand):
             .domain(domain).values_list("_id", flat=True)
         )
 
+        self.stdout.write('Collecting data (this might take a while)')
+
         self.collect_doc_counts()
         self.collect_forms_per_user_per_month()
         self.collect_cases_created_per_user_per_month()
@@ -577,7 +579,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Average cases per user per month: {monthly_cases_per_user}')
 
     def _output_case_ratio_index(self):
-        case_index_ratio = round(resource_model.get('case_index_ratio', 0), 2)
+        case_index_ratio = round(resource_model['case_index_ratio'] or 0, 2)
         self.stdout.write(f'Ratio of cases to case indices: 1 : {case_index_ratio}')
 
     def _output_attachment_sizes(self):
