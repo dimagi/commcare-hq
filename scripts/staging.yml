@@ -87,4 +87,5 @@ branches:
     - dm/lookup-table-uploader # Daniel Jun 20
     - dependabot/npm_and_yarn/npm-8.12.2 # Amit Jun 21
     - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
+    - akj/call-limit-settings # Akash June 22
 submodules: { }
