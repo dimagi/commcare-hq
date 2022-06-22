@@ -164,6 +164,7 @@ msgstr "Mostrar somente as Subscrições de Ensaio"
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Type"
@@ -459,6 +460,7 @@ msgstr ""
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/enterprise_users.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -8838,6 +8840,7 @@ msgstr "Relatório"
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py
 msgid "Description"
@@ -12989,6 +12992,7 @@ msgid "Edit Column"
 msgstr "Edição da Coluna"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/reports/views.py
 msgid "Title"
 msgstr ""
 
@@ -33738,6 +33742,7 @@ msgid "Evaluate!"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 msgid "Format JSON"
 msgstr ""
 
@@ -34051,16 +34056,36 @@ msgstr ""
 msgid "Step 1 of 2 - Select Data Source"
 msgstr "Passo 1 de 2 - Selecione a Origem dos Dados"
 
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Update Expression"
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid "Named Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#, fuzzy
+#| msgid "Date Filter"
+msgid "Named Filter"
+msgstr "Filtro de Data"
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/views.py
+msgid "Definition"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid ""
+"\n"
+"                    Your expression has parse errors!\n"
+"                    For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid ""
-"\n"
-"                                Update Expression <strong data-bind=\"text: "
-"name\"></strong>:\n"
-"                            "
+msgid "see more"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Update Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
@@ -34469,13 +34494,13 @@ msgid "UCR Expressions"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid "Definition"
-msgstr ""
-
-#: corehq/apps/userreports/views.py
 msgid ""
 "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
 "exists."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid "Edit UCR Expression"
 msgstr ""
 
 #: corehq/apps/users/account_confirmation.py

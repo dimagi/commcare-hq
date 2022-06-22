@@ -65,7 +65,7 @@ branches:
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
-    - akj/mw-signup # Akash May 25
+    #- akj/mw-signup # Akash May 25
     - rp/gsheet/create-manual-refresh-google-sheet-task # Rynhard May 30
     # - gh/upgrade-twilio # Graham May 31
     - cs/SC-1821-script_for_sizing_model_params # June 2
@@ -76,10 +76,15 @@ branches:
     - ad/tableau-request-client-IP # Addison June 14
     - rc/case-id-download-from-mult-domains # Robert June 15
     - bmb/sso/api/test-001  # Biyeun June 15
+    - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth+cs/SC-1945-ability-to-add-filter-to-rules # Jenny June 21
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
     - ml/all-in-one-offboarding+sk/rename-permission-classes
     - es/mobile-auth+sk/rename-permission-classes
     - es/mobile-auth  # Simon Nov 23
     - ml/all-in-one-offboarding  # Minha April 13
     - sk/rename-permission-classes
+    - cs/fix-case-owner-location-parent # Charl Jun 20
+    - dm/lookup-table-uploader # Daniel Jun 20
+    - dependabot/npm_and_yarn/npm-8.12.2 # Amit Jun 21
+    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
 submodules: { }
