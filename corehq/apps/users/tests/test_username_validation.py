@@ -4,8 +4,6 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.validation import (
-    ReservedUsernameException,
-    _check_for_reserved_usernames,
     _validate_complete_username,
     validate_mobile_username,
 )
@@ -32,7 +30,7 @@ class TestMobileUsernameValidation(TestCase):
             validate_mobile_username(None, self.domain)
 
     def test_reserved_username_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
+        with self.assertRaises(ValidationError):
             validate_mobile_username('admin', self.domain)
 
     def test_empty_username_raises_exception(self):
@@ -46,23 +44,6 @@ class TestMobileUsernameValidation(TestCase):
     def test_already_used_username_raises_exception(self):
         with self.assertRaises(ValidationError):
             validate_mobile_username('test-user', self.domain)
-
-
-class TestCheckForReservedUsernames(SimpleTestCase):
-
-    def test_non_reserved_username_does_not_raise_exception(self):
-        try:
-            _check_for_reserved_usernames('not-reserved')
-        except ReservedUsernameException:
-            self.fail(f'Unexpected raised exception: {ReservedUsernameException}')
-
-    def test_admin_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
-            _check_for_reserved_usernames('admin')
-
-    def test_demo_user_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
-            _check_for_reserved_usernames('demo_user')
 
 
 class TestValidateCompleteUsername(SimpleTestCase):

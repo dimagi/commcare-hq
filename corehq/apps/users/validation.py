@@ -2,9 +2,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import gettext as _
 
-from corehq.apps.users.exceptions import (
-    ReservedUsernameException,
-)
 from corehq.apps.users.util import format_username, is_username_available
 from corehq.apps.users.views.mobile import BAD_MOBILE_USERNAME_REGEX
 
@@ -21,20 +18,13 @@ def validate_mobile_username(username, domain):
     if not username:
         raise ValidationError(_("Username is required."))
 
-    _check_for_reserved_usernames(username)
     username_as_email = format_username(username, domain)
     _validate_complete_username(username_as_email)
 
     if not is_username_available(username_as_email):
-        raise ValidationError(_("Username '{}' is already taken.").format(username_as_email))
+        raise ValidationError(_("Username '{}' is already taken or reserved.").format(username_as_email))
 
     return username_as_email
-
-
-def _check_for_reserved_usernames(username):
-    reserved_usernames = ['admin', 'demo_user']
-    if username in reserved_usernames:
-        raise ReservedUsernameException(username)
 
 
 def _validate_complete_username(username):

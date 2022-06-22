@@ -21,9 +21,6 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.users.exceptions import (
-    ReservedUsernameException,
-)
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -59,14 +56,8 @@ def generate_mobile_username(username, domain):
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
-    error = None
-    try:
-        return validate_mobile_username(username, domain)
-    except ReservedUsernameException:
-        error = _("Username '{}' is reserved.").format(username)
-    finally:
-        if error:
-            raise ValidationError(error)
+    # TODO: separate username generation and validation
+    return validate_mobile_username(username, domain)
 
 
 def cc_user_domain(domain):
@@ -492,6 +483,11 @@ def is_username_available(username):
     from corehq.apps.users.dbaccessors import user_exists
     # enforce complete username, otherwise check is meaningless
     if not re.match("[a-z0-9.+-_]+@[a-z0-9.+-_]+.commcarehq.org", username):
+        return False
+
+    local_username = username.split('@')[0]
+    reserved_usernames = ['admin', 'demo_user']
+    if local_username in reserved_usernames:
         return False
 
     exists = user_exists(username)

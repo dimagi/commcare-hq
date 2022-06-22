@@ -239,7 +239,8 @@ class TestGenerateMobileUsername(TestCase):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('test-user', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'test-user@test-domain.commcarehq.org' is already taken.")
+        self.assertEqual(cm.exception.message,
+                         "Username 'test-user@test-domain.commcarehq.org' is already taken or reserved.")
 
     def test_username_was_previously_in_use_message(self):
         retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
@@ -249,13 +250,15 @@ class TestGenerateMobileUsername(TestCase):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('retired', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'retired@test-domain.commcarehq.org' is already taken.")
+        self.assertEqual(cm.exception.message,
+                         "Username 'retired@test-domain.commcarehq.org' is already taken or reserved.")
 
     def test_username_is_reserved_message(self):
         with self.assertRaises(ValidationError) as cm:
             generate_mobile_username('admin', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'admin' is reserved.")
+        self.assertEqual(cm.exception.message,
+                         "Username 'admin@test-domain.commcarehq.org' is already taken or reserved.")
 
     def test_username_is_none_message(self):
         with self.assertRaises(ValidationError) as cm:
@@ -293,3 +296,7 @@ class TestIsUsernameAvailable(TestCase):
 
     def test_returns_false_if_incomplete_username(self):
         self.assertFalse(is_username_available('test-user'))
+
+    def test_returns_false_if_reserved_username(self):
+        self.assertFalse(is_username_available('admin'))
+        self.assertFalse(is_username_available('demo_user'))
