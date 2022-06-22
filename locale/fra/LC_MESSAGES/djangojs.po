@@ -3860,10 +3860,8 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
-#, fuzzy
-#| msgid "Time"
 msgid "From Time"
-msgstr "Heure"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
@@ -4188,10 +4186,8 @@ msgid "Unknown error"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/ucr_expression.js
-#, fuzzy
-#| msgid "Expression"
 msgid "Expression saved"
-msgstr "Expression"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."

@@ -13349,10 +13349,8 @@ msgid "Custom filter"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#, fuzzy
-#| msgid "Add Filter"
 msgid "UCR Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
@@ -13419,10 +13417,8 @@ msgid "Custom filter ID"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#, fuzzy
-#| msgid "Hide Filter Options"
 msgid "Filter Definition"
-msgstr "Ocultar Opções de Filtro"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
@@ -26969,10 +26965,8 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
-#, fuzzy
-#| msgid "Time"
 msgid "To Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Report Start Date"
@@ -29156,10 +29150,9 @@ msgid "Edit Scheduled Report"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy, python-format
-#| msgid "This report's timezone is %(timezone)s."
+#, python-format
 msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "O fuso horário deste relatório é %(timezone)s."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -34103,10 +34096,8 @@ msgid "Named Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Date Filter"
 msgid "Named Filter"
-msgstr "Filtro de Data"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -35738,12 +35729,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35751,17 +35736,8 @@ msgid ""
 "                              email to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35769,9 +35745,6 @@ msgid ""
 "                              SMS to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""

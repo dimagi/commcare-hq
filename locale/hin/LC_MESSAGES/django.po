@@ -13256,10 +13256,8 @@ msgid "Custom filter"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#, fuzzy
-#| msgid "Add Filter"
 msgid "UCR Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
@@ -33881,10 +33879,8 @@ msgid "Named Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Add Filter"
 msgid "Named Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
