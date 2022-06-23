@@ -212,8 +212,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
-    # TODO Do we need to preserve this checkpoint format?
-    checkpoint_id = "{}-{}-report_xforms_20160824_1708-{}".format(
+    checkpoint_id = "{}-{}-{}".format(
         pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
