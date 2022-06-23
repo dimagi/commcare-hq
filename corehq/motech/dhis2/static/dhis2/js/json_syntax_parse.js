@@ -13,84 +13,79 @@ hqDefine('dhis2/js/json_syntax_parse', [
             return {
                 message: error.message + ' while parsing empty string',
                 position: 0,
-            }
+            };
         }
         var badToken = error.message.startsWith('Unexpected token') ?
             error.message.match(/^Unexpected token (.|\n) .*position\s+(\d+)/i)
-            : error.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i)
+            : error.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i);
 
         var errorIndex = badToken ? +badToken[2]
             : error.message.match(/^Unexpected end of JSON.*/i) ? text.length - 1
-            : null
+                : null;
 
         var errorMsg = badToken ? error.message.replace(/^Unexpected token ./, `Unexpected token ${
-                JSON.stringify(badToken[1])
-            }`)
-            : error.message
+            JSON.stringify(badToken[1])
+        }`)
+            : error.message;
 
-        if (badToken != null && badToken[1] === '\n') {
-            errorMsg = errorMsg.replace(/[\n\r]/, 'at end of row')
+        if (badToken !== null && badToken[1] === '\n') {
+            errorMsg = errorMsg.replace(/[\n\r]/, 'at end of row');
         }
 
         var helpText = "";
         if (error.message.startsWith('Unexpected token')) {
             if (badToken[1] === '\n') {
-                helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, ['
+                helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, [';
+            } else {
+                helpText = "Expected: }, ',', ]";
             }
-            else {
-                helpText = "Expected: }, ',', ]"
-            }
-        }
-        else {
-            helpText = "Expected: }, :, ',', ]"
+        } else {
+            helpText = "Expected: }, :, ',', ]";
         }
 
-        var errorRow = text.slice(0, errorIndex).split('\n').length - 1
+        var errorRow = text.slice(0, errorIndex).split('\n').length - 1;
         if (editor > -1) {
-            var editorNum = `, Case config ${editor + 1},`
-            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}${editorNum}`)
-        }
-        else {
-            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}`)
+            var editorNum = `, Case config ${editor + 1},`;
+            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}${editorNum}`);
+        } else {
+            errorMsg = errorMsg.replace(/position [0-9]*/, `row ${errorRow}`);
         }
 
         if (errorIndex !== null && errorIndex !== undefined) {
-            var start = errorIndex <= context ? 0 : errorIndex - context
-            var end = errorIndex + context >= text.length ? text.length : errorIndex + context
+            var start = errorIndex <= context ? 0 : errorIndex - context;
+            var end = errorIndex + context >= text.length ? text.length : errorIndex + context;
             var slice = (start === 0 ? '' : '...') +
                 text.slice(start, errorIndex) + '{ERROR}' + text.slice(errorIndex, end) +
-                (end === text.length ? '' : '...')
+                (end === text.length ? '' : '...');
 
-            var near = text === slice ? '' : 'near '
+            var near = text === slice ? '' : 'near ';
             return {
                 message: errorMsg + ` while parsing ${near}\n${slice}\n` + helpText,
                 position: errorIndex,
-            }
-        }
-        else {
+            };
+        } else {
             return {
                 message: errorMsg + ` while parsing '${text.slice(0, context * 2)}'`,
                 position: 0,
-            }
+            };
         }
-    }
+    };
 
     class JSONParseError extends SyntaxError {
-        constructor (error, text, context, caller, editor) {
-            context = context || 20
-            var metadata = parseError(error, text, context, editor)
-            super(metadata.message)
+        constructor(error, text, context, caller, editor) {
+            var metadata = parseError(error, text, context, editor);
+            super(metadata.message);
         }
     }
 
-    var parseJson = function (text, reviver, context, editor=-1) {
-        context = context || 20
+    var parseJson = function (text, reviver, context, editor = -1) {
+        context = context || 20;
         try {
-            return JSON.parse(text, reviver)
+            return JSON.parse(text, reviver);
         } catch (error) {
-            throw new JSONParseError(error, text, context, parseJson, editor)
+            throw new JSONParseError(error, text, context, parseJson, editor);
         }
-    }
+    };
 
     return {
         parseJson: parseJson,

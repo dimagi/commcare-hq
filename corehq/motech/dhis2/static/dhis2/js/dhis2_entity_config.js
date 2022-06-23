@@ -28,8 +28,8 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         var self = {};
         self.oCaseConfigs = ko.observableArray();
         self.errorMessage = ko.observable('');
-        self.isError = ko.computed(function() {
-            return self.errorMessage() === '' ? false : true
+        self.isError = ko.computed(function () {
+            return self.errorMessage() !== '';
         });
 
         self.init = function () {
@@ -61,17 +61,16 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                 var value = editors[i].getValue();
                 try {
                     if (editors.length > 1) {
-                        var result = jsonParse.parseJson(value, null, 30, i)
-                    }
-                    else {
-                        var result = jsonParse.parseJson(value, null, 30)
+                        jsonParse.parseJson(value, null, 30, i);
+                    } else {
+                        jsonParse.parseJson(value, null, 30);
                     }
                 } catch (error) {
-                    self.errorMessage(error)
+                    self.errorMessage(error);
                     return self;
                 }
-            };
-            self.errorMessage("")
+            }
+            self.errorMessage('');
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},

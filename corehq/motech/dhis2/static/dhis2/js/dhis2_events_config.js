@@ -17,11 +17,11 @@ hqDefine('dhis2/js/dhis2_events_config', [
 ) {
     var ViewModel = function (data) {
         var self = {};
-        data = data ? data : []
+        data = data ? data : [];
         self.formConfigs = ko.observable(JSON.stringify(data, null, 2));
         self.errorMessage = ko.observable('');
-        self.isError = ko.computed(function() {
-            return self.errorMessage() === '' ? false : true
+        self.isError = ko.computed(function () {
+            return self.errorMessage() !== '';
         });
 
         self.initFormConfigTemplate = function (elements) {
@@ -34,12 +34,12 @@ hqDefine('dhis2/js/dhis2_events_config', [
             var editors = baseAce.returnEditors();
             var value = editors[0].getValue();
             try {
-              var result = jsonParse.parseJson(value, null, 30)
+                jsonParse.parseJson(value, null, 30);
             } catch (error) {
-              self.errorMessage(error)
-              return self;
+                self.errorMessage(error);
+                return self;
             }
-            self.errorMessage("")
+            self.errorMessage('');
             $.post(
                 form.action,
                 {'form_configs': self.formConfigs()},

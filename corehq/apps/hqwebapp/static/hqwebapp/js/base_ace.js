@@ -55,9 +55,9 @@ hqDefine('hqwebapp/js/base_ace', [
         });
     };
 
-    var returnEditors = function() {
+    var returnEditors = function () {
         return self.editor;
-    }
+    };
 
     /**
      * initObservableJsonWidget allows the ACE editor to be applied to

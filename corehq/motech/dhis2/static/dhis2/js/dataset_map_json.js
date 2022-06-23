@@ -19,8 +19,8 @@ hqDefine('dhis2/js/dataset_map_json', [
         var self = {};
         self.dataSetMap = ko.observable(JSON.stringify(data, null, 4));
         self.errorMessage = ko.observable('');
-        self.isError = ko.computed(function() {
-            return self.errorMessage() === '' ? false : true
+        self.isError = ko.computed(function () {
+            return self.errorMessage() !== '';
         });
 
         self.initMapConfigTemplate = function (elements) {
@@ -33,12 +33,12 @@ hqDefine('dhis2/js/dataset_map_json', [
             var editors = baseAce.returnEditors();
             var value = editors[0].getValue();
             try {
-              var result = jsonParse.parseJson(value, null, 30)
+                jsonParse.parseJson(value, null, 30);
             } catch (error) {
-              self.errorMessage(error)
-              return self;
+                self.errorMessage(error);
+                return self;
             }
-            self.errorMessage('')
+            self.errorMessage('');
             $.post(
                 form.action,
                 {'dataset_map': self.dataSetMap()},
