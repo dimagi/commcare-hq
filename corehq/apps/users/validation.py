@@ -8,7 +8,7 @@ from corehq.apps.users.views.mobile import BAD_MOBILE_USERNAME_REGEX
 
 def validate_mobile_username(username, domain):
     """
-    Raises a ValidationError is any issue with the complete username is encountered
+    Raises a ValidationError if any issue with the complete username is encountered
     :param username: str, expects complete username ('username@example.commcarehq.org')
     :param domain: str, required
     """

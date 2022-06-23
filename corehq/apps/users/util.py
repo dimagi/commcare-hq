@@ -67,7 +67,7 @@ def get_complete_mobile_username(username, domain):
     :return: the complete username ('example-user@domain.commcarehq.org')
     """
     # this method is not responsible for validation, and therefore does the most basic email format check
-    if not re.match(".+@.+", username):
+    if '@' not in username:
         username = format_username(username, domain)
 
     return username
@@ -494,11 +494,11 @@ def is_username_available(username):
     :return: boolean
     """
     from corehq.apps.users.dbaccessors import user_exists
-    # enforce complete username, otherwise check is meaningless
-    if not re.match("[a-z0-9.+-_]+@[a-z0-9.+-_]+.commcarehq.org", username):
-        return False
 
-    local_username = username.split('@')[0]
+    local_username = username
+    if '@' in local_username:
+        # assume email format since '@' is an invalid character for usernames
+        local_username = username.split('@')[0]
     reserved_usernames = ['admin', 'demo_user']
     if local_username in reserved_usernames:
         return False

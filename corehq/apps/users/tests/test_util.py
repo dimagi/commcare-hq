@@ -246,12 +246,9 @@ class TestIsUsernameAvailable(TestCase):
 
         self.assertFalse(is_username_available('retired@test-domain.commcarehq.org'))
 
-    def test_returns_false_if_incomplete_username(self):
-        self.assertFalse(is_username_available('test-user'))
-
     def test_returns_false_if_reserved_username(self):
         self.assertFalse(is_username_available('admin'))
-        self.assertFalse(is_username_available('demo_user'))
+        self.assertFalse(is_username_available('demo_user@test-domain.commcarehq.org'))
 
 
 class TestGetCompleteMobileUsername(SimpleTestCase):
