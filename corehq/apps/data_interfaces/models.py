@@ -20,6 +20,7 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -314,6 +315,7 @@ class AutomaticUpdateRule(models.Model):
             'custom_match_definition',
             'closed_parent_definition',
             'location_filter_definition',
+            'ucr_filter_definition',
         ))
 
     @property
@@ -483,6 +485,7 @@ class CaseRuleCriteria(models.Model):
     custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE, null=True)
     closed_parent_definition = models.ForeignKey('ClosedParentDefinition', on_delete=models.CASCADE, null=True)
     location_filter_definition = models.ForeignKey('LocationFilterDefinition', on_delete=models.CASCADE, null=True)
+    ucr_filter_definition = models.ForeignKey('UCRFilterDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -494,6 +497,8 @@ class CaseRuleCriteria(models.Model):
             return self.closed_parent_definition
         elif self.location_filter_definition:
             return self.location_filter_definition
+        elif self.ucr_filter_definition_id:
+            return self.ucr_filter_definition
         else:
             raise ValueError("No available definition found")
 
@@ -512,6 +517,8 @@ class CaseRuleCriteria(models.Model):
             self.closed_parent_definition = value
         elif isinstance(value, LocationFilterDefinition):
             self.location_filter_definition = value
+        elif isinstance(value, UCRFilterDefinition):
+            self.ucr_filter_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -716,6 +723,20 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
                     return True
 
         return False
+
+
+class UCRFilterDefinition(CaseRuleCriteriaDefinition):
+    configured_filter = models.JSONField()
+
+    @memoized
+    def _parsed_filter(self, domain):
+        from corehq.apps.userreports.filters.factory import FilterFactory
+        return FilterFactory.from_spec(self.configured_filter, FactoryContext.empty(domain=domain))
+
+    def matches(self, case, now):
+        case_json = case.to_json()
+        parsed_filter = self._parsed_filter(domain=case.domain)
+        return parsed_filter(case_json, EvaluationContext(case_json))
 
 
 class CaseRuleAction(models.Model):

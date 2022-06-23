@@ -47,7 +47,7 @@ class ConfigurableIndicatorMixIn(object):
     def get_columns(self):
         raise NotImplementedError()
 
-    def get_values(self, item, context=None):
+    def get_values(self, item, evaluation_context=None):
         raise NotImplementedError()
 
 
@@ -81,8 +81,8 @@ class BooleanIndicator(SingleColumnIndicator):
                                                wrapped_spec)
         self.filter = filter
 
-    def get_values(self, item, context=None):
-        value = 1 if self.filter(item, context) else 0
+    def get_values(self, item, evaluation_context=None):
+        value = 1 if self.filter(item, evaluation_context) else 0
         return [ColumnValue(self.column, value)]
 
 
@@ -99,8 +99,8 @@ class RawIndicator(SingleColumnIndicator):
         super(RawIndicator, self).__init__(display_name, column, wrapped_spec)
         self.getter = getter
 
-    def get_values(self, item, context=None):
-        return [ColumnValue(self.column, self.getter(item, context))]
+    def get_values(self, item, evaluation_context=None):
+        return [ColumnValue(self.column, self.getter(item, evaluation_context))]
 
 
 class CompoundIndicator(ConfigurableIndicator):
@@ -115,8 +115,8 @@ class CompoundIndicator(ConfigurableIndicator):
     def get_columns(self):
         return [c for ind in self.indicators for c in ind.get_columns()]
 
-    def get_values(self, item, context=None):
-        return [val for ind in self.indicators for val in ind.get_values(item, context)]
+    def get_values(self, item, evaluation_context=None):
+        return [val for ind in self.indicators for val in ind.get_values(item, evaluation_context)]
 
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
@@ -140,9 +140,9 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
     def get_columns(self):
         return [self._make_column(product_code) for product_code in self.product_codes]
 
-    def get_values(self, item, context=None):
+    def get_values(self, item, evaluation_context=None):
         case_id = self.case_id_expression(item)
-        domain = context.root_doc['domain']
+        domain = evaluation_context.root_doc['domain']
         values = self._get_values_by_product(domain, case_id)
         return [
             ColumnValue(self._make_column(product_code), values.get(product_code, self.default_value))

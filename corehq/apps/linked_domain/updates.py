@@ -367,6 +367,7 @@ def update_tableau_server_and_visualizations(domain_link):
         vis.domain = domain_link.linked_domain
         vis.server = server_model
         vis.view_url = master_vis['view_url']
+        vis.title = master_vis['title']
         vis.save()
 
 def update_dialer_settings(domain_link):

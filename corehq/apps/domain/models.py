@@ -191,7 +191,6 @@ class CallCenterProperties(DocumentSchema):
         return pre != post
 
 
-
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
     type = StringProperty()
@@ -442,6 +441,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
+    confirmation_link_expiry_time = IntegerProperty(default=168)
+
     ga_opt_out = BooleanProperty(default=False)
 
     restrict_mobile_access = BooleanProperty(default=False)
@@ -517,7 +518,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return None
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    @quickcache(['couch_user._id', 'is_active'], timeout=5 * 60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
@@ -599,7 +600,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain_has_submission_in_last_30_days(self.name)
 
     @classmethod
-    @quickcache(['name'], skip_arg='strict', timeout=30*60,
+    @quickcache(['name'], skip_arg='strict', timeout=30 * 60,
         session_function=icds_conditional_session_key())
     def get_by_name(cls, name, strict=False):
         if not name:
@@ -708,7 +709,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         ).all()]
 
     def case_sharing_included(self):
-        return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+        return self.case_sharing or reduce(
+            lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False
+        )
 
     def save(self, **params):
         from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
@@ -758,7 +761,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
 
     def copies_of_parent(self):
-        return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
+        return Domain.view(
+            'domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True
+        )
 
     def delete(self, leave_tombstone=False):
         if not leave_tombstone and not settings.UNIT_TESTING:
