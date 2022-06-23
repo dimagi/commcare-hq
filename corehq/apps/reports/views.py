@@ -2,7 +2,7 @@ import copy
 import io
 import json
 import re
-from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
 from wsgiref.util import FileWrapper
@@ -352,8 +352,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
         time_difference = get_timezone_difference(self.domain)
         (report.hour, day_change) = recalculate_hour(
             report.hour,
-            int(time_difference[:3]),
-            int(time_difference[3:])
+            time_difference.hours,
+            time_difference.minutes
         )
         report.minute = 0
         if day_change:
@@ -554,6 +554,14 @@ class AddSavedReportConfigView(View):
         return self.request.couch_user
 
 
+@dataclass
+class Timezone:
+    hours: int
+    minutes: int
+
+    def __str__(self):
+        return f"{self.hours:+03}:{self.minutes:02}"
+
 
 @login_and_domain_required
 @datespan_default
@@ -646,7 +654,9 @@ def recalculate_hour(hour, hour_difference, minute_difference):
 
 
 def get_timezone_difference(domain):
-    return datetime.now(pytz.timezone(Domain.get_by_name(domain)['default_timezone'])).strftime('%z')
+    domain_obj = Domain.get_by_name(domain)
+    tz_diff = datetime.now(pytz.timezone(domain_obj.default_timezone)).strftime('%z')
+    return Timezone(int(tz_diff[:3]), int(tz_diff[3:]))
 
 
 def calculate_day(interval, day, day_change):
@@ -686,8 +696,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             time_difference = get_timezone_difference(self.domain)
             (instance.hour, day_change) = recalculate_hour(
                 instance.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
+                time_difference.hours,
+                time_difference.minutes
             )
             instance.minute = 0
             if day_change:
@@ -702,6 +712,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 config_ids=[],
                 hour=8,
                 minute=0,
+                stop_hour=20,
+                stop_minute=0,
                 send_to_owner=True,
                 recipient_emails=[],
                 language=None,
@@ -764,6 +776,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     @memoized
     def scheduled_report_form(self):
         initial = self.report_notification.to_json()
+
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
@@ -786,10 +799,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
-        form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
+        form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain)[:3] + ':'
-                                        + get_timezone_difference(self.domain)[3:])
+                                        get_timezone_difference(self.domain))
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
+                                        (Domain.get_by_name(self.domain)['default_timezone'],
+                                        get_timezone_difference(self.domain))
         return form
 
     @property
@@ -838,9 +853,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
+                self.report_notification.hour, time_difference.hours, time_difference.minutes
             )
-            self.report_notification.minute = int(time_difference[3:])
+            self.report_notification.minute = time_difference.minutes
             if day_change:
                 self.report_notification.day = calculate_day(
                     self.report_notification.interval,
@@ -2402,6 +2417,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     @property
     def column_names(self):
         return [
+            _("Title"),
             _("Server"),
             _("View URL"),
         ]
@@ -2422,6 +2438,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     def _get_item_data(self, tableau_visualization):
         data = {
             'id': tableau_visualization.id,
+            'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
         }

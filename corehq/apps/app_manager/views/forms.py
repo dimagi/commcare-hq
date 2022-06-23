@@ -916,13 +916,15 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-
-        auto_link = candidate_module.can_auto_link(module)
         for candidate_form in candidate_module.get_forms():
+            # Forms can be linked automatically if their module is the same case type as this module,
+            # or if they belong to this module's parent module. All other forms can be linked manually.
+            case_type_match = candidate_module.case_type == module.case_type
+            is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
                 'unique_id': candidate_form.unique_id,
                 'name': _form_name(candidate_form),
-                'auto_link': auto_link,
+                'auto_link': case_type_match or is_parent,
                 'allow_manual_linking': True,
             })
 
@@ -942,18 +944,11 @@ def get_form_datums(request, domain, app_id):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
-    datums = []
-    root_module = form.get_module().root_module
-    if root_module:
-        datums.extend([
-            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
-            if datum.requires_selection
-        ])
-    datums.extend([
+    datums = [
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
-    ])
-    return json_response(datums)
+    ]
+    return JsonResponse(datums)
 
 
 @require_GET

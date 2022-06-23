@@ -2182,6 +2182,13 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+CASE_UPDATES_UCR_FILTERS = StaticToggle(
+    'case_updates_ucr_filters',
+    'Allow the use of UCR filters in Auto Case Update Rules',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
@@ -2282,5 +2289,12 @@ SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
     TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+    'two_stage_user_provisioning_by_sms',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

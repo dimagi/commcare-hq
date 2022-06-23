@@ -141,6 +141,7 @@ msgstr "Mostrar Solo las Suscripciones de Prueba"
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Type"
@@ -443,6 +444,7 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/enterprise_users.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -594,6 +596,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 #: custom/abt/reports/late_pmt.py
 msgid "Phone Number"
@@ -3502,29 +3505,20 @@ msgid "Attempted to update unknown or non-editable field '{}'"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid ""
-#| "Password is not strong enough. Try making your password more complex."
 msgid "Password is not strong enough."
 msgstr ""
-"La contraseña no es lo suficientemente segura. Intente hacer su contraseña "
-"más compleja."
 
 #: corehq/apps/api/user_updates.py
 msgid "'default_phone_number' must be a string"
 msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "Error! The selected form does not exist."
 msgid "The role '{}' does not exist"
-msgstr "¡Error! El formulario seleccionado no existe."
+msgstr ""
 
 #: corehq/apps/api/user_updates.py
-#, fuzzy
-#| msgid "There are {} locations with the name '{}' under the parent '{}'"
 msgid "There are multiple roles with the name '{}' in the domain '{}'"
-msgstr "Hay {} ubicaciones con el nombre '{}' bajo el padre '{}'"
+msgstr ""
 
 #: corehq/apps/api/util.py
 #, python-format
@@ -6516,15 +6510,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"involves a form\n"
-"                that requires manual linking which has not been configured.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -9356,6 +9341,7 @@ msgstr "Reporte"
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py
 msgid "Description"
@@ -12040,10 +12026,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
-#, fuzzy
-#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr "El formulario no se valida"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""
@@ -13328,6 +13312,10 @@ msgid "Please enter a valid regular expression to match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
+msgid "There was a problem with a UCR Filter Definition: "
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr "Por favor especifique por lo menos una acción."
 
@@ -13611,6 +13599,7 @@ msgid "Edit Column"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/reports/views.py
 msgid "Title"
 msgstr "Título"
 
@@ -13956,6 +13945,10 @@ msgid "Custom filter"
 msgstr "Filtro personalizado"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "UCR Filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
 msgstr "Y"
 
@@ -14018,6 +14011,10 @@ msgstr "El caso padre ha sido cerrado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "ID filtro Personalizada"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Filter Definition"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
 msgid "Find"
@@ -14552,6 +14549,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Account confirmation link expiry"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Default time (in hours) for which account confirmation link will "
+"be valid.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Editar Información Básica"
 
@@ -14562,6 +14571,10 @@ msgstr "Actualice la Información Básica"
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Zona horaria por defecto"
+
+#: corehq/apps/domain/forms.py
+msgid "Confirmation link expiry should be an integer."
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -15172,6 +15185,28 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Add case type"
 msgstr "Agregar tipo de caso"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+#, fuzzy
+#| msgid "Web Apps Permissions"
+msgid "Synchronous Web Apps Submissions"
+msgstr "Permisos de Aplicaciones Web"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
@@ -15981,6 +16016,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr "Hola,"
 
@@ -23213,7 +23249,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/proptable/dl_property_table.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 msgid "No data"
 msgstr "No hay datos"
 
@@ -24154,10 +24189,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
-#, fuzzy
-#| msgid "This is not a valid sub-area for the area %s"
 msgid "{} is not a valid data source type!"
-msgstr "Esta no es una sub-área válida para el área %s"
+msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
 msgid "The data source referenced by this report could not be found."
@@ -26156,6 +26189,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -26163,6 +26197,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -26181,10 +26216,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr ""
@@ -26233,6 +26270,15 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare HQ"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Once you confirm your account you will be able to access and submit data in "
+"the \"%(domain)s\" project on %(hq_name)s.\n"
+"Your username to login is %(username)s\n"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
@@ -27974,6 +28020,10 @@ msgid "Day"
 msgstr "Día"
 
 #: corehq/apps/reports/forms.py
+msgid "To Time"
+msgstr ""
+
+#: corehq/apps/reports/forms.py
 msgid "Report Start Date"
 msgstr ""
 
@@ -27992,6 +28042,10 @@ msgstr ""
 #: corehq/apps/reports/forms.py
 msgid "Configure Scheduled Report"
 msgstr "Configurar Reporte Agendado"
+
+#: corehq/apps/reports/forms.py
+msgid "Must be after 'From Time'"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
@@ -28077,7 +28131,6 @@ msgid "[no name]"
 msgstr "[no tiene nombre]"
 
 #: corehq/apps/reports/standard/cases/data_sources.py
-#: corehq/apps/reports/v2/formatters/cases.py
 #, python-format
 msgid "Unknown [%s]"
 msgstr "Desconocido  [%s]"
@@ -30167,10 +30220,6 @@ msgstr ""
 msgid "Date is after"
 msgstr ""
 
-#: corehq/apps/reports/v2/formatters/cases.py
-msgid "No Data"
-msgstr "No hay Datos"
-
 #: corehq/apps/reports/v2/models.py
 msgid "The report endpoint for {}/{} cannot be found."
 msgstr ""
@@ -30199,6 +30248,11 @@ msgstr "Nuevo Reporte Agendado"
 #: corehq/apps/reports/views.py
 msgid "Edit Scheduled Report"
 msgstr "Editar Reporte Agendado "
+
+#: corehq/apps/reports/views.py
+#, python-format
+msgid "This scheduled report's timezone is %s (UTC%s)"
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -34304,6 +34358,15 @@ msgstr ""
 msgid "Target domain {} does not use enterprise permissions of {}"
 msgstr ""
 
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"When '{}' is True for a new user, {} must be either empty or set to False."
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid "When '{}' is True for an existing user, {}."
+msgstr ""
+
 #: corehq/apps/userreports/columns.py
 #, python-brace-format
 msgid ""
@@ -34362,6 +34425,10 @@ msgstr ""
 #, python-brace-format
 msgid "{0} filter type must include a \"filters\" list"
 msgstr "{0} tipo de filtro debe incluir una lista de \"filtros\" "
+
+#: corehq/apps/userreports/filters/factory.py
+msgid "Couldn't find named filter with name: {}"
+msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
@@ -34971,6 +35038,7 @@ msgid "Evaluate!"
 msgstr "¡Evaluar! "
 
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
 msgid "Format JSON"
 msgstr ""
 
@@ -35299,16 +35367,34 @@ msgstr ""
 msgid "Step 1 of 2 - Select Data Source"
 msgstr "Paso 1 de 2 - Seleccionar Fuente de Datos"
 
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Update Expression"
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid "Named Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid "Named Filter"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/views.py
+msgid "Definition"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+msgid ""
+"\n"
+"                    Your expression has parse errors!\n"
+"                    For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid ""
-"\n"
-"                                Update Expression <strong data-bind=\"text: "
-"name\"></strong>:\n"
-"                            "
+msgid "see more"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+msgid "Update Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html
@@ -35753,13 +35839,13 @@ msgid "UCR Expressions"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid "Definition"
-msgstr ""
-
-#: corehq/apps/userreports/views.py
 msgid ""
 "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
 "exists."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid "Edit UCR Expression"
 msgstr ""
 
 #: corehq/apps/users/account_confirmation.py
@@ -35913,6 +35999,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "Require Account Confirmation by SMS?"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"If checked, the user will be sent a confirmation SMS and asked to set their "
+"password."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
@@ -35936,6 +36032,12 @@ msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
 msgid ""
 "Setting a password is disabled. The user will set their own password on "
 "confirming their account email."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
+"Setting a password is disabled. The user will set their own password on "
+"confirming their account phone number."
 msgstr ""
 
 #: corehq/apps/users/forms.py
@@ -36915,6 +37017,10 @@ msgid "Send Confirmation Email"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Confirmation SMS"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Reactivate Mobile Worker"
 msgstr "Reactivar Usuario Móvil"
 
@@ -36956,23 +37062,47 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            Would you like to send the account confirmation "
-"email to this account?\n"
-"                          "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              email to this account?\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
-"                            The user will be sent an email with instructions "
-"to\n"
-"                            set a password and be able to login to this "
+"                              Would you like to send the account "
+"confirmation\n"
+"                              SMS to this account?\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              The user will be sent an email with "
+"instructions to\n"
+"                              set a password and be able to login to this "
 "project.\n"
-"                          "
+"                            "
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid ""
+"\n"
+"                              The user will be sent a SMS with instructions "
+"to\n"
+"                              set a password and be able to login to this "
+"project.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Send Account Confirmaton Email"
+msgstr ""
+
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Send Account Confirmaton SMS"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -37507,16 +37637,12 @@ msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username contains invalid characters."
 msgid "Username '{}' may not contain special characters."
-msgstr "El nombre de usuario contiene caracteres inválidos."
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username is required."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/util.py
 msgid "Username '{}' may not contain consecutive '.' (period)."
@@ -37531,16 +37657,12 @@ msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
 msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is already taken"
 msgid "Username '{}' is already taken."
-msgstr "Nombre de usuario {} ya está tomado"
+msgstr ""
 
 #: corehq/apps/users/util.py
-#, fuzzy
-#| msgid "Username {} is reserved."
 msgid "Username '{}' is reserved."
-msgstr "Nombre de usuario {} está reservado. "
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py
 #, python-format
@@ -42645,18 +42767,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Read Only (No Reports)"
-#~ msgstr "Solo Lectura (No Reportes)"
-
-#~ msgid "App Editor"
-#~ msgstr "Editor de App"
-
-#~ msgid "Read Only"
-#~ msgstr "Solo Lectura"
-
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador de Campo"
-
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador de Facturación"

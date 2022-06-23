@@ -1434,7 +1434,7 @@ msgid "Date and Time"
 msgstr "Date et Heure"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: submodules/formdesigner/src/mugs.js
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr "Heure"
 
@@ -3445,6 +3445,12 @@ msgstr "Soumettre paiement"
 msgid "Submit Invoice Request"
 msgstr "Soumettre la demande de Facture"
 
+#: corehq/apps/domain/static/domain/js/case_search.js
+#, fuzzy
+#| msgid "You have unchanged case settings"
+msgid "You have unchanged settings"
+msgstr "Vous avez des paramètres de dossier non sauvegardées"
+
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Acheter des crédits "
@@ -4154,6 +4160,10 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+msgid "From Time"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Sélection de la langue..."
@@ -4475,6 +4485,10 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+msgid "Expression saved"
+msgstr ""
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4535,6 +4549,14 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Veuillez entrer une adresse mail valide."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
