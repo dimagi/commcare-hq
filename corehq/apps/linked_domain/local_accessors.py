@@ -21,6 +21,7 @@ def get_tableau_server_and_visualizations(domain):
     for vis in visualizations:
         vis_list.append({
             'domain': domain,
+            'title': vis.title,
             'server': server,
             'view_url': vis.view_url,
             'id': vis.id,

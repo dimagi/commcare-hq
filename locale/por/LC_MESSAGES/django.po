@@ -12717,6 +12717,10 @@ msgid "Please enter a valid regular expression to match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
+msgid "There was a problem with a UCR Filter Definition: "
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr ""
 
@@ -12992,6 +12996,7 @@ msgid "Edit Column"
 msgstr "Edição da Coluna"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
+#: corehq/apps/reports/views.py
 msgid "Title"
 msgstr ""
 
@@ -13344,6 +13349,10 @@ msgid "Custom filter"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "UCR Filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
 msgstr ""
 
@@ -13405,6 +13414,10 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Filter Definition"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
@@ -14508,6 +14521,28 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Add case type"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+#, fuzzy
+#| msgid "Manage Web Apps Permissions"
+msgid "Synchronous Web Apps Submissions"
+msgstr "Gerir Permissões das Aplicações Web"
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
@@ -26930,10 +26965,8 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
-#, fuzzy
-#| msgid "Time"
 msgid "To Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Report Start Date"
@@ -29117,10 +29150,9 @@ msgid "Edit Scheduled Report"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy, python-format
-#| msgid "This report's timezone is %(timezone)s."
+#, python-format
 msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "O fuso horário deste relatório é %(timezone)s."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -33164,6 +33196,10 @@ msgid "{0} filter type must include a \"filters\" list"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py
+msgid "Couldn't find named filter with name: {}"
+msgstr ""
+
+#: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
 msgstr ""
 
@@ -34060,10 +34096,8 @@ msgid "Named Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Date Filter"
 msgid "Named Filter"
-msgstr "Filtro de Data"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -35695,12 +35729,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35708,17 +35736,8 @@ msgid ""
 "                              email to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35726,9 +35745,6 @@ msgid ""
 "                              SMS to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""

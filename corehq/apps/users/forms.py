@@ -915,7 +915,8 @@ class NewMobileWorkerForm(forms.Form):
                                     <!-- ko if: $root.stagedUser().force_account_confirmation() -->
                                         <i class="fa fa-warning"></i> {disabled_email}
                                     <!-- /ko -->
-                                    <!-- ko if: !($root.stagedUser().force_account_confirmation()) && $root.stagedUser().force_account_confirmation_by_sms() -->  # noqa: E501
+                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
+                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
                                         <i class="fa fa-warning"></i> {disabled_phone}
                                     <!-- /ko -->
                                 <!-- /ko -->
