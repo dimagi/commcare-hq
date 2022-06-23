@@ -227,7 +227,7 @@ class ApplicationValidator(ApplicationBaseValidator):
         errors = []
         xmlns_count = defaultdict(int)
         for form in self.app.get_forms():
-            errors.extend(form.validate_for_build(validate_module=False))
+            errors.extend(form.validate_for_build())
 
             # make sure that there aren't duplicate xmlns's
             if not isinstance(form, ShadowForm):
@@ -817,7 +817,7 @@ class FormBaseValidator(object):
             }
         }
 
-    def validate_for_build(self, validate_module):
+    def validate_for_build(self):
         errors = []
 
         meta = self.error_meta()
@@ -871,11 +871,11 @@ class FormBaseValidator(object):
                 error.update(meta)
                 errors.append(error)
 
-        errors.extend(self.extended_build_validation(xml_valid, validate_module))
+        errors.extend(self.extended_build_validation(xml_valid))
 
         return errors
 
-    def extended_build_validation(self, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid):
         """
         Override to perform additional validation during build process.
         """
@@ -1018,31 +1018,33 @@ class FormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid):
         errors = []
         if xml_valid:
             for error in self.check_actions():
                 error.update(self.error_meta())
                 errors.append(error)
+        return errors
 
-        if validate_module:
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
+    def validate_for_module(self, module):
+        errors = super().validate_for_module(module)
 
-            if self.form.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if self.form.requires_case_type():
-                needs_case_type = True
-            if self.form.requires_referral():
-                needs_referral_detail = True
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
+        if self.form.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.form.requires_case_type():
+            needs_case_type = True
+        if self.form.requires_referral():
+            needs_referral_detail = True
 
-            errors.extend(self.form.get_module().validator.get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail,
-                needs_referral_detail=needs_referral_detail,
-            ))
+        errors.extend(module.validator.get_case_errors(
+            needs_case_type=needs_case_type,
+            needs_case_detail=needs_case_detail,
+            needs_referral_detail=needs_referral_detail,
+        ))
 
         return errors
 
@@ -1145,28 +1147,32 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid):
         errors = []
+
         if xml_valid:
             for error in self.check_actions():
                 error.update(self.error_meta())
                 errors.append(error)
 
-        module = self.form.get_module()
-        if validate_module:
-            errors.extend(module.validator.get_case_errors(
-                needs_case_type=False,
-                needs_case_detail=module.requires_case_details(),
-                needs_referral_detail=False,
-            ))
+        return errors
+
+    def validate_for_module(self, module):
+        errors = super().validate_for_module(module)
+
+        errors.extend(module.validator.get_case_errors(
+            needs_case_type=False,
+            needs_case_detail=module.requires_case_details(),
+            needs_referral_detail=False,
+        ))
 
         return errors
 
 
 class ShadowFormValidator(IndexedFormBaseValidator):
     @time_method()
-    def extended_build_validation(self, xml_valid, validate_module=True):
-        errors = super(ShadowFormValidator, self).extended_build_validation(xml_valid, validate_module)
+    def extended_build_validation(self, xml_valid):
+        errors = super(ShadowFormValidator, self).extended_build_validation(xml_valid)
         meta = self.error_meta()
         if not self.form.shadow_parent_form_id:
             error = {
