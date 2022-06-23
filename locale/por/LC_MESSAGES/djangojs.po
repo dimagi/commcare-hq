@@ -1408,6 +1408,7 @@ msgstr "Data e Hora"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+#: submodules/formdesigner/src/mugs.js
 msgid "Time"
 msgstr "Hora"
 
