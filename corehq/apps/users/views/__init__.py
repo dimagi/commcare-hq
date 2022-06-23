@@ -965,6 +965,11 @@ def delete_user_role(request, domain):
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except UserRole.DoesNotExist:
         return JsonResponse({})
+
+    if role.upstream_id:
+        # Do not delete user roles that are controlled by an upstream domain
+        return JsonResponse({})
+
     copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
