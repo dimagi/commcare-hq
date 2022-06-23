@@ -5,6 +5,7 @@ from datetime import datetime
 from operator import methodcaller
 
 from django.conf import settings
+from django.db import migrations
 
 from dimagi.utils.modules import to_function
 from pillowtop.dao.exceptions import (
@@ -16,6 +17,7 @@ from pillowtop.logger import pillow_logging
 
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.es.client import BulkActionItem
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
 def _get_pillow_instance(full_class_str):
@@ -370,3 +372,25 @@ def get_errors_with_ids(es_action_errors):
 def _changes_to_list(change_items):
     """Convert list of dict(key: value) in to a list of tuple(key, value)"""
     return list(map(methodcaller("popitem"), change_items))
+
+
+def change_checkpoint_id(old_id, new_id):
+    """Django migration which clones Kafka checkpoints to a new ID"""
+    from pillowtop.models import KafkaCheckpoint
+
+    @skip_on_fresh_install
+    def _change_checkpoint_id(*args, **kwargs):
+        for old in KafkaCheckpoint.objects.filter(checkpoint_id=old_id):
+            KafkaCheckpoint.objects.create(
+                checkpoint_id=new_id,
+                topic=old.topic,
+                partition=old.partition,
+                offset=old.offset,
+                doc_modification_time=old.doc_modification_time,
+            )
+
+    return migrations.RunPython(
+        _change_checkpoint_id,
+        reverse_code=migrations.RunPython.noop,
+        elidable=True,
+    )
