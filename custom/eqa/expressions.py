@@ -37,10 +37,10 @@ def get_yes_no(val):
         return 'N/A'
 
 
-@quickcache(['item', 'xmlns'])
-def get_two_last_forms(item, xmlns):
-    xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
-    forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
+@quickcache(['domain', 'case_id', 'xmlns'])
+def get_two_last_forms(domain, case_id, xmlns):
+    xforms_ids = CommCareCase.objects.get_case_xform_ids(case_id)
+    forms = XFormInstance.objects.get_forms(xforms_ids, domain)
     f_forms = [f for f in forms if f.xmlns == xmlns]
     s_forms = sorted(f_forms, key=lambda x: x.received_on)
 
@@ -64,7 +64,7 @@ class EQAExpressionSpec(JsonObject):
     xmlns = StringProperty()
 
     def __call__(self, item, evaluation_context=None):
-        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
+        curr_form, prev_form = get_two_last_forms(item['domain'], item['_id'], self.xmlns)
 
         path_question = 'form/%s' % self.question_id
 
@@ -144,7 +144,7 @@ class EQAPercentExpression(JsonObject):
     xmlns = StringProperty()
 
     def __call__(self, item, evaluation_context=None):
-        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
+        curr_form, prev_form = get_two_last_forms(item['domain'], item['_id'], self.xmlns)
 
         path_question = 'form/%s' % self.question_id
 
