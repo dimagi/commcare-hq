@@ -16,10 +16,12 @@ hqDefine("reports/js/tableau", function () {
             },
             dataType: 'json',
             success: function (data) {
+                var loadingDiv = document.getElementById("loadingDiv");
+                loadingDiv.style.display = "none";
                 if (data.success) {
                     self.initViz(data.ticket);
                 } else {
-                    self.errorMessage(data.message);
+                    document.getElementById( 'errorMessage' ).innerHTML = '<b>' + data.message + '</b>';
                 }
             },
         }).fail(function () {

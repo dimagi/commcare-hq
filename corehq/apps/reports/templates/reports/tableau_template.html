@@ -18,8 +18,9 @@
 <script src="{% static 'reports/js/tableau.js' %}"></script>
 
 <body>
-    <div><p>{% trans "Page is loading..." %} </p></div>
+    <div id="loadingDiv"><p>{% trans "Page is loading..." %} </p></div>
     <div id="vizContainer"></div>
+    <div id="errorMessage"><p>{{ failure_message }}</p></div>
 </body>
 
 {% endblock %}
