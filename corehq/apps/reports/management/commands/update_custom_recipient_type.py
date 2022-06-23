@@ -7,7 +7,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
-from django.db.models import Q
 
 
 class Command(BaseCommand):
@@ -45,7 +44,7 @@ class Command(BaseCommand):
             )
 
         # Filter those not equal to [] just to be safe
-        definitions = CreateScheduleInstanceActionDefinition.objects.filter(~Q(recipients=[]))
+        definitions = CreateScheduleInstanceActionDefinition.objects.exclude(recipients=[])
 
         for definition in definitions:
             recipients = definition.recipients
