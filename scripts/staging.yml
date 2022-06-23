@@ -66,7 +66,6 @@ branches:
 #    - mjr/odata_enterprise_report # Matt May 23
     #- akj/mw-signup # Akash May 25
     # - gh/upgrade-twilio # Graham May 31
-    - cs/SC-1821-script_for_sizing_model_params # June 2
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
@@ -85,7 +84,7 @@ branches:
     - dm/lookup-table-uploader # Daniel Jun 20
     - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
-    - ad/multi-select-auto-launch # Addison/Jenny June 22
+#    - ad/multi-select-auto-launch # Addison/Jenny June 22
     - smh/tableau-loading-ui # Steph June 22
     - do/case-claim-title # Dominic June 23
 submodules: { }
