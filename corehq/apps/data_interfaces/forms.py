@@ -1002,3 +1002,6 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
 
     def clean_filter_on_closed_parent(self):
         return False
+
+    def clean_ucr_filter_definitions(self):
+        return []
