@@ -24,7 +24,7 @@
         </template>
       </field>
     </detail>
-    <detail nodeset="instance('results')/results/case[@case_type='child'][index/parent=current()/@case_id][@status='open']">
+    <detail nodeset="instance('results:inline')/results/case[@case_type='child'][index/parent=current()/@case_id][@status='open']">
       <title>
         <text>
           <locale id="m0.case_long.tab.2.title"/>

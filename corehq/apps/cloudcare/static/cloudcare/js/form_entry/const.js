@@ -30,6 +30,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COLLAPSIBLE: 'group-collapse',
         COLLAPSIBLE_OPEN: 'collapse-open',
         COLLAPSIBLE_CLOSED: 'collapse-closed',
+        TIME_12_HOUR: '12-hour',
         ETHIOPIAN: 'ethiopian',
 
         // Note it's important to differentiate these two

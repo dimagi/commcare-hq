@@ -1117,6 +1117,10 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     def relationship_id_to_name(relationship_id):
         return CommCareCaseIndex.RELATIONSHIP_INVERSE_MAP[relationship_id]
 
+    def to_json(self):
+        from ..serializers import CommCareCaseIndexSerializer
+        return CommCareCaseIndexSerializer(self).data
+
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndex) and (
             self.case_id == other.case_id

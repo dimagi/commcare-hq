@@ -18,7 +18,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -81,6 +80,7 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
+    is_dimagi_email,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -274,6 +274,8 @@ class Permissions(DocumentSchema):
         return self.view_reports or report in self.view_report_list
 
     def view_tableau_viz(self, viz_id):
+        if not self.access_all_locations:
+            return False
         return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
@@ -308,82 +310,6 @@ class Permissions(DocumentSchema):
         for name in Permissions.permission_names():
             setattr(perms, name, value)
         return perms
-
-
-class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
-    # because these are in JSON and cannot be serialized
-    # todo: apply translation to these in the UI
-    # note: these are also tricky to change because these are just some default names,
-    # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
-    APP_EDITOR = gettext_noop("App Editor")
-    READ_ONLY = gettext_noop("Read Only")
-    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
-    BILLING_ADMIN = gettext_noop("Billing Admin")
-    MOBILE_WORKER = gettext_noop("Mobile Worker")
-    INITIAL_ROLES = (
-        READ_ONLY,
-        APP_EDITOR,
-        FIELD_IMPLEMENTER,
-        BILLING_ADMIN
-    )
-
-    ID_NAME_MAP = {
-        'read-only-no-reports': READ_ONLY_NO_REPORTS,
-        'no-permissions': READ_ONLY,
-        'read-only': READ_ONLY,
-        'field-implementer': FIELD_IMPLEMENTER,
-        'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN,
-        'mobile-worker': MOBILE_WORKER
-    }
-
-    # skip legacy duplicate ('no-permissions')
-    NAME_ID_MAP = {name: id for id, name in ID_NAME_MAP.items() if id != 'no-permissions'}
-
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return cls.NAME_ID_MAP.get(name, None)
-
-    @classmethod
-    def get_preset_role_name(cls, role_id):
-        return cls.ID_NAME_MAP.get(role_id, None)
-
-    @classmethod
-    def get_preset_map(cls):
-        return {
-            cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
-            cls.READ_ONLY: lambda: Permissions(view_reports=True),
-            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
-                                                       view_commcare_users=True,
-                                                       edit_groups=True,
-                                                       view_groups=True,
-                                                       edit_locations=True,
-                                                       view_locations=True,
-                                                       edit_shared_exports=True,
-                                                       view_reports=True),
-            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
-                                                   report_an_issue=True,
-                                                   access_all_locations=True,
-                                                   access_api=False,
-                                                   download_reports=False)
-        }
-
-    @classmethod
-    def get_permissions(cls, preset):
-        preset_map = cls.get_preset_map()
-        if preset not in preset_map:
-            return None
-        return preset_map[preset]()
-
-    @classmethod
-    def get_role_name_with_matching_permissions(cls, permissions):
-        for name, factory in UserRolePresets.get_preset_map().items():
-            if factory() == permissions:
-                return name
 
 
 class DomainMembershipError(Exception):
@@ -1003,7 +929,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def is_dimagi(self):
-        return self.username.endswith('@dimagi.com')
+        return is_dimagi_email(self.username)
 
     def is_locked_out(self):
         return self.supports_lockout() and self.should_be_locked_out()
@@ -1538,6 +1464,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_view_some_tableau_viz(self, domain):
+        if not self.can_access_all_locations(domain):
+            return False
+
         from corehq.apps.reports.models import TableauVisualization
         return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 
@@ -2445,7 +2374,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
-            if user_doc['email'].endswith('@dimagi.com'):
+            if is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):

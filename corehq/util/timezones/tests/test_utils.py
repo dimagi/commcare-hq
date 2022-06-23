@@ -1,10 +1,13 @@
+from datetime import datetime
+
 import pytz
 from unittest.mock import patch
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase
+import testil
 
 from corehq.apps.users.models import WebUser, DomainMembership
-from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.timezones.utils import get_timezone_for_user, parse_date
 
 DOMAIN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
@@ -33,3 +36,37 @@ class GetTimezoneForUserTest(SimpleTestCase):
         # if override_global_tz
         domain_membership.override_global_tz = True
         self.assertEqual(get_timezone_for_user(couch_user, "test"), domain_membership_timezone)
+
+
+def test_parse_date_iso_datetime():
+    parsed = parse_date('2022-04-06T12:13:14Z')
+    testil.eq(parsed, datetime(2022, 4, 6, 12, 13, 14))
+    # `date` is timezone naive
+    testil.eq(parsed.tzinfo, None)
+
+
+def test_parse_date_noniso_datetime():
+    parsed = parse_date('Apr 06, 2022 12:13:14 UTC')
+    testil.eq(parsed, datetime(2022, 4, 6, 12, 13, 14))
+    # `date` is timezone naive
+    testil.eq(parsed.tzinfo, None)
+
+
+def test_parse_date_date():
+    parsed = parse_date('2022-04-06')
+    testil.eq(parsed, datetime(2022, 4, 6, 0, 0, 0))
+
+
+def test_parse_date_str():
+    parsed = parse_date('broken')
+    testil.eq(parsed, 'broken')
+
+
+def test_parse_date_none():
+    parsed = parse_date(None)
+    testil.eq(parsed, None)
+
+
+def test_parse_date_int():
+    parsed = parse_date(4)
+    testil.eq(parsed, 4)
