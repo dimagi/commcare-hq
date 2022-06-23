@@ -14053,7 +14053,6 @@ msgstr "Autorregistro del Caso"
 #| msgid "(including child locations)"
 msgid "Include cases from child locations"
 msgstr "(incluyendo ubicaciones hijo)"
-msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"

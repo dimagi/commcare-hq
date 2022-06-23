@@ -13340,6 +13340,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Include cases from child locations"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
