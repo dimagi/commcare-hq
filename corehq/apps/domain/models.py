@@ -443,6 +443,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     confirmation_link_expiry_time = IntegerProperty(default=168)
 
+    operator_call_limit = IntegerProperty(default=120)
+
     ga_opt_out = BooleanProperty(default=False)
 
     restrict_mobile_access = BooleanProperty(default=False)
