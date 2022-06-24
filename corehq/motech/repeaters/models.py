@@ -75,6 +75,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.base import Deferred
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -299,15 +300,25 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def repeater(self):
         return Repeater.get(self.repeater_id)
 
+    @cached_property
+    def _optionvalue_fields(self):
+        return [
+            attr_tuple[0]
+            for attr_tuple in inspect.getmembers(self.__class__)
+            if isinstance(attr_tuple[1], OptionValue)
+        ]
+
     def to_json(self):
         repeater_dict = self.__dict__.copy()
         options = repeater_dict.pop('options', None)
 
         # Populating OptionValue attrs
-        for attr_tuple in inspect.getmembers(self.__class__):
-            if isinstance(attr_tuple[1], OptionValue):
-                attr = attr_tuple[0]
-                repeater_dict[attr] = options.get(attr) if attr in options else getattr(self, attr, None)
+        for attr in self._optionvalue_fields:
+            if attr == 'include_app_id_param':
+                continue
+            repeater_dict[attr] = (options.get(attr)
+                if attr in options
+                else getattr(self.__class__, attr).get_default_value())
 
         # include_app_id_param is a constant in some Repeaters and will not come up in options
         if hasattr(self, 'include_app_id_param'):
