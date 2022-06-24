@@ -276,7 +276,7 @@ class ConfigurableReportTableManager(UcrTableManager):
             for provider in self.data_source_providers
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
-        filtered_data_sources = self.get_filtered_configs(new_data_source)
+        filtered_data_sources = self.get_filtered_configs(new_data_sources)
         self._add_data_sources_to_table_adapters(filtered_data_sources)
 
     def _add_data_sources_to_table_adapters(self, new_data_sources):
