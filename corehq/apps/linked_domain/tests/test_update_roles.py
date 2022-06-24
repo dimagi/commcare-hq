@@ -9,14 +9,14 @@ from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTes
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.userreports.util import get_ucr_class_name
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole
 
 
 class TestUpdateRoles(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateRoles, cls).setUpClass()
-        permissions = Permissions(
+        permissions = HqPermissions(
             edit_data=True,
             edit_reports=True,
             view_report_list=[
@@ -25,7 +25,7 @@ class TestUpdateRoles(BaseLinkedDomainTest):
         )
         cls.role = UserRole.create(cls.domain, 'test', permissions, is_non_admin_editable=True)
         cls.other_role = UserRole.create(
-            cls.domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
+            cls.domain, 'other_test', HqPermissions(edit_web_users=True, view_locations=True)
         )
         cls.other_role.set_assignable_by([cls.role.id])
 
@@ -60,7 +60,7 @@ class TestUpdateRoles(BaseLinkedDomainTest):
 
         # create role in linked domain with the same name but no 'upstream_id'
         UserRole.create(
-            self.linked_domain, 'other_test', Permissions(edit_web_users=True, view_locations=True)
+            self.linked_domain, 'other_test', HqPermissions(edit_web_users=True, view_locations=True)
         )
 
         update_user_roles(self.domain_link)
@@ -74,7 +74,7 @@ class TestUpdateRoles(BaseLinkedDomainTest):
 
         # create role in linked domain with upstream_id and name not matching upstream name
         UserRole.create(
-            self.linked_domain, 'id_test', Permissions(edit_web_users=False, view_locations=True),
+            self.linked_domain, 'id_test', HqPermissions(edit_web_users=False, view_locations=True),
             upstream_id=self.other_role.get_id
         )
 
@@ -123,7 +123,7 @@ class TestUpdateRolesRemote(TestCase):
         self.role1 = UserRole.create(
             domain=self.linked_domain,
             name='test',
-            permissions=Permissions(
+            permissions=HqPermissions(
                 edit_data=True,
                 edit_reports=True,
                 view_report_list=[
@@ -137,7 +137,7 @@ class TestUpdateRolesRemote(TestCase):
         self.other_role = UserRole.create(
             domain=self.linked_domain,
             name='other_test',
-            permissions=Permissions(
+            permissions=HqPermissions(
                 edit_web_users=True,
                 view_locations=True,
             ),
@@ -152,7 +152,7 @@ class TestUpdateRolesRemote(TestCase):
 
     @patch('corehq.apps.linked_domain.updates.remote_get_user_roles')
     def test_update_remote(self, remote_get_user_roles):
-        remote_permissions = Permissions(
+        remote_permissions = HqPermissions(
             edit_data=False,
             edit_reports=True,
             view_report_list=['corehq.reports.static_report']
@@ -168,7 +168,7 @@ class TestUpdateRolesRemote(TestCase):
         remote_role_other = self._make_remote_role_json(
             _id=uuid.uuid4().hex,
             name="another",
-            permissions=Permissions().to_json(),
+            permissions=HqPermissions().to_json(),
             assignable_by=[self.upstream_role1_id]
         )
 
@@ -183,7 +183,7 @@ class TestUpdateRolesRemote(TestCase):
         self.assertEqual(roles['test'].permissions, remote_permissions)
         self.assertEqual(roles['test'].is_non_admin_editable, False)
         self.assertEqual(roles['another'].assignable_by, [self.role1.get_id])
-        self.assertEqual(roles['another'].permissions, Permissions())
+        self.assertEqual(roles['another'].permissions, HqPermissions())
         self.assertEqual(roles['other_test'].assignable_by, [self.role1.get_id])
 
     def _make_remote_role_json(self, **kwargs):

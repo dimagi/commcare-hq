@@ -7,7 +7,7 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAuthentication, \
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.apps.users.models import WebUser, HQApiKey, HqPermissions, UserRole
 from corehq.util.test_utils import softer_assert
 
 
@@ -154,19 +154,19 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
 
 class RequirePermissionAuthenticationTest(AuthenticationTestBase):
-    require_edit_data = RequirePermissionAuthentication(Permissions.edit_data)
+    require_edit_data = RequirePermissionAuthentication(HqPermissions.edit_data)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.role_with_permission = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         cls.role_without_permission = UserRole.create(
-            cls.domain, 'no-edit-data', permissions=Permissions(edit_data=False)
+            cls.domain, 'no-edit-data', permissions=HqPermissions(edit_data=False)
         )
         cls.role_with_permission_but_no_api_access = UserRole.create(
-            cls.domain, 'no-api-access', permissions=Permissions(edit_data=True, access_api=False)
+            cls.domain, 'no-api-access', permissions=HqPermissions(edit_data=True, access_api=False)
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
         cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None,
