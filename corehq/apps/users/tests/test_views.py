@@ -179,8 +179,7 @@ class TestUpdateRoleFromView(TestCase):
 class DeleteRoleTests(TestCase):
     def test_delete_role_removes_role(self):
         role = UserRole.objects.create(domain=self.domain, name='test-role')
-
-        request = self._create_request({'_id': role.get_id})
+        request = self._create_request(_id=role.get_id)
 
         delete_user_role(request, 'test-domain')
 
@@ -189,20 +188,35 @@ class DeleteRoleTests(TestCase):
 
     # NOTE: Documenting current behavior. The API should probably be changed to return an error
     def test_missing_role_returns_nothing(self):
-        request = self._create_request({'_id': 'invalid_id'})
+        request = self._create_request(_id='invalid_id')
 
         response = delete_user_role(request, 'test-domain')
-        self.assertEqual(response.content.decode('utf-8'), '{}')
+        content = json.loads(response.content)
+        self.assertEqual(content, {})
+
+    def test_cannot_remove_role_with_existing_users(self):
+        role = UserRole.objects.create(domain=self.domain, name='test-role')
+        request = self._create_request(_id=role.get_id, name='test-role')
+        self.user_count = 5
+
+        response = delete_user_role(request, 'test-domain')
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            content['message'],
+            "Unable to delete role 'test-role'. It has 5 users still assigned to it. "
+            "Remove all users assigned to the role before deleting it."
+        )
 
     def test_cannot_delete_linked_domain_data(self):
         role = UserRole.objects.create(domain='test-domain', name='test-role', upstream_id='parent_id')
-
-        request = self._create_request({'_id': role.get_id})
+        request = self._create_request(_id=role.get_id)
 
         response = delete_user_role(request, 'test-domain')
+        content = json.loads(response.content)
         remaining_role = UserRole.objects.get(id=role.id)
         # Following existing behavior. This should return an error when the missing role also returns an error
-        self.assertEqual(response.content.decode('utf-8'), '{}')
+        self.assertEqual(content, {})
         self.assertIsNotNone(remaining_role)
 
     # Helpers
@@ -219,6 +233,11 @@ class DeleteRoleTests(TestCase):
         privilege_mock = patch.object(views, 'domain_has_privilege', lambda x, y: True)
         privilege_mock.start()
         self.addCleanup(privilege_mock.stop)
+
+        self.user_count = 0
+        user_count_mock = patch.object(views, 'get_role_user_count', lambda domain, id: self.user_count)
+        user_count_mock.start()
+        self.addCleanup(user_count_mock.stop)
 
         self.factory = RequestFactory()
 
@@ -241,8 +260,8 @@ class DeleteRoleTests(TestCase):
 
         return web_user
 
-    def _create_request(self, data):
-        request = self.factory.post('/some/url', data=json.dumps(data), content_type='application/json')
+    def _create_request(self, **kwargs):
+        request = self.factory.post('/some/url', data=json.dumps(kwargs), content_type='application/json')
         request.user = request.couch_user = self.user
 
         return request
