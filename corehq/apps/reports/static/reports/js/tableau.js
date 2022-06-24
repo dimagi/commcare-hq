@@ -2,7 +2,6 @@
 hqDefine("reports/js/tableau", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         self = {}
-        self.errorMessage = ko.observable();
 
     self.requestViz = function () {
         $.ajax({
@@ -25,7 +24,11 @@ hqDefine("reports/js/tableau", function () {
                 }
             },
         }).fail(function () {
-            self.errorMessage(gettext("We are sorry, but something unexpected has occurred."));
+            var loadingDiv = document.getElementById("loadingDiv");
+            loadingDiv.style.display = "none";
+            var requestErrorMessage = gettext("An error occured with the tableau server request, please ensure " +
+                "the server configuration is correct and try again.")
+            document.getElementById( 'errorMessage' ).innerHTML = '<b>' + requestErrorMessage + '</b>';
         });
     }
 
