@@ -2060,6 +2060,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/forms/reports.py
@@ -13151,6 +13152,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/views/incremental.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
@@ -19876,62 +19878,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid "Unknown location: '%(name)s'. But the row is successfully added"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid ""
-"Multiple locations found with the name: '%(name)s'.  Try using site code. "
-"But the row is successfully added"
-msgstr ""
-
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
 msgid "type {lookup_table_name} is not defined as global"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown group: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
+msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid ""
+"Multiple locations found with the name: '%(name)s'.  Try using site code. "
+"But the row is successfully added"
 msgstr ""
 
 #: corehq/apps/fixtures/views.py
@@ -20416,6 +20392,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
+msgid "Email address '{}' is not a dimagi email address"
+msgstr ""
+
+#: corehq/apps/hqadmin/forms.py
+msgid ""
+"User with email address '{}' does not exist on this site, please have the "
+"user registered first"
+msgstr ""
+
+#: corehq/apps/hqadmin/forms.py
 msgid "Confirm the username"
 msgstr ""
 
@@ -20614,10 +20600,36 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid ""
-"\n"
-"          Please type comma-separated email addresses of users to grant/"
-"revoke superuser privileges.\n"
-"        "
+"Please type comma or new-line separated email addresses of users you want to "
+"offboard."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"Please type comma or new-line separated email addresses of users to grant/"
+"revoke superuser privileges."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/apps/hqadmin/views/users.py
+msgid "All superusers and staff users"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Developer"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Superuser"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/reports.py
+msgid "Accounting Admin"
+msgstr "Administração de Contabilidade"
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Two Factor Enabled"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
@@ -20726,6 +20738,10 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Two-Factor Auth successfully disabled."
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "Get users to offboard"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
@@ -40251,10 +40267,6 @@ msgid "Edit Data"
 msgstr "Editar dados"
 
 #: corehq/reports.py
-msgid "Accounting Admin"
-msgstr "Administração de Contabilidade"
-
-#: corehq/reports.py
 msgid "SMS Billing Administration"
 msgstr "Administração de Faturação de SMS"
 
@@ -40467,6 +40479,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Grant superuser privileges"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Get users for offboarding"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
@@ -41438,3 +41454,15 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "App Editor"
+#~ msgstr "Editor da Aplicação"
+
+#~ msgid "Read Only"
+#~ msgstr "Somente Leitura"
+
+#~ msgid "Field Implementer"
+#~ msgstr "Implementador no Terreno"
+
+#~ msgid "Billing Admin"
+#~ msgstr "Administrador do Faturamento"
