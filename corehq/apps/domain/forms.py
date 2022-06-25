@@ -389,10 +389,10 @@ class DomainGlobalSettingsForm(forms.Form):
         label=gettext_lazy("Account confirmation link expiry"),
         required=True,
         min_value=1,
-        max_value=720,
+        max_value=30,
         help_text=gettext_lazy(
             """
-            Default time (in hours) for which account confirmation link will be valid.
+            Default time (in days) for which account confirmation link will be valid.
             """
         )
     )

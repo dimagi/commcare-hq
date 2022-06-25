@@ -4,7 +4,6 @@ from django.utils.translation import override, gettext_lazy as _
 
 from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language
 from corehq.apps.hqwebapp.two_factor_gateways import Gateway
-from corehq.apps.sms.api import send_sms
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix

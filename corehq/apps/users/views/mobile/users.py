@@ -1482,6 +1482,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @location_safe
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
+    one_day_in_seconds = 60 * 60 * 24
 
     @property
     @memoized
@@ -1508,7 +1509,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             })
 
     def is_invite_valid(self):
-        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
         if hours_elapsed <= self.domain_object.confirmation_link_expiry_time:
             return True
         return False
