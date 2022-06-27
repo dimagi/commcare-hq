@@ -157,6 +157,7 @@ The following linked project spaces received content:
                 build.is_released = True
                 build.save(increment_version=False)
         except Exception as e:  # intentionally broad
+            notify_exception(None, "Exception releasing app during linked domain update: {}".format(e))
             return self._error_tuple(error_prefix + str(e))
 
     def _release_report(self, domain_link, model, user_id):
