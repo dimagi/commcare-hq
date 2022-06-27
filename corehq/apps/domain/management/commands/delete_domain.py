@@ -53,7 +53,6 @@ class Command(BaseCommand):
                 return
         self.hard_delete_cases(domain_name)
         self.hard_delete_forms(domain_name)
-        self.hard_delete_groups(domain_name)
         print(f"Soft-Deleting domain {domain_name} "
               "(i.e. switching its type to Domain-Deleted, "
               "which will prevent anyone from reusing that domain)")
