@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -103,7 +104,8 @@ class OpenmrsImporterForm(forms.Form):
                                    help_text=_('Space-separated column(s) to be concatenated to create the case '
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
-                           help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
+                           help_text=mark_safe(  # nosec: no user input
+                               _('e.g. [{"column": "givenName", "property": "first_name"}, ...]')))
 
 
 class OpenmrsRepeaterForm(CaseRepeaterForm):
