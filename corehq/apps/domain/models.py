@@ -441,7 +441,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    confirmation_link_expiry_time = IntegerProperty(default=168)
+    # Number of hours SMS confirmation link will be valid (default 1 week)
+    confirmation_link_expiry_time = IntegerProperty(default=7 * 24)
 
     operator_call_limit = IntegerProperty(default=120)
 

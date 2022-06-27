@@ -562,6 +562,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        domain.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
         domain.operator_call_limit = self.cleaned_data.get("operator_call_limit")
         try:
             self._save_logo_configuration(domain)
