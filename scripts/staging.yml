@@ -58,13 +58,10 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
-    #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
-    #- akj/mw-signup # Akash May 25
     # - gh/upgrade-twilio # Graham May 31
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
