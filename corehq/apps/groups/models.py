@@ -85,11 +85,6 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         refresh_group_views()
 
     @classmethod
-    def hard_delete_docs_for_domain(cls, domain):
-        group_docs = Group.by_domain(domain)
-        Group.delete_docs(group_docs)
-
-    @classmethod
     def delete_docs(cls, docs, **params):
         super(Group, cls).delete_docs(docs, **params)
         refresh_group_views()
