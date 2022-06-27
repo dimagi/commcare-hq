@@ -164,22 +164,22 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
-def _delete_all_cases(domain_name):
+def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
     for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
-        CommCareCase.objects.soft_delete_cases(domain_name, list(case_id_chunk))
+        CommCareCase.objects.hard_delete_cases(domain_name, list(case_id_chunk))
     logger.info('Deleting cases complete.')
 
 
-def _delete_all_forms(domain_name):
+def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = list(itertools.chain(*[
         XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
         for doc_type in doc_type_to_state
     ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        XFormInstance.objects.soft_delete_forms(domain_name, list(form_id_chunk))
+        XFormInstance.objects.hard_delete_forms(domain_name, list(form_id_chunk))
     logger.info('Deleting forms complete.')
 
 
@@ -271,8 +271,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
-    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCase']),
-    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstance']),
+    CustomDeletion('form_processor', delete_all_cases, ['CommCareCase']),
+    CustomDeletion('form_processor', delete_all_forms, ['XFormInstance']),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
         'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
     ]),
