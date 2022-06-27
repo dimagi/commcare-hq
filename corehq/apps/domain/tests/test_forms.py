@@ -108,6 +108,6 @@ class TestDomainGlobalSettingsForm(TestCase):
         return DomainGlobalSettingsForm(data, domain=self.domain)
 
     def tearDown(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, "test_domain", False, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
         self.domain.delete()
         super().tearDown()
