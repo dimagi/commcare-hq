@@ -19,7 +19,6 @@ from corehq.util.test_utils import flag_enabled
 @patch.object(Application, 'enable_practice_users', return_value=False)
 class BuildErrorsInlineSearchTest(SimpleTestCase):
 
-    # TODO: add test for shadow
     def test_inline_search_as_parent(self, *args):
         """an inline search module can't be a parent module"""
         factory = AppFactory(build_version='2.51.0')
