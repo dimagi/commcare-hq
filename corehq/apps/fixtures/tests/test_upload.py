@@ -558,17 +558,20 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_rows(), ['orange'])
 
     def test_upload_progress_and_result(self):
+        from datetime import timedelta
         task = FakeTask()
-        result = self.upload([
-            (None, 'N', 'apple'),
-            (None, 'N', 'banana'),
-            (None, 'N', 'coconut'),
-            (None, 'N', 'doughnut'),
-        ], task=task)
+        with patch.object(mod, "timedelta", lambda **k: timedelta()):
+            result = self.upload([
+                (None, 'N', 'apple'),
+                (None, 'N', 'banana'),
+                (None, 'N', 'coconut'),
+                (None, 'N', 'doughnut'),
+            ], task=task)
         self.assertEqual(task.states, [
             {'state': 'PROGRESS', 'meta': {'current': 0.0, 'total': 10}},
             {'state': 'PROGRESS', 'meta': {'current': 2.5, 'total': 10}},
             {'state': 'PROGRESS', 'meta': {'current': 5.0, 'total': 10}},
+            {'state': 'PROGRESS', 'meta': {'current': 7.5, 'total': 10}},
             {'state': 'PROGRESS', 'meta': {'current': 7.5, 'total': 10}},
         ])
         self.assertEqual(result.number_of_fixtures, 1)

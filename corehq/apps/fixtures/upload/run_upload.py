@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 from itertools import chain
 from operator import attrgetter
 
@@ -93,6 +94,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         deleted_key=attrgetter("tag"),
     )
 
+    update_progress(None)
     with CouchTransaction() as couch:
         for table in tables.to_delete:
             table.recursive_delete(couch)
@@ -112,18 +114,23 @@ def setup_progress(task, workbook):
         return total_tables, lambda table: None
 
     def update_progress(table):
-        if table.tag not in progress.tables:
-            progress.tables.add(table.tag)
-            progress.total_rows = workbook.count_rows(table) or 1
-            progress.row = 0
-        else:
-            progress.row += 1
+        if table is not None:
+            if table.tag not in progress.tables:
+                progress.tables.add(table.tag)
+                progress.total_rows = workbook.count_rows(table) or 1
+                progress.row = 0
+            else:
+                progress.row += 1
+            if datetime.now() < progress.next_update:
+                return
+        progress.next_update = datetime.now() + timedelta(seconds=2)
         table_count = len(progress.tables) - 1
         processed = table_count * 10 + (10 * progress.row / progress.total_rows)
         DownloadBase.set_progress(task, processed, 10 * total_tables)
 
     class progress:
         tables = set()
+        next_update = datetime.now()
 
     return total_tables, update_progress
 
