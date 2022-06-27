@@ -87,8 +87,8 @@ class CouchTransaction(object):
                 cls.bulk_delete(chunk)
 
         for cls, doc_map in self.docs_to_save.items():
-            docs = list(doc_map.values())
-            cls.bulk_save(docs)
+            for docs in chunked(doc_map.values(), 1000, list):
+                cls.bulk_save(docs)
 
         for action in self.post_commit_actions:
             action()
