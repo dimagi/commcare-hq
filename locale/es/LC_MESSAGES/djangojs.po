@@ -3256,10 +3256,8 @@ msgid "Submit Invoice Request"
 msgstr "Ingrese Solicitud de Factura"
 
 #: corehq/apps/domain/static/domain/js/case_search.js
-#, fuzzy
-#| msgid "You have unchanged case settings"
 msgid "You have unchanged settings"
-msgstr "Tiene configuraciones de caso sin cambio"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"

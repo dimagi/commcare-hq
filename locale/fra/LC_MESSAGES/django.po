@@ -37,7 +37,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2015-2016,2022\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -15056,10 +15056,8 @@ msgid "Add case type"
 msgstr "Ajouter un type de dossier"
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
-#, fuzzy
-#| msgid "Web Apps Permissions"
 msgid "Synchronous Web Apps Submissions"
-msgstr "Permissions pour applications web"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid ""
@@ -26127,9 +26125,9 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, fuzzy, python-format
-#| msgid "Hello,"
+#| msgid "Dear %(name)s,"
 msgid "Hello %(name)s,"
-msgstr "Bonjour,"
+msgstr "Cher(e) %(name)s, "
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format

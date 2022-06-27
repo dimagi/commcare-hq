@@ -5,6 +5,7 @@
 # Translators:
 # Antonio Cardoso Martins <digiplan@netvisao.pt>, 2005
 # Balzamon, 2015
+# Dimagi Dev <devops@dimagi.com>, 2022
 # Elisio Andre Martins Catana <eacatana@netvisao.pt>, 2005
 # esoergel, 2015
 # esoergel, 2015
@@ -21,7 +22,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Zsolt Bölöny <bolony.zsolt@gmail.com>, 2013\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
 "Language: hi\n"
@@ -97,7 +98,7 @@ msgstr ""
 #: corehq/apps/accounting/filters.py corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 msgid "Active Status"
-msgstr ""
+msgstr "सक्रिय स्थिति"
 
 #: corehq/apps/accounting/filters.py
 msgid "Customer Billing Account"
@@ -125,7 +126,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Trial Status"
-msgstr ""
+msgstr "परीक्षण की स्थिति"
 
 #: corehq/apps/accounting/filters.py
 msgid "Show All Subscriptions (including trials)"
@@ -158,7 +159,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Is Hidden"
-msgstr ""
+msgstr "छिपा है"
 
 #: corehq/apps/accounting/filters.py
 #: corehq/apps/reports/standard/cases/basic.py
