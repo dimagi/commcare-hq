@@ -478,11 +478,11 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']
-        DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
 
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
-        DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
 
     @staticmethod
     def validate_integer_value(value, value_name):
@@ -562,6 +562,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        domain.operator_call_limit = self.cleaned_data.get("operator_call_limit")
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
