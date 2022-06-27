@@ -104,7 +104,7 @@ from corehq.apps.users.models import (
     DomainRequest,
     Invitation,
     PermissionInfo,
-    Permissions,
+    HqPermissions,
     RoleAssignableBy,
     RolePermission,
     UserRole,
@@ -895,7 +895,7 @@ class TestDeleteDomain(TestCase):
                 name="role2"
             )
             role.set_permissions([
-                PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
+                PermissionInfo(HqPermissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
             ])
             role.set_assignable_by([role1.id])
             self._assert_role_counts(domain_name, 2, 1, 1)

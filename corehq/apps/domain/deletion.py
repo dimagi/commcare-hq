@@ -304,6 +304,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
+    ModelDeletion('data_interfaces', 'UCRFilterDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
@@ -377,7 +378,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'UserRole', 'domain', [
-        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+        'RolePermission', 'RoleAssignableBy', 'Permission'
     ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),

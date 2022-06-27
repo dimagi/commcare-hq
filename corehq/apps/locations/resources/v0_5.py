@@ -13,7 +13,7 @@ from corehq.apps.api.resources.auth import (
     DomainAdminAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import absolute_reverse
 
 from ..models import LocationType, SQLLocation
@@ -32,7 +32,7 @@ class LocationTypeResource(BaseLocationsResource):
     class Meta(object):
         resource_name = 'location_type'
         queryset = LocationType.objects.all()
-        authentication = RequirePermissionAuthentication(Permissions.edit_locations)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         fields = [
             'id',
             'domain',
@@ -72,7 +72,7 @@ class LocationResource(BaseLocationsResource):
         resource_name = 'location'
         detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()
-        authentication = RequirePermissionAuthentication(Permissions.edit_locations)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         allowed_methods = ['get']
         fields = [
             'id',

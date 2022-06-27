@@ -70,7 +70,7 @@ class ElasticTestMixin(object):
             index=TEST_INDEX_INFO.index,
             params={'explain': 'true'},
         )
-        self.assertTrue(validation['valid'])
+        self.assertTrue(validation['valid'], validation)
 
     def checkQuery(self, query, expected_json, is_raw_query=False, validate_query=True):
         self.maxDiff = None

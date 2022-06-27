@@ -164,7 +164,7 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        from corehq.apps.users.models import Permissions
+        from corehq.apps.users.models import HqPermissions
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
@@ -175,7 +175,7 @@ class ProjectReportsTab(UITab):
         )
         has_ucr_permissions = self.couch_user.has_permission(
             self.domain,
-            get_permission_name(Permissions.edit_ucrs)
+            get_permission_name(HqPermissions.edit_ucrs)
         )
 
         if is_ucr_toggle_enabled and has_ucr_permissions:
