@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
+    CaseSearchValidationCondition,
     DefaultCaseSearchProperty,
     Itemset,
     Module, DetailColumn, ShadowModule,
@@ -856,3 +857,41 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_case_search_validation_conditions(self, *args):
+        self.module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'}, validation=[
+                CaseSearchValidationCondition(xpath='2 + 2 = 5')
+            ]),
+            CaseSearchProperty(name='email', label={'en': 'Email'}, validation=[
+                CaseSearchValidationCondition(
+                    xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')",
+                    message="Please enter a valid email address",
+                )
+            ]),
+        ]
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <validation xpath="2 + 2 = 5"/>
+          </prompt>
+          <prompt key="email">
+            <display>
+              <text>
+                <locale id="search_property.m0.email"/>
+              </text>
+            </display>
+            <validation
+                xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')"
+                message="Please enter a valid email address"
+            />
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt")

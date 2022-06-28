@@ -32,6 +32,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     StackJump,
     Text,
     TextXPath,
+    Validation,
     XPathVariable,
 )
 from corehq.apps.app_manager.util import (
@@ -274,6 +275,14 @@ class RemoteRequestFactory(object):
                 kwargs['exclude'] = "true()"
             if prop.required:
                 kwargs['required'] = interpolate_xpath(prop.required)
+            if prop.validation:
+                kwargs['validation'] = [
+                    Validation(
+                        xpath=condition.xpath,
+                        message=condition.message,
+                    )
+                    for condition in prop.validation
+                ]
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

@@ -501,6 +501,12 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
+class Validation(XmlObject):
+    ROOT_NAME = 'validation'
+    xpath = XPathField('@xpath')
+    message = StringField('@message', required=False)
+
+
 class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
@@ -513,6 +519,7 @@ class QueryPrompt(DisplayNode):
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
     required = StringField('@required', required=False)
+    validation = NodeListField('validation', Validation)
 
     itemset = NodeField('itemset', Itemset)
 
