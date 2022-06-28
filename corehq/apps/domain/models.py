@@ -444,6 +444,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # Number of hours SMS confirmation link will be valid (default 1 week)
     confirmation_link_expiry_time = IntegerProperty(default=7 * 24)
 
+    operator_call_limit = IntegerProperty(default=120)
+
     ga_opt_out = BooleanProperty(default=False)
 
     restrict_mobile_access = BooleanProperty(default=False)
