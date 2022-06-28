@@ -7,7 +7,7 @@ import pytz
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.fixtures.models import LookupTable, TypeField
 from corehq.apps.linked_domain.const import (
     DOMAIN_LEVEL_DATA_MODELS,
     FEATURE_FLAG_DATA_MODELS,
@@ -115,11 +115,11 @@ def _create_ucr_expression(domain, name="ping", upstream_id=None, should_save=Tr
 
 
 def _create_fixture(domain, tag="table", should_save=True):
-    data_type = FixtureDataType(
+    data_type = LookupTable(
         domain=domain,
         tag=tag,
         fields=[
-            FixtureTypeField(
+            TypeField(
                 field_name="fixture_property",
                 properties=["test"]
             )
@@ -162,13 +162,13 @@ class BaseLinkedDomainTest(TestCase):
         )
 
         cls.original_fixture = _create_fixture(cls.upstream_domain)
+        cls.addClassCleanup(cls.original_fixture._migration_get_couch_object().delete)
 
         cls.domain_link = DomainLink.link_domains(cls.downstream_domain, cls.upstream_domain)
 
     @classmethod
     def tearDownClass(cls):
         delete_all_report_configs()
-        cls.original_fixture.delete()
         cls.original_keyword.delete()
         cls.linked_keyword.delete()
         cls.original_report.delete()
@@ -284,25 +284,25 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_ucr_expressions, actual_downstream_ucr_expressions)
 
     def test_get_fixtures_for_upstream_domain(self):
-        expected_upstream_fixtures = [self.original_fixture._id]
+        expected_upstream_fixtures = [self.original_fixture._migration_couch_id]
         expected_downstream_fixtures = []
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
-        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
         expected_upstream_fixtures = []
-        expected_downstream_fixtures = [self.original_fixture._id]
+        expected_downstream_fixtures = [self.original_fixture._migration_couch_id]
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
             self.downstream_domain, self.domain_link
         )
-        actual_upstream_fixtures = [fixture._id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
