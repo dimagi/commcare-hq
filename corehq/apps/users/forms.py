@@ -939,7 +939,7 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
-                            short=_("Your password is too short. -- forms.py"),
+                            short=_("Your password should have at least 8 characters."),
                         )),
                         required=True,
                     ),
@@ -947,7 +947,8 @@ class NewMobileWorkerForm(forms.Form):
                         css: {
                             'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
                             'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
-                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR || $root.passwordSatisfyLength() === false,
+                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR ||
+                             $root.passwordSatisfyLength() === false,
                         }
                     ''' if not has_custom_clean_password() else ''
                 ),
