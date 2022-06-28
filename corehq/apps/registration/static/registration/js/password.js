@@ -15,6 +15,7 @@ hqDefine('registration/js/password', [
     var passwordModel = function () {
         var self = {};
         self.minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
+        self.minimumPwdLength = initialPageData.get('minimumPwdLength');
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
         self.password = ko.observable();
         self.strength = ko.computed(function () {
@@ -23,6 +24,12 @@ hqDefine('registration/js/password', [
             }
             return 0;
         });
+        self.length = ko.computed(function(){
+            if (self.password()) {
+                return self.password().length;
+            }
+            return 0;
+        })
         var suggestionClick = 0;
         $(document).ready(function () {
             $("#help_text").trigger('click');
@@ -39,7 +46,7 @@ hqDefine('registration/js/password', [
             self.isSuggestedPassword(false);
         });
         self.color = ko.computed(function () {
-            if (self.strength() < self.minimumZxcvbnScore - 1) {
+            if (self.length() < self.minimumPwdLength || self.strength() < self.minimumZxcvbnScore - 1 ) {
                 return "text-error text-danger";
             } else if (self.strength() < self.minimumZxcvbnScore || self.isSuggestedPassword()) {
                 return "text-warning";
@@ -50,6 +57,8 @@ hqDefine('registration/js/password', [
         self.passwordHelp = ko.computed(function () {
             if (!self.password()) {
                 return '';
+            } else if (self.length()<self.minimumPwdLength) {
+                return gettext("Your password must be at least 8 characters long.")
             } else if (self.strength() >= self.minimumZxcvbnScore && self.isSuggestedPassword()) {
                 return gettext("<i class='fa fa-warning'></i>" +
                     "This password is automatically generated. " +

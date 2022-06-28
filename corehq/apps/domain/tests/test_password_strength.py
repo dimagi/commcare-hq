@@ -2,27 +2,33 @@ from django import forms
 from django.test import SimpleTestCase, override_settings
 
 from corehq.apps.domain.forms import clean_password
+from settings import MINIMUM_PWD_LENGTH, MINIMUM_ZXCVBN_SCORE
 
 
+@override_settings(MINIMUM_PWD_LENGTH=0, MINIMUM_ZXCVBN_SCORE=2)
 class PasswordStrengthTest(SimpleTestCase):
 
-    @override_settings(MINIMUM_ZXCVBN_SCORE=2)
     def test_score_0_password(self):
         self.assert_bad_password(PASSWORDS_BY_STRENGTH[0])
 
-    @override_settings(MINIMUM_ZXCVBN_SCORE=2)
     def test_score_1_password(self):
         self.assert_bad_password(PASSWORDS_BY_STRENGTH[1])
 
-    @override_settings(MINIMUM_ZXCVBN_SCORE=2)
     def test_score_2_password(self):
         self.assert_good_password(PASSWORDS_BY_STRENGTH[2])
 
-    @override_settings(MINIMUM_ZXCVBN_SCORE=2)
+    @override_settings(MINIMUM_PWD_LENGTH = 8)
+    def test_length_2_password(self):
+        self.assert_bad_password(PASSWORDS_BY_STRENGTH[2])
+
+    @override_settings(MINIMUM_PWD_LENGTH = 8)
     def test_score_3_password(self):
         self.assert_good_password(PASSWORDS_BY_STRENGTH[3])
 
-    @override_settings(MINIMUM_ZXCVBN_SCORE=2)
+    @override_settings(MINIMUM_PWD_LENGTH = 12)
+    def test_length_3_password(self):
+        self.assert_bad_password(PASSWORDS_BY_STRENGTH[3])
+
     def test_score_4_password(self):
         self.assert_good_password(PASSWORDS_BY_STRENGTH[4])
 

@@ -321,6 +321,40 @@ hqDefine("users/js/mobile_workers",[
             return self.STATUS.SUCCESS;
         });
 
+        self.passwordSatisfyLength = ko.computed(function(){
+            if (!self.stagedUser()) {
+                return true;
+            }
+
+            if (self.stagedUser().force_account_confirmation()) {
+                return true;
+            }
+
+            if (self.stagedUser().force_account_confirmation_by_sms()) {
+                return true;
+            }
+
+            if (!self.useStrongPasswords()) {
+                // No validation
+                return true;
+            }
+
+            if(!self.skipStandardValidations()){
+                var minimumPwdLength = initialPageData.get('minimumPwdLength');
+                var password = self.stagedUser().password();
+                if (!password) {
+                    return true;
+                }
+                if (self.isSuggestedPassword()) {
+                    return true;
+                }
+                if(password.length < minimumPwdLength) {
+                    return false;
+                }
+            }
+            return true;
+        })
+
         self.requiredEmailMissing = ko.computed(function () {
             return self.stagedUser() && self.stagedUser().emailRequired() && !self.stagedUser().email();
         });
