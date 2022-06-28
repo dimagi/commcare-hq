@@ -96,7 +96,47 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(1, len(form.errors))
         self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
 
-    def create_form(self, **kwargs):
+    def test_operator_call_limit_not_present_when_domain_not_eligible(self):
+        form = self.create_form()
+        self.assertTrue('operator_call_limit' not in form.fields)
+
+    def test_operator_call_limit_default_present_when_domain_eligible(self):
+        domain = Domain(name="test-samveg-quick")
+        domain.save()
+        try:
+            form = self.create_form(domain=domain, operator_call_limit=domain.operator_call_limit)
+            form.full_clean()
+            form.save(Mock(), domain)
+            self.assertTrue('operator_call_limit' in form.fields)
+            self.assertEqual(120, domain.operator_call_limit)
+        finally:
+            domain.delete()
+
+    def test_operator_call_limit_custom_present_when_domain_eligible(self):
+        domain = Domain(name="test-samveg-quick")
+        domain.save()
+        try:
+            form = self.create_form(domain=domain, operator_call_limit=50)
+            form.full_clean()
+            form.save(Mock(), domain)
+            self.assertTrue('operator_call_limit' in form.fields)
+            self.assertEqual(50, domain.operator_call_limit)
+        finally:
+            domain.delete()
+
+    def test_operator_call_limit_error_when_invalid_value(self):
+        domain = Domain(name="test-samveg-quick")
+        domain.save()
+        try:
+            form = self.create_form(domain=domain, operator_call_limit="12a")
+            form.full_clean()
+            self.assertIsNotNone(form.errors)
+            self.assertEqual(1, len(form.errors))
+            self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
+        finally:
+            domain.delete()
+
+    def create_form(self, domain=None, **kwargs):
         data = {
             "hr_name": "foo",
             "project_description": "sample",
@@ -105,7 +145,9 @@ class TestDomainGlobalSettingsForm(TestCase):
         if kwargs:
             for field, value in kwargs.items():
                 data.update({field: value})
-        return DomainGlobalSettingsForm(data, domain=self.domain)
+        if not domain:
+            domain = self.domain
+        return DomainGlobalSettingsForm(data, domain=domain)
 
     def tearDown(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
